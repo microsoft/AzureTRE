@@ -581,18 +581,6 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
          raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=raiseMessage)
 
     # Check MHRA's validation criteria.
-    # criteriumCheck1 = (airlock_request.statisticsStatements[0].statisticalTests and
-    #                    not airlock_request.statisticsStatements[0].statisticalTestsConfirmation)
-
-    # criteriumCheck2 = (airlock_request.statisticsStatements[0].coefficientsAssociation and
-    #                    (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
-    #                    not airlock_request.statisticsStatements[0].coefficientsAssociationModelNotSaturated or
-    #                    not airlock_request.statisticsStatements[0].coefficientsAssociationRegressionNotIncluded))
-
-    # criteriumCheck3 = (airlock_request.statisticsStatements[0].shape and
-    #                    (not airlock_request.statisticsStatements[0].shapeStandardDeviations or
-    #                    not airlock_request.statisticsStatements[0].shapeMinFive))
-
     criteriumCheck1 = not airlock_request.statisticsStatements[0].statisticalTestsConfirmation
 
     criteriumCheck2 = (not airlock_request.statisticsStatements[0].coefficientsAssociationResidualDegrees or
