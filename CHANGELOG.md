@@ -6,7 +6,7 @@ ENHANCEMENTS:
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
-* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4677](https://github.com/microsoft/AzureTRE/pull/4677)])
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
