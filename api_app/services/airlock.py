@@ -637,22 +637,8 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
     criteriumCheck13 = not airlock_request.statisticsStatements[0].other
 
     # We start checking if we have a L1 or L4.
-    if criteriumCheck1 or criteriumCheck2:
-        if not criteriumCheck3:
-            if (not airlock_request.statisticsStatements[0].shape and
-                not airlock_request.statisticsStatements[0].mode and
-                not airlock_request.statisticsStatements[0].ratios and
-                not airlock_request.statisticsStatements[0].frequencies and
-                not airlock_request.statisticsStatements[0].position and
-                not airlock_request.statisticsStatements[0].extremeValues and
-                not airlock_request.statisticsStatements[0].linearAggregates and
-                not airlock_request.statisticsStatements[0].oddsRatios):
-                # We have reached a L1 request.
-                triage_level_input = strings.API_TRIAGE_LEVEL1
-                airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
-                return airlock_request
-        # We have reached a L4 request.
-        else:
+    if criteriumCheck3:
+        if criteriumCheck1 or criteriumCheck2:
             try:
                 triage_level_input = strings.API_TRIAGE_LEVEL4
                 airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
@@ -692,6 +678,21 @@ async def exit_and_reject_statistics_airlock_request(airlock_request: AirlockReq
                     if e.status_code == 400:  # type: ignore
                         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
                 raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
+
+        # Maybe we have reached a L1 request.
+        else:
+            if (not airlock_request.statisticsStatements[0].shape and
+                not airlock_request.statisticsStatements[0].mode and
+                not airlock_request.statisticsStatements[0].ratios and
+                not airlock_request.statisticsStatements[0].frequencies and
+                not airlock_request.statisticsStatements[0].position and
+                not airlock_request.statisticsStatements[0].extremeValues and
+                not airlock_request.statisticsStatements[0].linearAggregates and
+                not airlock_request.statisticsStatements[0].oddsRatios):
+                # We have reached a L1 request.
+                triage_level_input = strings.API_TRIAGE_LEVEL1
+                airlock_request = await airlock_request_repo.set_triage_level_and_review_due_date(airlock_request, triage_level_input)
+                return airlock_request
 
     # If we reached this point, it means we have L2A, L2B or L3.
     if criteriumCheck4 and criteriumCheck5 and criteriumCheck6 and criteriumCheck7 and criteriumCheck9 and criteriumCheck11 and criteriumCheck12 and criteriumCheck13:
