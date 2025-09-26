@@ -1,3 +1,61 @@
+from types import SimpleNamespace
+import pytest
+from mock import patch
+
+from services.access_service import AuthConfigValidationError
+
+
+@patch("api.routes.resource_helpers.get_access_service")
+def test_get_identity_role_assignments_fallback_when_user_mgmt_disabled(get_access_service_mock):
+    # Arrange: access service raises auth config error
+    class FakeAccessService:
+        def get_identity_role_assignments(self, user_id: str):
+            raise AuthConfigValidationError("graph not available")
+
+    get_access_service_mock.return_value = FakeAccessService()
+
+    # Force feature disabled
+    from core import config as core_config
+    original_value = core_config.USER_MANAGEMENT_ENABLED
+    core_config.USER_MANAGEMENT_ENABLED = False
+
+    try:
+        from api.routes import resource_helpers
+        user = SimpleNamespace(id="user-id")
+
+        # Act
+        result = resource_helpers.get_identity_role_assignments(user)
+
+        # Assert
+        assert result == []
+    finally:
+        core_config.USER_MANAGEMENT_ENABLED = original_value
+
+
+@patch("api.routes.resource_helpers.get_access_service")
+def test_get_identity_role_assignments_raises_when_user_mgmt_enabled(get_access_service_mock):
+    # Arrange: access service raises auth config error
+    class FakeAccessService:
+        def get_identity_role_assignments(self, user_id: str):
+            raise AuthConfigValidationError("graph not available")
+
+    get_access_service_mock.return_value = FakeAccessService()
+
+    # Force feature enabled
+    from core import config as core_config
+    original_value = core_config.USER_MANAGEMENT_ENABLED
+    core_config.USER_MANAGEMENT_ENABLED = True
+
+    try:
+        from api.routes import resource_helpers
+        user = SimpleNamespace(id="user-id")
+
+        # Act / Assert
+        with pytest.raises(AuthConfigValidationError):
+            resource_helpers.get_identity_role_assignments(user)
+    finally:
+        core_config.USER_MANAGEMENT_ENABLED = original_value
+
 import datetime
 from unittest.mock import AsyncMock
 import uuid

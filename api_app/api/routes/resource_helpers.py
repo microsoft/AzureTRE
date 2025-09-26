@@ -26,6 +26,8 @@ from service_bus.resource_request_sender import (
 )
 from services.authentication import get_access_service
 from services.logging import logger
+from services.access_service import AuthConfigValidationError
+from core import config
 
 
 async def delete_validation(resource: Resource, resource_repo: ResourceRepository):
@@ -158,7 +160,12 @@ def construct_location_header(operation: Operation) -> str:
 
 def get_identity_role_assignments(user):
     access_service = get_access_service()
-    return access_service.get_identity_role_assignments(user.id)
+    try:
+        return access_service.get_identity_role_assignments(user.id)
+    except AuthConfigValidationError:
+        if config.USER_MANAGEMENT_ENABLED:
+            raise
+        return []
 
 
 def get_app_user_roles_assignments_emails(app_obj_id):
