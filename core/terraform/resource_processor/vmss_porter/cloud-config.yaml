@@ -41,7 +41,8 @@ system_info:
     groups: [docker]
 
 write_files:
-  - path: .env
+  #- path: .env
+  - path: /tmp/docker_vmss.env
     content: |
       REGISTRY_SERVER=${docker_registry_server}
       TERRAFORM_STATE_CONTAINER_NAME=${terraform_state_container_name}
@@ -85,7 +86,7 @@ runcmd:
   - az login --identity --client-id ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
   - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
-    --restart always --env-file .env
+    --restart always --env-file /tmp/docker_vmss.env
     --name resource_processor1
     --log-driver local
     ${docker_registry_server}/${resource_processor_vmss_porter_image_repository}:${resource_processor_vmss_porter_image_tag}
