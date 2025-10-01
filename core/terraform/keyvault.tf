@@ -184,6 +184,30 @@ resource "azurerm_key_vault_secret" "client_type_custom_header" {
   lifecycle { ignore_changes = [value] }
 }
 
+resource "azurerm_key_vault_secret" "ssbs_management_app_registration_client_id" {
+  name         = "ssbs-management-app-registration-client-id"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [value] }
+}
+
+resource "azurerm_key_vault_secret" "ssbs_management_app_registration_client_secret" {
+  name         = "ssbs-management-app-registration-client-secret"
+  value        = ""
+  key_vault_id = azurerm_key_vault.kv.id
+  tags         = local.tre_core_tags
+  depends_on = [
+    azurerm_key_vault_access_policy.deployer
+  ]
+
+  lifecycle { ignore_changes = [value] }
+}
+
 resource "azurerm_monitor_diagnostic_setting" "kv" {
   name                       = "diagnostics-kv-${var.tre_id}"
   target_resource_id         = azurerm_key_vault.kv.id
