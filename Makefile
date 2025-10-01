@@ -141,7 +141,9 @@ deploy-core: tre-start
 			&& ./deploy.sh 1>/dev/null 2>/dev/null; \
 		else cd ${MAKEFILE_DIR}/core/terraform/ && ./deploy.sh; fi;
 
-# Runs deploy-core but without applying the TF changes, allows the TF plan to be inspected
+# Description: Shows a deployment plan for the core infrastructure of the TRE.
+# plan-core shows what changes deploy-core will make, this allows the terraform plan to be inspected prior to deployment.
+# Example: make plan-core
 plan-core: tre-start
 	$(call target_title, "Generating core terraform plan") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
