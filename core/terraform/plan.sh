@@ -18,7 +18,7 @@ TS=$(date +"%s")
 PLAN_FILE="${TS}-tre-core.tfplan"
 LOG_FILE="${TS}-tre-core.log"
 
-# This variables are loaded in for us
+# These variables are loaded in for us
 # shellcheck disable=SC2154
 ../../devops/scripts/terraform_wrapper.sh \
   -d "${PWD}" \
