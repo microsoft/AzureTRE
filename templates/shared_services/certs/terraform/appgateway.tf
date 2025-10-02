@@ -153,6 +153,11 @@ resource "azurerm_application_gateway" "agw" {
     include_query_string = true
   }
 
+  # Using newest SSL Policy for Application Gateway.authentication_certificate.authentication_certificate.
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101"
+  }
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
   lifecycle {
     ignore_changes = [
