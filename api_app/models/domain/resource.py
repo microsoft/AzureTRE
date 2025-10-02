@@ -45,6 +45,7 @@ class Resource(AzureTREModel):
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = {}
+    updatedUser: dict = {}
     updatedWhen: float = 0
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
