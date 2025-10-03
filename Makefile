@@ -182,7 +182,7 @@ tre-start: ## ⏩ Start the TRE Service
 # Example: make tre-stop
 tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
-	&& $(MAKE) bootstrap-env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop
 
 # Description: Destroy the TRE Service. This will destroy all the resources of the TRE service, including the Azure Firewall and Application Gateway.
