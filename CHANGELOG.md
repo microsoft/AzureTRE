@@ -8,6 +8,8 @@ ENHANCEMENTS:
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
+* Streamline Azure bootstrap by replacing legacy dependency checks with `bootstrap_azure_env.sh` ([#2993](https://github.com/microsoft/AzureTRE/issues/2993))
+* Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
