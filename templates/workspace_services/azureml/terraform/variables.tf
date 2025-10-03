@@ -51,3 +51,13 @@ variable "key_store_id" {
 variable "log_analytics_workspace_name" {
   type = string
 }
+variable "workspace_owners_group_id" {
+  type        = string
+  description = "Object ID of the workspace owners AAD group"
+  default     = ""
+}
+variable "workspace_researchers_group_id" {
+  type        = string
+  description = "Object ID of the workspace researchers AAD group"
+  default     = ""
+}

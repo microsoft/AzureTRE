@@ -44,6 +44,18 @@
       "$id": "#/properties/log_analytics_workspace_name",
       "type": "string",
       "title": "Log Analytics Workspace Name"
+    },
+    "workspace_owners_group_id": {
+      "$id": "#/properties/workspace_owners_group_id",
+      "type": "string",
+      "title": "Workspace Owners Group ID",
+      "description": "Object ID of the workspace owners AAD group"
+    },
+    "workspace_researchers_group_id": {
+      "$id": "#/properties/workspace_researchers_group_id",
+      "type": "string",
+      "title": "Workspace Researchers Group ID",
+      "description": "Object ID of the workspace researchers AAD group"
     }
   },
   "uiSchema": {
@@ -51,6 +63,12 @@
       "classNames": "tre-hidden"
     },
     "log_analytics_workspace_name": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
       "classNames": "tre-hidden"
     }
   },
@@ -70,6 +88,16 @@
             "name": "log_analytics_workspace_name",
             "type": "string",
             "value": "{{ resource.parent.properties.log_analytics_workspace_name }}"
+          },
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
           }
         ]
       },
@@ -142,22 +170,6 @@
                     "AzureResourceManager",
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureML_Client",
-                  "description": "AzureML Client",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": [
-                    "AzureActiveDirectory",
-                    "AzureResourceManager",
-                    "AzureMachineLearning"
                   ],
                   "destination_ports": [
                     "443"
@@ -288,22 +300,6 @@
                     "AzureResourceManager",
                     "{{ resource.properties.mcr_tag }}",
                     "AzureFrontDoor.FirstParty"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureML_Client",
-                  "description": "AzureML Client",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": [
-                    "AzureActiveDirectory",
-                    "AzureResourceManager",
-                    "AzureMachineLearning"
                   ],
                   "destination_ports": [
                     "443"

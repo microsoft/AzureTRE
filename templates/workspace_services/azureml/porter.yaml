@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 0.10.0
+version: 0.11.0
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -71,6 +71,14 @@ parameters:
     default: ""
   - name: log_analytics_workspace_name
     type: string
+  - name: workspace_owners_group_id
+    type: string
+    default: ""
+    description: "Object ID of the workspace owners AAD group"
+  - name: workspace_researchers_group_id
+    type: string
+    default: ""
+    description: "Object ID of the workspace researchers AAD group"
 
 outputs:
   - name: azureml_workspace_name
@@ -150,6 +158,8 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -189,6 +199,8 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -228,6 +240,8 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
