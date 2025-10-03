@@ -1,6 +1,20 @@
 # Deploying Azure TRE
 
-You are now ready to deploy the Azure TRE instance. Execute the `all` action of the makefile using `make`:
+You are now ready to deploy the Azure TRE instance.
+
+## Register Azure Resource Providers
+
+First, register the required Azure resource providers for your subscription:
+
+```bash
+make register-providers
+```
+
+This step only needs to be run once per Azure subscription and registers the necessary Azure resource providers (Microsoft.Storage, Microsoft.AlertsManagement, Microsoft.Compute) and features (EncryptionAtHost) required by Azure TRE.
+
+## Deploy Azure TRE
+
+Execute the `all` action of the makefile using `make`:
 
 ```bash
 make all
