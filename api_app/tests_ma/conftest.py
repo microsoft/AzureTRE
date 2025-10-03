@@ -1,6 +1,6 @@
 import pytest
 import pytest_asyncio
-from mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from azure.cosmos.aio import CosmosClient, DatabaseProxy
 
 from api.dependencies.database import Database
