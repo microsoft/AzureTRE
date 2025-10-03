@@ -4,12 +4,19 @@
 * Updated the version of gitea and the runtime build script. Updating Gitea will remove the storage from underneath it and result in a redeploy. ([#4672](https://github.com/microsoft/AzureTRE/pull/4672))
 
 ENHANCEMENTS:
+* Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
 * Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
+* Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678)]
+* Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
+* Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
