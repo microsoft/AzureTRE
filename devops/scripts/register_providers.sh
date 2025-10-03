@@ -3,8 +3,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
 register_resource_providers() {
   local providers=("Microsoft.Storage" "Microsoft.AlertsManagement" "Microsoft.Compute")
   echo -e "\e[34m»»» 🔧 \e[96mEnsuring required Azure resource providers are registered\e[0m"
