@@ -18,7 +18,7 @@ BUG FIXES:
 * Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 
 COMPONENTS:
-* Azure ML workspace service updated to 0.11.0
+* Azure ML workspace service updated to 1.0.0
 
 
 ## 0.25.0 (July 18, 2025)
