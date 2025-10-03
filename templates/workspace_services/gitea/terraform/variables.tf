@@ -16,11 +16,7 @@ variable "mgmt_acr_name" {
 variable "aad_authority_url" {
   type = string
 }
-variable "gitea_storage_limit" {
-  type        = number
-  description = "Space allocated in GB for the Gitea data in Azure Files Share"
-  default     = 100
-}
+
 variable "arm_environment" {
   type = string
 }
