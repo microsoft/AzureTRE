@@ -158,6 +158,7 @@ resource "azurerm_application_gateway" "agw" {
     policy_type = "Predefined"
     policy_name = "AppGwSslPolicy20220101"
   }
+
   # We don't want Terraform to revert certificate cycle changes. We assume the certificate will be renewed in keyvault.
   lifecycle {
     ignore_changes = [
