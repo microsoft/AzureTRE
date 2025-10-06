@@ -275,6 +275,11 @@ moved {
 }
 
 moved {
+  from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.database.windows.net"]
+  to   = azurerm_private_dns_zone.non_core["privatelink.database.windows.net"]
+}
+
+moved {
   from = module.network.azurerm_private_dns_zone.private_dns_zones["privatelink.sql.azuresynapse.net"]
   to   = azurerm_private_dns_zone.non_core["privatelink.sql.azuresynapse.net"]
 }

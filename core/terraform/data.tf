@@ -25,3 +25,18 @@ data "azurerm_monitor_diagnostic_categories" "api" {
     azurerm_service_plan.core,
   ]
 }
+
+data "azurerm_key_vault" "core_kv" {
+  name                = local.core_keyvault_name
+  resource_group_name = local.core_resource_group_name
+}
+
+data "azurerm_key_vault_secret" "arm_client_id" {
+  name         = local.arm_client_id
+  key_vault_id = data.azurerm_key_vault.core_kv.id
+}
+
+data "azurerm_key_vault_secret" "arm_client_secret" {
+  name         = local.arm_client_secret
+  key_vault_id = data.azurerm_key_vault.core_kv.id
+}
