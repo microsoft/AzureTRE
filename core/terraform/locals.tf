@@ -18,6 +18,7 @@ locals {
   private_dns_zone_names_non_core = toset([
     "privatelink.purview.azure.com",
     "privatelink.purviewstudio.azure.com",
+    "privatelink.database.windows.net",
     "privatelink.sql.azuresynapse.net",
     "privatelink.dev.azuresynapse.net",
     "privatelink.azuresynapse.net",
@@ -33,5 +34,20 @@ locals {
     "privatelink.azuredatabricks.net"
   ])
 
-  storage_table_scope = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/rg-${var.tre_id}/providers/Microsoft.Storage/storageAccounts/stg${var.tre_id}/tableServices/default/tables"
+  storage_table_scope      = "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/rg-${var.tre_id}/providers/Microsoft.Storage/storageAccounts/stg${var.tre_id}/tableServices/default/tables"
+  core_keyvault_name       = "kv-${var.tre_id}"
+  core_resource_group_name = "rg-${var.tre_id}"
+  env_rules = [
+    { match = "cprdprod", val = "p" },
+    { match = "cprdstaging", val = "s" },
+    { match = "cprdtest", val = "t" },
+    { match = "cprddev", val = "d" },
+  ]
+  matches = [
+    for r in local.env_rules :
+    r.val if(r.match == var.tre_id) || endswith(var.tre_id, r.match)
+  ]
+  arm_client_id     = "arm-client-id"
+  arm_client_secret = "arm-client-secret"
+  data_environment  = length(local.matches) > 0 ? local.matches[0] : "?"
 }
