@@ -5,22 +5,6 @@ set -o nounset
 # Uncomment this line to debug (will echo secrets!)
 # set -o xtrace
 
-FLAGS=()
-if [[ "$#" -gt 0 ]]; then
-  RAW_ARGUMENTS="${*//,/ }"
-  # shellcheck disable=SC2206
-  FLAGS=(${RAW_ARGUMENTS})
-fi
-
-has_flag() {
-  local desired="$1"
-  for flag in "${FLAGS[@]}"; do
-    if [[ "${flag}" == "${desired}" ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 REPO_ROOT="${SCRIPT_DIR}/../.."
 
