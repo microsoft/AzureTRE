@@ -80,6 +80,19 @@ tee /home/"${VM_USER}"/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-screensave
 END
 chown -Rf "${VM_USER}":"${VM_USER}" /home/"${VM_USER}"/.config
 
+# Create keyring with blank password (auto-unlock)
+mkdir -p ~/.local/share/keyrings
+cat > ~/.local/share/keyrings/Default.keyring <<EOF
+[keyring]
+display-name=Default
+ctime=0
+mtime=0
+lock-on-idle=false
+lock-timeout=0
+EOF
+
+chmod 600 ~/.local/share/keyrings/Default.keyring
+
 if [ "${SHARED_STORAGE_ACCESS}" -eq 1 ]; then
   # Install required packages
   echo "init_vm.sh: Shared storage"
