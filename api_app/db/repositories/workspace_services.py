@@ -26,18 +26,28 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        parameters = [
+            {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
+            {'name': '@workspaceId', 'value': workspace_id}
+        ]
+        return query, parameters
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "{ResourceType.WorkspaceService}" AND c.workspaceId = "{workspace_id}"'
+        query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        parameters = [
+            {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
+            {'name': '@workspaceId', 'value': workspace_id}
+        ]
+        return query, parameters
 
     async def get_active_workspace_services_for_workspace(self, workspace_id: str) -> List[WorkspaceService]:
         """
         returns list of "non-deleted" workspace services linked to this workspace
         """
-        query = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
-        workspace_services = await self.query(query=query)
+        query, parameters = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
+        workspace_services = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
     async def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
@@ -49,8 +59,10 @@ class WorkspaceServiceRepository(ResourceRepository):
         return workspace_service
 
     async def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
-        query = self.workspace_services_query(workspace_id) + f' AND c.id = "{service_id}"'
-        workspace_services = await self.query(query=query)
+        query, parameters = self.workspace_services_query(workspace_id)
+        query += ' AND c.id = @serviceId'
+        parameters.append({'name': '@serviceId', 'value': service_id})
+        workspace_services = await self.query(query=query, parameters=parameters)
         if not workspace_services:
             raise EntityDoesNotExist
         return parse_obj_as(WorkspaceService, workspace_services[0])
