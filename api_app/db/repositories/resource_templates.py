@@ -22,7 +22,12 @@ class ResourceTemplateRepository(BaseRepository):
 
     @staticmethod
     def _template_by_name_query(name: str, resource_type: ResourceType) -> str:
-        return f'SELECT * FROM c WHERE c.resourceType = "{resource_type}" AND c.name = "{name}"'
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name'
+        parameters = [
+            {'name': '@resourceType', 'value': resource_type},
+            {'name': '@name', 'value': name}
+        ]
+        return query, parameters
 
     @staticmethod
     def enrich_template(template: ResourceTemplate, is_update: bool = False) -> dict:
@@ -42,10 +47,14 @@ class ResourceTemplateRepository(BaseRepository):
         :param user_roles: If set, only return templates that the user is authorized to use.
                            template.authorizedRoles should contain at least one of user_roles
         """
-        query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "{resource_type}" AND c.current = true'
+        query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true'
+        parameters = [
+            {'name': '@resourceType', 'value': resource_type}
+        ]
         if resource_type == ResourceType.UserResource:
-            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
-        template_infos = await self.query(query=query)
+            query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+            parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
+        template_infos = await self.query(query=query, parameters=parameters)
         templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
 
         if not user_roles:
@@ -57,10 +66,12 @@ class ResourceTemplateRepository(BaseRepository):
         """
         Returns full template for the current version of the 'template_name' template
         """
-        query = self._template_by_name_query(template_name, resource_type) + ' AND c.current = true'
+        query, parameters = self._template_by_name_query(template_name, resource_type)
+        query += ' AND c.current = true'
         if resource_type == ResourceType.UserResource:
-            query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
-        templates = await self.query(query=query)
+            query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+            parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
+        templates = await self.query(query=query, parameters=parameters)
         if len(templates) == 0:
             raise EntityDoesNotExist
         if len(templates) > 1:
@@ -76,17 +87,20 @@ class ResourceTemplateRepository(BaseRepository):
 
         For UserResource templates, you also need to pass in 'parent_service_name' as a parameter
         """
-        query = self._template_by_name_query(name, resource_type) + f' AND c.version = "{version}"'
+        query, parameters = self._template_by_name_query(name, resource_type)
+        query += f' AND c.version = @version'
+        parameters.append({'name': '@version', 'value': version})
 
         # If querying for a user resource, we also need to add the parentWorkspaceService (name) to the query
         if resource_type == ResourceType.UserResource:
             if parent_service_name:
-                query += f' AND c.parentWorkspaceService = "{parent_service_name}"'
+                query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+                parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
             else:
                 raise Exception("When getting a UserResource template, you must pass in a 'parent_service_name'")
 
         # Execute the query and handle results
-        templates = await self.query(query=query)
+        templates = await self.query(query=query, parameters=parameters)
         if len(templates) != 1:
             raise EntityDoesNotExist
         if resource_type == ResourceType.UserResource:

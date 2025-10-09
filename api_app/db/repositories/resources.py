@@ -76,8 +76,11 @@ class ResourceRepository(BaseRepository):
         return parse_obj_as(Resource, resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = '{template_name}' AND {IS_ACTIVE_RESOURCE}"
-        resources = await self.query(query=query)
+        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND {IS_ACTIVE_RESOURCE}"
+        parameters = [
+            {'name': '@templateName', 'value': template_name}
+        ]
+        resources = await self.query(query=query, parameters=parameters)
         if not resources:
             raise EntityDoesNotExist
         return parse_obj_as(Resource, resources[0])
@@ -130,8 +133,12 @@ class ResourceRepository(BaseRepository):
         dependent_resources_list = []
 
         # Get all related resources
-        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, '{parent_resource_path}') AND c.deploymentStatus != '{Status.Deleted}'"
-        related_resources = await self.query(query=related_resources_query)
+        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, @resourcePath) AND c.deploymentStatus != @deletedStatus"
+        parameters = [
+            {'name': '@resourcePath', 'value': parent_resource_path},
+            {'name': '@deletedStatus', 'value': Status.Deleted}
+        ]
+        related_resources = await self.query(query=related_resources_query, parameters=parameters)
         for resource in related_resources:
             resource_path = resource["resourcePath"]
             resource_level = resource_path.count("/")
