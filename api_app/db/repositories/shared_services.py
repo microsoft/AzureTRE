@@ -34,7 +34,7 @@ class SharedServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_shared_services_query():
-        query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType'
+        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType'
         parameters = [
             {'name': '@resourceType', 'value': ResourceType.SharedService}
         ]
@@ -42,7 +42,7 @@ class SharedServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_shared_service_with_template_name_query(template_name: str):
-        query = f'SELECT * FROM c WHERE {IS_ACTIVE_RESOURCE} AND c.resourceType = @resourceType AND c.templateName = @templateName'
+        query = 'SELECT * FROM c WHERE ' + IS_ACTIVE_RESOURCE + ' AND c.resourceType = @resourceType AND c.templateName = @templateName'
         parameters = [
             {'name': '@resourceType', 'value': ResourceType.SharedService},
             {'name': '@templateName', 'value': template_name}

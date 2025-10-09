@@ -35,7 +35,7 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
         parameters = [
             {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
             {'name': '@workspaceId', 'value': workspace_id}

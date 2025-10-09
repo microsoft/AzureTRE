@@ -35,7 +35,7 @@ class UserResourceRepository(ResourceRepository):
 
     @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
-        query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
         parameters = [
             {'name': '@resourceType', 'value': ResourceType.UserResource},
             {'name': '@serviceId', 'value': service_id},

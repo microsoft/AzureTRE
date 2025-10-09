@@ -47,12 +47,12 @@ class ResourceTemplateRepository(BaseRepository):
         :param user_roles: If set, only return templates that the user is authorized to use.
                            template.authorizedRoles should contain at least one of user_roles
         """
-        query = f'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true'
+        query = 'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true'
         parameters = [
             {'name': '@resourceType', 'value': resource_type}
         ]
         if resource_type == ResourceType.UserResource:
-            query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+            query += ' AND c.parentWorkspaceService = @parentWorkspaceService'
             parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
         template_infos = await self.query(query=query, parameters=parameters)
         templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
@@ -69,7 +69,7 @@ class ResourceTemplateRepository(BaseRepository):
         query, parameters = self._template_by_name_query(template_name, resource_type)
         query += ' AND c.current = true'
         if resource_type == ResourceType.UserResource:
-            query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+            query += ' AND c.parentWorkspaceService = @parentWorkspaceService'
             parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
         templates = await self.query(query=query, parameters=parameters)
         if len(templates) == 0:
@@ -88,13 +88,13 @@ class ResourceTemplateRepository(BaseRepository):
         For UserResource templates, you also need to pass in 'parent_service_name' as a parameter
         """
         query, parameters = self._template_by_name_query(name, resource_type)
-        query += f' AND c.version = @version'
+        query += ' AND c.version = @version'
         parameters.append({'name': '@version', 'value': version})
 
         # If querying for a user resource, we also need to add the parentWorkspaceService (name) to the query
         if resource_type == ResourceType.UserResource:
             if parent_service_name:
-                query += f' AND c.parentWorkspaceService = @parentWorkspaceService'
+                query += ' AND c.parentWorkspaceService = @parentWorkspaceService'
                 parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
             else:
                 raise Exception("When getting a UserResource template, you must pass in a 'parent_service_name'")

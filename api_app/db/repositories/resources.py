@@ -76,7 +76,7 @@ class ResourceRepository(BaseRepository):
         return parse_obj_as(Resource, resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
-        query = f"SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND {IS_ACTIVE_RESOURCE}"
+        query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND " + IS_ACTIVE_RESOURCE
         parameters = [
             {'name': '@templateName', 'value': template_name}
         ]
@@ -133,7 +133,7 @@ class ResourceRepository(BaseRepository):
         dependent_resources_list = []
 
         # Get all related resources
-        related_resources_query = f"SELECT * FROM c WHERE CONTAINS(c.resourcePath, @resourcePath) AND c.deploymentStatus != @deletedStatus"
+        related_resources_query = "SELECT * FROM c WHERE CONTAINS(c.resourcePath, @resourcePath) AND c.deploymentStatus != @deletedStatus"
         parameters = [
             {'name': '@resourcePath', 'value': parent_resource_path},
             {'name': '@deletedStatus', 'value': Status.Deleted}
