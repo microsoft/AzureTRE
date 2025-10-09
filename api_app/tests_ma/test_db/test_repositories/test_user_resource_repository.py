@@ -70,11 +70,16 @@ async def test_create_user_resource_item_raises_value_error_if_template_is_inval
 
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
 async def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
-    expected_query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.UserResource},
+        {'name': '@serviceId', 'value': SERVICE_ID},
+        {'name': '@workspaceId', 'value': WORKSPACE_ID}
+    ]
 
     await user_resource_repo.get_user_resources_for_workspace_service(WORKSPACE_ID, SERVICE_ID)
 
-    query_mock.assert_called_once_with(query=expected_query)
+    query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @patch('db.repositories.user_resources.UserResourceRepository.query')
@@ -89,11 +94,17 @@ async def test_get_user_resource_returns_resource_if_found(query_mock, user_reso
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.dict()]
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "user-resource" AND c.parentWorkspaceServiceId = "{SERVICE_ID}" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{RESOURCE_ID}"'
+    expected_query = f'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.UserResource},
+        {'name': '@serviceId', 'value': SERVICE_ID},
+        {'name': '@workspaceId', 'value': WORKSPACE_ID},
+        {'name': '@resourceId', 'value': RESOURCE_ID}
+    ]
 
     await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
 
-    query_mock.assert_called_once_with(query=expected_query)
+    query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
