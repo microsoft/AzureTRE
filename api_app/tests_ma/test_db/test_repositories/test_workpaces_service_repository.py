@@ -87,7 +87,7 @@ async def test_get_workspace_service_by_id_raises_entity_does_not_exist_if_no_av
 
 async def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspace_service):
     workspace_service_repo.query = AsyncMock(return_value=[workspace_service])
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId AND c.id = @serviceId'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId AND c.id = @serviceId'
     expected_parameters = [
         {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
         {'name': '@workspaceId', 'value': WORKSPACE_ID},

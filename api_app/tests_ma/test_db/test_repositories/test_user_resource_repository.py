@@ -94,7 +94,7 @@ async def test_get_user_resource_returns_resource_if_found(query_mock, user_reso
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.dict()]
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId'
     expected_parameters = [
         {'name': '@resourceType', 'value': ResourceType.UserResource},
         {'name': '@serviceId', 'value': SERVICE_ID},
