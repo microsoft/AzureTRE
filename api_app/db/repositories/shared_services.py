@@ -50,7 +50,7 @@ class SharedServiceRepository(ResourceRepository):
         return query, parameters
 
     async def get_shared_service_by_id(self, shared_service_id: str):
-        query, parameters = self.shared_service_query(shared_service_id)
+        query, parameters = self.shared_service_query(str(shared_service_id))
         shared_services = await self.query(query=query, parameters=parameters)
         if not shared_services:
             raise EntityDoesNotExist

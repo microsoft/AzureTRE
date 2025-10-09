@@ -69,14 +69,14 @@ class UserResourceRepository(ResourceRepository):
         """
         returns a list of "non-deleted" user resources linked to this workspace service
         """
-        query, parameters = self.active_user_resources_query(workspace_id, service_id)
+        query, parameters = self.active_user_resources_query(str(workspace_id), str(service_id))
         user_resources = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[UserResource], user_resources)
 
     async def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
-        query, parameters = self.user_resources_query(workspace_id, service_id)
+        query, parameters = self.user_resources_query(str(workspace_id), str(service_id))
         query += ' AND c.id = @resourceId'
-        parameters.append({'name': '@resourceId', 'value': resource_id})
+        parameters.append({'name': '@resourceId', 'value': str(resource_id)})
         user_resources = await self.query(query=query, parameters=parameters)
         if not user_resources:
             raise EntityDoesNotExist

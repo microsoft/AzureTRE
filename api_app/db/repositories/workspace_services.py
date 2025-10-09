@@ -46,7 +46,7 @@ class WorkspaceServiceRepository(ResourceRepository):
         """
         returns list of "non-deleted" workspace services linked to this workspace
         """
-        query, parameters = WorkspaceServiceRepository.active_workspace_services_query(workspace_id)
+        query, parameters = WorkspaceServiceRepository.active_workspace_services_query(str(workspace_id))
         workspace_services = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[WorkspaceService], workspace_services)
 
@@ -59,9 +59,9 @@ class WorkspaceServiceRepository(ResourceRepository):
         return workspace_service
 
     async def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
-        query, parameters = self.workspace_services_query(workspace_id)
+        query, parameters = self.workspace_services_query(str(workspace_id))
         query += ' AND c.id = @serviceId'
-        parameters.append({'name': '@serviceId', 'value': service_id})
+        parameters.append({'name': '@serviceId', 'value': str(service_id)})
         workspace_services = await self.query(query=query, parameters=parameters)
         if not workspace_services:
             raise EntityDoesNotExist
