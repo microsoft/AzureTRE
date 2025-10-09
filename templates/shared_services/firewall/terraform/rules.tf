@@ -51,7 +51,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_application" {
 
         content {
           name        = rule.value.name
-          description = rule.value.description
+          description = try(rule.value.description != "" ? rule.value.description : null, null)
 
           dynamic "protocols" {
             for_each = rule.value.protocols
