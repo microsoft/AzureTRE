@@ -890,6 +890,24 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#register-azure-resource-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Register Azure Resource Providers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-azure-tre" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy Azure TRE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validate-the-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       Validate the deployment
@@ -3722,6 +3740,24 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#register-azure-resource-providers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Register Azure Resource Providers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-azure-tre" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy Azure TRE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#validate-the-deployment" class="md-nav__link">
     <span class="md-ellipsis">
       Validate the deployment
@@ -3780,7 +3816,14 @@
 
 
 <h1 id="deploying-azure-tre">Deploying Azure TRE</h1>
-<p>You are now ready to deploy the Azure TRE instance. Execute the <code>all</code> action of the makefile using <code>make</code>:</p>
+<p>You are now ready to deploy the Azure TRE instance.</p>
+<h2 id="register-azure-resource-providers">Register Azure Resource Providers</h2>
+<p>First, register the required Azure resource providers for your subscription:</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>register-providers
+</code></pre></div>
+<p>This step only needs to be run once per Azure subscription and registers the necessary Azure resource providers (Microsoft.Storage, Microsoft.AlertsManagement, Microsoft.Compute) and features (EncryptionAtHost) required by Azure TRE.</p>
+<h2 id="deploy-azure-tre">Deploy Azure TRE</h2>
+<p>Execute the <code>all</code> action of the makefile using <code>make</code>:</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>all
 </code></pre></div>
 <p>Deploying a new Azure TRE instance takes approximately 30 minutes.</p>

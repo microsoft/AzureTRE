@@ -997,6 +997,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#azure-resource-provider-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Resource Provider Registration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#publish-custom-templates-in-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
       Publish Custom Templates in Pipelines
@@ -3716,6 +3725,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#azure-resource-provider-registration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Azure Resource Provider Registration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#publish-custom-templates-in-pipelines" class="md-nav__link">
     <span class="md-ellipsis">
       Publish Custom Templates in Pipelines
@@ -3769,6 +3787,17 @@
 <p>In AzureTRE deployment repository You will find all the pipelines under the folder <code>.github/workflows</code> on top of each workflow there is the workflow
 inputs part where the used Github environment name is set, make sure to update it with yours, for example:</p>
 <p><img alt="Setup env in pipeline" src="../../../assets/using-tre/pipelines_set_env.png" /></p>
+<h2 id="azure-resource-provider-registration">Azure Resource Provider Registration</h2>
+<p>Before running any CI/CD pipelines that deploy Azure TRE, ensure that the required Azure resource providers are registered in your target subscription. This is a one-time setup step per subscription.</p>
+<p>You can register the required providers by running:</p>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>register-providers
+</code></pre></div>
+<p>This command registers the following providers and features required by Azure TRE:
+- Microsoft.Storage
+- Microsoft.AlertsManagement<br />
+- Microsoft.Compute
+- Microsoft.Compute/EncryptionAtHost feature</p>
+<p>Alternatively, you can add a step to your CI/CD pipeline to run this command before the main deployment steps.</p>
 <h2 id="publish-custom-templates-in-pipelines">Publish Custom Templates in Pipelines</h2>
 <p>If you have created custom AzureTRE templates you can publish and register them as part of the CI/CD pipelines.
 To do so go to <code>.github/workflows/deploy_tre_reusable.yml</code> workflow and add your template under the following jobs:</p>
