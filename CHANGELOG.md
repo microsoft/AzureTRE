@@ -2,6 +2,7 @@
 ## 0.26.0 (Unreleased)
 
 ENHANCEMENTS:
+* Create CODEOWNERS file with repository maintainers
 * Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
