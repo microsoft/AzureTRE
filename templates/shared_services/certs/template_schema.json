@@ -34,6 +34,32 @@
       "type": "string",
       "title": "Cert name",
       "description": "What to call the certificate that's exported to KeyVault (alphanumeric and '-' only)"
+    },
+    "enable_auto_renewal": {
+      "$id": "#/properties/enable_auto_renewal",
+      "type": "boolean",
+      "title": "Enable Auto-renewal",
+      "description": "Enable automatic renewal of the certificate before expiry",
+      "default": false,
+      "updateable": true
+    },
+    "renewal_threshold_days": {
+      "$id": "#/properties/renewal_threshold_days",
+      "type": "integer",
+      "title": "Renewal threshold (days)",
+      "description": "Number of days before expiry to trigger renewal",
+      "default": 30,
+      "minimum": 1,
+      "maximum": 60,
+      "updateable": true
+    },
+    "renewal_schedule_cron": {
+      "$id": "#/properties/renewal_schedule_cron",
+      "type": "string",
+      "title": "Renewal schedule (cron)",
+      "description": "Cron expression for checking certificate expiry (default: weekly on Sunday at 2 AM)",
+      "default": "0 2 * * 0",
+      "updateable": true
     }
   },
   "pipeline": {

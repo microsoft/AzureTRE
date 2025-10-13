@@ -113,7 +113,29 @@ If you still have an existing Nexus installation based on App Service (from the 
 
 The Nexus service checks Key Vault regularly for the latest certificate matching the name you passed on deploy (`nexus-ssl` by default).
 
+### Manual Renewal
+
 When approaching expiry, you can either provide an updated certificate into the TRE core KeyVault (with the name you specified when installing Nexus) if you brought your own, or if you used the certs shared service to generate one, just call the `renew` custom action on that service. This will generate a new certificate and persist it to the Key Vault, replacing the expired one.
+
+### Auto-renewal
+
+Starting with certs service version 0.8.0, you can enable automatic certificate renewal when deploying the certificate service. When enabled, the service will automatically check certificate expiry and trigger renewal before the certificate expires.
+
+To enable auto-renewal for Nexus certificates:
+
+1. When deploying the certs shared service, set the following properties:
+   - **Enable Auto-renewal**: `true`
+   - **Renewal threshold (days)**: Number of days before expiry to trigger renewal (default: 30)
+   - **Renewal schedule (cron)**: How often to check for expiry (default: weekly on Sunday at 2 AM)
+
+2. The system will automatically:
+   - Check certificate expiry on the configured schedule
+   - Trigger renewal when the certificate is within the threshold period
+   - Update the certificate in Key Vault
+   - Log all renewal activities for monitoring
+
+!!! note
+    Auto-renewal uses Azure Logic Apps and requires appropriate permissions to access Key Vault and the TRE API. The Logic App is deployed automatically when auto-renewal is enabled.
 
 ## Updating to v3.0.0
 The newest version of Nexus is a significant update for the service.

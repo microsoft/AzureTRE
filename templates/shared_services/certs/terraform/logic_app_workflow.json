@@ -1,0 +1,195 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "${workflow_name}",
+      "location": "${location}",
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "keyvault_name": {
+              "defaultValue": "${keyvault_name}",
+              "type": "String"
+            },
+            "cert_name": {
+              "defaultValue": "${cert_name}",
+              "type": "String"
+            },
+            "renewal_threshold_days": {
+              "defaultValue": "${renewal_threshold_days}",
+              "type": "Int"
+            },
+            "tre_api_base_url": {
+              "defaultValue": "${tre_api_base_url}",
+              "type": "String"
+            },
+            "shared_service_id": {
+              "defaultValue": "${shared_service_id}",
+              "type": "String"
+            }
+          },
+          "triggers": {
+            "Scheduled_Certificate_Check": {
+              "recurrence": {
+                "frequency": "Week",
+                "interval": 1,
+                "schedule": {
+                  "hours": [2],
+                  "minutes": [0],
+                  "weekDays": ["Sunday"]
+                }
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Initialize_current_date": {
+              "runAfter": {},
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "currentDate",
+                    "type": "string",
+                    "value": "@{utcnow()}"
+                  }
+                ]
+              }
+            },
+            "Get_certificate_from_KeyVault": {
+              "runAfter": {
+                "Initialize_current_date": ["Succeeded"]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "GET",
+                "uri": "https://@{parameters('keyvault_name')}.vault.azure.net/certificates/@{parameters('cert_name')}?api-version=7.3",
+                "authentication": {
+                  "type": "ManagedServiceIdentity"
+                }
+              }
+            },
+            "Parse_certificate_response": {
+              "runAfter": {
+                "Get_certificate_from_KeyVault": ["Succeeded"]
+              },
+              "type": "ParseJson",
+              "inputs": {
+                "content": "@body('Get_certificate_from_KeyVault')",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attributes": {
+                      "type": "object",
+                      "properties": {
+                        "exp": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "Calculate_expiry_date": {
+              "runAfter": {
+                "Parse_certificate_response": ["Succeeded"]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "expiryDate",
+                    "type": "string",
+                    "value": "@{addSeconds('1970-01-01T00:00:00Z', body('Parse_certificate_response')?['attributes']?['exp'])}"
+                  }
+                ]
+              }
+            },
+            "Calculate_days_until_expiry": {
+              "runAfter": {
+                "Calculate_expiry_date": ["Succeeded"]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "daysUntilExpiry",
+                    "type": "integer",
+                    "value": "@div(sub(ticks(variables('expiryDate')), ticks(variables('currentDate'))), 864000000000)"
+                  }
+                ]
+              }
+            },
+            "Check_if_renewal_needed": {
+              "runAfter": {
+                "Calculate_days_until_expiry": ["Succeeded"]
+              },
+              "type": "If",
+              "expression": {
+                "and": [
+                  {
+                    "lessOrEquals": [
+                      "@variables('daysUntilExpiry')",
+                      "@parameters('renewal_threshold_days')"
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Trigger_certificate_renewal": {
+                  "type": "Http",
+                  "inputs": {
+                    "method": "POST",
+                    "uri": "@{parameters('tre_api_base_url')}/api/shared-services/@{parameters('shared_service_id')}/invoke-action?action=renew",
+                    "authentication": {
+                      "type": "ManagedServiceIdentity"
+                    },
+                    "headers": {
+                      "Content-Type": "application/json"
+                    }
+                  }
+                },
+                "Log_renewal_triggered": {
+                  "runAfter": {
+                    "Trigger_certificate_renewal": ["Succeeded"]
+                  },
+                  "type": "Compose",
+                  "inputs": {
+                    "message": "Certificate renewal triggered successfully",
+                    "certificate": "@parameters('cert_name')",
+                    "expiry_date": "@variables('expiryDate')",
+                    "days_until_expiry": "@variables('daysUntilExpiry')",
+                    "renewal_response": "@body('Trigger_certificate_renewal')"
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Log_no_renewal_needed": {
+                    "type": "Compose",
+                    "inputs": {
+                      "message": "Certificate does not need renewal yet",
+                      "certificate": "@parameters('cert_name')",
+                      "expiry_date": "@variables('expiryDate')",
+                      "days_until_expiry": "@variables('daysUntilExpiry')",
+                      "threshold_days": "@parameters('renewal_threshold_days')"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": {}
+      }
+    }
+  ],
+  "outputs": {}
+}
