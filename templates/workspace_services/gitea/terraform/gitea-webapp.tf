@@ -58,20 +58,20 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA__service__ALLOW_ONLY_EXTERNAL_REGISTRATION = true
     GITEA__service__SHOW_REGISTRATION_BUTTON         = false
 
-    GITEA__migrations__ALLOW_LOCALNETWORKS           = "true"
+    GITEA__migrations__ALLOW_LOCALNETWORKS = "true"
 
-    GITEA__storage__STORAGE_TYPE                     = "azureblob"
-    GITEA__storage__AZURE_BLOB_ENDPOINT              = azurerm_storage_account.gitea.primary_blob_endpoint
-    GITEA__storage__AZURE_BLOB_ACCOUNT_NAME          = azurerm_storage_account.gitea.name
-    GITEA__storage__AZURE_BLOB_ACCOUNT_KEY           = azurerm_storage_account.gitea.primary_access_key
-    GITEA__storage__AZURE_BLOB_CONTAINER             = azurerm_storage_container.gitea_blob_container.name
+    GITEA__storage__STORAGE_TYPE            = "azureblob"
+    GITEA__storage__AZURE_BLOB_ENDPOINT     = azurerm_storage_account.gitea.primary_blob_endpoint
+    GITEA__storage__AZURE_BLOB_ACCOUNT_NAME = azurerm_storage_account.gitea.name
+    GITEA__storage__AZURE_BLOB_ACCOUNT_KEY  = azurerm_storage_account.gitea.primary_access_key
+    GITEA__storage__AZURE_BLOB_CONTAINER    = azurerm_storage_container.gitea_blob_container.name
 
-    GITEA__database__SSL_MODE                        = "true"
-    GITEA__database__DB_TYPE                         = "mysql"
-    GITEA__database__HOST                            = azurerm_mysql_flexible_server.gitea.fqdn
-    GITEA__database__NAME                            = azurerm_mysql_flexible_database.gitea.name
-    GITEA__database__USER                            = azurerm_mysql_flexible_server.gitea.administrator_login
-    GITEA__database__PASSWD                          = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
+    GITEA__database__SSL_MODE = "true"
+    GITEA__database__DB_TYPE  = "mysql"
+    GITEA__database__HOST     = azurerm_mysql_flexible_server.gitea.fqdn
+    GITEA__database__NAME     = azurerm_mysql_flexible_database.gitea.name
+    GITEA__database__USER     = azurerm_mysql_flexible_server.gitea.administrator_login
+    GITEA__database__PASSWD   = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.db_password.id})"
   }
 
   lifecycle { ignore_changes = [tags] }

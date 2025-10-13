@@ -44,7 +44,7 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
 
-    GITEA__migrations__ALLOW_LOCALNETWORKS  = "true"
+    GITEA__migrations__ALLOW_LOCALNETWORKS = "true"
 
     GITEA__storage__STORAGE_TYPE            = "azureblob"
     GITEA__storage__AZURE_BLOB_ENDPOINT     = data.azurerm_storage_account.gitea.primary_blob_endpoint
