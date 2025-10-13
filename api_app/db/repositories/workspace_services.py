@@ -8,7 +8,8 @@ from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 
 import resources.strings as strings
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository
+from models.domain.operation import Status
 from db.repositories.operations import OperationRepository
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
@@ -35,8 +36,9 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
         parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
             {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
             {'name': '@workspaceId', 'value': workspace_id}
         ]

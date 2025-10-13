@@ -2,8 +2,8 @@ from mock import patch
 import pytest
 import pytest_asyncio
 
+from models.domain.operation import Status
 from db.errors import EntityDoesNotExist
-from db.repositories.resources import IS_NOT_DELETED_CLAUSE
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
@@ -70,8 +70,9 @@ async def test_create_user_resource_item_raises_value_error_if_template_is_inval
 
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
 async def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
-    expected_query = f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE} AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+    expected_query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
     expected_parameters = [
+        {'name': '@deletedStatus', 'value': Status.Deleted},
         {'name': '@resourceType', 'value': ResourceType.UserResource},
         {'name': '@serviceId', 'value': SERVICE_ID},
         {'name': '@workspaceId', 'value': WORKSPACE_ID}

@@ -10,7 +10,8 @@ import resources.strings as strings
 from core import config, credentials
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository
+from models.domain.operation import Status
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
@@ -43,9 +44,10 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def active_workspaces_query_string():
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND ' + IS_NOT_DELETED_CLAUSE
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.deploymentStatus != @deletedStatus'
         parameters = [
-            {'name': '@resourceType', 'value': ResourceType.Workspace}
+            {'name': '@resourceType', 'value': ResourceType.Workspace},
+            {'name': '@deletedStatus', 'value': Status.Deleted}
         ]
         return query, parameters
 

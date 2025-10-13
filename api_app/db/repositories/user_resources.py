@@ -9,7 +9,8 @@ from models.domain.authentication import User
 import resources.strings as strings
 from db.errors import EntityDoesNotExist
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository
+from models.domain.operation import Status
 from models.domain.resource import ResourceType
 from models.domain.user_resource import UserResource
 from models.schemas.resource import ResourcePatch
@@ -35,8 +36,9 @@ class UserResourceRepository(ResourceRepository):
 
     @staticmethod
     def active_user_resources_query(workspace_id: str, service_id: str):
-        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
         parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
             {'name': '@resourceType', 'value': ResourceType.UserResource},
             {'name': '@serviceId', 'value': service_id},
             {'name': '@workspaceId', 'value': workspace_id}

@@ -8,12 +8,13 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE, IS_ACTIVE_RESOURCE
+from db.repositories.resources import ResourceRepository
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from models.schemas.resource import ResourcePatch
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
 from models.domain.resource import ResourceType
+from models.domain.operation import Status
 
 
 class SharedServiceRepository(ResourceRepository):
@@ -34,16 +35,19 @@ class SharedServiceRepository(ResourceRepository):
 
     @staticmethod
     def active_shared_services_query():
-        query = 'SELECT * FROM c WHERE ' + IS_NOT_DELETED_CLAUSE + ' AND c.resourceType = @resourceType'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType'
         parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
             {'name': '@resourceType', 'value': ResourceType.SharedService}
         ]
         return query, parameters
 
     @staticmethod
     def active_shared_service_with_template_name_query(template_name: str):
-        query = 'SELECT * FROM c WHERE ' + IS_ACTIVE_RESOURCE + ' AND c.resourceType = @resourceType AND c.templateName = @templateName'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.deploymentStatus != @failedStatus AND c.resourceType = @resourceType AND c.templateName = @templateName'
         parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
+            {'name': '@failedStatus', 'value': Status.DeploymentFailed},
             {'name': '@resourceType', 'value': ResourceType.SharedService},
             {'name': '@templateName', 'value': template_name}
         ]

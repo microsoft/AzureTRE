@@ -30,16 +30,21 @@ class ResourceRepository(BaseRepository):
         await super().create(config.STATE_STORE_RESOURCES_CONTAINER)
         return cls
 
-    @staticmethod
-    def _active_resources_query():
-        # get active docs (not deleted)
-        return f'SELECT * FROM c WHERE {IS_NOT_DELETED_CLAUSE}'
-
     def _active_resources_by_type_query(self, resource_type: ResourceType):
-        return self._active_resources_query() + f' AND c.resourceType = "{resource_type}"'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType'
+        parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
+            {'name': '@resourceType', 'value': resource_type}
+        ]
+        return query, parameters
 
     def _active_resources_by_id_query(self, resource_id: str):
-        return self._active_resources_query() + f' AND c.id = "{resource_id}"'
+        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.id = @resourceId'
+        parameters = [
+            {'name': '@deletedStatus', 'value': Status.Deleted},
+            {'name': '@resourceId', 'value': resource_id}
+        ]
+        return query, parameters
 
     @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
@@ -76,9 +81,11 @@ class ResourceRepository(BaseRepository):
         return parse_obj_as(Resource, resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
-        query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND " + IS_ACTIVE_RESOURCE
+        query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND c.deploymentStatus != @deletedStatus AND c.deploymentStatus != @failedStatus"
         parameters = [
-            {'name': '@templateName', 'value': template_name}
+            {'name': '@templateName', 'value': template_name},
+            {'name': '@deletedStatus', 'value': Status.Deleted},
+            {'name': '@failedStatus', 'value': Status.DeploymentFailed}
         ]
         resources = await self.query(query=query, parameters=parameters)
         if not resources:
@@ -192,8 +199,3 @@ class ResourceRepository(BaseRepository):
 
     def get_timestamp(self) -> float:
         return datetime.utcnow().timestamp()
-
-
-# Cosmos query consts
-IS_NOT_DELETED_CLAUSE = f'c.deploymentStatus != "{Status.Deleted}"'
-IS_ACTIVE_RESOURCE = f'c.deploymentStatus != "{Status.Deleted}" and c.deploymentStatus != "{Status.DeploymentFailed}"'
