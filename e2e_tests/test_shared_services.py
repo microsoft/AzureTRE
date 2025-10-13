@@ -153,6 +153,9 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
             "description": f"{strings.CERTS_SHARED_SERVICE} deployed via e2e tests",
             "domain_prefix": cert_domain,
             "cert_name": cert_name,
+            "enable_auto_renewal": True,
+            "renewal_threshold_days": 30,
+            "renewal_schedule_cron": "0 2 * * 0",
         },
     }
 
