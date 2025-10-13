@@ -18,7 +18,7 @@ BUG FIXES:
 * Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678)]
 * Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
 * Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
-* Fix firewall application rule validation error when description is empty string ([#ISSUE_NUMBER](https://github.com/microsoft/AzureTRE/issues/ISSUE_NUMBER))
+* Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
