@@ -163,9 +163,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
