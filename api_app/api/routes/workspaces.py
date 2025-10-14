@@ -1,6 +1,7 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Header, Path, status, Request, Response
+from pydantic import UUID4
 
 from jsonschema.exceptions import ValidationError
 
@@ -362,8 +363,8 @@ async def retrieve_workspace_service_history_by_workspace_service_id(workspace_s
 # USER RESOURCE ROUTES
 @user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_user_resources_for_workspace_service(
-        workspace_id: str,
-        service_id: str,
+        workspace_id: UUID4 = Path(...),
+        service_id: UUID4 = Path(...),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:

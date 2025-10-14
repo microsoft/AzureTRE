@@ -48,19 +48,19 @@ def workspace():
 @pytest.mark.asyncio
 async def test_get_workspaces_queries_db(workspace_repo):
     workspace_repo.container.query_items = MagicMock()
-    expected_query = workspace_repo.workspaces_query_string()
+    expected_query, expected_parameters = workspace_repo.workspaces_query_string()
 
     await workspace_repo.get_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @pytest.mark.asyncio
 async def test_get_active_workspaces_queries_db(workspace_repo):
     workspace_repo.container.query_items = MagicMock()
-    expected_query = workspace_repo.active_workspaces_query_string()
+    expected_query, expected_parameters = workspace_repo.active_workspaces_query_string()
 
     await workspace_repo.get_active_workspaces()
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @pytest.mark.asyncio
@@ -89,10 +89,14 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_query_item_result = AsyncMock()
     workspace_query_item_result.__aiter__.return_value = [workspace.dict()]
     workspace_repo.container.query_items = MagicMock(return_value=workspace_query_item_result)
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.id = "{workspace.id}"'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.Workspace},
+        {'name': '@workspaceId', 'value': workspace.id}
+    ]
 
     await workspace_repo.get_workspace_by_id(workspace.id)
-    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=None)
+    workspace_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @pytest.mark.asyncio

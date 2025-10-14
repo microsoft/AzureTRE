@@ -26,13 +26,17 @@ class ResourceHistoryRepository(BaseRepository):
     def resource_history_query(self, resourceId: str):
         logger.debug("Validate sanity of resourceId")
         self.is_valid_uuid(resourceId)
-        return f'SELECT * FROM c WHERE c.resourceId = "{resourceId}"'
+        query = 'SELECT * FROM c WHERE c.resourceId = @resourceId'
+        parameters = [
+            {'name': '@resourceId', 'value': resourceId}
+        ]
+        return query, parameters
 
     async def get_resource_history_by_resource_id(self, resource_id: str) -> List[ResourceHistoryItem]:
-        query = self.resource_history_query(resource_id)
+        query, parameters = self.resource_history_query(resource_id)
         try:
             logger.info(f"Fetching history for resource {resource_id}")
-            resource_history_items = await self.query(query=query)
+            resource_history_items = await self.query(query=query, parameters=parameters)
             logger.debug(f"Got {len(resource_history_items)} history items for resource {resource_id}")
         except EntityDoesNotExist:
             logger.info(f"No history for resource {resource_id}")
