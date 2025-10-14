@@ -22,7 +22,7 @@ else
 
     #Validate config schema
     if ! out="$(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml 2>&1)"; then
-      echo "Validation Error: config.yaml contains errors or does not conform to config_schema.json"
+      echo -e "\e[31m»»» ⚠️ Your config.yaml is invalid 😥 Please fix the errors and retry."
       echo "$out" | sed -n '1,30p'
       exit 1
     fi
