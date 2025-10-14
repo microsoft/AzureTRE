@@ -1,7 +1,7 @@
 # Pipeline Template Schema
 This document will help you write a valid `pipeline: {}` block in your template.
 
-> For a working example, see `./templates/shared-services/sonatype-nexus/template_schema.json`.
+> For a working example, see `./templates/shared-services/sonatype-nexus-vm/template_schema.json`.
 
 ## Schema
 ```json
