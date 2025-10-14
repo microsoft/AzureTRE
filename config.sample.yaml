@@ -66,6 +66,14 @@ tre:
   # allowed_dns:
   #   - mydomain.com.
 
+  # Uncomment to provide a list of NTP servers to allow outbound UDP/123 on the firewall.
+  # Defaults to ["*"] (allow all) if not set.
+  # Provide a list of IPs. Example:
+  # ntp_server_ip_addresses:
+  #   - 51.145.123.29
+  #   - 40.119.6.228
+  #   - 168.61.215.74
+
   # Uncomment to deploy to a custom domain
   # custom_domain: __CHANGE_ME__
 

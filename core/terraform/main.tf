@@ -109,6 +109,7 @@ module "firewall" {
   shared_services_ip_group_id    = module.network.shared_services_ip_group_id
   web_app_ip_group_id            = module.network.web_app_ip_group_id
   airlock_processor_ip_group_id  = module.network.airlock_processor_ip_group_id
+  ntp_server_ip_addresses        = var.ntp_server_ip_addresses
 }
 
 module "appgateway" {
