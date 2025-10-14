@@ -19,16 +19,11 @@ if [ ! -f "config.yaml" ]; then
     #exit
   fi
 else
-    # Validate no duplicate keys in config
-    has_dupes=$(yq e '.. | select(. == "*") | {(path | .[-1]): .}| keys' config.yaml | sort| uniq -d)
-    if [ -n "${has_dupes:-}" ]; then
-      echo -e "\e[31m»»» 💥 There are duplicate keys in your config, please fix and try again!\e[0m"
-      exit 1
-    fi
 
-    # Validate config schema
-    if [[ $(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml) != *valid* ]]; then
-      echo -e "\e[31m»»» ⚠️ Your config.yaml is invalid 😥 Please fix the errors and retry."
+    #Validate config schema
+    if ! out="$(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml 2>&1)"; then
+      echo "Validation Error: config.yaml contains errors or does not conform to config_schema.json"
+      echo "$out" | sed -n '1,30p'
       exit 1
     fi
 
