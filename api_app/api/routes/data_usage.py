@@ -4,7 +4,7 @@ from azure.core.exceptions import HttpResponseError
 import logging
 
 from api.dependencies.database import get_repository
-from models.schemas.container_reation_request import ContainerCreateRequest
+from models.schemas.container_reation_request import ContainerCreateRequest, EntraGroupReuest, RoleAssignmentRequest
 from db.repositories.workspaces import WorkspaceRepository
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_tre_user_or_tre_admin
@@ -110,3 +110,30 @@ async def create_container(conatiner_create_request: ContainerCreateRequest = No
     except Exception as e:
         logging.exception("Failed to create container.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create container")
+
+@data_usage_router.post("/roles-group-create",
+                       status_code=status.HTTP_201_CREATED,
+                       name=strings.API_CREATE_USER_RESOURCE_GROUP,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
+async def create_roles_group(group_request: EntraGroupReuest = None,
+                           data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> EntraGroup:
+    try:
+
+        return await data_usage_service.create_group(group_request)
+    except Exception as e:
+        logging.exception("Failed to create Roles group.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create Roles group.")
+
+@data_usage_router.post("/assign-roles-to-group",
+                       status_code=status.HTTP_201_CREATED,
+                       name=strings.API_ASSIGN_ROLE_TO_GROUP,
+                       dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
+async def assign_roles_to_group(role_assignment_request: RoleAssignmentRequest = None,
+                           data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> dict:
+    try:
+
+        await data_usage_service.assign_role_to_group(role_assignment_request)
+        return {"message": "Roles assigned to group successfully"}
+    except Exception as e:
+        logging.exception("Failed to role assigned to group.")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create Roles group.")

@@ -24,3 +24,7 @@ pytz~=2022.7
 python-dateutil~=2.8.2
 azure-mgmt-resource==23.0.1
 pandas==1.5.2
+msgraph-sdk==1.16.0
+azure-mgmt-authorization==4.0.0
+azure-mgmt-storage==21.1.0
+azure-keyvault-secrets==4.8.0

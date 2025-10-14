@@ -237,6 +237,9 @@ AIRLOCK_TO_DATE_NEED_TO_BE_LATER_THEN_FROM_DATE = "to_date needs to be later tha
 AIRLOCK_FROM_DATE_NEED_TO_BE_BEFORE_TO_DATE = "from_date needs to be before to_date"
 AIRLOCK_MAX_TIME_PERIOD = "The time period for pulling the data cannot exceed 1 year"
 
+API_CREATE_USER_RESOURCE_GROUP = "Create user resource group"
+API_ASSIGN_ROLE_TO_GROUP = "Assign role to user resource group"
+
 # Airlock Actions
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
