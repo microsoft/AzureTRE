@@ -117,6 +117,24 @@ fi
 template_name=$(yq eval '.name' porter.yaml)
 template_version=$(yq eval '.version' porter.yaml)
 
+semver_compare() {
+  local -a new_ver cur_ver
+  IFS='.' read -r -a new_ver <<< "$1"
+  IFS='.' read -r -a cur_ver <<< "$2"
+
+  # Compare up to the max length; missing parts are treated as 0
+  local i max=${#new_ver[@]}
+  (( ${#cur_ver[@]} > max )) && max=${#cur_ver[@]}
+
+  for ((i=0; i<max; i++)); do
+    # default empty parts to 0; force base-10 to avoid octal interpretation
+    local a=${new_ver[i]:-0}
+    local b=${cur_ver[i]:-0}
+    if ((10#$a < 10#$b)); then return 0; fi # new ver < current ver (error)
+    if ((10#$a > 10#$b)); then return 2; fi # new ver > current ver (ok to register)
+  done
+  return 1  # new ver == current ver (ignore)
+}
 
 function get_template() {
   case "${bundle_type}" in
@@ -132,9 +150,16 @@ function get_template() {
 get_result=$(get_template)
 if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
   # 'id' was returned - so we successfully got the template from the API. Now check the version
-  if [[ "$(echo "$get_result" | jq -r .version)" == "$template_version" ]]; then
-    echo "Template with this version already exists"
-    exit
+  existing_version="$(echo "$get_result" | jq -r .version)"
+  ver_lt() { semver_compare "$1" "$2"; return $(( $? == 0 ? 0 : 1 )); }
+  ver_eq() { semver_compare "$1" "$2"; return $(( $? == 1 ? 0 : 1 )); }
+
+  if ver_eq "$template_version" "$existing_version"; then
+    echo "A template with this version already exists."
+    exit 0
+  elif ver_lt "$template_version" "$existing_version"; then
+    echo "A newer version already exists (existing: $existing_version, attempted: $template_version). Registration aborted."
+    exit 1
   fi
 else
   error_code=$(echo "$get_result" | jq -r .status_code)
