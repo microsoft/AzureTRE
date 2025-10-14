@@ -11,7 +11,7 @@ This document will help you write a valid `pipeline: {}` block in your template.
         "stepId": "a unique string value here",
         "stepTitle": "Friendly description of the step here - will be displayed in the UI",
         "resourceTemplateName": "name of the resource template to update", // only required for shared_service targets
-        "resourceType": "shared_service", // [ shared_service | user_resource | workspace_service | workspace ]
+        "resourceType": "shared-service", // [ shared-service | user-resource | workspace-service | workspace ]
         "resourceAction": "upgrade", // <-- currently only upgrade supported
         "properties": [
         {
@@ -41,7 +41,7 @@ The below example references 2 properties from the primary resource to be used i
         "stepId": "1234567-87654-2345-6543",
         "stepTitle": "Update a firewall rule",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared_service", 
+        "resourceType": "shared-service", 
         "resourceAction": "upgrade",
         "arraySubstitutionAction": "replace", // <-- [append | remove | replace]
         "arrayMatchField": "name", // <-- name of the field in the array object to match on, for remove / replace
@@ -58,6 +58,7 @@ The below example references 2 properties from the primary resource to be used i
                   "target_fqdns": "{{ resource.properties.fqdns_list }}",
                   "source_addresses": "{{ resource.properties.address_prefixes }}"
                 }
+              ]
           }
         }]
       },
