@@ -3772,7 +3772,7 @@
 <h1 id="pipeline-template-schema">Pipeline Template Schema</h1>
 <p>This document will help you write a valid <code>pipeline: {}</code> block in your template.</p>
 <blockquote>
-<p>For a working example, see <code>./templates/shared-services/sonatype-nexus/template_schema.json</code>.</p>
+<p>For a working example, see <code>./templates/shared-services/sonatype-nexus-vm/template_schema.json</code>.</p>
 </blockquote>
 <h2 id="schema">Schema</h2>
 <div class="highlight"><pre><span></span><code><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
@@ -3781,7 +3781,7 @@
 <span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a unique string value here&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Friendly description of the step here - will be displayed in the UI&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name of the resource template to update&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// only required for shared_service targets</span>
-<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared_service&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// [ shared_service | user_resource | workspace_service | workspace ]</span>
+<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// [ shared-service | user-resource | workspace-service | workspace ]</span>
 <span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- currently only upgrade supported</span>
 <span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
@@ -3805,7 +3805,7 @@ The below example references 2 properties from the primary resource to be used i
 <span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1234567-87654-2345-6543&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Update a firewall rule&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-shared-service-firewall&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared_service&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span><span class="w"> </span>
 <span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
 <span class="w">        </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- [append | remove | replace]</span>
 <span class="w">        </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- name of the field in the array object to match on, for remove / replace</span>
@@ -3822,6 +3822,7 @@ The below example references 2 properties from the primary resource to be used i
 <span class="w">                  </span><span class="nt">&quot;target_fqdns&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.fqdns_list }}&quot;</span><span class="p">,</span>
 <span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.address_prefixes }}&quot;</span>
 <span class="w">                </span><span class="p">}</span>
+<span class="w">              </span><span class="p">]</span>
 <span class="w">          </span><span class="p">}</span>
 <span class="w">        </span><span class="p">}]</span>
 <span class="w">      </span><span class="p">},</span>
