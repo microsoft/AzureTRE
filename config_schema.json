@@ -120,6 +120,20 @@
         "private_agent_subnet_id": {
           "description": "Subnet ID of private runner agent.",
           "type": "string"
+        },
+        "allowed_dns": {
+          "description": "List of allowed DNS suffixes.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ntp_server_ip_addresses": {
+          "description": "List of NTP server hostnames or IPs to allow outbound UDP/123 on the firewall. Defaults to allow all destinations to preserve existing behavior if not set.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
