@@ -158,7 +158,7 @@ export "$STORAGE_GUARD_VAR"=true # export so guard is visible in sub shells
 
 # Setup the trap to disable public access on exit (only on first run)
 # Capture the current values to avoid conflicts with subsequent calls
-add_exit_trap "storage_disable_public_access '$storage_account_name' '$resource_group_name'"
+add_exit_trap "storage_disable_public_access \"$storage_account_name\" \"$resource_group_name\""
 
 # Enable public access for deployment
 storage_enable_public_access "$storage_account_name" "$resource_group_name"
