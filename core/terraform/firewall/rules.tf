@@ -13,7 +13,9 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       protocols = [
         "UDP"
       ]
-      destination_addresses = var.ntp_server_ip_addresses
+      destination_addresses = [
+        "*"
+      ]
       destination_ports = [
         "123"
       ]

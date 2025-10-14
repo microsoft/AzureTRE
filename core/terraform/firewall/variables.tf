@@ -64,7 +64,3 @@ variable "shared_services_ip_group_id" {
   type        = string
   description = "Shared Services IP Group"
 }
-
-variable "ntp_server_ip_addresses" {
-  type = list(string)
-}

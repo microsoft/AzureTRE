@@ -300,9 +300,3 @@ variable "private_agent_subnet_id" {
   type        = string
   default     = ""
 }
-
-variable "ntp_server_ip_addresses" {
-  type        = list(string)
-  description = "List of NTP server hostnames or IPs to allow outbound UDP/123 on the firewall. Defaults to allow all to preserve existing behavior if not set."
-  default     = ["*"]
-}
