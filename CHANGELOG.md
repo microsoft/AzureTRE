@@ -21,7 +21,7 @@ BUG FIXES:
 * Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678))
 * Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
 * Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
-* Fix issue where multiple lists incorrectly cause a validation error
+* Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
