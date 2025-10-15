@@ -245,7 +245,7 @@
           "minimum": 1
         },
         "rp_bundle_values": {
-          "description": "JSON string of key/value pairs made available to bundles (e.g., image_gallery_id).",
+          "description": "JSON string of key/value pairs made available to bundles.",
           "type": "string"
         }
       }
@@ -267,7 +267,7 @@
           "type": "boolean"
         },
         "enable_cmk_encryption": {
-          "description": "Enables customer-managed key encryption for supported resources (developer setting).",
+          "description": "Enables customer-managed key encryption for supported resources.",
           "type": "boolean"
         },
         "logging_level": {
