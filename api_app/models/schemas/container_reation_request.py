@@ -13,7 +13,7 @@ class ContainerCreateRequest(BaseModel):
             }
         }
 
-class EntraGroupReuest(BaseModel):
+class EntraGroupRequest(BaseModel):
     workspaceId: Optional[str] = None
     protocolId: Optional[str] = None
 

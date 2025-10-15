@@ -4,7 +4,7 @@ from azure.core.exceptions import HttpResponseError
 import logging
 
 from api.dependencies.database import get_repository
-from models.schemas.container_reation_request import ContainerCreateRequest, EntraGroupReuest, RoleAssignmentRequest
+from models.schemas.container_reation_request import ContainerCreateRequest, EntraGroup, EntraGroupRequest, RoleAssignmentRequest
 from db.repositories.workspaces import WorkspaceRepository
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_tre_user_or_tre_admin
@@ -115,7 +115,7 @@ async def create_container(conatiner_create_request: ContainerCreateRequest = No
                        status_code=status.HTTP_201_CREATED,
                        name=strings.API_CREATE_USER_RESOURCE_GROUP,
                        dependencies=[Depends(get_current_workspace_owner_or_tre_user_or_tre_admin)])
-async def create_roles_group(group_request: EntraGroupReuest = None,
+async def create_roles_group(group_request: EntraGroupRequest = None,
                            data_usage_service: DataUsageService = Depends(data_usage_service_factory)) -> EntraGroup:
     try:
 

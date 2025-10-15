@@ -3,7 +3,7 @@ import uuid
 
 import httpx
 from db.repositories.workspaces import WorkspaceRepository
-from models.schemas.container_reation_request import ContainerCreateRequest, EntraGroup, EntraGroupReuest, RoleAssignmentRequest
+from models.schemas.container_reation_request import ContainerCreateRequest, EntraGroup, EntraGroupRequest, RoleAssignmentRequest
 from models.domain.data_usage import MHRAProtocolItem, MHRAProtocolList, MHRAWorkspaceDataUsage, MHRAContainerUsageItem, MHRAFileshareUsageItem, MHRAStorageAccountLimits, MHRAStorageAccountLimitsItem, StorageAccountLimitsInput, WorkspaceDataUsage
 from models.schemas.storage_info_request import StorageInfoRequest
 from core import config, credentials
@@ -379,7 +379,7 @@ class DataUsageService:
             size_tb = size_gb / 1024
             return f"{size_tb:.2f}TB"
 
-    async def create_group(self, group_request: EntraGroupReuest)->EntraGroup:
+    async def create_group(self, group_request: EntraGroupRequest)->EntraGroup:
 
         tenant_id = config.AAD_TENANT_ID
         client_id = await self._fetch_key_valut("ssbs-management-app-registration-client-id")
