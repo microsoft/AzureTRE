@@ -39,12 +39,18 @@ resource "azurerm_linux_web_app" "gitea" {
 
     GITEA__server__ROOT_URL              = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER      = "true"
-    GITEA__lfs__PATH                     = "/data/lfs"
-    GITEA__lfs__STORAGE_TYPE             = "local"
     GITEA__log_0x2E_console__COLORIZE    = "false" # Azure monitor doens't show colors, so this is easier to read.
     GITEA__picture__DISABLE_GRAVATAR     = "true"  # external avaters are not available due to network restrictions
     GITEA__security__INSTALL_LOCK        = true
     GITEA__service__DISABLE_REGISTRATION = true
+
+    GITEA__migrations__ALLOW_LOCALNETWORKS = "true"
+
+    GITEA__storage__STORAGE_TYPE            = "azureblob"
+    GITEA__storage__AZURE_BLOB_ENDPOINT     = data.azurerm_storage_account.gitea.primary_blob_endpoint
+    GITEA__storage__AZURE_BLOB_ACCOUNT_NAME = data.azurerm_storage_account.gitea.name
+    GITEA__storage__AZURE_BLOB_ACCOUNT_KEY  = data.azurerm_storage_account.gitea.primary_access_key
+    GITEA__storage__AZURE_BLOB_CONTAINER    = azurerm_storage_container.gitea_blob_container.name
 
     GITEA__database__SSL_MODE = "true"
     GITEA__database__DB_TYPE  = "mysql"
@@ -74,16 +80,6 @@ resource "azurerm_linux_web_app" "gitea" {
       docker_image_name   = "microsoft/azuretre/gitea:${local.version}"
     }
   }
-
-  storage_account {
-    name         = "gitea-data"
-    type         = "AzureFiles"
-    account_name = data.azurerm_storage_account.gitea.name
-    access_key   = data.azurerm_storage_account.gitea.primary_access_key
-    share_name   = azurerm_storage_share.gitea.name
-    mount_path   = "/data"
-  }
-
   logs {
     application_logs {
       file_system_level = "Information"
@@ -98,7 +94,8 @@ resource "azurerm_linux_web_app" "gitea" {
   }
 
   depends_on = [
-    azurerm_key_vault_secret.gitea_password
+    azurerm_key_vault_secret.gitea_password,
+    azurerm_storage_container.gitea_blob_container
   ]
 }
 
@@ -168,7 +165,6 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_gitea" {
 
   metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
@@ -191,14 +187,14 @@ resource "azurerm_key_vault_secret" "gitea_password" {
   lifecycle { ignore_changes = [tags] }
 }
 
-resource "azurerm_storage_share" "gitea" {
-  name                 = "gitea-data"
-  storage_account_name = data.azurerm_storage_account.gitea.name
-  quota                = var.gitea_storage_limit
-}
-
 resource "azurerm_role_assignment" "gitea_acrpull_role" {
   scope                = data.azurerm_container_registry.mgmt_acr.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.gitea_id.principal_id
+}
+
+resource "azurerm_storage_container" "gitea_blob_container" {
+  name                  = "gitea"
+  storage_account_id    = data.azurerm_storage_account.gitea.id
+  container_access_type = "private"
 }
