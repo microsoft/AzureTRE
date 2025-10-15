@@ -22,7 +22,7 @@ BUG FIXES:
 * Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
 * Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
-* Updated config_schema.json to include enable_dns_policy and allowed_dns settings. ([])
+* Updated config_schema.json to include enable_dns_policy and allowed_dns settings. ([#4713](https://github.com/microsoft/AzureTRE/pull/4713))
 
 
 ## 0.25.0 (July 18, 2025)
