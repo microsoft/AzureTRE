@@ -59,6 +59,10 @@
         "external_key_store_id": {
           "description": "ID of external Key Vault to store CMKs.",
           "type": "string"
+        },
+        "disable_acr_public_access": {
+          "description": "Set to true to disable public (anonymous) access to the management ACR.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -120,6 +124,22 @@
         "private_agent_subnet_id": {
           "description": "Subnet ID of private runner agent.",
           "type": "string"
+        },
+        "core_app_service_plan_sku": {
+          "description": "App Service plan SKU for TRE core services (e.g., P1v2).",
+          "type": "string"
+        },
+        "workspace_app_service_plan_sku": {
+          "description": "Default App Service plan SKU for workspace apps (e.g., P1v2).",
+          "type": "string"
+        },
+        "resource_processor_vmss_sku": {
+          "description": "VMSS SKU for the Resource Processor scale set (e.g., Standard_B2s).",
+          "type": "string"
+        },
+        "user_management_enabled": {
+          "description": "When true, TreAdmins can assign/deassign users to workspaces via the UI.",
+          "type": "boolean"
         },
         "enable_dns_policy": {
           "description": "Enable DNS policy on the firewall to restrict DNS resolution to allowed domain list.",
@@ -215,6 +235,57 @@
         },
         "ui_footer_text": {
           "description": "Text shown in bottom left corner of portal. Default value is 'Azure Trusted Research Environment'",
+          "type": "string"
+        }
+      }
+    },
+    "resource_processor": {
+      "description": "Settings for the Resource Processor service.",
+      "type": "object",
+      "properties": {
+        "resource_processor_number_processes_per_instance": {
+          "description": "Number of processes to start per VMSS instance.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "rp_bundle_values": {
+          "description": "JSON string of key/value pairs made available to bundles (e.g., image_gallery_id).",
+          "type": "string"
+        }
+      }
+    },
+    "developer_settings": {
+      "description": "Developer and local debugging settings (typically for non-production use).",
+      "type": "object",
+      "properties": {
+        "stateful_resources_locked": {
+          "description": "When false, locks are not added to stateful resources to ease teardown.",
+          "type": "boolean"
+        },
+        "kv_purge_protection_enabled": {
+          "description": "Controls purge protection for the TRE Core Key Vault.",
+          "type": "boolean"
+        },
+        "enable_local_debugging": {
+          "description": "Enables local machine access to Service Bus, Cosmos, and base workspace deployment.",
+          "type": "boolean"
+        },
+        "enable_cmk_encryption": {
+          "description": "Enables customer-managed key encryption for supported resources (developer setting).",
+          "type": "boolean"
+        },
+        "logging_level": {
+          "description": "Logging level for API and Resource Processor.",
+          "type": "string",
+          "enum": [
+            "ERROR",
+            "WARNING",
+            "INFO",
+            "DEBUG"
+          ]
+        },
+        "tre_url": {
+          "description": "Override TRE API base URL (e.g., for local development or alternate clouds).",
           "type": "string"
         }
       }
