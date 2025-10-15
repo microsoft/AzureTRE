@@ -120,6 +120,17 @@
         "private_agent_subnet_id": {
           "description": "Subnet ID of private runner agent.",
           "type": "string"
+        },
+        "enable_dns_policy": {
+          "description": "Enable DNS policy on the firewall to restrict DNS resolution to allowed domain list.",
+          "type": "boolean"
+        },
+        "allowed_dns": {
+          "description": "List of allowed DNS entries to be added to the existing allowed-dns.json list.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
