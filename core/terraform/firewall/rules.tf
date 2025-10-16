@@ -8,18 +8,16 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
     priority = 201
     action   = "Allow"
 
-    rule {
-      name = "time"
-      protocols = [
-        "UDP"
-      ]
-      destination_addresses = var.ntp_server_ip_addresses
-      destination_ports = [
-        "123"
-      ]
-      source_addresses = [
-        "*"
-      ]
+    dynamic "rule" {
+      for_each = length(compact(coalesce(var.ntp_server_ip_addresses, []))) > 0 ? [1] : []
+      content {
+        name      = "time"
+        protocols = ["UDP"]
+
+        destination_addresses = compact(var.ntp_server_ip_addresses)
+        destination_ports     = ["123"]
+        source_addresses      = ["*"]
+      }
     }
   }
 

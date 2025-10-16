@@ -399,6 +399,7 @@ jobs:
           AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
           ENABLE_DNS_POLICY: ${{ vars.ENABLE_DNS_POLICY }}
           ALLOWED_DNS: ${{ vars.ALLOWED_DNS }}
+          NTP_SERVER_IP_ADDRESSES: ${{ vars.NTP_SERVER_IP_ADDRESSES }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command

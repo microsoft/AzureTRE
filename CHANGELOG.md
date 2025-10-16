@@ -2,6 +2,7 @@
 ## 0.26.0 (Unreleased)
 **BREAKING CHANGES**
 * The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
+* The "time" firewall network rule is now configurable via the ntp_server_ip_addresses variable which accepts a list of ip addresses, to maintain existing behaviour you need to set this value to a list containing * ([#4710](https://github.com/microsoft/AzureTRE/pull/4710))
 
 ENHANCEMENTS:
 * Create CODEOWNERS file with repository maintainers
