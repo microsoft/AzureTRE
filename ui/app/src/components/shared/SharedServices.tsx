@@ -111,7 +111,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
       return (
         <div style={{ marginTop: "20px" }}>
           <Spinner
-            label="Loading shared services"
+            label="Loading Shared Services"
             ariaLive="assertive"
             labelPosition="top"
             size={SpinnerSize.large}
