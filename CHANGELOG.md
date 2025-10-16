@@ -15,7 +15,6 @@ ENHANCEMENTS:
 * Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
 * Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
-* Adds the ability to configure a list of allowed ntp servers in the firewall policy ([#4710](https://github.com/microsoft/AzureTRE/pull/4710))
 
 BUG FIXES:
 * Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
