@@ -5,6 +5,7 @@ import { PrimaryButton, Stack, Spinner, SpinnerSize } from "@fluentui/react";
 import { ResourceType } from "../../models/resourceType";
 import { SharedService } from "../../models/sharedService";
 import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
+import { LoadingState } from "../../models/loadingState";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { CreateUpdateResourceContext } from "../../contexts/CreateUpdateResourceContext";
 import { RoleName } from "../../models/roleNames";
@@ -21,7 +22,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
   const [sharedServices, setSharedServices] = useState(
     [] as Array<SharedService>,
   );
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
@@ -30,8 +31,9 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
         const ss = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get))
           .sharedServices;
         setSharedServices(ss);
-      } finally {
-        setIsLoading(false);
+        setLoadingState(LoadingState.Ok);
+      } catch (err) {
+        setLoadingState(LoadingState.Error);
       }
     };
     getSharedServices();
@@ -57,43 +59,34 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
     setSharedServices(ssList);
   };
 
-  return (
-    <>
-      <Stack className="tre-panel">
-        <Stack.Item>
-          <Stack horizontal horizontalAlign="space-between">
-            <h1>Shared Services</h1>
-            {!props.readonly && (
-              <SecuredByRole
-                allowedAppRoles={[RoleName.TREAdmin]}
-                element={
-                  <PrimaryButton
-                    iconProps={{ iconName: "Add" }}
-                    text="Create new"
-                    onClick={() => {
-                      createFormCtx.openCreateForm({
-                        resourceType: ResourceType.SharedService,
-                        onAdd: (r: Resource) =>
-                          addSharedService(r as SharedService),
-                      });
-                    }}
-                  />
-                }
-              />
-            )}
-          </Stack>
-        </Stack.Item>
-        <Stack.Item>
-          {isLoading ? (
-            <div style={{ marginTop: "20px" }}>
-              <Spinner
-                label="Loading Shared Services"
-                ariaLive="assertive"
-                labelPosition="top"
-                size={SpinnerSize.large}
-              />
-            </div>
-          ) : (
+  switch (loadingState) {
+    case LoadingState.Ok:
+      return (
+        <Stack className="tre-panel">
+          <Stack.Item>
+            <Stack horizontal horizontalAlign="space-between">
+              <h1>Shared Services</h1>
+              {!props.readonly && (
+                <SecuredByRole
+                  allowedAppRoles={[RoleName.TREAdmin]}
+                  element={
+                    <PrimaryButton
+                      iconProps={{ iconName: "Add" }}
+                      text="Create new"
+                      onClick={() => {
+                        createFormCtx.openCreateForm({
+                          resourceType: ResourceType.SharedService,
+                          onAdd: (r: Resource) =>
+                            addSharedService(r as SharedService),
+                        });
+                      }}
+                    />
+                  }
+                />
+              )}
+            </Stack>
+          </Stack.Item>
+          <Stack.Item>
             <ResourceCardList
               resources={sharedServices}
               updateResource={(r: Resource) =>
@@ -105,9 +98,25 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
               emptyText="This TRE has no shared services."
               readonly={props.readonly}
             />
-          )}
-        </Stack.Item>
-      </Stack>
-    </>
-  );
+          </Stack.Item>
+        </Stack>
+      );
+    case LoadingState.Error:
+      return (
+        <div style={{ marginTop: "20px" }}>
+          <span>Error loading shared services</span>
+        </div>
+      );
+    default:
+      return (
+        <div style={{ marginTop: "20px" }}>
+          <Spinner
+            label="Loading shared services"
+            ariaLive="assertive"
+            labelPosition="top"
+            size={SpinnerSize.large}
+          />
+        </div>
+      );
+  }
 };
