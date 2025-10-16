@@ -110,7 +110,7 @@ ui_config:
   # Footer text shown in the bottom left hand corner of the TRE portal
   ui_footer_text: "Azure Trusted Research Environment"
 
-developer_settings:
+#developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
 # TRE Core Key Vault purge protection will be disabled so it can be reused upon deletion
