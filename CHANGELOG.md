@@ -23,7 +23,7 @@ BUG FIXES:
 * Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
 * Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
-* Add Loading spinner to shared services page (UI) ([]())
+* Add Loading spinner to shared services page (UI) ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
 
 
 ## 0.25.0 (July 18, 2025)
