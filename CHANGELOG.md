@@ -1,5 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
+**BREAKING CHANGES**
+* The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
 
 ENHANCEMENTS:
 * Create CODEOWNERS file with repository maintainers
@@ -11,15 +13,20 @@ ENHANCEMENTS:
 * Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
 * Streamline Azure bootstrap by replacing legacy dependency checks with `bootstrap_azure_env.sh` ([#2993](https://github.com/microsoft/AzureTRE/issues/2993))
 * Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
-* Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688)])
+* Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
 
 BUG FIXES:
+* Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
 * Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
-* Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678)]
+* Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678))
 * Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
 * Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
+* Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
+* Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
+* Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
+* Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
 * Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 
 ## 0.25.0 (July 18, 2025)
