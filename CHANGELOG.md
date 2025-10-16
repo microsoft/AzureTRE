@@ -17,6 +17,7 @@ ENHANCEMENTS:
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
 
 BUG FIXES:
+* Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
 * Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
 * Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678))
