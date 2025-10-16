@@ -15,6 +15,7 @@ ENHANCEMENTS:
 * Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
 * Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
+* Adds the ability to configure a list of allowed ntp servers in the firewall policy ([#4710](https://github.com/microsoft/AzureTRE/pull/4710))
 
 BUG FIXES:
 * Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
@@ -26,7 +27,7 @@ BUG FIXES:
 * Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
 * Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
-
+* Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
