@@ -16,7 +16,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_network" {
 
         content {
           name             = rule.value.name
-          description      = try(rule.value.description != "" ? rule.value.description : rule.value.name, rule.value.name)
+          description      = try(length(trimspace(rule.value.description)) > 0 ? rule.value.description : null, null)
           source_addresses = try(rule.value.source_addresses, [])
           source_ip_groups = concat(
             try(rule.value.source_ip_group_ids, []),
@@ -51,7 +51,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "dynamic_application" {
 
         content {
           name        = rule.value.name
-          description = try(rule.value.description != "" ? rule.value.description : rule.value.name, rule.value.name)
+          description = try(length(trimspace(rule.value.description)) > 0 ? rule.value.description : null, null)
 
           dynamic "protocols" {
             for_each = rule.value.protocols
