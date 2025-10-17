@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
 **BREAKING CHANGES**
-* The firewall nework rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you can specify your own rules via a template pipeline.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
+* The firewall nework rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you will need to specify your own firewall rules.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
 * The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
 
 ENHANCEMENTS:
