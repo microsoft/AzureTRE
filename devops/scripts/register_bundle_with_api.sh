@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script register a bundle with the TRE API. It relies on the bundle
-# pre-existing in the remote repository (i.e. has been publish beforehand).
+# pre-existing in the remote repository (i.e. has been published beforehand).
 
 set -o errexit
 set -o pipefail
@@ -102,7 +102,7 @@ explain_json=$(porter explain --reference "${acr_name}${acr_domain_suffix}"/"$(y
 payload=$(echo "${explain_json}" | jq --slurpfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema[0], "resourceType": $bundle_type, "current": $current}')
 
 if [ "${dry_run}" == "true" ]; then
-    echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register. "
+    echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register."
     echo "See documentation for more details: https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/"
     echo "${payload}" | jq --color-output .
     exit 1
@@ -117,30 +117,12 @@ fi
 template_name=$(yq eval '.name' porter.yaml)
 template_version=$(yq eval '.version' porter.yaml)
 
-semver_compare() {
-  local -a new_ver cur_ver
-  IFS='.' read -r -a new_ver <<< "$1"
-  IFS='.' read -r -a cur_ver <<< "$2"
-
-  # Compare up to the max length; missing parts are treated as 0
-  local i max=${#new_ver[@]}
-  (( ${#cur_ver[@]} > max )) && max=${#cur_ver[@]}
-
-  for ((i=0; i<max; i++)); do
-    # default empty parts to 0; force base-10 to avoid octal interpretation
-    local a=${new_ver[i]:-0}
-    local b=${cur_ver[i]:-0}
-    if ((10#$a < 10#$b)); then return 0; fi # new ver < current ver (error)
-    if ((10#$a > 10#$b)); then return 2; fi # new ver > current ver (ok to register)
-  done
-  return 1  # new ver == current ver (ignore)
-}
 
 function get_template() {
   case "${bundle_type}" in
     ("workspace") get_result=$(tre workspace-template "$template_name" show --output json) || echo ;;
     ("workspace_service") get_result=$(tre workspace-service-template "$template_name" show --output json) || echo ;;
-    ("user_resource") get_result=$(tre workspace-service-template "${workspace_service_name}" user-resource-template "$template_name" show --output json) || echo;;
+    ("user_resource") get_result=$(tre workspace-service-template "${workspace_service_name}" user-resource-template "$template_name" show --output json) || echo ;;
     ("shared_service") get_result=$(tre shared-service-template "$template_name" show --output json) || echo ;;
   esac
   echo "$get_result"
@@ -151,21 +133,19 @@ get_result=$(get_template)
 if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
   # 'id' was returned - so we successfully got the template from the API. Now check the version
   existing_version="$(echo "$get_result" | jq -r .version)"
-  ver_lt() { semver_compare "$1" "$2"; return $(( $? == 0 ? 0 : 1 )); }
-  ver_eq() { semver_compare "$1" "$2"; return $(( $? == 1 ? 0 : 1 )); }
 
-  if ver_eq "$template_version" "$existing_version"; then
+  if [[ "$template_version" == "$existing_version" ]]; then
     echo "A template with this version already exists."
     exit 0
-  elif ver_lt "$template_version" "$existing_version"; then
-    echo "A newer version already exists (existing: $existing_version, attempted: $template_version). Registration aborted."
+  elif [[ "$(printf '%s\n' "$template_version" "$existing_version" | sort -V | head -n1)" != "$existing_version" ]]; then
+    echo "A newer version of this template already exists (existing: $existing_version, attempted: $template_version). Registration aborted."
     exit 1
   fi
 else
   error_code=$(echo "$get_result" | jq -r .status_code)
   # 404 Not Found error at this point is fine => we want to continue to register the template
   # For other errors, show the error and exit with non-zero result
-  if [[  "$error_code" != "404" ]]; then
+  if [[ "$error_code" != "404" ]]; then
     echo "Error checking for existing template: $get_result"
     exit 1
   fi
