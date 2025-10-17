@@ -86,7 +86,7 @@ Each network rule has the following structure:
 | Property | Description | Example |
 |----------|-------------|---------|
 | `name` | Rule name | "AzureMachineLearning" |
-| `description` | Human-readable description (if not provided, rule name is used) | "Azure Machine Learning rules" |
+| `description` | Human-readable description | "Azure Machine Learning rules" |
 | `source_addresses` | Origin of traffic | "{{ resource.properties.aml_subnet_address_prefixes }}" |
 | `destination_addresses` | Target of traffic | ["AzureMachineLearning"] |
 | `destination_ports` | Allowed ports | ["443", "8787"] |
@@ -107,7 +107,7 @@ Each application rule has the following structure:
 | Property | Description | Example |
 |----------|-------------|---------|
 | `name` | Rule name | "AzureML_client" |
-| `description` | Human-readable description (if not provided, rule name is used) | "AzureML rules" |
+| `description` | Human-readable description | "AzureML rules" |
 | `source_addresses` | Origin of traffic | "{{ resource.properties.workspace_address_spaces }}" |
 | `target_fqdns` | Target FQDNs | ["aadcdn.msauth.net"] |
 | `protocols` | Protocol configuration | [{"port": "443", "type": "Https"}] |
@@ -187,7 +187,7 @@ Below is an example of a network rule collection for Azure Machine Learning:
 
 ## Best Practices
 
-1. **Use descriptive names and descriptions** for rule collections and individual rules. If no description is provided, the rule name will be used automatically.
+1. **Use descriptive names and descriptions** for rule collections and individual rules.
 2. **Minimize the scope** of firewall rules to only what is necessary.
 3. **Document any custom rules** in your service documentation.
 4. **Test thoroughly** after making changes to firewall rules.
