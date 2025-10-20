@@ -1,5 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.26.0 (Unreleased)
+**BREAKING CHANGES**
+* The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
 
 ENHANCEMENTS:
 * Create CODEOWNERS file with repository maintainers
@@ -25,6 +27,7 @@ BUG FIXES:
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
 * Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
 * Add Loading spinner to shared services page ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
+* Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
