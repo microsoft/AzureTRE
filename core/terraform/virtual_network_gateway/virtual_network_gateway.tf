@@ -111,6 +111,34 @@ resource "azurerm_virtual_network_gateway" "virtual_network_gateway" {
   }
 }
 
+# Let's wait a little bit for the VNG creation settles down. :)
+resource "time_sleep" "wait_for_virtual_network_gateway" {
+  create_duration = "30s"
+
+  depends_on = [azurerm_virtual_network_gateway.virtual_network_gateway]
+}
+
+# Create ExpressRoute for MHRA VPN access.
+resource "azurerm_virtual_network_gateway_connection" "express_route_connection" {
+  name                       = local.express_route_vng_name
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  type                       = "ExpressRoute"
+  virtual_network_gateway_id = azurerm_virtual_network_gateway.virtual_network_gateway.id
+  express_route_circuit_id   = local.express_route_circuit_id
+  authorization_key          = local.authorization_key["${var.tre_id}"]
+  tags                       = local.tre_core_tags
+
+  depends_on = [time_sleep.wait_for_virtual_network_gateway]
+}
+
+# Let's wait a little bit for the VNG changes settle down. :)
+resource "time_sleep" "wait_for_express_route_connection" {
+  create_duration = "30s"
+
+  depends_on = [azurerm_virtual_network_gateway_connection.express_route_connection]
+}
+
 # This options must be enabled, so that the VNG can connect to other resources in MHRA network.
 # We use a null_resource to have the possibility to force execution in all deployments.s
 resource "null_resource" "change_vng_configurations" {
@@ -124,5 +152,5 @@ resource "null_resource" "change_vng_configurations" {
     always_run = "${timestamp()}"
   }
 
-  depends_on = [azurerm_virtual_network_gateway.virtual_network_gateway]
+  depends_on = [time_sleep.wait_for_express_route_connection]
 }
