@@ -1,8 +1,10 @@
+import logging
 from typing import List
 from ipaddress import IPv4Network, NetmaskValueError, collapse_addresses
 
-from core import config
-
+from core import config, credentials
+from resources import constants
+from azure.mgmt.network import NetworkManagementClient
 
 def generate_new_cidr(allocated_subnets: List[str], required_cidr_block_type: int) -> str:
     if required_cidr_block_type >= 32 or required_cidr_block_type < 8:
@@ -60,3 +62,28 @@ def remove_subnet(subnets: List[IPv4Network], exclude: IPv4Network) -> List[IPv4
     new_result = list(collapse_addresses(result))
     new_result.sort()
     return new_result
+
+def get_existing_ip(self) -> list:
+    """
+    Retrieves the address prefixes of the existing virtual network.
+    Returns:
+        list: Address prefixes of the virtual network.
+    Raises:
+        Exception: If unable to retrieve the virtual network.
+    """
+    try:
+        credential = credentials.get_credential()
+        network_client = NetworkManagementClient(credential, config.SUBSCRIPTION_ID)
+
+        resource_group_name = constants.CORE_RESOURCE_GROUP_NAME.format(config.TRE_ID)
+        vnet_name = constants.CORE_VNET_NAME.format(config.TRE_ID)
+
+        vnet = network_client.virtual_networks.get(
+            resource_group_name=resource_group_name,
+            virtual_network_name=vnet_name
+        )
+
+        return vnet.address_space.address_prefixes
+    except Exception as e:
+        logging.exception("Error retrieving existing IPs from virtual network.")
+        raise Exception(f"Error retrieving existing IPs: {e}")

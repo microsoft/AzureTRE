@@ -16,7 +16,7 @@ from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
-from services.cidr_service import generate_new_cidr, is_network_available
+from services.cidr_service import generate_new_cidr, is_network_available, get_existing_ip
 
 
 class WorkspaceRepository(ResourceRepository):
@@ -141,7 +141,8 @@ class WorkspaceRepository(ResourceRepository):
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]
-
+        allocatedNetworks = get_existing_ip()
+        networks = [net for net in networks if net not in allocatedNetworks]
         new_address_space = generate_new_cidr(networks, cidr_netmask)
         return new_address_space
 

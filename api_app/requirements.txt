@@ -28,3 +28,4 @@ msgraph-sdk==1.16.0
 azure-mgmt-authorization==4.0.0
 azure-mgmt-storage==21.1.0
 azure-keyvault-secrets==4.8.0
+azure-mgmt-network==28.1.0
