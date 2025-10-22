@@ -63,11 +63,11 @@ def remove_subnet(subnets: List[IPv4Network], exclude: IPv4Network) -> List[IPv4
     new_result.sort()
     return new_result
 
-def get_existing_ip(self) -> list:
+def get_existing_ip() -> List[str]:
     """
     Retrieves the address prefixes of the existing virtual network.
     Returns:
-        list: Address prefixes of the virtual network.
+        List[str]: Address prefixes of the virtual network.
     Raises:
         Exception: If unable to retrieve the virtual network.
     """
