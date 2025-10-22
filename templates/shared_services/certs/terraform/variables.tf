@@ -27,3 +27,25 @@ variable "key_store_id" {
 variable "arm_environment" {
   type = string
 }
+
+variable "enable_auto_renewal" {
+  type        = bool
+  default     = false
+  description = "Enable automatic renewal of the certificate before expiry"
+}
+
+variable "renewal_threshold_days" {
+  type        = number
+  default     = 30
+  description = "Number of days before expiry to trigger renewal"
+  validation {
+    condition     = var.renewal_threshold_days >= 1 && var.renewal_threshold_days <= 60
+    error_message = "Renewal threshold must be between 1 and 60 days."
+  }
+}
+
+variable "renewal_schedule_cron" {
+  type        = string
+  default     = "0 2 * * 0"
+  description = "Cron expression for checking certificate expiry (default: weekly on Sunday at 2 AM)"
+}
