@@ -29,9 +29,22 @@ def get_free_subnets(allocated_subnets: List[str]) -> List[IPv4Network]:
     core_network = IPv4Network(config.CORE_ADDRESS_SPACE)
     allocation_network = IPv4Network(config.TRE_ADDRESS_SPACE)
 
+    # Start with the allocation space minus the core network
     free_subnets = remove_subnet([allocation_network], core_network)
 
-    for subnet_string in allocated_subnets:
+    # Also consider any existing VNets in the subscription so we don't allocate
+    # a CIDR that overlaps with them. If querying Azure fails for any reason we
+    # fall back to only using the passed allocated_subnets.
+    try:
+        existing_prefixes = get_existing_ip()
+    except Exception:
+        logging.exception("Could not fetch existing VNet prefixes; proceeding with provided allocated_subnets only.")
+        existing_prefixes = []
+
+    # Combine provided allocated subnets with existing prefixes and deduplicate
+    combined_allocated = list({*allocated_subnets, *existing_prefixes})
+
+    for subnet_string in combined_allocated:
         free_subnets = remove_subnet(free_subnets, IPv4Network(subnet_string))
 
     return free_subnets
@@ -75,15 +88,23 @@ def get_existing_ip() -> List[str]:
         credential = credentials.get_credential()
         network_client = NetworkManagementClient(credential, config.SUBSCRIPTION_ID)
 
-        resource_group_name = constants.CORE_RESOURCE_GROUP_NAME.format(config.TRE_ID)
-        vnet_name = constants.CORE_VNET_NAME.format(config.TRE_ID)
+        prefixes = []
 
-        vnet = network_client.virtual_networks.get(
-            resource_group_name=resource_group_name,
-            virtual_network_name=vnet_name
-        )
+        # List all virtual networks in the subscription and collect their address prefixes.
+        # This ensures we avoid allocating a CIDR that overlaps with any existing VNet (including
+        # those already peered via other VNets).
+        for vnet in network_client.virtual_networks.list_all():
+            addr_space = getattr(vnet, "address_space", None)
+            if addr_space is None:
+                continue
+            vnet_prefixes = getattr(addr_space, "address_prefixes", None)
+            if not vnet_prefixes:
+                continue
+            prefixes.extend(vnet_prefixes)
 
-        return vnet.address_space.address_prefixes
+        # Deduplicate and return sorted list for deterministic results
+        unique_prefixes = sorted(set(prefixes))
+        return unique_prefixes
     except Exception as e:
-        logging.exception("Error retrieving existing IPs from virtual network.")
+        logging.exception("Error retrieving existing IPs from virtual networks.")
         raise Exception(f"Error retrieving existing IPs: {e}")
