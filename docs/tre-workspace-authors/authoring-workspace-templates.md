@@ -99,13 +99,32 @@ The mandatory parameters for workspace services are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
-### Workpace services requiring additional address sapces
+### Workpace services requiring additional address spaces
 
-Some workspace services may require additional address spaces to be provisioned. This may be as they need advanced network security groups, route tables or delegated subnets.
+Some workspace services may require additional address spaces to be provisioned. This may be necessary if they need advanced network security groups, route tables or delegated subnets.
 
 To request an additional address space, the workspace service bundle must define an `address_space` parameter in the `porter.yaml` file. The value of this parameter will be provided by API to the resource processor.
 
 The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template.
+
+The `address_space` allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.
+
+In your install pipeline you also need to include a workspace upgrade step for the workspace to update it's `address_spaces` property.
+
+```json
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "efb826a8-71ad-4eb6-aa31-dbe349bb54fb",
+        "stepTitle": "Upgrade to ensure the workspace is aware of the new address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main"
+      }
+```
 
 ## User resource bundle manifests
 
