@@ -3265,9 +3265,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#workpace-services-requiring-additional-address-sapces" class="md-nav__link">
+  <a href="#workpace-services-requiring-additional-address-spaces" class="md-nav__link">
     <span class="md-ellipsis">
-      Workpace services requiring additional address sapces
+      Workpace services requiring additional address spaces
     </span>
   </a>
   
@@ -3879,9 +3879,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#workpace-services-requiring-additional-address-sapces" class="md-nav__link">
+  <a href="#workpace-services-requiring-additional-address-spaces" class="md-nav__link">
     <span class="md-ellipsis">
-      Workpace services requiring additional address sapces
+      Workpace services requiring additional address spaces
     </span>
   </a>
   
@@ -4077,10 +4077,25 @@ ARM_CLIENT_SECRET
 </tr>
 </tbody>
 </table>
-<h3 id="workpace-services-requiring-additional-address-sapces">Workpace services requiring additional address sapces</h3>
-<p>Some workspace services may require additional address spaces to be provisioned. This may be as they need advanced network security groups, route tables or delegated subnets.</p>
+<h3 id="workpace-services-requiring-additional-address-spaces">Workpace services requiring additional address spaces</h3>
+<p>Some workspace services may require additional address spaces to be provisioned. This may be necessary if they need advanced network security groups, route tables or delegated subnets.</p>
 <p>To request an additional address space, the workspace service bundle must define an <code>address_space</code> parameter in the <code>porter.yaml</code> file. The value of this parameter will be provided by API to the resource processor.</p>
 <p>The size of the <code>address_space</code> will default to <code>/24</code>, however other sizes can be requested by including an <code>address_space_size</code> as part of the workspace service template.</p>
+<p>The <code>address_space</code> allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.</p>
+<p>In your install pipeline you also need to include a workspace upgrade step for the workspace to update it's <code>address_spaces</code> property.</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;install&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;efb826a8-71ad-4eb6-aa31-dbe349bb54fb&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Upgrade to ensure the workspace is aware of the new address space&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workspace&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[]</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+</code></pre></div>
 <h2 id="user-resource-bundle-manifests">User resource bundle manifests</h2>
 <p>User Resource bundles are generated in the same way as workspace bundles and workspace services bundles.
 The main difference is that a workspace service type needs to be supplied when registering a user resource template, as it only applies to a given workspace service.</p>
