@@ -12,7 +12,7 @@ ENHANCEMENTS:
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
-* Add `WORKSPACE_SERVICE_PREFIX` to `make user_resource_bundle` for use where a workspace-service bundle name does not start with `tre-service-` ([]())
+* Add `WORKSPACE_SERVICE_PREFIX` to `make user_resource_bundle` for use where a workspace-service bundle name does not start with `tre-service-` ([#4731](https://github.com/microsoft/AzureTRE/pull/4731))
 * Streamline Azure bootstrap by replacing legacy dependency checks with `bootstrap_azure_env.sh` ([#2993](https://github.com/microsoft/AzureTRE/issues/2993))
 * Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
 * Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
