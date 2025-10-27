@@ -180,3 +180,8 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}"'
         operations = await self.query(query=query)
         return len(operations) > 0
+
+    async def has_any_resource_deployment_in_progress(self) -> bool:
+        query = self.operations_query() + f'c.status = "{Status.PipelineRunning}"'
+        operations = await self.query(query=query)
+        return len(operations) > 0

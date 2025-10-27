@@ -629,7 +629,15 @@ async def retrive_emsl_workspaces(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-
+@workspaces_core_router.get("/any-deployment-in_progress", name=strings.API_DEPLOYMENT_STATUS)
+async def has_any_resource_deployment_in_progress(
+        operations_repo = Depends(get_repository(OperationRepository))) -> bool:
+    try:
+        result = await operations_repo.has_any_resource_deployment_in_progress()
+        return result
+    except Exception as e:
+        logging.error(f"Error check any deployment is running: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 
