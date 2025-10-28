@@ -105,7 +105,8 @@ Some workspace services may require additional address spaces to be provisioned.
 
 To request an additional address space, the workspace service bundle must define an `address_space` parameter in the `porter.yaml` file. The value of this parameter will be provided by API to the resource processor.
 
-The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template. This parameter accepts the presets `small` (/24), `medium` (/22), `large` (/16), the literal value `custom` together with an explicit `address_space` CIDR (e.g. `10.2.1.0/25`), or a numeric CIDR mask as a string (e.g. `"25"`) to ask the system to auto-select an available `/25`.
+The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template.
+This parameter accepts the presets `small` (/24), `medium` (/22), `large` (/16), the literal value `custom` together with an explicit `address_space` CIDR (e.g. `10.2.1.0/25`), or a numeric CIDR mask as a string from "16" to "29" (e.g. `"25"`) to ask the system to auto-select an available `/25`.
 
 The `address_space` allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.
 
