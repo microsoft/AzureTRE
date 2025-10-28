@@ -27,10 +27,10 @@ locals {
   cmk_name                 = "tre-encryption-${var.tre_id}"
   encryption_identity_name = "id-encryption-${var.tre_id}"
   password_name            = "${var.cert_name}-password"
-  
+
   # Auto-renewal related locals
   service_resource_name_suffix = substr(replace(var.tre_resource_id, "-", ""), 0, 6)
-  location                    = data.azurerm_resource_group.rg.location
-  resource_group_name         = data.azurerm_resource_group.rg.name
-  tre_api_base_url           = "https://${var.tre_id}.${data.azurerm_resource_group.rg.location}.cloudapp.azure.com"
+  location                     = data.azurerm_resource_group.rg.location
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  tre_api_base_url             = "https://${var.tre_id}.${data.azurerm_resource_group.rg.location}.cloudapp.azure.com"
 }

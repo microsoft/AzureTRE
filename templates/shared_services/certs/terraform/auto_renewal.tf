@@ -5,8 +5,8 @@ resource "azurerm_logic_app_workflow" "cert_renewal" {
   resource_group_name = local.resource_group_name
   tags                = local.tre_shared_service_tags
 
-  workflow_schema     = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
-  workflow_version    = "1.0.0.0"
+  workflow_schema  = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
+  workflow_version = "1.0.0.0"
 
   parameters = {
     "keyvault_name" = {
@@ -33,38 +33,38 @@ resource "azurerm_logic_app_workflow" "cert_renewal" {
 
   # Basic workflow definition - will be replaced by ARM template deployment
   workflow_definition = jsonencode({
-    "$schema" = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
+    "$schema"      = "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"
     contentVersion = "1.0.0.0"
     parameters = {
       "keyvault_name" = {
         "defaultValue" = data.azurerm_key_vault.core.name
-        "type" = "String"
+        "type"         = "String"
       }
       "cert_name" = {
         "defaultValue" = var.cert_name
-        "type" = "String"
+        "type"         = "String"
       }
       "renewal_threshold_days" = {
         "defaultValue" = var.renewal_threshold_days
-        "type" = "Int"
+        "type"         = "Int"
       }
       "tre_api_base_url" = {
         "defaultValue" = local.tre_api_base_url
-        "type" = "String"
+        "type"         = "String"
       }
       "shared_service_id" = {
         "defaultValue" = var.tre_resource_id
-        "type" = "String"
+        "type"         = "String"
       }
     }
     triggers = {
       "Scheduled_Certificate_Check" = {
         "recurrence" = {
           "frequency" = "Week"
-          "interval" = 1
+          "interval"  = 1
           "schedule" = {
-            "hours" = [2]
-            "minutes" = [0]
+            "hours"    = [2]
+            "minutes"  = [0]
             "weekDays" = ["Sunday"]
           }
         }
@@ -74,7 +74,7 @@ resource "azurerm_logic_app_workflow" "cert_renewal" {
     actions = {
       "Initialize_variable" = {
         "runAfter" = {}
-        "type" = "InitializeVariable"
+        "type"     = "InitializeVariable"
         "inputs" = {
           "variables" = [
             {
@@ -115,7 +115,7 @@ resource "azurerm_resource_group_template_deployment" "cert_renewal_workflow" {
   deployment_mode     = "Incremental"
 
   template_content = templatefile("${path.module}/logic_app_workflow.json", {
-    workflow_name           = azurerm_logic_app_workflow.cert_renewal[0].name
+    workflow_name          = azurerm_logic_app_workflow.cert_renewal[0].name
     location               = local.location
     keyvault_name          = data.azurerm_key_vault.core.name
     cert_name              = var.cert_name
