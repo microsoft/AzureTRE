@@ -84,6 +84,7 @@ variable "auth_client_id" {
 }
 variable "auth_client_secret" {
   type        = string
+  sensitive   = true
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
 variable "enable_backup" {
