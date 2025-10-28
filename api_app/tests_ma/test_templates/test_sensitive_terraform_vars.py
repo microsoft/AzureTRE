@@ -28,8 +28,8 @@ def find_terraform_variable_blocks(root: Path):
 
 
 def test_secret_named_variables_are_sensitive_and_scanned_from_repo_root():
-    # Ensure we always scan from repository root regardless of pytest's cwd or -k selection
-    repo_root = Path(__file__).resolve().parents[3]
+    # Use Path.cwd() so the test behaves like other tests that rely on pytest's working directory
+    repo_root = Path.cwd()
     failures = []
 
     scanned = []
