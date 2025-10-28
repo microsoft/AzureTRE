@@ -118,6 +118,7 @@ variable "client_id" {
 variable "client_secret" {
   type        = string
   default     = ""
+  sensitive   = true
   description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
 variable "ui_client_id" {
