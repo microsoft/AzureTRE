@@ -10,7 +10,8 @@ import resources.strings as strings
 from core import config, credentials
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.resource_templates import ResourceTemplateRepository
-from db.repositories.resources import ResourceRepository, IS_NOT_DELETED_CLAUSE
+from db.repositories.resources import ResourceRepository
+from models.domain.operation import Status
 from db.repositories.operations import OperationRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
@@ -35,20 +36,29 @@ class WorkspaceRepository(ResourceRepository):
 
     @staticmethod
     def workspaces_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}"'
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType'
+        parameters = [
+            {'name': '@resourceType', 'value': ResourceType.Workspace}
+        ]
+        return query, parameters
 
     @staticmethod
     def active_workspaces_query_string():
-        return f'SELECT * FROM c WHERE c.resourceType = "{ResourceType.Workspace}" AND {IS_NOT_DELETED_CLAUSE}'
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.deploymentStatus != @deletedStatus'
+        parameters = [
+            {'name': '@resourceType', 'value': ResourceType.Workspace},
+            {'name': '@deletedStatus', 'value': Status.Deleted}
+        ]
+        return query, parameters
 
     async def get_workspaces(self) -> List[Workspace]:
-        query = WorkspaceRepository.workspaces_query_string()
-        workspaces = await self.query(query=query)
+        query, parameters = WorkspaceRepository.workspaces_query_string()
+        workspaces = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[Workspace], workspaces)
 
     async def get_active_workspaces(self) -> List[Workspace]:
-        query = WorkspaceRepository.active_workspaces_query_string()
-        workspaces = await self.query(query=query)
+        query, parameters = WorkspaceRepository.active_workspaces_query_string()
+        workspaces = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[Workspace], workspaces)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
@@ -60,8 +70,10 @@ class WorkspaceRepository(ResourceRepository):
         return workspace
 
     async def get_workspace_by_id(self, workspace_id: str) -> Workspace:
-        query = self.workspaces_query_string() + f' AND c.id = "{workspace_id}"'
-        workspaces = await self.query(query=query)
+        query, parameters = self.workspaces_query_string()
+        query += ' AND c.id = @workspaceId'
+        parameters.append({'name': '@workspaceId', 'value': str(workspace_id)})
+        workspaces = await self.query(query=query, parameters=parameters)
         if not workspaces:
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
