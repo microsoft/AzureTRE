@@ -27,14 +27,21 @@ def find_terraform_variable_blocks(root: Path):
             yield tf_file, m.group('name'), m.group('body')
 
 
-def test_secret_named_variables_are_sensitive():
-    repo_root = Path.cwd()
+def test_secret_named_variables_are_sensitive_and_scanned_from_repo_root():
+    # Ensure we always scan from repository root regardless of pytest's cwd or -k selection
+    repo_root = Path(__file__).resolve().parents[3]
     failures = []
 
+    scanned = []
     for tf_file, name, body in find_terraform_variable_blocks(repo_root):
+        scanned.append(str(tf_file))
         if SECRET_NAME_RE.search(name):
             if not has_uncommented_sensitive(body):
                 failures.append(f"{tf_file}: variable '{name}' missing 'sensitive = true'")
+
+    # Sanity: fail early if no terraform files were scanned (likely mis-located repo)
+    if not scanned:
+        pytest.fail(f"No terraform files found under {repo_root}/templates/**/terraform/*.tf - check working directory")
 
     if failures:
         pytest.fail("Found secret-like Terraform variables without sensitive=true:\n" + "\n".join(failures))
