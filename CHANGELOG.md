@@ -31,6 +31,10 @@ BUG FIXES:
 * Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
 * Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
 
+COMPONENTS:
+* Bump starlette from 0.48.0 to 0.49.1 in /e2e_tests ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
+* Bump fastapi from 0.118.0 to 0.120.2 in /api_app ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
+
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
 * If you update core deployment prior to this release an upstream issue with Azure RM terraform provider means that
