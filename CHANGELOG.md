@@ -30,6 +30,7 @@ BUG FIXES:
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
 * Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
 * Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
+* Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
 * Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
 * Update Starlette and FastAPI versions ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
 
