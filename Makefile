@@ -415,12 +415,13 @@ shared_service_bundle:
 
 # Description: Build, publish and register a user resource bundle.
 # Arguments: 1. WORKSPACE_SERVICE - the name of the workspace service 2. BUNDLE - the name of the bundle
+# 3. Optional: WORKSPACE_SERVICE_PREFIX - prefix to add to the workspace service name when registering the bundle defaults to "tre-service-"
 # Example: make user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
 # Note: the WORKSPACE_SERVICE variable is used to specify the name of the workspace service. This should be equivalent to the name of the directory of the template in the templates/workspace_services directory.
 # And the BUNDLE variable is used to specify the name of the bundle. This should be equivalent to the name of the directory of the template in the templates/workspace_services/${WORKSPACE_SERVICE}/user_resources directory.
 user_resource_bundle:
 	$(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-${WORKSPACE_SERVICE}
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=$${WORKSPACE_SERVICE_PREFIX:-tre-service-}${WORKSPACE_SERVICE}
 
 # Description: Publish and register all bundles.
 # Example: make bundle-publish-register-all
