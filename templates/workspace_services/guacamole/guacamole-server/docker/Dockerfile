@@ -43,9 +43,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 USER root
 
 # Update to supported Alpine repositories if needed (Alpine 3.18 is EOL as of May 2025)
+# Use HTTP instead of HTTPS to avoid SSL verification issues in restricted environments
 RUN if [ -f /etc/alpine-release ] && grep -q "^3.18" /etc/alpine-release; then \
-        sed -i 's#https://dl-cdn.alpinelinux.org/alpine/v3.18#https://dl-cdn.alpinelinux.org/alpine/v3.20#g' /etc/apk/repositories; \
-    fi
+        sed -i 's#https://dl-cdn.alpinelinux.org/alpine/v3.18#http://dl-cdn.alpinelinux.org/alpine/v3.20#g' /etc/apk/repositories; \
+    fi && \
+    sed -i 's#https://#http://#g' /etc/apk/repositories
 
 RUN apk update && apk add --no-cache wget openssh openjdk17-jre ca-certificates ca-certificates-bundle \
     && update-ca-certificates --fresh \

@@ -12,25 +12,23 @@ services:
     networks:
       - guac-test-network
 
-  # Guacamole server with TRE auth extension
+  # Guacamole server with TRE auth extension (Debian-based from-source build)
   guacamole:
     build:
       context: ../guacamole-server
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile.debian-source
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
       # Azure TRE Configuration (mock values for testing)
       - TRE_ID=test-tre
-      - API_URL=http://mock-api:8000
+      - API_URL=http://mock-api:1080
       - WORKSPACE_ID=test-workspace
       - KEYVAULT_URL=https://mock-keyvault.vault.azure.net/
       - AAD_TENANT_ID=test-tenant-id
-      # OAuth2 Proxy Configuration
-      - OAUTH2_PROXY_CLIENT_ID=test-client-id
-      - OAUTH2_PROXY_CLIENT_SECRET=test-client-secret
-      - OAUTH2_PROXY_COOKIE_SECRET=test-cookie-secret-16-bytes
-      - OAUTH2_PROXY_OIDC_ISSUER_URL=https://login.microsoftonline.com/test-tenant-id/v2.0
+      # Mock auth headers (injected directly for E2E tests, bypassing OAuth)
+      - X_FORWARDED_ACCESS_TOKEN=mock-test-token-for-e2e
+      - X_FORWARDED_PREFERRED_USERNAME=testuser@test.com
     depends_on:
       - xrdp
       - mock-api
@@ -60,7 +58,7 @@ services:
       - xrdp
       - mock-api
     environment:
-      - GUACAMOLE_URL=http://guacamole:80
+      - GUACAMOLE_URL=http://guacamole:8080
       - XRDP_HOST=xrdp
       - XRDP_PORT=3389
       - TEST_USERNAME=testuser

@@ -125,7 +125,14 @@ RUN mkdir -p /guac-transfer ${GUACAMOLE_HOME}/extensions
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 
-# Install s6-overlay for process supervision
+# Retrieve auth integration from build image
+COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
+COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
+
+# Download guacamole.war
+RUN wget --no-check-certificate -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
+
+# Install s6-overlay for process supervision (after all RUN commands that need /bin/sh)
 RUN S6_ARCHIVE=s6-overlay.tar.gz && \
     wget --no-check-certificate -O "$S6_ARCHIVE" "https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz" --progress=dot:giga && \
     tar xzvf "$S6_ARCHIVE" -C / && \
@@ -133,13 +140,6 @@ RUN S6_ARCHIVE=s6-overlay.tar.gz && \
 
 COPY ./docker/sshd_config /etc/ssh/
 COPY ./docker/services /etc/services.d/
-
-# Retrieve auth integration from build image
-COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
-COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
-
-# Download guacamole.war
-RUN wget --no-check-certificate -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
 
 # Install oauth2-proxy
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
