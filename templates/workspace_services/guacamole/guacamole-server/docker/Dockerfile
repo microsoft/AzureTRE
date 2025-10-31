@@ -1,7 +1,14 @@
 FROM maven:3.9-eclipse-temurin-17-alpine AS client_build
 
+# Update to supported Alpine repositories (Alpine 3.18 is EOL as of May 2025)
+# Switch to Alpine 3.20 or later which is currently supported
+RUN cat /etc/alpine-release && \
+    if grep -q "^3.18" /etc/alpine-release; then \
+        sed -i 's#https://dl-cdn.alpinelinux.org/alpine/v3.18#https://dl-cdn.alpinelinux.org/alpine/v3.20#g' /etc/apk/repositories; \
+    fi
+
 # Install required packages for SSL certificate management
-RUN apk add --update --no-cache ca-certificates openssl bash \
+RUN apk update && apk add --no-cache ca-certificates openssl bash \
     && update-ca-certificates
 
 # Download and import Maven Central SSL certificate to Java keystore
@@ -35,7 +42,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-RUN apk add --update --no-cache wget openssh openjdk17-jre ca-certificates ca-certificates-bundle \
+# Update to supported Alpine repositories if needed (Alpine 3.18 is EOL as of May 2025)
+RUN if [ -f /etc/alpine-release ] && grep -q "^3.18" /etc/alpine-release; then \
+        sed -i 's#https://dl-cdn.alpinelinux.org/alpine/v3.18#https://dl-cdn.alpinelinux.org/alpine/v3.20#g' /etc/apk/repositories; \
+    fi
+
+RUN apk update && apk add --no-cache wget openssh openjdk17-jre ca-certificates ca-certificates-bundle \
     && update-ca-certificates --fresh \
     && ssh-keygen -A
 
