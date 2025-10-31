@@ -1,9 +1,8 @@
-FROM maven:3.9-eclipse-temurin-17 AS client_build
+FROM maven:3.9-eclipse-temurin-17-alpine AS client_build
 
-# Update CA certificates and download Maven Central certificate chain
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates openssl \
-    && update-ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Install required packages for SSL certificate management
+RUN apk add --update --no-cache ca-certificates openssl bash \
+    && update-ca-certificates
 
 # Download and import Maven Central SSL certificate to Java keystore
 # This resolves PKIX path building issues in restricted network environments
