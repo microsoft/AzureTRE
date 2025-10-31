@@ -75,8 +75,8 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
         LOGGER.info("Authenticating user");
 
         // Getting headers from the oauth2 proxy
-        final String accessToken = credentials.getRequest().getHeader("X-Forwarded-Access-Token");
-        final String prefUsername = credentials.getRequest().getHeader("X-Forwarded-Preferred-Username");
+        final String accessToken = credentials.getRequestDetails().getHeader("X-Forwarded-Access-Token");
+        final String prefUsername = credentials.getRequestDetails().getHeader("X-Forwarded-Preferred-Username");
 
         if (Strings.isNullOrEmpty(accessToken)) {
             LOGGER.error("access token was not provided");

@@ -6,7 +6,7 @@
 
     <groupId>org.apache.guacamole</groupId>
     <artifactId>guacamole-auth-tre</artifactId>
-    <version>0.4.1</version>
+    <version>0.4.2</version>
     <packaging>jar</packaging>
     <name>guacamole-azure-tre</name>
 
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.apache.guacamole</groupId>
             <artifactId>guacamole-ext</artifactId>
-            <version>1.5.5</version>
+            <version>1.6.0</version>
             <scope>provided</scope>
         </dependency>
         <!-- MS Azure dependencies -->
