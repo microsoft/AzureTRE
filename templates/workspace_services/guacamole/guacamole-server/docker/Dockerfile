@@ -11,9 +11,9 @@ RUN bash /tmp/maven_package_and_exit_succesfully.sh
 FROM scratch AS test-results
 COPY --from=client_build /target/surefire-reports/* /
 
-FROM guacamole/guacd:1.5.5
+FROM guacamole/guacd:1.6.0
 
-ARG GUACAMOLE_AZURE_VERSION=0.4.1
+ARG GUACAMOLE_AZURE_VERSION=0.4.2
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -53,7 +53,7 @@ COPY ./docker/services /etc/services.d/
 COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
 COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.jar" "${GUACAMOLE_HOME}/extensions/"
 
-RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.5.5/binary/guacamole-1.5.5.war" --progress=dot:giga
+RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
 
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
