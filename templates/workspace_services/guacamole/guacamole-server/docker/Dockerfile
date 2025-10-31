@@ -1,9 +1,19 @@
 FROM maven:3.9-eclipse-temurin-17 AS client_build
 
-# Update CA certificates in build stage to ensure Maven can access repositories
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+# Update CA certificates and download Maven Central certificate chain
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates openssl \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Download and import Maven Central SSL certificate to Java keystore
+# This resolves PKIX path building issues in restricted network environments
+RUN echo "Downloading Maven Central certificate chain..." \
+    && openssl s_client -showcerts -connect repo.maven.apache.org:443 </dev/null 2>/dev/null \
+       | openssl x509 -outform PEM > /tmp/maven-central.crt \
+    && keytool -import -trustcacerts -keystore ${JAVA_HOME}/lib/security/cacerts \
+       -storepass changeit -noprompt -alias maven-central -file /tmp/maven-central.crt \
+    && rm -f /tmp/maven-central.crt \
+    && echo "Maven Central certificate imported successfully"
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 # cache dependencies in a separate layer
