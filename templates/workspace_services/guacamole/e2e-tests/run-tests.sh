@@ -30,72 +30,72 @@ COMMAND=${1:-help}
 
 case "$COMMAND" in
     build)
-        print_section "Building Guacamole Docker image..."
+        print_section "Building Guacamole Docker image (from-source)..."
         cd ../guacamole-server
-        docker build -f docker/Dockerfile -t guacamole-tre:latest .
+        docker build -f docker/Dockerfile.debian-source -t guacamole-tre:latest .
         echo -e "${GREEN}✓ Build complete${NC}"
         ;;
     
     up)
         print_section "Starting test environment..."
-        docker-compose up -d
+        docker compose up -d
         echo
         echo -e "${GREEN}✓ Environment started${NC}"
         echo
         echo "Services running:"
-        docker-compose ps
+        docker compose ps
         ;;
     
     down)
         print_section "Stopping test environment..."
-        docker-compose down
+        docker compose down
         echo -e "${GREEN}✓ Environment stopped${NC}"
         ;;
     
     test)
         print_section "Running Playwright tests..."
-        docker-compose run --rm playwright npx playwright test
+        docker compose run --rm playwright npx playwright test
         ;;
     
     test-headed)
         print_section "Running Playwright tests in headed mode..."
-        docker-compose run --rm playwright npx playwright test --headed
+        docker compose run --rm playwright npx playwright test --headed
         ;;
     
     test-debug)
         print_section "Running Playwright tests in debug mode..."
-        docker-compose run --rm playwright npx playwright test --debug
+        docker compose run --rm playwright npx playwright test --debug
         ;;
     
     logs)
         SERVICE=${2:-guacamole}
         print_section "Showing logs for $SERVICE..."
-        docker-compose logs -f "$SERVICE"
+        docker compose logs -f "$SERVICE"
         ;;
     
     shell)
         SERVICE=${2:-guacamole}
         print_section "Opening shell in $SERVICE..."
-        docker-compose exec "$SERVICE" /bin/sh
+        docker compose exec "$SERVICE" /bin/sh
         ;;
     
     clean)
         print_section "Cleaning up test environment..."
-        docker-compose down -v --rmi local
+        docker compose down -v --rmi local
         rm -rf playwright/node_modules playwright/test-results playwright/screenshots/*.png
         echo -e "${GREEN}✓ Cleanup complete${NC}"
         ;;
     
     full)
         print_section "Running full test suite..."
-        echo "Step 1: Building Docker image..."
+        echo "Step 1: Building Docker image (from-source)..."
         cd ../guacamole-server
-        docker build -f docker/Dockerfile -t guacamole-tre:latest .
+        docker build -f docker/Dockerfile.debian-source -t guacamole-tre:latest .
         cd ../e2e-tests
         
         echo
         echo "Step 2: Starting environment..."
-        docker-compose up -d
+        docker compose up -d
         
         echo
         echo "Step 3: Waiting for services to be ready..."
@@ -103,11 +103,11 @@ case "$COMMAND" in
         
         echo
         echo "Step 4: Running tests..."
-        docker-compose run --rm playwright npx playwright test
+        docker compose run --rm playwright npx playwright test
         
         echo
         echo "Step 5: Collecting screenshots..."
-        docker-compose cp playwright:/screenshots/. ./playwright/screenshots/
+        docker compose cp playwright:/screenshots/. ./playwright/screenshots/
         
         echo
         echo -e "${GREEN}✓ Full test suite complete${NC}"

@@ -1,12 +1,12 @@
-FROM mcr.microsoft.com/playwright:v1.49.1-noble
+FROM mcr.microsoft.com/playwright:v1.56.1-noble
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (disable strict SSL for environments with self-signed certs)
+RUN npm config set strict-ssl false && npm ci && npm config set strict-ssl true
 
 # Copy test files
 COPY . .

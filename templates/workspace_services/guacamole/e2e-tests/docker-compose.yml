@@ -12,13 +12,21 @@ services:
     networks:
       - guac-test-network
 
-  # Guacamole server with TRE auth extension (Debian-based from-source build)
-  guacamole:
-    build:
-      context: ../guacamole-server
-      dockerfile: docker/Dockerfile.debian-source
+  # Nginx proxy to inject auth headers for E2E testing
+  nginx-proxy:
+    image: nginx:alpine
     ports:
-      - "8080:8080"
+      - "8080:80"
+    volumes:
+      - ./nginx-test.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - guacamole-backend
+    networks:
+      - guac-test-network
+
+  # Guacamole backend server with TRE auth extension (Debian-based from-source build)
+  guacamole-backend:
+    image: guacamole-tre:latest
     environment:
       # Azure TRE Configuration (mock values for testing)
       - TRE_ID=test-tre
@@ -26,9 +34,10 @@ services:
       - WORKSPACE_ID=test-workspace
       - KEYVAULT_URL=https://mock-keyvault.vault.azure.net/
       - AAD_TENANT_ID=test-tenant-id
-      # Mock auth headers (injected directly for E2E tests, bypassing OAuth)
-      - X_FORWARDED_ACCESS_TOKEN=mock-test-token-for-e2e
-      - X_FORWARDED_PREFERRED_USERNAME=testuser@test.com
+      # Disable oauth2-proxy for E2E tests (nginx injects headers directly)
+      - DISABLE_OAUTH2_PROXY=true
+    ports:
+      - "8081:8080"  # Expose backend directly for debugging
     depends_on:
       - xrdp
       - mock-api
@@ -54,11 +63,11 @@ services:
       context: ./playwright
       dockerfile: Dockerfile
     depends_on:
-      - guacamole
+      - nginx-proxy
       - xrdp
       - mock-api
     environment:
-      - GUACAMOLE_URL=http://guacamole:8080
+      - GUACAMOLE_URL=http://nginx-proxy:80
       - XRDP_HOST=xrdp
       - XRDP_PORT=3389
       - TEST_USERNAME=testuser

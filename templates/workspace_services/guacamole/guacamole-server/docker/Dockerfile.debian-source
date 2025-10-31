@@ -132,16 +132,7 @@ COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.
 # Download guacamole.war
 RUN wget --no-check-certificate -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
 
-# Install s6-overlay for process supervision (after all RUN commands that need /bin/sh)
-RUN S6_ARCHIVE=s6-overlay.tar.gz && \
-    wget --no-check-certificate -O "$S6_ARCHIVE" "https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz" --progress=dot:giga && \
-    tar xzvf "$S6_ARCHIVE" -C / && \
-    rm -f "$S6_ARCHIVE"
-
-COPY ./docker/sshd_config /etc/ssh/
-COPY ./docker/services /etc/services.d/
-
-# Install oauth2-proxy
+# Install oauth2-proxy (before s6-overlay to ensure /bin/sh is available)
 ENV OAUTH2_PROXY_HOME=/etc/oauth2-proxy
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     wget --no-check-certificate -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.7.1/oauth2-proxy-v7.7.1.linux-amd64.tar.gz" --progress=dot:giga && \
@@ -149,11 +140,27 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     tar zxpf "$OAUTH2_PROXY_ARCHIVE" -C "$OAUTH2_PROXY_HOME" --strip-components=1 && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"
 
+# Install Application Insights (before s6-overlay to ensure /bin/sh is available)
+RUN wget --no-check-certificate -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar" --progress=dot:giga
+
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-# Install Application Insights
-RUN wget --no-check-certificate -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar" --progress=dot:giga
+COPY ./docker/sshd_config /etc/ssh/
+COPY ./docker/services /etc/services.d/
+# Add init script to handle optional oauth2-proxy disable for E2E testing
+COPY ./docker/init-disable-oauth.sh /etc/cont-init.d/01-disable-oauth
+
+# Set permissions before s6-overlay installation (which may remove /bin/sh)
+RUN chmod +x /etc/cont-init.d/01-disable-oauth
+
 ENV CATALINA_OPTS="$CATALINA_OPTS -javaagent:/tmp/applicationinsights-agent.jar"
+ENV GUACD_LOG_LEVEL=info
+
+# Install s6-overlay for process supervision (LAST - after all RUN commands that need /bin/sh)
+RUN S6_ARCHIVE=s6-overlay.tar.gz && \
+    wget --no-check-certificate -O "$S6_ARCHIVE" "https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz" --progress=dot:giga && \
+    tar xzvf "$S6_ARCHIVE" -C / && \
+    rm -f "$S6_ARCHIVE"
 
 ENTRYPOINT [ "/init" ]
 
