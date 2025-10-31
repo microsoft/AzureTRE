@@ -1,9 +1,59 @@
+from types import SimpleNamespace
+import pytest
+from unittest.mock import patch
+
+from services.access_service import AuthConfigValidationError
+
+
+@patch("api.routes.resource_helpers.get_access_service")
+def test_get_identity_role_assignments_fallback_when_user_mgmt_disabled(get_access_service_mock, monkeypatch):
+    # Arrange: access service raises auth config error
+    class FakeAccessService:
+        def get_identity_role_assignments(self, user_id: str):
+            raise AuthConfigValidationError("graph not available")
+
+    get_access_service_mock.return_value = FakeAccessService()
+
+    # Force feature disabled using monkeypatch to avoid test pollution
+    from core import config as core_config
+    monkeypatch.setattr(core_config, "USER_MANAGEMENT_ENABLED", False)
+
+    from api.routes import resource_helpers
+    user = SimpleNamespace(id="user-id")
+
+    # Act
+    result = resource_helpers.get_identity_role_assignments(user)
+
+    # Assert
+    assert result == []
+
+
+@patch("api.routes.resource_helpers.get_access_service")
+def test_get_identity_role_assignments_raises_when_user_mgmt_enabled(get_access_service_mock, monkeypatch):
+    # Arrange: access service raises auth config error
+    class FakeAccessService:
+        def get_identity_role_assignments(self, user_id: str):
+            raise AuthConfigValidationError("graph not available")
+
+    get_access_service_mock.return_value = FakeAccessService()
+
+    # Force feature enabled using monkeypatch to avoid test pollution
+    from core import config as core_config
+    monkeypatch.setattr(core_config, "USER_MANAGEMENT_ENABLED", True)
+
+    from api.routes import resource_helpers
+    user = SimpleNamespace(id="user-id")
+
+    # Act / Assert
+    with pytest.raises(AuthConfigValidationError):
+        resource_helpers.get_identity_role_assignments(user)
+
 import datetime
 from unittest.mock import AsyncMock
 import uuid
 import pytest
 import pytest_asyncio
-from mock import patch
+from unittest.mock import patch
 import json
 
 from fastapi import HTTPException, status
