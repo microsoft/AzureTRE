@@ -53,7 +53,13 @@ public class TokenInjectingConnection extends SimpleConnection {
         fullConfig.setParameter("password", credsJsonObject.getString("password"));
         this.setConfiguration(fullConfig);
 
-        return super.connect(info, tokens);
+        try {
+            return super.connect(info, tokens);
+        } finally {
+            // Clear credentials from configuration after connection attempt
+            fullConfig.setParameter("username", null);
+            fullConfig.setParameter("password", null);
+        }
     }
 
     private JSONObject getConnectionCredentialsFromProjectAPI(final String resourceName)
@@ -62,7 +68,7 @@ public class TokenInjectingConnection extends SimpleConnection {
         String username = null;
         String password = null;
         try {
-            LOGGER.info("Loading credentials from Azure Key Vault for secret {}", resourceName);
+            LOGGER.debug("Loading credentials from Azure Key Vault for resource");
             final String keyVaultUri = System.getenv("KEYVAULT_URL");
             final String managedIdentityClientId = System.getenv("MANAGED_IDENTITY_CLIENT_ID");
             /// Create an HttpClient manually as the class loader was unable to find the class to create a default one.
@@ -81,13 +87,21 @@ public class TokenInjectingConnection extends SimpleConnection {
             if (resourceCredentials.length == 2) {
                 username = resourceCredentials[0];
                 password = resourceCredentials[1];
+            } else {
+                LOGGER.error("Invalid credential format received from Key Vault");
+                throw new GuacamoleException("Failed to retrieve valid credentials");
             }
+        } catch (final GuacamoleException ex) {
+            throw ex;
         } catch (final Exception ex) {
-            LOGGER.error("Error fetching username and password", ex);
-            throw new GuacamoleException("Error fetching username and password: " + ex.getMessage());
+            LOGGER.error("Error fetching credentials from Key Vault: {}", ex.getClass().getSimpleName());
+            LOGGER.debug("Detailed error: ", ex);
+            throw new GuacamoleException("Failed to retrieve credentials from secure storage");
         }
-        final String json = String.format("{\"username\": \"%s\",\"password\": \"%s\"}", username, password);
-        credentials = new JSONObject(json);
+        
+        credentials = new JSONObject();
+        credentials.put("username", username);
+        credentials.put("password", password);
 
         return credentials;
     }

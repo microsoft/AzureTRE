@@ -73,10 +73,20 @@ public class AuthenticationProviderService {
                     "User must have a workspace owner or workspace researcher or Airlock Manager role",
                     CredentialsInfo.USERNAME_PASSWORD);
             }
-        } catch (final Exception ex) {
-            LOGGER.error("Could not validate token", ex);
+        } catch (final GuacamoleInvalidCredentialsException ex) {
+            // Re-throw without logging to avoid leaking role information
+            throw ex;
+        } catch (final com.auth0.jwt.exceptions.JWTVerificationException ex) {
+            // Re-throw JWT verification exceptions with their original message for debugging
+            LOGGER.error("JWT verification failed: {}", ex.getMessage());
             throw new GuacamoleInvalidCredentialsException(
-                "Could not validate token:" + ex.getMessage(),
+                ex.getMessage(),
+                CredentialsInfo.USERNAME_PASSWORD);
+        } catch (final Exception ex) {
+            LOGGER.error("Token validation failed: {}", ex.getClass().getSimpleName());
+            LOGGER.debug("Detailed validation error: ", ex);
+            throw new GuacamoleInvalidCredentialsException(
+                "Token validation failed",
                 CredentialsInfo.USERNAME_PASSWORD);
         }
     }
