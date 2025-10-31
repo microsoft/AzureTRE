@@ -1,4 +1,4 @@
-FROM maven:3-jdk-11-slim AS client_build
+FROM maven:3.9-eclipse-temurin-17-alpine AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 # cache dependencies in a separate layer
@@ -21,7 +21,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-RUN apk add --update --no-cache wget openssh openjdk11-jre \
+RUN apk add --update --no-cache wget openssh openjdk17-jre ca-certificates \
+    && update-ca-certificates \
     && ssh-keygen -A
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
