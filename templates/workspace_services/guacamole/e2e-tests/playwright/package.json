@@ -1,0 +1,15 @@
+{
+  "name": "guacamole-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for Guacamole TRE integration",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^20.11.0"
+  }
+}

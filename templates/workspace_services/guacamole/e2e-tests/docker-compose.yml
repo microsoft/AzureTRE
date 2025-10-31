@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Mock xrdp server for testing
+  xrdp:
+    image: danielguerra/ubuntu-xrdp:20.04
+    hostname: xrdp-test
+    ports:
+      - "3390:3389"
+    environment:
+      - TZ=UTC
+    networks:
+      - guac-test-network
+
+  # Guacamole server with TRE auth extension
+  guacamole:
+    build:
+      context: ../guacamole-server
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      # Azure TRE Configuration (mock values for testing)
+      - TRE_ID=test-tre
+      - API_URL=http://mock-api:8000
+      - WORKSPACE_ID=test-workspace
+      - KEYVAULT_URL=https://mock-keyvault.vault.azure.net/
+      - AAD_TENANT_ID=test-tenant-id
+      # OAuth2 Proxy Configuration
+      - OAUTH2_PROXY_CLIENT_ID=test-client-id
+      - OAUTH2_PROXY_CLIENT_SECRET=test-client-secret
+      - OAUTH2_PROXY_COOKIE_SECRET=test-cookie-secret-16-bytes
+      - OAUTH2_PROXY_OIDC_ISSUER_URL=https://login.microsoftonline.com/test-tenant-id/v2.0
+    depends_on:
+      - xrdp
+      - mock-api
+    networks:
+      - guac-test-network
+
+  # Mock TRE API server
+  mock-api:
+    image: mockserver/mockserver:5.15.0
+    ports:
+      - "8000:1080"
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/config/expectations.json
+      - MOCKSERVER_LOG_LEVEL=INFO
+    volumes:
+      - ./mock-api-config.json:/config/expectations.json:ro
+    networks:
+      - guac-test-network
+
+  # Playwright test runner
+  playwright:
+    build:
+      context: ./playwright
+      dockerfile: Dockerfile
+    depends_on:
+      - guacamole
+      - xrdp
+      - mock-api
+    environment:
+      - GUACAMOLE_URL=http://guacamole:80
+      - XRDP_HOST=xrdp
+      - XRDP_PORT=3389
+      - TEST_USERNAME=testuser
+      - TEST_PASSWORD=testpass
+    volumes:
+      - ./playwright/tests:/tests
+      - ./playwright/screenshots:/screenshots
+      - ./playwright/videos:/videos
+    networks:
+      - guac-test-network
+    command: npx playwright test --reporter=html
+
+networks:
+  guac-test-network:
+    driver: bridge
