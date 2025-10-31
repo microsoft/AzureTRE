@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-17-alpine AS client_build
+FROM maven:3.9-eclipse-temurin-17 AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 # cache dependencies in a separate layer
