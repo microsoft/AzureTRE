@@ -1,5 +1,10 @@
 FROM maven:3.9-eclipse-temurin-17 AS client_build
 
+# Update CA certificates in build stage to ensure Maven can access repositories
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 # cache dependencies in a separate layer
 RUN mvn package -Dmaven.test.skip
@@ -21,8 +26,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-RUN apk add --update --no-cache wget openssh openjdk17-jre ca-certificates \
-    && update-ca-certificates \
+RUN apk add --update --no-cache wget openssh openjdk17-jre ca-certificates ca-certificates-bundle \
+    && update-ca-certificates --fresh \
     && ssh-keygen -A
 
 ENV CATALINA_BASE=/usr/share/tomcat9/
