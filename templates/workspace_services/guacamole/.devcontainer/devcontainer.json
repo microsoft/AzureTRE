@@ -1,0 +1,92 @@
+{
+  "name": "Guacamole Development",
+  "image": "mcr.microsoft.com/devcontainers/java:1-17-bullseye",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nodeGypDependencies": true
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "moby": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-maven",
+        "ms-playwright.playwright",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-17",
+            "path": "/usr/local/sdkman/candidates/java/current",
+            "default": true
+          }
+        ],
+        "java.compile.nullAnalysis.mode": "automatic",
+        "maven.executable.path": "/usr/local/sdkman/candidates/maven/current/bin/mvn",
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "playwright.reuseBrowser": true
+      }
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "forwardPorts": [
+    8080,
+    3000,
+    4200,
+    5900,
+    3389
+  ],
+
+  "portsAttributes": {
+    "8080": {
+      "label": "Guacamole Web",
+      "onAutoForward": "notify"
+    },
+    "3000": {
+      "label": "Mock TRE API",
+      "onAutoForward": "silent"
+    },
+    "4200": {
+      "label": "Playwright UI Mode",
+      "onAutoForward": "notify"
+    },
+    "5900": {
+      "label": "VNC",
+      "onAutoForward": "silent"
+    },
+    "3389": {
+      "label": "RDP",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  "remoteUser": "vscode",
+
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/templates/workspace_services/guacamole",
+
+  "containerEnv": {
+    "JAVA_HOME": "/usr/local/sdkman/candidates/java/current",
+    "MAVEN_HOME": "/usr/local/sdkman/candidates/maven/current",
+    "PATH": "${containerEnv:PATH}:/usr/local/sdkman/candidates/maven/current/bin:/usr/local/sdkman/candidates/java/current/bin"
+  }
+}

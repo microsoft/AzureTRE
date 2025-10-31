@@ -12,6 +12,7 @@ ENHANCEMENTS:
   - Security fixes: automatic credential cleanup, exception message sanitization, secure JSON construction
   - Test coverage increased from 15 to 66 tests (46 unit + 20 integration tests)
   - Added comprehensive E2E test infrastructure with Docker Compose + xrdp + Playwright for end-to-end validation
+  - Added devcontainer configuration for Guacamole development with Java 17, Maven, Node.js 20, and Playwright
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
