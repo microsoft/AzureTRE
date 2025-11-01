@@ -4,11 +4,28 @@ const TEST_USERNAME = process.env.TEST_USERNAME || 'testuser';
 const TEST_PASSWORD = process.env.TEST_PASSWORD || 'testpass';
 const GUACAMOLE_URL = process.env.GUACAMOLE_URL || 'http://localhost:8080';
 
+// Helper to check for 502 errors
+async function checkFor502(page: Page) {
+  const content = await page.content();
+  if (content.includes('502 Bad Gateway') || content.includes('502')) {
+    const screenshot = await page.screenshot();
+    console.error('502 Bad Gateway detected!');
+    throw new Error('Backend service not responding - 502 Bad Gateway');
+  }
+}
+
 test.describe('Guacamole TRE Integration E2E Tests', () => {
   
   test.beforeEach(async ({ page }) => {
     // Set longer timeout for navigation
     page.setDefaultTimeout(30000);
+    
+    // Add response listener to catch 502 errors
+    page.on('response', response => {
+      if (response.status() === 502) {
+        console.error(`502 Bad Gateway from URL: ${response.url()}`);
+      }
+    });
   });
 
   test('should load Guacamole homepage', async ({ page }) => {

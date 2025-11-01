@@ -20,7 +20,8 @@ services:
     volumes:
       - ./nginx-test.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - guacamole-backend
+      guacamole-backend:
+        condition: service_healthy
     networks:
       - guac-test-network
 
@@ -37,10 +38,16 @@ services:
       # Disable oauth2-proxy for E2E tests (nginx injects headers directly)
       - DISABLE_OAUTH2_PROXY=true
     ports:
-      - "8081:8080"  # Expose backend directly for debugging
+      - "8081:80"  # Expose backend directly for debugging
     depends_on:
       - xrdp
       - mock-api
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
     networks:
       - guac-test-network
 
