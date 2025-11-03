@@ -20,13 +20,20 @@ async def send_message_notify_platform(message_properties: NotifyUkMessageInput)
     replaced_secondary_recipients = message_properties.secondary_recipients.replace(" ", "")
     secondary_recipients_list = replaced_secondary_recipients.split(",")
 
+    replaced_recipients = message_properties.recipients.replace(" ", "")
+    recipients_list = replaced_recipients.split(",")
+
+
     # This list will contain at least the Support Team email address.
     validated_secondary_recipients_list = []
-    validated_secondary_recipients_list.append(message_properties.recipients)
 
     # Remove malformed email addresses.
     # This regex will validate email addresses sent to the API.
     email_regex_validation = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
+    for email in recipients_list:
+        if email and re.fullmatch(email_regex_validation, email):
+            validated_secondary_recipients_list.append(email)
+
     if not secondary_recipients_list == '':
         for item in secondary_recipients_list:
             if(re.fullmatch(email_regex_validation, item)):
