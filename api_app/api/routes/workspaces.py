@@ -310,7 +310,26 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(get_current_workspace_owner_user)])
-async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+async def delete_workspace_service(response: Response, user=Depends(get_current_workspace_owner_user), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository))) -> OperationInResponse:
+    # If the workspace service owns an allocated address_space, remove it from the parent workspace before uninstall
+    try:
+        address_to_free = workspace_service.properties.get("address_space")
+        if address_to_free:
+            # ensure the workspace has the address_spaces property
+            workspace_address_spaces = workspace.properties.get("address_spaces", [])
+            if address_to_free in workspace_address_spaces:
+                new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
+                workspace_patch = ResourcePatch()
+                workspace_patch.properties = {"address_spaces": new_address_spaces}
+                try:
+                    await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
+                except CosmosAccessConditionFailedError:
+                    # let the client try again or fail the uninstall flow due to etag conflict
+                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+    except Exception:
+        # don't block uninstall if patching the workspace fails for unexpected reasons
+        logger.exception("Failed to free workspace address space before uninstall")
+
     if await delete_validation(workspace_service, workspace_service_repo):
         operation = await send_uninstall_message(
             resource=workspace_service,
