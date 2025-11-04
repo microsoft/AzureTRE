@@ -79,8 +79,8 @@ resource "azurerm_linux_web_app" "gitea" {
     vnet_route_all_enabled                        = true
 
     application_stack {
-      docker_image     = "${data.azurerm_container_registry.mgmt_acr.login_server}/microsoft/azuretre/gitea-workspace-service"
-      docker_image_tag = local.version
+      docker_image_name   = "microsoft/azuretre/gitea-workspace-service:${local.version}"
+      docker_registry_url = "https://${data.azurerm_container_registry.mgmt_acr.login_server}"
     }
   }
 
@@ -131,6 +131,14 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   }
 
   lifecycle { ignore_changes = [tags] }
+}
+
+
+
+# We create this association so that we can control access directly to Gitea in a simpler way.
+resource "azurerm_private_endpoint_application_security_group_association" "asg_block_external_gitea" {
+  private_endpoint_id           = azurerm_private_endpoint.gitea_private_endpoint.id
+  application_security_group_id = azurerm_application_security_group.asg_block_external_gitea.id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "gitea" {

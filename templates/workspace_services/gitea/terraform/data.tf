@@ -18,13 +18,13 @@ data "azurerm_subnet" "web_apps" {
 data "azurerm_subnet" "services" {
   name                 = "ServicesSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
-  resource_group_name  = data.azurerm_resource_group.ws.name
+  resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
 }
 
 data "azurerm_subnet" "mysql_gitea" {
   name                 = "MysqlGiteaSubnet"
   virtual_network_name = data.azurerm_virtual_network.ws.name
-  resource_group_name  = data.azurerm_resource_group.ws.name
+  resource_group_name  = data.azurerm_virtual_network.ws.resource_group_name
 }
 
 data "azurerm_private_dns_zone" "azurewebsites" {
