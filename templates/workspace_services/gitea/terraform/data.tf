@@ -91,3 +91,7 @@ data "azapi_resource_action" "ds" {
   response_export_values = ["*"]
 }
 
+data "azurerm_application_security_group" "asg_block_external_gitea" {
+  name                = local.asg-block-external-gitea
+  resource_group_name = data.azurerm_resource_group.ws.name
+}

@@ -133,12 +133,10 @@ resource "azurerm_private_endpoint" "gitea_private_endpoint" {
   lifecycle { ignore_changes = [tags] }
 }
 
-
-
 # We create this association so that we can control access directly to Gitea in a simpler way.
 resource "azurerm_private_endpoint_application_security_group_association" "asg_block_external_gitea" {
   private_endpoint_id           = azurerm_private_endpoint.gitea_private_endpoint.id
-  application_security_group_id = azurerm_application_security_group.asg_block_external_gitea.id
+  application_security_group_id = data.azurerm_application_security_group.asg_block_external_gitea.id
 }
 
 resource "azurerm_monitor_diagnostic_setting" "gitea" {
