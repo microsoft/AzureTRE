@@ -134,7 +134,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                         is_last_step = True
 
             if step_to_update is None:
-                raise ValueError(f"Error finding step {message.stepId} in operation {message.operationId}")
+                raise ValueError(f"Step {message.stepId} not found in operation {message.operationId}")
 
             # update the step status
             step_to_update.status = message.status
