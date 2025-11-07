@@ -109,6 +109,7 @@ async def test_supervisor_cleanup_on_exception():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Intentionally ignore KeyboardInterrupt to test cleanup logic after interruption
             pass
 
     # Verify task was created and cancelled during cleanup
