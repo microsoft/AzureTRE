@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 import os
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
@@ -139,8 +139,7 @@ def test_heartbeat_directory_creation():
     consumer = MockConsumerForEdgeCases(skip_init=True)
     consumer.heartbeat_file = "/tmp/test_dir/test_heartbeat.txt"
 
-    with patch("service_bus.service_bus_consumer.os.makedirs") as mock_makedirs, \
-            patch("builtins.open", create=True) as mock_open:
+    with patch("service_bus.service_bus_consumer.os.makedirs") as mock_makedirs:
 
         consumer.update_heartbeat()
 
