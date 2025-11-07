@@ -1,6 +1,7 @@
 import json
 import uuid
 import time
+from typing import Dict, List, Any
 
 from pydantic import ValidationError, parse_obj_as
 
@@ -73,15 +74,15 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
                     logger.debug("No sessions for this process. Will look again...")
 
-                except ServiceBusConnectionError:
+                except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
+                    logger.warning(f"Service Bus connection error (will retry): {e}")
 
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                    logger.exception(f"Unknown exception. Will retry - {e}")
+                    logger.exception(f"Unexpected error in message processing: {type(e).__name__}: {e}")
 
-    async def process_message(self, msg):
+    async def process_message(self, msg) -> bool:
         complete_message = False
         message = ""
 
@@ -115,6 +116,11 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
         try:
             # update the op
             operation = await self.operations_repo.get_operation_by_id(str(message.operationId))
+            
+            # Add null safety for operation steps
+            if not operation.steps:
+                raise ValueError(f"Operation {message.operationId} has no steps")
+                
             step_to_update = None
             is_last_step = False
 
@@ -128,7 +134,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                         is_last_step = True
 
             if step_to_update is None:
-                raise f"Error finding step {message.stepId} in operation {message.operationId}"
+                raise ValueError(f"Error finding step {message.stepId} in operation {message.operationId}")
 
             # update the step status
             step_to_update.status = message.status
@@ -159,7 +165,8 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
             # more steps in the op to do?
             if is_last_step is False:
-                assert current_step_index < (len(operation.steps) - 1)
+                if current_step_index >= len(operation.steps) - 1:
+                    raise ValueError(f"Invalid step index {current_step_index} for operation with {len(operation.steps)} steps")
                 next_step = operation.steps[current_step_index + 1]
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
@@ -255,7 +262,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
         return status
 
-    def create_updated_resource_document(self, resource: dict, message: DeploymentStatusUpdateMessage):
+    def create_updated_resource_document(self, resource: Dict[str, Any], message: DeploymentStatusUpdateMessage) -> Dict[str, Any]:
         """
         Merge the outputs with the resource document to persist
         """
@@ -268,7 +275,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
         return resource
 
-    def convert_outputs_to_dict(self, outputs_list: [Output]):
+    def convert_outputs_to_dict(self, outputs_list: List[Output]) -> Dict[str, Any]:
         """
         Convert a list of Porter outputs to a dictionary
         """
