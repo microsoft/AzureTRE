@@ -6,6 +6,9 @@ from azure.monitor.opentelemetry import configure_azure_monitor
 
 from core.config import APPLICATIONINSIGHTS_CONNECTION_STRING, LOGGING_LEVEL
 
+# Standard log format with worker ID
+LOG_FORMAT = '%(asctime)s - Worker %(worker_id)s - %(name)s - %(levelname)s - %(message)s'
+
 UNWANTED_LOGGERS = [
     "azure.core.pipeline.policies.http_logging_policy",
     "azure.eventhub._eventprocessor.event_processor",
@@ -85,7 +88,7 @@ def apply_worker_id_to_logger(logger_instance):
     # Update handlers to include worker_id in the format
     for handler in logger_instance.handlers:
         if isinstance(handler, logging.StreamHandler):
-            formatter = logging.Formatter('%(asctime)s - Worker %(worker_id)s - %(name)s - %(levelname)s - %(message)s')
+            formatter = logging.Formatter(LOG_FORMAT)
             handler.setFormatter(formatter)
 
 
@@ -116,14 +119,11 @@ def initialize_logging() -> logging.Logger:
             }
         )
 
-    # Custom log format including worker_id
-    log_format = '%(asctime)s - Worker %(worker_id)s - %(name)s - %(levelname)s - %(message)s'
-
     LoggingInstrumentor().instrument(
         set_logging_format=True,
         log_level=logging_level,
         tracer_provider=tracer._real_tracer,
-        log_format=log_format
+        log_format=LOG_FORMAT
     )
 
     # Set up a handler if none exists
