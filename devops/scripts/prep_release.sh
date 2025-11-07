@@ -39,34 +39,19 @@ cp CHANGELOG.md CHANGELOG.md.bak
 
 # Replace "Unreleased" with new version and date
 TODAY=$(date +%Y-%m-%d)
-sed -i "0,/## \[Unreleased\]/s//## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+sed -i "0,/## \(Unreleased\)/s//## ($NEW_VERSION) - $TODAY/" CHANGELOG.md
 
 # Add new Unreleased section at the top
 awk -v ver="$NEW_VERSION" '
-  NR==1 {print; print "## [Unreleased]\n\n* _No changes yet_\n"; next}
+  NR==1 {print; print "## (Unreleased)\n\n* _No changes yet_\n"; next}
   1
 ' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
-# Insert list_versions.sh output under the new version section
-VERSIONS_OUTPUT=$(devops/scripts/list_versions.sh)
-awk -v ver="$NEW_VERSION" -v vo="$VERSIONS_OUTPUT" '
-  BEGIN {printed=0}
-  {
-    print
-    if (!printed && $0 ~ "## \\["ver"\\]") {
-      print "\n### Component Versions\n"
-      print "```\n" vo "\n```"
-      printed=1
-    }
-  }
-' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
-
-echo "CHANGELOG.md updated. Please review and edit as needed."
-
 # 4. Commit and push
-# git add CHANGELOG.md
-# git commit -m "Prep for release $NEW_TAG"
-# git push -u origin "$BRANCH"
+
+git add CHANGELOG.md
+git commit -m "Prep for release $NEW_TAG"
+git push -u origin "$BRANCH"
 
 # 5. Create PR and link to issue
 GH_USER=$(gh api user --jq .login)
@@ -82,6 +67,7 @@ cat <<EOF
    - Title: $NEW_VERSION
    - Copy the relevant section from CHANGELOG.md as the description.
    - Add:
+     Output of devops/scripts/list_versions.sh
      Full Changelog: https://github.com/microsoft/AzureTRE/compare/<previous_tag>...$NEW_TAG
    - Mark as pre-release.
 

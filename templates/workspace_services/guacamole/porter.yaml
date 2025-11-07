@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.13.0
+version: 0.13.4
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -31,7 +31,7 @@ parameters:
     type: string
   - name: image_tag
     type: string
-    default: ""   # will use the value in the version.txt file unless provided
+    default: "" # will use the value in the version.txt file unless provided
     description: "The tag of the guacamole image"
   - name: mgmt_acr_name
     type: string
@@ -110,6 +110,9 @@ parameters:
     default: false
   - name: arm_environment
     type: string
+  - name: workspace_subscription_id
+    type: string
+    default: ""
 
 outputs:
   - name: authentication_callback_uri
@@ -154,6 +157,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -188,6 +192,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -222,6 +227,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

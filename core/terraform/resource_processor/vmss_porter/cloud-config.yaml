@@ -20,7 +20,7 @@ packages:
   - [containerd.io, 1.7.27-1]
   - [docker-compose, 1.29.2-1]
   - [azure-cli, 2.74.0-1~jammy]
-  - [gnupg2, 2.2.27-3ubuntu2.3]
+  - [gnupg2, 2.2.27-3ubuntu2.4]
   - [pass, 1.7.4-5]
 
 # create the docker group

@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "fwtransit" {
   count               = var.firewall_force_tunnel_ip != "" ? 0 : 1
   name                = "pip-fw-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
+  resource_group_name = var.resource_group_name
   location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
@@ -29,7 +29,7 @@ resource "azurerm_public_ip" "fwmanagement" {
 
 resource "azurerm_firewall" "fw" {
   name                = local.firewall_name
-  resource_group_name = local.core_resource_group_name
+  resource_group_name = var.resource_group_name
   location            = var.location
   sku_tier            = local.effective_firewall_sku
   sku_name            = "AZFW_VNet"
