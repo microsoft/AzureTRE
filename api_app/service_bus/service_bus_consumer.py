@@ -1,5 +1,6 @@
 import asyncio
 import os
+import tempfile
 import time
 
 from services.logging import logger
@@ -15,7 +16,6 @@ class ServiceBusConsumer:
 
     def __init__(self, heartbeat_file_prefix: str):
         # Create a unique identifier for this worker process
-        import tempfile
         self.worker_id = os.getpid()
         temp_dir = tempfile.gettempdir()
         self.heartbeat_file = os.path.join(temp_dir, f"{heartbeat_file_prefix}_heartbeat_{self.worker_id}.txt")
@@ -90,6 +90,7 @@ class ServiceBusConsumer:
                         try:
                             await task
                         except asyncio.CancelledError:
+                            # Expected when cancelling a task - ignore and proceed with restart
                             pass
                         task = None
                 except Exception as e:
