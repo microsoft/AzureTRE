@@ -166,7 +166,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
             # more steps in the op to do?
             if is_last_step is False:
                 if current_step_index >= len(operation.steps) - 1:
-                    raise ValueError(f"Invalid step index {current_step_index} for operation with {len(operation.steps)} steps")
+                    raise ValueError(f"Step index {current_step_index} is the last step in operation (has {len(operation.steps)} steps), but more steps were expected")
                 next_step = operation.steps[current_step_index + 1]
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
