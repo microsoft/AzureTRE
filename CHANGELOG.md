@@ -18,6 +18,7 @@ ENHANCEMENTS:
 * Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
 * Improve documentation on `address_space` allocation ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Upgrade to CodeQL v4 actions ([#4750](https://github.com/microsoft/AzureTRE/pull/4750))
 
 BUG FIXES:
 * Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
@@ -29,6 +30,7 @@ BUG FIXES:
 * Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
 * Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
+* Add Loading spinner to shared services page ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
 * Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
 * Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
