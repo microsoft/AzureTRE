@@ -5,8 +5,7 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies (disable strict SSL for environments with self-signed certs)
-RUN npm config set strict-ssl false && npm ci && npm config set strict-ssl true
+RUN npm install
 
 # Copy test files
 COPY . .

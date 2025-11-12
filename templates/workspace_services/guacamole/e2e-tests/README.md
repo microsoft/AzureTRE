@@ -29,35 +29,46 @@ The E2E test suite validates the complete Guacamole workflow including:
 ## Prerequisites
 
 - Docker and Docker Compose
+- Azure CLI (`az`) with access to create app registrations
 - Network access to:
   - Maven Central (for building Guacamole auth extension)
   - Apache mirrors (for Guacamole and Tomcat downloads)
   - Docker Hub (for base images)
   - GitHub (for oauth2-proxy and other dependencies)
 
+  Sign in with the Azure CLI (`az login`) before running the setup commands below.
+
 ## Setup
 
-1. **Build the Guacamole Image** (if not already built):
+For an end-to-end run (including Azure AD provisioning and cleanup), execute:
+
+```bash
+./run-tests.sh full
+```
+
+The command performs all steps below automatically and deletes the temporary app registration when finished. To run individual steps manually, follow the sequence here:
+
+1. **Provision Azure AD credentials for OAuth2 proxy** (creates an app registration and `.env` file):
    ```bash
-   cd ../guacamole-server
-   docker build -f docker/Dockerfile -t guacamole-tre:latest .
+   ./run-tests.sh setup-auth
    ```
 
-2. **Start the Test Environment**:
+2. **Build the Guacamole image** (from source):
    ```bash
-   docker-compose up -d
+   ./run-tests.sh build
    ```
 
-3. **Run the Tests**:
-   ```bash
-   # Run tests in the Playwright container
-   docker-compose run playwright npx playwright test
+3. **Start the Docker Compose environment**:
+  ```bash
+  ./run-tests.sh up
+  ```
 
-   # Or run tests locally (if Playwright is installed)
-   cd playwright
-   npm install
-   GUACAMOLE_URL=http://localhost:8080 npx playwright test
-   ```
+4. **Execute the Playwright suite** (pick the mode you prefer):
+  ```bash
+  ./run-tests.sh test          # headless
+  ./run-tests.sh test-headed   # with browser UI
+  ./run-tests.sh test-debug    # Playwright inspector
+  ```
 
 ## Test Cases
 
@@ -117,6 +128,21 @@ All test screenshots are saved to `./playwright/screenshots/` and can be used to
 | `TEST_USERNAME` | `testuser` | Test username for RDP |
 | `TEST_PASSWORD` | `testpass` | Test password for RDP |
 
+### OAuth Configuration
+
+The `./run-tests.sh setup-auth` command generates `./.env` with the parameters required by oauth2-proxy and the Guacamole extension:
+
+| Variable | Description |
+|----------|-------------|
+| `GUAC_OIDC_TENANT_ID` | Azure AD tenant that hosts the test app registration |
+| `GUAC_OIDC_CLIENT_ID` | Client (application) ID of the test registration |
+| `GUAC_OIDC_CLIENT_SECRET` | Client secret created for oauth2-proxy |
+| `GUAC_OIDC_REDIRECT_URI` | Redirect URI registered for tests (default `http://localhost/oauth2/callback`) |
+| `GUAC_OIDC_EMAIL_DOMAIN` | Allowed email domain for oauth2-proxy (defaults to `*`) |
+| `GUAC_OIDC_ISSUER_URL` | OIDC issuer discovery endpoint |
+| `GUAC_OIDC_AUDIENCE` | API audience used by the Guacamole auth extension |
+| `GUACAMOLE_URL` | Base URL used by Playwright (defaults to `http://guacamole-backend:8085`) |
+
 ### Mock API Configuration
 
 The mock API (`mock-api-config.json`) simulates TRE API responses for:
@@ -137,10 +163,17 @@ If the Guacamole Docker build fails with SSL/certificate errors:
 ### Tests Fail to Connect
 
 If Playwright tests cannot reach Guacamole:
-1. Verify all containers are running: `docker-compose ps`
-2. Check container logs: `docker-compose logs guacamole`
+1. Verify all containers are running: `docker compose ps`
+2. Check container logs: `docker compose logs guacamole-backend`
 3. Ensure ports are not already in use
-4. Verify network connectivity: `docker-compose exec playwright ping guacamole`
+4. Verify network connectivity: `docker compose exec playwright ping guacamole-backend`
+
+### OAuth2 Proxy Startup Errors
+
+If `guacamole-backend` exits with OIDC discovery or configuration errors:
+1. Confirm Azure CLI is logged in: `az account show`
+2. Regenerate credentials: `./run-tests.sh setup-auth`
+3. Check that `.env` contains the expected `GUAC_OIDC_*` variables
 
 ### No VMs Displayed
 

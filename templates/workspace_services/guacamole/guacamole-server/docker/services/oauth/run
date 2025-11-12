@@ -17,6 +17,7 @@ cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- 
 --http-address http://0.0.0.0:8085 \
 --https-address https://0.0.0.0:8086 \
 --cookie-secure true \
+--skip-claims-from-profile-url \
 --reverse-proxy true \
 --pass-access-token true \
 --set-xauthrequest true \

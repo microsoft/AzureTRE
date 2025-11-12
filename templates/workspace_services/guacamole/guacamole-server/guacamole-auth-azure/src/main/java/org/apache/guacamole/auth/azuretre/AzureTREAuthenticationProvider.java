@@ -29,9 +29,11 @@ import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.UserContext;
 import org.slf4j.Logger;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -62,21 +64,18 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     @Override
     public AuthenticatedUser updateAuthenticatedUser(AuthenticatedUser authenticatedUser, Credentials credentials)
         throws GuacamoleException {
-        LOGGER.info("updateAuthenticatedUser");
         AuthenticatedUser updated = authenticateUser(credentials);
-
-        LOGGER.info("updateAuthenticatedUser - done");
         return updated;
     }
 
 
     @Override
     public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) {
-        LOGGER.info("Authenticating user");
+        final HttpServletRequest request = credentials.getRequest();
 
         // Getting headers from the oauth2 proxy
-        final String accessToken = credentials.getRequestDetails().getHeader("X-Forwarded-Access-Token");
-        final String prefUsername = credentials.getRequestDetails().getHeader("X-Forwarded-Preferred-Username");
+        String accessToken = request.getHeader("X-Forwarded-Access-Token");
+        String prefUsername = credentials.getRequestDetails().getHeader("X-Forwarded-Preferred-Username");
 
         if (Strings.isNullOrEmpty(accessToken)) {
             LOGGER.error("access token was not provided");
@@ -92,36 +91,31 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
     @Override
     public UserContext getUserContext(final AuthenticatedUser authenticatedUser) throws GuacamoleException {
-        LOGGER.debug("Getting user context.");
-
         if (authenticatedUser instanceof AzureTREAuthenticatedUser) {
             final AzureTREAuthenticatedUser user = (AzureTREAuthenticatedUser) authenticatedUser;
             final String accessToken = user.getAccessToken();
-
-            LOGGER.debug("Getting configurations in order to populate user context.");
-            var connections = ConnectionService.getConnections(user);
-
-            LOGGER.debug("Creating user context.");
-            final TreUserContext treUserContext = new TreUserContext(this, connections);
-            treUserContext.init(user);
 
           // Validate the token 'again', the OpenID extension verified it, but it didn't verify
           // that we got the correct roles. The fact that a valid token was returned doesn't mean
           // this user is an Owner or a Researcher. If its not, break, don't try to get any VMs.
           // Note: At the moment there is NO apparent way to UN-Authorize a user that a previous
           // extension authorized... (The user will see an empty list of VMs)
-          // Note2: The API app will also verify the token an in any case will not return any vms
+          // Note2: The API app will also verify the token and in any case will not return any VMs
           // in this case.
             try {
                 LOGGER.info("Validating token");
-                final UrlJwkProvider jwkProvider =
-                    new UrlJwkProvider(new URL(System.getenv("OAUTH2_PROXY_JWKS_ENDPOINT")));
+                final UrlJwkProvider jwkProvider = new UrlJwkProvider(new URL(System.getenv("OAUTH2_PROXY_JWKS_ENDPOINT")));
                 authenticationProviderService.validateToken(accessToken, jwkProvider);
             } catch (final Exception ex) {
                 // Failed to validate the token
                 LOGGER.error("Failed to validate token. ex: " + ex);
                 return null;
             }
+
+            // Token validation succeeded, it is now safe to hydrate the session with TRE connections.
+            var connections = ConnectionService.getConnections(user);
+            final TreUserContext treUserContext = new TreUserContext(this, connections);
+            treUserContext.init(user);
 
             return treUserContext;
         }
@@ -132,9 +126,6 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
     public UserContext updateUserContext(UserContext context, AuthenticatedUser authenticatedUser,
         Credentials credentials)
         throws GuacamoleException {
-        LOGGER.debug("Updating usercontext");
-        var userContext = getUserContext(authenticatedUser);
-
-        return userContext;
+        return getUserContext(authenticatedUser);
     }
 }

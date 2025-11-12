@@ -1,9 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const GUACAMOLE_URL = process.env.GUACAMOLE_URL || 'http://localhost:8080';
+const TEST_DIR = process.env.PLAYWRIGHT_TEST_DIR || './tests';
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: TEST_DIR,
   timeout: 60000,
   expect: {
     timeout: 10000,
