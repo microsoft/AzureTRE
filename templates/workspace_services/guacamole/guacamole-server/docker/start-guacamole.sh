@@ -34,7 +34,7 @@ start_tomcat() {
   else
     log "Application Insights disabled (missing APPLICATIONINSIGHTS_CONNECTION_STRING)"
   fi
-  /usr/share/tomcat9/bin/catalina.sh run &
+  bash /usr/share/tomcat9/bin/catalina.sh run &
   tomcat_pid=$!
 }
 

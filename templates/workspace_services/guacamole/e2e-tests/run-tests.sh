@@ -2,7 +2,7 @@
 # Guacamole E2E Test Runner
 # This script simplifies running the end-to-end tests
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"

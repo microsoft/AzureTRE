@@ -89,7 +89,9 @@ public final class TokenInjectingConnection extends SimpleConnection {
         String password = null;
 
         try {
-            LOGGER.debug("Loading credentials from Azure Key Vault");
+            LOGGER.debug(
+                "Loading credentials from Azure Key Vault for secret {}",
+                resourceName);
             final String keyVaultUri = System.getenv("KEYVAULT_URL");
             final String managedIdentityClientId = System.getenv(
                 "MANAGED_IDENTITY_CLIENT_ID");

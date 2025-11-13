@@ -36,22 +36,22 @@ RUN mkdir -p "$GUACAMOLE_HOME" "$GUACAMOLE_LIB" /guac-transfer "$OAUTH2_PROXY_HO
 
 RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
     TOMCAT_VER="9.0.111" && \
-    wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:giga && \
+    wget -O "$TOMCAT_ARCHIVE" -N "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VER}/bin/apache-tomcat-${TOMCAT_VER}.tar.gz" --progress=dot:mega && \
     tar xzf "$TOMCAT_ARCHIVE" && \
     rm -f "$TOMCAT_ARCHIVE" && \
     mv "apache-tomcat-${TOMCAT_VER}/" "$CATALINA_BASE"
 
-RUN sed -i "s#port=\"8080\"#port=\"8080\" maxHttpHeaderSize=\"262144\"#" "$CATALINA_BASE/conf/server.xml" && \
+RUN sed -i "s#port=\"8080\"#port=\"8080\" maxHttpHeaderSize=\"65536\"#" "$CATALINA_BASE/conf/server.xml" && \
     sed -i "s#unpackWARs=\"true\" autoDeploy=\"true\">#><Context path=\"guacamole\" docBase=\"${GUACAMOLE_HOME}guacamole.war\"/>#" "$CATALINA_BASE/conf/server.xml"
 
-RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
+RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:mega
 
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
-    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.13.0/oauth2-proxy-v7.13.0.linux-amd64.tar.gz" --progress=dot:giga && \
+    wget -O "$OAUTH2_PROXY_ARCHIVE" "https://github.com/oauth2-proxy/oauth2-proxy/releases/download/v7.13.0/oauth2-proxy-v7.13.0.linux-amd64.tar.gz" --progress=dot:mega && \
     tar zxpf "$OAUTH2_PROXY_ARCHIVE" -C "$OAUTH2_PROXY_HOME" --strip-components=1 && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"
 
-RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.7.4/applicationinsights-agent-3.7.4.jar" --progress=dot:giga
+RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.7.4/applicationinsights-agent-3.7.4.jar" --progress=dot:mega
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 COPY ./docker/start-guacamole.sh /usr/local/bin/start-guacamole.sh
