@@ -33,13 +33,26 @@ import org.slf4j.LoggerFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
 
-public class AuthenticationProviderService {
+/**
+ * Service responsible for validating access tokens issued to TRE users.
+ */
+public final class AuthenticationProviderService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AzureTREAuthenticationProvider.class);
+    /** Logger for validation errors. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+        AzureTREAuthenticationProvider.class);
 
-    public void validateToken(final String token, final UrlJwkProvider jwkProvider)
+    /**
+     * Validates the supplied JWT token using the provided JWK provider.
+     *
+     * @param token        access token presented by the client.
+     * @param jwkProvider  provider used to resolve signing keys.
+     * @throws GuacamoleInvalidCredentialsException if validation fails.
+     */
+    public void validateToken(
+        final String token,
+        final UrlJwkProvider jwkProvider)
         throws GuacamoleInvalidCredentialsException {
-
         try {
             if (System.getenv("AUDIENCE").length() == 0) {
                 throw new Exception("AUDIENCE is not provided");
@@ -49,7 +62,9 @@ public class AuthenticationProviderService {
             }
 
             final Jwk jwk = jwkProvider.get(JWT.decode(token).getKeyId());
-            final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
+            final Algorithm algorithm = Algorithm.RSA256(
+                (RSAPublicKey) jwk.getPublicKey(),
+                null);
             final JWTVerifier verifier = JWT.require(algorithm)
                 .withAudience(System.getenv("AUDIENCE"))
                 .withClaimPresence("roles")
@@ -57,34 +72,39 @@ public class AuthenticationProviderService {
                 .build();
 
             final DecodedJWT jwt = verifier.verify(token);
-            // Since we verify we have the correct Audience we validate the token if at least one role is present, no
-            // matter which one.
             final Claim roles = jwt.getClaim("roles");
-            if (roles == null || roles.isNull() || roles.asArray(Object.class).length == 0) {
+            if (roles == null
+                || roles.isNull()
+                || roles.asArray(Object.class).length == 0) {
                 throw new GuacamoleInvalidCredentialsException(
-                    "Token must contain a 'roles' claim", CredentialsInfo.USERNAME_PASSWORD);
+                    "Token must contain a 'roles' claim",
+                    CredentialsInfo.USERNAME_PASSWORD);
             }
 
-            List<String> rolesList = roles.asList(String.class);
-            if (rolesList.stream().noneMatch(x -> x.equalsIgnoreCase("WorkspaceOwner")
-                || x.equalsIgnoreCase("WorkspaceResearcher")
-                || x.equalsIgnoreCase("AirlockManager"))) {
+            final List<String> rolesList = roles.asList(String.class);
+            final boolean hasAuthorisedRole = rolesList.stream().anyMatch(
+                role -> role.equalsIgnoreCase("WorkspaceOwner")
+                    || role.equalsIgnoreCase("WorkspaceResearcher")
+                    || role.equalsIgnoreCase("AirlockManager"));
+            if (!hasAuthorisedRole) {
                 throw new GuacamoleInvalidCredentialsException(
-                    "User must have a workspace owner or workspace researcher or Airlock Manager role",
+                    "User must have workspace owner, workspace researcher, "
+                        + "or Airlock Manager role",
                     CredentialsInfo.USERNAME_PASSWORD);
             }
         } catch (final GuacamoleInvalidCredentialsException ex) {
-            // Re-throw without logging to avoid leaking role information
+            // Re-throw without logging to avoid leaking role information.
             throw ex;
         } catch (final com.auth0.jwt.exceptions.JWTVerificationException ex) {
-            // Re-throw JWT verification exceptions with their original message for debugging
             LOGGER.error("JWT verification failed: {}", ex.getMessage());
             throw new GuacamoleInvalidCredentialsException(
                 ex.getMessage(),
                 CredentialsInfo.USERNAME_PASSWORD);
         } catch (final Exception ex) {
-            LOGGER.error("Token validation failed: {}", ex.getClass().getSimpleName());
-            LOGGER.debug("Detailed validation error: ", ex);
+            LOGGER.error(
+                "Token validation failed: {}",
+                ex.getClass().getSimpleName());
+            LOGGER.debug("Detailed validation error", ex);
             throw new GuacamoleInvalidCredentialsException(
                 "Token validation failed",
                 CredentialsInfo.USERNAME_PASSWORD);

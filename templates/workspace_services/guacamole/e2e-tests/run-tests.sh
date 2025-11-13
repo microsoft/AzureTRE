@@ -101,7 +101,7 @@ validate_service() {
 
     if ! printf '%s\n' "$valid_services" | grep -Fx -- "$service" >/dev/null; then
         echo -e "${RED}✗ Invalid service '${service}'. Available services:${NC}"
-        printf '  - %s\n' $valid_services
+        printf '  - %s\n' "$valid_services"
         exit 1
     fi
 }
