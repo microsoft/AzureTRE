@@ -70,7 +70,6 @@ services:
     environment:
       - GUACAMOLE_URL=http://guacamole-backend:8085
     volumes:
-      - ./playwright/tests:/app/tests
       - ./playwright/screenshots:/screenshots
       - ./playwright/videos:/videos
     networks:

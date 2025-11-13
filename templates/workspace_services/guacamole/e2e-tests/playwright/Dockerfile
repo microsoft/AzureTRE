@@ -7,8 +7,9 @@ COPY package.json package-lock.json* ./
 
 RUN npm install
 
-# Copy test files
+# Copy Playwright project files (tests live under ./tests)
 COPY . .
 
 # Run tests
 CMD ["npx", "playwright", "test"]
+

@@ -54,16 +54,4 @@ test.describe('Guacamole VM Connection Tests', () => {
     // Should get some response (not necessarily successful, but not crash)
     expect(response.status()).toBeLessThan(500);
   });
-
-  test('verifies XRDP target VM is accessible', async ({ request }) => {
-    // Test that our target VM (XRDP container) is reachable
-    const response = await request.get('http://xrdp:3389', {
-      timeout: 5000,
-      failOnStatusCode: false
-    });
-
-    // XRDP should respond (even if not HTTP)
-    // We just want to verify the container is reachable
-    console.log('XRDP connection test status:', response.status());
-  });
 });

@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -29,16 +30,19 @@ import static org.mockito.Mockito.*;
 public class LocalIntegrationTest {
 
     private MockWebServer mockApiServer;
-    
+
     @Mock
     private Credentials credentialsMock;
-    
+
     @Mock
     private RequestDetails requestDetailsMock;
 
+    @Mock
+    private HttpServletRequest httpServletRequest;
+
     private AzureTREAuthenticationProvider authProvider;
     private String mockApiUrl;
-    
+
     private static final String TEST_WORKSPACE_ID = "test-workspace-123";
     private static final String TEST_SERVICE_ID = "test-service-456";
     private static final String TEST_USERNAME = "testuser@domain.com";
@@ -50,8 +54,13 @@ public class LocalIntegrationTest {
         mockApiServer = new MockWebServer();
         mockApiServer.start();
         mockApiUrl = mockApiServer.url("/").toString().replaceAll("/$", "");
-        
+
         authProvider = new AzureTREAuthenticationProvider();
+    }
+
+    private void stubCredentialRequest() {
+        when(credentialsMock.getRequest()).thenReturn(httpServletRequest);
+        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
     }
 
     @AfterEach
@@ -64,8 +73,8 @@ public class LocalIntegrationTest {
     @Test
     public void testSuccessfulAuthentication() throws GuacamoleException {
         // Setup: Mock the RequestDetails to return valid headers
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(TEST_USERNAME);
 
         // Execute: Authenticate user
@@ -73,19 +82,19 @@ public class LocalIntegrationTest {
 
         // Verify: User was authenticated successfully
         assertNotNull(authenticatedUser, "User should be authenticated");
-        assertEquals(TEST_USERNAME.toLowerCase(), authenticatedUser.getIdentifier(), 
+        assertEquals(TEST_USERNAME.toLowerCase(), authenticatedUser.getIdentifier(),
             "Username should be normalized to lowercase");
-        assertEquals(TEST_TOKEN, authenticatedUser.getAccessToken(), 
+        assertEquals(TEST_TOKEN, authenticatedUser.getAccessToken(),
             "Access token should match");
-        assertEquals(credentialsMock, authenticatedUser.getCredentials(), 
+        assertEquals(credentialsMock, authenticatedUser.getCredentials(),
             "Credentials should be preserved");
     }
 
     @Test
     public void testAuthenticationFailsWithMissingToken() {
         // Setup: Mock missing access token
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(null);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(null);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(TEST_USERNAME);
 
         // Execute & Verify: Authentication should fail
@@ -96,8 +105,8 @@ public class LocalIntegrationTest {
     @Test
     public void testAuthenticationFailsWithEmptyToken() {
         // Setup: Mock empty token
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn("");
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn("");
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(TEST_USERNAME);
 
         // Execute & Verify: Should fail with empty token
@@ -108,8 +117,8 @@ public class LocalIntegrationTest {
     @Test
     public void testAuthenticationFailsWithMissingUsername() {
         // Setup: Mock missing username
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(null);
 
         // Execute & Verify: Authentication should fail
@@ -120,8 +129,8 @@ public class LocalIntegrationTest {
     @Test
     public void testAuthenticationFailsWithEmptyUsername() {
         // Setup: Mock empty username
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn("");
 
         // Execute & Verify: Should fail with empty username
@@ -132,9 +141,9 @@ public class LocalIntegrationTest {
     @Test
     public void testUsernameNormalization() {
         // Setup: Mock credentials with mixed-case username
+        stubCredentialRequest();
         String mixedCaseUsername = "TestUser@Domain.COM";
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(mixedCaseUsername);
 
         // Execute
@@ -142,15 +151,15 @@ public class LocalIntegrationTest {
 
         // Verify: Username should be normalized to lowercase
         assertNotNull(user, "User should be authenticated");
-        assertEquals(mixedCaseUsername.toLowerCase(), user.getIdentifier(), 
+        assertEquals(mixedCaseUsername.toLowerCase(), user.getIdentifier(),
             "Username should be converted to lowercase");
     }
 
     @Test
     public void testAuthenticationPreservesTokenAndCredentials() {
         // Setup
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(TEST_USERNAME);
 
         // Execute
@@ -158,11 +167,11 @@ public class LocalIntegrationTest {
 
         // Verify: All authentication data is preserved
         assertNotNull(user, "User should be authenticated");
-        assertSame(credentialsMock, user.getCredentials(), 
+        assertSame(credentialsMock, user.getCredentials(),
             "Original credentials object should be preserved");
-        assertEquals(TEST_TOKEN, user.getAccessToken(), 
+        assertEquals(TEST_TOKEN, user.getAccessToken(),
             "Access token should be stored");
-        assertNotNull(user.getAuthenticationProvider(), 
+        assertNotNull(user.getAuthenticationProvider(),
             "Authentication provider should be set");
     }
 
@@ -183,7 +192,7 @@ public class LocalIntegrationTest {
             "        }\n" +
             "    ]\n" +
             "}";
-        
+
         mockApiServer.enqueue(new MockResponse()
             .setBody(mockVmResponse)
             .setResponseCode(200)
@@ -191,17 +200,17 @@ public class LocalIntegrationTest {
 
         // Verify: Mock server is ready and response is valid
         assertNotNull(mockVmResponse, "Mock response should be defined");
-        assertTrue(mockVmResponse.contains("userResources"), 
+        assertTrue(mockVmResponse.contains("userResources"),
             "Response should contain userResources");
-        assertTrue(mockVmResponse.contains("vm-test-123"), 
+        assertTrue(mockVmResponse.contains("vm-test-123"),
             "Response should contain test VM data");
     }
 
     @Test
     public void testMultipleAuthenticationAttempts() {
         // Setup: Prepare for multiple authentication attempts
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        stubCredentialRequest();
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(TEST_USERNAME);
 
         // Execute: Multiple authentication calls
@@ -211,16 +220,16 @@ public class LocalIntegrationTest {
         // Verify: Both authentications should succeed independently
         assertNotNull(user1, "First authentication should succeed");
         assertNotNull(user2, "Second authentication should succeed");
-        assertEquals(user1.getIdentifier(), user2.getIdentifier(), 
+        assertEquals(user1.getIdentifier(), user2.getIdentifier(),
             "Both authentications should return same user identifier");
     }
 
     @Test
     public void testAuthenticationWithSpecialCharacters() {
         // Setup: Username with special characters
+        stubCredentialRequest();
         String specialUsername = "test.user+tag@sub.domain.com";
-        when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
-        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
+        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(TEST_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(specialUsername);
 
         // Execute
@@ -228,7 +237,7 @@ public class LocalIntegrationTest {
 
         // Verify: Special characters should be handled correctly
         assertNotNull(user, "User with special characters should be authenticated");
-        assertEquals(specialUsername.toLowerCase(), user.getIdentifier(), 
+        assertEquals(specialUsername.toLowerCase(), user.getIdentifier(),
             "Special characters should be preserved in lowercase");
     }
 }

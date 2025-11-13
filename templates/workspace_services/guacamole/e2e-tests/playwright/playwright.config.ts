@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const GUACAMOLE_URL = process.env.GUACAMOLE_URL || 'http://localhost:8080';
-const TEST_DIR = process.env.PLAYWRIGHT_TEST_DIR || './tests';
+const TEST_DIR = process.env.PLAYWRIGHT_TEST_DIR || 'tests';
 
 export default defineConfig({
   testDir: TEST_DIR,

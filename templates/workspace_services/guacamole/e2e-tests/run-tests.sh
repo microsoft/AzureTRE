@@ -97,6 +97,11 @@ print_section() {
     echo
 }
 
+build_playwright_image() {
+    print_section "Building Playwright test runner image..."
+    docker compose build playwright
+}
+
 configure_mock_api() {
     if ! command -v curl >/dev/null 2>&1; then
         echo -e "${YELLOW}⚠ curl is not available; skipping mock API configuration${NC}"
@@ -172,6 +177,7 @@ case "$COMMAND" in
 
     test)
         require_auth_env
+        build_playwright_image
         configure_mock_api
         print_section "Running Playwright tests..."
         docker compose run --rm playwright npx playwright test
@@ -179,6 +185,7 @@ case "$COMMAND" in
 
     test-report)
         require_auth_env
+        build_playwright_image
         configure_mock_api
         print_section "Running Playwright tests with live HTML report..."
         echo "Report will be served at http://localhost:9323 (press Ctrl+C to stop the viewer)."
@@ -192,6 +199,7 @@ case "$COMMAND" in
 
     test-headed)
         require_auth_env
+        build_playwright_image
         configure_mock_api
         print_section "Running Playwright tests in headed mode..."
         docker compose run --rm playwright npx playwright test --headed
@@ -199,6 +207,7 @@ case "$COMMAND" in
 
     test-debug)
         require_auth_env
+        build_playwright_image
         configure_mock_api
         print_section "Running Playwright tests in debug mode..."
         docker compose run --rm playwright npx playwright test --debug
@@ -245,6 +254,7 @@ case "$COMMAND" in
         COMPOSE_STARTED=1
         configure_mock_api
 
+        build_playwright_image
         print_section "Running Playwright tests..."
         docker compose run --rm playwright npx playwright test
 
