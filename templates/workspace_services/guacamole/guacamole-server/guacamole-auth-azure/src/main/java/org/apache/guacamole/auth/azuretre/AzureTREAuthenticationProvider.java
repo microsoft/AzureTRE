@@ -29,11 +29,9 @@ import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Credentials;
 import org.apache.guacamole.net.auth.UserContext;
 import org.slf4j.Logger;
-import javax.servlet.http.HttpServletRequest;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-
 
 public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvider {
 
@@ -71,10 +69,9 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
 
     @Override
     public AzureTREAuthenticatedUser authenticateUser(final Credentials credentials) {
-        final HttpServletRequest request = credentials.getRequest();
 
         // Getting headers from the oauth2 proxy
-        String accessToken = request.getHeader("X-Forwarded-Access-Token");
+        String accessToken = credentials.getRequestDetails().getHeader("X-Forwarded-Access-Token");
         String prefUsername = credentials.getRequestDetails().getHeader("X-Forwarded-Preferred-Username");
 
         if (Strings.isNullOrEmpty(accessToken)) {
@@ -98,10 +95,6 @@ public class AzureTREAuthenticationProvider extends AbstractAuthenticationProvid
           // Validate the token 'again', the OpenID extension verified it, but it didn't verify
           // that we got the correct roles. The fact that a valid token was returned doesn't mean
           // this user is an Owner or a Researcher. If its not, break, don't try to get any VMs.
-          // Note: At the moment there is NO apparent way to UN-Authorize a user that a previous
-          // extension authorized... (The user will see an empty list of VMs)
-          // Note2: The API app will also verify the token and in any case will not return any VMs
-          // in this case.
             try {
                 LOGGER.info("Validating token");
                 final UrlJwkProvider jwkProvider = new UrlJwkProvider(new URL(System.getenv("OAUTH2_PROXY_JWKS_ENDPOINT")));

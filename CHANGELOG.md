@@ -5,14 +5,7 @@ ENHANCEMENTS:
 * Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
 * Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
-* Upgrade Guacamole to v1.6.0 with Java 17, migrate from deprecated Credentials.getRequest() to RequestDetails API, fix security issues, and add comprehensive integration tests
-  - Guacamole components upgraded: guacamole-ext (1.5.5 → 1.6.0), guacd (1.5.5 → 1.6.0), guacamole.war (1.5.5 → 1.6.0)
-  - Tomcat upgraded from 9.0.98 to 9.0.111 with latest security patches
-  - Java upgraded from 11 to 17 with Eclipse Temurin for updated CA certificates and SSL support
-  - Security fixes: automatic credential cleanup, exception message sanitization, secure JSON construction
-  - Test coverage increased from 15 to 66 tests (46 unit + 20 integration tests)
-  - Added comprehensive E2E test infrastructure with Docker Compose + xrdp + Playwright for end-to-end validation
-  - Added devcontainer configuration for Guacamole development with Java 17, Maven, Node.js 20, and Playwright
+* Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 
 BUG FIXES:
 * Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))

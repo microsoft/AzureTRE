@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # hadolint ignore=DL3002
 USER root
 
-RUN apk add --update --no-cache wget openjdk17-jre
+RUN apk add --update --no-cache wget openjdk17-jre tini bash
 
 RUN addgroup -S guac \
     && adduser -S -G guac -h /home/guacsvc guacsvc
@@ -44,11 +44,6 @@ RUN TOMCAT_ARCHIVE="tomcat.tar.gz" && \
 RUN sed -i "s#port=\"8080\"#port=\"8080\" maxHttpHeaderSize=\"262144\"#" "$CATALINA_BASE/conf/server.xml" && \
     sed -i "s#unpackWARs=\"true\" autoDeploy=\"true\">#><Context path=\"guacamole\" docBase=\"${GUACAMOLE_HOME}guacamole.war\"/>#" "$CATALINA_BASE/conf/server.xml"
 
-RUN S6_ARCHIVE=s6-overlay.tar.gz && \
-    wget -O "$S6_ARCHIVE" "https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64.tar.gz" --progress=dot:giga && \
-    tar xzvf "$S6_ARCHIVE" -C / && \
-    rm -f "$S6_ARCHIVE"
-
 RUN wget -O "${GUACAMOLE_HOME}/guacamole.war" "http://apache.org/dyn/closer.cgi?action=download&filename=guacamole/1.6.0/binary/guacamole-1.6.0.war" --progress=dot:giga
 
 RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
@@ -59,7 +54,7 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
 RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar" --progress=dot:giga
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
-COPY ./docker/services /etc/services.d/
+COPY ./docker/start-guacamole.sh /usr/local/bin/start-guacamole.sh
 
 # retrieve auth integration from build image
 COPY --from=client_build /target/lib/* "${GUACAMOLE_LIB}"
@@ -67,9 +62,10 @@ COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-RUN chown -R guacsvc:guac "$GUACAMOLE_HOME" "$GUACAMOLE_LIB" /usr/share/tomcat9 /guac-transfer "$OAUTH2_PROXY_HOME" /tmp/applicationinsights-agent.jar /etc/services.d
+RUN chmod +x /usr/local/bin/start-guacamole.sh && \
+    chown -R guacsvc:guac "$GUACAMOLE_HOME" "$GUACAMOLE_LIB" /usr/share/tomcat9 /guac-transfer "$OAUTH2_PROXY_HOME" /tmp/applicationinsights-agent.jar
 
-ENTRYPOINT [ "/init" ]
+ENTRYPOINT [ "/sbin/tini", "--", "/usr/local/bin/start-guacamole.sh" ]
 
 EXPOSE 80
 
