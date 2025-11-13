@@ -15,13 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 
@@ -47,8 +44,6 @@ public class AzureTREAuthenticationProviderTest {
     RequestDetails requestDetailsMock;
     @Mock
     Credentials credentialsMock;
-    @Mock
-    HttpServletRequest httpServletRequest;
     AzureTREAuthenticationProvider azureTREAuthenticationProvider;
     @Mock
     AzureTREAuthenticatedUser authenticatedUser;
@@ -60,14 +55,13 @@ public class AzureTREAuthenticationProviderTest {
     }
 
     private void stubCredentialRequest() {
-        when(credentialsMock.getRequest()).thenReturn(httpServletRequest);
         when(credentialsMock.getRequestDetails()).thenReturn(requestDetailsMock);
     }
 
     @Test
     public void authenticateUserSucceed() {
         stubCredentialRequest();
-        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
+        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(MOCKED_USERNAME);
 
         assertNotNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
@@ -76,8 +70,7 @@ public class AzureTREAuthenticationProviderTest {
     @Test
     public void authenticateUserFailsWhenNoAccessToken() {
         stubCredentialRequest();
-        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn("");
-        when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn(MOCKED_USERNAME);
+        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn("");
 
         assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
     }
@@ -85,7 +78,7 @@ public class AzureTREAuthenticationProviderTest {
     @Test
     public void authenticateUserFailsWhenNoPrefUsername() {
         stubCredentialRequest();
-        when(httpServletRequest.getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
+        when(requestDetailsMock.getHeader("X-Forwarded-Access-Token")).thenReturn(MOCKED_TOKEN);
         when(requestDetailsMock.getHeader("X-Forwarded-Preferred-Username")).thenReturn("");
 
         assertNull(azureTREAuthenticationProvider.authenticateUser(credentialsMock));
