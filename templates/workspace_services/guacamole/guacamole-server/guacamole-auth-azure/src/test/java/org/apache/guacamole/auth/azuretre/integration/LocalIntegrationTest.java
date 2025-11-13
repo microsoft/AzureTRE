@@ -180,17 +180,17 @@ public class LocalIntegrationTest {
     @SetEnvironmentVariable(key = "SERVICE_ID", value = TEST_SERVICE_ID)
     public void testMockedAPIEndpoint() {
         // Setup: Mock API response with VM data
-        String mockVmResponse = "{\n" +
-            "    \"userResources\": [\n" +
-            "        {\n" +
-            "            \"properties\": {\n" +
-            "                \"hostname\": \"vm-test-123\",\n" +
-            "                \"ip\": \"10.0.0.100\",\n" +
-            "                \"display_name\": \"Test VM 1\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    ]\n" +
-            "}";
+        String mockVmResponse = "{\n"
+            + "    \"userResources\": [\n"
+            + "        {\n"
+            + "            \"properties\": {\n"
+            + "                \"hostname\": \"vm-test-123\",\n"
+            + "                \"ip\": \"10.0.0.100\",\n"
+            + "                \"display_name\": \"Test VM 1\"\n"
+            + "            }\n"
+            + "        }\n"
+            + "    ]\n"
+            + "}";
 
         mockApiServer.enqueue(new MockResponse()
             .setBody(mockVmResponse)

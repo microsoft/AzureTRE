@@ -18,14 +18,15 @@ package org.apache.guacamole.auth.azuretre.connection;
  * under the License.
  */
 
-import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.protocol.GuacamoleConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @ExtendWith(MockitoExtension.class)
 public class TokenInjectingConnectionTest {
@@ -45,7 +46,7 @@ public class TokenInjectingConnectionTest {
     @Test
     public void testTokenInjectingConnectionCreation() {
         connection = new TokenInjectingConnection("Test Connection", "conn-id", config, true);
-        
+
         assertNotNull(connection);
         assertEquals("Test Connection", connection.getName());
         assertEquals("conn-id", connection.getIdentifier());
@@ -55,7 +56,7 @@ public class TokenInjectingConnectionTest {
     @Test
     public void testTokenInjectingConnectionWithInterpretTokensFalse() {
         connection = new TokenInjectingConnection("Test Connection", "conn-id", config, false);
-        
+
         assertNotNull(connection);
         assertEquals("Test Connection", connection.getName());
     }
@@ -63,7 +64,7 @@ public class TokenInjectingConnectionTest {
     @Test
     public void testGetConfiguration() {
         connection = new TokenInjectingConnection("Test Connection", "conn-id", config, true);
-        
+
         GuacamoleConfiguration retrievedConfig = connection.getConfiguration();
         assertNotNull(retrievedConfig);
         assertEquals("rdp", retrievedConfig.getProtocol());
@@ -94,7 +95,7 @@ public class TokenInjectingConnectionTest {
     public void testConfigurationWithAzureResourceId() {
         config.setParameter("azure-resource-id", "resource-123");
         connection = new TokenInjectingConnection("Test Connection", "conn-id", config, true);
-        
+
         assertEquals("resource-123", connection.getConfiguration().getParameter("azure-resource-id"));
     }
 
@@ -103,9 +104,9 @@ public class TokenInjectingConnectionTest {
         config.setParameter("port", "3389");
         config.setParameter("ignore-cert", "true");
         config.setParameter("resize-method", "display-update");
-        
+
         connection = new TokenInjectingConnection("Test Connection", "conn-id", config, true);
-        
+
         GuacamoleConfiguration retrievedConfig = connection.getConfiguration();
         assertEquals("3389", retrievedConfig.getParameter("port"));
         assertEquals("true", retrievedConfig.getParameter("ignore-cert"));
@@ -129,7 +130,7 @@ public class TokenInjectingConnectionTest {
     public void testConnectionWithMinimalConfiguration() {
         GuacamoleConfiguration minimalConfig = new GuacamoleConfiguration();
         minimalConfig.setProtocol("rdp");
-        
+
         connection = new TokenInjectingConnection("Minimal", "min-id", minimalConfig, true);
         assertNotNull(connection);
         assertEquals("rdp", connection.getConfiguration().getProtocol());

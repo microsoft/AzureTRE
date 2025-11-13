@@ -8,7 +8,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Integration tests for RDP credential injection and configuration.
@@ -38,17 +41,17 @@ public class RDPCredentialIntegrationTest {
 
         // Verify: All RDP parameters are set correctly
         assertEquals("rdp", rdpConfig.getProtocol(), "Protocol should be RDP");
-        assertEquals("10.0.0.100", rdpConfig.getParameter("hostname"), 
+        assertEquals("10.0.0.100", rdpConfig.getParameter("hostname"),
             "Hostname should be set correctly");
-        assertEquals("3389", rdpConfig.getParameter("port"), 
+        assertEquals("3389", rdpConfig.getParameter("port"),
             "Port should be 3389");
-        assertEquals("testuser", rdpConfig.getParameter("username"), 
+        assertEquals("testuser", rdpConfig.getParameter("username"),
             "Username should be set");
-        assertEquals("testpassword", rdpConfig.getParameter("password"), 
+        assertEquals("testpassword", rdpConfig.getParameter("password"),
             "Password should be set");
-        assertEquals("true", rdpConfig.getParameter("ignore-cert"), 
+        assertEquals("true", rdpConfig.getParameter("ignore-cert"),
             "Certificate validation should be disabled");
-        assertEquals("display-update", rdpConfig.getParameter("resize-method"), 
+        assertEquals("display-update", rdpConfig.getParameter("resize-method"),
             "Resize method should be display-update");
     }
 
@@ -63,27 +66,27 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("hostname", "10.0.0.100");
         rdpConfig.setParameter("azure-resource-id", "vm-test-123");
 
-        assertNull(rdpConfig.getParameter("username"), 
+        assertNull(rdpConfig.getParameter("username"),
             "Username should be null before injection");
-        assertNull(rdpConfig.getParameter("password"), 
+        assertNull(rdpConfig.getParameter("password"),
             "Password should be null before injection");
 
         // Step 2: Inject credentials (simulating TokenInjectingConnection)
         rdpConfig.setParameter("username", mockUsername);
         rdpConfig.setParameter("password", mockPassword);
 
-        assertEquals(mockUsername, rdpConfig.getParameter("username"), 
+        assertEquals(mockUsername, rdpConfig.getParameter("username"),
             "Username should be injected");
-        assertEquals(mockPassword, rdpConfig.getParameter("password"), 
+        assertEquals(mockPassword, rdpConfig.getParameter("password"),
             "Password should be injected");
 
         // Step 3: Simulate cleanup (as done in TokenInjectingConnection finally block)
         rdpConfig.setParameter("username", null);
         rdpConfig.setParameter("password", null);
 
-        assertNull(rdpConfig.getParameter("username"), 
+        assertNull(rdpConfig.getParameter("username"),
             "Username should be cleared after use");
-        assertNull(rdpConfig.getParameter("password"), 
+        assertNull(rdpConfig.getParameter("password"),
             "Password should be cleared after use");
     }
 
@@ -102,9 +105,9 @@ public class RDPCredentialIntegrationTest {
             rdpConfig.setParameter("password", null);
         } finally {
             // Verify: Credentials are cleared even on failure
-            assertNull(rdpConfig.getParameter("username"), 
+            assertNull(rdpConfig.getParameter("username"),
                 "Username should be cleared after failure");
-            assertNull(rdpConfig.getParameter("password"), 
+            assertNull(rdpConfig.getParameter("password"),
                 "Password should be cleared after failure");
         }
     }
@@ -132,21 +135,21 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("server-layout", System.getenv("GUAC_SERVER_LAYOUT"));
 
         // Verify: Security parameters are applied correctly
-        assertEquals("true", rdpConfig.getParameter("disable-copy"), 
+        assertEquals("true", rdpConfig.getParameter("disable-copy"),
             "Copy should be disabled");
-        assertEquals("false", rdpConfig.getParameter("disable-paste"), 
+        assertEquals("false", rdpConfig.getParameter("disable-paste"),
             "Paste should be enabled");
-        assertEquals("false", rdpConfig.getParameter("enable-drive"), 
+        assertEquals("false", rdpConfig.getParameter("enable-drive"),
             "Drive should be disabled");
-        assertEquals("transfer", rdpConfig.getParameter("drive-name"), 
+        assertEquals("transfer", rdpConfig.getParameter("drive-name"),
             "Drive name should be set");
-        assertEquals("/guac-transfer", rdpConfig.getParameter("drive-path"), 
+        assertEquals("/guac-transfer", rdpConfig.getParameter("drive-path"),
             "Drive path should be set");
-        assertEquals("true", rdpConfig.getParameter("disable-download"), 
+        assertEquals("true", rdpConfig.getParameter("disable-download"),
             "Download should be disabled");
-        assertEquals("true", rdpConfig.getParameter("disable-upload"), 
+        assertEquals("true", rdpConfig.getParameter("disable-upload"),
             "Upload should be disabled");
-        assertEquals("en-us-qwerty", rdpConfig.getParameter("server-layout"), 
+        assertEquals("en-us-qwerty", rdpConfig.getParameter("server-layout"),
             "Keyboard layout should be set");
     }
 
@@ -156,7 +159,7 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("username", "user1");
         rdpConfig.setParameter("password", "pass1");
         assertEquals("user1", rdpConfig.getParameter("username"));
-        
+
         // Cleanup after cycle 1
         rdpConfig.setParameter("username", null);
         rdpConfig.setParameter("password", null);
@@ -166,14 +169,14 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("username", "user2");
         rdpConfig.setParameter("password", "pass2");
         assertEquals("user2", rdpConfig.getParameter("username"));
-        
+
         // Cleanup after cycle 2
         rdpConfig.setParameter("username", null);
         rdpConfig.setParameter("password", null);
         assertNull(rdpConfig.getParameter("username"));
 
         // Verify: Configuration can be reused safely
-        assertNull(rdpConfig.getParameter("password"), 
+        assertNull(rdpConfig.getParameter("password"),
             "No credentials should remain after multiple cycles");
     }
 
@@ -187,9 +190,9 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("password", passwordWithSpecialChars);
 
         // Verify: Special characters are preserved
-        assertEquals(usernameWithSpecialChars, rdpConfig.getParameter("username"), 
+        assertEquals(usernameWithSpecialChars, rdpConfig.getParameter("username"),
             "Username with special characters should be preserved");
-        assertEquals(passwordWithSpecialChars, rdpConfig.getParameter("password"), 
+        assertEquals(passwordWithSpecialChars, rdpConfig.getParameter("password"),
             "Password with special characters should be preserved");
 
         // Cleanup
@@ -210,9 +213,9 @@ public class RDPCredentialIntegrationTest {
         assertNotNull(rdpConfig.getParameter("port"), "Port should be set");
 
         // Verify: Optional parameters can be null
-        assertNull(rdpConfig.getParameter("username"), 
+        assertNull(rdpConfig.getParameter("username"),
             "Username can be null before injection");
-        assertNull(rdpConfig.getParameter("domain"), 
+        assertNull(rdpConfig.getParameter("domain"),
             "Domain is optional");
     }
 
@@ -233,9 +236,9 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("password", password);
 
         // Verify: Credentials are set correctly
-        assertEquals("admin-user", rdpConfig.getParameter("username"), 
+        assertEquals("admin-user", rdpConfig.getParameter("username"),
             "Username should be parsed from Key Vault format");
-        assertEquals("secure-password-123", rdpConfig.getParameter("password"), 
+        assertEquals("secure-password-123", rdpConfig.getParameter("password"),
             "Password should be parsed from Key Vault format");
 
         // Cleanup
@@ -250,15 +253,15 @@ public class RDPCredentialIntegrationTest {
         String[] credentials = invalidSecret.split("\\n");
 
         // Verify: Invalid format is detected
-        assertNotEquals(2, credentials.length, 
+        assertNotEquals(2, credentials.length,
             "Invalid format should not have exactly 2 parts");
 
         // Should not inject invalid credentials
         if (credentials.length != 2) {
             // Don't inject - this simulates error handling in TokenInjectingConnection
-            assertNull(rdpConfig.getParameter("username"), 
+            assertNull(rdpConfig.getParameter("username"),
                 "Username should not be set with invalid format");
-            assertNull(rdpConfig.getParameter("password"), 
+            assertNull(rdpConfig.getParameter("password"),
                 "Password should not be set with invalid format");
         }
     }
@@ -280,19 +283,19 @@ public class RDPCredentialIntegrationTest {
         rdpConfig.setParameter("password", null);
 
         // Verify: Non-credential parameters remain unchanged
-        assertEquals("rdp", rdpConfig.getProtocol(), 
+        assertEquals("rdp", rdpConfig.getProtocol(),
             "Protocol should remain unchanged");
-        assertEquals("10.0.0.100", rdpConfig.getParameter("hostname"), 
+        assertEquals("10.0.0.100", rdpConfig.getParameter("hostname"),
             "Hostname should remain unchanged");
-        assertEquals("3389", rdpConfig.getParameter("port"), 
+        assertEquals("3389", rdpConfig.getParameter("port"),
             "Port should remain unchanged");
-        assertEquals("true", rdpConfig.getParameter("ignore-cert"), 
+        assertEquals("true", rdpConfig.getParameter("ignore-cert"),
             "Certificate setting should remain unchanged");
 
         // Verify: Only credentials are cleared
-        assertNull(rdpConfig.getParameter("username"), 
+        assertNull(rdpConfig.getParameter("username"),
             "Username should be cleared");
-        assertNull(rdpConfig.getParameter("password"), 
+        assertNull(rdpConfig.getParameter("password"),
             "Password should be cleared");
     }
 }
