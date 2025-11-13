@@ -85,6 +85,27 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+validate_service() {
+    local service="$1"
+
+    if [ -z "$service" ]; then
+        echo -e "${RED}✗ No service name provided${NC}"
+        exit 1
+    fi
+
+    local valid_services
+    if ! valid_services=$(docker compose config --services 2>/dev/null); then
+        echo -e "${RED}✗ Unable to list services from docker compose. Is Docker running?${NC}"
+        exit 1
+    fi
+
+    if ! printf '%s\n' "$valid_services" | grep -Fx -- "$service" >/dev/null; then
+        echo -e "${RED}✗ Invalid service '${service}'. Available services:${NC}"
+        printf '  - %s\n' $valid_services
+        exit 1
+    fi
+}
+
 echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}  Guacamole TRE E2E Test Suite${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════${NC}"
@@ -216,6 +237,7 @@ case "$COMMAND" in
     logs)
         SERVICE=${2:-guacamole-backend}
         require_auth_env
+        validate_service "$SERVICE"
         print_section "Showing logs for $SERVICE..."
         docker compose logs -f "$SERVICE"
         ;;
@@ -223,6 +245,7 @@ case "$COMMAND" in
     shell)
         SERVICE=${2:-guacamole-backend}
         require_auth_env
+        validate_service "$SERVICE"
         print_section "Opening shell in $SERVICE..."
         docker compose exec "$SERVICE" /bin/sh
         ;;
