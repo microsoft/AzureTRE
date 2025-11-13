@@ -51,7 +51,7 @@ RUN OAUTH2_PROXY_ARCHIVE=oauth2-proxy.tar.gz && \
     tar zxpf "$OAUTH2_PROXY_ARCHIVE" -C "$OAUTH2_PROXY_HOME" --strip-components=1 && \
     rm -f "$OAUTH2_PROXY_ARCHIVE"
 
-RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar" --progress=dot:giga
+RUN wget -O "/tmp/applicationinsights-agent.jar" "https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.7.4/applicationinsights-agent-3.7.4.jar" --progress=dot:giga
 
 COPY ./docker/guacamole/ ${GUACAMOLE_HOME}
 COPY ./docker/start-guacamole.sh /usr/local/bin/start-guacamole.sh
