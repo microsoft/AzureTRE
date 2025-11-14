@@ -33,7 +33,7 @@ EOF
 
 # TODO: Remove porter v0 https://github.com/microsoft/AzureTRE/issues/2990
 echo "Azure cli login..."
-az login --identity -u "${VMSS_MSI_ID}"
+az login --identity --client-id "${VMSS_MSI_ID}"
 
 echo "Checking if porter v0 state exists..."
 exits=$(az storage table exists --account-name "${MGMT_STORAGE_ACCOUNT_NAME}" --name "porter" --auth-mode "login" --output tsv)

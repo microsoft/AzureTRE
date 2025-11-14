@@ -10,10 +10,10 @@ from shared.logging import shell_output_logger
 def azure_login_command(config):
     if config["vmss_msi_id"]:
         # Use the Managed Identity when in VMSS context
-        command = f"az login --identity -u {config['vmss_msi_id']}"
+        command = f"az login --identity --client-id {config['vmss_msi_id']}"
     else:
         # Use a Service Principal when running locally
-        command = f"az login --service-principal --username {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
+        command = f"az login --service-principal --client-id {config['arm_client_id']} --password {config['arm_client_secret']} --tenant {config['arm_tenant_id']}"
 
     return command
 
