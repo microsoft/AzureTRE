@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-disable default outbound access on subnets that don't require it ([#4706](https://github.com/microsoft/AzureTRE/issues/4706))
+* Specify default_outbound_access_enabled setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 
 BUG FIXES:
 
