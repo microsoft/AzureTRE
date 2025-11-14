@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+disable default outbound access on subnets that don't require it ([#4706](https://github.com/microsoft/AzureTRE/issues/4706))
 
 BUG FIXES:
 
