@@ -5,7 +5,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
-fix circular dependancy in base workspace ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
+* Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 
 COMPONENTS:
 
