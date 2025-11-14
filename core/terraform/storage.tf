@@ -84,6 +84,12 @@ resource "azurerm_storage_table" "workspacecosts" {
   storage_account_name = azurerm_storage_account.stg.name
 }
 
+resource "azurerm_storage_table" "workspacecreditusage" {
+  name                 = "workspacecreditusage"
+  storage_account_name = azurerm_storage_account.stg.name
+}
+
+
 resource "azurerm_role_assignment" "workspace_costs_table_reader" {
   scope                = azurerm_storage_account.stg.id
   role_definition_name = "Storage Table Data Reader"

@@ -120,6 +120,7 @@ resource "time_sleep" "wait_for_virtual_network_gateway" {
 
 # Create ExpressRoute for MHRA VPN access.
 resource "azurerm_virtual_network_gateway_connection" "express_route_connection" {
+  count                      = (var.tre_id == "cprdprod" || var.tre_id == "cprdstaging" || var.tre_id == "cprdtest" || var.tre_id == "cprddev") ? 1 : 0
   name                       = local.express_route_vng_name
   resource_group_name        = var.resource_group_name
   location                   = var.location
