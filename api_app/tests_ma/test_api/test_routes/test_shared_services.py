@@ -195,7 +195,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         get_shared_service_mock.return_value = sample_shared_service(shared_service_id)
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=shared_service_id), json={"enabled": True})
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     # [PATCH] /shared-services/{shared_service_id}
     @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
@@ -344,5 +344,5 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         assert response.text == "[{'loc': ('body', 'fakeField'), 'msg': 'extra fields not permitted', 'type': 'value_error.extra'}]"
