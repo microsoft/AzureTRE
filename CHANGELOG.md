@@ -1,5 +1,14 @@
 <!-- markdownlint-disable MD041 -->
-## 0.26.0 (Unreleased)
+## 0.27.0 (Unreleased)
+**BREAKING CHANGES**
+
+ENHANCEMENTS:
+
+BUG FIXES:
+
+COMPONENTS:
+
+## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
 * The firewall network rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you will need to specify your own firewall rules.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
 * The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
@@ -18,6 +27,7 @@ ENHANCEMENTS:
 * Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
 * Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
 * Improve documentation on `address_space` allocation ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Upgrade to CodeQL v4 actions ([#4750](https://github.com/microsoft/AzureTRE/pull/4750))
 
 BUG FIXES:
 * Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
@@ -34,6 +44,39 @@ BUG FIXES:
 * Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
 * Update Starlette and FastAPI versions ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.2 |
+| core | 0.16.10 |
+| ui | 0.8.18 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-sonatype-nexus | 3.3.4 |
+| tre-shared-service-firewall | 1.5.0 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-certs | 0.7.7 |
+| tre-shared-service-airlock-notifier | 1.0.9 |
+| tre-shared-service-cyclecloud | 0.7.3 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.7.0 |
+| tre-workspace-unrestricted | 0.13.5 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-health | 0.2.12 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-service-azureml | 0.10.0 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-azuresql | 1.0.16 |
+| tre-service-guacamole | 0.13.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.4 |
+| tre-service-guacamole-linuxvm | 1.3.3 |
+| tre-service-guacamole-import-reviewvm | 0.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.1 |
+| tre-workspace-service-ohdsi | 0.3.4 |
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
