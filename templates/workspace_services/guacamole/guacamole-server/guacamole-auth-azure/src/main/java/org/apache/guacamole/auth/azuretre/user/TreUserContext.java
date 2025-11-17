@@ -109,6 +109,7 @@ public final class TreUserContext extends AbstractUserContext {
      *
      * @return directory of connections.
      */
+    @Override
     public Directory<Connection> getConnectionDirectory() {
         LOGGER.debug("getConnectionDirectory");
         return connectionDirectory;
