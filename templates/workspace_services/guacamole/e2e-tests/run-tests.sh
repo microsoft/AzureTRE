@@ -236,14 +236,14 @@ case "$COMMAND" in
 
     logs)
         SERVICE=${2:-guacamole-backend}
+        SERVICE="${2:-guacamole-backend}"
         require_auth_env
-        validate_service "$SERVICE"
         print_section "Showing logs for $SERVICE..."
         docker compose logs -f "$SERVICE"
         ;;
 
     shell)
-        SERVICE=${2:-guacamole-backend}
+        SERVICE="${2:-guacamole-backend}"
         require_auth_env
         validate_service "$SERVICE"
         print_section "Opening shell in $SERVICE..."
