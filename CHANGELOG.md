@@ -5,6 +5,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 
 COMPONENTS:
 
