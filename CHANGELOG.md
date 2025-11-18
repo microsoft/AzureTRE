@@ -3,8 +3,10 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 
 BUG FIXES:
+* Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 
 COMPONENTS:
 
