@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ColumnActionsMode,
   CommandBar,
@@ -15,6 +15,7 @@ import {
   PersonaSize,
   SelectionMode,
   ShimmeredDetailsList,
+  SearchBox,
   Stack,
 } from "@fluentui/react";
 import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
@@ -57,6 +58,7 @@ export const RequestsList: React.FunctionComponent = () => {
     useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
   const [activeFilter, setActiveFilter] = useState<string>("myRequests");
+  const [searchText, setSearchText] = useState("");
   const apiCall = useAuthApiCall();
   const theme = getTheme();
   const navigate = useNavigate();
@@ -76,66 +78,81 @@ export const RequestsList: React.FunctionComponent = () => {
     });
   };
 
+  const buildQuery = useCallback(() => {
+    const params = new URLSearchParams();
+    filters.forEach((value, key) => {
+      params.append(key, value);
+    });
+    if (orderBy) {
+      params.append("order_by", orderBy);
+      params.append("order_ascending", String(orderAscending));
+    }
+    const query = params.toString();
+    return query ? `?${query}` : "";
+  }, [filters, orderBy, orderAscending]);
+
+  const updateDisplayedRequests = useCallback(() => {
+    if (activeFilter === "allRequests") {
+      setAirlockRequests(airlockManagerRequests);
+    } else if (activeFilter === "awaitingMyReview") {
+      setAirlockRequests(
+        airlockManagerRequests.filter(
+          (r) => r.status === AirlockRequestStatus.InReview,
+        ),
+      );
+    } else {
+      setAirlockRequests(myAirlockRequests);
+    }
+  }, [activeFilter, airlockManagerRequests, myAirlockRequests]);
+
   const getAirlockRequests = useCallback(async () => {
     setApiError(undefined);
     setLoadingState(LoadingState.Loading);
     try {
-      let query = "?";
-      filters.forEach((value, key) => {
-        query += `${key}=${value}&`;
-      });
-      if (orderBy) {
-        query += `order_by=${orderBy}&order_ascending=${orderAscending}&`;
-      }
-      let fetchedWorkspaces: { workspaces: Workspace[] } = { workspaces: [] };
-      try {
-        fetchedWorkspaces = await apiCall(
-          ApiEndpoint.Workspaces,
-          HttpMethod.Get,
-        );
-      } catch (err: any) {
-        setApiError(err);
-        console.error("Failed to fetch workspaces:", err);
-      }
-      let requests: AirlockRequest[];
-      let airlock_manager_requests: AirlockRequest[];
-      requests = await apiCall(
-        `${ApiEndpoint.Requests}${query.slice(0, -1)}`,
+      const query = buildQuery();
+      const workspacePromise = apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
+      const myRequestsPromise = apiCall(
+        `${ApiEndpoint.Requests}${query}`,
         HttpMethod.Get,
       );
-      requests = mapRequestsToWorkspace(requests, fetchedWorkspaces.workspaces);
-      airlock_manager_requests = await apiCall(
-        `${ApiEndpoint.Requests}${query.slice(0, -1)}&airlock_manager=true`,
+      const managerRequestsPromise = apiCall(
+        `${ApiEndpoint.Requests}${query}${query ? "&" : "?"}airlock_manager=true`,
         HttpMethod.Get,
       );
-      airlock_manager_requests = mapRequestsToWorkspace(
-        airlock_manager_requests,
-        fetchedWorkspaces.workspaces,
+
+      const [{ workspaces: fetchedWorkspaces }, myRequests, managerRequests] =
+        await Promise.all([
+          workspacePromise,
+          myRequestsPromise,
+          managerRequestsPromise,
+        ]);
+
+      const mappedMyRequests = mapRequestsToWorkspace(
+        myRequests,
+        fetchedWorkspaces || [],
+      );
+      const mappedManagerRequests = mapRequestsToWorkspace(
+        managerRequests,
+        fetchedWorkspaces || [],
       );
 
-      setMyAirlockRequests(requests);
-      setAirlockManagerRequests(airlock_manager_requests);
-
-      // Set the display based on current active filter
-      if (activeFilter === "allRequests") {
-        setAirlockRequests(airlock_manager_requests);
-      } else if (activeFilter === "awaitingMyReview") {
-        setAirlockRequests(airlock_manager_requests.filter(r => r.status === "in_review"));
-      } else {
-        setAirlockRequests(requests);
-      }
-
+      setMyAirlockRequests(mappedMyRequests);
+      setAirlockManagerRequests(mappedManagerRequests);
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
       err.userMessage = "Error fetching airlock requests";
       setApiError(err);
       setLoadingState(LoadingState.Error);
     }
-  }, [filters, orderBy, apiCall, orderAscending, activeFilter]);
+  }, [apiCall, buildQuery]);
 
   useEffect(() => {
     getAirlockRequests();
-  }, [filters, orderBy, orderAscending, getAirlockRequests]);
+  }, [getAirlockRequests]);
+
+  useEffect(() => {
+    updateDisplayedRequests();
+  }, [updateDisplayedRequests]);
 
   const orderRequests = (column: IColumn) => {
     setOrderBy((o) => {
@@ -145,6 +162,62 @@ export const RequestsList: React.FunctionComponent = () => {
       }
       return column.key;
     });
+  };
+
+  const handleSortChange = (field: string) => {
+    setOrderBy((current) => {
+      if (current === field) {
+        setOrderAscending((prev) => !prev);
+        return current;
+      }
+      setOrderAscending(false);
+      return field;
+    });
+    setContextMenuProps(undefined);
+  };
+
+  const sortOptions: { key: string; label: string }[] = [
+    { key: "updatedWhen", label: "Last Updated" },
+    { key: "createdWhen", label: "Created Date" },
+    { key: "title", label: "Title" },
+    { key: "status", label: "Status" },
+  ];
+
+  const sortMenuItems: IContextualMenuItem[] = sortOptions.map((option) => ({
+    key: option.key,
+    text: option.label,
+    iconProps: {
+      iconName:
+        orderBy === option.key
+          ? orderAscending
+            ? "SortUp"
+            : "SortDown"
+          : "Sort",
+    },
+    onClick: () => handleSortChange(option.key),
+  }));
+
+  const handleSortButtonClick = (
+    ev?: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
+  ) => {
+    if (!ev) {
+      return;
+    }
+    setContextMenuProps({
+      items: sortMenuItems,
+      target: ev.currentTarget as HTMLElement,
+      directionalHint: DirectionalHint.bottomLeftEdge,
+      gapSpace: 0,
+      onDismiss: () => setContextMenuProps(undefined),
+    });
+  };
+
+  const getSortDisplayText = () => {
+    const option = sortOptions.find((opt) => opt.key === orderBy);
+    if (!option) {
+      return "Sort: Last Updated";
+    }
+    return `Sort: ${option.label} ${orderAscending ? "↑" : "↓"}`;
   };
 
   const openContextMenu = useCallback(
@@ -345,35 +418,27 @@ export const RequestsList: React.FunctionComponent = () => {
     setRequestColumns(columns);
   }, [openContextMenu, filters, orderAscending, orderBy]);
 
-  const quickFilters: ICommandBarItemProps[] = [
-    {
-      key: "reset",
-      text: "Clear filters",
-      iconProps: { iconName: "ClearFilter" },
-      onClick: () => {
-        setFilters(new Map());
-        if (activeFilter === "allRequests") {
-          setAirlockRequests(airlockManagerRequests);
-        } else {
-          setActiveFilter("myRequests");
-          setAirlockRequests(myAirlockRequests);
-        }
-      },
-    },
-  ];
+  const quickFilters: ICommandBarItemProps[] = [];
 
   if (airlockManagerRequests.length > 0) {
     quickFilters.unshift({
       key: "allRequests",
       text: "All Requests",
-      iconProps: { iconName: activeFilter === "allRequests" ? "CheckMark" : "BulletedList" },
-      buttonStyles: activeFilter === "allRequests" ? {
-        root: { fontWeight: '600' },
-        label: { fontWeight: '600' }
-      } : undefined,
+      iconProps: {
+        iconName: activeFilter === "allRequests" ? "CheckMark" : "BulletedList",
+      },
+      buttonStyles:
+        activeFilter === "allRequests"
+          ? {
+            root: { fontWeight: "600" },
+            label: { fontWeight: "600" },
+          }
+          : undefined,
       onClick: () => {
         setActiveFilter("allRequests");
-        setFilters(new Map());
+        if (filters.size > 0) {
+          setFilters(new Map());
+        }
         setAirlockRequests(airlockManagerRequests);
       },
     });
@@ -381,15 +446,27 @@ export const RequestsList: React.FunctionComponent = () => {
     quickFilters.unshift({
       key: "awaitingMyReview",
       text: "Awaiting my review",
-      iconProps: { iconName: activeFilter === "awaitingMyReview" ? "CheckMark" : "TemporaryUser" },
-      buttonStyles: activeFilter === "awaitingMyReview" ? {
-        root: { fontWeight: '600' },
-        label: { fontWeight: '600' }
-      } : undefined,
+      iconProps: {
+        iconName:
+          activeFilter === "awaitingMyReview" ? "CheckMark" : "TemporaryUser",
+      },
+      buttonStyles:
+        activeFilter === "awaitingMyReview"
+          ? {
+            root: { fontWeight: "600" },
+            label: { fontWeight: "600" },
+          }
+          : undefined,
       onClick: () => {
         setActiveFilter("awaitingMyReview");
-        setFilters(new Map());
-        setAirlockRequests(airlockManagerRequests.filter(r => r.status === "in_review"));
+        if (filters.size > 0) {
+          setFilters(new Map());
+        }
+        setAirlockRequests(
+          airlockManagerRequests.filter(
+            (r) => r.status === AirlockRequestStatus.InReview,
+          ),
+        );
       },
     });
   }
@@ -404,27 +481,94 @@ export const RequestsList: React.FunctionComponent = () => {
     } : undefined,
     onClick: () => {
       setActiveFilter("myRequests");
-      setFilters(new Map());
+      if (filters.size > 0) {
+        setFilters(new Map());
+      }
       setAirlockRequests(myAirlockRequests);
     },
   });
+
+  const filteredRequests = useMemo(() => {
+    const term = searchText.trim().toLowerCase();
+    if (!term) {
+      return airlockRequests;
+    }
+    return airlockRequests.filter((request) => {
+      const candidates = [
+        request.workspace,
+        request.title,
+        request.createdBy?.name,
+        request.createdBy?.email,
+        request.status,
+        request.type,
+      ]
+        .filter(Boolean)
+        .map((value) => value!.toString().toLowerCase());
+      return candidates.some((value) => value.includes(term));
+    });
+  }, [airlockRequests, searchText]);
+
+  const quickFilterCommandBarItems: ICommandBarItemProps[] = quickFilters;
+
+  const searchCommandBarItems: ICommandBarItemProps[] = [
+    {
+      key: "search",
+      onRender: () => (
+        <SearchBox
+          placeholder="Search requests..."
+          value={searchText}
+          onChange={(_, newValue) => setSearchText(newValue || "")}
+          onClear={() => setSearchText("")}
+          styles={{ root: { width: 320 } }}
+        />
+      ),
+    },
+  ];
+
+  const searchCommandBarFarItems: ICommandBarItemProps[] = [
+    {
+      key: "sort",
+      text: getSortDisplayText(),
+      iconProps: { iconName: "Sort" },
+      onClick: handleSortButtonClick,
+    },
+    {
+      key: "clear-search",
+      text: "Clear search",
+      iconProps: { iconName: "Clear" },
+      disabled: searchText.trim().length === 0,
+      onClick: () => setSearchText(""),
+    },
+  ];
 
   return (
     <>
       <Stack className="tre-panel">
         <Stack.Item>
-          <Stack horizontal horizontalAlign="space-between">
-            <h1 style={{ marginBottom: 0, marginRight: 30 }}>
-              Airlock Requests
-            </h1>
-            <Stack.Item grow>
-              <CommandBar items={quickFilters} ariaLabel="Quick filters" />
-            </Stack.Item>
-            <CommandBarButton
-              iconProps={{ iconName: "refresh" }}
-              text="Refresh"
-              style={{ background: "none", color: theme.palette.themePrimary }}
-              onClick={() => getAirlockRequests()}
+          <Stack tokens={{ childrenGap: 12 }}>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              verticalAlign="center"
+            >
+              <h1 style={{ marginBottom: 0 }}>Airlock Requests</h1>
+              <CommandBarButton
+                iconProps={{ iconName: "refresh" }}
+                text="Refresh"
+                style={{ background: "none", color: theme.palette.themePrimary }}
+                onClick={() => {
+                  getAirlockRequests();
+                }}
+              />
+            </Stack>
+            <CommandBar
+              items={quickFilterCommandBarItems}
+              ariaLabel="Quick filters"
+            />
+            <CommandBar
+              items={searchCommandBarItems}
+              farItems={searchCommandBarFarItems}
+              ariaLabel="Search and sort controls"
             />
           </Stack>
         </Stack.Item>
@@ -432,7 +576,7 @@ export const RequestsList: React.FunctionComponent = () => {
       {apiError && <ExceptionLayout e={apiError} />}
       <div className="tre-resource-panel" style={{ padding: "0px" }}>
         <ShimmeredDetailsList
-          items={airlockRequests}
+          items={filteredRequests}
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
@@ -445,13 +589,13 @@ export const RequestsList: React.FunctionComponent = () => {
           enableShimmer={loadingState === LoadingState.Loading}
         />
         {contextMenuProps && <ContextualMenu {...contextMenuProps} />}
-        {airlockRequests.length === 0 &&
+        {filteredRequests.length === 0 &&
           loadingState !== LoadingState.Loading && (
             <div
               style={{ textAlign: "center", padding: "50px 10px 100px 10px" }}
             >
               <h4>No requests found</h4>
-              {filters.size > 0 ? (
+              {filters.size > 0 || searchText.trim().length > 0 ? (
                 <small>
                   There are no requests matching your selected filter(s).
                 </small>
