@@ -62,8 +62,7 @@ COPY --from=client_build "/target/guacamole-auth-tre-${GUACAMOLE_AZURE_VERSION}.
 
 COPY ./docker/index.jsp "$CATALINA_BASE"/webapps/ROOT/index.jsp
 
-RUN chmod +x /usr/local/bin/start-guacamole.sh && \
-    chown -R guacsvc:guac "$GUACAMOLE_HOME" "$GUACAMOLE_LIB" /usr/share/tomcat9 /guac-transfer "$OAUTH2_PROXY_HOME" /tmp/applicationinsights-agent.jar
+RUN chown -R guacsvc:guac "$GUACAMOLE_HOME" "$GUACAMOLE_LIB" /usr/share/tomcat9 /guac-transfer "$OAUTH2_PROXY_HOME" /tmp/applicationinsights-agent.jar
 
 ENTRYPOINT [ "/sbin/tini", "--", "/usr/local/bin/start-guacamole.sh" ]
 
