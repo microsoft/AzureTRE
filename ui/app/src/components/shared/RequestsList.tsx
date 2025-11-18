@@ -56,6 +56,7 @@ export const RequestsList: React.FunctionComponent = () => {
   const [contextMenuProps, setContextMenuProps] =
     useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
+  const [activeFilter, setActiveFilter] = useState<string>("myRequests");
   const apiCall = useAuthApiCall();
   const theme = getTheme();
   const navigate = useNavigate();
@@ -113,15 +114,24 @@ export const RequestsList: React.FunctionComponent = () => {
       );
 
       setMyAirlockRequests(requests);
-      setAirlockRequests(requests);
-      setLoadingState(LoadingState.Ok);
       setAirlockManagerRequests(airlock_manager_requests);
+
+      // Set the display based on current active filter
+      if (activeFilter === "allRequests") {
+        setAirlockRequests(airlock_manager_requests);
+      } else if (activeFilter === "awaitingMyReview") {
+        setAirlockRequests(airlock_manager_requests.filter(r => r.status === "in_review"));
+      } else {
+        setAirlockRequests(requests);
+      }
+
+      setLoadingState(LoadingState.Ok);
     } catch (err: any) {
       err.userMessage = "Error fetching airlock requests";
       setApiError(err);
       setLoadingState(LoadingState.Error);
     }
-  }, [filters, orderBy, apiCall, orderAscending]);
+  }, [filters, orderBy, apiCall, orderAscending, activeFilter]);
 
   useEffect(() => {
     getAirlockRequests();
@@ -340,7 +350,15 @@ export const RequestsList: React.FunctionComponent = () => {
       key: "reset",
       text: "Clear filters",
       iconProps: { iconName: "ClearFilter" },
-      onClick: () => setFilters(new Map()),
+      onClick: () => {
+        setFilters(new Map());
+        if (activeFilter === "allRequests") {
+          setAirlockRequests(airlockManagerRequests);
+        } else {
+          setActiveFilter("myRequests");
+          setAirlockRequests(myAirlockRequests);
+        }
+      },
     },
   ];
 
@@ -348,8 +366,13 @@ export const RequestsList: React.FunctionComponent = () => {
     quickFilters.unshift({
       key: "allRequests",
       text: "All Requests",
-      iconProps: { iconName: "BulletedList" },
+      iconProps: { iconName: activeFilter === "allRequests" ? "CheckMark" : "BulletedList" },
+      buttonStyles: activeFilter === "allRequests" ? {
+        root: { fontWeight: '600' },
+        label: { fontWeight: '600' }
+      } : undefined,
       onClick: () => {
+        setActiveFilter("allRequests");
         setFilters(new Map());
         setAirlockRequests(airlockManagerRequests);
       },
@@ -358,10 +381,15 @@ export const RequestsList: React.FunctionComponent = () => {
     quickFilters.unshift({
       key: "awaitingMyReview",
       text: "Awaiting my review",
-      iconProps: { iconName: "TemporaryUser" },
+      iconProps: { iconName: activeFilter === "awaitingMyReview" ? "CheckMark" : "TemporaryUser" },
+      buttonStyles: activeFilter === "awaitingMyReview" ? {
+        root: { fontWeight: '600' },
+        label: { fontWeight: '600' }
+      } : undefined,
       onClick: () => {
-        setFilters(new Map([["status", "in_review"]]));
-        setAirlockRequests(airlockManagerRequests);
+        setActiveFilter("awaitingMyReview");
+        setFilters(new Map());
+        setAirlockRequests(airlockManagerRequests.filter(r => r.status === "in_review"));
       },
     });
   }
@@ -369,8 +397,13 @@ export const RequestsList: React.FunctionComponent = () => {
   quickFilters.unshift({
     key: "myRequests",
     text: "My Requests",
-    iconProps: { iconName: "EditContact" },
+    iconProps: { iconName: activeFilter === "myRequests" ? "CheckMark" : "EditContact" },
+    buttonStyles: activeFilter === "myRequests" ? {
+      root: { fontWeight: '600' },
+      label: { fontWeight: '600' }
+    } : undefined,
     onClick: () => {
+      setActiveFilter("myRequests");
       setFilters(new Map());
       setAirlockRequests(myAirlockRequests);
     },
