@@ -14,4 +14,4 @@ export TF_LOG=""
   -s "${TF_VAR_mgmt_storage_account_name}" \
   -n "${TF_VAR_terraform_state_container_name}" \
   -k "${TRE_ID}" \
-  -c "terraform import azurerm_key_vault_access_policy.deployer \"/subscriptions/23f86cef-93b3-45f3-858f-b11aa9a60201/resourceGroups/rg-cprddev/providers/Microsoft.KeyVault/vaults/kv-cprddev/objectId/a2661996-9af0-4acb-a528-0ce72040bea2\""
+  -c "terraform import ..."
