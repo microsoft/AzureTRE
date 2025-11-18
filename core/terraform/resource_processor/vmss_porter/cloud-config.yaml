@@ -15,13 +15,13 @@ apt:
       keyserver: hkp://keyserver.ubuntu.com:80
 
 packages:
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose
-  - azure-cli
-  - gnupg2
-  - pass
+  - [docker-ce, 5:28.2.2-1~ubuntu.22.04~jammy]
+  - [docker-ce-cli, 5:28.2.2-1~ubuntu.22.04~jammy]
+  - [containerd.io, 1.7.27-1]
+  - [docker-compose, 1.29.2-1]
+  - [azure-cli, 2.74.0-1~jammy]
+  - [gnupg2, 2.2.27-3ubuntu2.4]
+  - [pass, 1.7.4-5]
 
 # create the docker group
 groups:
@@ -84,7 +84,7 @@ runcmd:
   - printf '\nalias rpstatus='\''tmux new-session -d "watch docker ps"; tmux split-window -p 100 -v "docker logs --since 1m --follow resource_processor1"; tmux split-window -v -p 90; tmux -2 attach-session -d'\''\n' >> /etc/bash.bashrc
   - export DEBIAN_FRONTEND=noninteractive
   - az cloud set --name ${azure_environment}
-  - az login --identity -u ${vmss_msi_id}
+  - az login --identity --client-id ${vmss_msi_id}
   - az acr login --name ${docker_registry_server}
   - docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock
     --restart always --env-file .env

@@ -21,6 +21,8 @@ resource "azurerm_databricks_workspace" "databricks" {
   infrastructure_encryption_enabled     = true
   public_network_access_enabled         = false
   network_security_group_rules_required = "NoAzureDatabricksRules"
+  default_storage_firewall_enabled      = true
+  access_connector_id                   = azurerm_databricks_access_connector.connector.id
   tags                                  = local.tre_shared_service_tags
 
   lifecycle { ignore_changes = [tags] }
@@ -38,4 +40,46 @@ resource "azurerm_databricks_workspace" "databricks" {
     azurerm_subnet_network_security_group_association.host,
     azurerm_subnet_network_security_group_association.container
   ]
+}
+
+// required to set default_storage_firewall_enabled = true
+// https://learn.microsoft.com/en-us/azure/databricks/security/network/storage/firewall-support
+//
+resource "azurerm_databricks_access_connector" "connector" {
+  name                = "${local.databricks_workspace_name}-access-connector"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  tags                = local.tre_shared_service_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "databricks_diagnostics" {
+  name                       = "diagnostics-${local.databricks_workspace_name}"
+  target_resource_id         = azurerm_databricks_workspace.databricks.id
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.tre.id
+
+  enabled_log {
+    category = "accounts"
+  }
+
+  enabled_log {
+    category = "workspace"
+  }
+
+  enabled_log {
+    category = "gitCredentials"
+  }
+
+  enabled_log {
+    category = "iamRole"
+  }
+
+  enabled_log {
+    category = "secrets"
+  }
 }

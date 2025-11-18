@@ -1,11 +1,11 @@
 resource "azurerm_public_ip" "fwtransit" {
   count               = var.firewall_force_tunnel_ip != "" ? 0 : 1
   name                = "pip-fw-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = var.resource_group_name
+  location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
-  tags                = local.tre_shared_service_tags
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags, zones] }
 }
@@ -18,27 +18,26 @@ moved {
 resource "azurerm_public_ip" "fwmanagement" {
   count               = (var.firewall_force_tunnel_ip != "" || local.effective_firewall_sku == "Basic") ? 1 : 0
   name                = "pip-fw-management-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = var.resource_group_name
+  location            = var.location
   allocation_method   = "Static"
   sku                 = "Standard"
-  tags                = local.tre_shared_service_tags
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags, zones] }
 }
 
-
 resource "azurerm_firewall" "fw" {
   name                = local.firewall_name
-  resource_group_name = local.core_resource_group_name
-  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = var.resource_group_name
+  location            = var.location
   sku_tier            = local.effective_firewall_sku
   sku_name            = "AZFW_VNet"
   firewall_policy_id  = azurerm_firewall_policy.root.id
-  tags                = local.tre_shared_service_tags
+  tags                = var.tre_core_tags
   ip_configuration {
     name                 = "fw-ip-configuration"
-    subnet_id            = data.azurerm_subnet.firewall.id
+    subnet_id            = var.firewall_subnet_id
     public_ip_address_id = var.firewall_force_tunnel_ip != "" ? null : azurerm_public_ip.fwtransit[0].id
   }
 
@@ -46,7 +45,7 @@ resource "azurerm_firewall" "fw" {
     for_each = (var.firewall_force_tunnel_ip != "" || local.effective_firewall_sku == "Basic") ? [1] : []
     content {
       name                 = "mgmtconfig"
-      subnet_id            = data.azurerm_subnet.firewall_management.id
+      subnet_id            = var.firewall_management_subnet_id
       public_ip_address_id = azurerm_public_ip.fwmanagement[0].id
     }
   }
@@ -61,7 +60,7 @@ data "azurerm_monitor_diagnostic_categories" "firewall" {
 resource "azurerm_monitor_diagnostic_setting" "firewall" {
   name                           = "diagnostics-fw-${var.tre_id}"
   target_resource_id             = azurerm_firewall.fw.id
-  log_analytics_workspace_id     = data.azurerm_log_analytics_workspace.tre.id
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
   log_analytics_destination_type = "Dedicated"
 
   dynamic "enabled_log" {
@@ -79,10 +78,10 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
 
 resource "azurerm_firewall_policy" "root" {
   name                = local.firewall_policy_name
-  resource_group_name = local.core_resource_group_name
-  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = var.resource_group_name
+  location            = var.location
   sku                 = local.effective_firewall_sku
-  tags                = local.tre_shared_service_tags
+  tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
 }

@@ -1,13 +1,128 @@
 <!-- markdownlint-disable MD041 -->
-## 0.23.0
+## 0.27.0 (Unreleased)
+**BREAKING CHANGES**
+
+ENHANCEMENTS:
+* API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
+
+BUG FIXES:
+* Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Fix missing arguments for airlock manager requests ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
+
+COMPONENTS:
+
+## 0.26.0 (October 12, 2025)
+**BREAKING CHANGES**
+* The firewall network rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you will need to specify your own firewall rules.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
+* The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
+
+ENHANCEMENTS:
+* Create CODEOWNERS file with repository maintainers
+* Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
+* Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
+* Add `WORKSPACE_SERVICE_PREFIX` to `make user_resource_bundle` for use where a workspace-service bundle name does not start with `tre-service-` ([#4731](https://github.com/microsoft/AzureTRE/pull/4731))
+* Streamline Azure bootstrap by replacing legacy dependency checks with `bootstrap_azure_env.sh` ([#2993](https://github.com/microsoft/AzureTRE/issues/2993))
+* Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
+* Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
+* Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
+* Improve documentation on `address_space` allocation ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Upgrade to CodeQL v4 actions ([#4750](https://github.com/microsoft/AzureTRE/pull/4750))
+
+BUG FIXES:
+* Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
+* Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
+* Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
+* Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678))
+* Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
+* Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
+* Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
+* Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
+* Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
+* Add Loading spinner to shared services page ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
+* Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
+* Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Update Starlette and FastAPI versions ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.2 |
+| core | 0.16.10 |
+| ui | 0.8.18 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-sonatype-nexus | 3.3.4 |
+| tre-shared-service-firewall | 1.5.0 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-certs | 0.7.7 |
+| tre-shared-service-airlock-notifier | 1.0.9 |
+| tre-shared-service-cyclecloud | 0.7.3 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.7.0 |
+| tre-workspace-unrestricted | 0.13.5 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-health | 0.2.12 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-service-azureml | 0.10.0 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-azuresql | 1.0.16 |
+| tre-service-guacamole | 0.13.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.4 |
+| tre-service-guacamole-linuxvm | 1.3.3 |
+| tre-service-guacamole-import-reviewvm | 0.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.1 |
+| tre-workspace-service-ohdsi | 0.3.4 |
+
+## 0.25.0 (July 18, 2025)
+**IMPORTANT**:
+* If you update core deployment prior to this release an upstream issue with Azure RM terraform provider means that
+ your App Gateway and certificates will be destroyed. ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+
+ENHANCEMENTS:
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
+
+BUG FIXES:
+* App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+* Fix issue where workspace deletion fails due to storage account lock ([#4664](https://github.com/microsoft/AzureTRE/issues/4664))
+
+## 0.24.0 (July 16, 2025)
+
+ENHANCEMENTS:
+* Add revoke functionality and confirmation dialogs for Airlock requests ([#4543](https://github.com/microsoft/AzureTRE/issues/4543))
+* Migrate Azure Firewall and Route Tables to Core Terraform ([#4342](https://github.com/microsoft/AzureTRE/pull/4342))
+* Display VM owner information on resource cards with clickable mailto links ([#4592](https://github.com/microsoft/AzureTRE/issues/4592))
+* Add sort/filter options to Workspace list ([#4462](https://github.com/microsoft/AzureTRE/issues/4462))
+* Added backup vault to base workspace & updated Azurerm provider to match core. ([[#4362](https://github.com/microsoft/AzureTRE/issues/4362)])
+
+BUG FIXES:
+* Fix "log analytics workspaces not found" error when deploying Databricks workspace service ([#4585](https://github.com/microsoft/AzureTRE/pull/4585))
+* Fix CostTag calling Costs API for every tag. ([#4577](https://github.com/microsoft/AzureTRE/issues/4577))
+* Reduce frequency of queue reader logging to improve log readability ([#4530](https://github.com/microsoft/AzureTRE/issues/4530))
+* Fix resource lock indicator persisting when switching between resources ([#4590](https://github.com/microsoft/AzureTRE/issues/4590))
+* Renew Letsencrypt GitHub action is failing to access storage account ([#4593](https://github.com/microsoft/AzureTRE/issues/4593))
+* Fix deployment pipeline failures due to KeyVault network policies preventing public access ([#4597](https://github.com/microsoft/AzureTRE/issues/4597))
+* Ensure storage account network rules are properly cleaned up on script failure ([#472](https://github.com/microsoft/AzureTRE/issues/472))
+* Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
+* Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
+* Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
+* Fix terraform dependency introduced by the migration of Azure Firewall and Route Tables to Core Terraform ([#4624](https://github.com/microsoft/AzureTRE/issues/4624))
+
+## 0.23.0 (June 10, 2025)
 **BREAKING CHANGES & MIGRATIONS**:
 * The management container registry now uses a private endpoint, and public network access is controlled via the disable_acr_public_access variable. The ACR SKU has been changed to premuim so you need to run `make deploy-mgmt` to upgrade it.
 In future versions, public access will be fully removed, and the ACR will become private only. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
 
-
 ENHANCEMENTS:
 * Add ability to pass values to install stage on pipleine ([#4451](https://github.com/microsoft/AzureTRE/pull/4451))
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
+* Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 * Enhanced the logout message to emphasize session security. ([#4410](https://github.com/AzureTRE/AzureTRE/issues/4410))
 * Added ability to assign VMs to other users at creation time ([#1179](https://github.com/microsoft/AzureTRE/issues/1179))
 * Add shutdown schedule to Windows VMs ([#4211](https://github.com/microsoft/AzureTRE/pull/4211))
@@ -19,15 +134,23 @@ ENHANCEMENTS:
 * Delete old database migrations ([#4168](https://github.com/microsoft/AzureTRE/issues/4168))
 * Update terraform to reduce recreation of private endpoints and other resources ([#4539](https://github.com/microsoft/AzureTRE/pull/4539))
 * Disable ACR admin account ([#4542](https://github.com/microsoft/AzureTRE/pull/4542))
+* Enable firewall support for Databricks storage account ([#4391](https://github.com/microsoft/AzureTRE/issues/4391))
+* Allow UI_SITE_NAME and UI_FOOTER_TEXT to be dynamically calculated passed in deploy_tre_reusable.yaml ([#4575](https://github.com/microsoft/AzureTRE/pull/4575))
+* Enable diagnostic settings for Databricks workspaces ([#4576](https://github.com/microsoft/AzureTRE/pull/4576))
 
 BUG FIXES:
 * Letsencrypt.yml fails with "Invalid reference in variable validation" ([#4506](https://github.com/microsoft/AzureTRE/4506))
 * Intermittent management storage account access failure during core deployment ([#4505](https://github.com/microsoft/AzureTRE/4505))
+* Some error messages not displayed in side panel ([#4502](https://github.com/microsoft/AzureTRE/issues/4502))
 * Fix AirLock VM not deleting ([#4474](https://github.com/microsoft/AzureTRE/issues/4474))
 * Airlock Review Template Leaves OS Disk Behind ([4514](https://github.com/microsoft/AzureTRE/issues/4514))
 * Enabled Shared Access Key access on the core storage account ([#4448](https://github.com/microsoft/AzureTRE/issues/4448))
 * Remove `strtobool` from airlock_processor ([#4535](https://github.com/microsoft/AzureTRE/issues/4535))
-* Fix missing arguments for airlock manager requests ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
+* Keyvault + mgmt storage just in time access scripts traps conflict in the same shell ([#4564](https://github.com/microsoft/AzureTRE/issues/4564))
+* Fix Gitea workspace service being exposed externally ([#4558](https://github.com/microsoft/AzureTRE/issues/4558))
+* Certs service deployment failed updating static website ([#4572](https://github.com/microsoft/AzureTRE/issues/4572))
+* Pin package versions in resource processor cloud-init script to avoid breaking changes ([#4580](https://github.com/microsoft/AzureTRE/issues/4580))
+
 
 ## 0.22.0 (April 20, 2025)
 

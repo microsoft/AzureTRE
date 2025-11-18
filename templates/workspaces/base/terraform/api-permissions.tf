@@ -1,11 +1,5 @@
 # The API needs permissions to stop/start VMs
 
-data "azurerm_user_assigned_identity" "api_id" {
-  name                = "id-api-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
-}
-
-
 # TODO: the assigned builtin role gives too wide permissions.
 # https://github.com/microsoft/AzureTRE/issues/2389
 resource "azurerm_role_assignment" "api_vm_contributor" {
@@ -20,3 +14,5 @@ resource "azurerm_role_assignment" "api_reader" {
   role_definition_name = "Reader"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
+
+

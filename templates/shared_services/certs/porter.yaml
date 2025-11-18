@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.5
+version: 0.7.7
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -75,6 +75,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -103,6 +104,13 @@ install:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - exec:
       description: "Generate certificate"
       command: bash
@@ -143,6 +151,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -184,6 +193,13 @@ renew:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - az:
       description: "Start application gateway"
       arguments:

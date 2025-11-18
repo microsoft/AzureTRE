@@ -73,6 +73,27 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "enable_backup": {
+      "type": "boolean",
+      "title": "Enable Backup",
+      "description": "Enable backups for the workspace. Workspace services must support this feature.",
+      "default": true,
+      "updateable": true
+    },
+    "enable_dns_policy": {
+      "type": "boolean",
+      "title": "Enable DNS Security Policy",
+      "description": "Enable DNS Security Policy for the workspace.",
+      "default": false,
+      "updateable": true
+    },
+    "deploy_to_another_subscription": {
+      "type": "boolean",
+      "title": "Deploy workspace to another subscription",
+      "description": "Check this box if you want to deploy the workspace to another subscription.",
+      "default": false,
+      "updateable": false
     }
   },
   "allOf": [
@@ -279,6 +300,30 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "deploy_to_another_subscription": {
+            "const": true
+          }
+        },
+        "required": [
+          "deploy_to_another_subscription"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workspace_subscription_id": {
+            "type": "string",
+            "title": "Workspace Subscription ID",
+            "description": "The subscription ID where the workspace will be deployed."
+          }
+        },
+        "required": [
+          "workspace_subscription_id"
+        ]
+      }
     }
   ],
   "actions": [],
@@ -304,6 +349,7 @@
       "create_aad_groups",
       "client_id",
       "client_secret",
+      "enable_backup",
       "enable_airlock",
       "configure_review_vms",
       "airlock_review_config",

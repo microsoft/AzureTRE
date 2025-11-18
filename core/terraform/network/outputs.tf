@@ -10,6 +10,10 @@ output "azure_firewall_subnet_id" {
   value = "${azurerm_virtual_network.core.id}/subnets/AzureFirewallSubnet"
 }
 
+output "firewall_management_subnet_id" {
+  value = "${azurerm_virtual_network.core.id}/subnets/AzureFirewallManagementSubnet"
+}
+
 output "app_gw_subnet_id" {
   value = "${azurerm_virtual_network.core.id}/subnets/AppGwSubnet"
 }
@@ -40,6 +44,10 @@ output "airlock_storage_subnet_id" {
 
 output "airlock_events_subnet_id" {
   value = "${azurerm_virtual_network.core.id}/subnets/AirlockEventsSubnet"
+}
+
+output "route_table_name" {
+  value = azurerm_route_table.rt.name
 }
 
 # DNS Zones
@@ -91,3 +99,21 @@ output "eventgrid_private_dns_zone_id" {
 output "azurecr_dns_zone_id" {
   value = azurerm_private_dns_zone.azurecr.id
 }
+
+# IP Groups
+output "resource_processor_ip_group_id" {
+  value = azurerm_ip_group.resource_processor.id
+}
+
+output "shared_services_ip_group_id" {
+  value = azurerm_ip_group.shared.id
+}
+
+output "airlock_processor_ip_group_id" {
+  value = azurerm_ip_group.airlock_processor.id
+}
+
+output "web_app_ip_group_id" {
+  value = azurerm_ip_group.webapp.id
+}
+

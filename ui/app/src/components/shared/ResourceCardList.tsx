@@ -3,6 +3,7 @@ import React from "react";
 import { IStackStyles, IStackTokens, Stack, Text } from "@fluentui/react";
 import { ResourceCard } from "../shared/ResourceCard";
 import { Resource } from "../../models/resource";
+import { CachedUser } from "../../models/user";
 
 interface ResourceCardListProps {
   resources: Array<Resource>;
@@ -12,6 +13,7 @@ interface ResourceCardListProps {
   emptyText: string;
   readonly?: boolean;
   isExposedExternally?: boolean;
+  usersCache?: Map<string, CachedUser>; // ownerId -> user info mapping
 }
 
 export const ResourceCardList: React.FunctionComponent<
@@ -42,6 +44,7 @@ export const ResourceCardList: React.FunctionComponent<
                       ? props.isExposedExternally
                       : r.properties.is_exposed_externally
                   }
+                  usersCache={props.usersCache}
                 />
               </Stack.Item>
             );

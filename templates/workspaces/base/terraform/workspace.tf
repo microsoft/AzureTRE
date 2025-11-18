@@ -25,6 +25,12 @@ module "network" {
   tre_resource_id        = var.tre_resource_id
   tre_workspace_tags     = local.tre_workspace_tags
   arm_environment        = var.arm_environment
+  enable_dns_policy      = var.enable_dns_policy
+
+  providers = {
+    azurerm      = azurerm
+    azurerm.core = azurerm.core
+  }
 }
 
 module "aad" {
@@ -41,7 +47,6 @@ module "aad" {
   core_api_client_id             = var.core_api_client_id
 
   depends_on = [
-    azurerm_role_assignment.keyvault_deployer_ws_role,
     azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
@@ -64,6 +69,12 @@ module "airlock" {
   encryption_identity_id                 = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_airlock_malware_scanning        = var.enable_airlock_malware_scanning
   airlock_malware_scan_result_topic_name = var.enable_airlock_malware_scanning ? var.airlock_malware_scan_result_topic_name : null
+
+  providers = {
+    azurerm      = azurerm
+    azurerm.core = azurerm.core
+  }
+
   depends_on = [
     module.network,
   ]
@@ -88,8 +99,20 @@ module "azure_monitor" {
   encryption_key_versionless_id            = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
   encryption_identity_id                   = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   enable_local_debugging                   = var.enable_local_debugging
+
   depends_on = [
     module.network,
     module.airlock
   ]
+}
+
+module "backup" {
+  count                 = var.enable_backup ? 1 : 0
+  source                = "./backup"
+  tre_id                = var.tre_id
+  tre_resource_id       = var.tre_resource_id
+  location              = var.location
+  resource_group_name   = azurerm_resource_group.ws.name
+  tre_workspace_tags    = local.tre_workspace_tags
+  enable_cmk_encryption = var.enable_cmk_encryption
 }
