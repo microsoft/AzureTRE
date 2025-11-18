@@ -260,7 +260,6 @@ export const RequestsList: React.FunctionComponent = () => {
         onRender: (request: AirlockRequest) => (
           <Persona size={PersonaSize.size24} text={request.createdBy?.name} />
         ),
-        isFiltered: filters.has("creator_user_id"),
       },
       {
         key: "type",
