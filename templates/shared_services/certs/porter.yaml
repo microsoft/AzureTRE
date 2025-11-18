@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.7
+version: 0.8.0
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -57,6 +57,18 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: enable_auto_renewal
+    type: boolean
+    default: false
+    description: "Enable automatic renewal of the certificate before expiry"
+  - name: renewal_threshold_days
+    type: integer
+    default: 30
+    description: "Number of days before expiry to trigger renewal"
+  - name: renewal_schedule_cron
+    type: string
+    default: "0 2 * * 0"
+    description: "Cron expression for checking certificate expiry (default: weekly on Sunday at 2 AM)"
 
 mixins:
   - exec
@@ -76,6 +88,9 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_auto_renewal: ${ bundle.parameters.enable_auto_renewal }
+        renewal_threshold_days: ${ bundle.parameters.renewal_threshold_days }
+        renewal_schedule_cron: ${ bundle.parameters.renewal_schedule_cron }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -90,6 +105,9 @@ install:
         - name: resource_group_name
         - name: keyvault_name
         - name: password_name
+        - name: auto_renewal_enabled
+        - name: auto_renewal_logic_app_name
+        - name: renewal_threshold_days
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -135,11 +153,26 @@ install:
         name: ${ bundle.outputs.application_gateway_name }
 
 upgrade:
-  - exec:
+  - terraform:
       description: "Upgrade shared service"
-      command: echo
-      arguments:
-        - "This shared service does not implement upgrade action"
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        domain_prefix: ${ bundle.parameters.domain_prefix }
+        cert_name: ${ bundle.parameters.cert_name }
+        tre_resource_id: ${ bundle.parameters.id }
+        enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
+        key_store_id: ${ bundle.parameters.key_store_id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        enable_auto_renewal: ${ bundle.parameters.enable_auto_renewal }
+        renewal_threshold_days: ${ bundle.parameters.renewal_threshold_days }
+        renewal_schedule_cron: ${ bundle.parameters.renewal_schedule_cron }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.tre_id }-shared-service-certs
 
 uninstall:
   - terraform:
@@ -152,6 +185,9 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        enable_auto_renewal: ${ bundle.parameters.enable_auto_renewal }
+        renewal_threshold_days: ${ bundle.parameters.renewal_threshold_days }
+        renewal_schedule_cron: ${ bundle.parameters.renewal_schedule_cron }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -179,6 +215,9 @@ renew:
         - name: resource_group_name
         - name: keyvault_name
         - name: password_name
+        - name: auto_renewal_enabled
+        - name: auto_renewal_logic_app_name
+        - name: renewal_threshold_days
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
