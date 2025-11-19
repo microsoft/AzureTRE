@@ -151,14 +151,6 @@ parameters:
     type: boolean
     default: true
     description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
-  - name: enable_airlock_malware_scanning
-    type: boolean
-    default: false
-    description: "Enable malware scanning on the workspace storage account"
-  - name: airlock_malware_scan_result_topic_name
-    type: string
-    default: ""
-    description: "The name of the topic to publish scan results to"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -270,8 +262,6 @@ install:
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
-        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
-        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -330,8 +320,6 @@ upgrade:
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
-        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
-        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -413,8 +401,6 @@ uninstall:
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
-        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
-        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -81,13 +81,6 @@
       "default": true,
       "updateable": true
     },
-    "enable_dns_policy": {
-      "type": "boolean",
-      "title": "Enable DNS Security Policy",
-      "description": "Enable DNS Security Policy for the workspace.",
-      "default": false,
-      "updateable": true
-    },
     "deploy_to_another_subscription": {
       "type": "boolean",
       "title": "Deploy workspace to another subscription",
