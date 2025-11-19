@@ -495,7 +495,7 @@ export const RequestsList: React.FunctionComponent = () => {
     }
     return airlockRequests.filter((request) => {
       const candidates = [
-        request.workspace,
+        request.workspaceId,
         request.title,
         request.createdBy?.name,
         request.createdBy?.email,
