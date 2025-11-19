@@ -7,8 +7,10 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
 
 COMPONENTS:
+* Unrestricted workspace v0.13.6
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**

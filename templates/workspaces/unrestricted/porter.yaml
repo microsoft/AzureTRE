@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.13.5
+version: 0.13.6
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -38,6 +38,10 @@ parameters:
   - name: azure_location
     type: string
     description: "Azure location (region) to deploy to"
+  - name: workspace_subscription_id
+    type: string
+    description: "Azure subscription ID for the workspace resources"
+    default: ""
   - name: address_spaces
     type: string
     description: "VNet address spaces"
@@ -61,6 +65,10 @@ parameters:
   - name: shared_storage_quota
     type: integer
     default: 50
+  - name: storage_account_redundancy
+    type: string
+    default: "GRS"
+    description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
   - name: enable_local_debugging
     type: boolean
     default: false
@@ -125,6 +133,14 @@ parameters:
   - name: enable_airlock
     type: boolean
     default: false
+  - name: enable_backup
+    type: boolean
+    default: true
+    description: "Enable backups for the workspace, including the vm's & shared storage."
+  - name: enable_dns_policy
+    type: boolean
+    default: false
+    description: "Whether to enable DNS security policy for the workspace."
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -135,6 +151,14 @@ parameters:
     type: boolean
     default: true
     description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
+  - name: enable_airlock_malware_scanning
+    type: boolean
+    default: false
+    description: "Enable malware scanning on the workspace storage account"
+  - name: airlock_malware_scan_result_topic_name
+    type: string
+    default: ""
+    description: "The name of the topic to publish scan results to"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -163,6 +187,26 @@ outputs:
       - install
       - upgrade
   - name: sp_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: backup_vault_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: vm_backup_policy_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: fileshare_backup_policy_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: log_analytics_workspace_name
     type: string
     applyTo:
       - install
@@ -197,6 +241,7 @@ install:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
@@ -221,7 +266,12 @@ install:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -236,6 +286,10 @@ install:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: backup_vault_name
+        - name: vm_backup_policy_id
+        - name: fileshare_backup_policy_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
@@ -247,6 +301,7 @@ upgrade:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
@@ -271,7 +326,12 @@ upgrade:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -286,6 +346,10 @@ upgrade:
         - name: client_id
         - name: scope_id
         - name: sp_id
+        - name: backup_vault_name
+        - name: vm_backup_policy_id
+        - name: fileshare_backup_policy_id
+        - name: log_analytics_workspace_name
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
@@ -321,6 +385,7 @@ uninstall:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         location: ${ bundle.parameters.azure_location }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
@@ -344,7 +409,12 @@ uninstall:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
+        enable_backup: ${ bundle.parameters.enable_backup }
+        enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
+        airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
