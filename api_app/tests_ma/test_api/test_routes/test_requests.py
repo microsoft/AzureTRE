@@ -1,6 +1,6 @@
 import pytest
 from fastapi import status
-from mock import AsyncMock, patch, MagicMock
+from mock import patch
 
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from resources import strings

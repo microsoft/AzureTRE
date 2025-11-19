@@ -375,7 +375,7 @@ async def test_get_airlock_requests_for_airlock_manager_passes_correct_arguments
     test_order_ascending = False
 
     # Call the method with all parameters
-    result = await airlock_request_repo.get_airlock_requests_for_airlock_manager(
+    await airlock_request_repo.get_airlock_requests_for_airlock_manager(
         user_id=user_id,
         type=test_type,
         status=test_status,
