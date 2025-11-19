@@ -15,13 +15,6 @@
       "title": "Shared Storage Quota",
       "description": "Quota (in GB) to set for the VM Shared Storage."
     },
-    "enable_airlock": {
-      "type": "boolean",
-      "title": "Enable Airlock",
-      "description": "Allow safe import and export to the workspace",
-      "default": true,
-      "updateable": true
-    },
     "app_service_plan_sku": {
       "type": "string",
       "title": "App Service Plan SKU",
@@ -90,106 +83,6 @@
     }
   },
   "allOf": [
-    {
-      "if": {
-        "properties": {
-          "enable_airlock": {
-            "const": true
-          }
-        },
-        "required": [
-          "enable_airlock"
-        ]
-      },
-      "then": {
-        "properties": {
-          "configure_review_vms": {
-            "type": "boolean",
-            "title": "Configure Review VMs",
-            "description": "Allow TRE to automatically create and delete review VMs for airlock approvals",
-            "default": false
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "enable_airlock": {
-            "const": true
-          },
-          "configure_review_vms": {
-            "const": true
-          }
-        },
-        "required": [
-          "enable_airlock",
-          "configure_review_vms"
-        ]
-      },
-      "then": {
-        "properties": {
-          "airlock_review_config": {
-            "type": "object",
-            "title": "Airlock Review Config",
-            "default": null,
-            "description": "Configuration for Airlock Review feature. Needs to be set up after workspace creation",
-            "properties": {
-              "import": {
-                "title": "Import VM Settings",
-                "required": [
-                  "import_vm_workspace_id",
-                  "import_vm_workspace_service_id",
-                  "import_vm_user_resource_template_name"
-                ],
-                "properties": {
-                  "import_vm_workspace_id": {
-                    "title": "Import Workspace ID",
-                    "type": "string",
-                    "description": "ID for Import Review workspace"
-                  },
-                  "import_vm_workspace_service_id": {
-                    "title": "Import Workspace Service ID",
-                    "type": "string",
-                    "description": "ID for Workspace Service ID where to deploy Review user resources"
-                  },
-                  "import_vm_user_resource_template_name": {
-                    "title": "Import VM User Resource Template Name",
-                    "type": "string",
-                    "description": "Template Name for User Resource for reviewing Import Requests",
-                    "examples": [
-                      "tre-service-guacamole-import-reviewvm"
-                    ]
-                  }
-                }
-              },
-              "export": {
-                "title": "Export VM Settings",
-                "required": [
-                  "export_vm_workspace_service_id",
-                  "export_vm_user_resource_template_name"
-                ],
-                "properties": {
-                  "export_vm_workspace_service_id": {
-                    "title": "Export Workspace Service ID",
-                    "type": "string",
-                    "description": "ID for Workspace Service ID where to deploy Review user resources"
-                  },
-                  "export_vm_user_resource_template_name": {
-                    "title": "Export VM User Resource Template Name",
-                    "type": "string",
-                    "description": "Template Name for User Resource for reviewing Export Requests",
-                    "examples": [
-                      "tre-service-guacamole-export-reviewvm"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     {
       "if": {
         "properties": {
@@ -340,9 +233,6 @@
       "client_id",
       "client_secret",
       "enable_backup",
-      "enable_airlock",
-      "configure_review_vms",
-      "airlock_review_config",
       "*"
     ]
   },
