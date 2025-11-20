@@ -14,6 +14,12 @@ E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
 
+# Description: Register Azure resource providers (run once per subscription)
+# Example: make register-providers
+register-providers: ## 🔧 Register Azure resource providers (run once per subscription)
+	$(call target_title,"Registering Azure resource providers") \
+	&& ${MAKEFILE_DIR}/devops/scripts/register_providers.sh
+
 # Description: Provision all the application resources from beginning to end
 # Example: make all
 all: bootstrap mgmt-deploy images tre-deploy ## 🚀 Provision all the application resources from beginning to end
@@ -47,21 +53,21 @@ help: ## 💬 This help message :)
 # Example: make bootstrap
 bootstrap:
 	$(call target_title, "Bootstrap Terraform") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& cd ${MAKEFILE_DIR}/devops/terraform && ./bootstrap.sh
 
 # Description: Deploy management infrastructure. This will create the management resource group (named <mgmt_resource_group_name> from the config.yaml file) with the necessary resources such as Azure Container Registry, Storage Account for the tfstate and KV for Encryption Keys if enabled.
 # Example: make mgmt-deploy
 mgmt-deploy:
 	$(call target_title, "Deploying management infrastructure") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& cd ${MAKEFILE_DIR}/devops/terraform && ./deploy.sh
 
 # Description: Destroy management infrastructure. This will destroy the management resource group with the resources in it.
 # Example: make mgmt-destroy
 mgmt-destroy:
 	$(call target_title, "Destroying management infrastructure") \
-	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	. ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& cd ${MAKEFILE_DIR}/devops/terraform && ./destroy.sh
 
 # A recipe for building images. Parameters:
@@ -73,7 +79,7 @@ mgmt-destroy:
 # The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
-&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
@@ -106,7 +112,7 @@ build-airlock-processor:
 # Example: $(call push_image,"api","./api_app/_version.py")
 define push_image
 $(call target_title, "Pushing $(1) Image") \
-&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 && source <(grep = $(2) | sed 's/ *= */=/g') \
@@ -134,7 +140,7 @@ push-airlock-processor:
 # Example: make deploy-core
 deploy-core: tre-start
 	$(call target_title, "Deploying TRE") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& rm -fr ~/.config/tre/environment.json \
 	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
 		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/core/terraform/ \
@@ -146,7 +152,7 @@ deploy-core: tre-start
 # Example: make plan-core
 plan-core: tre-start
 	$(call target_title, "Generating core terraform plan") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& rm -fr ~/.config/tre/environment.json \
 	&& if [[ "$${TF_LOG}" == "DEBUG" ]]; \
 		then echo "TF DEBUG set - output supressed - see tflogs container for log file" && cd ${MAKEFILE_DIR}/core/terraform/ \
@@ -157,7 +163,7 @@ plan-core: tre-start
 # Example: make letsencrypt
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,certbot,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/core/terraform/scripts/letsencrypt.sh
@@ -168,7 +174,7 @@ letsencrypt:
 # Example: make tre-start
 tre-start: ## ⏩ Start the TRE Service
 	$(call target_title, "Starting TRE") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh start
 
 # Description: Stop the TRE Service.
@@ -176,14 +182,14 @@ tre-start: ## ⏩ Start the TRE Service
 # Example: make tre-stop
 tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop
 
 # Description: Destroy the TRE Service. This will destroy all the resources of the TRE service, including the Azure Firewall and Application Gateway.
 # Example: make tre-destroy
 tre-destroy: ## 🧨 Destroy the TRE Service
 	$(call target_title, "Destroying TRE") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& . ${MAKEFILE_DIR}/devops/scripts/destroy_env_no_terraform.sh
 
@@ -192,7 +198,7 @@ tre-destroy: ## 🧨 Destroy the TRE Service
 # Example: make terraform-deploy DIR="./templates/workspaces/base"
 terraform-deploy:
 	$(call target_title, "Deploying ${DIR} with Terraform") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& ./devops/scripts/terraform_deploy.sh ${DIR}
@@ -202,7 +208,7 @@ terraform-deploy:
 # Example: make terraform-upgrade DIR="./templates/workspaces/base"
 terraform-upgrade:
 	$(call target_title, "Upgrading ${DIR} with Terraform") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& ./devops/scripts/terraform_upgrade_provider.sh ${DIR}
@@ -212,7 +218,7 @@ terraform-upgrade:
 # Example: make terraform-import DIR="./templates/workspaces/base"
 terraform-import:
 	$(call target_title, "Importing ${DIR} with Terraform") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& cd ${DIR}/terraform/ && ./import.sh
 
 # Description: Destroy the Terraform resources in the specified directory.
@@ -220,7 +226,7 @@ terraform-import:
 # Example: make terraform-destroy DIR="./templates/workspaces/base"
 terraform-destroy:
 	$(call target_title, "Destroying ${DIR} Service") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${DIR}/.env \
 	&& cd ${DIR}/terraform/ && ./destroy.sh
@@ -263,7 +269,7 @@ lint-docs:
 # Example: make bundle-build DIR="./templates/workspaces/base"
 bundle-build:
 	$(call target_title, "Building ${DIR} bundle with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& cd ${DIR} \
@@ -278,7 +284,7 @@ bundle-build:
 # Example: make bundle-install DIR="./templates/workspaces/base"
 bundle-install: bundle-check-params
 	$(call target_title, "Deploying ${DIR} with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& cd ${DIR} \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
@@ -310,7 +316,7 @@ bundle:
 # Example: make bundle-check-params DIR="./templates/workspaces/base"
 bundle-check-params:
 	$(call target_title, "Checking bundle parameters in ${DIR}") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,porter \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& cd ${DIR} \
 	&& if [ ! -f "parameters.json" ]; then echo "Error - please create a parameters.json file."; exit 1; fi \
 	&& if [ "$$(jq -r '.name' parameters.json)" != "$$(yq eval '.name' porter.yaml)" ]; then echo "Error - ParameterSet name isn't equal to bundle's name."; exit 1; fi \
@@ -325,7 +331,7 @@ bundle-check-params:
 # Example: make bundle-uninstall DIR="./templates/workspaces/base"
 bundle-uninstall:
 	$(call target_title, "Uninstalling ${DIR} with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& cd ${DIR} \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
@@ -342,7 +348,7 @@ bundle-uninstall:
 # Example: make bundle-custom-action DIR="./templates/workspaces/base" ACTION="action"
 bundle-custom-action:
  	$(call target_title, "Performing:${ACTION} ${DIR} with Porter") \
- 	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_and_validate_env.sh \
 	&& cd ${DIR}
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh .env \
@@ -359,7 +365,7 @@ bundle-custom-action:
 # Example: make bundle-publish DIR="./templates/workspaces/base"
 bundle-publish:
 	$(call target_title, "Publishing ${DIR} bundle with Porter") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& az acr login --name ${ACR_NAME}	\
@@ -373,7 +379,7 @@ bundle-publish:
 # Example: make bundle-register DIR="./templates/workspaces/base"
 bundle-register:
 	$(call target_title, "Registering ${DIR} bundle") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 	&& if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
 	&& az acr login --name ${ACR_NAME}	\
@@ -409,12 +415,13 @@ shared_service_bundle:
 
 # Description: Build, publish and register a user resource bundle.
 # Arguments: 1. WORKSPACE_SERVICE - the name of the workspace service 2. BUNDLE - the name of the bundle
+# 3. Optional: WORKSPACE_SERVICE_PREFIX - prefix to add to the workspace service name when registering the bundle defaults to "tre-service-"
 # Example: make user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
 # Note: the WORKSPACE_SERVICE variable is used to specify the name of the workspace service. This should be equivalent to the name of the directory of the template in the templates/workspace_services directory.
 # And the BUNDLE variable is used to specify the name of the bundle. This should be equivalent to the name of the directory of the template in the templates/workspace_services/${WORKSPACE_SERVICE}/user_resources directory.
 user_resource_bundle:
 	$(MAKE) bundle-build bundle-publish bundle-register \
-	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=tre-service-${WORKSPACE_SERVICE}
+	DIR="${MAKEFILE_DIR}/templates/workspace_services/${WORKSPACE_SERVICE}/user_resources/${BUNDLE}" BUNDLE_TYPE=user_resource WORKSPACE_SERVICE_NAME=$${WORKSPACE_SERVICE_PREFIX:-tre-service-}${WORKSPACE_SERVICE}
 
 # Description: Publish and register all bundles.
 # Example: make bundle-publish-register-all
@@ -426,7 +433,7 @@ bundle-publish-register-all:
 # Example: make deploy-shared-service DIR="./templates/shared_services/firewall/"
 deploy-shared-service:
 	$(call target_title, "Deploying ${DIR} shared service") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh porter,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& ${MAKEFILE_DIR}/devops/scripts/ensure_cli_signed_in.sh $${TRE_URL} \
 	&& cd ${DIR} \
 	&& ${MAKEFILE_DIR}/devops/scripts/deploy_shared_service.sh $${PROPS}
@@ -434,7 +441,7 @@ deploy-shared-service:
 # Description: Build, publish and register the firewall shared service. And then deploy the firewall shared service.
 # Example: make firewall-install
 firewall-install:
-	. ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	. ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& $(MAKE) bundle-build bundle-publish bundle-register deploy-shared-service \
 	DIR=${MAKEFILE_DIR}/templates/shared_services/firewall/ BUNDLE_TYPE=shared_service
 
@@ -442,7 +449,7 @@ firewall-install:
 # Example: make static-web-upload
 static-web-upload:
 	$(call target_title, "Uploading to static website") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/upload_static_web.sh
@@ -451,7 +458,7 @@ static-web-upload:
 # Example: make build-and-deploy-ui
 build-and-deploy-ui:
 	$(call target_title, "Build and deploy UI") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
@@ -510,7 +517,7 @@ test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 # Example: make test-e2e-custom SELECTOR=smoke
 test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 	$(call target_title, "Running E2E tests with custom selector ${SELECTOR}") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env,auth \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
 	&& cd ${MAKEFILE_DIR}/e2e_tests \
 	&& \
@@ -525,7 +532,7 @@ test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 # Example: make setup-local-debugging
 setup-local-debugging: ## 🛠️ Setup local debugging
 	$(call target_title,"Setting up the ability to debug the API and Resource Processor") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/setup_local_debugging.sh
@@ -534,21 +541,21 @@ setup-local-debugging: ## 🛠️ Setup local debugging
 # Example: make auth
 auth: ## 🔐 Create the necessary Azure Active Directory assets
 	$(call target_title,"Setting up Azure Active Directory") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& ${MAKEFILE_DIR}/devops/scripts/create_aad_assets.sh
 
 # Description: Display TRE core output
 # Example: make show-core-output
 show-core-output:
 	$(call target_title,"Display TRE core output") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./show_output.sh && popd > /dev/null
 
 # Description: Check the API health
 # Example: make api-healthcheck
 api-healthcheck:
 	$(call target_title,"Checking API Health") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& ${MAKEFILE_DIR}/devops/scripts/api_healthcheck.sh
 
@@ -556,7 +563,7 @@ api-healthcheck:
 # Example: make db-migrate
 db-migrate: api-healthcheck ## 🗄️ Run database migrations
 	$(call target_title,"Migrating Cosmos Data") \
-	&& . ${MAKEFILE_DIR}/devops/scripts/check_dependencies.sh nodocker,env \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& . ${MAKEFILE_DIR}/devops/scripts/get_access_token.sh \
