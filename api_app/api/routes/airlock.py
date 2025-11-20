@@ -151,7 +151,7 @@ async def create_review_user_resource(
         return AirlockRequestAndOperationInResponse(airlockRequest=updated_resource, operation=operation)
     except (KeyError, TypeError, EntityDoesNotExist) as e:
         logger.exception("Failed to retrieve Airlock Review configuration for workspace %s", workspace.id)
-        raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise HTTPException(status_code=status_code.HTTP_422_UNPROCESSABLE_CONTENT,
                             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}")
     except (ValidationError, ValueError) as e:

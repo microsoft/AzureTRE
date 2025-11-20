@@ -25,6 +25,24 @@ inputs part where the used Github environment name is set, make sure to update i
 
 ![Setup env in pipeline](../../assets/using-tre/pipelines_set_env.png)
 
+## Azure Resource Provider Registration
+
+Before running any CI/CD pipelines that deploy Azure TRE, ensure that the required Azure resource providers are registered in your target subscription. This is a one-time setup step per subscription.
+
+You can register the required providers by running:
+
+```bash
+make register-providers
+```
+
+This command registers the following providers and features required by Azure TRE:
+- Microsoft.Storage
+- Microsoft.AlertsManagement  
+- Microsoft.Compute
+- Microsoft.Compute/EncryptionAtHost feature
+
+Alternatively, you can add a step to your CI/CD pipeline to run this command before the main deployment steps.
+
 ## Publish Custom Templates in Pipelines
 
 If you have created custom AzureTRE templates you can publish and register them as part of the CI/CD pipelines.
