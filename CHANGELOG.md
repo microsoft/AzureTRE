@@ -9,6 +9,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Fix workspace deletion failures due to AnotherOperationInProgress errors on AMPLS private endpoint ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 
 COMPONENTS:
 
