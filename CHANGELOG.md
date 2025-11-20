@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
+* Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
@@ -14,6 +15,10 @@ BUG FIXES:
 * Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| tre-service-azureml | 1.1.0 |
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**

@@ -1,19 +1,12 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-azureml
-version: 1.0.0
+version: 1.1.0
 description: "An Azure TRE service for Azure Machine Learning"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
 
 credentials:
-  # Credentials for interacting with the AAD Auth tenant
-  - name: auth_client_id
-    env: AUTH_CLIENT_ID
-  - name: auth_client_secret
-    env: AUTH_CLIENT_SECRET
-  - name: auth_tenant_id
-    env: AUTH_TENANT_ID
   # Credentials for interacting with Azure
   - name: azure_tenant_id
     env: ARM_TENANT_ID
@@ -61,8 +54,6 @@ parameters:
     default: false
   - name: arm_environment
     env: ARM_ENVIRONMENT
-  - name: azure_environment
-    env: AZURE_ENVIRONMENT
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -73,11 +64,9 @@ parameters:
     type: string
   - name: workspace_owners_group_id
     type: string
-    default: ""
     description: "Object ID of the workspace owners AAD group"
   - name: workspace_researchers_group_id
     type: string
-    default: ""
     description: "Object ID of the workspace researchers AAD group"
 
 outputs:
@@ -150,11 +139,7 @@ install:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
@@ -191,11 +176,7 @@ upgrade:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
@@ -232,11 +213,7 @@ uninstall:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_tenant_id: ${ bundle.credentials.azure_tenant_id }
-        auth_client_id: ${ bundle.credentials.auth_client_id }
-        auth_client_secret: ${ bundle.credentials.auth_client_secret }
-        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         arm_environment: ${ bundle.parameters.arm_environment }
-        azure_environment: ${ bundle.parameters.azure_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         log_analytics_workspace_name: ${ bundle.parameters.log_analytics_workspace_name }
