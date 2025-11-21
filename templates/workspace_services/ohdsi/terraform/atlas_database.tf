@@ -100,10 +100,11 @@ resource "azurerm_network_security_group" "postgres" {
 }
 
 resource "azurerm_subnet" "postgres" {
-  name                 = "PostgreSQLSubnet${local.short_service_id}"
-  virtual_network_name = data.azurerm_virtual_network.ws.name
-  resource_group_name  = data.azurerm_resource_group.ws.name
-  address_prefixes     = [var.address_space]
+  name                            = "PostgreSQLSubnet${local.short_service_id}"
+  virtual_network_name            = data.azurerm_virtual_network.ws.name
+  resource_group_name             = data.azurerm_resource_group.ws.name
+  address_prefixes                = [var.address_space]
+  default_outbound_access_enabled = true
 
   delegation {
     name = "psql-delegation"
