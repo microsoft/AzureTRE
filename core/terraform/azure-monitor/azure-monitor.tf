@@ -117,10 +117,7 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   subnet_id           = var.shared_subnet_id
   tags                = var.tre_core_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
   depends_on = [
     azurerm_monitor_private_link_scoped_service.ampls_app_insights,
   ]
