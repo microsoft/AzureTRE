@@ -1,7 +1,7 @@
 import copy
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
@@ -114,9 +114,9 @@ class AirlockRequestRepository(BaseRepository):
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
             createdBy=user,
-            createdWhen=datetime.utcnow().timestamp(),
+            createdWhen=datetime.now(UTC).timestamp(),
             updatedBy=user,
-            updatedWhen=datetime.utcnow().timestamp(),
+            updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
         )
