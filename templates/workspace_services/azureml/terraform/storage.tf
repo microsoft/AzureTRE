@@ -7,6 +7,7 @@ resource "azurerm_storage_account" "aml" {
   table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
   cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
   tags                             = local.tre_workspace_service_tags
   network_rules {
     default_action = "Deny"
