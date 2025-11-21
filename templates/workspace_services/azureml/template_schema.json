@@ -4,10 +4,7 @@
   "type": "object",
   "title": "Azure Machine Learning",
   "description": "Azure Machine Learning",
-  "required": [
-    "workspace_owners_group_id",
-    "workspace_researchers_group_id"
-  ],
+  "required": [],
   "properties": {
     "display_name": {
       "type": "string",
