@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
+* Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
