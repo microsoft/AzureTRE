@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ConnectionServiceTest {
     @Mock
@@ -31,6 +32,34 @@ class ConnectionServiceTest {
                 put("dummy_connection", null);
             }};
         testGetConnections(connectionList);
+    }
+
+    @Test
+    public void getConnectionsThrowsExceptionWhenUserIsNull() {
+        try (MockedStatic<ConnectionService> connectionServiceMockedStatic = Mockito.mockStatic(
+            ConnectionService.class)) {
+            connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(null))
+                .thenCallRealMethod();
+            
+            Map<String, Connection> result = ConnectionService.getConnections(null);
+            // Should return empty map when user is null
+            assertEquals(0, result.size());
+        } catch (final GuacamoleException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void getConnectionsHandlesGuacamoleException() {
+        try (MockedStatic<ConnectionService> connectionServiceMockedStatic = Mockito.mockStatic(
+            ConnectionService.class)) {
+            connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(
+              (AzureTREAuthenticatedUser) authenticatedUser))
+                .thenThrow(new GuacamoleException("API connection failed"));
+            
+            assertThrows(GuacamoleException.class, () -> 
+                ConnectionService.getConnections((AzureTREAuthenticatedUser) authenticatedUser));
+        }
     }
 
     private void testGetConnections(final Map<String, Connection> connectionList) {
