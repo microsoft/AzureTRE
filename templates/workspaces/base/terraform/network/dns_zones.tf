@@ -16,7 +16,10 @@ resource "azurerm_private_dns_zone" "azure_monitor" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
@@ -27,7 +30,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
@@ -35,7 +41,10 @@ resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opinsights" {
@@ -46,14 +55,20 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opin
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_ods_opinsights" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.ods.opinsights.azure.com"]
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opinsights" {
@@ -63,14 +78,20 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opin
   private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_ods_opinsights.name
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_agentsvc" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.agentsvc.azure-automation.net"]
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc" {
@@ -80,5 +101,8 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc
   private_dns_zone_name = azurerm_private_dns_zone.azure_monitor_agentsvc.name
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [tags]
+  }
 }
