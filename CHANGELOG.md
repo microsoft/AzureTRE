@@ -14,7 +14,6 @@ BUG FIXES:
 
 COMPONENTS:
 * Bump workspace base template version to 2.7.2 ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
-* Bump core version to 0.16.11 ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
