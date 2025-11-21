@@ -33,10 +33,20 @@ jobs:
         with:
           persist-credentials: false
 
+      # Pin specific version due to az cli issue in 2.74.0 https://github.com/microsoft/AzureTRE/issues/4593
+      - name: Install specific Azure CLI version
+        run: |
+          AZ_DIST=$(lsb_release -cs)
+          AZ_VER=2.73.0
+
+          apt-cache policy azure-cli
+          sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
+          az version
+
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.2.9
+          terraform_version: 1.9.8
           terraform_wrapper: false
 
       - name: Renew Certificates
@@ -52,6 +62,7 @@ jobs:
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           TF_VAR_mgmt_storage_account_name: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
         run: |
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \

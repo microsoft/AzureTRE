@@ -19,16 +19,11 @@ if [ ! -f "config.yaml" ]; then
     #exit
   fi
 else
-    # Validate no duplicate keys in config
-    has_dupes=$(yq e '.. | select(. == "*") | {(path | .[-1]): .}| keys' config.yaml | sort| uniq -d)
-    if [ -n "${has_dupes:-}" ]; then
-      echo -e "\e[31m»»» 💥 There are duplicate keys in your config, please fix and try again!\e[0m"
-      exit 1
-    fi
 
-    # Validate config schema
-    if [[ $(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml) != *valid* ]]; then
+    #Validate config schema
+    if ! out="$(pajv validate -s "$DIR/../../config_schema.json" -d config.yaml 2>&1)"; then
       echo -e "\e[31m»»» ⚠️ Your config.yaml is invalid 😥 Please fix the errors and retry."
+      echo "$out" | sed -n '1,30p'
       exit 1
     fi
 
@@ -56,21 +51,28 @@ else
       done
     fi
 
-    # Get leaf keys yq query
-    GET_LEAF_KEYS=".. | select(. == \"*\") | {(path | .[-1]): .}"
+    # yq query to get all leaf keys, converting any arrays to a single line json array.
+    GET_LEAF_KEYS="with(.. | select(kind == \"seq\"); . = @json) | .. | select(kind == \"scalar\") | ... comments=\"\""
     # Map keys to uppercase yq query
-    UPCASE_KEYS="with_entries(.key |= upcase)"
+    UPCASE_KEYS="{key | upcase: .}"
     # Prefix keys with TF_VAR_ yq query
-    TF_KEYS="with_entries(.key |= \"TF_VAR_\" + .)"
+    TF_KEYS="{\"TF_VAR_\" + key: .}"
     # Yq query to format the output to be in form: key=value
     FORMAT_FOR_ENV_EXPORT="to_entries| map(.key + \"=\" +  .value)|join(\" \")"
 
     # Export as UPPERCASE keys env vars
-    # shellcheck disable=SC2046
-    export $(yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    # (process line by line to preserve values with spaces in)
+    while IFS= read -r KV; do
+      # shellcheck disable=SC2163
+      export "$KV"
+    done <<< "$(yq e "$GET_LEAF_KEYS|$UPCASE_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)"
+
     # Export as Terraform keys env vars
-    # shellcheck disable=SC2046
-    export $(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)
+    # (process line by line to preserve values with spaces in)
+    while IFS= read -r KV; do
+      # shellcheck disable=SC2163
+      export "$KV"
+    done <<< "$(yq e "$GET_LEAF_KEYS|$TF_KEYS| $FORMAT_FOR_ENV_EXPORT" config.yaml)"
 
     # Source AZURE_ENVIRONMENT and setup the ARM_ENVIRONMENT based on it
     AZURE_ENVIRONMENT=$(az cloud show --query name --output tsv)

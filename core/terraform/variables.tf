@@ -186,6 +186,11 @@ variable "firewall_sku" {
   default     = ""
 }
 
+variable "firewall_force_tunnel_ip" {
+  type    = string
+  default = ""
+}
+
 variable "app_gateway_sku" {
   description = "Application Gateway SKU"
   type        = string
@@ -228,18 +233,72 @@ variable "enable_cmk_encryption" {
   type        = bool
   description = "A boolean indicating if customer managed keys will be used for encryption of supporting resources"
   default     = false
+
+  validation {
+    condition = var.enable_cmk_encryption == false || (var.enable_cmk_encryption == true && (
+      (try(length(var.external_key_store_id), 0) > 0 && try(length(var.encryption_kv_name), 0) == 0) ||
+      (try(length(var.external_key_store_id), 0) == 0 && try(length(var.encryption_kv_name), 0) > 0)
+    ))
+    error_message = "Exactly one of 'external_key_store_id' or 'encryption_kv_name' must be non-empty when enable_cmk_encryption is true."
+  }
 }
 
 variable "external_key_store_id" {
   type        = string
   description = "ID of external Key Vault to store CMKs in (only required if enable_cmk_encryption is true)"
-  default     = null
+  default     = ""
 }
 
 variable "encryption_kv_name" {
   type        = string
   description = "Name of Key Vault for encryption keys, required only if external_key_store_id is not set (only used if enable_cmk_encryption is true)"
-  default     = null
+  default     = ""
+}
+
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
+}
+
+variable "allowed_dns" {
+  type        = list(string)
+  description = "When DNS security policy is enabled this list of domains will be added to the allow list."
+  default     = []
+}
+
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  description = "A boolean indicating if admin consent should be auto granted to the workspace"
+  default     = false
+}
+
+variable "user_management_enabled" {
+  type        = bool
+  description = "Is the Entra ID user management feature enabled (requires a workspace with Entra ID groups enabled, default to false)?"
+  default     = false
+}
+
+variable "deploy_bastion" {
+  type        = bool
+  description = "Deploy Azure Bastion"
+  default     = true
+}
+
+variable "bastion_sku" {
+  type        = string
+  description = "Azure Bastion SKU"
+  default     = "Basic"
+  validation {
+    condition     = contains(["Developer", "Basic", "Standard", "Premium"], var.bastion_sku)
+    error_message = "Invalid bastion_sku value"
+  }
+}
+
+variable "private_agent_subnet_id" {
+  description = "Subnet ID of the github runners"
+  type        = string
+  default     = ""
 }
 
 variable "servicebus_sku" {

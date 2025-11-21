@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-airlock-notifier
-version: 1.0.8
+version: 1.0.9
 description: "A shared service notifying on Airlock Operations"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -119,6 +119,14 @@ install:
         username: ${ bundle.credentials.azure_client_id }
 
   - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
+
+  - az:
       arguments:
         - resource
         - update
@@ -148,7 +156,6 @@ install:
         resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
         subscription: ${ bundle.credentials.azure_subscription_id }
         src: /cnab/app/LogicApp.zip
-
 
 upgrade:
   - terraform:
@@ -191,6 +198,14 @@ upgrade:
         username: ${ bundle.credentials.azure_client_id }
 
   - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
+
+  - az:
       arguments:
         - resource
         - update
@@ -220,7 +235,6 @@ upgrade:
         resource-group: ${ bundle.outputs.airlock_notifier_logic_app_resource_group_name }
         subscription: ${ bundle.credentials.azure_subscription_id }
         src: /cnab/app/LogicApp.zip
-
 
 uninstall:
   - terraform:

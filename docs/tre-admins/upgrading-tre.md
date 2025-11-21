@@ -28,17 +28,21 @@ Once the code is merged, follow the same process used to initially deploy the TR
 
 ## Deploying a specific version of Azure TRE
 
-If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the [Azure TRE deployment repository](https://github.com/Microsoft/AzureTRE-Deployment) you can change the value of `OSS_VERSION` in `.devcontainer/devcontainer.json`, for example:
+If you wish to upgrade or deploy a specific version, or unreleased version of Azure TRE and are using the [Azure TRE deployment repository](https://github.com/Microsoft/AzureTRE-Deployment) you can change the value of `UPSTREAM_REPO_VERSION` in `.devcontainer/devcontainer.json`, for example:
 
-- `"OSS_VERSION": "v0.9.0"` (to use the specified tag; be sure to specify the complete tag name (prefixed with `v` and not the release name)
-- `"OSS_VERSION": "main"` (to use the latest code in the "main" branch)
+- `"UPSTREAM_REPO_VERSION": "v0.9.0"` (to use the specified tag; be sure to specify the complete tag name (prefixed with `v` and not the release name))
+- `"UPSTREAM_REPO_VERSION": "main"` (to use the latest code in the `main` branch)
 - `"OSS_VERSION": "1c6ff35ec9246e53b86e93b9da5b97911edc71c1"` (to use the code at the time of the commit identified by the hash)
 
 ## Deploying a fork of Azure TRE
 
-If you wish to deploy the Azure TRE from a forked repository you can change the value of `OSS_REPO` in `.devcontainer/devcontainer.json`, for example:
+If you wish to deploy the Azure TRE from a forked repository you can change the values of `UPSTREAM_REPO` and `UPSTREAM_REPO_VERSION` in `.devcontainer/devcontainer.json`, for example, change:
 
-- `"OSS_REPO": "microsoft/AzureTRE"` (the default)
-- `"OSS_REPO": "myorg/AzureTRE"` (to point to fork of the Azure TRE in your GitHub organisation)
+- `"UPSTREAM_REPO": "microsoft/AzureTRE"` (the default)
+- `"UPSTREAM_REPO": "myorg/AzureTRE"` (to point to a fork of the Azure TRE in your GitHub organisation)
 
-When changing `OSS_REPO` ensure the `OSS_VERSION` variable refers to a GitHub ref on the repository fork.
+When changing `UPSTREAM_REPO` ensure the `UPSTREAM_REPO_VERSION` variable refers to a GitHub ref on your repository fork.
+
+## Check infrastructure changes using a Terraform plan
+
+You can run `make plan-core` to generate a terraform plan and view any potential changes prior to running the `make tre-deploy` command. This can be useful when you are evaluating an upgrade and don't want to make any actual changes to the deployed infrastructure.

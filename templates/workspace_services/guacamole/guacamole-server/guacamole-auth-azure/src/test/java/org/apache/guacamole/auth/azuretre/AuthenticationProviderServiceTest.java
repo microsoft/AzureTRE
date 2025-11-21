@@ -435,4 +435,46 @@ public class AuthenticationProviderServiceTest {
             }
         }
     }
+
+    @Test
+    public void validateTokenExceptionDoesNotLeakSensitiveInfo() throws Exception {
+        final String jwtToken = generateValidJWTToken();
+        final PublicKey publicKey = getPublicKey();
+        final Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) publicKey, null);
+
+        try (MockedStatic<Algorithm> mockAlgorithm = Mockito.mockStatic(Algorithm.class)) {
+            mockAlgorithm
+              .when(() -> Algorithm.RSA256((RSAPublicKey) publicKey, null))
+                .thenReturn(algorithm);
+
+            final Jwk jwk = mock(Jwk.class);
+            final UrlJwkProvider jwkProvider = mock(UrlJwkProvider.class);
+
+            when(jwk.getPublicKey()).thenReturn(publicKey);
+            // Simulate a null pointer or other error
+            when(jwkProvider.get("dummy_keyid")).thenThrow(new NullPointerException("Internal key vault error"));
+            environmentVariables.set("AUDIENCE", audience);
+            environmentVariables.set("ISSUER", issuer);
+
+            final AuthenticationProviderService azureTREAuthenticationProviderService =
+                new AuthenticationProviderService();
+            final Method validateToken =
+                AuthenticationProviderService.class.getDeclaredMethod(
+                    "validateToken", String.class, UrlJwkProvider.class);
+            validateToken.setAccessible(true);
+
+            try {
+                validateToken.invoke(azureTREAuthenticationProviderService, jwtToken, jwkProvider);
+                fail("Exception not thrown");
+            } catch (final InvocationTargetException e) {
+                assertEquals(GuacamoleInvalidCredentialsException.class, e.getTargetException().getClass());
+                // Verify that the exception message does not contain sensitive internal error details
+                final String message = e.getTargetException().getMessage();
+                assertEquals("Token validation failed", message);
+                // Ensure the original exception message is NOT leaked
+                assertThat(message, CoreMatchers.not(CoreMatchers.containsString("key vault")));
+                assertThat(message, CoreMatchers.not(CoreMatchers.containsString("NullPointerException")));
+            }
+        }
+    }
 }

@@ -2,11 +2,15 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = "= 4.27.0"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "= 2.3.0"
     }
     local = {
       source  = "hashicorp/local"
-      version = "=2.4.0"
+      version = "= 2.5.2"
     }
   }
   backend "azurerm" {
@@ -14,6 +18,8 @@ terraform {
 }
 
 provider "azurerm" {
+  subscription_id = coalesce(var.workspace_subscription_id, data.azurerm_client_config.current.subscription_id)
+
   features {
     key_vault {
       # Don't purge on destroy (this would fail due to purge protection being enabled on keyvault)
@@ -29,6 +35,12 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azurerm" {
+  alias = "core"
+  features {
+  }
 }
 
 module "terraform_azurerm_environment_configuration" {

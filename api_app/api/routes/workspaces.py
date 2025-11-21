@@ -1,6 +1,7 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Header, Path, status, Request, Response
+from pydantic import UUID4
 
 from jsonschema.exceptions import ValidationError
 
@@ -21,7 +22,6 @@ from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate,
 from models.schemas.workspace_service import WorkspaceServiceInCreate, WorkspaceServicesInList, WorkspaceServiceInResponse
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
-from models.schemas.users import UsersInResponse
 from resources import strings
 from services.access_service import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
@@ -37,7 +37,6 @@ from .resource_helpers import cascaded_update_resource, delete_validation, enric
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
 from services.logging import logger
-
 
 workspaces_core_router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 workspaces_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
@@ -110,7 +109,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except InvalidInput as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace,
@@ -188,13 +187,6 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
     return OperationInResponse(operation=operation)
 
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/users", response_model=UsersInResponse, name=strings.API_GET_WORKSPACE_USERS)
-async def get_workspace_users(workspace=Depends(get_workspace_by_id_from_path)) -> UsersInResponse:
-    access_service = get_access_service()
-    users = access_service.get_workspace_users(workspace)
-    return UsersInResponse(users=users)
-
-
 # workspace operations
 # This method only returns templates that the authenticated user is authorized to use
 @workspaces_shared_router.get("/workspaces/{workspace_id}/workspace-service-templates", response_model=ResourceTemplateInformationInList, name=strings.API_GET_WORKSPACE_SERVICE_TEMPLATES_IN_WORKSPACE)
@@ -257,6 +249,10 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # Get the workspace subscription id (if set)
+    if workspace.properties.get("workspace_subscription_id"):
+        workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
 
     # if template has address_space get an address space
     if resource_template.properties.get("address_space"):
@@ -367,8 +363,8 @@ async def retrieve_workspace_service_history_by_workspace_service_id(workspace_s
 # USER RESOURCE ROUTES
 @user_resources_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", response_model=UserResourcesInList, name=strings.API_GET_MY_USER_RESOURCES, dependencies=[Depends(get_workspace_by_id_from_path)])
 async def retrieve_user_resources_for_workspace_service(
-        workspace_id: str,
-        service_id: str,
+        workspace_id: UUID4 = Path(...),
+        service_id: UUID4 = Path(...),
         user=Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         user_resource_repo=Depends(get_repository(UserResourceRepository))) -> UserResourcesInList:
@@ -413,14 +409,37 @@ async def create_user_resource(
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
 
+    owner_id: str = None
+
+    # Check for assign_to_another_user logic
+    if (
+        hasattr(user_resource_create, "properties")
+        and isinstance(user_resource_create.properties, dict)
+        and user_resource_create.properties.get("assign_to_another_user") is True
+    ):
+        if user_resource_create.properties.get("owner_id"):
+            owner_id = user_resource_create.properties.get("owner_id")
+
     try:
-        user_resource, resource_template = await user_resource_repo.create_user_resource_item(user_resource_create, workspace.id, workspace_service.id, workspace_service.templateName, user.id, user.roles)
+        user_resource, resource_template = await user_resource_repo.create_user_resource_item(
+            user_resource_create,
+            workspace.id,
+            workspace_service.id,
+            workspace_service.templateName,
+            user.id,
+            user.roles,
+            owner_id
+        )
     except (ValidationError, ValueError) as e:
         logger.exception("Failed create user resource model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+    # Get the workspace subscription id (if set)
+    if workspace.properties.get("workspace_subscription_id"):
+        user_resource.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
 
     operation = await save_and_deploy_resource(
         resource=user_resource,

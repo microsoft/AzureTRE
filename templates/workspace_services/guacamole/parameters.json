@@ -95,6 +95,12 @@
       }
     },
     {
+      "name": "guac_server_layout",
+      "source": {
+        "env": "GUAC_SERVER_LAYOUT"
+      }
+    },
+    {
       "name": "image_tag",
       "source": {
         "env": "IMAGE_TAG"
@@ -116,6 +122,12 @@
       "name": "arm_environment",
       "source": {
         "env": "ARM_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "workspace_subscription_id",
+      "source": {
+        "env": "WORKSPACE_SUBSCRIPTION_ID"
       }
     }
   ]

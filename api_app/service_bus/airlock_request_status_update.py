@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
@@ -28,12 +29,23 @@ class AirlockStatusUpdater():
 
     async def receive_messages(self):
         with tracer.start_as_current_span("airlock_receive_messages"):
+            last_heartbeat_time = 0
+            polling_count = 0
+
             while True:
                 try:
+                    current_time = time.time()
+                    polling_count += 1
+                    # Log a heartbeat message every 60 seconds to show the service is still working
+                    if current_time - last_heartbeat_time >= 60:
+                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue {polling_count} times in the last minute")
+                        last_heartbeat_time = current_time
+                        polling_count = 0
+
                     async with credentials.get_credential_async_context() as credential:
                         service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
                         receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
-                        logger.info(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
+                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
                         async with receiver:
                             received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
                             for msg in received_msgs:

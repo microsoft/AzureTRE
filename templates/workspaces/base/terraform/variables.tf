@@ -8,6 +8,12 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
+variable "workspace_subscription_id" {
+  type        = string
+  description = "Subscription ID for the workspace resources"
+  default     = ""
+}
+
 variable "shared_storage_quota" {
   type        = number
   default     = 50
@@ -53,6 +59,11 @@ variable "create_aad_groups" {
   description = "Create AAD groups automatically for the Workspace Application Roles."
 }
 
+variable "core_api_client_id" {
+  type        = string
+  description = "The client id of the core API application."
+}
+
 variable "enable_airlock" {
   type        = bool
   description = "Controls the deployment of Airlock resources in the workspace."
@@ -73,7 +84,13 @@ variable "auth_client_id" {
 }
 variable "auth_client_secret" {
   type        = string
+  sensitive   = true
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
+}
+variable "enable_backup" {
+  type        = bool
+  default     = true
+  description = "Enable backups for the workspace"
 }
 
 # These variables are only passed in if you are not registering an AAD
@@ -101,7 +118,11 @@ variable "client_id" {
 variable "client_secret" {
   type        = string
   default     = ""
+  sensitive   = true
   description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
+}
+variable "ui_client_id" {
+  type = string
 }
 variable "sp_id" {
   type        = string
@@ -138,4 +159,27 @@ variable "storage_account_redundancy" {
   type        = string
   default     = "GRS"
   description = "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+}
+variable "auto_grant_workspace_consent" {
+  type        = bool
+  default     = false
+  description = "A boolean indicating if the admin consent should be auto granted to the workspace"
+}
+
+variable "enable_dns_policy" {
+  type        = bool
+  description = "Whether, or not, to add a DNS security policy with an allow-list. This is a preview feature that can be enabled to prevent data exfiltration via DNS."
+  default     = false
+}
+
+variable "enable_airlock_malware_scanning" {
+  type        = bool
+  default     = false
+  description = "Enable Airlock malware scanning for the workspace"
+}
+
+variable "airlock_malware_scan_result_topic_name" {
+  type        = string
+  description = "The name of the topic to publish scan results to"
+  default     = null
 }

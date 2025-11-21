@@ -1,3 +1,10 @@
+
+resource "time_sleep" "wait_180_seconds" {
+  depends_on = [azurerm_network_interface.internal]
+
+  destroy_duration = "180s"
+}
+
 resource "azurerm_network_interface" "internal" {
   name                = "internal-nic-${local.service_resource_name_suffix}"
   location            = data.azurerm_resource_group.ws.location
@@ -45,6 +52,9 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   allow_extension_operations = true
   admin_username             = random_string.username.result
   admin_password             = random_password.password.result
+  encryption_at_host_enabled = true
+  secure_boot_enabled        = local.secure_boot_enabled
+  vtpm_enabled               = local.vtpm_enabled
 
   custom_data = base64encode(data.template_file.download_review_data_script.rendered)
 
@@ -63,7 +73,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
   os_disk {
     name                   = "osdisk-${local.vm_name}"
     caching                = "ReadWrite"
-    storage_account_type   = "Standard_LRS"
+    storage_account_type   = "StandardSSD_LRS"
     disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.windowsvm_disk_encryption[0].id : null
   }
 
@@ -73,7 +83,12 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
 
   tags = local.tre_user_resources_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
+  # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
+  #
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, custom_data, os_disk[0].storage_account_type] }
+
+  depends_on = [time_sleep.wait_180_seconds]
 }
 
 resource "azurerm_disk_encryption_set" "windowsvm_disk_encryption" {

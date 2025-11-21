@@ -3,15 +3,19 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = "= 3.117.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "=3.4.3"
+      version = "= 3.7.2"
     }
     template = {
       source  = "hashicorp/template"
-      version = "=2.2.0"
+      version = "= 2.2.0"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "0.13.1"
     }
   }
   backend "azurerm" {
@@ -34,6 +38,7 @@ provider "azurerm" {
     }
     virtual_machine {
       skip_shutdown_and_force_delete = true
+      delete_os_disk_on_deletion     = true
     }
   }
   storage_use_azuread = true

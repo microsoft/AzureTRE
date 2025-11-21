@@ -15,7 +15,6 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
 1. Create a service principal for the subscription so that the workflow can provision Azure resources.
 1. Decide on a TRE ID and the location for the Azure resources
-1. Create a Teams WebHook for deployment notifications
 1. Configure repository secrets
 1. Deploy the TRE using the workflow
 
@@ -66,7 +65,8 @@ Configure the following secrets in your github environment:
 | `MGMT_RESOURCE_GROUP_NAME` | The name of the shared resource group for all Azure TRE core resources. |
 | `MGMT_STORAGE_ACCOUNT_NAME` | The name of the storage account to hold the Terraform state and other deployment artifacts. E.g. `mystorageaccount`. |
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
-
+| `EXTERNAL_KEY_STORE_ID` | Optional. The ID of the external Key Vault to store CMKs in. Should not be set if `ENCRYPTION_KV_NAME` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
+| `ENCRYPTION_KV_NAME` | Optional. The name of the Key Vault for encryption keys. Should not be set if `EXTERNAL_KEY_STORE_ID` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 
 ### Configure Core Variables
 
@@ -86,6 +86,7 @@ Configure the following **variables** in your github environment:
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](../custom-domain.md). |
+| `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 
 ### Configure Authentication Secrets
 
@@ -104,22 +105,6 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step authenti
   | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/config.yaml` env file |
   | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/config.yaml` env file|
 
-### Create a Teams Webhook for deployment notifications
-
-The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel when it finishes running.
-
-!!! note
-    If you don't want to notify a channel, you can also remove the **Notify dedicated teams channel** steps in the workflow
-
-1. Follow the [Microsoft Docs](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook) to create a webhook for your channel
-
-1. Configure the MS_TEAMS_WEBHOOK_URI repository secret
-
-  | <div style="width: 230px">Secret name</div> | Description |
-  | ----------- | ----------- |
-  | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
-
-
 !!! info
     See [Environment variables](../environment-variables.md) for full details of the deployment related variables.
 
@@ -132,6 +117,10 @@ In your repository you will find that the pipelines under the folder `.github/wo
 ### Deploy the TRE using the workflow
 
 With all the repository secrets set, you can trigger a workflow run by pushing to develop/main of your repo, or by dispatching the workflow manually.
+
+### Run CI/CD on Main Branch First
+
+It is important to run the CI/CD pipeline on the main branch first. This will create an environment that represents the current main branch. It will also define the `CI_CACHE_ACR_NAME` used for caching.
 
 ## Next steps
 

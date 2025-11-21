@@ -54,6 +54,10 @@ variable "guac_disable_upload" {
   type        = bool
   description = "Disable upload to the Guacamole workspace"
 }
+variable "guac_server_layout" {
+  type        = string
+  description = "Server keyboard layout"
+}
 variable "is_exposed_externally" {
   type        = bool
   description = "Is the Guacamole workspace to be exposed externally?"
@@ -65,4 +69,9 @@ variable "tre_resource_id" {
 variable "arm_environment" {
   type        = string
   description = "The ARM cloud environment"
+}
+variable "workspace_subscription_id" {
+  type        = string
+  description = "The id of the Azure subscription the workspace is deployed to"
+  default     = ""
 }

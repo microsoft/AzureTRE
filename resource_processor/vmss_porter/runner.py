@@ -1,17 +1,16 @@
+import time
 from typing import Optional
 from multiprocessing import Process
 import json
 import asyncio
-import logging
 import sys
-from resources.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
+from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
 from shared.config import get_config
-from resources.helpers import get_installation_id
-from resources.httpserver import start_server
+from helpers.httpserver import start_server
 
-from shared.logging import initialize_logging, logger, shell_output_logger, tracer
+from shared.logging import initialize_logging, logger, tracer
 from shared.config import VERSION
-from resources import statuses
+from helpers import statuses
 from contextlib import asynccontextmanager
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
@@ -38,17 +37,27 @@ async def default_credentials(msi_id):
     await credential.close()
 
 
-async def receive_message(service_bus_client, config: dict):
+async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):
     """
     This method is run per process. Each process will connect to service bus and try to establish a session.
     If messages are there, the process will continue to receive all the messages associated with that session.
     If no messages are there, the session connection will time out, sleep, and retry.
     """
     q_name = config["resource_request_queue"]
+    last_heartbeat_time = 0
+    polling_count = 0
 
-    while True:
+    while keep_running():
         try:
-            logger.info("Looking for new session...")
+            current_time = time.time()
+            polling_count += 1
+            # Log a heartbeat message every 60 seconds to show the service is still working
+            if current_time - last_heartbeat_time >= 60:
+                logger.info(f"Queue reader heartbeat: Polled for sessions {polling_count} times in the last minute")
+                last_heartbeat_time = current_time
+                polling_count = 0
+
+            logger.debug("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
             async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                 logger.info(f"Got a session containing messages: {receiver.session.session_id}")
@@ -94,48 +103,49 @@ async def receive_message(service_bus_client, config: dict):
 
         except Exception:
             # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
+
             logger.exception("Unknown exception. Will retry...")
 
 
-async def run_porter(command, config: dict):
+async def run_porter(command_parts_list: list, config: dict):
     """
     Run a Porter command
     """
-    command = [
-        f"{azure_login_command(config)} && ",
-        f"{azure_acr_login_command(config)} && ",
-        f"{apply_porter_credentials_sets_command(config)} && ",
-        *command
-    ]
+    login_commands = azure_login_command(config)
+    for cmd in login_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Azure login")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    proc = await asyncio.create_subprocess_shell(
-        ''.join(command),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"]
-    )
+    acr_login_commands = azure_acr_login_command(config)
+    for cmd in acr_login_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Azure ACR login")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    stdout, stderr = await proc.communicate()
-    logger.debug(f'run porter exited with {proc.returncode}')
-    result_stdout = None
-    result_stderr = None
+    porter_cred_commands = apply_porter_credentials_sets_command(config)
+    for cmd in porter_cred_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Porter credential sets")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    if stdout:
-        result_stdout = stdout.decode()
-        shell_output_logger(result_stdout, '[stdout]', logging.INFO)
+    last_returncode = None
+    last_stdout = None
+    last_stderr = None
 
-    if stderr:
-        result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logging.WARN)
+    for command_parts in command_parts_list:
+        last_returncode, last_stdout, last_stderr = await run_command_helper(command_parts, config, "Porter command")
+        if last_returncode != 0:
+            return (last_returncode, last_stdout, last_stderr)
 
-    return (proc.returncode, result_stdout, result_stderr)
+    return (last_returncode, last_stdout, last_stderr)
 
 
 def service_bus_message_generator(sb_message: dict, status: str, deployment_message: str, outputs=None):
     """
     Generate a resource request message
     """
-    installation_id = get_installation_id(sb_message)
+    installation_id = sb_message["id"]
     message_dict = {
         "operationId": sb_message["operationId"],
         "stepId": sb_message["stepId"],
@@ -156,7 +166,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
     """
 
-    installation_id = get_installation_id(msg_body)
+    installation_id = msg_body["id"]
     action = msg_body["action"]
     logger.info(f"{action} action starting for {installation_id}...")
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
@@ -173,12 +183,30 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     logger.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, config)
     logger.debug("Finished running porter execution command.")
-    action_completed_without_error = True
+
+    action_completed_without_error = False
+
+    if returncode == 0:
+        action_completed_without_error = True
 
     # Handle command output
     if returncode != 0 and err is not None:
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
+        # Construct a readable representation of the command(s)
+        command_representation = ""
+        for cmd in porter_command:
+            command_representation += " ".join(cmd) + "; "
+        command_representation = command_representation.rstrip("; ")
+
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + command_representation
         action_completed_without_error = False
+
+        if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
+            logger.warning("Upgrade failed, attempting install...")
+            msg_body['action'] = "install"
+            porter_command = await build_porter_command(config, msg_body, False)
+            returncode, _, err = await run_porter(porter_command, config)
+            if returncode == 0:
+                action_completed_without_error = True
 
         if "uninstall" == action and "could not find installation" in err:
             logger.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
@@ -227,7 +255,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 
     if returncode != 0:
         error_message = "Error context message = " + " ".join(err.split('\n'))
-        logger.info(f"{get_installation_id(msg_body)}: Failed to get outputs with error = {error_message}")
+        installation_id = msg_body["id"]
+        logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
         return False, {}
     else:
         outputs_json = {}
@@ -253,14 +282,19 @@ async def runner(process_number: int, config: dict):
             await receive_message(service_bus_client, config)
 
 
-async def check_runners(processes: list, httpserver: Process):
+async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):
     logger.info("Starting runners check...")
 
-    while True:
+    while keep_running():
         await asyncio.sleep(30)
         if all(not process.is_alive() for process in processes):
             logger.error("All runner processes have failed!")
-            httpserver.kill()
+            # Support both sync and async kill methods for tests
+            kill_method = httpserver.kill
+            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, '__await__'):
+                await kill_method()
+            else:
+                kill_method()
 
 
 if __name__ == "__main__":
@@ -270,7 +304,10 @@ if __name__ == "__main__":
         config = set_up_config()
 
         logger.info("Verifying Azure CLI and Porter functionality...")
-        asyncio.run(run_porter(["az account show -o table"], config))
+        asyncio.run(run_porter([[
+            "az", "account", "show",
+            "-o", "table"
+        ]], config))
 
         httpserver = Process(target=start_server)
         httpserver.start()

@@ -16,6 +16,10 @@ API_UPDATE_WORKSPACE = "Update an existing workspace"
 API_INVOKE_ACTION_ON_WORKSPACE = "Invoke action on a workspace"
 
 API_GET_WORKSPACE_USERS = "Get all users for a workspace"
+API_GET_ASSIGNABLE_USERS = "Get all users assignable to a workspace"
+API_GET_WORKSPACE_ROLES = "Get all the roles belonging to a workspace"
+API_ASSIGN_WORKSPACE_USER = "Assign a user to a workspace role"
+API_REMOVE_WORKSPACE_USER_ASSIGNMENT = "Remove a user from a workspace role"
 
 API_GET_ALL_WORKSPACE_SERVICES = "Get all workspace services for workspace"
 API_GET_WORKSPACE_SERVICE_BY_ID = "Get workspace service by Id"
@@ -34,12 +38,15 @@ API_DELETE_USER_RESOURCE = "Delete user resource"
 API_UPDATE_USER_RESOURCE = "Update an existing user resource"
 API_INVOKE_ACTION_ON_USER_RESOURCE = "Invoke action on a user resource"
 
+API_LIST_REQUESTS = "Get requests"
+
 API_CREATE_AIRLOCK_REQUEST = "Create an airlock request"
 API_GET_AIRLOCK_REQUEST = "Get an airlock request"
 API_LIST_AIRLOCK_REQUESTS = "Get all airlock requests for a workspace"
 API_SUBMIT_AIRLOCK_REQUEST = "Submit an airlock request"
 API_CANCEL_AIRLOCK_REQUEST = "Cancel an airlock request"
 API_REVIEW_AIRLOCK_REQUEST = "Review an airlock request"
+API_REVOKE_AIRLOCK_REQUEST = "Revoke an airlock request"
 API_AIRLOCK_REQUEST_LINK = "Get a token to access airlock request"
 API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE = "Create an Airlock Review User Resource"
 
@@ -170,6 +177,12 @@ RESOURCE_STATUS_UPDATING = "updating"
 RESOURCE_STATUS_UPDATED = "updated"
 RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
 
+# Resource Action
+RESOURCE_ACTION_INSTALL = "install"
+RESOURCE_ACTION_UPDATE = "upgrade"
+RESOURCE_ACTION_UNINSTALL = "uninstall"
+
+
 # Resource Action Status
 RESOURCE_STATUS_AWAITING_ACTION = "awaiting_action"
 RESOURCE_ACTION_STATUS_INVOKING = "invoking_action"
@@ -203,6 +216,7 @@ AIRLOCK_RESOURCE_STATUS_CANCELLED = "cancelled"
 AIRLOCK_RESOURCE_STATUS_BLOCKING_INPROGRESS = "blocking_in_progress"
 AIRLOCK_RESOURCE_STATUS_BLOCKED = "blocked_by_scan"
 AIRLOCK_RESOURCE_STATUS_FAILED = "failed"
+AIRLOCK_RESOURCE_STATUS_REVOKED = "revoked"
 
 # Airlock Request Types
 AIRLOCK_REQUEST_TYPE_IMPORT = "import"
@@ -224,10 +238,12 @@ AIRLOCK_NO_AIRLOCK_MANAGER_EMAIL = "There are no Airlock Managers in the workspa
 AIRLOCK_ACTION_REVIEW = "review"
 AIRLOCK_ACTION_CANCEL = "cancel"
 AIRLOCK_ACTION_SUBMIT = "submit"
+AIRLOCK_ACTION_REVOKE = "revoke"
 
 # Airlock Review Decisions
 AIRLOCK_REVIEW_DECISION_APPROVED = "approved"
 AIRLOCK_REVIEW_DECISION_REJECTED = "rejected"
+AIRLOCK_REVIEW_DECISION_REVOKED = "revoked"
 
 # Deployments
 RESOURCE_STATUS_AWAITING_DEPLOYMENT_MESSAGE = "This resource is waiting to be deployed"
@@ -254,3 +270,6 @@ PARAMETERS_WITH_WRONG_TYPE = "Parameters with wrong type"
 
 # Value that a sensitive is replaced with in Cosmos
 REDACTED_SENSITIVE_VALUE = "REDACTED"
+
+# User Management
+USER_MANAGEMENT_DISABLED = "User management is disabled"

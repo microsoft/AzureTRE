@@ -1,7 +1,7 @@
 ---
 name: Deploy Azure TRE Reusable
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_call:
     inputs:
       prRef:
@@ -35,6 +35,16 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         type: string
         required: true
+      UI_SITE_NAME:
+        description: Change the header text in the TRE portal
+        type: string
+        default: ""
+        required: false
+      UI_FOOTER_TEXT:
+        description: Change the footer text in the TRE portal
+        type: string
+        default: ""
+        required: false
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -55,9 +65,6 @@ on:  # yamllint disable-line rule:truthy
         description: ""
         required: true
       MGMT_RESOURCE_GROUP_NAME:
-        description: ""
-        required: true
-      MS_TEAMS_WEBHOOK_URI:
         description: ""
         required: true
       MGMT_STORAGE_ACCOUNT_NAME:
@@ -90,6 +97,15 @@ on:  # yamllint disable-line rule:truthy
       AZURE_CREDENTIALS:
         description: ""
         required: true
+      ENCRYPTION_KV_NAME:
+        description: ""
+        required: false
+      EXTERNAL_KEY_STORE_ID:
+        description: ""
+        required: false
+      PRIVATE_AGENT_SUBNET_ID:
+        description: ""
+        required: false
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
@@ -174,6 +190,10 @@ jobs:
             echo "Missing variable: LOCATION" && exit 1
           fi
 
+          if [ "${{ secrets.CI_CACHE_ACR_NAME }}" == '' ]; then
+            echo "CI_CACHE_ACR_NAME is not set. Please run the workflow on the main branch first." && exit 1
+          fi
+
       - name: Report check status start
         if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@v2.0.0
@@ -202,7 +222,7 @@ jobs:
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: ACR Login
-        id: ci_cache_cr_login
+        id: ci_cache_acr_login
         # will fail if this is a new env which is expected
         continue-on-error: true
         run: az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}"
@@ -220,7 +240,7 @@ jobs:
           echo "CI_CACHE_ACR_URI=$CI_CACHE_ACR_URI" >> "$GITHUB_ENV"
 
           docker_cache=()
-          if [ "${{ steps.ci_cache_cr_login.outcome }}" = "success" ]; then
+          if [ "${{ steps.ci_cache_acr_login.outcome }}" = "success" ]; then
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:${{ inputs.DEVCONTAINER_TAG }}")
             docker_cache+=(--cache-from "$CI_CACHE_ACR_URI/tredev:latest")
           fi
@@ -246,15 +266,22 @@ jobs:
           TERRAFORM_STATE_CONTAINER_NAME: ${{ vars.TERRAFORM_STATE_CONTAINER_NAME }}
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
 
       - name: ACR Login
         # failure in the first attempt indicates a new ACR, so we need to try again after it's been created
-        if: steps.ci_cache_cr_login.outcome != 'success'
+        if: steps.ci_cache_acr_login.outcome != 'success'
         run: |
           # shellcheck disable=SC2034,SC2015,SC2125
           for i in {1..3}; do
             az acr login --name "${{ secrets.CI_CACHE_ACR_NAME }}" && ec=0 && break || ec="$?" && sleep 10
           done
+          if [ "$ec" != 0 ]; then
+            echo "::error::Failed to login to ACR after 3 attempts. Make sure to run the pipleline on the main branch first."
+          fi
           # shellcheck disable=SC2242
           (exit "$ec")
 
@@ -270,7 +297,12 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        target: [build-and-push-api, build-and-push-resource-processor, build-and-push-airlock-processor]
+        target:
+          [
+            build-and-push-api,
+            build-and-push-resource-processor,
+            build-and-push-airlock-processor
+          ]
 
     steps:
       - name: Checkout
@@ -359,6 +391,14 @@ jobs:
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
           FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
           APP_GATEWAY_SKU: ${{ vars.APP_GATEWAY_SKU }}
+          ENABLE_CMK_ENCRYPTION: ${{ vars.ENABLE_CMK_ENCRYPTION }}
+          ENCRYPTION_KV_NAME: ${{ secrets.ENCRYPTION_KV_NAME }}
+          EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+          USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
+          AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
+          ENABLE_DNS_POLICY: ${{ vars.ENABLE_DNS_POLICY }}
+          ALLOWED_DNS: ${{ vars.ALLOWED_DNS }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -378,38 +418,38 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mysql"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/health-services"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/databricks"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azuresql"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/openai"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"}
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/base"
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/unrestricted"
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/airlock-import-review"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/azureml"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/gitea"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/mysql"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/health-services"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/databricks"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/ohdsi"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/azuresql"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/openai"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -424,9 +464,14 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: >-
-            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
+          COMMAND: |
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
@@ -440,22 +485,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/firewall/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/gitea/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/certs/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/firewall/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/gitea/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/admin-vm/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/certs/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/cyclecloud/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/databricks-auth/"
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -470,9 +515,14 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           # Although porter publish will build automatically, our makefile build target includes logic that should run
-          COMMAND: >-
-            for i in {1..3}; do make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 30; done; (exit \$ec)
+          COMMAND: |
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-build bundle-publish DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 30;
+            done
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
@@ -486,22 +536,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/firewall"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/gitea"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/admin-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/certs/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/cyclecloud/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"}
-          - {BUNDLE_TYPE: "shared_service",
-             BUNDLE_DIR: "./templates/shared_services/databricks-auth/"}
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/firewall"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/gitea"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/admin-vm/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/airlock_notifier/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/certs/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/cyclecloud/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/sonatype-nexus-vm/"
+          - BUNDLE_TYPE: "shared_service"
+            BUNDLE_DIR: "./templates/shared_services/databricks-auth/"
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -514,9 +564,14 @@ jobs:
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+          COMMAND: |
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -539,28 +594,28 @@ jobs:
       matrix:
         include:
           # bundles type can be inferred from the bundle dir (but this is more explicit)
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/base"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/unrestricted"}
-          - {BUNDLE_TYPE: "workspace",
-             BUNDLE_DIR: "./templates/workspaces/airlock-import-review"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azureml"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/gitea"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/mysql"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/health-services"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/databricks"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/ohdsi"}
-          - {BUNDLE_TYPE: "workspace_service",
-             BUNDLE_DIR: "./templates/workspace_services/azuresql"}
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/base"
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/unrestricted"
+          - BUNDLE_TYPE: "workspace"
+            BUNDLE_DIR: "./templates/workspaces/airlock-import-review"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/azureml"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/gitea"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/mysql"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/health-services"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/databricks"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/ohdsi"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/azuresql"
 
     environment: ${{ inputs.environmentName }}
     steps:
@@ -574,9 +629,14 @@ jobs:
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+          COMMAND: |
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -599,18 +659,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
-          - {BUNDLE_TYPE: "user_resource",
-             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm",
-             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"}
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+            WORKSPACE_SERVICE_NAME: "tre-service-guacamole"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm"
+            WORKSPACE_SERVICE_NAME: "tre-service-guacamole"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm"
+            WORKSPACE_SERVICE_NAME: "tre-service-guacamole"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
+            WORKSPACE_SERVICE_NAME: "tre-service-guacamole"
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
@@ -623,9 +683,14 @@ jobs:
       - name: Register bundle
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
-            for i in {1..3}; do make bundle-register DIR=${{ matrix.BUNDLE_DIR }}
-            && ec=0 && break || ec=\$? && sleep 10; done; (exit \$ec)
+          COMMAND: |
+            # Loop to retry the make command up to 3 times
+            for i in {1..3}; do
+              make bundle-register DIR=${{ matrix.BUNDLE_DIR }} && ec=0 && break || ec=\$? && sleep 10;
+            done;
+
+            # Exit with the last status code
+            (exit \$ec)
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
@@ -670,7 +735,6 @@ jobs:
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
           LOCATION: ${{ vars.LOCATION }}
-          FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
 
       - name: State Store Migrations
         uses: ./.github/actions/devcontainer_run_command
@@ -720,6 +784,9 @@ jobs:
           MGMT_RESOURCE_GROUP_NAME: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
           MGMT_STORAGE_ACCOUNT_NAME: ${{ secrets.MGMT_STORAGE_ACCOUNT_NAME }}
           SWAGGER_UI_CLIENT_ID: "${{ secrets.SWAGGER_UI_CLIENT_ID }}"
+          USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
+          UI_SITE_NAME: "${{ inputs.UI_SITE_NAME || vars.UI_SITE_NAME }}"
+          UI_FOOTER_TEXT: "${{ inputs.UI_FOOTER_TEXT || vars.UI_FOOTER_TEXT }}"
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
@@ -768,7 +835,8 @@ jobs:
     if: ${{ inputs.e2eTestsCustomSelector != '' }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
-    needs: [deploy_shared_services, register_bundles, register_user_resource_bundles]
+    needs:
+      [deploy_shared_services, register_bundles, register_user_resource_bundles]
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -837,22 +905,6 @@ jobs:
           conclusion: ${{ env.WORKFLOW_CONCLUSION }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      - name: Notify teams channel
-        env:
-          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        # notify only if failure
-        if: |
-          env.WORKFLOW_CONCLUSION == 'failure' &&
-          env.MS_TEAMS_WEBHOOK_URI != '' &&
-          (github.ref == 'refs/heads/main' && inputs.prRef == '')
-        uses: sachinkundu/ms-teams-notification@1.4
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Failed to deploy from main"
-          notification-color: dc3545
-          timezone: Europe/Zurich
-
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -863,3 +915,4 @@ jobs:
         with:
           junit_files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"
+          comment_mode: off

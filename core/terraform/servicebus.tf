@@ -5,6 +5,7 @@ resource "azurerm_servicebus_namespace" "sb" {
   sku                          = var.servicebus_sku
   premium_messaging_partitions = var.servicebus_sku == "Premium" ? "1" : 0
   capacity                     = var.servicebus_sku == "Premium" ? "1" : 0
+  local_auth_enabled           = false
   tags                         = local.tre_core_tags
 
   # Set to true, as network rules restrict access to selected networks when using Premium Sku
@@ -17,7 +18,7 @@ resource "azurerm_servicebus_namespace" "sb" {
 
       # Must be enabled, to allow Eventgrid to access the SB
       trusted_services_allowed = true
-      default_action = "Deny"
+      default_action           = "Deny"
       network_rules {
         subnet_id                            = module.network.airlock_events_subnet_id
         ignore_missing_vnet_service_endpoint = false
@@ -32,8 +33,9 @@ resource "azurerm_servicebus_namespace" "sb" {
   dynamic "customer_managed_key" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
-      key_vault_key_id = azurerm_key_vault_key.tre_encryption[0].id
-      identity_id      = azurerm_user_assigned_identity.encryption[0].id
+      key_vault_key_id                  = azurerm_key_vault_key.tre_encryption[0].id
+      identity_id                       = azurerm_user_assigned_identity.encryption[0].id
+      infrastructure_encryption_enabled = true
     }
   }
 

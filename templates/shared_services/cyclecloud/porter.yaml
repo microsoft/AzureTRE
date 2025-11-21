@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.7.2
+version: 0.7.3
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -64,7 +64,6 @@ outputs:
     applyTo:
       - install
       - upgrade
-
 
 mixins:
   - exec
@@ -159,6 +158,13 @@ start:
         identity:
         username: ${ bundle.credentials.azure_client_id }
   - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
+  - az:
       description: "Start the VM"
       arguments:
         - vm
@@ -194,6 +200,13 @@ stop:
       flags:
         identity:
         username: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: "Select the Azure subscription"
+      arguments:
+        - account
+        - set
+      flags:
+        subscription: ${ bundle.credentials.azure_subscription_id }
   - az:
       description: "Stop the VM"
       arguments:

@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=3.117.0"
+      version = "= 4.27.0"
     }
   }
 
@@ -26,4 +26,9 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+module "terraform_azurerm_environment_configuration" {
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  arm_environment = var.arm_environment
 }

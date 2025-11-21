@@ -6,7 +6,7 @@ name: Deploy Azure TRE (branch)
 # Note that the branch must be in the main repo as secrets are not passed
 # to workflows run from forks
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_dispatch:
     inputs:
       e2eTestsCustomSelector:
@@ -78,7 +78,6 @@ jobs:
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
       APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
       MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
-      MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
       MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
@@ -88,3 +87,6 @@ jobs:
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
+      ENCRYPTION_KV_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
+      EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
+      PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}

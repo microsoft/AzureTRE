@@ -1,10 +1,43 @@
-import { DefaultButton, Dialog, DialogFooter, DocumentCard, DocumentCardActivity, DocumentCardDetails, DocumentCardTitle, DocumentCardType, FontIcon, getTheme, IStackItemStyles, IStackStyles, IStackTokens, mergeStyles, MessageBar, MessageBarType, Modal, Panel, PanelType, Persona, PersonaSize, PrimaryButton, Spinner, SpinnerSize, Stack} from "@fluentui/react";
+import {
+  DefaultButton,
+  Dialog,
+  DialogFooter,
+  DocumentCard,
+  DocumentCardActivity,
+  DocumentCardDetails,
+  DocumentCardTitle,
+  DocumentCardType,
+  FontIcon,
+  getTheme,
+  IStackItemStyles,
+  IStackStyles,
+  IStackTokens,
+  mergeStyles,
+  MessageBar,
+  MessageBarType,
+  Modal,
+  Panel,
+  PanelType,
+  Persona,
+  PersonaSize,
+  PrimaryButton,
+  Spinner,
+  SpinnerSize,
+  Stack,
+  TextField,
+} from "@fluentui/react";
 import moment from "moment";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import { AirlockFilesLinkValidStatus, AirlockRequest, AirlockRequestAction, AirlockRequestStatus, AirlockReviewDecision } from "../../../models/airlock";
+import {
+  AirlockFilesLinkValidStatus,
+  AirlockRequest,
+  AirlockRequestAction,
+  AirlockRequestStatus,
+  AirlockReviewDecision,
+} from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { destructiveButtonStyles } from "../../../styles";
@@ -17,14 +50,20 @@ interface AirlockViewRequestProps {
   onUpdateRequest: (requests: AirlockRequest) => void;
 }
 
-export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps> = (props: AirlockViewRequestProps) => {
-  const {requestId} = useParams();
+export const AirlockViewRequest: React.FunctionComponent<
+  AirlockViewRequestProps
+> = (props: AirlockViewRequestProps) => {
+  const { requestId } = useParams();
   const [request, setRequest] = useState<AirlockRequest>();
   const [hideSubmitDialog, setHideSubmitDialog] = useState(true);
   const [reviewIsOpen, setReviewIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [hideCancelDialog, setHideCancelDialog] = useState(true);
+  const [hideRevokeDialog, setHideRevokeDialog] = useState(true);
+  const [revoking, setRevoking] = useState(false);
+  const [revokeError, setRevokeError] = useState(false);
+  const [revokeReason, setRevokeReason] = useState("");
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -32,14 +71,14 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
 
   useEffect(() => {
     // Get the selected request from the router param and find in the requests prop
-    let req = props.requests.find(r => r.id === requestId) as AirlockRequest;
+    let req = props.requests.find((r) => r.id === requestId) as AirlockRequest;
 
     // If not found, fetch it from the API
     if (!req) {
       apiCall(
         `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}/${requestId}`,
         HttpMethod.Get,
-        workspaceCtx.workspaceApplicationIdURI
+        workspaceCtx.workspaceApplicationIdURI,
       ).then((result) => {
         const request = result.airlockRequest as AirlockRequest;
         request.allowedUserActions = result.allowedUserActions;
@@ -49,9 +88,15 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
       setRequest(req);
     }
     console.log(req);
-  }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
+  }, [
+    apiCall,
+    requestId,
+    props.requests,
+    workspaceCtx.workspace.id,
+    workspaceCtx.workspaceApplicationIdURI,
+  ]);
 
-  const dismissPanel = useCallback(() => navigate('../'), [navigate]);
+  const dismissPanel = useCallback(() => navigate("../"), [navigate]);
 
   // Submit an airlock request
   const submitRequest = useCallback(async () => {
@@ -62,12 +107,12 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         const response = await apiCall(
           `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockSubmit}`,
           HttpMethod.Post,
-          workspaceCtx.workspaceApplicationIdURI
+          workspaceCtx.workspaceApplicationIdURI,
         );
         props.onUpdateRequest(response.airlockRequest);
         setHideSubmitDialog(true);
       } catch (err: any) {
-        err.userMessage = 'Error submitting airlock request';
+        err.userMessage = "Error submitting airlock request";
         setApiError(err);
         setSubmitError(true);
       }
@@ -84,12 +129,12 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         const response = await apiCall(
           `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockCancel}`,
           HttpMethod.Post,
-          workspaceCtx.workspaceApplicationIdURI
+          workspaceCtx.workspaceApplicationIdURI,
         );
         props.onUpdateRequest(response.airlockRequest);
         setHideCancelDialog(true);
       } catch (err: any) {
-        err.userMessage = 'Error cancelling airlock request';
+        err.userMessage = "Error cancelling airlock request";
         setApiError(err);
         setSubmitError(true);
       }
@@ -97,38 +142,101 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
     }
   }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI]);
 
+  // Revoke an airlock request
+  const revokeRequest = useCallback(async () => {
+    if (request && request.workspaceId && revokeReason.trim()) {
+      setRevoking(true);
+      setRevokeError(false);
+      try {
+        const response = await apiCall(
+          `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockRevoke}`,
+          HttpMethod.Post,
+          workspaceCtx.workspaceApplicationIdURI,
+          { reason: revokeReason }
+        );
+        props.onUpdateRequest(response.airlockRequest);
+        setHideRevokeDialog(true);
+        setRevokeReason("");
+      } catch (err: any) {
+        err.userMessage = "Error revoking airlock request";
+        setApiError(err);
+        setRevokeError(true);
+      }
+      setRevoking(false);
+    }
+  }, [apiCall, request, props, workspaceCtx.workspaceApplicationIdURI, revokeReason]);
+
   // Render the panel footer along with buttons that the signed-in user is allowed to see according to the API
   const renderFooter = useCallback(() => {
-    let footer = <></>
+    let footer = <></>;
     if (request) {
-      footer = <>
-        {
-          request.status === AirlockRequestStatus.Draft && <div style={{marginTop: '10px', marginBottom: '10px'}}>
-            <MessageBar>
-              This request is currently in draft. Add a file to the request's storage container and submit when ready.
-            </MessageBar>
+      footer = (
+        <>
+          {request.status === AirlockRequestStatus.Draft && (
+            <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+              <MessageBar>
+                This request is currently in draft. Add a file to the request's
+                storage container and submit when ready.
+              </MessageBar>
+            </div>
+          )}
+          {request.statusMessage && (
+            <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+              <MessageBar messageBarType={MessageBarType.error}>
+                {request.statusMessage}
+              </MessageBar>
+            </div>
+          )}
+          <div style={{ textAlign: "end" }}>
+            {request.allowedUserActions?.includes(
+              AirlockRequestAction.Cancel,
+            ) && (
+              <DefaultButton
+                onClick={() => {
+                  setSubmitError(false);
+                  setHideCancelDialog(false);
+                }}
+                styles={destructiveButtonStyles}
+              >
+                Cancel request
+              </DefaultButton>
+            )}
+            {request.allowedUserActions?.includes(
+              AirlockRequestAction.Submit,
+            ) && (
+              <PrimaryButton
+                onClick={() => {
+                  setSubmitError(false);
+                  setHideSubmitDialog(false);
+                }}
+              >
+                Submit
+              </PrimaryButton>
+            )}
+            {request.allowedUserActions?.includes(
+              AirlockRequestAction.Review,
+            ) && (
+              <PrimaryButton onClick={() => setReviewIsOpen(true)}>
+                Review
+              </PrimaryButton>
+            )}
+            {request.allowedUserActions?.includes(
+              AirlockRequestAction.Revoke,
+            ) && (
+              <DefaultButton
+                onClick={() => {
+                  setRevokeError(false);
+                  setRevokeReason("");
+                  setHideRevokeDialog(false);
+                }}
+                styles={destructiveButtonStyles}
+              >
+                Revoke
+              </DefaultButton>
+            )}
           </div>
-        }
-        {
-          request.statusMessage && <div style={{marginTop: '10px', marginBottom: '10px'}}>
-            <MessageBar messageBarType={MessageBarType.error}>{request.statusMessage}</MessageBar>
-          </div>
-        }
-        <div style={{textAlign: 'end'}}>
-          {
-            request.allowedUserActions?.includes(AirlockRequestAction.Cancel) &&
-              <DefaultButton onClick={() => {setSubmitError(false); setHideCancelDialog(false)}} styles={destructiveButtonStyles}>Cancel request</DefaultButton>
-          }
-          {
-            request.allowedUserActions?.includes(AirlockRequestAction.Submit) &&
-              <PrimaryButton onClick={() => {setSubmitError(false); setHideSubmitDialog(false)}}>Submit</PrimaryButton>
-          }
-          {
-            request.allowedUserActions?.includes(AirlockRequestAction.Review) &&
-              <PrimaryButton onClick={() => setReviewIsOpen(true)}>Review</PrimaryButton>
-          }
-        </div>
-      </>
+        </>
+      );
     }
     return footer;
   }, [request]);
@@ -136,7 +244,9 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
   return (
     <>
       <Panel
-        headerText={request && request.title ? request.title : "View airlock request"}
+        headerText={
+          request && request.title ? request.title : "View airlock request"
+        }
         isOpen={true}
         isLightDismiss={true}
         onDismiss={dismissPanel}
@@ -145,183 +255,338 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
         closeButtonAriaLabel="Close"
         type={PanelType.custom}
         customWidth="450px"
-      > {
-        request ? <>
-          <Stack horizontal horizontalAlign="space-between" style={{marginTop: '40px'}} styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Id</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-            <p>{request.id}</p>
-            </Stack.Item>
-          </Stack>
+      >
+        {" "}
+        {request ? (
+          <>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              style={{ marginTop: "40px" }}
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Id</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{request.id}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Creator</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <Persona size={PersonaSize.size32} text={request.createdBy?.name} />
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Creator</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <Persona
+                  size={PersonaSize.size32}
+                  text={request.createdBy?.name}
+                />
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Type</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{request.type}</p>
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Type</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{request.type}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Status</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{request.status.replace("_", " ")}</p>
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Status</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{request.status.replace("_", " ")}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Workspace</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{workspaceCtx.workspace?.properties?.display_name}</p>
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Workspace</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{workspaceCtx.workspace?.properties?.display_name}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Created</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{moment.unix(request.createdWhen).format('DD/MM/YYYY')}</p>
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Created</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{moment.unix(request.createdWhen).format("DD/MM/YYYY")}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Updated</b>
-            </Stack.Item>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{moment.unix(request.updatedWhen).fromNow()}</p>
-            </Stack.Item>
-          </Stack>
+            <Stack
+              horizontal
+              horizontalAlign="space-between"
+              styles={underlineStackStyles}
+            >
+              <Stack.Item styles={stackItemStyles}>
+                <b>Updated</b>
+              </Stack.Item>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{moment.unix(request.updatedWhen).fromNow()}</p>
+              </Stack.Item>
+            </Stack>
 
-          <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
-            <Stack.Item styles={stackItemStyles}>
-              <b>Business Justification</b>
-            </Stack.Item>
-          </Stack>
-          <Stack>
-            <Stack.Item styles={stackItemStyles}>
-              <p>{request.businessJustification}</p>
-            </Stack.Item>
-          </Stack>
-          {
-            AirlockFilesLinkValidStatus.includes(request.status) && <>
-              <Stack style={{marginTop: '20px'}} styles={underlineStackStyles}>
-                <Stack.Item styles={stackItemStyles}>
-                  <b>Files</b>
-                </Stack.Item>
-              </Stack>
-              <AirlockRequestFilesSection request={request} workspaceApplicationIdURI={workspaceCtx.workspaceApplicationIdURI}/>
-            </>
-          }
-          {
-            request.reviews && request.reviews.length > 0 && <>
-              <Stack style={{marginTop: '20px', marginBottom: '20px'}} styles={underlineStackStyles}>
-                <Stack.Item styles={stackItemStyles}>
-                  <b>Reviews</b>
-                </Stack.Item>
-              </Stack>
-              <Stack tokens={stackTokens}>
-                {
-                  request.reviews.map((review, i) => {
-                    return <DocumentCard
-                      key={i}
-                      aria-label="Review"
-                      type={DocumentCardType.compact}>
-                      <DocumentCardDetails>
-                        <DocumentCardActivity
-                          activity={moment.unix(review.dateCreated).fromNow()}
-                          people={[{name: review.reviewer.name, profileImageSrc: ''}]}
-                        />
-                        <DocumentCardTitle
-                          title={review.decisionExplanation}
-                          shouldTruncate
-                          showAsSecondaryTitle
-                        />
-                      </DocumentCardDetails>
-                      <div style={{margin:10}}>
-                        {
-                          review.reviewDecision === AirlockReviewDecision.Approved && <>
-                            <FontIcon aria-label="Approved" iconName="Completed" className={approvedIcon} />
-                            Approved
-                          </>
-                        }
-                        {
-                          review.reviewDecision === AirlockReviewDecision.Rejected && <>
-                            <FontIcon aria-label="Rejected" iconName="ErrorBadge" className={rejectedIcon} />
-                            Rejected
-                          </>
-                        }
-                      </div>
-                    </DocumentCard>
-                  })
-                }
-              </Stack>
-            </>
-          }
-        </>
-        : <div style={{ marginTop: '70px' }}>
-          <Spinner label="Loading..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-        </div>
-      }
+            <Stack style={{ marginTop: "20px" }} styles={underlineStackStyles}>
+              <Stack.Item styles={stackItemStyles}>
+                <b>Business Justification</b>
+              </Stack.Item>
+            </Stack>
+            <Stack>
+              <Stack.Item styles={stackItemStyles}>
+                <p>{request.businessJustification}</p>
+              </Stack.Item>
+            </Stack>
+            {AirlockFilesLinkValidStatus.includes(request.status) && (
+              <>
+                <Stack
+                  style={{ marginTop: "20px" }}
+                  styles={underlineStackStyles}
+                >
+                  <Stack.Item styles={stackItemStyles}>
+                    <b>Files</b>
+                  </Stack.Item>
+                </Stack>
+                <AirlockRequestFilesSection
+                  request={request}
+                  workspaceApplicationIdURI={
+                    workspaceCtx.workspaceApplicationIdURI
+                  }
+                />
+              </>
+            )}
+            {request.reviews && request.reviews.length > 0 && (
+              <>
+                <Stack
+                  style={{ marginTop: "20px", marginBottom: "20px" }}
+                  styles={underlineStackStyles}
+                >
+                  <Stack.Item styles={stackItemStyles}>
+                    <b>Reviews</b>
+                  </Stack.Item>
+                </Stack>
+                <Stack tokens={stackTokens}>
+                  {request.reviews.map((review, i) => {
+                    return (
+                      <DocumentCard
+                        key={i}
+                        aria-label="Review"
+                        type={DocumentCardType.compact}
+                      >
+                        <DocumentCardDetails>
+                          <DocumentCardActivity
+                            activity={moment.unix(review.dateCreated).fromNow()}
+                            people={[
+                              {
+                                name: review.reviewer.name,
+                                profileImageSrc: "",
+                              },
+                            ]}
+                          />
+                          <DocumentCardTitle
+                            title={review.decisionExplanation}
+                            shouldTruncate
+                            showAsSecondaryTitle
+                          />
+                        </DocumentCardDetails>
+                        <div style={{ margin: 10 }}>
+                          {review.reviewDecision ===
+                            AirlockReviewDecision.Approved && (
+                            <>
+                              <FontIcon
+                                aria-label="Approved"
+                                iconName="Completed"
+                                className={approvedIcon}
+                              />
+                              Approved
+                            </>
+                          )}
+                          {review.reviewDecision ===
+                            AirlockReviewDecision.Rejected && (
+                            <>
+                              <FontIcon
+                                aria-label="Rejected"
+                                iconName="ErrorBadge"
+                                className={rejectedIcon}
+                              />
+                              Rejected
+                            </>
+                          )}
+                          {review.reviewDecision ===
+                            AirlockReviewDecision.Revoked && (
+                            <>
+                              <FontIcon
+                                aria-label="Revoked"
+                                iconName="StatusCircleBlock2"
+                                className={revokedIcon}
+                              />
+                              Revoked
+                            </>
+                          )}
+                        </div>
+                      </DocumentCard>
+                    );
+                  })}
+                </Stack>
+              </>
+            )}
+          </>
+        ) : (
+          <div style={{ marginTop: "70px" }}>
+            <Spinner
+              label="Loading..."
+              ariaLive="assertive"
+              labelPosition="top"
+              size={SpinnerSize.large}
+            />
+          </div>
+        )}
         <Dialog
           hidden={hideSubmitDialog}
-          onDismiss={() => {setHideSubmitDialog(true); setSubmitError(false)}}
+          onDismiss={() => {
+            setHideSubmitDialog(true);
+            setSubmitError(false);
+          }}
           dialogContentProps={{
-            title: 'Submit request?',
-            subText: 'Make sure you have uploaded your file to the request\'s storage account before submitting.',
+            title: "Submit request?",
+            subText:
+              "Make sure you have uploaded your file to the request's storage account before submitting.",
           }}
         >
-          {
-            submitError && <ExceptionLayout e={apiError} />
-          }
-          {
-            submitting
-            ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-            : <DialogFooter>
-              <DefaultButton onClick={() => {setHideSubmitDialog(true); setSubmitError(false)}} text="Cancel" />
+          {submitError && <ExceptionLayout e={apiError} />}
+          {submitting ? (
+            <Spinner
+              label="Submitting..."
+              ariaLive="assertive"
+              labelPosition="top"
+              size={SpinnerSize.large}
+            />
+          ) : (
+            <DialogFooter>
+              <DefaultButton
+                onClick={() => {
+                  setHideSubmitDialog(true);
+                  setSubmitError(false);
+                }}
+                text="Cancel"
+              />
               <PrimaryButton onClick={submitRequest} text="Submit" />
             </DialogFooter>
-          }
+          )}
         </Dialog>
-
         <Dialog
           hidden={hideCancelDialog}
-          onDismiss={() => {setHideCancelDialog(true); setSubmitError(false)}}
+          onDismiss={() => {
+            setHideCancelDialog(true);
+            setSubmitError(false);
+          }}
           dialogContentProps={{
-            title: 'Cancel Airlock Request?',
-            subText: 'Are you sure you want to cancel this airlock request?',
+            title: "Cancel Airlock Request?",
+            subText: "Are you sure you want to cancel this airlock request?",
           }}
         >
-          {
-            submitError && <ExceptionLayout e={apiError} />
-          }
-          {
-            submitting
-            ? <Spinner label="Cancelling..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-            : <DialogFooter>
-              <DefaultButton onClick={cancelRequest} text="Cancel Request" styles={destructiveButtonStyles} />
-              <DefaultButton onClick={() => {setHideCancelDialog(true); setSubmitError(false)}} text="Back" />
+          {submitError && <ExceptionLayout e={apiError} />}
+          {submitting ? (
+            <Spinner
+              label="Cancelling..."
+              ariaLive="assertive"
+              labelPosition="top"
+              size={SpinnerSize.large}
+            />
+          ) : (
+            <DialogFooter>
+              <DefaultButton
+                onClick={cancelRequest}
+                text="Cancel Request"
+                styles={destructiveButtonStyles}
+              />
+              <DefaultButton
+                onClick={() => {
+                  setHideCancelDialog(true);
+                  setSubmitError(false);
+                }}
+                text="Back"
+              />
             </DialogFooter>
-          }
+          )}
         </Dialog>
-
+        <Dialog
+          hidden={hideRevokeDialog}
+          onDismiss={() => {
+            setHideRevokeDialog(true);
+            setRevokeError(false);
+            setRevokeReason("");
+          }}
+          dialogContentProps={{
+            title: "Revoke Airlock Request?",
+            subText: "Are you sure you want to revoke this approved airlock request? This will prevent new download links from being generated, but existing links will remain valid until they expire.",
+          }}
+        >
+          {revokeError && <ExceptionLayout e={apiError} />}
+          {revoking ? (
+            <Spinner
+              label="Revoking..."
+              ariaLive="assertive"
+              labelPosition="top"
+              size={SpinnerSize.large}
+            />
+          ) : (
+            <>
+              <TextField
+                label="Reason for revocation (required)"
+                multiline
+                rows={3}
+                value={revokeReason}
+                onChange={(_, newValue) => setRevokeReason(newValue || "")}
+                placeholder="Please provide a reason for revoking this approved request (e.g., approved in error, security concerns identified)"
+                required
+              />
+              <DialogFooter>
+                <DefaultButton
+                  onClick={revokeRequest}
+                  text="Revoke Request"
+                  styles={destructiveButtonStyles}
+                  disabled={!revokeReason.trim()}
+                />
+                <DefaultButton
+                  onClick={() => {
+                    setHideRevokeDialog(true);
+                    setRevokeError(false);
+                    setRevokeReason("");
+                  }}
+                  text="Cancel"
+                />
+              </DialogFooter>
+            </>
+          )}
+        </Dialog>
         <Modal
           titleAriaId={`title-${request?.id}`}
           isOpen={reviewIsOpen}
@@ -331,47 +596,56 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
           <AirlockReviewRequest
             request={request}
             onUpdateRequest={props.onUpdateRequest}
-            onReviewRequest={(request) => {props.onUpdateRequest(request); setReviewIsOpen(false)}}
+            onReviewRequest={(request) => {
+              props.onUpdateRequest(request);
+              setReviewIsOpen(false);
+            }}
             onClose={() => setReviewIsOpen(false)}
           />
         </Modal>
       </Panel>
     </>
-  )
-}
+  );
+};
 
 const { palette } = getTheme();
 const stackTokens: IStackTokens = { childrenGap: 20 };
 
 const underlineStackStyles: IStackStyles = {
   root: {
-    borderBottom: '#f2f2f2 solid 1px'
+    borderBottom: "#f2f2f2 solid 1px",
   },
 };
 
 const stackItemStyles: IStackItemStyles = {
   root: {
-    alignItems: 'center',
-    display: 'flex',
+    alignItems: "center",
+    display: "flex",
     height: 50,
-    margin: '0px 5px'
+    margin: "0px 5px",
   },
 };
 
 const approvedIcon = mergeStyles({
   color: palette.green,
   marginRight: 5,
-  fontSize: 12
+  fontSize: 12,
 });
 
 const rejectedIcon = mergeStyles({
   color: palette.red,
   marginRight: 5,
-  fontSize: 12
+  fontSize: 12,
+});
+
+const revokedIcon = mergeStyles({
+  color: palette.orange,
+  marginRight: 5,
+  fontSize: 12,
 });
 
 const modalStyles = mergeStyles({
-  display: 'flex',
-  flexFlow: 'column nowrap',
-  alignItems: 'stretch',
+  display: "flex",
+  flexFlow: "column nowrap",
+  alignItems: "stretch",
 });

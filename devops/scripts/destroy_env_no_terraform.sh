@@ -66,6 +66,11 @@ then
   no_wait_option="--no-wait"
 fi
 
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# shellcheck disable=SC1091
+source "$script_dir/kv_add_network_exception.sh"
+
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
 if [[ "$group_show_result" !=  "0" ]]; then
   echo "Resource group ${core_tre_rg} not found - skipping destroy"
@@ -183,5 +188,7 @@ while read -r rg_item; do
   purge_container_repositories "$rg_item"
 
   echo "Deleting resource group: ${rg_item}"
+  # remove any resource locks on resources inside the resource group
+  az lock list --resource-group "${rg_item}" --query "[].id" -o tsv | xargs -r -I {} az lock delete --id "{}"
   az group delete --resource-group "${rg_item}" --yes ${no_wait_option}
 done

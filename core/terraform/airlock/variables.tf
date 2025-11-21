@@ -34,14 +34,9 @@ variable "airlock_processor_image_repository" {
   default     = "microsoft/azuretre/airlock-processor"
 }
 
-variable "mgmt_resource_group_name" {
+variable "acr_id" {
   type        = string
-  description = "Shared management resource group"
-}
-
-variable "mgmt_acr_name" {
-  type        = string
-  description = "Management ACR name"
+  description = "ACR ID"
 }
 
 variable "airlock_app_service_plan_sku" {
@@ -61,6 +56,9 @@ variable "airlock_servicebus" {
     id                                = string
     default_primary_connection_string = string
   })
+}
+variable "airlock_servicebus_fqdn" {
+  type = string
 }
 variable "tre_core_tags" {
   type = map(string)
@@ -89,6 +87,9 @@ variable "queue_core_dns_zone_id" {
   type = string
 }
 variable "table_core_dns_zone_id" {
+  type = string
+}
+variable "eventgrid_private_dns_zone_id" {
   type = string
 }
 

@@ -16,7 +16,6 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 1. Create app registrations for API authentication
 1. Create app registrations and a user for the E2E tests
 1. Create a workspace app registration for setting up workspaces (for the E2E tests)
-1. Create a Teams WebHook for deployment notifications
 1. Configure repository secrets
 1. Deploy the TRE using the workflow
 
@@ -102,21 +101,6 @@ Configure the TEST_WORKSPACE_APP_ID repository secret
 | `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app. |
 | `TEST_WORKSPACE_APP_SECRET` | The application (client) secret of the Workspaces app. |
 
-### Create a Teams Webhook for deployment notifications
-
-The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel when it finishes running.
-
-!!! note
-    If you don't want to notify a channel, you can also remove the **Notify dedicated teams channel** steps in the workflow
-
-1. Follow the [Microsoft Docs](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook) to create a webhook for your channel
-
-1. Configure the MS_TEAMS_WEBHOOK_URI repository secret
-
-  | <div style="width: 230px">Secret name</div> | Description |
-  | ----------- | ----------- |
-  | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
-
 ### Configure repository/environment secrets
 
 Configure additional secrets used in the deployment workflow:
@@ -147,7 +131,7 @@ Configure variables used in the deployment workflow:
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
-
+| `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
 
 ### Deploy the TRE using the workflow
 

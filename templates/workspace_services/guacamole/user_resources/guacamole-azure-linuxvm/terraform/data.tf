@@ -1,9 +1,14 @@
+data "azurerm_client_config" "current" {
+  provider = azurerm.core
+}
+
 data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
 data "azurerm_resource_group" "core" {
-  name = "rg-${var.tre_id}"
+  provider = azurerm.core
+  name     = "rg-${var.tre_id}"
 }
 
 data "azurerm_virtual_network" "ws" {
@@ -28,6 +33,7 @@ data "azurerm_linux_web_app" "guacamole" {
 }
 
 data "azurerm_public_ip" "app_gateway_ip" {
+  provider            = azurerm.core
   name                = "pip-agw-${var.tre_id}"
   resource_group_name = data.azurerm_resource_group.core.name
 }
@@ -69,4 +75,9 @@ data "template_file" "apt_sources_config" {
 data "azurerm_storage_account" "stg" {
   name                = local.storage_name
   resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azuread_user" "user" {
+  count     = var.admin_username == "" ? 1 : 0
+  object_id = var.owner_id
 }

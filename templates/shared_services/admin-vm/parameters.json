@@ -57,6 +57,18 @@
       "source": {
         "env": "KEY_STORE_ID"
       }
+    },
+    {
+      "name": "os_image",
+      "source": {
+        "env": "OS_IMAGE"
+      }
+    },
+    {
+      "name": "image_gallery_id",
+      "source": {
+        "env": "IMAGE_GALLERY_ID"
+      }
     }
   ]
 }

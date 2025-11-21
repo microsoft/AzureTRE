@@ -60,4 +60,8 @@ locals {
     azurerm_storage_account.sa_import_in_progress.id,
     azurerm_storage_account.sa_export_approved.id
   ]
+
+  servicebus_connection              = "SERVICEBUS_CONNECTION"
+  step_result_eventgrid_connection   = "EVENT_GRID_STEP_RESULT_CONNECTION"
+  data_deletion_eventgrid_connection = "EVENT_GRID_DATA_DELETION_CONNECTION"
 }

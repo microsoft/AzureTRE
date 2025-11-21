@@ -81,7 +81,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
     try:
         body = msg.get_body().decode('utf-8')
-        logging.info('Python ServiceBus queue trigger processed message: %s', body)
+        logging.debug('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
         result = parse_obj_as(RequestProperties, json_body["data"])
         if not result:
@@ -187,7 +187,7 @@ def set_output_event_to_report_failure(stepResultEvent, request_properties, fail
             data={"completed_step": request_properties.new_status, "new_status": constants.STAGE_FAILED, "request_id": request_properties.request_id, "request_files": request_files, "status_message": failure_reason},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
@@ -199,7 +199,7 @@ def set_output_event_to_report_request_files(stepResultEvent, request_properties
             data={"completed_step": request_properties.new_status, "request_id": request_properties.request_id, "request_files": request_files},
             subject=request_properties.request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
@@ -211,7 +211,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
             data={"blob_to_delete": container_url},
             subject=request_properties.request_id,
             event_type="Airlock.DataDeletion",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )

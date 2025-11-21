@@ -27,7 +27,9 @@
       "title": "App Service Plan SKU",
       "description": "The SKU that will be used when deploying an Azure App Service Plan.",
       "default": "P1v3",
+      "updateable": true,
       "enum": [
+        "P0v3",
         "P1v3",
         "P1v2",
         "S1"
@@ -71,6 +73,27 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "enable_backup": {
+      "type": "boolean",
+      "title": "Enable Backup",
+      "description": "Enable backups for the workspace. Workspace services must support this feature.",
+      "default": true,
+      "updateable": true
+    },
+    "enable_dns_policy": {
+      "type": "boolean",
+      "title": "Enable DNS Security Policy",
+      "description": "Enable DNS Security Policy for the workspace.",
+      "default": false,
+      "updateable": true
+    },
+    "deploy_to_another_subscription": {
+      "type": "boolean",
+      "title": "Deploy workspace to another subscription",
+      "description": "Check this box if you want to deploy the workspace to another subscription.",
+      "default": false,
+      "updateable": false
     }
   },
   "allOf": [
@@ -237,7 +260,7 @@
         "properties": {
           "create_aad_groups": {
             "type": "boolean",
-            "title": "Create AAD Groups for each workspace role",
+            "title": "Create AAD Groups for each workspace role (Required for user management)",
             "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
             "default": false,
             "updateable": true
@@ -277,6 +300,30 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "deploy_to_another_subscription": {
+            "const": true
+          }
+        },
+        "required": [
+          "deploy_to_another_subscription"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workspace_subscription_id": {
+            "type": "string",
+            "title": "Workspace Subscription ID",
+            "description": "The subscription ID where the workspace will be deployed."
+          }
+        },
+        "required": [
+          "workspace_subscription_id"
+        ]
+      }
     }
   ],
   "actions": [],
@@ -302,6 +349,7 @@
       "create_aad_groups",
       "client_id",
       "client_secret",
+      "enable_backup",
       "enable_airlock",
       "configure_review_vms",
       "airlock_review_config",

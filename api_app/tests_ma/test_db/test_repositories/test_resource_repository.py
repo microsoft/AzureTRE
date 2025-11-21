@@ -6,6 +6,7 @@ import pytest_asyncio
 from mock import patch, MagicMock
 
 from jsonschema.exceptions import ValidationError
+from resources import strings
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_test_user
@@ -354,7 +355,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.user = user
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
-    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user)
+    await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
     # now patch again
@@ -365,7 +366,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.isEnabled = False
     expected_resource.user = user
 
-    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user)
+    await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 
@@ -380,7 +381,7 @@ def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
 
     # check it's valid when updating a single updateable prop
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large'})
-    resource_repo.validate_patch(patch, template_repo, template)
+    resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
 
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
@@ -395,14 +396,14 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     # check it's invalid when sending an unexpected field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template)
+        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
 
     # check it's invalid when sending a bad value
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template)
+        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
 
     # check it's invalid when trying to update a non-updateable field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template)
+        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
