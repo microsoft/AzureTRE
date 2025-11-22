@@ -183,44 +183,21 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
     is_manual_connection           = false
   }
 
+  private_dns_zone_group {
+    name = "azure-monitor-private-dns-zone-group"
+
+    private_dns_zone_ids = [
+      var.azure_monitor_dns_zone_id,
+      var.azure_monitor_oms_opinsights_dns_zone_id,
+      var.azure_monitor_ods_opinsights_dns_zone_id,
+      var.azure_monitor_agentsvc_dns_zone_id,
+      var.blob_core_dns_zone_id,
+    ]
+  }
+
   depends_on = [
     azurerm_monitor_private_link_scoped_service.ampls_app_insights,
-  ]
-}
-
-# Separate private_dns_zone_group resource to avoid AnotherOperationInProgress errors
-# See: https://github.com/hashicorp/terraform-provider-azurerm/issues/28715
-resource "azurerm_private_endpoint_private_dns_zone_group" "azure_monitor_private_dns_zone_group" {
-  name                = "azure-monitor-private-dns-zone-group"
-  private_endpoint_id = azurerm_private_endpoint.azure_monitor_private_endpoint.id
-
-  private_dns_zone_config {
-    name                 = "privatelink-monitor-azure-com"
-    private_dns_zone_ids = [var.azure_monitor_dns_zone_id]
-  }
-
-  private_dns_zone_config {
-    name                 = "privatelink-oms-opinsights-azure-com"
-    private_dns_zone_ids = [var.azure_monitor_oms_opinsights_dns_zone_id]
-  }
-
-  private_dns_zone_config {
-    name                 = "privatelink-ods-opinsights-azure-com"
-    private_dns_zone_ids = [var.azure_monitor_ods_opinsights_dns_zone_id]
-  }
-
-  private_dns_zone_config {
-    name                 = "privatelink-agentsvc-azure-automation-net"
-    private_dns_zone_ids = [var.azure_monitor_agentsvc_dns_zone_id]
-  }
-
-  private_dns_zone_config {
-    name                 = "privatelink-blob-core-windows-net"
-    private_dns_zone_ids = [var.blob_core_dns_zone_id]
-  }
-
-  depends_on = [
-    azurerm_private_endpoint.azure_monitor_private_endpoint,
+    azurerm_monitor_private_link_scoped_service.ampls_log_anaytics,
   ]
 }
 
