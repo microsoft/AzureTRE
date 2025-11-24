@@ -187,7 +187,6 @@ terraform.rc
 
 # node
 node_modules
-package-lock.json
 
 # certificate folder
 letsencrypt/
