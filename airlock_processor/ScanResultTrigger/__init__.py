@@ -59,5 +59,5 @@ def main(msg: func.ServiceBusMessage,
             data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "status_message": status_message},
             subject=request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))

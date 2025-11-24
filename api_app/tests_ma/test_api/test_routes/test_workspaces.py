@@ -390,7 +390,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     async def test_get_workspace_by_id_get_returns_422_if_workspace_id_is_not_a_uuid(self, access_service_mock, _, app, client):
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
         response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id="not_valid"))
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     # [GET] /workspaces/{workspace_id}/history
     @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
@@ -503,7 +503,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         workspace_patch = {"isEnabled": True}
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch)
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         assert ("('header', 'etag')" in response.text and "field required" in response.text)
 
     # [PATCH] /workspaces/{workspace_id}
@@ -999,7 +999,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=workspace_id, service_id=workspace_service_id, resource_id=resource_id), json={"enabled": True})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
@@ -1212,7 +1212,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         get_workspace_mock.return_value = sample_deployed_workspace(workspace_id)
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=workspace_id, service_id=workspace_service_id), json={"enabled": True})
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
@@ -1627,7 +1627,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=workspace_id, service_id=workspace_service_id, resource_id=resource_id), json={"enabled": True})
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
