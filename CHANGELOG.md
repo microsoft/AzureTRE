@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
+* Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
@@ -10,6 +11,8 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
+* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
 
 COMPONENTS:
 
@@ -46,7 +49,6 @@ BUG FIXES:
 * Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
 * Add Loading spinner to shared services page ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
 * Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
-* Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
 * Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
 * Update Starlette and FastAPI versions ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
 
