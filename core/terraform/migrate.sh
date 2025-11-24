@@ -233,7 +233,7 @@ if az group show --name "${CORE_RESOURCE_GROUP_NAME}" > /dev/null 2>&1; then
   # Route tables
   import_if_exists module.network.azurerm_route_table.rt \
     "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${CORE_RESOURCE_GROUP_NAME}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}"
-
+  
   # Default route (was originally inline in route table, now separate)
   import_if_exists azurerm_route.default_route \
     "/subscriptions/${ARM_SUBSCRIPTION_ID}/resourceGroups/${CORE_RESOURCE_GROUP_NAME}/providers/Microsoft.Network/routeTables/rt-${TRE_ID}/routes/DefaultRoute"
