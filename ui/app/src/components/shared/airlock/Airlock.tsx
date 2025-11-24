@@ -45,6 +45,7 @@ export const Airlock: React.FunctionComponent = () => {
   const [orderBy, setOrderBy] = useState("updatedWhen");
   const [orderAscending, setOrderAscending] = useState(false);
   const [filters, setFilters] = useState(new Map<string, string>());
+  const [showMyRequestsOnly, setShowMyRequestsOnly] = useState(false);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] =
     useState<IContextualMenuProps>();
@@ -246,7 +247,6 @@ export const Airlock: React.FunctionComponent = () => {
         onRender: (request: AirlockRequest) => (
           <Persona size={PersonaSize.size24} text={request.createdBy?.name} />
         ),
-        isFiltered: filters.has("creator_user_id"),
       },
       {
         key: "type",
@@ -343,8 +343,8 @@ export const Airlock: React.FunctionComponent = () => {
       text: "My requests",
       iconProps: { iconName: "EditContact" },
       onClick: () => {
-        const userId = account.localAccountId.split(".")[0];
-        setFilters(new Map([["creator_user_id", userId]]));
+        setShowMyRequestsOnly(!showMyRequestsOnly);
+        setFilters(new Map());
       },
     });
   }
@@ -387,7 +387,7 @@ export const Airlock: React.FunctionComponent = () => {
       {apiError && <ExceptionLayout e={apiError} />}
       <div className="tre-resource-panel" style={{ padding: "0px" }}>
         <ShimmeredDetailsList
-          items={airlockRequests}
+          items={showMyRequestsOnly && account ? airlockRequests.filter(r => r.createdBy?.id === account.localAccountId.split(".")[0]) : airlockRequests}
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
