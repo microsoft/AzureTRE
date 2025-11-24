@@ -62,10 +62,11 @@ async def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_
 
 async def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
     shared_service_repo.query = AsyncMock(return_value=[])
+    query, parameters = SharedServiceRepository.active_shared_services_query()
 
     await shared_service_repo.get_active_shared_services()
 
-    shared_service_repo.query.assert_called_once_with(query=SharedServiceRepository.active_shared_services_query())
+    shared_service_repo.query.assert_called_once_with(query=query, parameters=parameters)
 
 
 @patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')

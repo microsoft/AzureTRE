@@ -46,6 +46,10 @@ output "airlock_events_subnet_id" {
   value = "${azurerm_virtual_network.core.id}/subnets/AirlockEventsSubnet"
 }
 
+output "route_table_name" {
+  value = azurerm_route_table.rt.name
+}
+
 # DNS Zones
 
 output "azure_monitor_dns_zone_id" {

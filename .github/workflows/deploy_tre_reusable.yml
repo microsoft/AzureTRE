@@ -67,9 +67,6 @@ on: # yamllint disable-line rule:truthy
       MGMT_RESOURCE_GROUP_NAME:
         description: ""
         required: true
-      MS_TEAMS_WEBHOOK_URI:
-        description: ""
-        required: true
       MGMT_STORAGE_ACCOUNT_NAME:
         description: ""
         required: true
@@ -400,6 +397,8 @@ jobs:
           USER_MANAGEMENT_ENABLED: ${{ vars.USER_MANAGEMENT_ENABLED }}
           PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
           AUTO_GRANT_WORKSPACE_CONSENT: ${{ vars.AUTO_GRANT_WORKSPACE_CONSENT }}
+          ENABLE_DNS_POLICY: ${{ vars.ENABLE_DNS_POLICY }}
+          ALLOWED_DNS: ${{ vars.ALLOWED_DNS }}
 
       - name: API Healthcheck
         uses: ./.github/actions/devcontainer_run_command
@@ -905,22 +904,6 @@ jobs:
           status: "completed"
           conclusion: ${{ env.WORKFLOW_CONCLUSION }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Notify teams channel
-        env:
-          MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-        # notify only if failure
-        if: |
-          env.WORKFLOW_CONCLUSION == 'failure' &&
-          env.MS_TEAMS_WEBHOOK_URI != '' &&
-          (github.ref == 'refs/heads/main' && inputs.prRef == '')
-        uses: sachinkundu/ms-teams-notification@1.4
-        with:
-          github-token: ${{ github.token }}
-          ms-teams-webhook-uri: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
-          notification-summary: "Failed to deploy from main"
-          notification-color: dc3545
-          timezone: Europe/Zurich
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4

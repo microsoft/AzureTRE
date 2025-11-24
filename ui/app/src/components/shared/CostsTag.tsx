@@ -35,21 +35,6 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
         costs = workspaceCtx.costs;
       } else if (costsCtx.costs.length > 0) {
         costs = costsCtx.costs;
-      } else if (!workspaceCtx.workspace.id) {
-        let scopeId = (
-          await apiCall(
-            `${ApiEndpoint.Workspaces}/${props.resourceId}/scopeid`,
-            HttpMethod.Get,
-          )
-        ).workspaceAuth.scopeId;
-        const r = await apiCall(
-          `${ApiEndpoint.Workspaces}/${props.resourceId}/${ApiEndpoint.Costs}`,
-          HttpMethod.Get,
-          scopeId,
-          undefined,
-          ResultType.JSON,
-        );
-        costs = [{ costs: r.costs, id: r.id, name: r.name }];
       }
 
       const resourceCosts = costs.find((cost) => {

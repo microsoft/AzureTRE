@@ -8,6 +8,12 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
+variable "workspace_subscription_id" {
+  type        = string
+  description = "Subscription ID for the workspace resources"
+  default     = ""
+}
+
 variable "shared_storage_quota" {
   type        = number
   default     = 50
@@ -78,6 +84,7 @@ variable "auth_client_id" {
 }
 variable "auth_client_secret" {
   type        = string
+  sensitive   = true
   description = "Used to authenticate into the AAD Tenant to create the AAD App"
 }
 variable "enable_backup" {
@@ -111,6 +118,7 @@ variable "client_id" {
 variable "client_secret" {
   type        = string
   default     = ""
+  sensitive   = true
   description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
 variable "ui_client_id" {

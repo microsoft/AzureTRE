@@ -44,7 +44,8 @@ Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with th
     "description": "workspace for team X",
     "client_id":"<WORKSPACE_API_CLIENT_ID>",
     "client_secret":"<WORKSPACE_API_CLIENT_SECRET>",
-    "address_space_size": "medium"
+    "address_space_size": "medium",
+    "workspace_subscription_id": "<OPTIONAL AZURE SUBSCRIPTION ID>"
   }
 }
 ```
@@ -55,6 +56,21 @@ You can also follow the progress in Azure portal as various resources come up.
 
 Workspace level operations can now be carried out using the workspace API, at `/api/workspaces/<workspace_id>/docs/`.
 
+### Deploying the workspace to a separate Azure subscription
+
+By specifying an Azure subscription id (a GUID) in the API request or in the UI options the workspace can be created in a separate Azure subscription to the one used for the core TRE resources. The subscription must exist in the same tenant as the core subscription.
+
+There are a few manual steps required to allow the TRE to deploy to a separate subscription. The deployment is done using a managed identity, so this managed identity needs permissions to deploy to the new subscription.
+
+In the core TRE resource group (**_rg-\<treid\>_**) there is a managed identity named **_id-vmss-\<treid\>_**. This is the identity used for deployment and it needs to be granted the [**Owner**][owner] role, or a combination of [**Contributor**][contributor] and [**User Access Administrator**][useradmin] roles at the scope of the new Azure subscription (or management group).
+
+There is also a managed identity named **_id-api-\<treid\>_**. This is the identity the API uses to query the billing API. For the API to be able to report costs for the workspace it will require the [**Billing Reader**][billreader] role on the new Azure subscription (or management group).
+
 ## Next steps
 
 * [Installing a workspace service & user resources](./installing-workspace-service-and-user-resource.md)
+
+[owner]: https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#owner
+[contributor]: https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#contributor
+[useradmin]: https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/privileged#user-access-administrator
+[billreader]: https://learn.microsoft.com/azure/role-based-access-control/built-in-roles/management-and-governance#billing-reader

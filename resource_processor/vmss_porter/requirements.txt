@@ -1,4 +1,4 @@
-aiohttp==3.11.10
+aiohttp==3.12.14
 azure-cli-core==2.65.0
 azure-identity==1.19.0
 azure-monitor-opentelemetry==1.6.4

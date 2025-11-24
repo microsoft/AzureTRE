@@ -1,4 +1,5 @@
 resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
+  provider              = azurerm.core
   name                  = "azurewebsites-link-${azurerm_virtual_network.ws.name}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azurewebsites.name
@@ -10,6 +11,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurewebsites" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
+  provider              = azurerm.core
   name                  = "filecorelink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.filecore.name
@@ -20,6 +22,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "filecorelink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
+  provider              = azurerm.core
   name                  = "blobcorelink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.blobcore.name
@@ -30,6 +33,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "blobcorelink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "dfscorelink" {
+  provider              = azurerm.core
   name                  = "dfscorelink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.dfscore.name
@@ -40,6 +44,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dfscorelink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
+  provider              = azurerm.core
   name                  = "vaultcorelink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.vaultcore.name
@@ -50,6 +55,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vaultcorelink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azurecrlink" {
+  provider              = azurerm.core
   name                  = "azurecrlink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azurecr.name
@@ -60,6 +66,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azurecrlink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
+  provider              = azurerm.core
   name                  = "azuremllink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azureml.name
@@ -70,6 +77,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremllink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
+  provider              = azurerm.core
   name                  = "azuremlcertlink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azuremlcert.name
@@ -80,6 +88,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuremlcertlink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "healthlink" {
+  provider              = azurerm.core
   name                  = "healthlink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.health.name
@@ -90,6 +99,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "healthlink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "dicomlink" {
+  provider              = azurerm.core
   name                  = "dicomlink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.dicom.name
@@ -100,6 +110,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "dicomlink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
+  provider              = azurerm.core
   name                  = "notebookslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.notebooks.name
@@ -110,6 +121,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "notebookslink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "mysqllink" {
+  provider              = azurerm.core
   name                  = "mysqllink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.mysql.name
@@ -120,6 +132,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "mysqllink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "postgreslink" {
+  provider              = azurerm.core
   name                  = "postgreslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.postgres.name
@@ -130,6 +143,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgreslink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azuresqllink" {
+  provider              = azurerm.core
   name                  = "azuresqllink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.azuresql.name
@@ -140,6 +154,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azuresqllink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "nexuslink" {
+  provider              = azurerm.core
   name                  = "nexuslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.nexus.name
@@ -150,6 +165,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "nexuslink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "databrickslink" {
+  provider              = azurerm.core
   name                  = "databrickslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.databricks.name
@@ -160,6 +176,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "databrickslink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "openailink" {
+  provider              = azurerm.core
   name                  = "openailink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.openai.name
@@ -170,6 +187,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "openailink" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cognitveserviceslink" {
+  provider              = azurerm.core
   name                  = "cognitiveserviceslink-${local.workspace_resource_name_suffix}"
   resource_group_name   = local.core_resource_group_name
   private_dns_zone_name = data.azurerm_private_dns_zone.cognitiveservices.name

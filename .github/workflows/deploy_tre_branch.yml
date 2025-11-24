@@ -78,7 +78,6 @@ jobs:
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
       APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
       MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
-      MS_TEAMS_WEBHOOK_URI: ${{ secrets.MS_TEAMS_WEBHOOK_URI }}
       MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}

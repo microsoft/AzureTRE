@@ -45,6 +45,7 @@ export enum AirlockRequestStatus {
   Submitted = "submitted",
   Cancelled = "cancelled",
   Failed = "failed",
+  Revoked = "revoked",
 }
 
 export interface NewAirlockRequest {
@@ -57,6 +58,7 @@ export enum AirlockRequestAction {
   Cancel = "cancel",
   Submit = "submit",
   Review = "review",
+  Revoke = "revoke",
 }
 
 export const AirlockFilesLinkValidStatus = [
@@ -67,6 +69,7 @@ export const AirlockFilesLinkValidStatus = [
 export enum AirlockReviewDecision {
   Approved = "approved",
   Rejected = "rejected",
+  Revoked = "revoked",
 }
 
 export interface AirlockReview {
