@@ -11,7 +11,7 @@ azure-mgmt-storage==21.2.1
 azure-monitor-opentelemetry==1.6.4
 azure-servicebus==7.12.3
 azure-storage-blob==12.23.1
-fastapi==0.115.3
+fastapi==0.120.2
 gunicorn==23.0.0
 jsonschema[format_nongpl]==4.19.1
 msal==1.31.0
