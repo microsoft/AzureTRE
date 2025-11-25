@@ -2,6 +2,7 @@
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
+* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
@@ -12,7 +13,7 @@ BUG FIXES:
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
 * Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
-* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
+* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4746](https://github.com/microsoft/AzureTRE/issues/4746))
 
 COMPONENTS:
 
