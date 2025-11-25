@@ -15,7 +15,6 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
 1. Create a service principal for the subscription so that the workflow can provision Azure resources.
 1. Decide on a TRE ID and the location for the Azure resources
-1. Create a Teams WebHook for deployment notifications
 1. Configure repository secrets
 1. Deploy the TRE using the workflow
 
@@ -105,22 +104,6 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step authenti
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
   | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/config.yaml` env file |
   | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/config.yaml` env file|
-
-### Create a Teams Webhook for deployment notifications
-
-The `deploy_tre.yml` workflow sends a notification to a Microsoft Teams channel when it finishes running.
-
-!!! note
-    If you don't want to notify a channel, you can also remove the **Notify dedicated teams channel** steps in the workflow
-
-1. Follow the [Microsoft Docs](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook) to create a webhook for your channel
-
-1. Configure the MS_TEAMS_WEBHOOK_URI repository secret
-
-  | <div style="width: 230px">Secret name</div> | Description |
-  | ----------- | ----------- |
-  | `MS_TEAMS_WEBHOOK_URI` | URI for the Teams channel webhook |
-
 
 !!! info
     See [Environment variables](../environment-variables.md) for full details of the deployment related variables.

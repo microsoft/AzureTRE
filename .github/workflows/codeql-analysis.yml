@@ -38,18 +38,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["python", "java", "javascript", "typescript"]
+        language: ["python", "java", "typescript", "actions"]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+
+      - if: matrix.language == 'java'
+        name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
       - if: matrix.language == 'java'
         name: Build Java
@@ -57,6 +64,6 @@ jobs:
         run: mvn package
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{matrix.language}}"

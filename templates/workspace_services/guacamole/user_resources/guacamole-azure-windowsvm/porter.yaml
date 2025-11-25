@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.4.0
+version: 1.4.2
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -9,10 +9,10 @@ registry: azuretre
 custom:
   # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
-    "2 CPU | 8GB RAM": Standard_D2s_v5
-    "4 CPU | 16GB RAM": Standard_D4s_v5
-    "8 CPU | 32GB RAM": Standard_D8s_v5
-    "16 CPU | 64GB RAM": Standard_D16s_v5
+    "2 CPU | 8GB RAM": Standard_D2s_v6
+    "4 CPU | 16GB RAM": Standard_D4s_v6
+    "8 CPU | 32GB RAM": Standard_D8s_v6
+    "16 CPU | 64GB RAM": Standard_D16s_v6
   image_options:
     "Windows 10":
       source_image_reference:
@@ -139,6 +139,9 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: workspace_subscription_id
+    type: string
+    default: ""
 
 outputs:
   - name: ip
@@ -177,6 +180,7 @@ install:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
@@ -213,6 +217,7 @@ upgrade:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
@@ -261,6 +266,7 @@ uninstall:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }

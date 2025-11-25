@@ -42,9 +42,12 @@ async def test_create_shared_service_template_item_calls_create_item_with_the_co
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_templates_for_shared_services_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = "shared-service" AND c.current = true'
+    expected_query = 'SELECT c.name, c.title, c.description, c.authorizedRoles FROM c WHERE c.resourceType = @resourceType AND c.current = true'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.SharedService}
+    ]
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0", resource_type=ResourceType.SharedService)]
 
     await resource_template_repo.get_templates_information(ResourceType.SharedService, parent_service_name="parent_service")
 
-    query_mock.assert_called_once_with(query=expected_query)
+    query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)

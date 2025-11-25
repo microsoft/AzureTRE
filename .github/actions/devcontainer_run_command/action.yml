@@ -294,6 +294,7 @@ runs:
           -e UI_FOOTER_TEXT="${{ inputs.UI_FOOTER_TEXT }}" \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
+          -e FIREWALL_SKU=${{ inputs.FIREWALL_SKU != '' && inputs.FIREWALL_SKU || 'Standard' }} \
           -e TF_VAR_firewall_sku=${{ inputs.FIREWALL_SKU != '' && inputs.FIREWALL_SKU || 'Standard' }} \
           -e TF_VAR_app_gateway_sku=${{ inputs.APP_GATEWAY_SKU }} \
           -e TF_VAR_enable_cmk_encryption="${{ (inputs.ENABLE_CMK_ENCRYPTION != ''

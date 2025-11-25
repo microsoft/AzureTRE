@@ -9,7 +9,7 @@ from fastapi.responses import PlainTextResponse
 
 
 def http422_error_handler(_: Request, exception: Union[RequestValidationError, ValidationError]) -> PlainTextResponse:
-    return PlainTextResponse(str(exception), status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    return PlainTextResponse(str(exception), status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
 
 validation_error_response_definition["properties"] = {
