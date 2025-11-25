@@ -7,6 +7,7 @@
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
+* Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
@@ -84,6 +85,9 @@ COMPONENTS:
 | tre-service-guacamole-import-reviewvm | 0.4.3 |
 | tre-service-guacamole-windowsvm | 1.4.1 |
 | tre-workspace-service-ohdsi | 0.3.4 |
+
+COMPONENTS:
+* Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
