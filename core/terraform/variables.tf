@@ -300,3 +300,9 @@ variable "private_agent_subnet_id" {
   type        = string
   default     = ""
 }
+
+variable "servicebus_sku" {
+  description = "The SKU for the Service Bus namespace. Possible values are 'Standard' and 'Premium'."
+  type        = string
+  default     = "Premium"
+}

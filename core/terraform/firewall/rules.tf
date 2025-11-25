@@ -18,12 +18,39 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
         "AzureResourceManager",
 
         // Needed when a workspace key vault is created before its private endpoint
-        "AzureKeyVault.${var.location}"
+        "AzureKeyVault.${var.location}",
+
+        // Allow RP deployments that rely on App Service and Logic Apps control planes
+        "AppService",
+        "AzureConnectors",
+        "LogicApps",
+        "LogicAppsManagement"
       ]
       destination_ports = [
         "443"
       ]
       source_ip_groups = [var.resource_processor_ip_group_id]
+    }
+
+    dynamic "rule" {
+      for_each = var.servicebus_sku == "Standard" ? [1] : []
+      content {
+        name = "servicebus-standard-egress"
+        protocols = [
+          "TCP"
+        ]
+        destination_addresses = [
+          "ServiceBus"
+        ]
+        destination_ports = [
+          "443",
+          "5671"
+        ]
+        source_ip_groups = [
+          var.resource_processor_ip_group_id,
+          var.web_app_ip_group_id
+        ]
+      }
     }
   }
 
@@ -46,6 +73,7 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
       ]
       source_ip_groups = [var.web_app_ip_group_id]
     }
+
   }
 
   application_rule_collection {
