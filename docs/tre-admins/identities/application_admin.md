@@ -14,7 +14,7 @@ This application does not have any roles defined.
 | Application.ReadWrite.All | Application | Yes | This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant. |
 | Directory.Read.All | Application | Yes | This permission is required to read User details from Microsoft Entra ID. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. |
 | Group.Create | Application | Yes | This permission is required to create and update Microsoft Entra ID groups. This is required if Microsoft Entra ID groups are to be created automatically by the TRE. |
-| DelegatedPermissionGrant.ReadWrite.All | Application | Yes | This permssion is required to remove the need for users to manually grant consent when creating new workspaces. |
+| DelegatedPermissionGrant.ReadWrite.All | Application | Yes | This permission is required to remove the need for users to manually grant consent when creating new workspaces. |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
