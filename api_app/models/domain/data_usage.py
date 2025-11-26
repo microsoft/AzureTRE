@@ -42,7 +42,7 @@ class MHRAFileshareUsageItem(BaseModel):
     fileshare_usage:  Optional[str] = None
     fileshare_limits:  Optional[str] = None
     fileshare_remaining:  Optional[str] = None
-    fileshare_limits_update_time: str
+    fileshare_limits_update_time: Optional[str] = None
     fileshare_percentage_used:  Optional[float] = None
     update_time: Optional[str] = None
 
@@ -51,7 +51,7 @@ class MHRAWorkspaceDataUsage(BaseModel):
     workspace_fileshare_usage_items: List[MHRAFileshareUsageItem]
 
 class WorkspaceDataUsage(BaseModel):
-    container_usage_item: MHRAContainerUsageItem
+    container_usage_item: Optional[MHRAContainerUsageItem] = None
     fileshare_usage_item: Optional[MHRAFileshareUsageItem] = None
 
 class MHRAProtocolItem(BaseModel):
