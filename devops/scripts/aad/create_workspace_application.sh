@@ -9,17 +9,17 @@ function show_usage()
     cat << USAGE
 
 Utility script for pre-creating the Workspace API Azure AD application registration
-and corresponding service principal so that Terraform can import and configure it
-without requiring Application.ReadWrite.All permissions.
+and corresponding service principal.
 
 Usage: $0 --name <workspace-name> --application-admin-clientid <client-id>
 
 Options:
-    -n,--name                Required. Prefix for the Workspace API app registration name.
-                             The script appends " API" to keep naming consistent with Terraform.
+  -n,--name
+      Required. Prefix for the Workspace API app registration name.
+      The script appends " API" to keep naming consistent with Terraform.
   -y,--application-admin-clientid
-               Required. Client ID of the application administrator (typically the TRE Core API
-               app registration) that must be added as an owner of the workspace application.
+      Required. Client ID of the application administrator (typically the TRE Core API
+      app registration) that must be added as an owner of the workspace application.
 
 USAGE
     exit 2

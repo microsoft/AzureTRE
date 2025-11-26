@@ -210,11 +210,6 @@
           "description": "Workspace AD Application. This will be created for you for future use - when creating workspaces.",
           "type": "string",
           "pattern": "^[{]?[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}[}]?$"
-        },
-        "workspace_api_client_secret": {
-          "description": "Workspace AD Application secret. This will be created for you for future use - when creating workspaces.",
-          "type": "string",
-          "minLength": 11
         }
       },
       "required": [

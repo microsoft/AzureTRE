@@ -43,23 +43,15 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 Workspace is now ready to use.
 
 
-## Creating an Application Client for base workspace
+## Creating an manuall Entra ID Application for the workspace
 
-As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
+If you have not configured automatic application registration creation as explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
 
 ```bash
   ./devops/scripts/aad/create_workspace_application.sh \
     --name "${TRE_ID} - workspace 1" \
-    --admin-consent \
-    --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \
-    --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
     --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
 ```
-
-!!! caution
-    If you're using a separate tenant for Microsoft Entra ID app registrations to the one where you've deployed the TRE infrastructure resources, ensure you've signed into that tenant in the `az cli` before running the above command. See **Using a separate Microsoft Entra ID tenant** in [Setup Auth configuration](./setup-auth-entities.md) for more details.
-
-Running the script will report `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` for the generated app. Set these under authentication section in `config.yaml` so that automated testing will work. You also need to use `WORKSPACE_API_CLIENT_ID` and `WORKSPACE_API_CLIENT_SECRET` in the form.
 
 ## Next steps
 
