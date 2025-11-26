@@ -7,14 +7,6 @@ from services.aad_authentication import AzureADAuthorization
 from services.access_service import AccessService, AuthConfigValidationError
 
 
-def extract_auth_information(workspace_creation_properties: dict) -> dict:
-    access_service = get_access_service('AAD')
-    try:
-        return access_service.extract_workspace_auth_information(workspace_creation_properties)
-    except AuthConfigValidationError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
 def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
     if provider == AuthProvider.AAD:
         return AzureADAuthorization()

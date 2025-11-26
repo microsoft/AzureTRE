@@ -47,12 +47,6 @@ variable "enable_local_debugging" {
   description = "This will allow storage account access over the internet. Set to true to allow deploying this from a local machine."
 }
 
-variable "register_aad_application" {
-  type        = bool
-  default     = false
-  description = "Create an AAD application automatically for the Workspace."
-}
-
 variable "create_aad_groups" {
   type        = bool
   default     = false
@@ -114,12 +108,6 @@ variable "client_id" {
   type        = string
   default     = ""
   description = "The client id of the workspace in the identity provider, this is passed in so that we may return it as an output."
-}
-variable "client_secret" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
 variable "ui_client_id" {
   type = string

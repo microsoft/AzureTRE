@@ -9,6 +9,15 @@ resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
 resource "random_uuid" "app_role_workspace_airlock_manager_id" {}
 
+locals {
+  workspace_sp_password_rotation_days = 30
+  workspace_sp_password_validity_days = 180
+}
+
+resource "time_rotating" "workspace_sp_password" {
+  rotation_days = local.workspace_sp_password_rotation_days
+}
+
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
   identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
@@ -114,6 +123,14 @@ resource "azuread_service_principal_delegated_permission_grant" "ui" {
 
 resource "azuread_service_principal_password" "workspace" {
   service_principal_id = azuread_service_principal.workspace.id
+  end_date = timeadd(
+    time_rotating.workspace_sp_password.rotation_rfc3339,
+    format("%dh", local.workspace_sp_password_validity_days * 24)
+  )
+
+  rotate_when_changed = {
+    rotation = time_rotating.workspace_sp_password.rotation_rfc3339
+  }
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
@@ -135,7 +152,7 @@ resource "azurerm_key_vault_secret" "client_secret" {
 }
 
 resource "azuread_app_role_assignment" "workspace_owner" {
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceOwner"]
+  app_role_id         = azuread_application.workspace.app_role_ids["WorkspaceOwner"]
   principal_object_id = var.workspace_owner_object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
@@ -169,21 +186,21 @@ resource "azuread_group_member" "workspace_owner" {
 
 resource "azuread_app_role_assignment" "workspace_owners_group" {
   count               = var.create_aad_groups ? 1 : 0
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceOwner"]
+  app_role_id         = azuread_application.workspace.app_role_ids["WorkspaceOwner"]
   principal_object_id = azuread_group.workspace_owners[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
 
 resource "azuread_app_role_assignment" "workspace_researchers_group" {
   count               = var.create_aad_groups ? 1 : 0
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["WorkspaceResearcher"]
+  app_role_id         = azuread_application.workspace.app_role_ids["WorkspaceResearcher"]
   principal_object_id = azuread_group.workspace_researchers[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }
 
 resource "azuread_app_role_assignment" "workspace_airlock_managers_group" {
   count               = var.create_aad_groups ? 1 : 0
-  app_role_id         = azuread_service_principal.workspace.app_role_ids["AirlockManager"]
+  app_role_id         = azuread_application.workspace.app_role_ids["AirlockManager"]
   principal_object_id = azuread_group.workspace_airlock_managers[count.index].object_id
   resource_object_id  = azuread_service_principal.workspace.object_id
 }

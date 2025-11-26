@@ -16,10 +16,6 @@ class UserRoleAssignmentError(Exception):
 
 class AccessService(OAuth2AuthorizationCodeBearer):
     @abstractmethod
-    def extract_workspace_auth_information(self, data: dict) -> dict:
-        pass
-
-    @abstractmethod
     def get_identity_role_assignments(self, user_id: str) -> dict:
         pass
 

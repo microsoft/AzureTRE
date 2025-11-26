@@ -24,7 +24,7 @@ CLIENT_ID = 'f0acf127-a672-a672-a672-a15e5bf9f127'
 OPERATION_ID = '11111111-7265-4b5f-9eae-a1a62928772f'
 
 
-def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
+def sample_workspace(workspace_id=WORKSPACE_ID) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
@@ -39,8 +39,7 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
         updatedWhen=FAKE_CREATE_TIMESTAMP,
         user=create_admin_user()
     )
-    if auth_info:
-        workspace.properties = {**auth_info}
+
     return workspace
 
 

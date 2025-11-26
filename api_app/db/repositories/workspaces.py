@@ -89,7 +89,7 @@ class WorkspaceRepository(ResourceRepository):
         )
         return availability_result.name_available
 
-    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
 
@@ -114,7 +114,6 @@ class WorkspaceRepository(ResourceRepository):
                                     **address_spaces_param,
                                     **auto_app_registration_param,
                                     **workspace_owner_param,
-                                    **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 
         workspace = Workspace(

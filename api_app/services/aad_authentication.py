@@ -480,25 +480,6 @@ class AzureADAuthorization(AccessService):
 
         return request_body
 
-    # This method is called when you create a workspace and you already have an AAD App Registration
-    # to link it to. You pass in the client_id and go and get the extra information you need from AAD
-    # If the auth_type is `Automatic`, then these values will be written by Terraform.
-    def _get_app_auth_info(self, client_id: str) -> dict:
-        graph_data = self._get_app_sp_graph_data(client_id)
-        if 'value' not in graph_data or len(graph_data['value']) == 0:
-            logger.debug(graph_data)
-            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
-
-        app_info = graph_data['value'][0]
-        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
-
-        # Convert the roles into ids (We could have more roles defined in the app than we need.)
-        for appRole in app_info['appRoles']:
-            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
-                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
-
-        return authInfo
-
     def _ms_graph_query(self, url: str, http_method: str, json=None) -> dict:
         msgraph_token = self._get_msgraph_token()
         auth_headers = self._get_auth_header(msgraph_token)
@@ -549,23 +530,6 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
 
         return object_info["@odata.type"]
-
-    def extract_workspace_auth_information(self, data: dict) -> dict:
-        if ("auth_type" not in data) or (data["auth_type"] != "Automatic" and "client_id" not in data):
-            raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
-
-        auth_info = {}
-        # The user may want us to create the AAD workspace app and therefore they
-        # don't know the client_id yet.
-        if data["auth_type"] != "Automatic":
-            auth_info = self._get_app_auth_info(data["client_id"])
-
-            # Check we've get all our required roles
-            for role in self.WORKSPACE_ROLES_DICT.items():
-                if role[1] not in auth_info:
-                    raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role[0]}")
-
-        return auth_info
 
     def get_identity_role_assignments(self, user_id: str) -> List[RoleAssignment]:
         identity_type = self._get_identity_type(user_id)

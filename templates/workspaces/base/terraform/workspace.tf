@@ -1,3 +1,23 @@
+data "azuread_application" "existing_workspace" {
+  count     = var.client_id != "" ? 1 : 0
+  client_id = var.client_id
+}
+
+data "azuread_service_principal" "existing_workspace" {
+  count     = var.client_id != "" ? 1 : 0
+  client_id = var.client_id
+}
+
+locals {
+  workspace_app_imports = var.client_id != "" ? {
+    existing = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
+  } : {}
+
+  workspace_sp_imports = var.client_id != "" ? {
+    existing = format("/servicePrincipals/%s", data.azuread_service_principal.existing_workspace[0].object_id)
+  } : {}
+}
+
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
@@ -36,7 +56,7 @@ module "network" {
 module "aad" {
   source                         = "./aad"
   tre_workspace_tags             = local.tre_workspace_tags
-  count                          = var.register_aad_application ? 1 : 0
+  client_id                      = var.client_id
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id
@@ -50,6 +70,18 @@ module "aad" {
     azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
+}
+
+import {
+  for_each = local.workspace_app_imports
+  to       = module.aad.azuread_application.workspace
+  id       = each.value
+}
+
+import {
+  for_each = local.workspace_sp_imports
+  to       = module.aad.azuread_service_principal.workspace
+  id       = each.value
 }
 
 module "airlock" {
