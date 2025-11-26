@@ -33,5 +33,3 @@ output "workspace_researchers_group_id" {
 output "workspace_airlock_managers_group_id" {
   value = var.create_aad_groups ? azuread_group.workspace_airlock_managers[0].object_id : ""
 }
-
-

@@ -43,7 +43,7 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 Workspace is now ready to use.
 
 
-## Creating an manuall Entra ID Application for the workspace
+## Creating a manual Entra ID Application for the workspace
 
 If you have not configured automatic application registration creation as explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
 
