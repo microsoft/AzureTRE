@@ -16,10 +16,7 @@ resource "azurerm_private_dns_zone" "azure_monitor" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
@@ -30,10 +27,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor" {
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
@@ -41,10 +35,7 @@ resource "azurerm_private_dns_zone" "azure_monitor_oms_opinsights" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opinsights" {
@@ -55,10 +46,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_oms_opin
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_ods_opinsights" {
@@ -66,10 +54,7 @@ resource "azurerm_private_dns_zone" "azure_monitor_ods_opinsights" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opinsights" {
@@ -80,10 +65,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_ods_opin
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone" "azure_monitor_agentsvc" {
@@ -91,10 +73,7 @@ resource "azurerm_private_dns_zone" "azure_monitor_agentsvc" {
   resource_group_name = var.ws_resource_group_name
   tags                = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc" {
@@ -105,8 +84,5 @@ resource "azurerm_private_dns_zone_virtual_network_link" "azure_monitor_agentsvc
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [tags]
-  }
+  lifecycle { ignore_changes = [tags] }
 }
