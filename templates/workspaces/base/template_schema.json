@@ -13,7 +13,8 @@
     "shared_storage_quota": {
       "type": "integer",
       "title": "Shared Storage Quota",
-      "description": "Quota (in GB) to set for the VM Shared Storage."
+      "description": "Quota (in GB) to set for the VM Shared Storage.",
+      "updateable": true
     },
     "enable_airlock": {
       "type": "boolean",
