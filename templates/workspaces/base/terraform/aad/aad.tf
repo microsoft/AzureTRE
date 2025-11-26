@@ -121,8 +121,8 @@ resource "azuread_service_principal_delegated_permission_grant" "ui" {
   claim_values                         = ["user_impersonation"]
 }
 
-resource "azuread_service_principal_password" "workspace" {
-  service_principal_id = azuread_service_principal.workspace.id
+resource "azuread_application_password" "workspace" {
+  application_id = azuread_application.workspace.id
   end_date = timeadd(
     time_rotating.workspace_sp_password.rotation_rfc3339,
     format("%dh", local.workspace_sp_password_validity_days * 24)
@@ -144,7 +144,7 @@ resource "azurerm_key_vault_secret" "client_id" {
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
-  value        = azuread_service_principal_password.workspace.value
+  value        = azuread_application_password.workspace.value
   key_vault_id = var.key_vault_id
   tags         = var.tre_workspace_tags
 

@@ -3,18 +3,9 @@ data "azuread_application" "existing_workspace" {
   client_id = var.client_id
 }
 
-data "azuread_service_principal" "existing_workspace" {
-  count     = var.client_id != "" ? 1 : 0
-  client_id = var.client_id
-}
-
 locals {
   workspace_app_imports = var.client_id != "" ? {
     existing = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
-  } : {}
-
-  workspace_sp_imports = var.client_id != "" ? {
-    existing = format("/servicePrincipals/%s", data.azuread_service_principal.existing_workspace[0].object_id)
   } : {}
 }
 
@@ -75,12 +66,6 @@ module "aad" {
 import {
   for_each = local.workspace_app_imports
   to       = module.aad.azuread_application.workspace
-  id       = each.value
-}
-
-import {
-  for_each = local.workspace_sp_imports
-  to       = module.aad.azuread_service_principal.workspace
   id       = each.value
 }
 

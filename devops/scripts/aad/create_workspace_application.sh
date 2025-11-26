@@ -8,8 +8,7 @@ function show_usage()
 {
     cat << USAGE
 
-Utility script for pre-creating the Workspace API Azure AD application registration
-and corresponding service principal.
+Utility script for pre-creating the Workspace API Azure AD application registration.
 
 Usage: $0 --name <workspace-name> --application-admin-clientid <client-id>
 
@@ -40,7 +39,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 declare appName=""
 declare workspaceAppId=""
-declare workspaceSpId=""
 declare appObjectId=""
 declare applicationAdminClientId=""
 declare applicationAdminObjectId=""
@@ -91,8 +89,6 @@ echo -e "\e[96mEnsuring Workspace Application exists in the \"${tenant}\" Azure 
 source "${DIR}/get_existing_app.sh"
 # shellcheck disable=SC1091
 source "${DIR}/wait_for_new_app_registration.sh"
-# shellcheck disable=SC1091
-source "${DIR}/create_or_update_service_principal.sh"
 
 # Look for an existing app registration
 existingApp=$(get_existing_app --name "${appName}")
@@ -130,8 +126,6 @@ fi
 az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" --only-show-errors || true
 az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdminObjectId" --only-show-errors || true
 
-# Create a Service Principal for the app (without exposing credentials).
-create_or_update_service_principal "${workspaceAppId}" 0 >/dev/null
 
 # Output the application details
 echo

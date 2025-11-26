@@ -29,15 +29,15 @@ APPLICATION_PERMISSIONS=()
 APPLICATION_PERMISSIONS+=("Application.ReadWrite.OwnedBy")
 
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "Directory.Read.All")
+  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All")
 fi
 
 if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Group.Create")
+  APPLICATION_PERMISSIONS+=("Group.Create" "Group.Read.All" "User.ReadBasic.All")
 fi
 
 if [ "${AUTO_GRANT_WORKSPACE_CONSENT:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "DelegatedPermissionGrant.ReadWrite.All")
+  APPLICATION_PERMISSIONS+=("DelegatedPermissionGrant.ReadWrite.All")
 fi
 
 # Check if the array contains more than 1 item
