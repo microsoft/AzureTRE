@@ -168,8 +168,6 @@ locals {
 
   # Use the newer password as the current password
   current_password = local.primary_is_newer ? azuread_application_password.workspace_primary.value : azuread_application_password.workspace_secondary.value
-  # Keep the older password as backup (not stored in Key Vault)
-  backup_password = local.primary_is_newer ? azuread_application_password.workspace_secondary.value : azuread_application_password.workspace_primary.value
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
