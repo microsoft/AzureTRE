@@ -32,8 +32,7 @@ async def create_or_get_test_workspace(
         verify: bool,
         template_name: str = resource_strings.BASE_WORKSPACE,
         pre_created_workspace_id: str = "",
-        client_id: str = "",
-        client_secret: str = "") -> Tuple[str, str]:
+        client_id: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
@@ -54,7 +53,6 @@ async def create_or_get_test_workspace(
 
     if auth_type == "Manual":
         payload["properties"]["client_id"] = client_id
-        payload["properties"]["client_secret"] = client_secret
 
     admin_token = await get_admin_token(verify=verify)
     # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
@@ -108,7 +106,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
     # Set up - uses a pre created app reg as has appropriate roles assigned
     workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type="Manual", verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
+        auth_type="Manual", verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID)
 
     yield workspace_path, workspace_id
 

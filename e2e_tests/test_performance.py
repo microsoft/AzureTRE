@@ -68,8 +68,7 @@ async def test_bulk_updates_to_ensure_each_resource_updated_in_series(verify) ->
                 "description": "",
                 "address_space_size": "small",
                 "auth_type": "Manual",
-                "client_id": f"{config.TEST_WORKSPACE_APP_ID}",
-                "client_secret": f"{config.TEST_WORKSPACE_APP_SECRET}"
+                "client_id": f"{config.TEST_WORKSPACE_APP_ID}"
             }
         }
 
