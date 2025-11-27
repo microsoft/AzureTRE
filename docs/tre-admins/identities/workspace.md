@@ -40,7 +40,6 @@ Example on how to run the script:
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
-| `--automation-clientid` | This is an optional parameter but will grant the Automation App (created in step 1) permission to the new workspace app. |
 | `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE. |
 
 ## Comments
