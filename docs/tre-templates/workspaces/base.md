@@ -22,7 +22,7 @@ When deploying a workspace the following properties need to be configured.
 | `client_id` | Valid client ID of the Workspace App Registration. | Required only when `auth_type` is set to `Manual`. Leave empty (default) to allow the TRE to create and manage the workspace application automatically. |
 
 ## Azure Trusted Services
-*Azure Trusted Services* are allowed to connect to both the key vault and storage account provsioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.
+*Azure Trusted Services* are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.
 
 Further details around which Azure services are allowed to connect can be found below:
 
