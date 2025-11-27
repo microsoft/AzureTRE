@@ -4509,16 +4509,16 @@
 <td>This permission is required to read User details from Microsoft Entra ID. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE.</td>
 </tr>
 <tr>
-<td>Group.ReadWrite.All</td>
+<td>Group.Create</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This permission is required to create and update Microsoft Entra ID groups. This is requried if Microsoft Entra ID groups are to be created automatically by the TRE.</td>
+<td>This permission is required to create and update Microsoft Entra ID groups. This is required if Microsoft Entra ID groups are to be created automatically by the TRE.</td>
 </tr>
 <tr>
 <td>DelegatedPermissionGrant.ReadWrite.All</td>
 <td>Application</td>
 <td>Yes</td>
-<td>This permssion is required to remove the need for users to manually grant consent when creating new workspaces.</td>
+<td>This permission is required to remove the need for users to manually grant consent when creating new workspaces.</td>
 </tr>
 </tbody>
 </table>
@@ -4547,7 +4547,7 @@
 </tr>
 <tr>
 <td><code>--application-permission</code></td>
-<td>This  is a comma seperated list of the permissions that need to be assigned. For exampler <code>Application.ReadWrite.All,Directory.Read.All,Group.ReadWrite.All</code></td>
+<td>This is a comma separated list of the permissions that need to be assigned. For example <code>Application.ReadWrite.All,Directory.Read.All,Group.Create</code></td>
 </tr>
 <tr>
 <td><code>--reset-password</code></td>
