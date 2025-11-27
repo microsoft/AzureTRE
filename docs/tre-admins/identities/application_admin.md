@@ -32,7 +32,7 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 | -------- | ----------- |
 | `--name` | This is used to put a friendly name to the Application that can be seen in the portal. It is typical to use the name of your TRE instance. |
 | `--admin-consent` | If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an Microsoft Entra ID Admin to consent after you have created the identity. Consent is required for this permission. |
-| `--application-permission` | This  is a comma seperated list of the permissions that need to be assigned. For exampler `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
+| `--application-permission` | This  is a comma separated list of the permissions that need to be assigned. For exampler `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 ## Environment Variables
