@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 
-* Base workspace bundle 4.0.0 (major upgrade from 2.8.0) now creates and rotates the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+* Base workspace bundle 3.0.0 (major upgrade from 2.8.0) now creates and rotates the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
   - Existing workspaces that relied on manually managed secrets continue to operate without interruption; upgrade them at your own pace.
   - The automation admin (`APPLICATION_ADMIN_CLIENT_ID`) no longer needs the `Directory.Read.All` Microsoft Graph permission; keep the documented `Application.ReadWrite.*`, `Group.*`, `User.ReadBasic.All`, and `DelegatedPermissionGrant.ReadWrite.All` permissions in place. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
