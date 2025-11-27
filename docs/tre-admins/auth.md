@@ -15,7 +15,7 @@ The automation utilises a `make` command, which reads a few environment variable
 |AAD_TENANT_ID|The tenant id of where your Microsoft Entra ID identities will be placed. This can be different to the tenant where your Azure resources are created.|
 | LOCATION | Where your Azure assets will be provisioned (eg. westeurope). This is used to add a redirect URI from the Swagger UI to the API Application.|
 |AUTO_WORKSPACE_APP_REGISTRATION| Default of `false`. Setting this to true grants the `Application.ReadWrite.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found&nbsp;[here](./identities/application_admin.md).|
-|AUTO_WORKSPACE_GROUP_CREATION| Set to `false` by default. Setting this to `true` grants the `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permission to the *Application Admin* identity. This identity can then create and manage security groups aligned to each applciation role.
+|AUTO_WORKSPACE_GROUP_CREATION| Set to `false` by default. Setting this to `true` grants the `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permission to the *Application Admin* identity. This identity can then create and manage security groups aligned to each application role.
 |AUTO_GRANT_WORKSPACE_CONSENT| Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
 
 ## Create Authentication assets
