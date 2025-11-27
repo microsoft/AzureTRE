@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from models.schemas.workspace import AuthProvider
 from resources import strings
 from services.aad_authentication import AzureADAuthorization
-from services.access_service import AccessService, AuthConfigValidationError
+from services.access_service import AccessService
 
 
 def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:

@@ -30,4 +30,7 @@ Further details around which Azure services are allowed to connect can be found 
 - Azure Storage: <https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?msclkid=ee4e79e4b97911eca46dae54da464d11&tabs=azure-portal#trusted-access-for-resources-registered-in-your-subscription>
 
 ## Client secret rotation
-When `auth_type` is set to `Automatic`, the base workspace bundle provisions the Microsoft Entra application and manages its secrets for you. Two secrets (primary and secondary) are created, rotated every 30 days, and offset by 15 days so that one secret is always valid during rollover. Each credential remains valid for 180 days, and the currently active secret is synced to the workspace key vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`). Re-running the workspace deployment (for example as part of an upgrade) automatically refreshes the secret whenever the rotation schedule requires it—no manual input is needed.
+Two secrets (primary and secondary) are created, rotated every 30 days, and offset by 15 days so that one secret is always valid during rollover.
+Each credential remains valid for 180 days, and the currently active secret is synced to the workspace key vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
+
+Re-running the workspace deployment (for example as part of an upgrade) automatically refreshes the secret whenever the rotation schedule requires it—no manual input is needed.

@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+* Base workspace bundle 4.0.0 removes the legacy manual identity passthrough parameters (scope_id, sp_id, app_role_id_*)—workspaces now rely on generated outputs instead. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
