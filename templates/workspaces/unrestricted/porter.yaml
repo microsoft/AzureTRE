@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 1.0.0
+version: 2.0.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -95,7 +95,7 @@ parameters:
   - name: aad_redirect_uris
     type: string
     description: "List of redirect URIs in {name:value} format"
-    default: "W10="  # b64 for []
+    default: "W10=" # b64 for []
   - name: app_service_plan_sku
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"

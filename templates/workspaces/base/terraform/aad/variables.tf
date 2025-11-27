@@ -1,7 +1,3 @@
-variable "client_id" {
-  type    = string
-  default = ""
-}
 variable "key_vault_id" {
   type = string
 }

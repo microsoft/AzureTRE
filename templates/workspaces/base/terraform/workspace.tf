@@ -47,7 +47,6 @@ module "network" {
 module "aad" {
   source                         = "./aad"
   tre_workspace_tags             = local.tre_workspace_tags
-  client_id                      = var.client_id
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id

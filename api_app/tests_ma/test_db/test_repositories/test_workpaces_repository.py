@@ -274,6 +274,8 @@ async def test_create_workspace_item_raises_value_error_if_template_is_invalid(m
 
     with pytest.raises(ValueError):
         await workspace_repo.create_workspace_item(workspace_input, "test_object_id", ["test_role"])
+
+
 def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace_repo):
     dictToTest = {}
     expected_object_id = "Expected"
