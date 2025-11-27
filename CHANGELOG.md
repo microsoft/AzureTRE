@@ -2,15 +2,18 @@
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
-* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
-* Base workspace bundle 4.0.0 removes the legacy manual identity passthrough parameters (scope_id, sp_id, app_role_id_*)—workspaces now rely on generated outputs instead. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+
+* Base workspace bundle 4.0.0 (major upgrade from 2.8.0) now creates and rotates the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+  - Existing workspaces that relied on manually managed secrets continue to operate without interruption; upgrade them at your own pace.
+  - The automation admin (`APPLICATION_ADMIN_CLIENT_ID`) no longer needs the `Directory.Read.All` Microsoft Graph permission; keep the documented `Application.ReadWrite.*`, `Group.*`, `User.ReadBasic.All`, and `DelegatedPermissionGrant.ReadWrite.All` permissions in place. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
-* Automate workspace application client secret creation and rotation, removing the need to supply a secret during workspace creation ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
 
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))

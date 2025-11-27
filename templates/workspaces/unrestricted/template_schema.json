@@ -127,13 +127,6 @@
             "title": "Application (Client) ID",
             "description": "The AAD Application Registration ID for the workspace.",
             "updateable": true
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Application (Client) Secret",
-            "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true,
-            "updateable": true
           }
         },
         "required": [
@@ -231,7 +224,6 @@
       "auth_type",
       "create_aad_groups",
       "client_id",
-      "client_secret",
       "enable_backup",
       "*"
     ]

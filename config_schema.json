@@ -164,7 +164,7 @@
           "type": "boolean"
         },
         "auto_workspace_group_creation": {
-          "description": "This identity can create security groups aligned to each applciation role. Read more about it here: docs/tre-admins/auth.md",
+          "description": "This identity can create security groups aligned to each application role. Read more about it here: docs/tre-admins/auth.md",
           "type": "boolean"
         },
         "auto_grant_workspace_consent": {

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.13.6
+version: 1.0.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -72,10 +72,6 @@ parameters:
   - name: enable_local_debugging
     type: boolean
     default: false
-  - name: register_aad_application
-    type: boolean
-    default: false
-    description: "Whether this bundle should register the workspace in AAD"
   - name: create_aad_groups
     type: boolean
     default: true
@@ -92,36 +88,10 @@ parameters:
     description:
       "The client id of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"
-  - name: client_secret
-    type: string
-    description:
-      "The client secret of the workspace in the identity provider. This value is typically provided to you
-      when you create the ws application"
-    default: ""
   - name: ui_client_id
     type: string
     default: ""
     description: "The client ID of the UI"
-  - name: scope_id
-    type: string
-    default: ""
-    description: "The Service Principal Name or identifierUri (e.g. api://GUID"
-  - name: sp_id
-    type: string
-    default: ""
-    description: "The Service Principal in the Identity provider to be able to get claims"
-  - name: app_role_id_workspace_owner
-    type: string
-    default: ""
-    description: "The id of the application role WorkspaceOwner in the identity provider"
-  - name: app_role_id_workspace_researcher
-    type: string
-    default: ""
-    description: "The id of the application role WorkspaceResearcher in the identity provider"
-  - name: app_role_id_workspace_airlock_manager
-    type: string
-    default: ""
-    description: "The id of the application role AirlockManager in the identity provider"
   - name: aad_redirect_uris
     type: string
     description: "List of redirect URIs in {name:value} format"
@@ -237,7 +207,6 @@ install:
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
-        register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
         core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
@@ -245,13 +214,7 @@ install:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
-        client_secret: ${ bundle.parameters.client_secret }
         ui_client_id: ${ bundle.parameters.ui_client_id }
-        scope_id: ${ bundle.parameters.scope_id }
-        sp_id: ${ bundle.parameters.sp_id }
-        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
-        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
-        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
@@ -295,7 +258,6 @@ upgrade:
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
-        register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
         core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
@@ -303,13 +265,7 @@ upgrade:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
-        client_secret: ${ bundle.parameters.client_secret }
         ui_client_id: ${ bundle.parameters.ui_client_id }
-        scope_id: ${ bundle.parameters.scope_id }
-        sp_id: ${ bundle.parameters.sp_id }
-        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
-        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
-        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
@@ -341,30 +297,6 @@ upgrade:
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
-  - az:
-      description: "Set Azure Cloud Environment"
-      arguments:
-        - cloud
-        - set
-      flags:
-        name: ${ bundle.parameters.azure_environment }
-  - az:
-      description: "AAD Application Admin Login"
-      arguments:
-        - login
-      flags:
-        service-principal: ""
-        username: "${ bundle.credentials.auth_client_id }"
-        password: "${ bundle.credentials.auth_client_secret }"
-        tenant: "${ bundle.credentials.auth_tenant_id }"
-        allow-no-subscriptions: ""
-  - exec:
-      description: "Update workspace app redirect urls"
-      command: ./update_redirect_urls.sh
-      flags:
-        workspace-api-client-id: "${ bundle.parameters.client_id }"
-        aad-redirect-uris-b64: "${ bundle.parameters.aad_redirect_uris }"
-        register-aad-application: "${ bundle.parameters.register_aad_application }"
 
 uninstall:
   - terraform:
@@ -377,7 +309,6 @@ uninstall:
         address_spaces: ${ bundle.parameters.address_spaces }
         shared_storage_quota: ${ bundle.parameters.shared_storage_quota }
         enable_local_debugging: ${ bundle.parameters.enable_local_debugging }
-        register_aad_application: ${ bundle.parameters.register_aad_application }
         create_aad_groups: ${ bundle.parameters.create_aad_groups }
         core_api_client_id: ${ bundle.parameters.core_api_client_id }
         auth_client_id: ${ bundle.credentials.auth_client_id }
@@ -385,12 +316,7 @@ uninstall:
         auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_owner_object_id: ${ bundle.parameters.workspace_owner_object_id }
         client_id: ${ bundle.parameters.client_id }
-        scope_id: ${ bundle.parameters.scope_id }
         ui_client_id: ${ bundle.parameters.ui_client_id }
-        sp_id: ${ bundle.parameters.sp_id }
-        app_role_id_workspace_owner: ${ bundle.parameters.app_role_id_workspace_owner }
-        app_role_id_workspace_researcher: ${ bundle.parameters.app_role_id_workspace_researcher }
-        app_role_id_workspace_airlock_manager: ${ bundle.parameters.app_role_id_workspace_airlock_manager }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
