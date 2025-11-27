@@ -3,12 +3,6 @@ data "azuread_application" "existing_workspace" {
   client_id = var.client_id
 }
 
-locals {
-  workspace_app_imports = var.client_id != "" ? {
-    existing = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
-  } : {}
-}
-
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
@@ -63,9 +57,9 @@ module "aad" {
 }
 
 import {
-  for_each = local.workspace_app_imports
-  to       = module.aad.azuread_application.workspace
-  id       = each.value
+  count = var.client_id != "" ? 1 : 0
+  to    = module.aad.azuread_application.workspace
+  id    = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
 }
 
 module "airlock" {
