@@ -19,8 +19,7 @@ When deploying a workspace the following properties need to be configured.
 
 | Property | Options | Description |
 | -------- | ------- | ----------- |
-| `client_id` | Valid client ID of the Workspace App Registration. | The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application. |
-| `client_secret` | Valid client secret. |
+| `client_id` | Valid client ID of the Workspace App Registration. | Required only when `auth_type` is set to `Manual`. Leave empty (default) to allow the TRE to create and manage the workspace application automatically. |
 
 ## Azure Trusted Services
 *Azure Trusted Services* are allowed to connect to both the key vault and storage account provsioned within the workspace. If this is undesirable additonal resources without this setting configured can be deployed.
@@ -29,3 +28,6 @@ Further details around which Azure services are allowed to connect can be found 
 
 - Key Vault: <https://docs.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services>
 - Azure Storage: <https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?msclkid=ee4e79e4b97911eca46dae54da464d11&tabs=azure-portal#trusted-access-for-resources-registered-in-your-subscription>
+
+## Client secret rotation
+When `auth_type` is set to `Automatic`, the base workspace bundle provisions the Microsoft Entra application and manages its secrets for you. Two secrets (primary and secondary) are created, rotated every 30 days, and offset by 15 days so that one secret is always valid during rollover. Each credential remains valid for 180 days, and the currently active secret is synced to the workspace key vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`). Re-running the workspace deployment (for example as part of an upgrade) automatically refreshes the secret whenever the rotation schedule requires it—no manual input is needed.

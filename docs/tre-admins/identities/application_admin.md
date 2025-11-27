@@ -15,7 +15,7 @@ This application does not have any roles defined.
 | Group.Create | Application | Yes | This permission is required to create and update Microsoft Entra ID groups. This is required if Microsoft Entra ID groups are to be created automatically by the TRE. |
 | Group.Read.All | Application | Yes | This permission is required to read Microsoft Entra ID groups. This is required if Microsoft Entra ID groups are to be created automatically by the TRE. |
 | User.ReadBasic.All | Application | Yes | This permission is required to read basic user information in Microsoft Entra ID. This is required if Microsoft Entra ID groups are to be created automatically by the TRE. |
-| DelegatedPermissionGrant.ReadWrite.All | Application | Yes | This permssion is required to remove the need for users to manually grant consent when creating new workspaces. |
+| DelegatedPermissionGrant.ReadWrite.All | Application | Yes | This permission is required to remove the need for users to manually grant consent when creating new workspaces. |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
@@ -32,7 +32,7 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 | -------- | ----------- |
 | `--name` | This is used to put a friendly name to the Application that can be seen in the portal. It is typical to use the name of your TRE instance. |
 | `--admin-consent` | If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an Microsoft Entra ID Admin to consent after you have created the identity. Consent is required for this permission. |
-| `--application-permission` | This  is a comma separated list of the permissions that need to be assigned. For exampler `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
+| `--application-permission` | This  is a comma separated list of the permissions that need to be assigned. For example `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 ## Environment Variables
