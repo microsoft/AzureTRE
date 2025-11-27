@@ -30,10 +30,6 @@ if [ -f ../.env ]; then
   source ../.env
 fi
 
-# Add a few extra values to the file to help us (i.e. for local debugging api_app and resource processor)
-# shellcheck disable=SC2129
-echo "TEST_WORKSPACE_APP_ID='${WORKSPACE_API_CLIENT_ID}'" >> ../private.env
-
 # These next ones from Check Dependencies
 echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
 echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
