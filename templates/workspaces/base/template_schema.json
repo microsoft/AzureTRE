@@ -75,6 +75,13 @@
       ],
       "updateable": true
     },
+    "create_aad_groups": {
+      "type": "boolean",
+      "title": "Create AAD Groups for each workspace role (Required for user management)",
+      "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
+      "default": true,
+      "updateable": true
+    },
     "enable_backup": {
       "type": "boolean",
       "title": "Enable Backup",
@@ -244,13 +251,6 @@
             "title": "Application (Client) ID",
             "description": "The AAD Application Registration ID for the workspace.",
             "updateable": true
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Application (Client) Secret",
-            "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true,
-            "updateable": true
           }
         },
         "required": [
@@ -259,13 +259,6 @@
       },
       "else": {
         "properties": {
-          "create_aad_groups": {
-            "type": "boolean",
-            "title": "Create AAD Groups for each workspace role (Required for user management)",
-            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
-            "default": false,
-            "updateable": true
-          },
           "aad_redirect_uris": {
             "type": "array",
             "title": "AAD Redirect URIs",
@@ -349,7 +342,6 @@
       "auth_type",
       "create_aad_groups",
       "client_id",
-      "client_secret",
       "enable_backup",
       "enable_airlock",
       "configure_review_vms",

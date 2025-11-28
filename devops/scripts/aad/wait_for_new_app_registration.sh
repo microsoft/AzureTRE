@@ -25,6 +25,4 @@ function wait_for_new_app_registration()
       echo "Failed"
       exit 1
   fi
-
-  echo "App registration \"${clientId}\" found."
 }

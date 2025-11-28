@@ -29,15 +29,15 @@ APPLICATION_PERMISSIONS=()
 APPLICATION_PERMISSIONS+=("Application.ReadWrite.OwnedBy")
 
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "Directory.Read.All")
+  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All")
 fi
 
 if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Group.Create")
+  APPLICATION_PERMISSIONS+=("Group.Create" "Group.Read.All" "User.ReadBasic.All")
 fi
 
 if [ "${AUTO_GRANT_WORKSPACE_CONSENT:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Application.ReadWrite.All" "DelegatedPermissionGrant.ReadWrite.All")
+  APPLICATION_PERMISSIONS+=("DelegatedPermissionGrant.ReadWrite.All")
 fi
 
 # Check if the array contains more than 1 item
@@ -73,21 +73,6 @@ APPLICATION_PERMISSION=$(IFS=,; echo "${APPLICATION_PERMISSIONS[*]}")
   --admin-consent --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
   --reset-password $RESET_PASSWORDS \
   --custom-domain "${CUSTOM_DOMAIN}"
-
-if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
-  # Load the new values back in
-  # This is because we want the SWAGGER_UI_CLIENT_ID
-  # shellcheck disable=SC1091
-  . "$DIR/load_and_validate_env.sh"
-
-  "$DIR/aad/create_workspace_application.sh" \
-    --name "${TRE_ID} - workspace 1" \
-    --admin-consent \
-    --ux-clientid "${SWAGGER_UI_CLIENT_ID}" \
-    --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
-    --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}" \
-    --reset-password $RESET_PASSWORDS
-fi
 
 if [ "${CHANGED_TENANT}" -ne 0 ]; then
   echo "Attempting to sign you back into ${LOGGED_IN_TENANT_ID}."

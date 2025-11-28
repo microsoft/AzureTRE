@@ -162,8 +162,6 @@ sed -i '/ARM_CLIENT_SECRET/d' "${private_env_path}"
 sed -i '/AAD_TENANT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_ID/d' "${private_env_path}"
 sed -i '/APPLICATION_ADMIN_CLIENT_SECRET/d' "${private_env_path}"
-sed -i '/TEST_WORKSPACE_APP_ID/d' "${private_env_path}"
-sed -i '/TEST_WORKSPACE_APP_SECRET/d' "${private_env_path}"
 
 # Append them to the TRE file so that the Resource Processor can use them
 tee -a "${private_env_path}" <<EOF
@@ -172,8 +170,6 @@ ARM_CLIENT_SECRET=${RP_TESTING_SP_PASSWORD}
 AAD_TENANT_ID=${AAD_TENANT_ID}
 APPLICATION_ADMIN_CLIENT_ID=${APPLICATION_ADMIN_CLIENT_ID}
 APPLICATION_ADMIN_CLIENT_SECRET=${APPLICATION_ADMIN_CLIENT_SECRET}
-TEST_WORKSPACE_APP_ID=${WORKSPACE_API_CLIENT_ID}
-TEST_WORKSPACE_APP_SECRET=${WORKSPACE_API_CLIENT_SECRET}
 EOF
 
 # copy porter configuration to porter home
