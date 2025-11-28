@@ -76,12 +76,6 @@ on: # yamllint disable-line rule:truthy
       TEST_APP_ID:
         description: ""
         required: true
-      TEST_WORKSPACE_APP_ID:
-        description: ""
-        required: true
-      TEST_WORKSPACE_APP_SECRET:
-        description: ""
-        required: true
       TEST_ACCOUNT_CLIENT_ID:
         description: ""
         required: true
@@ -162,12 +156,6 @@ jobs:
           fi
           if [ "${{ secrets.TEST_APP_ID }}" == '' ]; then
             echo "Missing secret: TEST_APP_ID" && exit 1
-          fi
-          if [ "${{ secrets.TEST_WORKSPACE_APP_ID }}" == '' ]; then
-            echo "Missing secret: TEST_WORKSPACE_APP_ID" && exit 1
-          fi
-          if [ "${{ secrets.TEST_WORKSPACE_APP_SECRET }}" == '' ]; then
-            echo "Missing secret: TEST_WORKSPACE_APP_SECRET" && exit 1
           fi
           if [ "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}" == '' ]; then
             echo "Missing secret: TEST_ACCOUNT_CLIENT_ID" && exit 1
@@ -301,7 +289,7 @@ jobs:
           [
             build-and-push-api,
             build-and-push-resource-processor,
-            build-and-push-airlock-processor
+            build-and-push-airlock-processor,
           ]
 
     steps:
@@ -815,8 +803,6 @@ jobs:
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}
@@ -859,8 +845,6 @@ jobs:
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
-          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
-          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
           TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
           TRE_ID: ${{ secrets.TRE_ID }}

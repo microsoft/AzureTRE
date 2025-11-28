@@ -30,12 +30,6 @@ inputs:
   TEST_ACCOUNT_CLIENT_SECRET:
     description: "The Test Automation Account Client Secret used to interact with the API."
     required: false
-  TEST_WORKSPACE_APP_ID:
-    description: "The Test Workspace application Id used to interact with the API."
-    required: false
-  TEST_WORKSPACE_APP_SECRET:
-    description: "The Test Workspace application secret used to interact with the API."
-    required: false
   TRE_ID:
     description: "The TRE Id."
     required: false
@@ -273,8 +267,6 @@ runs:
           -e TRE_ID="${{ inputs.TRE_ID }}" \
           -e TF_VAR_tre_id="${{ inputs.TRE_ID }}" \
           -e TRE_URL="${{ env.TRE_URL }}" \
-          -e TEST_WORKSPACE_APP_ID="${{ inputs.TEST_WORKSPACE_APP_ID }}" \
-          -e TEST_WORKSPACE_APP_SECRET="${{ inputs.TEST_WORKSPACE_APP_SECRET }}" \
           -e TEST_APP_ID="${{ inputs.TEST_APP_ID }}" \
           -e TEST_ACCOUNT_CLIENT_ID="${{ inputs.TEST_ACCOUNT_CLIENT_ID }}" \
           -e TEST_ACCOUNT_CLIENT_SECRET="${{ inputs.TEST_ACCOUNT_CLIENT_SECRET }}" \

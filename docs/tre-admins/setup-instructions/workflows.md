@@ -90,17 +90,6 @@ Configure the E2E Test repository secrets
 | `TEST_USER_NAME` | The username of the E2E Test User |
 | `TEST_USER_PASSWORD` | The password of the E2E Test User |
 
-### Create a workspace app registration for setting up workspaces (for the E2E tests)
-
-Follow the [instructions to create a workspace app registration](../auth.md#workspaces) (used for the E2E tests) - and make the E2E test user a **WorkspaceOwner** for the app registration.
-
-Configure the TEST_WORKSPACE_APP_ID repository secret
-
-| <div style="width: 230px">Secret name</div> | Description |
-| ----------- | ----------- |
-| `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app. |
-| `TEST_WORKSPACE_APP_SECRET` | The application (client) secret of the Workspaces app. |
-
 ### Configure repository/environment secrets
 
 Configure additional secrets used in the deployment workflow:

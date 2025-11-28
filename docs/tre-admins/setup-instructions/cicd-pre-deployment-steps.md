@@ -102,7 +102,6 @@ In a previous [Setup Auth configuration](./setup-auth-entities.md) step authenti
   | `API_CLIENT_ID` | API application (client) ID. |
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/config.yaml` env file |
 
 !!! info
     See [Environment variables](../environment-variables.md) for full details of the deployment related variables.

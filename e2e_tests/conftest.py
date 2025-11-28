@@ -1,9 +1,14 @@
-import random
-import pytest
 import asyncio
-from typing import Tuple
-import config
+import functools
 import logging
+import random
+import re
+import subprocess
+from pathlib import Path
+from typing import Tuple
+
+import config
+import pytest
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
@@ -13,6 +18,10 @@ from helpers import get_admin_token, ensure_automation_admin_has_airlock_role, e
 
 LOGGER = logging.getLogger(__name__)
 pytestmark = pytest.mark.asyncio(loop_scope="session")
+
+_MANUALLY_CREATED_APP_NAME_PREFIX = "TRE E2E Manual Workspace"
+_CREATE_MANUAL_APP_SCRIPT = Path(__file__).resolve().parents[1] / "devops" / "scripts" / "aad" / "create_workspace_application.sh"
+_MANUAL_APP_CLIENT_ID_PATTERN = re.compile(r"Workspace Application Client ID:\s*([0-9a-f-]+)")
 
 
 def pytest_addoption(parser):
@@ -27,6 +36,39 @@ def verify(pytestconfig):
     if option_value == "false":
         return False
     raise ValueError("--verify must be 'true' or 'false'")
+
+
+def _run_manual_app_script(command: list[str]) -> str:
+    completed = subprocess.run(command, check=True, capture_output=True, text=True)
+    return completed.stdout + completed.stderr
+
+
+async def _provision_manually_created_application_client_id() -> str:
+    if not _CREATE_MANUAL_APP_SCRIPT.exists():
+        raise FileNotFoundError(f"Unable to locate create_workspace_application.sh at {_CREATE_MANUAL_APP_SCRIPT}")
+
+    application_admin_client_id = config.API_CLIENT_ID
+    if application_admin_client_id == "":
+        raise ValueError("API_CLIENT_ID must be set to provision a manually created workspace application")
+
+    command = [
+        str(_CREATE_MANUAL_APP_SCRIPT),
+        "--name",
+        _MANUALLY_CREATED_APP_NAME_PREFIX,
+        "--application-admin-clientid",
+        application_admin_client_id
+    ]
+
+    loop = asyncio.get_running_loop()
+    output = await loop.run_in_executor(None, functools.partial(_run_manual_app_script, command))
+
+    match = _MANUAL_APP_CLIENT_ID_PATTERN.search(output)
+    if not match:
+        raise RuntimeError(f"Unable to parse workspace application client ID from script output: {output}")
+
+    client_id = match.group(1)
+    LOGGER.info("Ensured manually created workspace application exists: %s", client_id)
+    return client_id
 
 
 async def create_or_get_test_workspace(
@@ -115,7 +157,7 @@ async def setup_test_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
     # Set up - uses a pre created app reg as has appropriate roles assigned
     workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type="Manual", verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID)
+        auth_type="Automatic", verify=verify, pre_created_workspace_id=pre_created_workspace_id)
 
     yield workspace_path, workspace_id
 
@@ -153,6 +195,20 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
 
     # Tear-down
     await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+
+
+@pytest.fixture(scope="session")
+async def setup_manually_created_application_workspace(verify) -> Tuple[str, str]:
+    client_id = await _provision_manually_created_application_client_id()
+
+    workspace_path, workspace_id = await create_or_get_test_workspace(
+        auth_type="Manual",
+        verify=verify,
+        client_id=client_id)
+
+    yield workspace_path, workspace_id
+
+    await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)
 
 
 async def get_workspace_owner_token(workspace_id, verify):
