@@ -30,11 +30,11 @@ def verify(pytestconfig):
 
 
 async def create_or_get_test_workspace(
-    auth_type: str,
-    verify: bool,
-    template_name: str = resource_strings.BASE_WORKSPACE,
-    pre_created_workspace_id: str = "",
-    client_id: str = "") -> Tuple[str, str]:
+        auth_type: str,
+        verify: bool,
+        template_name: str = resource_strings.BASE_WORKSPACE,
+        pre_created_workspace_id: str = "",
+        client_id: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
