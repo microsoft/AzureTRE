@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
 # Install Azure CLI
-ARG AZURE_CLI_VERSION=2.79.0-1~bullseye
+ARG AZURE_CLI_VERSION=2.80.0-1~bullseye
 COPY scripts/azure-cli.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
     export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
