@@ -169,16 +169,28 @@ async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str,
 
 
 async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> Optional[str]:
+    """Retrieve a workspace role ID, retrying on 404 to allow time for Entra ID role propagation."""
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         headers = get_auth_header(admin_token)
-        response = await client.get(get_full_endpoint(f"/api/workspaces/{workspace_id}/roles"), headers=headers, timeout=TIMEOUT)
-        assert_status(response, [status.HTTP_200_OK], f"Failed to get workspace roles for {workspace_id}")
-
-        for role in response.json().get("roles", []):
-            if role.get("displayName") == role_name:
-                return role.get("id")
-
-    return None
+        
+        for attempt in range(ROLE_ASSIGNMENT_MAX_ATTEMPTS):
+            response = await client.get(get_full_endpoint(f"/api/workspaces/{workspace_id}/roles"), headers=headers, timeout=TIMEOUT)
+            
+            if response.status_code == status.HTTP_404_NOT_FOUND:
+                LOGGER.info("Workspace roles not yet available for %s (%s/%s)", workspace_id, attempt + 1, ROLE_ASSIGNMENT_MAX_ATTEMPTS)
+                await asyncio.sleep(ROLE_ASSIGNMENT_SLEEP_SECONDS)
+                continue
+            
+            assert_status(response, [status.HTTP_200_OK], f"Failed to get workspace roles for {workspace_id}")
+            
+            for role in response.json().get("roles", []):
+                if role.get("displayName") == role_name:
+                    return role.get("id")
+            
+            return None
+        
+        LOGGER.warning("Workspace roles never became available for %s after %s attempts", workspace_id, ROLE_ASSIGNMENT_MAX_ATTEMPTS)
+        return None
 
 
 async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_id: str, admin_token: str, verify: bool, role_name: str) -> None:
