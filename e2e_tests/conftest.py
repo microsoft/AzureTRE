@@ -21,10 +21,12 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def verify(pytestconfig):
-    if pytestconfig.getoption("verify").lower() == "true":
+    option_value = pytestconfig.getoption("verify").lower()
+    if option_value == "true":
         return True
-    elif pytestconfig.getoption("verify").lower() == "false":
+    if option_value == "false":
         return False
+    raise ValueError("--verify must be 'true' or 'false'")
 
 
 async def create_or_get_test_workspace(
