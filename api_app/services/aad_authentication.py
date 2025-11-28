@@ -374,9 +374,26 @@ class AzureADAuthorization(AccessService):
         return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
-        user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
-        user_app_roles = self._ms_graph_query(user_app_role_query, "GET")
-        return any(r for r in user_app_roles["value"] if r["appRoleId"] == role_id)
+        try:
+            identity_type = self._get_identity_type(user_id)
+        except AuthConfigValidationError as exc:
+            logger.warning("Unable to determine identity type for %s: %s", user_id, exc)
+            return False
+
+        if identity_type == "#microsoft.graph.user":
+            graph_data = self._get_role_assignment_graph_data_for_user(user_id)
+        elif identity_type == "#microsoft.graph.servicePrincipal":
+            graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
+        else:
+            logger.warning("Unsupported identity type %s for %s", identity_type, user_id)
+            return False
+
+        assignments = graph_data.get("value")
+        if assignments is None:
+            logger.warning("Role assignment response missing 'value' for %s", user_id)
+            return False
+
+        return any(role.get("appRoleId") == role_id for role in assignments)
 
     def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
         aad_groups_in_user = workspace.properties["create_aad_groups"]

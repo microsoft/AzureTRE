@@ -1,21 +1,18 @@
 # End-to-end (E2E) tests
 
-## Prerequisites
+## Create Workspace Application for E2E tests
 
-1. Authentication and Authorization configuration set up as noted [here](../tre-admins/auth.md)
-1. An Azure Tre deployed environment.
+End-to-end tests require a Microsoft Entra ID application to represent the workspace API of the workspaces created during testing. This application must be created manually prior to running the tests.
 
-## Add Automation Admin Application as Owner of Workspace Application
-For the end-to-end tests to be able to create and manage workspaces, the Automation Admin Application created as part of the auth setup needs to be added as an Owner of the Workspace Application(s) used by the TRE.
-
-You can do this using the Azure Portal, or by using the helper script `./devops/scripts/aad/add_automation_admin_to_workspace_application.sh`. For example:
+Example on how to run the script:
 
 ```bash
-  ./devops/scripts/aad/add_automation_admin_to_workspace_application.sh \
-    --workspace-application-clientid "${WORKSPACE_API_CLIENT_ID}"
+  ./devops/scripts/aad/create_workspace_application.sh \
+    --name "Workspace Application for E2E Tests" \
+    --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
 ```
 
-The script automatically reads the automation admin client ID from `config.yaml` (authentication.test_account_client_id).
+The Workspace Application ID then needs adding to the `e2e_tests/.env` file under the `TEST_WORKSPACE_APP_ID` property.
 
 ## Registering bundles to run End-to-end tests
 

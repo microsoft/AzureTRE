@@ -574,6 +574,38 @@ def test_get_role_assignment_for_user(mock_get_role_assignment_data_for_user):
     assert role == mock_user_data["value"][0]
 
 
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_user")
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.user")
+def test_is_user_in_role_with_user_identity(mock_get_identity_type, mock_get_role_assignments):
+    mock_get_role_assignments.return_value = {"value": [{"appRoleId": "role-a"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("user-obj", "role-a") is True
+    mock_get_identity_type.assert_called_once_with("user-obj")
+    mock_get_role_assignments.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_service_principal")
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.servicePrincipal")
+def test_is_user_in_role_with_service_principal(mock_get_identity_type, mock_get_role_assignments):
+    mock_get_role_assignments.return_value = {"value": [{"appRoleId": "role-b"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("sp-obj", "role-b") is True
+    mock_get_identity_type.assert_called_once_with("sp-obj")
+    mock_get_role_assignments.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.servicePrincipal")
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_service_principal", return_value={})
+def test_is_user_in_role_handles_missing_graph_value(mock_get_assignments, mock_get_identity_type):
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("sp-obj", "role-c") is False
+    mock_get_identity_type.assert_called_once_with("sp-obj")
+    mock_get_assignments.assert_called_once()
+
+
 def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:

@@ -8,7 +8,7 @@ import logging
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
-from helpers import get_admin_token
+from helpers import get_admin_token, ensure_automation_admin_has_airlock_role, ensure_automation_admin_has_workspace_owner_role
 
 
 LOGGER = logging.getLogger(__name__)
@@ -28,11 +28,11 @@ def verify(pytestconfig):
 
 
 async def create_or_get_test_workspace(
-        auth_type: str,
-        verify: bool,
-        template_name: str = resource_strings.BASE_WORKSPACE,
-        pre_created_workspace_id: str = "",
-        client_id: str = "") -> Tuple[str, str]:
+    auth_type: str,
+    verify: bool,
+    template_name: str = resource_strings.BASE_WORKSPACE,
+    pre_created_workspace_id: str = "",
+    client_id: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
@@ -45,7 +45,8 @@ async def create_or_get_test_workspace(
             "display_name": f"E2E {description} workspace ({auth_type} AAD)",
             "description": f"{template_name} test workspace for E2E tests",
             "auth_type": auth_type,
-            "address_space_size": "small"
+            "address_space_size": "small",
+            "create_aad_groups": True
         }
     }
     if config.TEST_WORKSPACE_APP_PLAN != "":
@@ -60,6 +61,12 @@ async def create_or_get_test_workspace(
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
+
+    await ensure_automation_admin_has_airlock_role(workspace_id, admin_token, verify)
+
+    if auth_type == "Manual" and client_id != "":
+        await ensure_automation_admin_has_workspace_owner_role(workspace_id, admin_token, verify)
+
     return workspace_path, workspace_id
 
 
