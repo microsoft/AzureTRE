@@ -29,7 +29,7 @@ from models.schemas.airlock_request import AirlockRequestAndOperationInResponse,
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user, get_current_airlock_manager_user,get_current_admin_user, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin,get_current_tre_user_or_tre_admin
+    get_current_tre_user_or_tre_admin
 
 from .resource_helpers import construct_location_header
 
@@ -345,7 +345,7 @@ async def create_airlock_request_setup(
 @airlock_core_router.get("/airlock/get-status", status_code=status_code.HTTP_200_OK,
                               response_model=AirlockProcessStatus,
                               name=strings.API_TO_GET_AIRLOCK_STATUS,
-                              dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
+                              dependencies=[Depends(get_current_tre_user_or_tre_admin)])
 async def get_airlock_status(airlock_status_repo: AirlockStatusRepository = Depends(get_repository(AirlockStatusRepository))):
 
     airlockstatus = await airlock_status_repo.get_status()
