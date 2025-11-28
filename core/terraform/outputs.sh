@@ -31,6 +31,8 @@ if [ -f ../.env ]; then
 fi
 
 # These next ones from Check Dependencies
-echo "SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
-echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'" >> ../private.env
-echo "AZURE_TENANT_ID='${TENANT_ID}'" >> ../private.env
+{
+  echo "SUBSCRIPTION_ID='${SUB_ID}'"
+  echo "AZURE_SUBSCRIPTION_ID='${SUB_ID}'"
+  echo "AZURE_TENANT_ID='${TENANT_ID}'"
+} >> ../private.env
