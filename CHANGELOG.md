@@ -7,6 +7,7 @@
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
+* Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 BUG FIXES:
@@ -15,7 +16,8 @@ BUG FIXES:
 * Fix workspace deletion failures due to AnotherOperationInProgress errors on AMPLS private endpoint ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
 * Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
-* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4746](https://github.com/microsoft/AzureTRE/issues/4746))
+* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
+* Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
 
 COMPONENTS:
