@@ -39,6 +39,21 @@ class DataUsageService:
             headers={"ClientType": config.CLIENT_TYPE_CUSTOM_HEADER}
         )
 
+    def _get_latest_entity_by_timestamp(self, entities):
+        latest = None
+        latest_ts = None
+        if entities:
+            for entity in entities:
+                ts = entity.get("Timestamp")
+                if ts is None:
+                    continue
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=datetime.timezone.utc)
+                if latest_ts is None or ts > latest_ts:
+                    latest = entity
+                    latest_ts = ts
+        return latest
+
     async def get_workspace_data_usage(self) -> MHRAWorkspaceDataUsage:
         container_usage_table = constants.WORKSPACE_CONTAINER_USAGE_TABLE_NAME
         fileshare_usage_table = constants.WORKSPACE_FILESHARE_USAGE_TABLE_NAME
@@ -252,18 +267,31 @@ class DataUsageService:
 
         try:
             protocol_items = []
+            latest_by_workspace = {}
             query_filter = f"WorkspaceName eq '{workspaceId}'"
             table_client = self.client.get_table_client(table_name=container_perstudy_table)
-            entities = table_client.query_entities(query_filter)
-
+            entities = list(table_client.query_entities(query_filter))
             for entity in entities:
+                wsid = entity.get("WorkspaceId")
+                pid = entity.get("ProtocolId")
+                wsid = wsid + pid
+                ts = entity.get("Timestamp")
+                current_best = latest_by_workspace.get(wsid)
+                if current_best is None:
+                    latest_by_workspace[wsid] = entity
+                else:
+                    cur_ts = current_best.get("Timestamp")
+                    if cur_ts is None or (ts is not None and ts > cur_ts):
+                        latest_by_workspace[wsid] = entity
+
+            for wsid, e in latest_by_workspace.items():
                 protocol_items.append(
                     MHRAProtocolItem(
-                        workspace_name=entity['WorkspaceName'],
-                        storage_name=entity['StorageName'],
-                        protocol_id=entity['ProtocolId'],
-                        protocol_data_usage = self._format_size(entity.get('ProtocolDataUsage')),
-                        protocol_percentage_used = math.floor(entity.get('ProtocolPercentageUsed',0))
+                        workspace_name=e.get('WorkspaceName', ''),
+                        storage_name=e.get('StorageName', ''),
+                        protocol_id=e.get('ProtocolId', ''),
+                        protocol_data_usage=self._format_size(e.get('ProtocolDataUsage', 0)),
+                        protocol_percentage_used=math.floor(e.get('ProtocolPercentageUsed', 0))
                     )
                 )
 
@@ -291,42 +319,40 @@ class DataUsageService:
             entities = table_client.query_entities(query_filter)
 
             container_usage_item = None
-            if entities:
-                for entity in entities:
-                    container_usage_item = MHRAContainerUsageItem(
-                        workspace_name = entity.get('WorkspaceName', ''),
-                        storage_name = entity.get('StorageName', ''),
-                        storage_usage = self._format_size(entity.get('StorageUsage')),
-                        storage_limits = self._format_size(entity.get('StorageLimits')),
-                        storage_remaining = self._format_size(
-                            (entity.get('StorageLimits', 0) - entity.get('StorageUsage', 0))
-                        ),
-                        storage_limits_update_time = entity.get('StorageLimitsUpdateTime', ''),
-                        storage_percentage_used = math.floor(entity.get('StoragePercentage', 0)),
-                        update_time = entity.get('UpdateTime', '')
-                    )
-                    break  # Only take the first matching item
+            latest = self._get_latest_entity_by_timestamp(entities)
+            if latest:
+                container_usage_item = MHRAContainerUsageItem(
+                    workspace_name=latest.get('WorkspaceName', ''),
+                    storage_name=latest.get('StorageName', ''),
+                    storage_usage=self._format_size(latest.get('StorageUsage')),
+                    storage_limits=self._format_size(latest.get('StorageLimits')),
+                    storage_remaining=self._format_size(
+                        (latest.get('StorageLimits', 0) - latest.get('StorageUsage', 0))
+                    ),
+                    storage_limits_update_time=latest.get('StorageLimitsUpdateTime', ''),
+                    storage_percentage_used=math.floor(latest.get('StoragePercentage', 0)),
+                    update_time=latest.get('UpdateTime', '')
+                )
 
             # Fileshare usage
             table_client = self.client.get_table_client(table_name=fileshare_usage_table)
             entities = table_client.query_entities(query_filter)
 
             fileshare_usage_item = None
-            if entities:
-                for entity in entities:
-                    fileshare_usage_item = MHRAFileshareUsageItem(
-                        workspace_name = entity.get('WorkspaceName', ''),
-                        storage_name = entity.get('StorageName', ''),
-                        fileshare_usage = self._format_size(entity.get('FileshareUsage')),
-                        fileshare_limits = self._format_size(entity.get('FileshareLimits')),
-                        fileshare_remaining = self._format_size(
-                            (entity.get('FileshareLimits', 0) - entity.get('FileshareUsage', 0))
-                        ),
-                        fileshare_limits_update_time = entity.get('FileshareLimitsUpdateTime', ''),
-                        fileshare_percentage_used = math.floor(entity.get('FilesharePercentage', 0)),
-                        update_time = entity.get('UpdateTime', '')
-                    )
-                    break  # Only take the first matching item
+            latest = self._get_latest_entity_by_timestamp(entities)
+            if latest:
+                fileshare_usage_item = MHRAFileshareUsageItem(
+                    workspace_name = latest.get('WorkspaceName', ''),
+                    storage_name = latest.get('StorageName', ''),
+                    fileshare_usage = self._format_size(latest.get('FileshareUsage')),
+                    fileshare_limits = self._format_size(latest.get('FileshareLimits')),
+                    fileshare_remaining = self._format_size(
+                        (latest.get('FileshareLimits', 0) - latest.get('FileshareUsage', 0))
+                    ),
+                    fileshare_limits_update_time = latest.get('FileshareLimitsUpdateTime', ''),
+                    fileshare_percentage_used = math.floor(latest.get('FilesharePercentage', 0)),
+                    update_time = latest.get('UpdateTime', '')
+                )
 
             return WorkspaceDataUsage(
                 container_usage_item=container_usage_item,
