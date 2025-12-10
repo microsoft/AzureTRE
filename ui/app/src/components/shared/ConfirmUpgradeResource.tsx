@@ -73,29 +73,31 @@ const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
   };
 };
 
-// Utility to collect direct property keys referenced inside an 'if' schema (simple/general)
-const collectIfKeys = (ifSchema: any): string[] => {
+// Utility to collect direct property keys referenced inside conditional schemas
+const collectConditionalKeys = (entry: any): string[] => {
   const keys: string[] = [];
-  if (!ifSchema) return keys;
-  // handle simple 'properties' usage
-  if (ifSchema.properties) {
-    keys.push(...Object.keys(ifSchema.properties));
-  }
-  // handle consts inside properties: { properties: { foo: { const: ... } } }
-  // other complex constructs are ignored for simplicity
-  return keys;
+  if (!entry) return keys;
+  const collect = (schemaPart: any) => {
+    if (schemaPart && schemaPart.properties) {
+      keys.push(...Object.keys(schemaPart.properties));
+    }
+  };
+  collect(entry.if);
+  collect(entry.then);
+  collect(entry.else);
+  return [...new Set(keys)];
 };
 
-// Extract conditional blocks where the 'if' references any of the new keys. Include their then/else blocks.
+// Extract conditional blocks that reference any of the new keys.
 const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
   const conditionalEntries: any[] = [];
   if (!schema) return { allOf: [] };
   const allOf = schema.allOf || [];
   allOf.forEach((entry: any) => {
     if (entry && entry.if) {
-      const ifKeys = collectIfKeys(entry.if);
-      // include entry if any ifKey matches a new key (top-level match)
-      if (ifKeys.some((k) => newKeys.some((nk) => nk.split('.')[0] === k))) {
+      const conditionalKeys = collectConditionalKeys(entry);
+      // include entry if any conditionalKey matches a new key (top-level match)
+      if (conditionalKeys.some((k) => newKeys.some((nk) => nk.split('.')[0] === k))) {
         conditionalEntries.push(entry);
       }
     }
