@@ -126,7 +126,7 @@ class ResourceRepository(BaseRepository):
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-            self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
+            await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
 
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
@@ -183,16 +183,31 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
+    async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-        # validate the PATCH data against a cut down version of the full template.
+        # get the schema for the target version if upgrade is happening
+        if resource_patch.templateVersion is not None:
+            # fetch the template for the target version
+            target_template = await resource_template_repo.get_template_by_name_and_version(resource_template.name, resource_patch.templateVersion, resource_template.resourceType)
+            enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
+
+        # # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
+            # Allow property if installing, explicitly updateable, or when upgrading and the new property is being added in this patch
+            if (
+                resource_action == RESOURCE_ACTION_INSTALL
+                or prop.get("updateable", False) is True
+                or (
+                    resource_patch.templateVersion is not None
+                    and resource_patch.properties is not None
+                    and prop_name in resource_patch.properties
+                )
+            ):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
