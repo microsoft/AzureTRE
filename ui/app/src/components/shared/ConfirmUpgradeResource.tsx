@@ -331,6 +331,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
                 {finalSchema && (
                   <Form
+                    liveOmit={true}
                     omitExtraData={true}
                     schema={finalSchema}
                     formData={newPropertyValues}
