@@ -12,6 +12,8 @@ import {
 } from "@fluentui/react";
 import React, { useContext, useState, useEffect } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
+import { ApiEndpoint } from "../../models/apiEndpoints";
+import { WorkspaceService } from "../../models/workspaceService";
 import {
   HttpMethod,
   ResultType,
@@ -88,7 +90,7 @@ const collectConditionalKeys = (entry: any): string[] => {
   return [...new Set(keys)];
 };
 
-// Extract conditional blocks that reference any of the new keys.
+// Extract conditional blocks that reference any of the new properties.
 const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
   const conditionalEntries: any[] = [];
   if (!schema) return { allOf: [] };
@@ -150,17 +152,50 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
       return;
     }
 
+    // Construct API paths for templates of specified resourceType
+    let templateListPath;
+    // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
+    let templateGetPath;
+
+    let workspaceApplicationIdURI = undefined;
+    switch (props.resource.resourceType) {
+      case ResourceType.Workspace:
+        templateListPath = ApiEndpoint.WorkspaceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.WorkspaceService:
+        templateListPath = ApiEndpoint.WorkspaceServiceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.SharedService:
+        templateListPath = ApiEndpoint.SharedServiceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.UserResource:
+        if (props.resource.properties.parentWorkspaceService) {
+          // If we are upgrading a user resource, parent resource must have a workspaceId
+          const workspaceId = (props.resource.properties.parentWorkspaceService as WorkspaceService)
+            .workspaceId;
+          templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+          templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+          workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
+          break;
+        } else {
+          throw Error(
+            "Parent workspace service must be passed as prop when creating user resource.",
+          );
+        }
+      default:
+        throw Error("Unsupported resource type.");
+    }
+
     const fetchNewTemplateSchema = async () => {
       setLoadingSchema(true);
       setApiError(null);
       try {
         let fetchUrl = "";
-        if (props.resource.resourceType === ResourceType.Workspace) {
-          fetchUrl = `/workspace-templates/${props.resource.templateName}?version=${selectedVersion}`;
-        } else {
-          const templateType = props.resource.resourceType.toLowerCase();
-          fetchUrl = `/templates/${templateType}/${selectedVersion}`;
-        }
+
+        fetchUrl = `${templateGetPath}/${props.resource.templateName}?version=${selectedVersion}`;
 
         const res = await apiCall(
           fetchUrl,
@@ -211,23 +246,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
     try {
       let body: any = { templateVersion: selectedVersion };
 
-      // Patch only the new properties inside the 'properties' field
-      if (!body.properties) {
-        body.properties = {};
-      }
-      console.log("New property values to set:", newPropertyValues);
-      Object.keys(newPropertyValues).forEach((key) => {
-        const val = newPropertyValues[key];
-        body.properties[key] = val;
-      });
-      console.log("Final upgrade body:", body);
-
-      // Include other optional properties if applicable
-      // Object.keys(newPropertyValues).forEach((key) => {
-      //   if (newPropertiesToFill.includes(key)) {
-      //     body.properties[key] = newPropertyValues[key];
-      //   }
-      // });
+      body.properties = newPropertyValues;
 
       let op = await apiCall(
         props.resource.resourcePath,
@@ -271,7 +290,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
   const uiSchema = {
     ...baseUiSchema,
     "ui:submitButtonOptions": { norender: true },
-    // overview: { "ui:widget": "textarea" },
   };
 
   const onRenderOption = (option: any): JSX.Element => {
