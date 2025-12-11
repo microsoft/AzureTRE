@@ -222,13 +222,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const currentProps = currentTemplate?.properties || {};
 
         const newKeys = getAllPropertyKeys(newSchemaProps);
-        console.log("New template property keys:", newKeys);
         const currentKeys = getAllPropertyKeys(currentProps);
-        console.log("Current resource property keys:", currentKeys);
         const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
-        console.log("Identified new property keys to fill:", newPropKeys);
         const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
-        console.log("Identified removed property keys:", removedPropsArray);
         setNewPropertiesToFill(newPropKeys);
         setRemovedProperties(removedPropsArray);
 
