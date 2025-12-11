@@ -123,6 +123,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
   const [newPropertyValues, setNewPropertyValues] = useState<any>({});
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
+  const [removedProperties, setRemovedProperties] = useState<string[]>([]);
 
   const upgradeProps = {
     type: DialogType.normal,
@@ -149,6 +150,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
       setNewPropertiesToFill([]);
       setNewPropertyValues({});
       setNewTemplateSchema(null);
+      setRemovedProperties([]);
       return;
     }
 
@@ -197,7 +199,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
         fetchUrl = `${templateGetPath}/${props.resource.templateName}?version=${selectedVersion}`;
 
-        const res = await apiCall(
+        const newTemplate = await apiCall(
           fetchUrl,
           HttpMethod.Get,
           wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
@@ -205,25 +207,37 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           ResultType.JSON,
         );
 
-        // Use full fetched schema from API
-        setNewTemplateSchema(res);
+        const currentTemplate = await apiCall(
+          `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
+          HttpMethod.Get,
+          wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+          undefined,
+          ResultType.JSON,
+        );
 
-        const newSchemaProps = res?.properties || {};
-        const currentProps = props.resource.properties || {};
+        // Use full fetched schema from API
+        setNewTemplateSchema(newTemplate);
+
+        const newSchemaProps = newTemplate?.properties || {};
+        const currentProps = currentTemplate?.properties || {};
 
         const newKeys = getAllPropertyKeys(newSchemaProps);
+        console.log("New template property keys:", newKeys);
         const currentKeys = getAllPropertyKeys(currentProps);
-
+        console.log("Current resource property keys:", currentKeys);
         const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
-
+        console.log("Identified new property keys to fill:", newPropKeys);
+        const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
+        console.log("Identified removed property keys:", removedPropsArray);
         setNewPropertiesToFill(newPropKeys);
+        setRemovedProperties(removedPropsArray);
 
         // prefill newPropertyValues with schema defaults or empty string
         setNewPropertyValues(
           newPropKeys.reduce((acc, key) => {
             // Get top-level portion of the key
             const topKey = key.split('.')[0];
-            const defaultValue = res?.properties?.[topKey]?.default;
+            const defaultValue = newTemplate?.properties?.[topKey]?.default;
             acc[key] = defaultValue !== undefined ? defaultValue : '';
             return acc;
           }, {} as any),
@@ -340,7 +354,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             </MessageBar>
 
             {loadingSchema && <Spinner label="Loading new template schema..." />}
-
+            {!loadingSchema && removedProperties.length > 0 && (
+              <MessageBar messageBarType={MessageBarType.warning}>
+                Warning: The following properties are no longer present and will be removed: {removedProperties.join(', ')}
+              </MessageBar>
+            )}
             {!loadingSchema && newPropertiesToFill.length > 0 && (
               <Stack tokens={{ childrenGap: 15 }}>
                 <MessageBar messageBarType={MessageBarType.info} styles={{ root: { marginBottom: 25 } }}>
