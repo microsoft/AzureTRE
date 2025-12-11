@@ -42,14 +42,15 @@ class DataUsageService:
     def _get_latest_entity_by_timestamp(self, entities):
         latest = None
         latest_ts = None
+        logging.info(f"Finding latest entity from entities: {entities}")
         if entities:
+            logging.info(f"Finding latest entity from entities: {entities}")
             for entity in entities:
+                logging.info(f"Checking entity: {entity}")
                 ts = entity.get("Timestamp")
-                if ts is None:
-                    continue
-                if ts.tzinfo is None:
-                    ts = ts.replace(tzinfo=datetime.timezone.utc)
+                logging.info(f"Entity timestamp: {ts}")
                 if latest_ts is None or ts > latest_ts:
+                    logging.info(f"Updating latest entity to: {entity}")
                     latest = entity
                     latest_ts = ts
         return latest
@@ -307,20 +308,23 @@ class DataUsageService:
     async def get_data_usage_for_workspace(self, workspaceId: str) -> WorkspaceDataUsage:
         container_usage_table = constants.WORKSPACE_CONTAINER_USAGE_TABLE_NAME
         fileshare_usage_table = constants.WORKSPACE_FILESHARE_USAGE_TABLE_NAME
-
+        logging.info(f"Getting data usage for workspace {workspaceId}")
         tre_id = config.TRE_ID
         workspace = constants.WORKSPACE_RESOURCE_GROUP_NAME.format(tre_id, workspaceId[-4:])
-
+        logging.info(f"Derived workspace name: {workspace}")
         try:
             query_filter = f"WorkspaceName eq '{workspace}'"
 
             # Container usage
             table_client = self.client.get_table_client(table_name=container_usage_table)
             entities = table_client.query_entities(query_filter)
-
+            logging.info(f"Queried container usage entities for workspace {entities}")
             container_usage_item = None
             latest = self._get_latest_entity_by_timestamp(entities)
+            logging.info(f"Formatting container usage item for latest entity: {latest}")
+
             if latest:
+                logging.info(f"Latest container usage entity: {latest}")
                 container_usage_item = MHRAContainerUsageItem(
                     workspace_name=latest.get('WorkspaceName', ''),
                     storage_name=latest.get('StorageName', ''),
@@ -337,10 +341,12 @@ class DataUsageService:
             # Fileshare usage
             table_client = self.client.get_table_client(table_name=fileshare_usage_table)
             entities = table_client.query_entities(query_filter)
-
+            logging.info(f"Queried fileshare usage entities for workspace {entities}")
             fileshare_usage_item = None
             latest = self._get_latest_entity_by_timestamp(entities)
+            logging.info(f"Latest fileshare usage entity: {latest}")
             if latest:
+                logging.info(f"Formatting fileshare usage item for latest entity: {latest}")
                 fileshare_usage_item = MHRAFileshareUsageItem(
                     workspace_name = latest.get('WorkspaceName', ''),
                     storage_name = latest.get('StorageName', ''),
