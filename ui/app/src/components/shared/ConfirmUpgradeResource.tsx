@@ -159,7 +159,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
     // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
     let templateGetPath;
 
-    let workspaceApplicationIdURI = undefined;
+    // let workspaceApplicationIdURI = undefined;
     switch (props.resource.resourceType) {
       case ResourceType.Workspace:
         templateListPath = ApiEndpoint.WorkspaceTemplates;
@@ -180,7 +180,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             .workspaceId;
           templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
-          workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
+          // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
           break;
         } else {
           throw Error(
@@ -352,7 +352,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             {loadingSchema && <Spinner label="Loading new template schema..." />}
             {!loadingSchema && removedProperties.length > 0 && (
               <MessageBar messageBarType={MessageBarType.warning}>
-                Warning: The following properties are no longer present and will be removed: {removedProperties.join(', ')}
+                Warning: The following properties are no longer present in the template and will be removed: {removedProperties.join(', ')}
               </MessageBar>
             )}
             {!loadingSchema && newPropertiesToFill.length > 0 && (
