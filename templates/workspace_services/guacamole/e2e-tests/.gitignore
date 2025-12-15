@@ -1,0 +1,22 @@
+# Ignore node modules
+node_modules/
+
+# Ignore test results
+test-results/
+playwright-report/
+
+# Ignore screenshots and videos from local runs
+screenshots/*.png
+videos/*.webm
+
+# Ignore package-lock if using npm
+package-lock.json
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.sw
