@@ -113,12 +113,12 @@ class ResourceRepository(BaseRepository):
 
     def _get_all_property_keys_from_template(self, resource_template: ResourceTemplate) -> set:
         properties = set(resource_template.properties.keys())
-        if resource_template.allOf:
+        if "allOf" in resource_template:
             for condition in resource_template.allOf:
-                if 'then' in condition and 'properties' in condition['then']:
-                    properties.update(condition['then']['properties'].keys())
-                if 'else' in condition and 'properties' in condition['else']:
-                    properties.update(condition['else']['properties'].keys())
+                if "then" in condition and "properties" in condition["then"]:
+                    properties.update(condition["then"]["properties"].keys())
+                if "else" in condition and "properties" in condition["else"]:
+                    properties.update(condition["else"]["properties"].keys())
         return properties
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
@@ -207,6 +207,9 @@ class ResourceRepository(BaseRepository):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
+        # get the old template properties for comparison during upgrades
+        old_template_properties = set(enriched_template["properties"].keys())
+
         # get the schema for the target version if upgrade is happening
         if resource_patch.templateVersion is not None:
             # fetch the template for the target version
@@ -218,14 +221,19 @@ class ResourceRepository(BaseRepository):
         update_template["required"] = []
         update_template["properties"] = {}
         for prop_name, prop in enriched_template["properties"].items():
-            # Allow property if installing, explicitly updateable, or when upgrading and the new property is being added in this patch
+            # Allow property if:
+            # 1. Installing (all properties allowed)
+            # 2. Property is explicitly updateable
+            # 3. Upgrading and the property is NEW (not in old template) and being added in this patch
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True
                 or (
                     resource_patch.templateVersion is not None
+                    and resource_patch.templateVersion != resource_template.version
                     and resource_patch.properties is not None
                     and prop_name in resource_patch.properties
+                    and prop_name not in old_template_properties
                 )
             ):
                 update_template["properties"][prop_name] = prop

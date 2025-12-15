@@ -4,6 +4,7 @@ import uuid
 import pytest
 import pytest_asyncio
 from mock import patch, MagicMock
+from pydantic import parse_obj_as
 
 from jsonschema.exceptions import ValidationError
 from resources import strings
@@ -137,6 +138,58 @@ def sample_nested_template() -> ResourceTemplate:
             }
         },
         customActions=[]
+    ).dict(exclude_none=True)
+
+
+def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
+    """
+    Returns a template similar to sample_resource_template but with an additional
+    'new_property' that is not updateable. Useful for testing template upgrades.
+    """
+    return ResourceTemplate(
+        id="123",
+        name="tre-user-resource",
+        description="description",
+        version=version,
+        resourceType=ResourceType.UserResource,
+        current=True,
+        required=['os_image', 'title'],
+        properties={
+            'title': {
+                'type': 'string',
+                'title': 'Title of the resource'
+            },
+            'os_image': {
+                'type': 'string',
+                'title': 'Windows image',
+                'description': 'Select Windows image to use for VM',
+                'enum': [
+                    'Windows 10',
+                    'Server 2019 Data Science VM'
+                ],
+                'updateable': False
+            },
+            'vm_size': {
+                'type': 'string',
+                'title': 'VM Size',
+                'description': 'Select Windows image to use for VM',
+                'enum': [
+                    'small',
+                    'large'
+                ],
+                'updateable': True
+            },
+            'new_property': {
+                'type': 'string',
+                'title': 'New non-updateable property',
+                'enum': [
+                    'value1',
+                    'value2'
+                ],
+                'updateable': False
+            }
+        },
+        actions=[]
     ).dict(exclude_none=True)
 
 
@@ -370,10 +423,11 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
+async def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
     """
-    Make sure that patch is NOT valid when non-updateable fields are included
+    Make sure that patch is valid when updateable fields are included
     """
 
     template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
@@ -381,11 +435,12 @@ def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
 
     # check it's valid when updating a single updateable prop
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large'})
-    resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+    await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
 
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
+async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     """
     Make sure that patch is NOT valid when non-updateable fields are included
     """
@@ -396,14 +451,121 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     # check it's invalid when sending an unexpected field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
-    # check it's invalid when sending a bad value
+    # check it's invalid when sending a bad value (new install)
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+
+    # check it's invalid when sending a bad value (update)
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'huge'})
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
     # check it's invalid when trying to update a non-updateable field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
     with pytest.raises(ValidationError):
-        resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_new_non_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during a template upgrade, new properties (not in old version) can be specified
+    even if they are marked as updateable: false in the new template version
+    """
+    # Old template has os_image and vm_size
+    old_template = sample_resource_template()
+    old_template['version'] = '0.1.0'
+
+    # New template adds a new property 'new_property' that is not updateable
+    new_template = sample_resource_template_with_new_property(version='0.2.0')
+
+    # Mock the template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    # Patch includes the new property during upgrade - this should be ALLOWED
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'new_property': 'value1'})
+
+    # This should NOT raise a ValidationError
+    await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_rejects_existing_non_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during a template upgrade, existing non-updateable properties still cannot be modified
+    """
+    # Old template has os_image (non-updateable) and vm_size (updateable)
+    old_template = sample_resource_template()
+
+    # New template is the same but version 0.2.0
+    new_template = copy.deepcopy(old_template)
+
+    # Mock the template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    # Try to update existing non-updateable property during upgrade - this should FAIL
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'os_image': 'Windows 10'})
+
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during a template upgrade, updateable properties can still be modified
+    """
+    # Old template 0.1.0
+    old_template = sample_resource_template()
+
+    # New template 0.2.0
+    new_template = copy.deepcopy(old_template)
+
+    # Mock the template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    # Update existing updateable property during upgrade - this should work
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'vm_size': 'large'})
+
+    # This should NOT raise a ValidationError
+    await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_mix_of_new_and_updateable_properties_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during upgrade, you can specify both new non-updateable properties and existing updateable properties
+    """
+    # Old template
+    old_template = sample_resource_template()
+
+    # New template adds new_property
+    new_template = sample_resource_template_with_new_property(version='0.2.0')
+
+    # Mock the template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    # Patch with both new non-updateable property and existing updateable property
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'new_property': 'value1', 'vm_size': 'large'})
+
+    # This should NOT raise a ValidationError
+    await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
