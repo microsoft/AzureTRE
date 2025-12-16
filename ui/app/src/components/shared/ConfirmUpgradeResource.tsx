@@ -10,7 +10,7 @@ import {
   Icon,
   Stack,
 } from "@fluentui/react";
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { WorkspaceService } from "../../models/workspaceService";
@@ -125,6 +125,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
   const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
   const [removedProperties, setRemovedProperties] = useState<string[]>([]);
 
+  // Cache for current template to avoid refetching the same template repeatedly while selecting versions
+  const currentTemplateRef = useRef<any | null>(null);
+
+  // Invalidate cache if the resource's template name or current template version changes
+  useEffect(() => {
+    currentTemplateRef.current = null;
+  }, [props.resource.templateName, props.resource.templateVersion]);
+
   const upgradeProps = {
     type: DialogType.normal,
     title: `Upgrade Template Version?`,
@@ -207,13 +215,20 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           ResultType.JSON,
         );
 
-        const currentTemplate = await apiCall(
-          `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
-          HttpMethod.Get,
-          wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
-          undefined,
-          ResultType.JSON,
-        );
+        // Reuse cached current template if available to avoid redundant network calls
+        let currentTemplate;
+        if (currentTemplateRef.current) {
+          currentTemplate = currentTemplateRef.current;
+        } else {
+          currentTemplate = await apiCall(
+            `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
+            HttpMethod.Get,
+            wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+            undefined,
+            ResultType.JSON,
+          );
+          currentTemplateRef.current = currentTemplate;
+        }
 
         // Use full fetched schema from API
         setNewTemplateSchema(newTemplate);
@@ -223,8 +238,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
         const newKeys = getAllPropertyKeys(newSchemaProps);
         const currentKeys = getAllPropertyKeys(currentProps);
+
         const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
         const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
+
         setNewPropertiesToFill(newPropKeys);
         setRemovedProperties(removedPropsArray);
 
