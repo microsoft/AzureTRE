@@ -7,12 +7,8 @@ locals {
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
-  admin_username = (
-    var.admin_username == "" ?
-    # Generate a username from owner_id (use last 20 chars to ensure uniqueness)
-    substr(replace(var.owner_id, "-", ""), -20, 20) :
-    var.admin_username
-  )
+  # Reference the computed username from data.tf
+  admin_username = local.computed_admin_username
   vm_password_secret_name = "${local.vm_name}-admin-credentials"
   tre_user_resources_tags = {
     tre_id                   = var.tre_id
