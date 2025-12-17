@@ -9,10 +9,8 @@ locals {
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   admin_username = (
     var.admin_username == "" ?
-    (length(data.azuread_user.user[0].mail) > 0 && strcontains(data.azuread_user.user[0].user_principal_name, "#EXT#") ?
-      substr(element(split("@", data.azuread_user.user[0].mail), 0), 0, 20) :
-      substr(element(split("#EXT#", element(split("@", data.azuread_user.user[0].user_principal_name), 0)), 0), 0, 20)
-    ) :
+    # Generate a username from owner_id (use last 20 chars to ensure uniqueness)
+    substr(replace(var.owner_id, "-", ""), -20, 20) :
     var.admin_username
   )
   vm_password_secret_name = "${local.vm_name}-admin-credentials"

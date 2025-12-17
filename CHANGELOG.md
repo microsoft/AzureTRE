@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 BUG FIXES:
+* Fix VM user resource update/delete failures when owner is deleted from Entra ID ([#ISSUE_NUMBER](https://github.com/microsoft/AzureTRE/issues/ISSUE_NUMBER))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
@@ -22,6 +23,8 @@ BUG FIXES:
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 
 COMPONENTS:
+* Bump guacamole-azure-windowsvm user resource to 1.4.3
+* Bump guacamole-azure-linuxvm user resource to 1.4.1
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
