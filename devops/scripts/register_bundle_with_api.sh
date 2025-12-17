@@ -130,7 +130,7 @@ function get_template() {
 
 
 get_result=$(get_template)
-if [[ -n "$(echo "$get_result" | jq -r .id // empty)" ]]; then
+if [[ -n "$(echo "$get_result" | jq -r '.id // empty')" ]]; then
   # 'id' was returned - so we successfully got the template from the API. Now check the version
   existing_version="$(echo "$get_result" | jq -r .version)"
 
