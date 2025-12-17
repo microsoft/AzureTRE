@@ -8,7 +8,7 @@ set -e
 eval "$(jq -r '@sh "OWNER_ID=\(.owner_id) TENANT_ID=\(.tenant_id) CLIENT_ID=\(.client_id) CLIENT_SECRET=\(.client_secret)"')"
 
 # Fallback username (last 20 chars of owner_id without dashes)
-FALLBACK_USERNAME=$(echo "$OWNER_ID" | tr -d '-' | tail -c 21)
+FALLBACK_USERNAME=$(echo "$OWNER_ID" | tr -d '-' | tail -c 21 | tr -d '\n')
 
 # Try to get access token
 if ! ACCESS_TOKEN=$(curl -sf -X POST "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token" \
