@@ -6,7 +6,6 @@ from mock import patch
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.operations import OperationRepository
-from models.domain.operation import Status
 from models.domain.shared_service import SharedService
 from models.domain.resource import ResourceType
 from models.schemas.shared_service import SharedServiceInCreate
