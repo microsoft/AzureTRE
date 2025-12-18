@@ -16,10 +16,6 @@ BUG FIXES:
 
 COMPONENTS:
 
-| name | version |
-| ----- | ----- |
-| tre-service-azureml | 1.1.0 |
-
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
 * The firewall network rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you will need to specify your own firewall rules.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
