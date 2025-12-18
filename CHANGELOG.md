@@ -24,6 +24,7 @@ BUG FIXES:
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 
 COMPONENTS:
+* API version updated to 0.25.7 ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
