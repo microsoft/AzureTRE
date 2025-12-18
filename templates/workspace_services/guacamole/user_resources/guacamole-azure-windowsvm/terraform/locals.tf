@@ -9,7 +9,7 @@ locals {
   storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   admin_username = (
     var.admin_username == "" ?
-    # Generate a username from owner_id (use last 20 chars to ensure uniqueness)
+    # Generate a username from owner_id (UUID without dashes is 32 chars, take last 20 for uniqueness)
     substr(replace(var.owner_id, "-", ""), -20, 20) :
     var.admin_username
   )
