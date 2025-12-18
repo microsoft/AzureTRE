@@ -6,6 +6,7 @@ from mock import patch
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.shared_services import SharedServiceRepository
 from db.repositories.operations import OperationRepository
+from models.domain.operation import Status
 from models.domain.shared_service import SharedService
 from models.domain.resource import ResourceType
 from models.schemas.shared_service import SharedServiceInCreate
@@ -54,6 +55,13 @@ def basic_shared_service_request():
 
 
 async def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_repo):
+    shared_service_repo.query = AsyncMock(return_value=[])
+
+    with pytest.raises(EntityDoesNotExist):
+        await shared_service_repo.get_shared_service_by_id(SHARED_SERVICE_ID)
+
+
+async def test_get_shared_service_by_id_raises_if_deleted(shared_service_repo):
     shared_service_repo.query = AsyncMock(return_value=[])
 
     with pytest.raises(EntityDoesNotExist):
