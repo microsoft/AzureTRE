@@ -54,22 +54,3 @@ data "azurerm_user_assigned_identity" "ws_encryption_identity" {
   name                = local.encryption_identity_name
   resource_group_name = data.azurerm_resource_group.ws.name
 }
-
-# External data source to fetch username with graceful fallback for deleted users
-data "external" "username" {
-  count = var.admin_username == "" ? 1 : 0
-  program = ["bash", "${path.module}/get_username.sh"]
-  
-  query = {
-    owner_id      = var.owner_id
-    tenant_id     = var.auth_tenant_id
-    client_id     = var.auth_client_id
-    client_secret = var.auth_client_secret
-  }
-}
-
-locals {
-  # Compute username with graceful fallback
-  # Priority: explicit admin_username > friendly username from external script > should never fail
-  computed_admin_username = var.admin_username != "" ? var.admin_username : data.external.username[0].result.username
-}
