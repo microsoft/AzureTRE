@@ -245,7 +245,8 @@
       "prod-canadacentral-observabilityeventhubs.servicebus.windows.net"
     ],
     "metastoreDomains": [
-      "consolidated-canadaeast-prod-metastore.mysql.database.azure.com"
+      "consolidated-canadaeast-prod-metastore.mysql.database.azure.com",
+      "consolidated-canadaeastc2-prod-metastore-0.mysql.database.azure.com"
     ]
   },
   "centralindia": {
@@ -538,6 +539,7 @@
       "consolidated-eastus-prod-metastore-addl-2.mysql.database.azure.com",
       "consolidated-eastus-prod-metastore-addl-3.mysql.database.azure.com",
       "consolidated-eastus-prod-metastore-addl-4.mysql.database.azure.com",
+      "consolidated-eastusc2-prod-metastore-0.mysql.database.azure.com",
       "consolidated-eastusc3-prod-metastore-0.mysql.database.azure.com",
       "consolidated-eastusc3-prod-metastore-1.mysql.database.azure.com",
       "consolidated-eastusc3-prod-metastore-2.mysql.database.azure.com",
@@ -615,7 +617,8 @@
       "consolidated-eastus2c2-prod-metastore-1.mysql.database.azure.com",
       "consolidated-eastus2c2-prod-metastore-2.mysql.database.azure.com",
       "consolidated-eastus2c2-prod-metastore-3.mysql.database.azure.com",
-      "consolidated-eastus2c3-prod-metastore-0.mysql.database.azure.com"
+      "consolidated-eastus2c3-prod-metastore-0.mysql.database.azure.com",
+      "consolidated-eastus2c3-prod-metastore-1.mysql.database.azure.com"
     ]
   },
   "eastus2euap": {
@@ -1054,7 +1057,9 @@
     "artifactBlobStoragePrimaryDomains": [""],
     "artifactBlobStorageSecondaryDomains": [""],
     "eventHubEndpointDomains": [""],
-    "metastoreDomains": [""]
+    "metastoreDomains": [
+      "consolidated-switzerlandnorth-prod-metastore-0.mysql.database.azure.com"
+    ]
   },
   "switzerlandwest": {
     "webappDestinationAddresses": [
