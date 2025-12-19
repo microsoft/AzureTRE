@@ -57,4 +57,4 @@ jobs:
         with:
           name: coverage-report
           path: ui/app/coverage
-          retention-days: 30
+          retention-days: 10
