@@ -71,7 +71,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
           sha: ${{ github.event.workflow_run.head_sha }}
-          name: "Test Results"
+          name: "UI Test Results"
           status: "completed"
           conclusion: ${{ github.event.workflow_run.conclusion }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
