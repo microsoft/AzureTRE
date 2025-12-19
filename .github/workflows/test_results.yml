@@ -4,7 +4,7 @@ name: Test Results
 
 on:  # yamllint disable-line rule:truthy
   workflow_run:
-    workflows: ["Docker build"]
+    workflows: ["Docker build", "UI Tests"]
     types:
       - completed
 # actionlint doesn't like the following line depite it being recommanded:
