@@ -1,8 +1,10 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
+* Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
@@ -21,6 +23,8 @@ BUG FIXES:
 * Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
 * Add timeouts to Graph requests in API ([#4723](https://github.com/microsoft/AzureTRE/issues/4723))
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
+* Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
+
 
 COMPONENTS:
 
