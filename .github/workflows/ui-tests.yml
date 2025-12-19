@@ -1,0 +1,56 @@
+name: UI Tests
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches: [main]
+    paths:
+      - "ui/app/**"
+      - ".github/workflows/ui-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "ui/app/**"
+
+# for each ref (branch/pr) run just the most recent,
+# cancel other pending/running ones
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref }}"
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run vitest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        working-directory: ui/app
+        run: yarn install --frozen-lockfile
+
+      - name: Run vitest
+        working-directory: ui/app
+        run: yarn test --run
+
+      - name: Generate coverage report
+        working-directory: ui/app
+        run: yarn test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ui/app/coverage
+          retention-days: 30
