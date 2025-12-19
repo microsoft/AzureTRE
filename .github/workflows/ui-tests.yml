@@ -39,6 +39,10 @@ jobs:
         working-directory: ui/app
         run: yarn install --frozen-lockfile
 
+      - name: Copy config.source.json to config.json
+        working-directory: ui/app/src
+        run: cp config.source.json config.json
+
       - name: Run vitest
         working-directory: ui/app
         run: yarn test --run
