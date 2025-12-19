@@ -56,7 +56,6 @@ jobs:
         with:
           name: coverage-report
           path: ui/app/coverage
-          retention-days: 10
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
