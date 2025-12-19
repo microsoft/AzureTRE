@@ -25,7 +25,7 @@ export const ResourceCardList: React.FunctionComponent<
         <Stack horizontal wrap styles={stackStyles} tokens={wrapStackTokens}>
           {props.resources.map((r: Resource, i: number) => {
             return (
-              <Stack.Item key={i} style={gridItemStyles}>
+              <Stack.Item key={r.id} style={gridItemStyles}>
                 <ResourceCard
                   resource={r}
                   selectResource={(resource: Resource) =>
