@@ -74,3 +74,20 @@ jobs:
           files: "ui/app/junit.xml"
           check_name: "UI Test Results"
           comment_mode: always
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+
+      # For PR builds triggered from comment builds, the GITHUB_REF is set to main
+      # so the checks aren't automatically associated with the PR
+      # If prHeadSha is specified then explicity mark the checks for that SHA
+      - name: Report check status
+        if: github.event.workflow_run.head_sha != ''
+        uses: LouisBrunner/checks-action@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # the name must be identical to the one received by the real job
+          sha: ${{ github.event.workflow_run.head_sha }}
+          name: "UI Tests"
+          status: "completed"
+          conclusion: ${{ github.event.workflow_run.conclusion }}
+          details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
