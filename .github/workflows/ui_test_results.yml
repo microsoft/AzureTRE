@@ -12,7 +12,7 @@ on: # yamllint disable-line rule:truthy
 # permissions: {}
 
 jobs:
-  test-results:
+  ui-test-results:
     name: UI Test Results
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion != 'skipped'

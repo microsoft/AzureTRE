@@ -6,7 +6,7 @@ on: # yamllint disable-line rule:truthy
     branches: [main]
     paths:
       - "ui/app/**"
-      - ".github/workflows/ui-tests.yml"
+      - ".github/workflows/ui_tests.yml"
   push:
     branches: [main]
     paths:
@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  vitest:
     name: Run vitest
     runs-on: ubuntu-latest
     permissions:
