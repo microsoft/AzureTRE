@@ -1,7 +1,7 @@
-/// <reference types="vitest" />
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import eslint from "vite-plugin-eslint";
+import eslint from "@nabla/vite-plugin-eslint";
 import tsconfigPaths from "vite-tsconfig-paths";
 import svgr from "vite-plugin-svgr";
 
