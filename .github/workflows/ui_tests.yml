@@ -74,8 +74,6 @@ jobs:
           files: "ui/app/junit.xml"
           check_name: "UI Test Results"
           comment_mode: always
-          event_file: artifacts/Event File/event.json
-          event_name: ${{ github.event.workflow_run.event }}
 
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
@@ -91,3 +89,13 @@ jobs:
           status: "completed"
           conclusion: ${{ github.event.workflow_run.conclusion }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Report coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          json-summary-path: ui/app/coverage/coverage-summary.json
+          #json-summary-compare-path: main-coverage/coverage-summary.json
+          json-final-path: ui/app/coverage/coverage-final.json
+          comment-on: pr
