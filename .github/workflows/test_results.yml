@@ -45,11 +45,10 @@ jobs:
 
           # Poll until the other workflow completes or is skipped (max 120 attempts = 10 minutes)
           for i in {1..120}; do
-            # Get all workflows for this commit and check if the target workflow is completed or skipped
-            WORKFLOW_STATE=$(gh api repos/${{ github.repository }}/actions/runs \
-              --jq '.workflow_runs[] | select(.head_sha=="'$SHA'") | select(.name=="'$WAIT_FOR'") | select(.status=="completed") | .id' 2>/dev/null | head -1)
+            # Get workflow runs for this commit and check if the target workflow is completed
+            WORKFLOW_STATE=$(gh run list --repo ${{ github.repository }} --commit $SHA --workflow "$WAIT_FOR" --json status --jq '.[0].status' 2>/dev/null)
 
-            if [ -n "$WORKFLOW_STATE" ]; then
+            if [ "$WORKFLOW_STATE" = "completed" ]; then
               echo "✓ '$WAIT_FOR' has completed"
               break
             fi
