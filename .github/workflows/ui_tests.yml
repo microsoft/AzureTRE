@@ -1,3 +1,4 @@
+---
 name: UI Tests
 
 on: # yamllint disable-line rule:truthy
