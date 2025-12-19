@@ -63,10 +63,3 @@ jobs:
         with:
           name: test-results
           path: ui/app/junit.xml
-
-      - name: Publish test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: ui/app/junit.xml
-          check_name: UI Test Results
