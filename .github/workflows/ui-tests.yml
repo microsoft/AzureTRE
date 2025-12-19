@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ui/app
-        run: yarn install --frozen-lockfile
+        run: yarn Install
 
       - name: Copy config.source.json to config.json
         working-directory: ui/app/src
