@@ -46,7 +46,7 @@ jobs:
           # Poll until the other workflow completes or is skipped (max 120 attempts = 10 minutes)
           for i in {1..120}; do
             # Get workflow runs for this commit and check if the target workflow is completed
-            WORKFLOW_STATE=$(gh run list --repo ${{ github.repository }} --commit $SHA --workflow "$WAIT_FOR" --json status --jq '.[0].status' 2>/dev/null)
+            WORKFLOW_STATE=$(gh run list --repo ${{ github.event.workflow_run.head_repository.full_name }} --commit $SHA --workflow "$WAIT_FOR" --json status --jq '.[0].status' 2>/dev/null)
 
             if [ "$WORKFLOW_STATE" = "completed" ]; then
               echo "✓ '$WAIT_FOR' has completed"
