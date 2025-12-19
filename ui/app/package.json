@@ -27,12 +27,12 @@
     "strip-ansi": "^7.1.0",
     "typescript": "^5.6.3",
     "vite": "latest",
+    "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-svgr": "latest",
     "vite-tsconfig-paths": "latest",
     "web-vitals": "^3.3.0"
   },
   "devDependencies": {
-    "@nabla/vite-plugin-eslint": "^2.0.6",
     "@testing-library/dom": "^7.21.4",
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.0.0",
