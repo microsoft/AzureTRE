@@ -54,12 +54,21 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage-report
+          name: ui-test-coverage-report
           path: ui/app/coverage
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vitest-results
+          name: ui-test-results
           path: ui/app/junit.xml
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          files: "ui/app/junit.xml"
+          check_name: "UI Test Results"
+          comment_mode: always
