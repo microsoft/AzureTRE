@@ -27,6 +27,42 @@ jobs:
       actions: read
 
     steps:
+      - name: Wait for both workflows to complete
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          COMPLETED_WORKFLOW="${{ github.event.workflow_run.name }}"
+
+          # Determine which workflow to wait for
+          if [ "$COMPLETED_WORKFLOW" = "Docker build" ]; then
+            WAIT_FOR="UI Tests"
+          else
+            WAIT_FOR="Docker build"
+          fi
+
+          echo "Workflow '$COMPLETED_WORKFLOW' completed. Waiting for '$WAIT_FOR' to complete..."
+
+          # Poll until the other workflow completes or is skipped (max 120 attempts = 10 minutes)
+          for i in {1..120}; do
+            # Get all workflows for this commit and check if the target workflow is completed or skipped
+            WORKFLOW_STATE=$(gh api repos/${{ github.repository }}/commits/$SHA/check-runs \
+              --jq '.check_runs[] | select(.name=="'$WAIT_FOR'") | select(.status=="completed" or .conclusion=="skipped") | .name' 2>/dev/null | head -1)
+
+            if [ -n "$WORKFLOW_STATE" ]; then
+              echo "✓ '$WAIT_FOR' has completed or was skipped"
+              break
+            fi
+
+            if [ $i -eq 120 ]; then
+              echo "⚠ Timeout waiting for $WAIT_FOR after 10 minutes, proceeding anyway..."
+              break
+            fi
+
+            echo "Waiting for $WAIT_FOR... (attempt $i/120, ~$((i*5)) seconds elapsed)"
+            sleep 5
+          done
+
       - name: Download and Extract Artifacts
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
