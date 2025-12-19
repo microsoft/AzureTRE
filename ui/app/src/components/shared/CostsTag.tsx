@@ -30,42 +30,29 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
 
   useEffect(() => {
     async function fetchCostData() {
-      try {
-        let costs: CostResource[] = [];
-        if (workspaceCtx.costs && workspaceCtx.costs.length > 0) {
-          costs = workspaceCtx.costs;
-        } else if (costsCtx.costs && costsCtx.costs.length > 0) {
-          costs = costsCtx.costs;
-        }
-
-        const resourceCosts = costs.find((cost) => {
-          return cost.id === props.resourceId;
-        });
-
-        if (resourceCosts && resourceCosts.costs && resourceCosts.costs.length > 0) {
-          const formattedCost = new Intl.NumberFormat(undefined, {
-            style: "currency",
-            currency: resourceCosts?.costs[0].currency,
-            currencyDisplay: "narrowSymbol",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).format(resourceCosts.costs[0].cost);
-          setFormattedCost(formattedCost);
-        }
-      } catch (err) {
-        // Swallow errors and keep UI in a safe state; loading will be cleared in finally
-        // (API errors or unexpected shapes should not crash the component)
-        console.error(err);
-      } finally {
-        setLoadingState(LoadingState.Ok);
+      let costs: CostResource[] = [];
+      if (workspaceCtx.costs?.length > 0) {
+        costs = workspaceCtx.costs;
+      } else if (costsCtx.costs?.length > 0) {
+        costs = costsCtx.costs;
       }
-    }
 
-    // If the workspace object hasn't been loaded yet, keep showing shimmer until it is
-    if (!workspaceCtx.workspace || typeof workspaceCtx.workspace.id === "undefined") {
-      return;
-    }
+      const resourceCosts = costs.find((cost) => {
+        return cost.id === props.resourceId;
+      });
 
+      if (resourceCosts && resourceCosts?.costs?.length > 0) {
+        const formattedCost = new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency: resourceCosts?.costs[0].currency,
+          currencyDisplay: "narrowSymbol",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(resourceCosts.costs[0].cost);
+        setFormattedCost(formattedCost);
+      }
+      setLoadingState(LoadingState.Ok);
+    }
     fetchCostData();
   }, [
     apiCall,
@@ -90,10 +77,13 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
     return baseMessage;
   };
 
+  const showShimmer = loadingState === LoadingState.Loading ||
+    (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
-      {loadingState === LoadingState.Loading ? (
-        <Shimmer />
+      {showShimmer ? (
+        <Shimmer data-testid="shimmer" />
       ) : (
         <>
           {formattedCost ? (

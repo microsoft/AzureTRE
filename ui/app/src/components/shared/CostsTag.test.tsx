@@ -127,7 +127,7 @@ describe("CostsTag Component", () => {
     } as any;
     const costsContext = {
       costs: undefined,
-      loadingState: LoadingState.Ok,
+      loadingState: LoadingState.Loading,
       setCosts: vi.fn(),
       setLoadingState: vi.fn(),
     } as any;
