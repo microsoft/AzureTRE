@@ -44,12 +44,13 @@ jobs:
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
-          event_file: artifacts/Event File/event.json
           event_name: ${{ github.event.workflow_run.event }}
           files: "artifacts/**/*.xml"
           check_name: "Unit Test Results"
+          comment_mode: always
 
       # The following step is the catch situations where the tests didn't run at all.
       - name: Check failure files
