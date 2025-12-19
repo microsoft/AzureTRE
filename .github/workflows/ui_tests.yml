@@ -56,6 +56,7 @@ jobs:
         with:
           name: ui-test-coverage-report
           path: ui/app/coverage
+          retention-days: 10
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -63,6 +64,7 @@ jobs:
         with:
           name: ui-test-results
           path: ui/app/junit.xml
+          retention-days: 10
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
