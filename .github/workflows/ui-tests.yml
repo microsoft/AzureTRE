@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      checks: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -45,7 +47,7 @@ jobs:
 
       - name: Run vitest
         working-directory: ui/app
-        run: yarn test --run
+        run: yarn test --run --reporter=junit --outputFile=junit.xml
 
       - name: Generate coverage report
         working-directory: ui/app
@@ -58,3 +60,10 @@ jobs:
           name: coverage-report
           path: ui/app/coverage
           retention-days: 10
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: ui/app/junit.xml
+          check_name: UI Test Results
