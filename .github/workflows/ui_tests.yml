@@ -94,8 +94,4 @@ jobs:
         if: always()
         uses: davelosert/vitest-coverage-report-action@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          json-summary-path: ui/app/coverage/coverage-summary.json
-          #json-summary-compare-path: main-coverage/coverage-summary.json
-          json-final-path: ui/app/coverage/coverage-final.json
-          comment-on: pr
+          working-directory: ui/app/
