@@ -188,7 +188,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             .workspaceId;
           templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
-          // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
           break;
         } else {
           throw Error(
@@ -210,7 +209,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const newTemplate = await apiCall(
           fetchUrl,
           HttpMethod.Get,
-          wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+          props.resource.resourceType === ResourceType.UserResource ? workspaceCtx.workspaceApplicationIdURI : undefined,
           undefined,
           ResultType.JSON,
         );
@@ -223,7 +222,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           currentTemplate = await apiCall(
             `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
             HttpMethod.Get,
-            wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+            props.resource.resourceType === ResourceType.UserResource ? workspaceCtx.workspaceApplicationIdURI : undefined,
             undefined,
             ResultType.JSON,
           );
