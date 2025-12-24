@@ -22,7 +22,7 @@ BUG FIXES:
 * Add timeouts to Graph requests in API ([#4723](https://github.com/microsoft/AzureTRE/issues/4723))
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
-* Remove duplicate auth dependencies in API ([]())
+* Remove duplicate auth dependencies in API ([#4796](https://github.com/microsoft/AzureTRE/pull/4796))
 
 COMPONENTS:
 
