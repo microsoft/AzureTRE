@@ -21,6 +21,7 @@ terraform {
       source  = "Azure/azapi"
       version = "= 2.8.0"
     }
+    # tflint-ignore: terraform_unused_required_providers
     cloudinit = {
       source  = "hashicorp/cloudinit"
       version = "= 2.3.5"
