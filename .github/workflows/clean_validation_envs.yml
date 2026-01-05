@@ -2,9 +2,9 @@
 name: Clean Validation Environments
 
 on:  # yamllint disable-line rule:truthy
-  schedule:
+  #schedule:
     # Every 2 hours
-    - cron: "0 */1 * * *"
+    #- cron: "0 */1 * * *"
   workflow_dispatch:
 
 jobs:
