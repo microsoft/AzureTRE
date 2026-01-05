@@ -1,11 +1,11 @@
 ---
 name: Docker build
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   pull_request:
     branches:
       - main
-      - 'feature/**'
+      - "feature/**"
   workflow_dispatch:
 
 # for each ref (branch/pr) run just the most recent, cancel
@@ -14,20 +14,27 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   docker_build:
     name: Build images
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # For uploading artifacts
+      pull-requests: read # For path filter
     steps:
       - name: Upload Event File
         # this step is required to publish test results from forks
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Event File
           path: ${{ github.event_path }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -105,7 +112,7 @@ jobs:
         if: |
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -125,7 +132,7 @@ jobs:
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_api_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -136,7 +143,7 @@ jobs:
         if: |
           (steps.filter.outputs.resource_processor == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./resource_processor
           file: ./resource_processor/vmss_porter/Dockerfile
@@ -147,7 +154,7 @@ jobs:
         if: |
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -167,7 +174,7 @@ jobs:
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_maven_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -178,7 +185,7 @@ jobs:
         if: |
           (steps.filter.outputs.gitea == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./templates/shared_services/gitea/docker
           file: ./templates/shared_services/gitea/docker/Dockerfile
@@ -195,7 +202,7 @@ jobs:
         if: |
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
@@ -215,7 +222,7 @@ jobs:
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
@@ -224,7 +231,7 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: test-results
           path: test-results
