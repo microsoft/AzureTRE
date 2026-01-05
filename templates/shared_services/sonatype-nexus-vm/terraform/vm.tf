@@ -107,7 +107,7 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   secure_boot_enabled             = true
   vtpm_enabled                    = true
 
-  custom_data = data.template_cloudinit_config.nexus_config.rendered
+  custom_data = data.cloudinit_config.nexus_config.rendered
 
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
@@ -167,7 +167,7 @@ resource "azurerm_disk_encryption_set" "nexus_disk_encryption" {
   }
 }
 
-data "template_cloudinit_config" "nexus_config" {
+data "cloudinit_config" "nexus_config" {
   gzip          = true
   base64_encode = true
 
@@ -176,7 +176,7 @@ data "template_cloudinit_config" "nexus_config" {
     # Important: merge_type must be defined on each part, contrary to what cloud-init docs say about a "stack" aproach
     merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content_type = "text/cloud-config"
-    content      = data.template_file.nexus_bootstrapping.rendered
+    content      = local.nexus_bootstrapping_content
   }
 
   part {
@@ -209,7 +209,7 @@ data "template_cloudinit_config" "nexus_config" {
           permissions = "0744"
         },
         {
-          content     = data.template_file.configure_nexus_ssl.rendered
+          content     = local.configure_nexus_ssl_content
           path        = "/etc/cron.daily/configure_nexus_ssl"
           permissions = "0755"
         },
@@ -233,20 +233,16 @@ data "template_cloudinit_config" "nexus_config" {
   }
 }
 
-data "template_file" "nexus_bootstrapping" {
-  template = file("${path.module}/cloud-config.yaml")
-  vars = {
+locals {
+  nexus_bootstrapping_content = templatefile("${path.module}/cloud-config.yaml", {
     NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
-  }
-}
+  })
 
-data "template_file" "configure_nexus_ssl" {
-  template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
-  vars = {
+  configure_nexus_ssl_content = templatefile("${path.module}/../scripts/configure_nexus_ssl.sh", {
     MSI_ID        = azurerm_user_assigned_identity.nexus_msi.id
     VAULT_NAME    = data.azurerm_key_vault.kv.name
     SSL_CERT_NAME = data.azurerm_key_vault_certificate.nexus_cert.name
-  }
+  })
 }
 
 resource "azurerm_virtual_machine_extension" "keyvault" {
