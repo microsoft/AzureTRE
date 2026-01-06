@@ -35,7 +35,7 @@ function kv_add_network_exception() {
   fi
 
   local ATTEMPT=1
-  local MAX_ATTEMPTS=10
+  local MAX_ATTEMPTS=30
 
   while true; do
 
