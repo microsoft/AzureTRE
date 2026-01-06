@@ -13,6 +13,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Fix workspace deletion failures due to AnotherOperationInProgress errors on AMPLS private endpoint ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
 * Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
@@ -24,6 +25,7 @@ BUG FIXES:
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 
 COMPONENTS:
+* Bump workspace base template version to 2.7.2 ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
