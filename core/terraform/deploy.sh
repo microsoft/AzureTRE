@@ -32,8 +32,8 @@ LOG_FILE="${TS}-tre-core.log"
   -n "${TF_VAR_terraform_state_container_name}" \
   -k "${TRE_ID}" \
   -l "${LOG_FILE}" \
-  -c "terraform plan -out ${PLAN_FILE} && \
-  terraform apply -input=false -auto-approve ${PLAN_FILE} && \
+  -c "terraform plan --parallelism=25 -out ${PLAN_FILE} && \
+  terraform apply -input=false -auto-approve --parallelism=25 ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
 
 ./update_tags.sh
