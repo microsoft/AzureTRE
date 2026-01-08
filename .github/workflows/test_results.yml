@@ -28,19 +28,10 @@ jobs:
 
     steps:
       - name: Download and Extract Artifacts
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: |
-          mkdir -p artifacts && cd artifacts
-
-          artifacts_url=${{ github.event.workflow_run.artifacts_url }}
-
-          gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read -r artifact
-          do
-            IFS=$'\t' read -r name url <<< "$artifact"
-            gh api "$url" > "$name.zip"
-            unzip -d "$name" "$name.zip"
-          done
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        with:
+           run_id: ${{ github.event.workflow_run.id }}
+           path: artifacts
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
