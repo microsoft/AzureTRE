@@ -192,11 +192,11 @@ resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
 
 # System topic
 resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
-  name                   = local.import_inprogress_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_import_in_progress.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
+  name                = local.import_inprogress_sys_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_import_in_progress.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
 
   identity {
     type = "SystemAssigned"
@@ -225,11 +225,11 @@ resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_cre
 
 
 resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
-  name                   = local.import_rejected_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_import_rejected.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
+  name                = local.import_rejected_sys_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_import_rejected.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
 
   identity {
     type = "SystemAssigned"
@@ -257,11 +257,11 @@ resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_creat
 }
 
 resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
-  name                   = local.import_blocked_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_import_blocked.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
+  name                = local.import_blocked_sys_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_import_blocked.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
 
   identity {
     type = "SystemAssigned"
@@ -290,11 +290,11 @@ resource "azurerm_role_assignment" "servicebus_sender_import_blocked_blob_create
 
 
 resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
-  name                   = local.export_approved_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
+  name                = local.export_approved_sys_topic_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_export_approved.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
 
   identity {
     type = "SystemAssigned"
@@ -531,7 +531,7 @@ resource "azurerm_monitor_diagnostic_setting" "eventgrid_custom_topics" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
   }
 }
@@ -554,7 +554,7 @@ resource "azurerm_monitor_diagnostic_setting" "eventgrid_system_topics" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
   }
 }

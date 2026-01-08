@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.3.4
+version: 3.3.5
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -86,7 +86,7 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.9.8
+      clientVersion: 1.14.3
 
 install:
   - terraform:
