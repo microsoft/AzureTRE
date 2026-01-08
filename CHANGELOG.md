@@ -18,11 +18,15 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
 * Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
 * Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
 * Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
 * Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
+* Add timeouts to Graph requests in API ([#4723](https://github.com/microsoft/AzureTRE/issues/4723))
+* Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
+* Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 
 COMPONENTS:
 

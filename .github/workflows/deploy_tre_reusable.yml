@@ -193,7 +193,7 @@ jobs:
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -294,7 +294,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -318,7 +318,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -342,7 +342,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -441,7 +441,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -492,7 +492,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -543,7 +543,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -608,7 +608,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -662,7 +662,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -701,7 +701,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -750,7 +750,7 @@ jobs:
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -784,7 +784,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -811,7 +811,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
@@ -826,7 +826,7 @@ jobs:
     timeout-minutes: 300
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
           # if the following values are missing (i.e. not triggered via comment workflow)
@@ -854,7 +854,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: E2E Test Results
           path: "./e2e_tests/pytest_e2e_custom.xml"
@@ -890,12 +890,12 @@ jobs:
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
 
       - name: Publish E2E Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2.16.1
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           junit_files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"

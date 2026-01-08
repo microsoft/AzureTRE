@@ -130,8 +130,7 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
     assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
-    # TODO: uncomment with https://github.com/microsoft/AzureTRE/pull/2902
-    # assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
+    assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
     assert workspace.properties["workspace_owner_object_id"] == "test_object_id"
 
 

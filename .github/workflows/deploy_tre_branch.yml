@@ -29,6 +29,9 @@ on: # yamllint disable-line rule:truthy
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: "${{ github.workflow }}-${{ github.ref }}"
 
+permissions:
+  contents: read
+
 jobs:
   prepare-not-main:
     name: Preparation
@@ -37,6 +40,8 @@ jobs:
       github.ref != 'refs/heads/main'
     outputs:
       refid: ${{ steps.run-id.outputs.refid }}
+    permissions:
+      contents: read
     steps:
       - id: run-id
         name: Get run id

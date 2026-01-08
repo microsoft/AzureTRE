@@ -175,11 +175,11 @@ class AzureADAuthorization(AccessService):
         Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
         """
         if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration")
+            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration", timeout=GRAPH_REQUEST_TIMEOUT)
             aad_metadata = response.json() if response.ok else None
             jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
             if jwks_uri:
-                response = requests.get(jwks_uri)
+                response = requests.get(jwks_uri, timeout=GRAPH_REQUEST_TIMEOUT)
                 keys = response.json() if response.ok else None
                 if keys and 'keys' in keys:
                     for key in keys['keys']:
@@ -260,7 +260,7 @@ class AzureADAuthorization(AccessService):
         # For each sub-list it's required to call the batch endpoint for retrieveing user/group information
         for request_body_element in batch_request_body_list:
             batch_request_body_tmp = {"requests": request_body_element}
-            users_graph_data_tmp = requests.post(batch_endpoint, json=batch_request_body_tmp, headers=headers).json()
+            users_graph_data_tmp = requests.post(batch_endpoint, json=batch_request_body_tmp, headers=headers, timeout=GRAPH_REQUEST_TIMEOUT).json()
             users_graph_data["responses"] = users_graph_data["responses"] + users_graph_data_tmp["responses"]
 
         return users_graph_data

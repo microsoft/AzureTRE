@@ -4,7 +4,7 @@ from mock import call, patch
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
-from services.aad_authentication import AzureADAuthorization, compare_versions
+from services.aad_authentication import AzureADAuthorization, compare_versions, GRAPH_REQUEST_TIMEOUT
 from services.access_service import AuthConfigValidationError, UserRoleAssignmentError
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
@@ -546,12 +546,14 @@ def test_get_user_details_with_batch_of_more_than_20_requests(mock_graph_post, m
         call(
             f"{batch_endpoint}",
             json=batch_request_body_first_20,
-            headers=headers
+            headers=headers,
+            timeout=GRAPH_REQUEST_TIMEOUT
         ),
         call(
             f"{batch_endpoint}",
             json=batch_request_body_last_10,
-            headers=headers
+            headers=headers,
+            timeout=GRAPH_REQUEST_TIMEOUT
         )
     ]
     mock_graph_post.assert_has_calls(calls, any_order=True)

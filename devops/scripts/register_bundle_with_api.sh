@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script register a bundle with the TRE API. It relies on the bundle
-# pre-existing in the remote repository (i.e. has been publish beforehand).
+# pre-existing in the remote repository (i.e. has been published beforehand).
 
 set -o errexit
 set -o pipefail
@@ -102,7 +102,7 @@ explain_json=$(porter explain --reference "${acr_name}${acr_domain_suffix}"/"$(y
 payload=$(echo "${explain_json}" | jq --slurpfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema[0], "resourceType": $bundle_type, "current": $current}')
 
 if [ "${dry_run}" == "true" ]; then
-    echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register. "
+    echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register."
     echo "See documentation for more details: https://microsoft.github.io/AzureTRE/tre-admins/registering-templates/"
     echo "${payload}" | jq --color-output .
     exit 1
@@ -122,7 +122,7 @@ function get_template() {
   case "${bundle_type}" in
     ("workspace") get_result=$(tre workspace-template "$template_name" show --output json) || echo ;;
     ("workspace_service") get_result=$(tre workspace-service-template "$template_name" show --output json) || echo ;;
-    ("user_resource") get_result=$(tre workspace-service-template "${workspace_service_name}" user-resource-template "$template_name" show --output json) || echo;;
+    ("user_resource") get_result=$(tre workspace-service-template "${workspace_service_name}" user-resource-template "$template_name" show --output json) || echo ;;
     ("shared_service") get_result=$(tre shared-service-template "$template_name" show --output json) || echo ;;
   esac
   echo "$get_result"
@@ -130,17 +130,22 @@ function get_template() {
 
 
 get_result=$(get_template)
-if [[ -n "$(echo "$get_result" | jq -r .id)" ]]; then
+if [[ -n "$(echo "$get_result" | jq -r '.id // empty')" ]]; then
   # 'id' was returned - so we successfully got the template from the API. Now check the version
-  if [[ "$(echo "$get_result" | jq -r .version)" == "$template_version" ]]; then
-    echo "Template with this version already exists"
-    exit
+  existing_version="$(echo "$get_result" | jq -r .version)"
+
+  if [[ "$template_version" == "$existing_version" ]]; then
+    echo "A template with this version already exists."
+    exit 0
+  elif [[ "$(printf '%s\n' "$template_version" "$existing_version" | sort -V | head -n1)" != "$existing_version" ]]; then
+    echo "A newer version of this template already exists (existing: $existing_version, attempted: $template_version). Registration aborted."
+    exit 1
   fi
 else
   error_code=$(echo "$get_result" | jq -r .status_code)
   # 404 Not Found error at this point is fine => we want to continue to register the template
   # For other errors, show the error and exit with non-zero result
-  if [[  "$error_code" != "404" ]]; then
+  if [[ "$error_code" != "404" ]]; then
     echo "Error checking for existing template: $get_result"
     exit 1
   fi
