@@ -117,7 +117,7 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
-    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, "test_object_id", ["test_role"])
 
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
@@ -185,7 +185,7 @@ async def test_create_workspace_item_creates_a_workspace_with_custom_address_spa
     mock_is_workspace_storage_account_available.return_value.return_value = False
     validate_input_mock.return_value = basic_resource_template
 
-    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, "test_object_id", ["test_role"])
 
     assert workspace.properties["address_space"] == workspace_to_create.properties["address_space"]
 
@@ -207,7 +207,7 @@ async def test_create_workspace_item_throws_exception_with_bad_custom_address_sp
     validate_input_mock.return_value = basic_resource_template
 
     with pytest.raises(InvalidInput):
-        await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+        await workspace_repo.create_workspace_item(workspace_to_create, "test_object_id", ["test_role"])
 
 
 @pytest.mark.asyncio
@@ -272,19 +272,7 @@ async def test_create_workspace_item_raises_value_error_if_template_is_invalid(m
     validate_input_mock.side_effect = ValueError
 
     with pytest.raises(ValueError):
-        await workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id", ["test_role"])
-
-
-def test_automatically_create_application_registration_returns_true(workspace_repo):
-    dictToTest = {"auth_type": "Automatic"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is True
-
-
-def test_automatically_create_application_registration_returns_false(workspace_repo):
-    dictToTest = {"client_id": "12345"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is False
+        await workspace_repo.create_workspace_item(workspace_input, "test_object_id", ["test_role"])
 
 
 def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace_repo):

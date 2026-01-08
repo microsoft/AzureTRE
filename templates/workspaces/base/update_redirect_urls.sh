@@ -7,11 +7,10 @@ set -o pipefail
 
 function usage() {
     cat <<USAGE
-    Usage: $0 --workspace-api-client-id some_guid --aad-redirect-uris-b64 json_array_of_urls_in_base64 --register-aad-application false
+    Usage: $0 --workspace-api-client-id some_guid --aad-redirect-uris-b64 json_array_of_urls_in_base64
     Options:
         --workspace-api-client-id     The workspace api AAD application registration client Id
         --aad-redirect-uris-b64       The allowed redirect urls for the application
-        --register-aad-application    This script runs only if this value is set to false
 USAGE
     exit 1
 }
@@ -31,10 +30,6 @@ while [ "$1" != "" ]; do
         shift
         aad_redirect_uris_b64=$1
         ;;
-    --register-aad-application)
-        shift
-        register_aad_application=$1
-        ;;
     *)
         echo "Unexpected argument: '$1'"
         usage
@@ -53,11 +48,6 @@ done
 set -o nounset
 
 az cloud set --name "$AZURE_ENVIRONMENT"
-
-if [ "${register_aad_application}" != "false" ]; then
-    echo "This script can only run when auto-aad is disabled but got value of: ${register_aad_application}. Exiting..."
-    exit 0
-fi
 
 az ad app show --id "${workspace_api_client_id}" --query web.redirectUris --only-show-errors | jq -r '. | join(" ")'
 

@@ -47,8 +47,8 @@
 | `BASTION_SKU` | Optional. The SKU of the Azure Bastion instance. Default value is `Basic`. Allowed values [`Developer`, `Standard`, `Basic`, `Premium`]. See [Azure Bastion SKU feature comparison](https://learn.microsoft.com/en-us/azure/bastion/bastion-overview#sku). |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
-| `AUTO_WORKSPACE_APP_REGISTRATION`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy` permission. [Further information on Application Admin can be found here](./identities/application_admin.md). |
-| `AUTO_WORKSPACE_GROUP_CREATION`| Set to `false` by default. Setting this to `true` grants the `Group.Create` permission to the *Application Admin* identity. This identity can then create security groups aligned to each application role. |
+| `AUTO_WORKSPACE_APP_REGISTRATION`| Set to `false` by default. Setting this to `true` grants the `Application.ReadWrite.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy` permission. [Further information on Application Admin can be found here](./identities/application_admin.md). |
+| `AUTO_WORKSPACE_GROUP_CREATION`| Set to `false` by default. Setting this to `true` grants the `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each application role. |
 | `AUTO_GRANT_WORKSPACE_CONSENT`| Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
 | `USER_MANAGEMENT_ENABLED` | If set to `true`, TRE Admins will be able to assign and de-assign users to workspaces via the UI (Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater). |
 | `PRIVATE_AGENT_SUBNET_ID` | Optional. Vnet exception is enabled for the provided runner agent subnet id, enabling access to private resources like TRE key vault. |
@@ -67,7 +67,6 @@
   | `API_CLIENT_SECRET` | API application client secret. |
   | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
   | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application|
-  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application.|
 
 ## For CI/CD pipelines in github environment secrets
 

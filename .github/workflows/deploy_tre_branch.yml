@@ -86,8 +86,6 @@ jobs:
       MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
-      TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
-      TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
       TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}

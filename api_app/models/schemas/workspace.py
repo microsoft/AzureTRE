@@ -84,7 +84,6 @@ class WorkspaceInCreate(BaseModel):
                     "description": "workspace description",
                     "auth_type": "Manual",
                     "client_id": "<WORKSPACE_CLIENT_ID>",
-                    "client_secret": "<WORKSPACE_CLIENT_SECRET>",
                     "address_space_size": "small"
                 }
             }

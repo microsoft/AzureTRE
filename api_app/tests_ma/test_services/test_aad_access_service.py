@@ -145,12 +145,6 @@ def user_with_role():
     return User(id="user2", name="Test User 2", email="test2@example.com", roles=["WorkspaceOwner"])
 
 
-def test_extract_workspace__raises_error_if_client_id_not_available():
-    access_service = AzureADAuthorization()
-    with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"auth_type": "Manual"})
-
-
 @patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
 @patch("services.aad_authentication.AzureADAuthorization._get_user_role_assignments")
 @patch("services.aad_authentication.AzureADAuthorization._get_user_details")
@@ -304,71 +298,6 @@ def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assi
     assert "test_user1@email.com" in role_assignment_details["WorkspaceOwner"]
     assert "test_user3@email.com" in role_assignment_details["WorkspaceOwner"]
     assert "test_user4@email.com" in role_assignment_details["WorkspaceOwner"]
-
-
-@patch(
-    "services.aad_authentication.AzureADAuthorization._get_app_auth_info",
-    return_value={"app_role_id_workspace_researcher": "1234"},
-)
-def test_extract_workspace__raises_error_if_owner_not_in_roles(get_app_auth_info_mock):
-    access_service = AzureADAuthorization()
-    with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
-
-
-@patch(
-    "services.aad_authentication.AzureADAuthorization._get_app_auth_info",
-    return_value={"app_role_id_workspace_owner": "1234"},
-)
-def test_extract_workspace__raises_error_if_researcher_not_in_roles(
-    get_app_auth_info_mock,
-):
-    access_service = AzureADAuthorization()
-    with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
-
-
-@patch(
-    "services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data",
-    return_value={},
-)
-def test_extract_workspace__raises_error_if_graph_data_is_invalid(
-    get_app_sp_graph_data_mock,
-):
-    access_service = AzureADAuthorization()
-    with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
-
-
-@patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
-def test_extract_workspace__returns_sp_id_and_roles(get_app_sp_graph_data_mock):
-    get_app_sp_graph_data_mock.return_value = {
-        "value": [
-            {
-                "id": "12345",
-                "appRoles": [
-                    {"id": "1abc3", "value": "WorkspaceResearcher"},
-                    {"id": "1abc4", "value": "WorkspaceOwner"},
-                    {"id": "1abc5", "value": "AirlockManager"},
-                ],
-                "servicePrincipalNames": ["api://tre_ws_1234"],
-            }
-        ]
-    }
-    expected_auth_info = {
-        "sp_id": "12345",
-        "scope_id": "api://tre_ws_1234",
-        "app_role_id_workspace_owner": "1abc4",
-        "app_role_id_workspace_researcher": "1abc3",
-        "app_role_id_workspace_airlock_manager": "1abc5",
-    }
-
-    access_service = AzureADAuthorization()
-    actual_auth_info = access_service.extract_workspace_auth_information(
-        data={"auth_type": "Manual", "client_id": "1234"}
-    )
-
-    assert actual_auth_info == expected_auth_info
 
 
 @pytest.mark.parametrize(
@@ -645,6 +574,38 @@ def test_get_role_assignment_for_user(mock_get_role_assignment_data_for_user):
 
     mock_get_role_assignment_data_for_user.assert_called_once()
     assert role == mock_user_data["value"][0]
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_user")
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.user")
+def test_is_user_in_role_with_user_identity(mock_get_identity_type, mock_get_role_assignments):
+    mock_get_role_assignments.return_value = {"value": [{"appRoleId": "role-a"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("user-obj", "role-a") is True
+    mock_get_identity_type.assert_called_once_with("user-obj")
+    mock_get_role_assignments.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_service_principal")
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.servicePrincipal")
+def test_is_user_in_role_with_service_principal(mock_get_identity_type, mock_get_role_assignments):
+    mock_get_role_assignments.return_value = {"value": [{"appRoleId": "role-b"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("sp-obj", "role-b") is True
+    mock_get_identity_type.assert_called_once_with("sp-obj")
+    mock_get_role_assignments.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._get_identity_type", return_value="#microsoft.graph.servicePrincipal")
+@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_graph_data_for_service_principal", return_value={})
+def test_is_user_in_role_handles_missing_graph_value(mock_get_assignments, mock_get_identity_type):
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("sp-obj", "role-c") is False
+    mock_get_identity_type.assert_called_once_with("sp-obj")
+    mock_get_assignments.assert_called_once()
 
 
 def get_mock_batch_response(user_principals, group_principals):
