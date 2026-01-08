@@ -33,6 +33,22 @@ def shared_service_input():
     }
 
 
+@pytest.fixture
+def certs_service_input():
+    return {
+        "templateName": "tre-shared-service-certs",
+        "properties": {
+            "display_name": "Certificate Service",
+            "description": "SSL certificate service with auto-renewal", 
+            "domain_prefix": "test",
+            "cert_name": "test-cert",
+            "enable_auto_renewal": True,
+            "renewal_threshold_days": 30,
+            "renewal_schedule_cron": "0 2 * * 0"
+        }
+    }
+
+
 def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
     return SharedService(
         id=shared_service_id,

@@ -7,6 +7,11 @@ data "azurerm_key_vault" "key_vault" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
+data "azurerm_key_vault" "core" {
+  name                = "kv-${var.tre_id}"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
 data "azurerm_subnet" "app_gw_subnet" {
   name                 = "AppGwSubnet"
   virtual_network_name = "vnet-${var.tre_id}"

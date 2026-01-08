@@ -31,6 +31,7 @@ COMPONENTS:
 * The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
 
 ENHANCEMENTS:
+* Add automatic certificate renewal capability to certificate shared service
 * Create CODEOWNERS file with repository maintainers
 * Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
 * Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
@@ -96,6 +97,9 @@ COMPONENTS:
 
 COMPONENTS:
 * Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+
+COMPONENTS:
+* Certificate shared service `tre-shared-service-certs` to version 0.8.0
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
