@@ -24,15 +24,6 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies             = "Disabled"
     private_link_service_network_policies_enabled = true
     security_group                                = azurerm_network_security_group.app_gw.id
-
-    # delegation {
-    #   name = "delegation"
-
-    #   service_delegation {
-    #     name    = "Microsoft.Network/applicationGateways"
-    #     actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-    #   }
-    # }
   }
 
   subnet {
