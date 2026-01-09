@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 4.27.0"
+      version = "= 4.57.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -11,7 +11,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "= 2.5.2"
+      version = "= 2.6.1"
     }
     http = {
       source  = "hashicorp/http"
@@ -19,7 +19,12 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "= 2.3.0"
+      version = "= 2.8.0"
+    }
+    # tflint-ignore: terraform_unused_required_providers
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = "= 2.3.5"
     }
   }
 
