@@ -92,7 +92,7 @@ export const Footer: React.FunctionComponent = () => {
               borderTop: "1px solid #e8e8e8",
             }}
           >
-            {health?.services.map((s) => {
+            {health?.services?.map((s) => {
               return (
                 <Stack
                   horizontal
