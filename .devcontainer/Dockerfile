@@ -24,7 +24,7 @@ ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
 
 # Install terraform
-ARG TERRAFORM_VERSION="1.9.8"
+ARG TERRAFORM_VERSION="1.14.3"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
@@ -33,10 +33,10 @@ COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
 
 # Install Docker
-ARG DOCKER_CE_VERSION="5:27.4.1-1~debian.12~bookworm"
-ARG DOCKER_CE_CLI_VERSION="5:27.4.1-1~debian.12~bookworm"
-ARG DOCKER_COMPOSE_PLUGIN_VERSION="2.32.1-1~debian.12~bookworm"
-ARG DOCKER_CONTAINERD_VERSION="1.7.24-1"
+ARG DOCKER_CE_VERSION="5:29.1.3-1~debian.12~bookworm"
+ARG DOCKER_CE_CLI_VERSION="5:29.1.3-1~debian.12~bookworm"
+ARG DOCKER_CONTAINERD_VERSION="2.2.1-1~debian.12~bookworm"
+ARG DOCKER_COMPOSE_PLUGIN_VERSION="5.0.0-1~debian.12~bookworm"
 RUN apt-get update && apt-get install -y ca-certificates curl gnupg lsb-release --no-install-recommends \
     && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
@@ -54,10 +54,10 @@ RUN if [ "${INTERACTIVE}" = "true" ]; then \
 
 # Install Porter, updates should be propagated to the RP.
 ARG PORTER_HOME_V1=/home/$USERNAME/.porter/
-ARG PORTER_VERSION=v1.2.1
-ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.5
-ARG PORTER_AZ_MIXIN_VERSION=v1.0.4
-ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.3
+ARG PORTER_VERSION=v1.4.0
+ARG PORTER_TERRAFORM_MIXIN_VERSION=v1.0.8
+ARG PORTER_AZ_MIXIN_VERSION=v1.0.7
+ARG PORTER_AZURE_PLUGIN_VERSION=v1.2.4
 COPY .devcontainer/scripts/porter-v1.sh /tmp/
 RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_TERRAFORM_MIXIN_VERSION=${PORTER_TERRAFORM_MIXIN_VERSION} \
@@ -66,11 +66,9 @@ RUN export PORTER_VERSION=${PORTER_VERSION} \
     PORTER_HOME=${PORTER_HOME_V1} \
     && /tmp/porter-v1.sh
 
-ENV PATH ${PORTER_HOME_V1}:$PATH
+ENV PATH=${PORTER_HOME_V1}:$PATH
 
 # Install requirements
-ARG PIP_VERSION=23.3.1
-RUN  pip3 --no-cache-dir install pip==${PIP_VERSION} && pip3 config set global.disable-pip-version-check true
 COPY ["requirements.txt", "/tmp/pip-tmp/" ]
 COPY ["api_app/requirements.txt", "api_app/requirements-dev.txt", "/tmp/pip-tmp/api_app/" ]
 COPY ["resource_processor/vmss_porter/requirements.txt", "/tmp/pip-tmp/resource_processor/vmss_porter/" ]
@@ -80,12 +78,12 @@ COPY ["airlock_processor/requirements.txt", "/tmp/pip-tmp/airlock_processor/"]
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt
 
 # Install azure-cli
-ARG AZURE_CLI_VERSION=2.67.0-1~bookworm
+ARG AZURE_CLI_VERSION=2.81.0-1~bookworm
 COPY .devcontainer/scripts/azure-cli.sh /tmp/
 RUN export AZURE_CLI_VERSION=${AZURE_CLI_VERSION} \
     && /tmp/azure-cli.sh
 
-ARG YQ_VERSION="v4.44.6"
+ARG YQ_VERSION="v4.49.2"
 RUN curl -L --fail -o /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
     && chmod +x /usr/local/bin/yq
 

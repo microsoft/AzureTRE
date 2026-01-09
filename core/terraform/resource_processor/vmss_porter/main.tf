@@ -13,9 +13,9 @@ terraform {
       source  = "hashicorp/local"
       version = ">= 2.5.2"
     }
-    template = {
-      source  = "hashicorp/template"
-      version = ">= 2.2.0"
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = ">= 2.3.5"
     }
   }
 }
@@ -78,7 +78,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "vm_linux" {
   admin_username                  = "adminuser"
   disable_password_authentication = false
   admin_password                  = random_password.password.result
-  custom_data                     = data.template_cloudinit_config.config.rendered
+  custom_data                     = data.cloudinit_config.config.rendered
   encryption_at_host_enabled      = true
   upgrade_mode                    = "Automatic"
   tags                            = local.tre_core_tags
