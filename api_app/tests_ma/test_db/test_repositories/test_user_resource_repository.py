@@ -95,12 +95,13 @@ async def test_get_user_resource_returns_resource_if_found(query_mock, user_reso
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.dict()]
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus'
     expected_parameters = [
         {'name': '@resourceType', 'value': ResourceType.UserResource},
         {'name': '@serviceId', 'value': SERVICE_ID},
         {'name': '@workspaceId', 'value': WORKSPACE_ID},
-        {'name': '@resourceId', 'value': RESOURCE_ID}
+        {'name': '@resourceId', 'value': RESOURCE_ID},
+        {'name': '@deletedStatus', 'value': Status.Deleted}
     ]
 
     await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
@@ -110,5 +111,11 @@ async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo
 
 @patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
 async def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, user_resource_repo):
+    with pytest.raises(EntityDoesNotExist):
+        await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
+
+
+@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+async def test_get_user_resource_by_id_raises_entity_does_not_exist_if_resource_is_deleted(_, user_resource_repo):
     with pytest.raises(EntityDoesNotExist):
         await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)

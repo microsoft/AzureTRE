@@ -55,6 +55,8 @@ class SharedServiceRepository(ResourceRepository):
 
     async def get_shared_service_by_id(self, shared_service_id: str):
         query, parameters = self.shared_service_query(str(shared_service_id))
+        query += ' AND c.deploymentStatus != @deletedStatus'
+        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
         shared_services = await self.query(query=query, parameters=parameters)
         if not shared_services:
             raise EntityDoesNotExist

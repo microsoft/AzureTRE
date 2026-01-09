@@ -77,8 +77,9 @@ class UserResourceRepository(ResourceRepository):
 
     async def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
         query, parameters = self.user_resources_query(str(workspace_id), str(service_id))
-        query += ' AND c.id = @resourceId'
+        query += ' AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus'
         parameters.append({'name': '@resourceId', 'value': str(resource_id)})
+        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
         user_resources = await self.query(query=query, parameters=parameters)
         if not user_resources:
             raise EntityDoesNotExist

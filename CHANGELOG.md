@@ -12,6 +12,7 @@ ENHANCEMENTS:
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
 
 BUG FIXES:
+* Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
@@ -25,6 +26,7 @@ BUG FIXES:
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 
 COMPONENTS:
+* API version updated to 0.25.7 ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
