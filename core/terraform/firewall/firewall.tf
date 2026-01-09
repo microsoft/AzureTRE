@@ -70,9 +70,8 @@ resource "azurerm_monitor_diagnostic_setting" "firewall" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 
