@@ -109,7 +109,7 @@ The size of the `address_space` will default to `/24`, however other sizes can b
 
 The `address_space` allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.
 
-In your install pipeline you also need to include a workspace upgrade step for the workspace to update it's `address_spaces` property.
+In your install and uninstall pipelines you also need to include a workspace upgrade step for the workspace to update it's `address_spaces` property.
 
 ```json
   "pipeline": {

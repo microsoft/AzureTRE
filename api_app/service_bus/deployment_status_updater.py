@@ -6,7 +6,7 @@ import time
 from pydantic import ValidationError, parse_obj_as
 
 from api.routes.resource_helpers import get_timestamp
-from models.domain.resource import Output
+from models.domain.resource import Output, ResourceType
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -21,6 +21,9 @@ from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+from db.repositories.workspaces import WorkspaceRepository
+from models.schemas.resource import ResourcePatch
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
 class DeploymentStatusUpdater():
@@ -187,6 +190,34 @@ class DeploymentStatusUpdater():
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
+            # If the 'main' step succeeded for an uninstall operation, free any allocated address space
+            # owned by a WorkspaceService resource. We trigger cleanup when the step with templateStepId == 'main'
+            # is successful; this ensures the primary resource has been destroyed successfully before attempting to free the ip address space
+            try:
+                # if the step that just succeeded is the main step for this operation, and this is an uninstall,
+                # proceed with post-uninstall cleanup. No need to scan the operation.steps list again.
+                if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
+                    if resource_to_persist.get("resourceType") == ResourceType.WorkspaceService:
+                        address_to_free = resource_to_persist.get("properties", {}).get("address_space")
+                        parent_workspace_id = resource_to_persist.get("workspaceId")
+                        if address_to_free and parent_workspace_id:
+                            try:
+                                workspace_repo = await WorkspaceRepository.create()
+                                workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
+                                workspace_address_spaces = workspace.properties.get("address_spaces", [])
+                                if address_to_free in workspace_address_spaces:
+                                    new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
+                                    workspace_patch = ResourcePatch()
+                                    workspace_patch.properties = {"address_spaces": new_address_spaces}
+                                    try:
+                                        await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, self.resource_template_repo, self.resource_history_repo, operation.user, False)
+                                        logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
+                                    except CosmosAccessConditionFailedError:
+                                        logger.exception("ETag conflict when freeing workspace address space after successful uninstall")
+                            except Exception:
+                                logger.exception("Failed to free workspace address space after successful uninstall")
+            except Exception:
+                logger.exception("Unexpected error during post-uninstall address space cleanup")
 
             result = True
 
