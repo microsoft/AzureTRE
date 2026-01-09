@@ -1,6 +1,6 @@
 import time
 import pytest
-import pytest_asyncio
+# import pytest_asyncio
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -127,7 +127,7 @@ def create_test_user_with_roles(roles):
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
-    @pytest_asyncio.fixture(autouse=True, scope='class')
+    @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
@@ -303,7 +303,7 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
 
 class TestAirlockRoutesThatRequireAirlockManagerRights():
-    @pytest_asyncio.fixture(autouse=True, scope='class')
+    @pytest.fixture(autouse=True, scope='class')
     def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
         app.dependency_overrides[get_current_airlock_manager_user] = airlock_manager_user
         app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = airlock_manager_user
@@ -463,7 +463,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
 
 class TestAirlockRoutesPermissions():
 
-    @pytest_asyncio.fixture()
+    @pytest.fixture()
     def log_in_with_user(self, app):
         def inner(user):
             app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = user
