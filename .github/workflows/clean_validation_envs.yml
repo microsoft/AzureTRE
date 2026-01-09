@@ -1,11 +1,14 @@
 ---
 name: Clean Validation Environments
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   schedule:
     # Every 2 hours
     - cron: "0 */1 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   clean:
@@ -13,8 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: CICD
     timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read # For checking PRs
+      actions: read # For checking workflow runs
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # This is CRITICAL since we're making decisions based on branch existence
           fetch-depth: 0

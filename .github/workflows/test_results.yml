@@ -2,14 +2,14 @@
 # This workflow is required to publish test results from forks
 name: Test Results
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   workflow_run:
     workflows: ["Docker build"]
     types:
       - completed
-# actionlint doesn't like the following line depite it being recommanded:
-# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs#overview
-# permissions: {}
+
+permissions:
+  contents: read
 
 jobs:
   test-results:
@@ -31,16 +31,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
-           mkdir -p artifacts && cd artifacts
+          mkdir -p artifacts && cd artifacts
 
-           artifacts_url=${{ github.event.workflow_run.artifacts_url }}
+          artifacts_url=${{ github.event.workflow_run.artifacts_url }}
 
-           gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read -r artifact
-           do
-             IFS=$'\t' read -r name url <<< "$artifact"
-             gh api "$url" > "$name.zip"
-             unzip -d "$name" "$name.zip"
-           done
+          gh api "$artifacts_url" -q '.artifacts[] | select(.name | endswith(".dockerbuild") | not) | [.name, .archive_download_url] | @tsv' | while read -r artifact
+          do
+            IFS=$'\t' read -r name url <<< "$artifact"
+            gh api "$url" > "$name.zip"
+            unzip -d "$name" "$name.zip"
+          done
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
