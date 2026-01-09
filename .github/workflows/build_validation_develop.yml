@@ -13,13 +13,19 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # For paths-filter and super-linter
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Full git history is needed to get a proper list of
           # changed files within `super-linter`
@@ -55,7 +61,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         with:
-          terraform_version: "1.9.8"
+          terraform_version: "1.14.3"
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}

@@ -50,28 +50,6 @@ data "azurerm_user_assigned_identity" "ws_encryption_identity" {
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
-data "template_file" "get_apt_keys" {
-  template = file("${path.module}/get_apt_keys.sh")
-  vars = {
-    NEXUS_PROXY_URL = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "pypi_sources_config" {
-  template = file("${path.module}/pypi_sources_config.sh")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-  }
-}
-
-data "template_file" "apt_sources_config" {
-  template = file("${path.module}/apt_sources_config.yml")
-  vars = {
-    nexus_proxy_url = local.nexus_proxy_url
-    apt_sku         = local.apt_sku
-  }
-}
-
 data "azurerm_storage_account" "stg" {
   name                = local.storage_name
   resource_group_name = data.azurerm_resource_group.ws.name
