@@ -41,4 +41,30 @@ locals {
 
   cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
   encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
+
+  get_apt_keys_content = templatefile("${path.module}/get_apt_keys.sh", {
+    NEXUS_PROXY_URL = local.nexus_proxy_url
+  })
+
+  pypi_sources_config_content = templatefile("${path.module}/pypi_sources_config.sh", {
+    nexus_proxy_url = local.nexus_proxy_url
+  })
+
+  apt_sources_config_content = templatefile("${path.module}/apt_sources_config.yml", {
+    nexus_proxy_url = local.nexus_proxy_url
+    apt_sku         = local.apt_sku
+  })
+
+  vm_config_content = templatefile("${path.module}/vm_config.sh", {
+    INSTALL_UI            = local.selected_image.install_ui ? 1 : 0
+    SHARED_STORAGE_ACCESS = tobool(var.shared_storage_access) ? 1 : 0
+    STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
+    STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
+    HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
+    FILESHARE_NAME        = var.shared_storage_access ? var.shared_storage_name : ""
+    NEXUS_PROXY_URL       = local.nexus_proxy_url
+    CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
+    VM_USER               = local.admin_username
+    APT_SKU               = replace(local.apt_sku, ".", "")
+  })
 }

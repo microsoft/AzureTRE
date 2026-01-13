@@ -122,7 +122,7 @@ resource "azurerm_key_vault" "encryption_kv" {
   enabled_for_disk_encryption = true
   sku_name                    = "standard"
   tenant_id                   = data.azurerm_client_config.current.tenant_id
-  enable_rbac_authorization   = true
+  rbac_authorization_enabled  = true
   purge_protection_enabled    = true
 
   lifecycle { ignore_changes = [tags] }

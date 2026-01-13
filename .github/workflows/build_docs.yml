@@ -10,6 +10,8 @@ on:
       - mkdocs.yml
     branches:
       - main
+permissions:
+  contents: read
 jobs:
   deploy:
     name: Deploy Documentation
@@ -18,7 +20,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           persist-credentials: true
