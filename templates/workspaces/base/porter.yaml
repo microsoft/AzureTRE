@@ -198,9 +198,9 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.9.8
+      clientVersion: 1.14.3
   - az:
-      clientVersion: 2.67.0
+      clientVersion: 2.81.0
 
 install:
   - terraform:
