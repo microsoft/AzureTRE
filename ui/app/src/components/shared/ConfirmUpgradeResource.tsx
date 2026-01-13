@@ -119,7 +119,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
 
-  const [newPropertiesToFill, setNewPropertiesToFill] = useState<string[]>([]);
+  const [allNewProperties, setAllNewProperties] = useState<string[]>([]); // All new properties including hidden ones
+  const [newPropertiesToFill, setNewPropertiesToFill] = useState<string[]>([]); // Only visible properties
   const [newPropertyValues, setNewPropertyValues] = useState<any>({});
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
@@ -148,13 +149,21 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
     styles: dialogStyles,
   };
 
-  const wsAuth =
+  // Template GET endpoints (templateGetPath) always use TRE API authentication,
+  // even for UserResource templates, because they use paths like:
+  // /workspace-service-templates/{name} (not /workspaces/{id}/...)
+  const templateUsesWsAuth = false;
+
+  // However, the actual resource instance upgrade operation (PATCH) uses workspace auth
+  // for WorkspaceService and UserResource instances
+  const instanceUsesWsAuth =
     props.resource.resourceType === ResourceType.WorkspaceService ||
     props.resource.resourceType === ResourceType.UserResource;
 
   // Fetch new template schema and identify new properties missing in current resource
   useEffect(() => {
     if (!selectedVersion) {
+      setAllNewProperties([]);
       setNewPropertiesToFill([]);
       setNewPropertyValues({});
       setNewTemplateSchema(null);
@@ -188,6 +197,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             .workspaceId;
           templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+          // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
           break;
         } else {
           throw Error(
@@ -209,7 +219,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const newTemplate = await apiCall(
           fetchUrl,
           HttpMethod.Get,
-          props.resource.resourceType === ResourceType.UserResource ? workspaceCtx.workspaceApplicationIdURI : undefined,
+          templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
           undefined,
           ResultType.JSON,
         );
@@ -222,7 +232,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           currentTemplate = await apiCall(
             `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
             HttpMethod.Get,
-            props.resource.resourceType === ResourceType.UserResource ? workspaceCtx.workspaceApplicationIdURI : undefined,
+            templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
             undefined,
             ResultType.JSON,
           );
@@ -237,11 +247,23 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
         const newKeys = getAllPropertyKeys(newSchemaProps);
         const currentKeys = getAllPropertyKeys(currentProps);
-
         const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
         const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
 
-        setNewPropertiesToFill(newPropKeys);
+        // Store all new properties (including hidden ones) for schema building
+        setAllNewProperties(newPropKeys);
+
+        // Filter out properties that are hidden (tre-hidden) - they don't need user input
+        const uiSchema = newTemplate?.uiSchema || {};
+        const visibleNewPropKeys = newPropKeys.filter((key) => {
+          const topKey = key.split('.')[0];
+          const propertyUiSchema = uiSchema[topKey];
+          // Check if property has "tre-hidden" in its classNames
+          const isHidden = propertyUiSchema?.classNames?.includes('tre-hidden');
+          return !isHidden;
+        });
+
+        setNewPropertiesToFill(visibleNewPropKeys);
         setRemovedProperties(removedPropsArray);
 
         // prefill newPropertyValues with schema defaults or empty string
@@ -277,7 +299,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
       let op = await apiCall(
         props.resource.resourcePath,
         HttpMethod.Patch,
-        wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+        instanceUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
         body,
         ResultType.JSON,
         undefined,
@@ -295,13 +317,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
     }
   };
 
-  // Use buildReducedSchema to include only new properties
+  // Use buildReducedSchema to include all new properties (including hidden ones)
+  // Hidden properties will be rendered but not shown due to tre-hidden CSS class
   const reducedSchemaProperties = newTemplateSchema
-    ? buildReducedSchema(newTemplateSchema, newPropertiesToFill)
+    ? buildReducedSchema(newTemplateSchema, allNewProperties)
     : null;
 
-  // Extract any conditional blocks from full schema, filtered by new properties
-  const conditionalBlocks = newTemplateSchema ? extractConditionalBlocks(newTemplateSchema, newPropertiesToFill) : {};
+  // Extract any conditional blocks from full schema, filtered by all new properties
+  const conditionalBlocks = newTemplateSchema ? extractConditionalBlocks(newTemplateSchema, allNewProperties) : {};
 
   // Compose final schema combining reduced properties with conditional blocks
   const finalSchema = reducedSchemaProperties
@@ -371,11 +394,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                 Warning: The following properties are no longer present in the template and will be removed: {removedProperties.join(', ')}
               </MessageBar>
             )}
-            {!loadingSchema && newPropertiesToFill.length > 0 && (
+            {!loadingSchema && allNewProperties.length > 0 && (
               <Stack tokens={{ childrenGap: 15 }}>
-                <MessageBar messageBarType={MessageBarType.info} styles={{ root: { marginBottom: 25 } }}>
-                  You must specify values for new properties:
-                </MessageBar>
+                {newPropertiesToFill.length > 0 && (
+                  <MessageBar messageBarType={MessageBarType.info} styles={{ root: { marginBottom: 25 } }}>
+                    You must specify values for new properties:
+                  </MessageBar>
+                )}
 
                 {finalSchema && (
                   <Form
@@ -406,8 +431,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                 primaryDisabled={
                   !selectedVersion ||
                   (newPropertiesToFill.length > 0 &&
-                    Object.values(newPropertyValues).some(
-                      (v) => v === "" || v === undefined,
+                    newPropertiesToFill.some(
+                      (key) => newPropertyValues[key] === "" || newPropertyValues[key] === undefined,
                     ))
                 }
                 text="Upgrade"
