@@ -9,21 +9,6 @@ resource "random_uuid" "app_role_workspace_owner_id" {}
 resource "random_uuid" "app_role_workspace_researcher_id" {}
 resource "random_uuid" "app_role_workspace_airlock_manager_id" {}
 
-locals {
-  workspace_sp_password_rotation_days        = 30
-  workspace_sp_password_validity_days        = 180
-  workspace_sp_password_rotation_offset_days = 15
-}
-
-resource "time_rotating" "workspace_sp_password_primary" {
-  rotation_days = local.workspace_sp_password_rotation_days
-}
-
-resource "time_rotating" "workspace_sp_password_secondary" {
-  rotation_days = local.workspace_sp_password_rotation_days
-  rfc3339       = timeadd(time_rotating.workspace_sp_password_primary.rotation_rfc3339, "${local.workspace_sp_password_rotation_offset_days * 24}h")
-}
-
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
   identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
@@ -127,57 +112,9 @@ resource "azuread_service_principal_delegated_permission_grant" "ui" {
   claim_values                         = ["user_impersonation"]
 }
 
-resource "azuread_application_password" "workspace_primary" {
+resource "azuread_application_password" "workspace" {
   application_id = azuread_application.workspace.id
-  display_name   = "Primary Password"
-  end_date = timeadd(
-    time_rotating.workspace_sp_password_primary.rotation_rfc3339,
-    format("%dh", local.workspace_sp_password_validity_days * 24)
-  )
-
-  rotate_when_changed = {
-    rotation = time_rotating.workspace_sp_password_primary.rotation_rfc3339
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "azuread_application_password" "workspace_secondary" {
-  application_id = azuread_application.workspace.id
-  display_name   = "Secondary Password"
-  end_date = timeadd(
-    time_rotating.workspace_sp_password_secondary.rotation_rfc3339,
-    format("%dh", local.workspace_sp_password_validity_days * 24)
-  )
-
-  rotate_when_changed = {
-    rotation = time_rotating.workspace_sp_password_secondary.rotation_rfc3339
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-locals {
-  # Calculate expiration dates for both passwords
-  primary_end_date = timeadd(
-    time_rotating.workspace_sp_password_primary.rotation_rfc3339,
-    format("%dh", local.workspace_sp_password_validity_days * 24)
-  )
-  secondary_end_date = timeadd(
-    time_rotating.workspace_sp_password_secondary.rotation_rfc3339,
-    format("%dh", local.workspace_sp_password_validity_days * 24)
-  )
-
-  # Use timecmp to compare expiration dates and select the password with the furthest expiration
-  # timecmp returns 1 if first timestamp is later, -1 if earlier, 0 if equal
-  use_primary = timecmp(local.primary_end_date, local.secondary_end_date) > 0
-
-  # Use the password with the longest remaining validity
-  current_password = local.use_primary ? azuread_application_password.workspace_primary.value : azuread_application_password.workspace_secondary.value
+  display_name   = "Workspace Password"
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
@@ -191,7 +128,7 @@ resource "azurerm_key_vault_secret" "client_id" {
 
 resource "azurerm_key_vault_secret" "client_secret" {
   name         = "workspace-client-secret"
-  value        = local.current_password
+  value        = azuread_application_password.workspace.value
   key_vault_id = var.key_vault_id
   tags         = var.tre_workspace_tags
 

@@ -29,8 +29,7 @@ Further details around which Azure services are allowed to connect can be found 
 - Key Vault: <https://docs.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services>
 - Azure Storage: <https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?msclkid=ee4e79e4b97911eca46dae54da464d11&tabs=azure-portal#trusted-access-for-resources-registered-in-your-subscription>
 
-## Client secret rotation
-Two secrets (primary and secondary) are created, rotated every 30 days, and offset by 15 days so that one secret is always valid during rollover.
-Each credential remains valid for 180 days, and the currently active secret is synced to the workspace key vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
+## Client secret management
+The workspace application password is created with a default validity of approximately 2 years. The secret is stored in the workspace Key Vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
 
-Re-running the workspace deployment (for example as part of an upgrade) automatically refreshes the secret whenever the rotation schedule requires it—no manual input is needed.
+Workspaces should be upgraded periodically (at least every 2 years) to refresh the password.
