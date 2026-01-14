@@ -2,7 +2,6 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { UserMenu } from "./UserMenu";
-import { createAuthMocks } from "../../test-utils/common-mocks";
 
 // Mock MSAL
 const mockLogout = vi.fn();

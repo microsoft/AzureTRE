@@ -7,7 +7,6 @@ import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { LoadingState } from "../../models/loadingState";
 
 // Mock the API hook
 const mockApiCall = vi.fn();
@@ -280,7 +279,7 @@ describe("ConfirmDeleteResource Component", () => {
     });
 
     expect(screen.getByTestId("exception-layout")).toHaveTextContent(
-      "Error: Failed to delete resource"
+      "Error: " + errorMessage
     );
   });
 

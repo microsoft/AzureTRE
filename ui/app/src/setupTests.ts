@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { expect, beforeAll, vi } from "vitest";
+import { beforeAll, vi } from "vitest";
 import React from "react";
 
 // Mock MSAL React globally to avoid real provider state updates during tests

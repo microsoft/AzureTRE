@@ -5,7 +5,6 @@ import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
-import { LoadingState } from "../../models/loadingState";
 import { CostResource } from "../../models/costs";
 
 // Mock dependencies
