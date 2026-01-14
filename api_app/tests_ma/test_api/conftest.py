@@ -5,7 +5,7 @@ import pytest_asyncio
 from mock import patch
 
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from models.domain.authentication import User
 
@@ -138,11 +138,8 @@ def app() -> FastAPI:
 
 @pytest_asyncio.fixture
 async def client(app: FastAPI) -> AsyncClient:
-    async with AsyncClient(
-        app=app,
-        base_url="http://testserver",
-        headers={"Content-Type": "application/json"},
-    ) as client:
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
         yield client
 
 
