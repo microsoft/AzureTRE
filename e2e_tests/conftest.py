@@ -106,10 +106,7 @@ async def create_or_get_test_workspace(
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
 
-    # Wait for workspace to be fully deployed before attempting role assignments
-    from resources.resource import wait_for
-    await wait_for(workspace_path, admin_token, verify)
-
+    # post_resource with wait=True (the default) ensures the workspace is fully deployed
     await ensure_automation_admin_has_airlock_role(workspace_id, admin_token, verify)
 
     if auth_type == "Manual" and client_id != "":
