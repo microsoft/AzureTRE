@@ -78,6 +78,9 @@ async def create_or_get_test_workspace(
         pre_created_workspace_id: str = "",
         client_id: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
+        # Still need to ensure role assignment for pre-created workspaces
+        admin_token = await get_admin_token(verify=verify)
+        await ensure_automation_admin_has_airlock_role(pre_created_workspace_id, admin_token, verify)
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
     LOGGER.info(f"Creating workspace {template_name}")

@@ -141,7 +141,7 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     # Approve request
     LOGGER.info("Approving airlock request")
     payload = {
-        "approval": "True",
+        "approval": True,
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
     request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
@@ -173,7 +173,7 @@ async def test_airlock_flow(setup_test_workspace, verify) -> None:
     # 3. approve request
     LOGGER.info("Approving airlock request")
     payload = {
-        "approval": "True",
+        "approval": True,
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
     request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
