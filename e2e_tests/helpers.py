@@ -169,7 +169,7 @@ async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str,
 
 
 async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> Optional[str]:
-    """Retrieve a workspace role ID, retrying on 404 to allow time for Entra ID role propagation."""
+    """Retrieve a workspace role ID, retrying on 404/500/503 to allow time for Entra ID role propagation."""
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         headers = get_auth_header(admin_token)
 
@@ -178,6 +178,11 @@ async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bo
 
             if response.status_code == status.HTTP_404_NOT_FOUND:
                 LOGGER.info("Workspace roles not yet available for %s (%s/%s)", workspace_id, attempt + 1, ROLE_ASSIGNMENT_MAX_ATTEMPTS)
+                await asyncio.sleep(ROLE_ASSIGNMENT_SLEEP_SECONDS)
+                continue
+
+            if response.status_code in (status.HTTP_500_INTERNAL_SERVER_ERROR, status.HTTP_503_SERVICE_UNAVAILABLE):
+                LOGGER.info("Workspace roles endpoint returned %s for %s, likely Entra ID propagation delay (%s/%s)", response.status_code, workspace_id, attempt + 1, ROLE_ASSIGNMENT_MAX_ATTEMPTS)
                 await asyncio.sleep(ROLE_ASSIGNMENT_SLEEP_SECONDS)
                 continue
 

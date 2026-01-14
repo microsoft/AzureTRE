@@ -4,8 +4,23 @@
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 
 * Base workspace bundle 3.0.0 (major upgrade from 2.8.0) now creates and rotates the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
-  - Existing workspaces that relied on manually managed secrets continue to operate without interruption; upgrade them at your own pace.
-  - The automation admin (`APPLICATION_ADMIN_CLIENT_ID`) no longer needs the `Directory.Read.All` Microsoft Graph permission; keep the documented `Application.ReadWrite.*`, `Group.*`, `User.ReadBasic.All`, and `DelegatedPermissionGrant.ReadWrite.All` permissions in place. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+  
+  **Migration Guide:**
+  1. **Existing Workspaces:** Continue to operate without changes; upgrade at your convenience
+  2. **Upgrading Workspaces:**
+     - Ensure Application Admin identity owns existing workspace applications
+     - Run workspace upgrade - Terraform will import and take over secret management
+     - After upgrade, Terraform manages passwords with automatic 30-day rotation
+  3. **New Workspaces:**
+     - No `client_secret` parameter needed
+     - Optionally provide `client_id` to reuse pre-existing application
+     - Leave `client_id` empty for fully automatic application creation
+  
+  **Permission Changes:**
+  - **Removed:** `Directory.Read.All` no longer required
+  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.ReadBasic.All`, `DelegatedPermissionGrant.ReadWrite.All`
+  
+  ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
 
 ENHANCEMENTS:

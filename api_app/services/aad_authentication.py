@@ -346,7 +346,14 @@ class AzureADAuthorization(AccessService):
 
     def get_workspace_roles(self, workspace: Workspace) -> List[Role]:
         app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
-        graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
+        graph_data = self._ms_graph_query(app_roles_endpoint, "GET", raise_on_error=True)
+
+        if "value" not in graph_data:
+            logger.error(f"MS Graph response missing 'value' for workspace {workspace.id}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.ACCESS_MS_GRAPH_QUERY_FAILED
+            )
 
         roles = []
 
@@ -497,10 +504,11 @@ class AzureADAuthorization(AccessService):
 
         return request_body
 
-    def _ms_graph_query(self, url: str, http_method: str, json=None) -> dict:
+    def _ms_graph_query(self, url: str, http_method: str, json=None, raise_on_error: bool = False) -> dict:
         msgraph_token = self._get_msgraph_token()
         auth_headers = self._get_auth_header(msgraph_token)
         graph_data = {}
+        original_url = url
         while True:
             if not url:
                 break
@@ -516,8 +524,13 @@ class AzureADAuthorization(AccessService):
                 if '@odata.nextLink' in json_response:
                     url = json_response['@odata.nextLink']
             else:
-                logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
-                logger.error(f"Full response: {response}")
+                logger.error(f"MS Graph query to: {original_url} failed with status code {response.status_code}")
+                logger.error(f"Full response: {response.text}")
+                if raise_on_error:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail=f"{strings.ACCESS_MS_GRAPH_QUERY_FAILED}: {response.status_code}"
+                    )
         return graph_data
 
     def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
