@@ -142,20 +142,26 @@ it("handles async operations", async () => {
 ### Development Commands
 
 ```bash
+# Change directory
+cd ui/app
+
 # Run tests in watch mode
-npm test
+yarn test
+
+# Run tests in run mode
+yarn test --run
 
 # Run tests once with coverage
-npm run test:coverage
+yarn run test:coverage
 
 # Build and test (CI)
-npm run build && npm test
+yarn run build && yarn test --run
 ```
 
 ### Test Scripts
 
-- `npm test`: Runs tests in watch mode for development
-- `npm run test:coverage`: Runs tests once and generates coverage report
+- `yarn test`: Runs tests in watch mode for development
+- `yarn run test:coverage`: Runs tests once and generates coverage report
 - Coverage reports are generated in HTML, LCOV, JSON, and text formats
 
 ## Coverage Requirements
