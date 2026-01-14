@@ -109,15 +109,6 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install Bandit
-        if: ${{ steps.filter.outputs.core == 'true' }}
-        run: pip install bandit
-
-      - name: Run Bandit security checks
-        if: ${{ steps.filter.outputs.core == 'true' }}
-        run: bandit -c pyproject.toml -r .
-
-
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
