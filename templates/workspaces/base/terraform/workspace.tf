@@ -1,6 +1,13 @@
 data "azuread_application" "existing_workspace" {
   count     = var.client_id != "" ? 1 : 0
   client_id = var.client_id
+
+  lifecycle {
+    postcondition {
+      condition     = var.client_id == "" || self.client_id != ""
+      error_message = "Application with client_id ${var.client_id} not found in tenant. Ensure the application exists and the service principal has permission to read it."
+    }
+  }
 }
 
 locals {

@@ -162,12 +162,22 @@ resource "azuread_application_password" "workspace_secondary" {
 }
 
 locals {
-  # Use timecmp function to compare timestamps
-  # timecmp returns 1 if first timestamp is later, -1 if earlier, 0 if equal
-  primary_is_newer = timecmp(time_rotating.workspace_sp_password_primary.rotation_rfc3339, time_rotating.workspace_sp_password_secondary.rotation_rfc3339) > 0
+  # Calculate expiration dates for both passwords
+  primary_end_date = timeadd(
+    time_rotating.workspace_sp_password_primary.rotation_rfc3339,
+    format("%dh", local.workspace_sp_password_validity_days * 24)
+  )
+  secondary_end_date = timeadd(
+    time_rotating.workspace_sp_password_secondary.rotation_rfc3339,
+    format("%dh", local.workspace_sp_password_validity_days * 24)
+  )
 
-  # Use the newer password as the current password
-  current_password = local.primary_is_newer ? azuread_application_password.workspace_primary.value : azuread_application_password.workspace_secondary.value
+  # Use timecmp to compare expiration dates and select the password with the furthest expiration
+  # timecmp returns 1 if first timestamp is later, -1 if earlier, 0 if equal
+  use_primary = timecmp(local.primary_end_date, local.secondary_end_date) > 0
+
+  # Use the password with the longest remaining validity
+  current_password = local.use_primary ? azuread_application_password.workspace_primary.value : azuread_application_password.workspace_secondary.value
 }
 
 resource "azurerm_key_vault_secret" "client_id" {
