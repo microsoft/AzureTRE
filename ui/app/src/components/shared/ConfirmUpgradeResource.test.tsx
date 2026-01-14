@@ -701,4 +701,150 @@ describe("ConfirmUpgradeResource Component", () => {
       );
     });
   });
+
+  it("does not use workspace auth for template GET requests even for workspace services", async () => {
+    // Track all API calls
+    const apiCalls: any[] = [];
+    mockApiCall.mockImplementation((url, method, auth, ...rest) => {
+      apiCalls.push({ url, method, auth });
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={mockResource}
+        onDismiss={mockOnDismiss}
+      />
+    );
+
+    // Select a version to trigger template fetching
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Wait for schema to load
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Loading new template schema...")
+      ).not.toBeInTheDocument();
+    });
+
+    // Verify that GET requests for templates did NOT use workspace auth
+    const getRequests = apiCalls.filter((call) => call.method === "GET" && call.url.includes("?version="));
+    expect(getRequests.length).toBeGreaterThan(0);
+    getRequests.forEach((call) => {
+      expect(call.auth).toBeUndefined(); // Templates should not use workspace auth
+    });
+  });
+
+  it("hides message and enables upgrade button when all new properties are hidden with tre-hidden", async () => {
+    const templateWithHiddenProperties = {
+      properties: {
+        display_name: { type: "string" },
+        resource_key: { type: "string" },
+        hidden_property: { type: "string", default: "hidden_value" },
+      },
+      required: ["display_name"],
+      uiSchema: {
+        hidden_property: {
+          classNames: "tre-hidden",
+        },
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(templateWithHiddenProperties);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={mockResource}
+        onDismiss={mockOnDismiss}
+      />
+    );
+
+    // Select a version
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Wait for schema to load
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Loading new template schema...")
+      ).not.toBeInTheDocument();
+    });
+
+    // Should NOT show the "You must specify values" message because all properties are hidden
+    expect(screen.queryByText("You must specify values for new properties:")).not.toBeInTheDocument();
+
+    // Button should be enabled immediately
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).not.toBeDisabled();
+  });
+
+  it("shows message and validates only visible properties when mix of visible and hidden properties", async () => {
+    const templateWithMixedProperties = {
+      properties: {
+        display_name: { type: "string" },
+        resource_key: { type: "string" },
+        visible_property: { type: "string" },
+        hidden_property: { type: "string", default: "hidden_value" },
+      },
+      required: ["display_name"],
+      uiSchema: {
+        hidden_property: {
+          classNames: "tre-hidden",
+        },
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(templateWithMixedProperties);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={mockResource}
+        onDismiss={mockOnDismiss}
+      />
+    );
+
+    // Select a version
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Wait for schema to load
+    await waitFor(() => {
+      expect(
+        screen.queryByText("Loading new template schema...")
+      ).not.toBeInTheDocument();
+    });
+
+    // Should show the message because there's at least one visible property
+    expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+
+    // Button should be disabled because visible_property is empty
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).toBeDisabled();
+  });
 });

@@ -258,8 +258,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const visibleNewPropKeys = newPropKeys.filter((key) => {
           const topKey = key.split('.')[0];
           const propertyUiSchema = uiSchema[topKey];
-          // Check if property has "tre-hidden" in its classNames
-          const isHidden = propertyUiSchema?.classNames?.includes('tre-hidden');
+          // Check if property has "tre-hidden" in its classNames (support both old and new format)
+          const classNames = propertyUiSchema?.classNames || propertyUiSchema?.['ui:classNames'];
+          const isHidden = classNames?.includes('tre-hidden');
           return !isHidden;
         });
 
