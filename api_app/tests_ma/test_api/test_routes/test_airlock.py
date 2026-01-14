@@ -1,6 +1,8 @@
 import time
 import pytest
 
+pytestmark = pytest.mark.asyncio
+
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -17,7 +19,6 @@ from models.domain.workspace import Workspace
 from models.domain.operation import Operation
 from resources import strings
 from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user
-
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
