@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
+import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
 import { Resource, AvailableUpgrade } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -384,7 +384,9 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Click upgrade
     const upgradeButton = screen.getByTestId("primary-button");
-    fireEvent.click(upgradeButton);
+    await act(async () => {
+      fireEvent.click(upgradeButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
