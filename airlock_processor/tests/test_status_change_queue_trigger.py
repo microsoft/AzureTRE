@@ -121,5 +121,5 @@ class TestFilesDeletion():
 
 def _mock_service_bus_message(body: str):
     encoded_body = str.encode(body, "utf-8")
-    message = ServiceBusMessage(body=encoded_body, message_id="123", user_properties={})
+    message = ServiceBusMessage(body=encoded_body, message_id="123", user_properties={}, application_properties={})
     return message
