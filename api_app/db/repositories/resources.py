@@ -203,6 +203,18 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
+    def _get_pipeline_properties(self, enriched_template) -> List[str]:
+        properties = []
+        pipeline = enriched_template.get("pipeline")
+        if pipeline:
+            for phase in ["install", "upgrade"]:
+                if phase in pipeline and pipeline[phase]:
+                    for step in pipeline[phase]:
+                        if "properties" in step and step["properties"]:
+                            for prop in step["properties"]:
+                                properties.append(prop["name"])
+        return properties
+
     async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
@@ -220,11 +232,15 @@ class ResourceRepository(BaseRepository):
         update_template = copy.deepcopy(enriched_template)
         update_template["required"] = []
         update_template["properties"] = {}
+
+        pipeline_properties = self._get_pipeline_properties(enriched_template)
+
         for prop_name, prop in enriched_template["properties"].items():
             # Allow property if:
             # 1. Installing (all properties allowed)
-            # 2. Property is explicitly updateable
+            # 2. Property is explicitly updateable (updateable: true in template)
             # 3. Upgrading and the property is NEW (not in old template) and being added in this patch
+            # 4. Property is set using a parent property using {{ resource.parent.properties.my_parent_property }}
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True
@@ -235,6 +251,7 @@ class ResourceRepository(BaseRepository):
                     and prop_name in resource_patch.properties
                     and prop_name not in old_template_properties
                 )
+                or prop_name in pipeline_properties
             ):
                 update_template["properties"][prop_name] = prop
 
