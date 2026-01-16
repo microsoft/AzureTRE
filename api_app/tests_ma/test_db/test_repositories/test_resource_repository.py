@@ -569,3 +569,73 @@ async def test_validate_patch_allows_mix_of_new_and_updateable_properties_during
 
     # This should NOT raise a ValidationError
     await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_install_pipeline_property(template_repo, resource_repo):
+    """
+    Make sure that patch is valid when a property is present in install pipeline substitution
+    even if it is not updateable in the main properties.
+    """
+
+    template_dict = sample_resource_template()
+    # Add a pipeline with substitution for 'my_inherited_property'
+    # And add 'my_inherited_property' to properties as not updateable
+    template_dict['properties']['my_inherited_property'] = {
+        'type': 'string',
+        'updateable': False
+    }
+    template_dict['pipeline'] = {
+        'upgrade': [
+            {
+                'stepId': 'main',
+                'properties': [
+                    {'name': 'my_inherited_property', 'value': '{{ resource.parent.properties.my_inherited_property }}', 'type': 'string'}
+                ]
+            }
+        ]
+    }
+
+    template_repo.enrich_template = MagicMock(return_value=template_dict)
+    template = parse_obj_as(ResourceTemplate, template_dict)
+
+    # Patch attempting to send my_inherited_property.
+    # This simulates the UI sending the full object back, including the substituted value.
+    patch = ResourcePatch(isEnabled=True, properties={'my_inherited_property': ''})
+
+    # This should pass validation because my_inherited_property is in the pipeline
+    await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_upgrade_pipeline_property(template_repo, resource_repo):
+    """
+    Make sure that patch is valid when a property is present in upgrade pipeline substitution
+    even if it is not updateable in the main properties.
+    """
+
+    template_dict = sample_resource_template()
+    template_dict['properties']['my_inherited_property'] = {
+        'type': 'string',
+        'updateable': False
+    }
+    template_dict['pipeline'] = {
+        'upgrade': [
+            {
+                'stepId': 'main',
+                'properties': [
+                    {'name': 'my_inherited_property', 'value': '{{ resource.parent.properties.my_inherited_property }}', 'type': 'string'}
+                ]
+            }
+        ]
+    }
+
+    template_repo.enrich_template = MagicMock(return_value=template_dict)
+    template = parse_obj_as(ResourceTemplate, template_dict)
+
+    patch = ResourcePatch(isEnabled=True, properties={'my_inherited_property': ''})
+
+    # This should pass validation because my_inherited_property is in the upgrade pipeline
+    await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
