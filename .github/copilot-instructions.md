@@ -81,6 +81,7 @@ Azure TRE uses the following key technologies:
 
 - **TypeScript/JavaScript**:
   - Follow standard ESLint configuration
+  - Use Yarn for package management
 
 - **YAML**:
   - Use consistent indentation (2 spaces)
