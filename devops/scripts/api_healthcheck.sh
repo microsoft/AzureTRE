@@ -50,27 +50,30 @@ while [[ "$http_code" -ne 200 ]] && [[ $elapsed_time -lt $max_time ]]; do
   if [[ $elapsed_time -ge $max_time ]]; then
     break
   fi
-  echo "Waiting ${check_interval}s before retry... (elapsed: ${elapsed_time}s / ${max_time}s)"
+  echo "Waiting ${check_interval}s before retry..."
   sleep "$check_interval"
 
   attempt=$((attempt + 1))
   http_code=$(check_api_health)
-  echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s)"
+  echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s / ${max_time}s)"
 done
 
 # If we got 200, verify all services are OK
 if [[ "$http_code" -eq 200 ]]; then
   while ! check_all_services_ok && [[ $elapsed_time -lt $max_time ]]; do
+    echo "Some services are not OK after ${elapsed_time} seconds (${attempt} attempts)"
+    echo "Response:"
+    cat "$api_response_file"
     elapsed_time=$((elapsed_time + check_interval))
     if [[ $elapsed_time -ge $max_time ]]; then
       break
     fi
-    echo "Not all services OK. Waiting ${check_interval}s before retry... (elapsed: ${elapsed_time}s / ${max_time}s)"
+    echo "Not all services OK. Waiting ${check_interval}s before retry..."
     sleep "$check_interval"
 
     attempt=$((attempt + 1))
     http_code=$(check_api_health)
-    echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s)"
+    echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s / ${max_time}s)"
   done
 fi
 
