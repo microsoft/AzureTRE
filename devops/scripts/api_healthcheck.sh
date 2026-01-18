@@ -27,7 +27,7 @@ check_api_health() {
 # Function to parse response for service status
 check_all_services_ok() {
   local unhealthy_count
-  unhealthy_count=$(jq '.services | .[] | select(.status!="OK") | length' "$api_response_file" 2>/dev/null || echo "0")
+  unhealthy_count=$(jq '[.services[] | select(.status!="OK")] | length' "$api_response_file" 2>/dev/null || echo "0")
   if [[ "$unhealthy_count" -eq 0 ]]; then
     return 0
   else
