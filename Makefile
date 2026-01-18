@@ -252,8 +252,8 @@ lint: ## 🧹 Lint all files
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-e VALIDATE_TSX=true \
-    -e VALIDATE_TYPESCRIPT_ES=true \
- 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
+		-e VALIDATE_TYPESCRIPT_ES=true \
+		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-e VALIDATE_ALL_CODEBASE=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		ghcr.io/super-linter/super-linter:slim-v8.3.2
