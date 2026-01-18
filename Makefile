@@ -239,7 +239,8 @@ lint: ## 🧹 Lint all files
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
 	@docker run --name superlinter --pull=always --rm \
 		-e RUN_LOCAL=true \
-		-e LOG_LEVEL=NOTICE \
+		-e LOG_LEVEL=INFO \
+		-e DEFAULT_BRANCH=main \
 		-e VALIDATE_MARKDOWN=true \
 		-e VALIDATE_PYTHON_FLAKE8=true \
 		-e VALIDATE_YAML=true \
@@ -252,9 +253,10 @@ lint: ## 🧹 Lint all files
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-e VALIDATE_TSX=true \
     -e VALIDATE_TYPESCRIPT_ES=true \
-		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
+ 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
+		-e VALIDATE_ALL_CODEBASE=true \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v5.0.0
+		ghcr.io/super-linter/super-linter:slim-v8.3.2
 
 # Description: Lint documentation files
 # # This will validate all files, not only the changed ones as the CI version does.
