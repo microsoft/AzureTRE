@@ -10,6 +10,8 @@ ENHANCEMENTS:
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
+* Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
+* Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
 
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
@@ -1027,7 +1029,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 * A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358))
-* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed [here](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
+* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed in [configure-core-variables](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
 
 FEATURES:
 * (UI) Added upgrade button to resources that have pending template upgrades ([#3387](https://github.com/microsoft/AzureTRE/pull/3387))
@@ -1458,7 +1460,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described [here](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
+* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described in [configuring-shared-services](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
 
 FEATURES:
 
