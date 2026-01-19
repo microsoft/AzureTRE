@@ -1,5 +1,5 @@
 aiohttp==3.13.3
-azure-core==1.35.0
+azure-core==1.38.0
 azure-cosmos==4.14.3
 azure-eventgrid==4.22.0
 azure-identity==1.25.1
