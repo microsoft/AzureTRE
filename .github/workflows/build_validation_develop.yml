@@ -103,11 +103,6 @@ jobs:
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
 
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
