@@ -281,7 +281,8 @@
         "humao.rest-client",
         "timonwong.shellcheck",
         "ms-azuretools.vscode-azurefunctions",
-        "vitest.explorer"
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint"
       ]
     }
   },
