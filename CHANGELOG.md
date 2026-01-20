@@ -29,7 +29,6 @@ BUG FIXES:
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 
 COMPONENTS:
-* API version updated to 0.25.12 ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
