@@ -192,6 +192,21 @@
                   "protocols": [
                     "TCP"
                   ]
+                },
+                {
+                  "name": "Workspace_Authentication",
+                  "description": "Workspace VM Authentication",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }
@@ -318,6 +333,21 @@
                   "destination_ports": [
                     "443",
                     "445"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                },
+                {
+                  "name": "Workspace_Authentication",
+                  "description": "Workspace VM Authentication",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
                   ],
                   "protocols": [
                     "TCP"
