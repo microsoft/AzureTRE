@@ -62,8 +62,9 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     async def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
         query, parameters = self.workspace_services_query(str(workspace_id))
-        query += ' AND c.id = @serviceId'
+        query += ' AND c.id = @serviceId AND c.deploymentStatus != @deletedStatus'
         parameters.append({'name': '@serviceId', 'value': str(service_id)})
+        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
         workspace_services = await self.query(query=query, parameters=parameters)
         if not workspace_services:
             raise EntityDoesNotExist
