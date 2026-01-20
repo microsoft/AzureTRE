@@ -93,7 +93,9 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
               iconProps={{ iconName: "copy" }}
               styles={{ root: { minWidth: "40px" } }}
               onClick={() => {
-                props.command && handleCopyCommand();
+                if (props.command) {
+                  handleCopyCommand();
+                }
               }}
             />
           </TooltipHost>

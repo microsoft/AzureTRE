@@ -6,30 +6,36 @@ import { Resource, ComponentAction, VMPowerStates } from "../../models/resource"
 import { ResourceType } from "../../models/resourceType";
 
 // Mock child components
-vi.mock("./ResourceContextMenu", () => ({
-    ResourceContextMenu: ({ resource, commandBar, componentAction }: any) => (
+vi.mock("./ResourceContextMenu", () => {
+    const ResourceContextMenu = ({ resource, commandBar, componentAction }: any) => (
         <div data-testid="resource-context-menu">
             <div>Resource: {resource.id}</div>
             <div>CommandBar: {commandBar?.toString()}</div>
             <div>Action: {componentAction}</div>
         </div>
-    ),
-}));
+    );
+    ResourceContextMenu.displayName = 'ResourceContextMenu';
+    return { ResourceContextMenu };
+});
 
-vi.mock("./StatusBadge", () => ({
-    StatusBadge: ({ resource, status }: any) => (
+vi.mock("./StatusBadge", () => {
+    const StatusBadge = ({ resource, status }: any) => (
         <div data-testid="status-badge">
             <div>Resource: {resource.id}</div>
             <div>Status: {status}</div>
         </div>
-    ),
-}));
+    );
+    StatusBadge.displayName = 'StatusBadge';
+    return { StatusBadge };
+});
 
-vi.mock("./PowerStateBadge", () => ({
-    PowerStateBadge: ({ state }: any) => (
+vi.mock("./PowerStateBadge", () => {
+    const PowerStateBadge = ({ state }: any) => (
         <div data-testid="power-state-badge">Power: {state}</div>
-    ),
-}));
+    );
+    PowerStateBadge.displayName = 'PowerStateBadge';
+    return { PowerStateBadge };
+});
 
 // Mock FluentUI components
 vi.mock("@fluentui/react", () => {
@@ -38,11 +44,13 @@ vi.mock("@fluentui/react", () => {
             {children}
         </div>
     );
-    MockStack.Item = ({ children, style, align, grow }: any) => (
+    const Item = ({ children, style, align, grow }: any) => (
         <div data-testid="stack-item" style={style} data-align={align} data-grow={grow}>
             {children}
         </div>
     );
+    Item.displayName = 'StackItem';
+    MockStack.Item = Item;
 
     return {
         Stack: MockStack,

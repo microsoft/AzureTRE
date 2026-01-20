@@ -6,7 +6,7 @@ import { vi } from 'vitest';
  * Used across multiple FluentUI mocks to maintain consistency.
  */
 export const createMockStack = () => {
-  const MockStackComponent = ({ children, horizontal, style, styles, tokens, ...props }: any) => (
+  const MockStackComponent = ({ children, horizontal, style, styles, _tokens, ...props }: any) => (
     <div
       data-testid="stack"
       data-horizontal={horizontal}
@@ -17,7 +17,7 @@ export const createMockStack = () => {
     </div>
   );
 
-  MockStackComponent.Item = ({ children, align, grow, style, styles, ...props }: any) => (
+  const Item = ({ children, align, grow, style, styles, ...props }: any) => (
     <div
       data-testid="stack-item"
       data-align={align}
@@ -28,6 +28,8 @@ export const createMockStack = () => {
       {children}
     </div>
   );
+  Item.displayName = 'StackItem';
+  MockStackComponent.Item = Item;
 
   return MockStackComponent;
 };
@@ -103,7 +105,7 @@ export const createFluentUIMocks = () => ({
   mergeStyles: (styles: any) => styles,
 
   // Dialog components
-  Dialog: ({ children, hidden, onDismiss, dialogContentProps, modalProps, ...props }: any) =>
+  Dialog: ({ children, hidden, onDismiss, dialogContentProps, _modalProps, ...props }: any) =>
     !hidden ? (
       <div data-testid="dialog" role="dialog" {...props}>
         <div data-testid="dialog-title">{dialogContentProps?.title}</div>
@@ -183,8 +185,8 @@ export const createFluentUIMocks = () => ({
     onChange,
     onKeyDown,
     placeholder,
-    multiline,
-    autoAdjustHeight,
+    _multiline,
+    _autoAdjustHeight,
     styles,
     label,
     errorMessage,
@@ -215,7 +217,7 @@ export const createFluentUIMocks = () => ({
     label,
     disabled,
     styles,
-    onRenderOption,
+    _onRenderOption,
     ...props
   }: any) => (
     <div>
@@ -392,7 +394,7 @@ export const createFluentUIMocks = () => ({
     </div>
   ),
 
-  Modal: ({ isOpen, children, onDismiss, isBlocking, titleAriaId, styles, containerClassName, ...props }: any) =>
+  Modal: ({ isOpen, children, onDismiss, isBlocking, titleAriaId, styles, _containerClassName, ...props }: any) =>
     isOpen ? (
       <div
         data-testid="modal"
@@ -406,7 +408,7 @@ export const createFluentUIMocks = () => ({
       </div>
     ) : null,
 
-  Callout: ({ children, target, onDismiss, hidden, styles, ...props }: any) =>
+  Callout: ({ children, _target, onDismiss, hidden, styles, ...props }: any) =>
     !hidden ? (
       <div data-testid="callout" style={styles?.root} {...props}>
         {children}
@@ -445,8 +447,8 @@ export const createFluentUIMocks = () => ({
     items,
     columns,
     onRenderItemColumn,
-    selection,
-    selectionMode,
+    _selection,
+    _selectionMode,
     styles,
     ...props
   }: any) => (

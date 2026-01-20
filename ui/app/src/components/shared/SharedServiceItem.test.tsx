@@ -31,29 +31,35 @@ vi.mock("../../hooks/useComponentManager", () => ({
 }));
 
 // Mock child components
-vi.mock("./ResourceHeader", () => ({
-  ResourceHeader: ({ resource, latestUpdate, readonly }: any) => (
+vi.mock("./ResourceHeader", () => {
+  const ResourceHeader = ({ resource, _latestUpdate, readonly }: any) => (
     <div data-testid="resource-header">
       <div>Resource: {resource.id}</div>
       <div>Readonly: {readonly?.toString()}</div>
     </div>
-  ),
-}));
+  );
+  ResourceHeader.displayName = 'ResourceHeader';
+  return { ResourceHeader };
+});
 
-vi.mock("./ResourceBody", () => ({
-  ResourceBody: ({ resource, readonly }: any) => (
+vi.mock("./ResourceBody", () => {
+  const ResourceBody = ({ resource, readonly }: any) => (
     <div data-testid="resource-body">
       <div>Resource: {resource.id}</div>
       <div>Readonly: {readonly?.toString()}</div>
     </div>
-  ),
-}));
+  );
+  ResourceBody.displayName = 'ResourceBody';
+  return { ResourceBody };
+});
 
-vi.mock("./ExceptionLayout", () => ({
-  ExceptionLayout: ({ e }: any) => (
+vi.mock("./ExceptionLayout", () => {
+  const ExceptionLayout = ({ e }: any) => (
     <div data-testid="exception-layout">{e.userMessage}</div>
-  ),
-}));
+  );
+  ExceptionLayout.displayName = 'ExceptionLayout';
+  return { ExceptionLayout };
+});
 
 // Mock FluentUI components
 vi.mock("@fluentui/react", async () => {
@@ -239,7 +245,7 @@ describe("SharedServiceItem Component", () => {
   it("updates state when resource is updated", async () => {
     let onUpdateCallback: ((resource: any) => void) | undefined;
 
-    mockUseComponentManager.mockImplementation((resource, onUpdate, onDelete) => {
+    mockUseComponentManager.mockImplementation((_resource, onUpdate, _onDelete) => {
       onUpdateCallback = onUpdate;
       return { componentAction: "none", operation: null };
     });

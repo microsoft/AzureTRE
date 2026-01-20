@@ -5,13 +5,17 @@ import { BrowserRouter } from "react-router-dom";
 import { TopNav } from "./TopNav";
 
 // Mock child components
-vi.mock("./UserMenu", () => ({
-  UserMenu: () => <div data-testid="user-menu">User Menu</div>,
-}));
+vi.mock("./UserMenu", () => {
+  const UserMenu = () => <div data-testid="user-menu">User Menu</div>;
+  UserMenu.displayName = 'UserMenu';
+  return { UserMenu };
+});
 
-vi.mock("./notifications/NotificationPanel", () => ({
-  NotificationPanel: () => <div data-testid="notification-panel">Notifications</div>,
-}));
+vi.mock("./notifications/NotificationPanel", () => {
+  const NotificationPanel = () => <div data-testid="notification-panel">Notifications</div>;
+  NotificationPanel.displayName = 'NotificationPanel';
+  return { NotificationPanel };
+});
 
 // Mock config.json
 vi.mock("../../config.json", () => ({
@@ -28,11 +32,13 @@ vi.mock("@fluentui/react", () => {
     </div>
   );
 
-  MockStack.Item = ({ children, grow }: any) => (
+  const Item = ({ children, grow }: any) => (
     <div data-testid="stack-item" data-grow={grow}>
       {children}
     </div>
   );
+  Item.displayName = 'StackItem';
+  MockStack.Item = Item;
 
   return {
     getTheme: () => ({

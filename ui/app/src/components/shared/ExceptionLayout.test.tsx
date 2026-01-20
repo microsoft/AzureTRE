@@ -40,7 +40,7 @@ describe("ExceptionLayout Component", () => {
   it("renders nothing for 429 status (rate limiting)", async () => {
     const error = createMockError({ status: 429 });
 
-    let container: any;
+    let container: HTMLElement;
     await act(async () => {
       container = render(<ExceptionLayout e={error} />).container;
     });

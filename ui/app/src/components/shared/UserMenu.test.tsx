@@ -25,8 +25,8 @@ vi.mock("@azure/msal-react", () => ({
 }));
 
 // Mock FluentUI components
-vi.mock("@fluentui/react", () => ({
-  PrimaryButton: ({ children, menuProps, onClick, style }: any) => (
+vi.mock("@fluentui/react", () => {
+  const PrimaryButton = ({ children, menuProps, onClick, style }: any) => (
     <>
       <button
         data-testid="primary-button"
@@ -50,16 +50,24 @@ vi.mock("@fluentui/react", () => ({
         </div>
       )}
     </>
-  ),
-  Persona: ({ text, size, imageAlt }: any) => (
+  );
+  PrimaryButton.displayName = 'PrimaryButton';
+
+  const Persona = ({ text, size, imageAlt }: any) => (
     <div data-testid="persona" data-size={size} data-alt={imageAlt}>
       {text}
     </div>
-  ),
-  PersonaSize: {
-    size32: "size32",
-  }
-}));
+  );
+  Persona.displayName = 'Persona';
+
+  return {
+    PrimaryButton,
+    Persona,
+    PersonaSize: {
+      size32: "size32",
+    }
+  };
+});
 
 describe("UserMenu Component", () => {
   beforeEach(() => {

@@ -31,41 +31,53 @@ vi.mock("../../hooks/useComponentManager", () => ({
 }));
 
 // Mock child components
-vi.mock("./ResourceContextMenu", () => ({
-  ResourceContextMenu: ({ resource }: any) => (
+vi.mock("./ResourceContextMenu", () => {
+  const ResourceContextMenu = ({ resource }: any) => (
     <div data-testid="resource-context-menu">{resource.id}</div>
-  ),
-}));
+  );
+  ResourceContextMenu.displayName = 'ResourceContextMenu';
+  return { ResourceContextMenu };
+});
 
-vi.mock("./StatusBadge", () => ({
-  StatusBadge: ({ resource, status }: any) => (
+vi.mock("./StatusBadge", () => {
+  const StatusBadge = ({ _resource, status }: any) => (
     <div data-testid="status-badge">{status}</div>
-  ),
-}));
+  );
+  StatusBadge.displayName = 'StatusBadge';
+  return { StatusBadge };
+});
 
-vi.mock("./PowerStateBadge", () => ({
-  PowerStateBadge: ({ state }: any) => (
+vi.mock("./PowerStateBadge", () => {
+  const PowerStateBadge = ({ state }: any) => (
     <div data-testid="power-state-badge">{state}</div>
-  ),
-}));
+  );
+  PowerStateBadge.displayName = 'PowerStateBadge';
+  return { PowerStateBadge };
+});
 
-vi.mock("./CostsTag", () => ({
-  CostsTag: ({ resourceId }: any) => (
+vi.mock("./CostsTag", () => {
+  const CostsTag = ({ resourceId }: any) => (
     <div data-testid="costs-tag">{resourceId}</div>
-  ),
-}));
+  );
+  CostsTag.displayName = 'CostsTag';
+  return { CostsTag };
+});
 
-vi.mock("./ConfirmCopyUrlToClipboard", () => ({
-  ConfirmCopyUrlToClipboard: ({ onDismiss }: any) => (
+vi.mock("./ConfirmCopyUrlToClipboard", () => {
+  const ConfirmCopyUrlToClipboard = ({ onDismiss }: any) => (
     <div data-testid="confirm-copy-url" onClick={onDismiss}>
       Copy URL Dialog
     </div>
-  ),
-}));
+  );
+  ConfirmCopyUrlToClipboard.displayName = 'ConfirmCopyUrlToClipboard';
+  return { ConfirmCopyUrlToClipboard };
+});
 
-vi.mock("./SecuredByRole", () => ({
-  SecuredByRole: ({ element }: any) => element,
-}));
+vi.mock("./SecuredByRole", () => {
+  const SecuredByRole = ({ element }: any) => element;
+  SecuredByRole.displayName = 'SecuredByRole';
+  return { SecuredByRole };
+});
 
 vi.mock("moment", () => ({
   default: {
@@ -92,7 +104,7 @@ vi.mock("@fluentui/react", async () => {
   );
 
   // Add Item property to Stack
-  MockStack.Item = ({ children, align, grow, styles }: any) => (
+  const Item = ({ children, align, grow, styles }: any) => (
     <div
       data-testid="stack-item"
       data-align={align}
@@ -102,11 +114,13 @@ vi.mock("@fluentui/react", async () => {
       {children}
     </div>
   );
+  Item.displayName = 'StackItem';
+  MockStack.Item = Item;
 
   return {
     ...actual,
     Stack: MockStack,
-    PrimaryButton: ({ text, children, iconProps, styles, onClick, disabled }: any) => (
+    PrimaryButton: ({ text, children, _iconProps, styles, onClick, disabled }: any) => (
       <button
         data-testid="primary-button"
         onClick={onClick}

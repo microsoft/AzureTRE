@@ -20,8 +20,8 @@ vi.mock("../../hooks/useAuthApiCall", () => ({
 const mockAddUpdateOperation = vi.fn();
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
-  addUpdateOperation: (...args: any[]) => mockAddUpdateOperation(...args),
-  default: (state: any = { items: [] }) => state
+  addUpdateOperation: (...args: unknown[]) => mockAddUpdateOperation(...args),
+  default: (state: { items: unknown[] } = { items: [] }) => state
 }));
 
 // Mock FluentUI components - only the ones we need for this test
@@ -41,13 +41,15 @@ vi.mock("@fluentui/react", async () => {
 });
 
 // Mock ExceptionLayout
-vi.mock("./ExceptionLayout", () => ({
-  ExceptionLayout: ({ e }: any) => (
+vi.mock("./ExceptionLayout", () => {
+  const ExceptionLayout = ({ e }: any) => (
     <div data-testid="exception-layout">
       Error: {e.userMessage || e.message}
     </div>
-  ),
-}));
+  );
+  ExceptionLayout.displayName = 'ExceptionLayout';
+  return { ExceptionLayout };
+});
 
 const mockResource: Resource = {
   id: "test-resource-id",

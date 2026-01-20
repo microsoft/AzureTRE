@@ -92,19 +92,19 @@ describe("PowerStateBadge Component", () => {
     });
 
     it("renders nothing when state is undefined", () => {
-        render(<PowerStateBadge state={undefined as any} />);
+        render(<PowerStateBadge state={undefined as unknown as VMPowerStates} />);
 
         expect(screen.queryByText(/.+/)).not.toBeInTheDocument();
     });
 
     it("renders nothing when state is null", () => {
-        render(<PowerStateBadge state={null as any} />);
+        render(<PowerStateBadge state={null as unknown as VMPowerStates} />);
 
         expect(screen.queryByText(/.+/)).not.toBeInTheDocument();
     });
 
     it("renders nothing when state is empty string", () => {
-        render(<PowerStateBadge state={"" as any} />);
+        render(<PowerStateBadge state={"" as unknown as VMPowerStates} />);
 
         expect(screen.queryByText(/.+/)).not.toBeInTheDocument();
     });

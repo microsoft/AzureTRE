@@ -80,11 +80,11 @@ export const defaultCostsContext = {
 interface AllProvidersProps {
   children: React.ReactNode;
   msalInstance?: PublicClientApplication;
-  store?: any;
-  appRolesContext?: any;
-  workspaceContext?: any;
-  createUpdateResourceContext?: any;
-  costsContext?: any;
+  store?: ReturnType<typeof createMockStore>;
+  appRolesContext?: typeof defaultAppRolesContext;
+  workspaceContext?: typeof defaultWorkspaceContext;
+  createUpdateResourceContext?: typeof defaultCreateUpdateResourceContext;
+  costsContext?: typeof defaultCostsContext;
   initialEntries?: string[];
 }
 

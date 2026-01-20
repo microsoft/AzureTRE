@@ -1,15 +1,12 @@
 import { Stack, Shimmer, TooltipHost, Icon } from "@fluentui/react";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { CostsContext } from "../../contexts/CostsContext";
 import { LoadingState } from "../../models/loadingState";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
 import {
-  useAuthApiCall,
-  HttpMethod,
-  ResultType,
+  useAuthApiCall
 } from "../../hooks/useAuthApiCall";
-import { ApiEndpoint } from "../../models/apiEndpoints";
 import { ResourceType } from "../../models/resourceType";
 
 interface CostsTagProps {

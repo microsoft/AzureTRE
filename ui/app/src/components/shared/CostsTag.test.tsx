@@ -56,21 +56,21 @@ const mockWorkspace = {
     name: "Test User",
     email: "test@example.com",
     roleAssignments: [],
-    roles: ["workspace_owner"],
+    roles: ["workspace_researcher"],
   },
   workspaceURL: "https://workspace.example.com",
 };
 
 
 const createMockCostsContext = (costs?: CostResource[]) => ({
-  costs,
+  costs: costs || [],
   loadingState: LoadingState.Ok,
   setCosts: vi.fn(),
   setLoadingState: vi.fn(),
 });
 
 const createMockWorkspaceContext = (costs?: CostResource[]) => ({
-  costs,
+  costs: costs || [],
   workspace: mockWorkspace,
   workspaceApplicationIdURI: "test-app-id-uri",
   roles: ["workspace_researcher"],
@@ -98,7 +98,7 @@ const renderWithContexts = (
 
 describe("CostsTag Component", () => {
   // Get a reference to the mock API call function
-  const mockApiCall = (globalThis as any).__mockApiCall;
+  const mockApiCall = (globalThis as any).__mockApiCall as vi.Mock;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -117,7 +117,7 @@ describe("CostsTag Component", () => {
     // Provide a workspace with id: undefined to trigger loading state
     const workspaceWithNoId = { ...mockWorkspace, id: undefined };
     const workspaceContext = {
-      costs: undefined,
+      costs: [],
       workspace: workspaceWithNoId,
       workspaceApplicationIdURI: "test-app-id-uri",
       roles: ["workspace_researcher"],
@@ -126,7 +126,7 @@ describe("CostsTag Component", () => {
       setWorkspace: vi.fn(),
     } as any;
     const costsContext = {
-      costs: undefined,
+      costs: [],
       loadingState: LoadingState.Loading,
       setCosts: vi.fn(),
       setLoadingState: vi.fn(),

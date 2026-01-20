@@ -55,7 +55,7 @@ beforeAll(() => {
   // Mock crypto for MSAL
   Object.defineProperty(global, "crypto", {
     value: {
-      getRandomValues: (arr: any) => {
+      getRandomValues: (arr: Uint8Array) => {
         for (let i = 0; i < arr.length; i++) {
           arr[i] = Math.floor(Math.random() * 256);
         }
@@ -99,7 +99,7 @@ beforeAll(() => {
         // Add other commonly used icons as needed
       },
     });
-  } catch (e) {
+  } catch (_e) {
     // Ignore if @fluentui/react is not available
   }
 });

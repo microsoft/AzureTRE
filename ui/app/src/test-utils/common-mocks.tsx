@@ -1,3 +1,4 @@
+import React from 'react';
 import { vi } from 'vitest';
 
 /**
@@ -69,7 +70,7 @@ export const createExceptionLayoutMock = () => ({
  * Creates mocks for common child components used in resource tests.
  */
 export const createResourceComponentMocks = () => ({
-  ResourceHeader: ({ resource, latestUpdate, readonly }: any) => (
+  ResourceHeader: ({ resource, _latestUpdate, readonly }: any) => (
     <div data-testid="resource-header">
       <div data-testid="resource-id">{resource?.id}</div>
       <div data-testid="resource-readonly">{readonly?.toString()}</div>
@@ -121,17 +122,17 @@ export const createReactRouterMocks = (mockNavigate?: any, params?: any) => ({
  */
 export const createContextMocks = () => ({
   WorkspaceContext: {
-    Provider: ({ children, value }: any) => (
+    Provider: ({ children, _value }: any) => (
       <div data-testid="workspace-context-provider">{children}</div>
     ),
   },
   AppRolesContext: {
-    Provider: ({ children, value }: any) => (
+    Provider: ({ children, _value }: any) => (
       <div data-testid="app-roles-context-provider">{children}</div>
     ),
   },
   CostsContext: {
-    Provider: ({ children, value }: any) => (
+    Provider: ({ children, _value }: any) => (
       <div data-testid="costs-context-provider">{children}</div>
     ),
   },

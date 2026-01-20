@@ -8,38 +8,50 @@ import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
 
 // Mock child components
-vi.mock("./ResourceDebug", () => ({
-    ResourceDebug: ({ resource }: any) => (
+vi.mock("./ResourceDebug", () => {
+    const ResourceDebug = ({ resource }: any) => (
         <div data-testid="resource-debug">{resource.id}</div>
-    ),
-}));
+    );
+    ResourceDebug.displayName = 'ResourceDebug';
+    return { ResourceDebug };
+});
 
-vi.mock("./ResourcePropertyPanel", () => ({
-    ResourcePropertyPanel: ({ resource }: any) => (
+vi.mock("./ResourcePropertyPanel", () => {
+    const ResourcePropertyPanel = ({ resource }: any) => (
         <div data-testid="resource-property-panel">{resource.id}</div>
-    ),
-}));
+    );
+    ResourcePropertyPanel.displayName = 'ResourcePropertyPanel';
+    return { ResourcePropertyPanel };
+});
 
-vi.mock("./ResourceHistoryList", () => ({
-    ResourceHistoryList: ({ resource }: any) => (
+vi.mock("./ResourceHistoryList", () => {
+    const ResourceHistoryList = ({ resource }: any) => (
         <div data-testid="resource-history-list">{resource.id}</div>
-    ),
-}));
+    );
+    ResourceHistoryList.displayName = 'ResourceHistoryList';
+    return { ResourceHistoryList };
+});
 
-vi.mock("./ResourceOperationsList", () => ({
-    ResourceOperationsList: ({ resource }: any) => (
+vi.mock("./ResourceOperationsList", () => {
+    const ResourceOperationsList = ({ resource }: any) => (
         <div data-testid="resource-operations-list">{resource.id}</div>
-    ),
-}));
+    );
+    ResourceOperationsList.displayName = 'ResourceOperationsList';
+    return { ResourceOperationsList };
+});
 
-vi.mock("./SecuredByRole", () => ({
-    SecuredByRole: ({ element }: any) => element,
-}));
+vi.mock("./SecuredByRole", () => {
+    const SecuredByRole = ({ element }: any) => element;
+    SecuredByRole.displayName = 'SecuredByRole';
+    return { SecuredByRole };
+});
 
 // Mock react-markdown
-vi.mock("react-markdown", () => ({
-    default: ({ children }: any) => <div data-testid="markdown">{children}</div>,
-}));
+vi.mock("react-markdown", () => {
+    const MockMarkdown = ({ children }: any) => <div data-testid="markdown">{children}</div>;
+    MockMarkdown.displayName = 'MockMarkdown';
+    return { default: MockMarkdown };
+});
 
 vi.mock("remark-gfm", () => ({
     default: () => { },

@@ -53,16 +53,16 @@ describe('useAuthApiCall Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (useMsal as any).mockReturnValue({
+    (useMsal as vi.Mock).mockReturnValue({
       instance: mockInstance,
       accounts: [mockAccount],
     });
 
-    (useAccount as any).mockReturnValue(mockAccount);
+    (useAccount as vi.Mock).mockReturnValue(mockAccount);
 
     mockInstance.acquireTokenSilent.mockResolvedValue(mockTokenResponse);
 
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as vi.Mock).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: 'test' }),
       text: vi.fn().mockResolvedValue('test text'),
@@ -179,7 +179,7 @@ describe('useAuthApiCall Hook', () => {
   });
 
   it('throws error when API call fails', async () => {
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as vi.Mock).mockResolvedValue({
       ok: false,
       status: 500,
       text: vi.fn().mockResolvedValue('Server Error'),
@@ -192,7 +192,7 @@ describe('useAuthApiCall Hook', () => {
   });
 
   it('returns early when no account is available', async () => {
-    (useAccount as any).mockReturnValue(null);
+    (useAccount as vi.Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useAuthApiCall());
     const apiCall = result.current;
@@ -205,7 +205,7 @@ describe('useAuthApiCall Hook', () => {
 
   it('falls back to popup when silent token acquisition fails', async () => {
     // Create a proper InteractionRequiredAuthError using the mocked class
-    const { InteractionRequiredAuthError } = await import('@azure/msal-browser');
+    const { InteractionRequiredAuthError } = await import('@azure/msal-browser') as any;
     const interactionError = new InteractionRequiredAuthError('interaction_required', 'InteractionRequiredAuthError');
 
     mockInstance.acquireTokenSilent.mockRejectedValue(interactionError);

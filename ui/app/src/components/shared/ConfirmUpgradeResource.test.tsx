@@ -23,7 +23,7 @@ vi.mock("../../hooks/customReduxHooks", () => ({
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: vi.fn(),
-  default: (state: any = { items: [] }) => state
+  default: (state: { items: unknown[] } = { items: [] }) => state
 }));
 
 // Mock FluentUI components using centralized mocks
@@ -46,11 +46,13 @@ vi.mock("@fluentui/react", async () => {
   };
 });
 
-vi.mock("./ExceptionLayout", () => ({
-  ExceptionLayout: ({ e }: any) => (
+vi.mock("./ExceptionLayout", () => {
+  const ExceptionLayout = ({ e }: any) => (
     <div data-testid="exception-layout">{e.userMessage}</div>
-  ),
-}));
+  );
+  ExceptionLayout.displayName = 'ExceptionLayout';
+  return { ExceptionLayout };
+});
 
 const mockAvailableUpgrades: AvailableUpgrade[] = [
   { version: "1.1.0", forceUpdateRequired: false },

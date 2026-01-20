@@ -48,7 +48,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (navigator.clipboard.writeText as any).mockResolvedValue(undefined);
+    (navigator.clipboard.writeText as vi.Mock).mockResolvedValue(undefined);
   });
 
   it("renders dialog with correct title and content", () => {
@@ -155,7 +155,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("handles clipboard write failure gracefully", async () => {
-    (navigator.clipboard.writeText as any).mockRejectedValue(new Error("Clipboard error"));
+    (navigator.clipboard.writeText as vi.Mock).mockRejectedValue(new Error("Clipboard error"));
 
     render(
       <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
