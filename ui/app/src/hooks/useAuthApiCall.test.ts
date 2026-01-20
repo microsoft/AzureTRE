@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useAuthApiCall, HttpMethod, ResultType } from './useAuthApiCall';
 import { useMsal, useAccount } from '@azure/msal-react';
 
@@ -53,16 +53,16 @@ describe('useAuthApiCall Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    (useMsal as vi.Mock).mockReturnValue({
+    (useMsal as Mock).mockReturnValue({
       instance: mockInstance,
       accounts: [mockAccount],
     });
 
-    (useAccount as vi.Mock).mockReturnValue(mockAccount);
+    (useAccount as Mock).mockReturnValue(mockAccount);
 
     mockInstance.acquireTokenSilent.mockResolvedValue(mockTokenResponse);
 
-    (global.fetch as vi.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: 'test' }),
       text: vi.fn().mockResolvedValue('test text'),
@@ -179,7 +179,7 @@ describe('useAuthApiCall Hook', () => {
   });
 
   it('throws error when API call fails', async () => {
-    (global.fetch as vi.Mock).mockResolvedValue({
+    (global.fetch as Mock).mockResolvedValue({
       ok: false,
       status: 500,
       text: vi.fn().mockResolvedValue('Server Error'),
@@ -192,7 +192,7 @@ describe('useAuthApiCall Hook', () => {
   });
 
   it('returns early when no account is available', async () => {
-    (useAccount as vi.Mock).mockReturnValue(null);
+    (useAccount as Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useAuthApiCall());
     const apiCall = result.current;

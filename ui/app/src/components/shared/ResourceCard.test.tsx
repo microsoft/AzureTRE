@@ -218,6 +218,7 @@ const mockWorkspaceContext = {
     _etag: "test-etag",
     properties: {
       display_name: "Test Workspace",
+      scope_id: "test-scope-id",
     },
     user: {
       id: "test-user-id",

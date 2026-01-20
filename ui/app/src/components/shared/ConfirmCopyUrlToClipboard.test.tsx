@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { render, screen, fireEvent, waitFor, createCompleteFluentUIMock, mockClipboardAPI } from "../../test-utils";
 import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { Resource } from "../../models/resource";
@@ -48,7 +48,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (navigator.clipboard.writeText as vi.Mock).mockResolvedValue(undefined);
+    (navigator.clipboard.writeText as Mock).mockResolvedValue(undefined);
   });
 
   it("renders dialog with correct title and content", () => {
@@ -155,7 +155,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("handles clipboard write failure gracefully", async () => {
-    (navigator.clipboard.writeText as vi.Mock).mockRejectedValue(new Error("Clipboard error"));
+    (navigator.clipboard.writeText as Mock).mockRejectedValue(new Error("Clipboard error"));
 
     render(
       <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />

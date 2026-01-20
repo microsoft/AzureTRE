@@ -1,5 +1,5 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import {
   render,
   screen,
@@ -98,7 +98,7 @@ const renderWithContexts = (
 
 describe("CostsTag Component", () => {
   // Get a reference to the mock API call function
-  const mockApiCall = (globalThis as any).__mockApiCall as vi.Mock;
+  const mockApiCall = (globalThis as any).__mockApiCall as Mock;
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -12,6 +12,8 @@ import { CostsContext } from '../contexts/CostsContext';
 import { LoadingState } from '../models/loadingState';
 import { configureStore } from '@reduxjs/toolkit';
 import operationsReducer from '../components/shared/notifications/operationsSlice';
+import { ResourceType } from '../models/resourceType';
+import { CostResource } from '../models/costs';
 
 // Mock MSAL instance
 export const createMockMsalInstance = () => {
@@ -51,16 +53,32 @@ export const defaultAppRolesContext = {
 export const defaultWorkspaceContext = {
   roles: ['WorkspaceOwner'],
   setRoles: vi.fn(),
-  costs: [],
+  costs: [] as CostResource[],
   setCosts: vi.fn(),
   workspace: {
     id: 'test-workspace',
     resourcePath: '/workspaces/test-workspace',
     templateName: 'base',
     templateVersion: '1.0.0',
+    resourceType: ResourceType.Workspace,
+    resourceVersion: 1,
+    workspaceURL: 'https://test-workspace.example.com',
+    isEnabled: true,
     properties: {
       scope_id: 'test-scope',
     },
+    availableUpgrades: [],
+    deploymentStatus: 'Succeeded',
+    updatedWhen: Date.now(),
+    user: {
+      id: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      roles: [] as string[],
+      roleAssignments: [] as any[],
+    },
+    history: [],
+    _etag: 'test-etag',
   },
   setWorkspace: vi.fn(),
   workspaceApplicationIdURI: 'test-scope',
