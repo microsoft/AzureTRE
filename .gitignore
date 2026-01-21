@@ -214,3 +214,6 @@ validation.txt
 
 /index.html
 .DS_Store
+
+# Ignore package-lock file (created if using npm instead of yarn)
+package-lock.json
