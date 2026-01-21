@@ -9,7 +9,6 @@ ACR_DOMAIN_SUFFIX?=`az cloud show --query suffixes.acrLoginServerEndpoint --outp
 ACR_NAME?=`echo "$${ACR_NAME}" | tr A-Z a-z`
 ACR_FQDN?="${ACR_NAME}${ACR_DOMAIN_SUFFIX}"
 FULL_IMAGE_NAME_PREFIX:=${ACR_FQDN}/${IMAGE_NAME_PREFIX}
-LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
@@ -255,6 +254,8 @@ lint: ## 🧹 Lint all files
 		-e VALIDATE_TYPESCRIPT_ES=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
 		-e VALIDATE_ALL_CODEBASE=true \
+		-e TYPESCRIPT_ES_CONFIG_FILE=../../ui/app/eslint.config.js \
+		-e TSX_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
 		ghcr.io/super-linter/super-linter:slim-v8.3.2
 
