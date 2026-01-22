@@ -456,7 +456,7 @@ class AzureADAuthorization(AccessService):
             "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
         }
 
-        response = self._ms_graph_query(url, "POST", json=body)
+        response = self._ms_graph_query(url, "POST", json=body, raise_on_error=True)
         return response
 
     def _remove_user_from_group(self, user_id: str, group_id: str):
