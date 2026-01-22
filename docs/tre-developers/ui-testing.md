@@ -145,14 +145,17 @@ it("handles async operations", async () => {
 # Change directory
 cd ui/app
 
-# Run tests in watch mode
+# Run tests in watch mode (waits for file changes)
 yarn test
 
 # Run tests in run mode
 yarn test --run
 
-# Run tests once with coverage
-yarn run test:coverage
+# Run tests and produces a coverage report
+yarn test:coverage
+
+# Launches a web page where you can visualise your tests
+yarn test:ui
 
 # Build and test (CI)
 yarn run build && yarn test --run

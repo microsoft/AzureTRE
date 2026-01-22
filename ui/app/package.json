@@ -62,6 +62,7 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage --watch=false",
+    "test:ui": "vitest --ui",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
