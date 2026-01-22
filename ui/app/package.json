@@ -77,6 +77,9 @@
       "last 1 safari version"
     ]
   },
+  "engines": {
+    "node": ">=21.0.0"
+  },
   "resolutions": {
     "nth-check": "^2.0.1",
     "node-sass/**/ip": "^2.0.1"
