@@ -453,7 +453,7 @@ class AzureADAuthorization(AccessService):
     def _add_user_to_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
         body = {
-            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
+            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
         }
 
         response = self._ms_graph_query(url, "POST", json=body)
