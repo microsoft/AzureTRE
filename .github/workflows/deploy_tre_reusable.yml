@@ -897,6 +897,6 @@ jobs:
       - name: Publish E2E Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          junit_files: "artifacts/**/*.xml"
+          files: "artifacts/**/*.xml"
           check_name: "E2E Test Results"
           comment_mode: off

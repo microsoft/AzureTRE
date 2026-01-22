@@ -50,6 +50,7 @@ fi
 APPLICATION_PERMISSION=$(IFS=,; echo "${APPLICATION_PERMISSIONS[*]}")
 
 # Create the identity that is able to administer other applications
+# shellcheck disable=SC2153
 "$DIR/aad/create_application_administrator.sh" \
   --name "${TRE_ID}" \
   --admin-consent \
@@ -57,6 +58,7 @@ APPLICATION_PERMISSION=$(IFS=,; echo "${APPLICATION_PERMISSIONS[*]}")
   --reset-password $RESET_PASSWORDS
 
 # Create the identity that is able to automate the testing
+# shellcheck disable=SC2153
 "$DIR/aad/create_automation_administrator.sh" \
   --name "${TRE_ID}" \
   --reset-password $RESET_PASSWORDS
