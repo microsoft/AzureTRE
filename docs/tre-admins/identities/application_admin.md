@@ -8,8 +8,8 @@ This application does not have any roles defined.
 
 ## Microsoft Graph Permissions
 
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
+| Name | Type* | Admin consent required | TRE usage |
+| --- | --- | --- | --- |
 | Application.ReadWrite.OwnedBy | Application | Yes | This user has `Application.ReadWrite.OwnedBy` as a minimum permission for it to function. If the tenant is managed by a customer administrator, then this user must be added to the **Owners** of every workspace that is created. This will allow TRE to manage the Microsoft Entra ID Application. This will be a manual process for the Tenant Admin. |
 | Application.ReadWrite.All | Application | Yes | This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant. |
 | Group.Create | Application | Yes | This permission is required to create and update Microsoft Entra ID groups. This is required if Microsoft Entra ID groups are to be created automatically by the TRE. |
@@ -29,15 +29,15 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 ```
 
 | Argument | Description |
-| -------- | ----------- |
+| --- | --- |
 | `--name` | This is used to put a friendly name to the Application that can be seen in the portal. It is typical to use the name of your TRE instance. |
 | `--admin-consent` | If you have the appropriate permission to grant admin consent, then pass in this argument. If you do not, you will have to ask an Microsoft Entra ID Admin to consent after you have created the identity. Consent is required for this permission. |
-| `--application-permission` | This  is a comma separated list of the permissions that need to be assigned. For example `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
+| `--application-permission` | This is a comma separated list of the permissions that need to be assigned. For example `Application.ReadWrite.All,Group.Create,Group.Read.All,User.ReadBasic.All` |
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 ## Environment Variables
 
 | Variable | Description | Location |
-| -------- | ----------- | -------- |
-|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./config.yaml`|
-|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./config.yaml`|
+| --- | --- | --- |
+| APPLICATION_ADMIN_CLIENT_ID | The Client Id | `./config.yaml` |
+| APPLICATION_ADMIN_CLIENT_SECRET | The client secret | `./config.yaml` |

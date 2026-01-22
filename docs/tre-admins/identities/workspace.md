@@ -6,18 +6,18 @@ Access to workspaces is also controlled using app registrations - one per worksp
 ## Application Roles
 
 | Display name | Description | Allowed member types | Value |
-| ------------ | ----------- | -------------------- | ----- |
+| --- | --- | --- | --- |
 | Workspace Owner | Provides workspace owners access to the Workspace. | Users/Groups,Applications | `WorkspaceOwner` |
 | Workspace Researcher | Provides researchers access to the Workspace. | Users/Groups,Applications | `WorkspaceResearcher` |
 | Airlock Manager | Provides airlock managers access to the Workspace and ability to review airlock requests. | Users/Groups,Applications | `AirlockManager` |
 
 ## Microsoft Graph Permissions
 
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
-|email|Delegated|No|Used to read the user's email address when creating TRE resources|
-|openid|Delegated|No|Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information.|
-|profile|Delegated|No|Used to read the user's profile when creating TRE resources|
+| Name | Type* | Admin consent required | TRE usage |
+| --- | --- | --- | --- |
+| email | Delegated | No | Used to read the user's email address when creating TRE resources |
+| openid | Delegated | No | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. |
+| profile | Delegated | No | Used to read the user's profile when creating TRE resources |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
