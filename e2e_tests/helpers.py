@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import functools
+import json
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
@@ -21,6 +23,8 @@ GRAPH_TIMEOUT = Timeout(10, read=30)
 _AUTOMATION_ADMIN_OBJECT_ID: Optional[str] = None
 ROLE_ASSIGNMENT_MAX_ATTEMPTS = 30
 ROLE_ASSIGNMENT_SLEEP_SECONDS = 10
+ROLE_PROPAGATION_MAX_ATTEMPTS = 18  # 18 * 10s = 3 minutes max wait for role propagation
+ROLE_PROPAGATION_SLEEP_SECONDS = 10
 
 
 class InstallFailedException(Exception):
@@ -129,6 +133,53 @@ def get_token(scope_uri, verify) -> str:
     return token.token
 
 
+def get_fresh_token(scope_uri: str, verify: bool) -> str:
+    """Get a fresh token bypassing the MSAL cache by creating a new credential instance.
+
+    This is useful when we need to verify role claim propagation after role assignment.
+    """
+    # Create a fresh credential without cache to get updated role claims
+    credential = ClientSecretCredential(
+        config.AAD_TENANT_ID,
+        config.TEST_ACCOUNT_CLIENT_ID,
+        config.TEST_ACCOUNT_CLIENT_SECRET,
+        connection_verify=verify,
+        authority=cloud.get_aad_authority_fqdn(),
+        disable_instance_discovery=True  # Helps bypass some caching
+    )
+    token = credential.get_token(f'{scope_uri}/.default')
+
+    return token.token
+
+
+def _decode_jwt_claims(token: str) -> dict:
+    """Decode a JWT token and return the claims as a dictionary."""
+    try:
+        # JWT format: header.payload.signature
+        parts = token.split('.')
+        if len(parts) != 3:
+            return {}
+
+        # Decode the payload (second part), adding padding as needed
+        payload = parts[1]
+        padding = 4 - len(payload) % 4
+        if padding != 4:
+            payload += '=' * padding
+
+        decoded = base64.urlsafe_b64decode(payload)
+        return json.loads(decoded)
+    except Exception as e:
+        LOGGER.warning("Failed to decode JWT claims: %s", e)
+        return {}
+
+
+def _token_has_role(token: str, role_name: str) -> bool:
+    """Check if a JWT token contains the specified role in its claims."""
+    claims = _decode_jwt_claims(token)
+    roles = claims.get("roles", [])
+    return role_name in roles
+
+
 def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
     assert response.status_code in expected_status, \
         f"{message_prefix}. Expected: {expected_status}. Actual: {response.status_code}. Response text: {response.text}"
@@ -213,6 +264,53 @@ async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_i
             timeout=TIMEOUT
         )
         assert_status(response, [status.HTTP_202_ACCEPTED], f"Failed to assign {role_name} role for workspace {workspace_id}")
+        LOGGER.info("Role assignment API call succeeded for %s role in workspace %s", role_name, workspace_id)
+
+    # Wait for the role assignment to propagate to tokens
+    await _wait_for_role_in_token(workspace_id, role_name, verify)
+
+
+async def _wait_for_role_in_token(workspace_id: str, role_name: str, verify: bool) -> None:
+    # Get the workspace scope URI for token acquisition
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
+        admin_token = await get_admin_token(verify)
+        headers = get_auth_header(admin_token)
+        response = await client.get(get_full_endpoint(f"/api/workspaces/{workspace_id}"), headers=headers, timeout=TIMEOUT)
+        if response.status_code != 200:
+            LOGGER.warning("Could not get workspace details for role propagation check; skipping wait")
+            return
+
+        workspace = response.json().get("workspace", {})
+        scope_id = workspace.get("properties", {}).get("scope_id", "")
+        if not scope_id:
+            LOGGER.warning("Workspace %s has no scope_id; skipping role propagation check", workspace_id)
+            return
+
+        scope_uri = f"api://{scope_id.replace('api://', '')}"
+
+    # Map display name to role claim value
+    role_claim_map = {
+        "Airlock Manager": "AirlockManager",
+        "WorkspaceOwner": "WorkspaceOwner",
+        "WorkspaceResearcher": "WorkspaceResearcher"
+    }
+    role_claim = role_claim_map.get(role_name, role_name)
+
+    LOGGER.info("Waiting for %s role to appear in tokens for workspace %s...", role_name, workspace_id)
+
+    for attempt in range(ROLE_PROPAGATION_MAX_ATTEMPTS):
+        # Get a fresh token (new credential instance to bypass MSAL cache)
+        loop = asyncio.get_running_loop()
+        token = await loop.run_in_executor(None, functools.partial(get_fresh_token, scope_uri, verify))
+
+        if _token_has_role(token, role_claim):
+            LOGGER.info("Role %s is now present in token for workspace %s after %s attempts", role_name, workspace_id, attempt + 1)
+            return
+
+        LOGGER.info("Role %s not yet in token for workspace %s (%s/%s); waiting...", role_name, workspace_id, attempt + 1, ROLE_PROPAGATION_MAX_ATTEMPTS)
+        await asyncio.sleep(ROLE_PROPAGATION_SLEEP_SECONDS)
+
+    LOGGER.warning("Role %s never appeared in token for workspace %s after %s attempts; proceeding anyway", role_name, workspace_id, ROLE_PROPAGATION_MAX_ATTEMPTS)
 
 
 async def _get_automation_admin_object_id(workspace_id: str, admin_token: str, verify: bool) -> Optional[str]:
