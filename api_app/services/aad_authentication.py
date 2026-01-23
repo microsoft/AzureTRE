@@ -345,7 +345,15 @@ class AzureADAuthorization(AccessService):
         return result
 
     def get_workspace_roles(self, workspace: Workspace) -> List[Role]:
-        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
+        sp_id = workspace.properties.get('sp_id')
+        if not sp_id or not isinstance(sp_id, str) or sp_id == '':
+            logger.error(f"Workspace {workspace.id} has invalid sp_id: {sp_id!r}. The workspace may not have deployed correctly.")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Workspace {workspace.id} has invalid service principal configuration. Please check the workspace deployment."
+            )
+
+        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoles"
         graph_data = self._ms_graph_query(app_roles_endpoint, "GET", raise_on_error=True)
 
         if "value" not in graph_data:
@@ -456,8 +464,28 @@ class AzureADAuthorization(AccessService):
             "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
         }
 
-        response = self._ms_graph_query(url, "POST", json=body, raise_on_error=True)
-        return response
+        msgraph_token = self._get_msgraph_token()
+        auth_headers = self._get_auth_header(msgraph_token)
+        response = requests.post(url, json=body, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
+
+        if response.status_code == 204:
+            return {}
+
+        if response.status_code == 400:
+            try:
+                error_data = response.json()
+                if "already exist" in error_data.get("error", {}).get("message", ""):
+                    logger.info(f"User {user_id} is already a member of group {group_id}")
+                    return {}
+            except Exception:
+                pass
+
+        logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
+        logger.error(f"Full response: {response.text}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"{strings.ACCESS_MS_GRAPH_QUERY_FAILED}: {response.status_code}"
+        )
 
     def _remove_user_from_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/{user_id}/$ref"
@@ -523,6 +551,9 @@ class AzureADAuthorization(AccessService):
                 graph_data = merge_dict(graph_data, json_response)
                 if '@odata.nextLink' in json_response:
                     url = json_response['@odata.nextLink']
+            elif response.status_code == 204:
+                # 204 No Content is a success response for POST/DELETE operations
+                pass
             else:
                 logger.error(f"MS Graph query to: {original_url} failed with status code {response.status_code}")
                 logger.error(f"Full response: {response.text}")

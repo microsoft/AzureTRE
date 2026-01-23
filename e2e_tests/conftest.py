@@ -80,6 +80,7 @@ async def create_or_get_test_workspace(
     if pre_created_workspace_id != "":
         # Still need to ensure role assignment for pre-created workspaces
         admin_token = await get_admin_token(verify=verify)
+        await ensure_automation_admin_has_workspace_owner_role(pre_created_workspace_id, admin_token, verify)
         await ensure_automation_admin_has_airlock_role(pre_created_workspace_id, admin_token, verify)
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
