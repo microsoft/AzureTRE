@@ -6,14 +6,15 @@
 * Base workspace bundle 3.0.0 (major upgrade from 2.8.0) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
   
   **Migration Guide:**
-  1. **Existing Workspaces:** Continue to operate without changes; upgrade at your convenience
-  2. **Upgrading Workspaces:**
-     - Ensure Application Admin identity owns existing workspace applications
-     - Run workspace upgrade - Terraform will import and take over secret management
-  3. **New Workspaces:**
+  1. **Existing Workspaces:** Continue to operate without changes;
+  2. **New Workspaces:**
      - No `client_secret` parameter needed
      - Optionally provide `client_id` to reuse pre-existing application
      - Leave `client_id` empty for fully automatic application creation
+  3. **Upgrading Workspaces:**
+     - Only upgrade once you have tested the process in a non-production environment with your own bundles.
+     - Ensure Application Admin identity owns existing workspace applications
+     - Run workspace upgrade - Terraform will import and take over secret management
   
   **Permission Changes:**
   - **Removed:** `Directory.Read.All` no longer required

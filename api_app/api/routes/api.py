@@ -115,26 +115,9 @@ workspace_swagger_router = APIRouter()
 workspace_swagger_disabled_router = APIRouter()
 
 
-def _is_valid_scope_id(scope_id) -> bool:
-    """Check if scope_id is valid (not empty, not a dict, not None)."""
-    if scope_id is None:
-        return False
-    if isinstance(scope_id, dict):
-        return False
-    if isinstance(scope_id, str) and scope_id.strip() == '':
-        return False
-    return True
-
-
 def get_scope(workspace) -> str:
     # Cope with the fact that scope id can have api:// at the front.
-    scope_id = workspace.properties.get('scope_id')
-    if not _is_valid_scope_id(scope_id):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Workspace {workspace.id} has invalid scope_id configuration. Please check the workspace deployment."
-        )
-    return f"api://{scope_id.replace('api://', '')}/user_impersonation"
+    return f"api://{workspace.properties['scope_id'].replace('api://', '')}/user_impersonation"
 
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")

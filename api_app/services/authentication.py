@@ -7,6 +7,8 @@ from services.aad_authentication import AzureADAuthorization
 from services.access_service import AccessService, AuthConfigValidationError
 
 
+# DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
+# New bundles handle AAD app registration entirely in Terraform.
 def extract_auth_information(workspace_creation_properties: dict) -> dict:
     access_service = get_access_service('AAD')
     try:

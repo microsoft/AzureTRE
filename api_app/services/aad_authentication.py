@@ -559,6 +559,24 @@ class AzureADAuthorization(AccessService):
 
         return request_body
 
+    # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
+    # This method is only needed for auth_type=Manual which requires Directory.Read.All.
+    def _get_app_auth_info(self, client_id: str) -> dict:
+        graph_data = self._get_app_sp_graph_data(client_id)
+        if 'value' not in graph_data or len(graph_data['value']) == 0:
+            logger.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
+
+        app_info = graph_data['value'][0]
+        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
+
+        # Convert the roles into ids (We could have more roles defined in the app than we need.)
+        for appRole in app_info['appRoles']:
+            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
+                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
+
+        return authInfo
+
     def _ms_graph_query(self, url: str, http_method: str, json=None, raise_on_error: bool = False) -> dict:
         msgraph_token = self._get_msgraph_token()
         auth_headers = self._get_auth_header(msgraph_token)
@@ -619,22 +637,8 @@ class AzureADAuthorization(AccessService):
 
         return object_info["@odata.type"]
 
-    def _get_app_auth_info(self, client_id: str) -> dict:
-        graph_data = self._get_app_sp_graph_data(client_id)
-        if 'value' not in graph_data or len(graph_data['value']) == 0:
-            logger.debug(graph_data)
-            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
-
-        app_info = graph_data['value'][0]
-        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
-
-        # Convert the roles into ids (We could have more roles defined in the app than we need.)
-        for appRole in app_info['appRoles']:
-            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
-                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
-
-        return authInfo
-
+    # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
+    # New bundles handle AAD app registration entirely in Terraform.
     def extract_workspace_auth_information(self, data: dict) -> dict:
         # New bundles (v3.0.0+) don't use auth_type - they handle AAD in Terraform
         if "auth_type" not in data:
@@ -644,12 +648,15 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
 
         auth_info = {}
-        # The user may want us to create the AAD workspace app and therefore they
-        # don't know the client_id yet.
-        if data["auth_type"] != "Automatic":
+        if data["auth_type"] == "Automatic":
+            # Old bundles with auth_type=Automatic need register_aad_application=true
+            # so their Terraform knows to create the AAD app
+            auth_info["register_aad_application"] = True
+        else:
+            # auth_type=Manual - look up existing app via Graph API
             logger.warning(
                 "DEPRECATION: auth_type=Manual requires Application.Read.All permission. "
-                "Upgrade to workspace bundle v3.0.0+ which handles AAD registration in Terraform."
+                "Upgrade to base workspace bundle v3.0.0+ which handles AAD registration in Terraform."
             )
             auth_info = self._get_app_auth_info(data["client_id"])
 

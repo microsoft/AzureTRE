@@ -90,19 +90,16 @@ async def retrieve_workspace_by_workspace_id(workspace=Depends(get_workspace_by_
 @workspaces_core_router.get("/workspaces/{workspace_id}/scopeid", response_model=WorkspaceAuthInResponse, name=strings.API_GET_WORKSPACE_SCOPE_ID_BY_WORKSPACE_ID)
 async def retrieve_workspace_scope_id_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path)) -> WorkspaceAuthInResponse:
     wsAuth = WorkspaceAuth()
-    scope_id = workspace.properties.get("scope_id")
-    # Handle old bundles that may have empty/invalid scope_id values
-    if scope_id is not None and isinstance(scope_id, str) and scope_id.strip() != '':
-        wsAuth.scopeId = scope_id
+    if "scope_id" in workspace.properties:
+        wsAuth.scopeId = workspace.properties["scope_id"]
     return WorkspaceAuthInResponse(workspaceAuth=wsAuth)
 
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(get_current_admin_user), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     try:
-        # Extract auth information for backward compatibility with old bundles
         auth_info = extract_auth_information(workspace_create.properties)
-        workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, user.id, user.roles, auth_info)
+        workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
