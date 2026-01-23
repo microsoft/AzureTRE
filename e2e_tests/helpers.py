@@ -1,7 +1,5 @@
 import asyncio
-import base64
 import functools
-import json
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
@@ -20,11 +18,8 @@ azlogger = logging.getLogger("azure")
 azlogger.setLevel(logging.WARN)
 
 GRAPH_TIMEOUT = Timeout(10, read=30)
-_AUTOMATION_ADMIN_OBJECT_ID: Optional[str] = None
 ROLE_ASSIGNMENT_MAX_ATTEMPTS = 30
 ROLE_ASSIGNMENT_SLEEP_SECONDS = 10
-ROLE_PROPAGATION_MAX_ATTEMPTS = 18  # 18 * 10s = 3 minutes max wait for role propagation
-ROLE_PROPAGATION_SLEEP_SECONDS = 10
 
 
 class InstallFailedException(Exception):
@@ -133,53 +128,6 @@ def get_token(scope_uri, verify) -> str:
     return token.token
 
 
-def get_fresh_token(scope_uri: str, verify: bool) -> str:
-    """Get a fresh token bypassing the MSAL cache by creating a new credential instance.
-
-    This is useful when we need to verify role claim propagation after role assignment.
-    """
-    # Create a fresh credential without cache to get updated role claims
-    credential = ClientSecretCredential(
-        config.AAD_TENANT_ID,
-        config.TEST_ACCOUNT_CLIENT_ID,
-        config.TEST_ACCOUNT_CLIENT_SECRET,
-        connection_verify=verify,
-        authority=cloud.get_aad_authority_fqdn(),
-        disable_instance_discovery=True  # Helps bypass some caching
-    )
-    token = credential.get_token(f'{scope_uri}/.default')
-
-    return token.token
-
-
-def _decode_jwt_claims(token: str) -> dict:
-    """Decode a JWT token and return the claims as a dictionary."""
-    try:
-        # JWT format: header.payload.signature
-        parts = token.split('.')
-        if len(parts) != 3:
-            return {}
-
-        # Decode the payload (second part), adding padding as needed
-        payload = parts[1]
-        padding = 4 - len(payload) % 4
-        if padding != 4:
-            payload += '=' * padding
-
-        decoded = base64.urlsafe_b64decode(payload)
-        return json.loads(decoded)
-    except Exception as e:
-        LOGGER.warning("Failed to decode JWT claims: %s", e)
-        return {}
-
-
-def _token_has_role(token: str, role_name: str) -> bool:
-    """Check if a JWT token contains the specified role in its claims."""
-    claims = _decode_jwt_claims(token)
-    roles = claims.get("roles", [])
-    return role_name in roles
-
-
 def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
     assert response.status_code in expected_status, \
         f"{message_prefix}. Expected: {expected_status}. Actual: {response.status_code}. Response text: {response.text}"
@@ -250,110 +198,127 @@ async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bo
 
 
 async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_id: str, admin_token: str, verify: bool, role_name: str) -> None:
-    payload = {
-        "role_id": role_id,
-        "user_ids": [user_id]
-    }
+    """
+    Assign a user/service principal directly to an app role via Graph API.
+    This bypasses group membership and uses direct app role assignment,
+    which propagates to tokens immediately without the 5-15 minute delay
+    that group membership changes require.
+    """
+    # Get workspace details to get the sp_id (resource service principal)
+    workspace = await _get_workspace_details(workspace_id, admin_token, verify)
+    sp_id = workspace.get("properties", {}).get("sp_id")
+    if not sp_id:
+        LOGGER.error("Workspace %s has no sp_id; cannot assign role directly", workspace_id)
+        return
 
-    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        headers = get_auth_header(admin_token)
-        response = await client.post(
-            get_full_endpoint(f"/api/workspaces/{workspace_id}/users/assign"),
-            headers=headers,
-            json=payload,
-            timeout=TIMEOUT
+    # Do direct Graph API call to assign the principal to the app role
+    loop = asyncio.get_running_loop()
+    success = await loop.run_in_executor(
+        None,
+        functools.partial(_assign_principal_to_app_role_via_graph, user_id, sp_id, role_id, verify)
+    )
+
+    if success:
+        LOGGER.info("Direct app role assignment succeeded for %s role in workspace %s", role_name, workspace_id)
+    else:
+        LOGGER.warning("Direct app role assignment failed for %s role in workspace %s", role_name, workspace_id)
+
+    # Brief wait for token refresh - direct assignments should be immediate but give it a moment
+    await asyncio.sleep(5)
+
+
+def _get_application_admin_graph_token(verify: bool) -> Optional[str]:
+    """
+    Get a Graph API token using Application Admin credentials.
+    The Application Admin has Application.ReadWrite.OwnedBy permission and is the owner
+    of workspace service principals, allowing it to manage app role assignments.
+    """
+    if config.APPLICATION_ADMIN_CLIENT_ID == "" or config.APPLICATION_ADMIN_CLIENT_SECRET == "":
+        LOGGER.warning("Application Admin credentials not configured")
+        return None
+
+    try:
+        graph_resource = cloud.get_ms_graph_resource()
+        credential = ClientSecretCredential(
+            config.AAD_TENANT_ID,
+            config.APPLICATION_ADMIN_CLIENT_ID,
+            config.APPLICATION_ADMIN_CLIENT_SECRET,
+            connection_verify=verify,
+            authority=cloud.get_aad_authority_fqdn()
         )
-        assert_status(response, [status.HTTP_202_ACCEPTED], f"Failed to assign {role_name} role for workspace {workspace_id}")
-        LOGGER.info("Role assignment API call succeeded for %s role in workspace %s", role_name, workspace_id)
+        token = credential.get_token(f'{graph_resource}/.default')
+        return token.token
+    except Exception as e:
+        LOGGER.error("Failed to get Application Admin token: %s", e)
+        return None
 
-    # Wait for the role assignment to propagate to tokens
-    await _wait_for_role_in_token(workspace_id, role_name, verify)
 
+def _assign_principal_to_app_role_via_graph(principal_id: str, resource_id: str, app_role_id: str, verify: bool) -> bool:
+    """
+    Assign a user or service principal directly to an app role on a resource via Graph API.
+    Direct app role assignments propagate to tokens immediately, unlike group membership.
 
-async def _wait_for_role_in_token(workspace_id: str, role_name: str, verify: bool) -> None:
-    # Get the workspace scope URI for token acquisition
-    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        admin_token = await get_admin_token(verify)
-        headers = get_auth_header(admin_token)
-        response = await client.get(get_full_endpoint(f"/api/workspaces/{workspace_id}"), headers=headers, timeout=TIMEOUT)
-        if response.status_code != 200:
-            LOGGER.warning("Could not get workspace details for role propagation check; skipping wait")
-            return
+    Uses the Application Admin credentials since it owns the workspace service principals
+    and has Application.ReadWrite.OwnedBy permission.
+    """
+    graph_resource = cloud.get_ms_graph_resource()
+    graph_base_url = f"{graph_resource}/v1.0"
 
-        workspace = response.json().get("workspace", {})
-        scope_id = workspace.get("properties", {}).get("scope_id", "")
-        if not scope_id:
-            LOGGER.warning("Workspace %s has no scope_id; skipping role propagation check", workspace_id)
-            return
+    # Use Application Admin credentials - it owns workspace SPs and can manage their role assignments
+    token = _get_application_admin_graph_token(verify)
+    if not token:
+        LOGGER.warning("Could not get Application Admin token, falling back to automation admin")
+        token = get_token(graph_resource, verify)
 
-        scope_uri = f"api://{scope_id.replace('api://', '')}"
-
-    # Map display name to role claim value
-    role_claim_map = {
-        "Airlock Manager": "AirlockManager",
-        "WorkspaceOwner": "WorkspaceOwner",
-        "WorkspaceResearcher": "WorkspaceResearcher"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
-    role_claim = role_claim_map.get(role_name, role_name)
 
-    LOGGER.info("Waiting for %s role to appear in tokens for workspace %s...", role_name, workspace_id)
+    with httpx.Client(headers=headers, timeout=GRAPH_TIMEOUT, verify=verify) as client:
+        # Use the resource's appRoleAssignedTo endpoint
+        # This allows the resource owner to add assignments without special Graph permissions
+        url = f"{graph_base_url}/servicePrincipals/{resource_id}/appRoleAssignedTo"
 
-    for attempt in range(ROLE_PROPAGATION_MAX_ATTEMPTS):
-        # Get a fresh token (new credential instance to bypass MSAL cache)
-        loop = asyncio.get_running_loop()
-        token = await loop.run_in_executor(None, functools.partial(get_fresh_token, scope_uri, verify))
+        body = {
+            "principalId": principal_id,
+            "resourceId": resource_id,
+            "appRoleId": app_role_id
+        }
 
-        if _token_has_role(token, role_claim):
-            LOGGER.info("Role %s is now present in token for workspace %s after %s attempts", role_name, workspace_id, attempt + 1)
-            return
+        resp = client.post(url, json=body)
 
-        LOGGER.info("Role %s not yet in token for workspace %s (%s/%s); waiting...", role_name, workspace_id, attempt + 1, ROLE_PROPAGATION_MAX_ATTEMPTS)
-        await asyncio.sleep(ROLE_PROPAGATION_SLEEP_SECONDS)
+        if resp.status_code == 201:
+            LOGGER.info("Successfully assigned principal %s directly to app role %s", principal_id, app_role_id)
+            return True
 
-    LOGGER.warning("Role %s never appeared in token for workspace %s after %s attempts; proceeding anyway", role_name, workspace_id, ROLE_PROPAGATION_MAX_ATTEMPTS)
+        if resp.status_code == 400:
+            try:
+                error_data = resp.json()
+                error_message = error_data.get("error", {}).get("message", "")
+                if "already been assigned" in error_message or "already exists" in error_message:
+                    LOGGER.info("Principal %s already has app role %s", principal_id, app_role_id)
+                    return True
+            except Exception:
+                pass
+
+        if resp.status_code == 403:
+            LOGGER.warning(
+                "Direct app role assignment failed with 403 Forbidden. "
+                "The automation admin may not be an owner of the workspace service principal. "
+                "Ensure the workspace was deployed with workspace_owner_object_id set to the automation admin's object ID. "
+                "Response: %s", resp.text
+            )
+            return False
+
+        LOGGER.error("Graph API call to %s failed with status %s: %s", url, resp.status_code, resp.text)
+        return False
 
 
 async def _get_automation_admin_object_id(workspace_id: str, admin_token: str, verify: bool) -> Optional[str]:
-    global _AUTOMATION_ADMIN_OBJECT_ID
-    if _AUTOMATION_ADMIN_OBJECT_ID:
-        return _AUTOMATION_ADMIN_OBJECT_ID
-
-    if config.TEST_USER_NAME != "":
-        user_id = await _get_assignable_user_id(workspace_id, admin_token, verify, config.TEST_USER_NAME)
-        if user_id:
-            _AUTOMATION_ADMIN_OBJECT_ID = user_id
-            return user_id
-        LOGGER.warning("Assignable user lookup failed for %s; falling back to Graph", config.TEST_USER_NAME)
-
+    """Get the directory object ID for the automation admin (user or service principal)."""
     loop = asyncio.get_running_loop()
-    directory_id = await loop.run_in_executor(None, functools.partial(_get_directory_object_id_via_graph, verify))
-    if directory_id:
-        _AUTOMATION_ADMIN_OBJECT_ID = directory_id
-    return directory_id
-
-
-async def _get_assignable_user_id(workspace_id: str, admin_token: str, verify: bool, user_principal_name: str) -> Optional[str]:
-    params = {
-        "filter": user_principal_name,
-        "maxResultCount": 50
-    }
-
-    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        headers = get_auth_header(admin_token)
-        response = await client.get(
-            get_full_endpoint(f"/api/workspaces/{workspace_id}/assignable-users"),
-            headers=headers,
-            params=params,
-            timeout=TIMEOUT
-        )
-        assert_status(response, [status.HTTP_200_OK], f"Failed to get assignable users for workspace {workspace_id}")
-
-        for user in response.json().get("assignableUsers", []):
-            upn = user.get("userPrincipalName", "").lower()
-            if upn == user_principal_name.lower():
-                return user.get("id")
-
-    return None
+    return await loop.run_in_executor(None, functools.partial(_get_directory_object_id_via_graph, verify))
 
 
 async def _wait_for_user_management_configuration(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> bool:
