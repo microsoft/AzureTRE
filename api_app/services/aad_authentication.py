@@ -404,26 +404,9 @@ class AzureADAuthorization(AccessService):
         return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
-        try:
-            identity_type = self._get_identity_type(user_id)
-        except AuthConfigValidationError as exc:
-            logger.warning("Unable to determine identity type for %s: %s", user_id, exc)
-            return False
-
-        if identity_type == "#microsoft.graph.user":
-            graph_data = self._get_role_assignment_graph_data_for_user(user_id)
-        elif identity_type == "#microsoft.graph.servicePrincipal":
-            graph_data = self._get_role_assignment_graph_data_for_service_principal(user_id)
-        else:
-            logger.warning("Unsupported identity type %s for %s", identity_type, user_id)
-            return False
-
-        assignments = graph_data.get("value")
-        if assignments is None:
-            logger.warning("Role assignment response missing 'value' for %s", user_id)
-            return False
-
-        return any(role.get("appRoleId") == role_id for role in assignments)
+        user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
+        user_app_roles = self._ms_graph_query(user_app_role_query, "GET")
+        return any(r for r in user_app_roles["value"] if r["appRoleId"] == role_id)
 
     def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
         aad_groups_in_user = workspace.properties["create_aad_groups"]
@@ -488,31 +471,11 @@ class AzureADAuthorization(AccessService):
     def _add_user_to_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
         body = {
-            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
+            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
         }
 
-        msgraph_token = self._get_msgraph_token()
-        auth_headers = self._get_auth_header(msgraph_token)
-        response = requests.post(url, json=body, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
-
-        if response.status_code == 204:
-            return {}
-
-        if response.status_code == 400:
-            try:
-                error_data = response.json()
-                if "already exist" in error_data.get("error", {}).get("message", ""):
-                    logger.info(f"User {user_id} is already a member of group {group_id}")
-                    return {}
-            except Exception:
-                pass
-
-        logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
-        logger.error(f"Full response: {response.text}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"{strings.ACCESS_MS_GRAPH_QUERY_FAILED}: {response.status_code}"
-        )
+        response = self._ms_graph_query(url, "POST", json=body)
+        return response
 
     def _remove_user_from_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/{user_id}/$ref"
