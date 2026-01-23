@@ -81,6 +81,7 @@ Azure TRE uses the following key technologies:
 
 - **TypeScript/JavaScript**:
   - Follow standard ESLint configuration
+  - Use Yarn for package management
 
 - **YAML**:
   - Use consistent indentation (2 spaces)
@@ -174,7 +175,6 @@ When creating a pull request, you must update the CHANGELOG.md file with your ch
 
 - ENHANCEMENTS
 - BUG FIXES
-- COMPONENTS (for version updates)
 
 Format for changelog entries:
 ```markdown
@@ -182,6 +182,8 @@ Format for changelog entries:
 ```
 
 Always include issue and/or PR references using the format `([#1234](https://github.com/microsoft/AzureTRE/issues/1234))`.
+
+Don't change anything under the COMPONENTS section; it is auto-generated during releases.
 
 ## Version Management
 

@@ -1,60 +1,102 @@
 #!/bin/bash
-# This script checks if the api server endpoint /api/health is available(response code 200) and then verifies that the response contains all OK
-# Both verifications have a retry(4 retries, including call above makes total 5 calls).
+# This script checks if the API server endpoint /api/health is available (response code 200)
+# and verifies that the response contains all services with OK status.
+# Uses fixed intervals between retries with a maximum timeout.
 set -e
 
 # Get the directory that this script is in
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Create a .gitignore'd  directory for temp output
+# Create a .gitignore'd directory for temp output
 mkdir -p "$DIR/script_tmp"
 echo '*' > "$DIR/script_tmp/.gitignore"
 
-function call_and_parse() {
-  response_code=$($command)
-  if [[ $1 = true ]]; then
-    response_code=$(jq '.services| .[] | select(.status!="OK") | length' "$api_response_file")
-  fi
-}
-
-function call_with_retry() {
-  retries_left=6
-
-  echo "$command"
-  call_and_parse "$2"
-
-  while [[ "${response_code}" -ne $1 ]] && [[ $retries_left -gt 0 ]]; do
-    printf "running %s -- %d retries left\n" "$command" "$retries_left"
-    call_and_parse "$2"
-
-    sleep_time=$((30*retries_left))
-    echo "Sleeping for $sleep_time secs before trying again..."
-    sleep $sleep_time
-
-    retries_left=$(( retries_left - 1))
-  done
-
-  if [[ retries_left -eq 0 ]]; then
-    call_ok=false
-  else
-    call_ok=true
-  fi
-}
-
 api_response_file="$DIR/script_tmp/api_response.txt"
-command="curl --insecure --silent --output $api_response_file --write-out %{http_code} ${TRE_URL}/api/health"
-call_with_retry "200" false
+max_time=420  # 7 minutes in seconds
+check_interval=10
+elapsed_time=0
+attempt=1
 
-if [[ $call_ok = true ]]; then
-  command="curl --insecure --silent --output $api_response_file ${TRE_URL}/api/health"
-  call_with_retry "" true
+# Function to check API health endpoint
+check_api_health() {
+  local http_code
+  # shellcheck disable=SC1083
+  http_code=$(curl --insecure --silent --output "$api_response_file" --write-out %{http_code} "${TRE_URL}/api/health")
+  echo "$http_code"
+}
+
+# Function to parse response for service status
+check_all_services_ok() {
+  local unhealthy_count
+  unhealthy_count=$(jq '[.services[] | select(.status!="OK")] | length' "$api_response_file" 2>/dev/null || echo "0")
+  if [[ "$unhealthy_count" -eq 0 ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+echo "Checking API health at ${TRE_URL}/api/health"
+echo "Max timeout: ${max_time} seconds (7 minutes)"
+echo "Check interval: ${check_interval} seconds"
+echo ""
+
+# Initial health check
+http_code=$(check_api_health)
+echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s)"
+
+# Keep trying until we get 200 response
+while [[ "$http_code" -ne 200 ]] && [[ $elapsed_time -lt $max_time ]]; do
+  elapsed_time=$((elapsed_time + check_interval))
+  if [[ $elapsed_time -ge $max_time ]]; then
+    break
+  fi
+  echo "Waiting ${check_interval}s before retry..."
+  sleep "$check_interval"
+
+  attempt=$((attempt + 1))
+  http_code=$(check_api_health)
+  echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s / ${max_time}s)"
+done
+
+# If we got 200, verify all services are OK
+if [[ "$http_code" -eq 200 ]]; then
+  while ! check_all_services_ok && [[ $elapsed_time -lt $max_time ]]; do
+    echo "Some services are not OK after ${elapsed_time} seconds (${attempt} attempts)"
+    echo "Response:"
+    cat "$api_response_file"
+    elapsed_time=$((elapsed_time + check_interval))
+    if [[ $elapsed_time -ge $max_time ]]; then
+      break
+    fi
+    echo "Not all services OK. Waiting ${check_interval}s before retry..."
+    sleep "$check_interval"
+
+    attempt=$((attempt + 1))
+    http_code=$(check_api_health)
+    echo "Attempt $attempt: HTTP $http_code (elapsed: ${elapsed_time}s / ${max_time}s)"
+  done
 fi
 
-if [[ $call_ok = false ]]; then
+# Check final status
+if [[ "$http_code" -ne 200 ]]; then
+  echo ""
   echo "*** ⚠️ API _not_ healthy ***"
+  echo "Failed to get 200 response after ${elapsed_time} seconds (${attempt} attempts)"
+  echo "Response:"
+  cat "$api_response_file" 2>/dev/null || echo "(No response captured)"
+  exit 1
+fi
+
+if ! check_all_services_ok; then
+  echo ""
+  echo "*** ⚠️ API _not_ healthy ***"
+  echo "Some services are not OK after ${elapsed_time} seconds (${attempt} attempts)"
   echo "Response:"
   cat "$api_response_file"
   exit 1
 fi
 
+echo ""
 cat "$api_response_file"
-printf "\n*** ✅ API healthy ***\n"
+echo ""
+echo "*** ✅ API healthy (${attempt} attempts, ${elapsed_time}s elapsed) ***"
