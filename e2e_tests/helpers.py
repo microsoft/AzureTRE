@@ -199,120 +199,33 @@ async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bo
 
 async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_id: str, admin_token: str, verify: bool, role_name: str) -> None:
     """
-    Assign a user/service principal directly to an app role via Graph API.
-    This bypasses group membership and uses direct app role assignment,
-    which propagates to tokens immediately without the 5-15 minute delay
-    that group membership changes require.
+    Assign a user/service principal to an app role via the TRE API.
+    The API automatically uses direct app role assignment for service principals,
+    which propagates to tokens immediately (no 5-15 min group membership delay).
     """
-    # Get workspace details to get the sp_id (resource service principal)
-    workspace = await _get_workspace_details(workspace_id, admin_token, verify)
-    sp_id = workspace.get("properties", {}).get("sp_id")
-    if not sp_id:
-        LOGGER.error("Workspace %s has no sp_id; cannot assign role directly", workspace_id)
-        return
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
+        headers = get_auth_header(admin_token)
+        body = {
+            "user_ids": [user_id],
+            "role_id": role_id
+        }
+        response = await client.post(
+            get_full_endpoint(f"/api/workspaces/{workspace_id}/users/assign"),
+            headers=headers,
+            json=body,
+            timeout=TIMEOUT
+        )
 
-    # Do direct Graph API call to assign the principal to the app role
-    loop = asyncio.get_running_loop()
-    success = await loop.run_in_executor(
-        None,
-        functools.partial(_assign_principal_to_app_role_via_graph, user_id, sp_id, role_id, verify)
-    )
-
-    if success:
-        LOGGER.info("Direct app role assignment succeeded for %s role in workspace %s", role_name, workspace_id)
-    else:
-        LOGGER.warning("Direct app role assignment failed for %s role in workspace %s", role_name, workspace_id)
+        if response.status_code == status.HTTP_202_ACCEPTED:
+            LOGGER.info("App role assignment succeeded for %s role in workspace %s", role_name, workspace_id)
+        else:
+            LOGGER.warning(
+                "App role assignment failed for %s role in workspace %s: %s - %s",
+                role_name, workspace_id, response.status_code, response.text
+            )
 
     # Brief wait for token refresh - direct assignments should be immediate but give it a moment
     await asyncio.sleep(5)
-
-
-def _get_application_admin_graph_token(verify: bool) -> Optional[str]:
-    """
-    Get a Graph API token using Application Admin credentials.
-    The Application Admin has Application.ReadWrite.OwnedBy permission and is the owner
-    of workspace service principals, allowing it to manage app role assignments.
-    """
-    if config.APPLICATION_ADMIN_CLIENT_ID == "" or config.APPLICATION_ADMIN_CLIENT_SECRET == "":
-        LOGGER.warning("Application Admin credentials not configured")
-        return None
-
-    try:
-        graph_resource = cloud.get_ms_graph_resource()
-        credential = ClientSecretCredential(
-            config.AAD_TENANT_ID,
-            config.APPLICATION_ADMIN_CLIENT_ID,
-            config.APPLICATION_ADMIN_CLIENT_SECRET,
-            connection_verify=verify,
-            authority=cloud.get_aad_authority_fqdn()
-        )
-        token = credential.get_token(f'{graph_resource}/.default')
-        return token.token
-    except Exception as e:
-        LOGGER.error("Failed to get Application Admin token: %s", e)
-        return None
-
-
-def _assign_principal_to_app_role_via_graph(principal_id: str, resource_id: str, app_role_id: str, verify: bool) -> bool:
-    """
-    Assign a user or service principal directly to an app role on a resource via Graph API.
-    Direct app role assignments propagate to tokens immediately, unlike group membership.
-
-    Uses the Application Admin credentials since it owns the workspace service principals
-    and has Application.ReadWrite.OwnedBy permission.
-    """
-    graph_resource = cloud.get_ms_graph_resource()
-    graph_base_url = f"{graph_resource}/v1.0"
-
-    # Use Application Admin credentials - it owns workspace SPs and can manage their role assignments
-    token = _get_application_admin_graph_token(verify)
-    if not token:
-        LOGGER.warning("Could not get Application Admin token, falling back to automation admin")
-        token = get_token(graph_resource, verify)
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-
-    with httpx.Client(headers=headers, timeout=GRAPH_TIMEOUT, verify=verify) as client:
-        # Use the resource's appRoleAssignedTo endpoint
-        # This allows the resource owner to add assignments without special Graph permissions
-        url = f"{graph_base_url}/servicePrincipals/{resource_id}/appRoleAssignedTo"
-
-        body = {
-            "principalId": principal_id,
-            "resourceId": resource_id,
-            "appRoleId": app_role_id
-        }
-
-        resp = client.post(url, json=body)
-
-        if resp.status_code == 201:
-            LOGGER.info("Successfully assigned principal %s directly to app role %s", principal_id, app_role_id)
-            return True
-
-        if resp.status_code == 400:
-            try:
-                error_data = resp.json()
-                error_message = error_data.get("error", {}).get("message", "")
-                if "already been assigned" in error_message or "already exists" in error_message:
-                    LOGGER.info("Principal %s already has app role %s", principal_id, app_role_id)
-                    return True
-            except Exception:
-                pass
-
-        if resp.status_code == 403:
-            LOGGER.warning(
-                "Direct app role assignment failed with 403 Forbidden. "
-                "The automation admin may not be an owner of the workspace service principal. "
-                "Ensure the workspace was deployed with workspace_owner_object_id set to the automation admin's object ID. "
-                "Response: %s", resp.text
-            )
-            return False
-
-        LOGGER.error("Graph API call to %s failed with status %s: %s", url, resp.status_code, resp.text)
-        return False
 
 
 async def _get_automation_admin_object_id(workspace_id: str, admin_token: str, verify: bool) -> Optional[str]:

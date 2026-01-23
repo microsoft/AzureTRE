@@ -30,11 +30,6 @@ USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
 
 
 def _is_valid_aad_property(value) -> bool:
-    """Check if an AAD property value is valid (not empty, not a dict, not None).
-
-    Old workspace bundles may have empty strings or empty dicts for AAD properties
-    when the workspace was deployed without automatic AAD registration.
-    """
     if value is None:
         return False
     if isinstance(value, dict):
@@ -392,16 +387,69 @@ class AzureADAuthorization(AccessService):
         return roles
 
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
-        # User already has the role, do nothing
-        if self._is_user_in_role(user_id, role_id):
+        """
+        Assign a principal to a workspace role.
+
+        If workspace has AAD groups configured, tries group membership first.
+        Falls back to direct app role assignment if group assignment fails
+        (e.g., for service principals) or if groups are not configured.
+        """
+        groups_in_use = self._is_workspace_role_group_in_use(workspace)
+
+        if groups_in_use:
+            # Try group assignment first (works for users)
+            try:
+                if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+                    logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+                    raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+                self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
+                return
+            except UserRoleAssignmentError:
+                # Re-raise UserRoleAssignmentError (version check, group not found, etc.)
+                raise
+            except Exception as e:
+                # Group assignment failed (likely a service principal), fall through to direct assignment
+                logger.info(f"Group assignment failed for {user_id}: {e}. Using direct app role assignment.")
+
+        # Direct app role assignment for service principals or when no groups configured
+        return self._assign_principal_to_app_role_direct(user_id, workspace, role_id)
+
+    def _assign_principal_to_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
+        """
+        Assign a principal directly to an app role via Graph API.
+        This bypasses group membership and propagates to tokens immediately.
+        """
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration.")
+
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo"
+        body = {
+            "principalId": principal_id,
+            "resourceId": sp_id,
+            "appRoleId": role_id
+        }
+
+        msgraph_token = self._get_msgraph_token()
+        auth_headers = self._get_auth_header(msgraph_token)
+        response = requests.post(url, json=body, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
+
+        if response.status_code == 201:
+            logger.info(f"Successfully assigned principal {principal_id} directly to app role {role_id}")
             return
-        if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-        if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
-        return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
+
+        if response.status_code == 400:
+            try:
+                error_data = response.json()
+                error_message = error_data.get("error", {}).get("message", "")
+                if "already exist" in error_message:
+                    logger.info(f"Principal {principal_id} already has app role {role_id}")
+                    return
+            except Exception:
+                pass
+
+        logger.error(f"Direct app role assignment failed: {response.status_code} - {response.text}")
+        raise UserRoleAssignmentError(f"Failed to assign principal {principal_id} to role {role_id}: {response.status_code}")
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
         user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
@@ -470,8 +518,9 @@ class AzureADAuthorization(AccessService):
 
     def _add_user_to_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
+        # Use directoryObjects which works for both users and service principals
         body = {
-            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
+            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
         }
 
         response = self._ms_graph_query(url, "POST", json=body)
