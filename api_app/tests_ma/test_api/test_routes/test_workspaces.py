@@ -450,7 +450,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    async def test_post_workspaces_calls_db_and_service_bus(self, __, create_workspace_item, save_item_mock, send_resource_request_message_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
+    async def test_post_workspaces_calls_db_and_service_bus(self, _, create_workspace_item, save_item_mock, send_resource_request_message_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
         resource_template_repo.return_value = basic_resource_template
         create_workspace_item.return_value = [sample_workspace(), basic_resource_template]
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)

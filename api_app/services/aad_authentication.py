@@ -29,6 +29,21 @@ GRAPH_REQUEST_TIMEOUT = 10
 USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
 
 
+def _is_valid_aad_property(value) -> bool:
+    """Check if an AAD property value is valid (not empty, not a dict, not None).
+
+    Old workspace bundles may have empty strings or empty dicts for AAD properties
+    when the workspace was deployed without automatic AAD registration.
+    """
+    if value is None:
+        return False
+    if isinstance(value, dict):
+        return False
+    if isinstance(value, str) and value.strip() == '':
+        return False
+    return True
+
+
 class PrincipalType(Enum):
     User = "User"
     Group = "Group"
@@ -346,11 +361,11 @@ class AzureADAuthorization(AccessService):
 
     def get_workspace_roles(self, workspace: Workspace) -> List[Role]:
         sp_id = workspace.properties.get('sp_id')
-        if not sp_id or not isinstance(sp_id, str) or sp_id == '':
-            logger.error(f"Workspace {workspace.id} has invalid sp_id: {sp_id!r}. The workspace may not have deployed correctly.")
+        if not _is_valid_aad_property(sp_id):
+            logger.error(f"Workspace {workspace.id} has invalid sp_id: {sp_id!r}. The workspace may not have deployed correctly or is using an older template without automatic AAD registration.")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Workspace {workspace.id} has invalid service principal configuration. Please check the workspace deployment."
+                detail=f"Workspace {workspace.id} has invalid service principal configuration. Please check the workspace deployment or upgrade to a template version that supports automatic AAD registration."
             )
 
         app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoles"
@@ -419,13 +434,19 @@ class AzureADAuthorization(AccessService):
         workspace_id = workspace.properties["workspace_id"]
         group_name = ""
         app_role_id_suffix = ""
-        if workspace.properties["app_role_id_workspace_researcher"] == role_id:
+
+        # Get app role IDs, handling old bundles that may have empty/invalid values
+        researcher_role = workspace.properties.get("app_role_id_workspace_researcher")
+        owner_role = workspace.properties.get("app_role_id_workspace_owner")
+        airlock_role = workspace.properties.get("app_role_id_workspace_airlock_manager")
+
+        if _is_valid_aad_property(researcher_role) and researcher_role == role_id:
             group_name = "Workspace Researchers"
             app_role_id_suffix = "workspace_researcher"
-        elif workspace.properties["app_role_id_workspace_owner"] == role_id:
+        elif _is_valid_aad_property(owner_role) and owner_role == role_id:
             group_name = "Workspace Owners"
             app_role_id_suffix = "workspace_owner"
-        elif workspace.properties["app_role_id_workspace_airlock_manager"] == role_id:
+        elif _is_valid_aad_property(airlock_role) and airlock_role == role_id:
             group_name = "Airlock Managers"
             app_role_id_suffix = "workspace_airlock_manager"
         else:
@@ -434,7 +455,10 @@ class AzureADAuthorization(AccessService):
         return (f"{tre_id}-ws-{workspace_id} {group_name}", f"app_role_id_{app_role_id_suffix}")
 
     def _assign_workspace_user_to_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration. Cannot assign user to role.")
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -447,7 +471,10 @@ class AzureADAuthorization(AccessService):
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role_id}")
 
     def _remove_workspace_user_from_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration. Cannot remove user from role.")
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -591,6 +618,47 @@ class AzureADAuthorization(AccessService):
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE} {id}")
 
         return object_info["@odata.type"]
+
+    def _get_app_auth_info(self, client_id: str) -> dict:
+        graph_data = self._get_app_sp_graph_data(client_id)
+        if 'value' not in graph_data or len(graph_data['value']) == 0:
+            logger.debug(graph_data)
+            raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
+
+        app_info = graph_data['value'][0]
+        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
+
+        # Convert the roles into ids (We could have more roles defined in the app than we need.)
+        for appRole in app_info['appRoles']:
+            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
+                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
+
+        return authInfo
+
+    def extract_workspace_auth_information(self, data: dict) -> dict:
+        # New bundles (v3.0.0+) don't use auth_type - they handle AAD in Terraform
+        if "auth_type" not in data:
+            return {}
+
+        if data["auth_type"] != "Automatic" and "client_id" not in data:
+            raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
+
+        auth_info = {}
+        # The user may want us to create the AAD workspace app and therefore they
+        # don't know the client_id yet.
+        if data["auth_type"] != "Automatic":
+            logger.warning(
+                "DEPRECATION: auth_type=Manual requires Application.Read.All permission. "
+                "Upgrade to workspace bundle v3.0.0+ which handles AAD registration in Terraform."
+            )
+            auth_info = self._get_app_auth_info(data["client_id"])
+
+            # Check we've get all our required roles
+            for role in self.WORKSPACE_ROLES_DICT.items():
+                if role[1] not in auth_info:
+                    raise AuthConfigValidationError(f"{strings.ACCESS_APP_IS_MISSING_ROLE} {role[0]}")
+
+        return auth_info
 
     def get_identity_role_assignments(self, user_id: str) -> List[RoleAssignment]:
         identity_type = self._get_identity_type(user_id)

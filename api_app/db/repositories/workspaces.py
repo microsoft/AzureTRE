@@ -90,7 +90,7 @@ class WorkspaceRepository(ResourceRepository):
         )
         return availability_result.name_available
 
-    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
+    async def create_workspace_item(self, workspace_input: WorkspaceInCreate, workspace_owner_object_id: str, user_roles: List[str], auth_info: dict = None) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
 
@@ -107,9 +107,13 @@ class WorkspaceRepository(ResourceRepository):
 
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
+        # Include auth_info if provided (for backward compatibility with old bundles)
+        auth_info_param = auth_info if auth_info else {}
+
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
+                                    **auth_info_param,
                                     **address_space_param,
                                     **address_spaces_param,
                                     **workspace_owner_param,
