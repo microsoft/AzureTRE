@@ -60,6 +60,13 @@ async def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_
         await shared_service_repo.get_shared_service_by_id(SHARED_SERVICE_ID)
 
 
+async def test_get_shared_service_by_id_raises_if_deleted(shared_service_repo):
+    shared_service_repo.query = AsyncMock(return_value=[])
+
+    with pytest.raises(EntityDoesNotExist):
+        await shared_service_repo.get_shared_service_by_id(SHARED_SERVICE_ID)
+
+
 async def test_get_active_shared_services_for_shared_queries_db(shared_service_repo):
     shared_service_repo.query = AsyncMock(return_value=[])
     query, parameters = SharedServiceRepository.active_shared_services_query()
