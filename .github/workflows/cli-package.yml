@@ -22,6 +22,7 @@ jobs:
     # to sign in to a container registry to re-use a dev container image as a build cache
     environment: ${{ inputs.environment || 'CICD'}}
     permissions:
+      id-token: write
       contents: read
       actions: write # For uploading wheel artifact
 
@@ -40,7 +41,9 @@ jobs:
             tre --help
           DEVCONTAINER_TAG: latest
           CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
 
       - name: Create the CLI package
@@ -52,7 +55,9 @@ jobs:
             sudo make build-package
           DEVCONTAINER_TAG: latest
           CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME}}
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           AZURE_ENVIRONMENT: ${{ secrets.AZURE_ENVIRONMENT }}
 
       - name: Upload Wheel as artifact
