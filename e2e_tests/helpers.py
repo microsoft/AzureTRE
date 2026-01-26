@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import functools
+import json
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
@@ -17,13 +19,24 @@ TIMEOUT = Timeout(10, read=30)
 azlogger = logging.getLogger("azure")
 azlogger.setLevel(logging.WARN)
 
-GRAPH_TIMEOUT = Timeout(10, read=30)
 ROLE_ASSIGNMENT_MAX_ATTEMPTS = 30
 ROLE_ASSIGNMENT_SLEEP_SECONDS = 10
+ROLE_VERIFICATION_MAX_ATTEMPTS = 12
+ROLE_VERIFICATION_SLEEP_SECONDS = 5
 
 
 class InstallFailedException(Exception):
     pass
+
+
+def _is_service_principal_auth() -> bool:
+    """Check if using service principal (client credentials) authentication."""
+    return config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != ""
+
+
+def _has_automation_identity() -> bool:
+    """Check if any automation identity (service principal or user) is configured."""
+    return config.TEST_ACCOUNT_CLIENT_ID != "" or config.TEST_USER_NAME != ""
 
 
 def read_workspace_id() -> str:
@@ -116,13 +129,26 @@ async def get_admin_token(verify) -> str:
 
 
 def get_token(scope_uri, verify) -> str:
-    if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
+    if _is_service_principal_auth():
         # Logging in as an Enterprise Application: Use Client Credentials flow
-        credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_aad_authority_fqdn())
+        credential = ClientSecretCredential(
+            config.AAD_TENANT_ID,
+            config.TEST_ACCOUNT_CLIENT_ID,
+            config.TEST_ACCOUNT_CLIENT_SECRET,
+            connection_verify=verify,
+            authority=cloud.get_aad_authority_fqdn()
+        )
         token = credential.get_token(f'{scope_uri}/.default')
     else:
         # Logging in as a User: Use Resource Owner Password Credentials flow
-        credential = UsernamePasswordCredential(config.TEST_APP_ID, config.TEST_USER_NAME, config.TEST_USER_PASSWORD, connection_verify=verify, authority=cloud.get_aad_authority_fqdn(), tenant_id=config.AAD_TENANT_ID)
+        credential = UsernamePasswordCredential(
+            config.TEST_APP_ID,
+            config.TEST_USER_NAME,
+            config.TEST_USER_PASSWORD,
+            connection_verify=verify,
+            authority=cloud.get_aad_authority_fqdn(),
+            tenant_id=config.AAD_TENANT_ID
+        )
         token = credential.get_token(f'{scope_uri}/user_impersonation')
 
     return token.token
@@ -131,6 +157,46 @@ def get_token(scope_uri, verify) -> str:
 def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
     assert response.status_code in expected_status, \
         f"{message_prefix}. Expected: {expected_status}. Actual: {response.status_code}. Response text: {response.text}"
+
+
+def _decode_jwt_payload(token: str) -> dict:
+    """Decode a JWT token and return the payload as a dictionary."""
+    try:
+        # JWT format: header.payload.signature
+        parts = token.split('.')
+        if len(parts) != 3:
+            return {}
+
+        # Decode the payload (second part)
+        payload_b64 = parts[1]
+        # Add padding if needed
+        padding = 4 - len(payload_b64) % 4
+        if padding != 4:
+            payload_b64 += '=' * padding
+
+        payload_bytes = base64.urlsafe_b64decode(payload_b64)
+        return json.loads(payload_bytes.decode('utf-8'))
+    except Exception as e:
+        LOGGER.warning("Failed to decode JWT: %s", e)
+        return {}
+
+
+def _get_roles_from_token(token: str) -> List[str]:
+    """Extract roles from a JWT token."""
+    payload = _decode_jwt_payload(token)
+    roles = payload.get('roles', [])
+    if isinstance(roles, list):
+        return roles
+    return []
+
+
+def _extract_scope_uri_from_workspace(workspace: dict) -> Optional[str]:
+    """Extract the scope URI from a workspace dict for token requests."""
+    scope_id = workspace.get("properties", {}).get("scope_id", "")
+    if not scope_id:
+        return None
+    # Cope with the fact that scope_id can have api:// at the front
+    return f"api://{scope_id.replace('api://', '')}"
 
 
 async def ensure_automation_admin_has_airlock_role(workspace_id: str, admin_token: str, verify: bool) -> None:
@@ -147,11 +213,12 @@ async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str,
         LOGGER.info("Workspace ID missing; skipping %s assignment", role_name)
         return
 
-    if config.TEST_ACCOUNT_CLIENT_ID == "" and config.TEST_USER_NAME == "":
+    if not _has_automation_identity():
         LOGGER.info("No automation admin identity configured; skipping %s assignment", role_name)
         return
 
-    if not await _wait_for_user_management_configuration(workspace_id, admin_token, verify, role_name):
+    workspace = await _wait_for_user_management_configuration(workspace_id, admin_token, verify, role_name)
+    if workspace is None:
         return
 
     role_id = await _get_workspace_role_id(workspace_id, admin_token, verify, role_name=role_name)
@@ -159,12 +226,13 @@ async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str,
         LOGGER.warning("%s role not found for workspace %s; skipping assignment", role_name, workspace_id)
         return
 
-    user_object_id = await _get_automation_admin_object_id(workspace_id, admin_token, verify)
+    user_object_id = await _get_automation_admin_object_id(verify)
     if user_object_id is None:
         LOGGER.warning("Unable to determine automation admin directory object id; skipping %s assignment", role_name)
         return
 
-    await _assign_workspace_role_via_api(workspace_id, role_id, user_object_id, admin_token, verify, role_name)
+    scope_uri = _extract_scope_uri_from_workspace(workspace)
+    await _assign_workspace_role_via_api(workspace_id, role_id, user_object_id, admin_token, verify, role_name, scope_uri)
 
 
 async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> Optional[str]:
@@ -197,12 +265,35 @@ async def _get_workspace_role_id(workspace_id: str, admin_token: str, verify: bo
         return None
 
 
-async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_id: str, admin_token: str, verify: bool, role_name: str) -> None:
+# Map display names to role values used in tokens
+ROLE_DISPLAY_TO_VALUE = {
+    "Airlock Manager": "AirlockManager",
+    "WorkspaceOwner": "WorkspaceOwner",
+    "Workspace Owner": "WorkspaceOwner",
+    "WorkspaceResearcher": "WorkspaceResearcher",
+    "Workspace Researcher": "WorkspaceResearcher",
+}
+
+
+async def _assign_workspace_role_via_api(
+    workspace_id: str,
+    role_id: str,
+    user_id: str,
+    admin_token: str,
+    verify: bool,
+    role_name: str,
+    scope_uri: Optional[str]
+) -> None:
     """
     Assign a user/service principal to an app role via the TRE API.
     The API automatically uses direct app role assignment for service principals,
     which propagates to tokens immediately (no 5-15 min group membership delay).
+
+    After assignment, verifies that the role appears in newly issued tokens
+    by polling with retry to handle Entra ID propagation delays.
     """
+    expected_role_value = ROLE_DISPLAY_TO_VALUE.get(role_name, role_name)
+
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         headers = get_auth_header(admin_token)
         body = {
@@ -223,33 +314,79 @@ async def _assign_workspace_role_via_api(workspace_id: str, role_id: str, user_i
                 "App role assignment failed for %s role in workspace %s: %s - %s",
                 role_name, workspace_id, response.status_code, response.text
             )
+            return  # Don't attempt verification if assignment failed
 
-    # Brief wait for token refresh - direct assignments should be immediate but give it a moment
-    await asyncio.sleep(5)
+    # Verify the role appears in newly issued tokens
+    if scope_uri is None:
+        LOGGER.warning("No workspace scope URI for %s; skipping role verification", workspace_id)
+        await asyncio.sleep(5)  # Fall back to simple wait
+        return
+
+    await _verify_role_in_token(workspace_id, scope_uri, expected_role_value, role_name, verify)
 
 
-async def _get_automation_admin_object_id(workspace_id: str, admin_token: str, verify: bool) -> Optional[str]:
+async def _verify_role_in_token(
+    workspace_id: str,
+    scope_uri: str,
+    expected_role_value: str,
+    role_name: str,
+    verify: bool
+) -> None:
+    """Poll for fresh tokens until the expected role appears."""
+    loop = asyncio.get_running_loop()
+    for attempt in range(ROLE_VERIFICATION_MAX_ATTEMPTS):
+        # Get a fresh token for the workspace
+        try:
+            token = await loop.run_in_executor(None, functools.partial(get_token, scope_uri, verify))
+            roles_in_token = _get_roles_from_token(token)
+
+            if expected_role_value in roles_in_token:
+                LOGGER.info(
+                    "Verified %s role (%s) appears in token for workspace %s (attempt %s/%s)",
+                    role_name, expected_role_value, workspace_id, attempt + 1, ROLE_VERIFICATION_MAX_ATTEMPTS
+                )
+                return
+
+            LOGGER.info(
+                "Role %s not yet in token for workspace %s, current roles: %s (attempt %s/%s)",
+                expected_role_value, workspace_id, roles_in_token, attempt + 1, ROLE_VERIFICATION_MAX_ATTEMPTS
+            )
+        except Exception as e:
+            LOGGER.warning(
+                "Error getting token for role verification in workspace %s: %s (attempt %s/%s)",
+                workspace_id, e, attempt + 1, ROLE_VERIFICATION_MAX_ATTEMPTS
+            )
+
+        await asyncio.sleep(ROLE_VERIFICATION_SLEEP_SECONDS)
+
+    LOGGER.warning(
+        "Role %s never appeared in token for workspace %s after %s attempts",
+        expected_role_value, workspace_id, ROLE_VERIFICATION_MAX_ATTEMPTS
+    )
+
+
+async def _get_automation_admin_object_id(verify: bool) -> Optional[str]:
     """Get the directory object ID for the automation admin (user or service principal)."""
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, functools.partial(_get_directory_object_id_via_graph, verify))
 
 
-async def _wait_for_user_management_configuration(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> bool:
-    """Poll the workspace until Entra ID role/group data is available."""
+async def _wait_for_user_management_configuration(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> Optional[dict]:
+    """Poll the workspace until Entra ID role/group data is available. Returns workspace dict or None."""
     for attempt in range(ROLE_ASSIGNMENT_MAX_ATTEMPTS):
         workspace = await _get_workspace_details(workspace_id, admin_token, verify)
         if _workspace_supports_user_management(workspace):
-            return True
+            return workspace
 
         if _workspace_cannot_support_user_management(workspace):
             LOGGER.warning("Workspace %s does not support user management; skipping %s assignment", workspace_id, role_name)
-            return False
+            return None
 
         LOGGER.info("Waiting for workspace %s user management config (%s/%s)", workspace_id, attempt + 1, ROLE_ASSIGNMENT_MAX_ATTEMPTS)
         await asyncio.sleep(ROLE_ASSIGNMENT_SLEEP_SECONDS)
 
     LOGGER.warning("Workspace %s never exposed user management config; skipping %s assignment", workspace_id, role_name)
-    return False
+    return None
 
 
 async def _get_workspace_details(workspace_id: str, admin_token: str, verify: bool) -> dict:
@@ -289,8 +426,8 @@ def _get_directory_object_id_via_graph(verify: bool) -> Optional[str]:
     }
 
     identity_id: Optional[str] = None
-    with httpx.Client(headers=headers, timeout=GRAPH_TIMEOUT, verify=verify) as client:
-        if config.TEST_ACCOUNT_CLIENT_ID != "":
+    with httpx.Client(headers=headers, timeout=TIMEOUT, verify=verify) as client:
+        if _is_service_principal_auth():
             identity_id = _get_service_principal_id(client, graph_base_url, config.TEST_ACCOUNT_CLIENT_ID)
         elif config.TEST_USER_NAME != "":
             identity_id = _get_user_object_id(client, graph_base_url, config.TEST_USER_NAME)
