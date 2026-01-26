@@ -67,8 +67,10 @@ set_account_context() {
 
   export ARM_STORAGE_USE_AZUREAD=true
   export ARM_USE_AZUREAD=true
-  # We have to use AZCLI auth in Terraform because with Github Actions
-  # federated-id won't work in the devcontainer passed 5 mins.
+  # Force Terraform to use Azure CLI authentication. GitHub Actions OIDC
+  # (federated) tokens are short-lived and are not reliably available inside
+  # the devcontainer after their initial lifetime, which can cause Terraform
+  # authentication to fail. Using ARM_USE_CLI=true avoids this issue.
   export ARM_USE_CLI=true
 
   echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"

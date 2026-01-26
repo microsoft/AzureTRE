@@ -185,6 +185,15 @@ jobs:
           if [ "${{ secrets.TRE_ID }}" == '' ]; then
             echo "Missing secret: TRE_ID" && exit 1
           fi
+          if [ "${{ secrets.AZURE_CLIENT_ID }}" == '' ]; then
+            echo "Missing secret: AZURE_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_TENANT_ID }}" == '' ]; then
+            echo "Missing secret: AZURE_TENANT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_SUBSCRIPTION_ID }}" == '' ]; then
+            echo "Missing secret: AZURE_SUBSCRIPTION_ID" && exit 1
+          fi
 
           if [ "${{ inputs.DEVCONTAINER_TAG }}" == '' ]; then
             echo "Missing input: DEVCONTAINER_TAG" && exit 1
