@@ -37,6 +37,7 @@ Example on how to run the script:
     --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
 ```
 
+
 | Argument | Description |
 | -------- | ----------- |
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
