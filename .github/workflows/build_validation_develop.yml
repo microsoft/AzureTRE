@@ -103,6 +103,7 @@ jobs:
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
 
+
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
