@@ -72,16 +72,15 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
   See [Configure a federated identity credential on an app](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azcli) for more details.
 
-1. Configure repository variables for OIDC authentication
+1. Configure repository secrets for OIDC authentication
 
-  Configure the following **variables** (not secrets) in your repository or environment:
+  Configure the following **secrets** (not variables) in your repository or environment:
 
-  | <div style="width: 230px">Variable name</div> | Description |
+  | <div style="width: 230px">Secret name</div> | Description |
   | ----------- | ----------- |
   | `AZURE_CLIENT_ID` | The application (client) ID of the service principal created above |
   | `AZURE_TENANT_ID` | The tenant ID where the service principal was created |
   | `AZURE_SUBSCRIPTION_ID` | The Azure subscription ID where resources will be deployed |
-  | `AZURE_ENVIRONMENT` | Optional. The Azure cloud environment. Default is `AzureCloud`. Use `AzureUSGovernment` for US Government cloud |
 
 ### Decide on a TRE ID and Azure resources location
 

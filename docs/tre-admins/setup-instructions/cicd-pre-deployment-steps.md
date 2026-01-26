@@ -83,6 +83,9 @@ Configure the following secrets in your github environment:
 | `ACR_NAME` | A globally unique name for the Azure Container Registry (ACR) that will be created to store deployment images. |
 | `EXTERNAL_KEY_STORE_ID` | Optional. The ID of the external Key Vault to store CMKs in. Should not be set if `ENCRYPTION_KV_NAME` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 | `ENCRYPTION_KV_NAME` | Optional. The name of the Key Vault for encryption keys. Should not be set if `EXTERNAL_KEY_STORE_ID` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
+| `AZURE_CLIENT_ID` | The application (client) ID of the service principal created above |
+| `AZURE_TENANT_ID` | The tenant ID where the service principal was created |
+| `AZURE_SUBSCRIPTION_ID` | The Azure subscription ID where resources will be deployed |
 
 ### Configure Core Variables
 
@@ -90,9 +93,6 @@ Configure the following **variables** in your github environment:
 
 | <div style="width: 230px">Variable name</div> | Description |
 | ----------- | ----------- |
-| `AZURE_CLIENT_ID` | The application (client) ID of the service principal created above |
-| `AZURE_TENANT_ID` | The tenant ID where the service principal was created |
-| `AZURE_SUBSCRIPTION_ID` | The Azure subscription ID where resources will be deployed |
 | `AZURE_ENVIRONMENT` | Optional. The Azure cloud environment. Default is `AzureCloud`. Use `AzureUSGovernment` for US Government cloud |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
