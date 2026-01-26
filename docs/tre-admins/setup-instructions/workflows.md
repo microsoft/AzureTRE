@@ -48,10 +48,10 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
 1. Configure federated identity credentials for GitHub Actions OIDC
 
-  Configure the service principal to trust GitHub Actions OIDC tokens from your repository:
+  Configure the service principal to trust GitHub Actions OIDC tokens from your repository. The `--id` parameter expects the `appId` (application/client ID) returned from the previous step:
 
   ```cmd
-  az ad app federated-credential create --id <APPLICATION_OBJECT_ID> --parameters credential.json
+  az ad app federated-credential create --id <appId> --parameters credential.json
   ```
 
   Where `credential.json` contains (replace `OWNER`, `REPO`, and `ENVIRONMENT` with your values):
