@@ -94,6 +94,15 @@ on: # yamllint disable-line rule:truthy
       CI_CACHE_ACR_NAME:
         description: ""
         required: false
+      AZURE_CLIENT_ID:
+        description: ""
+        required: true
+      AZURE_TENANT_ID:
+        description: ""
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        description: ""
+        required: true
       ENCRYPTION_KV_NAME:
         description: ""
         required: false
