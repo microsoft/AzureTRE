@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+* Transition GitHub Actions to use federated credentials. You should replace the `AZURE_CREDENTIALS` secret as described in the [cicd pre steps](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/). ([#4822](https://github.com/microsoft/AzureTRE/pull/4822))
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
