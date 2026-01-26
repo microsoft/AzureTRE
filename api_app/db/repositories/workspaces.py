@@ -105,7 +105,6 @@ class WorkspaceRepository(ResourceRepository):
         address_space_param = {"address_space": intial_address_space}
         address_spaces_param = {"address_spaces": [intial_address_space]}
 
-        auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
         # we don't want something in the input to overwrite the system parameters,
@@ -113,7 +112,6 @@ class WorkspaceRepository(ResourceRepository):
         resource_spec_parameters = {**workspace_input.properties,
                                     **address_space_param,
                                     **address_spaces_param,
-                                    **auto_app_registration_param,
                                     **workspace_owner_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
@@ -134,9 +132,6 @@ class WorkspaceRepository(ResourceRepository):
         # the request, we can assume the logged in user will be WorkspaceOwner
         user_defined_workspace_owner_object_id = workspace_properties.get("workspace_owner_object_id")
         return workspace_owner_object_id if user_defined_workspace_owner_object_id is None else user_defined_workspace_owner_object_id
-
-    def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
-        return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
 
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.

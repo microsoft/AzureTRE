@@ -288,18 +288,6 @@ async def test_create_workspace_item_raises_value_error_if_template_is_invalid(m
         await workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id", ["test_role"])
 
 
-def test_automatically_create_application_registration_returns_true(workspace_repo):
-    dictToTest = {"auth_type": "Automatic"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is True
-
-
-def test_automatically_create_application_registration_returns_false(workspace_repo):
-    dictToTest = {"client_id": "12345"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is False
-
-
 def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace_repo):
     dictToTest = {}
     expected_object_id = "Expected"

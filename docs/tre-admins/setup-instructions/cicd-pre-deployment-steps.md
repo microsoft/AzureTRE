@@ -73,11 +73,11 @@ Configure the following secrets in your github environment:
 Configure the following **variables** in your github environment:
 
 | <div style="width: 230px">Variable name</div> | Description |
-| ----------- | ----------- |
+| --- | --- |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `CORE_ADDRESS_SPACE` | Optional. The address space for the Azure TRE core virtual network. Default value is `10.0.0.0/22`. |
-| `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16`|
+| `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16` |
 | `AZURE_ENVIRONMENT` | Optional. The name of the Azure environment. Supported values are `AzureCloud` and `AzureUSGovernment`. Default value is `AzureCloud`. |
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
@@ -92,18 +92,16 @@ Configure the following **variables** in your github environment:
 
 In a previous [Setup Auth configuration](./setup-auth-entities.md) step authentication configuration was added in `config.yaml` file. Go to this file and add those env vars to your github environment:
 
-  | Secret Name | Description |
-  | -------- | ----------- |
-  | `AAD_TENANT_ID` | Tenant id against which auth is performed. |
-  | `APPLICATION_ADMIN_CLIENT_ID`| This client will administer Microsoft Entra ID Applications for TRE |
-  | `APPLICATION_ADMIN_CLIENT_SECRET`| This client will administer Microsoft Entra ID Applications for TRE |
-  | `TEST_ACCOUNT_CLIENT_ID`| This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
-  | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
-  | `API_CLIENT_ID` | API application (client) ID. |
-  | `API_CLIENT_SECRET` | API application client secret. |
-  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `TEST_WORKSPACE_APP_ID`| Each workspace is secured behind it's own AD Application. Use the value of `WORKSPACE_API_CLIENT_ID` created in the `/config.yaml` env file |
-  | `TEST_WORKSPACE_APP_SECRET`| Each workspace is secured behind it's own AD Application. This is the secret for that application. Use the value of `WORKSPACE_API_CLIENT_SECRET` created in the `/config.yaml` env file|
+| Secret Name | Description |
+| --- | --- |
+| `AAD_TENANT_ID` | Tenant id against which auth is performed. |
+| `APPLICATION_ADMIN_CLIENT_ID` | This client will administer Microsoft Entra ID Applications for TRE |
+| `APPLICATION_ADMIN_CLIENT_SECRET` | This client will administer Microsoft Entra ID Applications for TRE |
+| `TEST_ACCOUNT_CLIENT_ID` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+| `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+| `API_CLIENT_ID` | API application (client) ID. |
+| `API_CLIENT_SECRET` | API application client secret. |
+| `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
 
 !!! info
     See [Environment variables](../environment-variables.md) for full details of the deployment related variables.

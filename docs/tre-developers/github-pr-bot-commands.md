@@ -48,6 +48,10 @@ You can use the full or short form of the SHA, but it must be at least 7 charact
 As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
+### `/test-manual-app [<sha>]`
+
+Runs the manual workspace application regression suite (currently the tests marked with the `manual_app` marker). Trigger this when you need to validate changes that affect manually created workspace applications or their authentication flow.
+
 ### `/test-destroy-env`
 
 When running `/test` multiple times on a PR, the same TRE ID and environment are used by default. The `/test-destroy-env` command destroys a previously created validation environment, allowing you to re-run `/test` with a clean starting point.

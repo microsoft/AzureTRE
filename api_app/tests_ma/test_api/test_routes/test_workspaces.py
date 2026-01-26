@@ -436,8 +436,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
     @patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
-    @patch("api.routes.workspaces.extract_auth_information")
-    async def test_post_workspaces_creates_workspace(self, _, create_workspace_item, __, ___, resource_template_repo, app, client, workspace_input, basic_resource_template):
+    async def test_post_workspaces_creates_workspace(self, create_workspace_item, __, ___, resource_template_repo, app, client, workspace_input, basic_resource_template):
         resource_template_repo.return_value = basic_resource_template
         create_workspace_item.return_value = [sample_workspace(), basic_resource_template]
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
@@ -451,8 +450,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    @patch("api.routes.workspaces.extract_auth_information")
-    async def test_post_workspaces_calls_db_and_service_bus(self, _, __, create_workspace_item, save_item_mock, send_resource_request_message_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
+    async def test_post_workspaces_calls_db_and_service_bus(self, _, create_workspace_item, save_item_mock, send_resource_request_message_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
         resource_template_repo.return_value = basic_resource_template
         create_workspace_item.return_value = [sample_workspace(), basic_resource_template]
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
@@ -466,8 +464,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    @patch("api.routes.workspaces.extract_auth_information")
-    async def test_post_workspaces_returns_202_on_successful_create(self, _, __, create_workspace_item, ____, _____, resource_template_repo, app, client, workspace_input, basic_resource_template):
+    async def test_post_workspaces_returns_202_on_successful_create(self, __, create_workspace_item, ____, _____, resource_template_repo, app, client, workspace_input, basic_resource_template):
         resource_template_repo.return_value = basic_resource_template
         create_workspace_item.return_value = [sample_workspace(), basic_resource_template]
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
@@ -482,8 +479,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.save_item")
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", return_value=[sample_workspace(), sample_resource_template()])
     @patch("api.routes.workspaces.WorkspaceRepository._validate_resource_parameters")
-    @patch("api.routes.workspaces.extract_auth_information")
-    async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, _, __, ___, ____, _____, delete_item_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
+    async def test_post_workspaces_returns_503_if_service_bus_call_fails(self, __, ___, ____, _____, delete_item_mock, resource_template_repo, app, client, workspace_input, basic_resource_template):
         resource_template_repo.return_value = basic_resource_template
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
@@ -491,8 +487,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         delete_item_mock.assert_called_once_with(WORKSPACE_ID)
 
     # [POST] /workspaces/
-    @patch("api.routes.workspaces.WorkspaceRepository.validate_input_against_template", side_effect=ValueError)
-    async def test_post_workspaces_returns_400_if_template_does_not_exist(self, _, app, client, workspace_input):
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", side_effect=ValueError)
+    async def test_post_workspaces_returns_400_if_template_does_not_exist(self, mock_create, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 

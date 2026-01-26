@@ -24,13 +24,12 @@ from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
 from resources import strings
 from services.access_service import AuthConfigValidationError
-from services.authentication import get_current_admin_user, \
+from services.authentication import extract_auth_information, get_current_admin_user, \
     get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, \
     get_current_workspace_owner_or_tre_admin, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_airlock_manager, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
-from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
@@ -99,7 +98,6 @@ async def retrieve_workspace_scope_id_by_workspace_id(workspace=Depends(get_work
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(get_current_admin_user)])
 async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(get_current_admin_user), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     try:
-        # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:

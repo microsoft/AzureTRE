@@ -2,13 +2,33 @@
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
-* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+
+* Base workspace bundle 3.0.0 (major upgrade from 2.8.0) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+  
+  **Migration Guide:**
+  1. **Existing Workspaces:** Continue to operate without changes;
+  2. **New Workspaces:**
+     - No `client_secret` parameter needed
+     - Optionally provide `client_id` to reuse pre-existing application
+     - Leave `client_id` empty for fully automatic application creation
+  3. **Upgrading Workspaces:**
+     - Only upgrade once you have tested the process in a non-production environment with your own bundles.
+     - Ensure Application Admin identity owns existing workspace applications
+     - Run workspace upgrade - Terraform will import and take over secret management
+  
+  **Permission Changes:**
+  - **Removed:** `Directory.Read.All` no longer required
+  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.ReadBasic.All`, `DelegatedPermissionGrant.ReadWrite.All`
+  
+  ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
 * Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
 * Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))

@@ -313,7 +313,7 @@ def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assi
 def test_extract_workspace__raises_error_if_owner_not_in_roles(get_app_auth_info_mock):
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
+        access_service.extract_workspace_auth_information(data={"auth_type": "Manual", "client_id": "1234"})
 
 
 @patch(
@@ -325,7 +325,7 @@ def test_extract_workspace__raises_error_if_researcher_not_in_roles(
 ):
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
+        access_service.extract_workspace_auth_information(data={"auth_type": "Manual", "client_id": "1234"})
 
 
 @patch(
@@ -337,7 +337,7 @@ def test_extract_workspace__raises_error_if_graph_data_is_invalid(
 ):
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
-        access_service.extract_workspace_auth_information(data={"client_id": "1234"})
+        access_service.extract_workspace_auth_information(data={"auth_type": "Manual", "client_id": "1234"})
 
 
 @patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
@@ -647,6 +647,33 @@ def test_get_role_assignment_for_user(mock_get_role_assignment_data_for_user):
     assert role == mock_user_data["value"][0]
 
 
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_is_user_in_role_returns_true_when_role_exists(mock_ms_graph_query):
+    mock_ms_graph_query.return_value = {"value": [{"appRoleId": "role-a"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("user-obj", "role-a") is True
+    mock_ms_graph_query.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_is_user_in_role_returns_false_when_role_not_exists(mock_ms_graph_query):
+    mock_ms_graph_query.return_value = {"value": [{"appRoleId": "role-a"}]}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("user-obj", "role-b") is False
+    mock_ms_graph_query.assert_called_once()
+
+
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_is_user_in_role_handles_empty_value(mock_ms_graph_query):
+    mock_ms_graph_query.return_value = {"value": []}
+    access_service = AzureADAuthorization()
+
+    assert access_service._is_user_in_role("user-obj", "role-c") is False
+    mock_ms_graph_query.assert_called_once()
+
+
 def get_mock_batch_response(user_principals, group_principals):
     response_body = {"responses": []}
     for user_principal in user_principals:
@@ -708,39 +735,43 @@ def get_mock_role_response(principal_roles):
     return response
 
 
-@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=True)
-@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use")
-@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_already_has_role(workspace_role_in_use_mock,
-                                                assign_user_to_group_mock,
-                                                workspace_without_groups, role_owner,
-                                                user_with_role):
+@patch("services.aad_authentication.AzureADAuthorization._assign_principal_to_app_role_direct")
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
+def test_assign_workspace_user_if_no_groups_uses_direct_assignment(workspace_role_in_use_mock,
+                                                                   direct_assign_mock,
+                                                                   workspace_without_groups, role_owner,
+                                                                   user_with_role):
+    """When no groups configured, should use direct app role assignment."""
     access_service = AzureADAuthorization()
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
-    assert workspace_role_in_use_mock.call_count == 0
-    assert assign_user_to_group_mock.call_count == 0
+    assert direct_assign_mock.call_count == 1
 
 
-@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
-@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
-@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_no_groups_raises_error(_, __, ___, workspace_without_groups, role_owner,
-                                                         user_with_role):
-
+@patch("services.aad_authentication.AzureADAuthorization._assign_principal_to_app_role_direct")
+@patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group", side_effect=Exception("Group add failed"))
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+def test_assign_workspace_user_fallback_to_direct_on_group_failure(workspace_role_in_use_mock,
+                                                                   group_assign_mock,
+                                                                   direct_assign_mock,
+                                                                   workspace_without_groups, role_owner,
+                                                                   user_with_role):
+    """When group assignment fails (e.g., for service principals), should fall back to direct assignment."""
     access_service = AzureADAuthorization()
+    access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
-    with pytest.raises(UserRoleAssignmentError):
-        access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
+    # Should try group first, then fall back to direct
+    assert group_assign_mock.call_count == 1
+    assert direct_assign_mock.call_count == 1
 
 
-@patch("services.aad_authentication.AzureADAuthorization._is_user_in_role", return_value=False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group")
-def test_assign_workspace_user_if_groups(_, __, assign_user_to_group_mock,
+def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
+                                         workspace_role_in_use_mock,
                                          workspace_without_groups, role_owner,
                                          user_with_role):
-
+    """Users should use group assignment when groups are configured."""
     access_service = AzureADAuthorization()
 
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
