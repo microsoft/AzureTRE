@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.3.4
+version: 0.3.5
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -108,7 +108,7 @@ install:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Select the Azure subscription"
       arguments:
@@ -161,7 +161,7 @@ upgrade:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Select the Azure subscription"
       arguments:
