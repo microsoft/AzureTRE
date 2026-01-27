@@ -28,6 +28,7 @@ BUG FIXES:
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
+* Fix property substitution not occuring where there only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 
 COMPONENTS:
 
