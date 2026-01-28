@@ -166,7 +166,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
               />
             ) : (
               <Form
-                omitExtraData={true}
+                omitExtraData={false}
                 schema={template}
                 formData={formData}
                 uiSchema={uiSchema}

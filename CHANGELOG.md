@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
 
 BUG FIXES:
+* Fix workspace property updates - clearing a field to blank in the UI now properly propagates the change to the API ([#ISSUE_NUMBER](https://github.com/microsoft/AzureTRE/issues/ISSUE_NUMBER))
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
 * Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
