@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2607,17 +2607,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#for-cicd-pipelines-in-github-environment-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For CI/CD pipelines in github environment secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -4398,17 +4387,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#for-cicd-pipelines-in-github-environment-secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For CI/CD pipelines in github environment secrets
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -4474,15 +4452,15 @@
 </tr>
 <tr>
 <td><code>ARM_CLIENT_ID</code></td>
-<td><em>Optional for manual deployment without logged-in credentials.</em> The client whose azure identity will be used to deploy the solution.</td>
+<td><em>Optional for manual deployment without logged-in credentials.</em> The client whose azure identity will be used to deploy the solution. For CI/CD, this is set via repository variables.</td>
 </tr>
 <tr>
 <td><code>ARM_CLIENT_SECRET</code></td>
-<td><em>Optional for manual deployment without logged-in credentials.</em> The password of the client defined in <code>ARM_CLIENT_ID</code>.</td>
+<td><em>Optional for manual deployment without logged-in credentials.</em> The password of the client defined in <code>ARM_CLIENT_ID</code>. <strong>Note:</strong> For CI/CD using GitHub Actions, this is no longer required as OIDC authentication is used instead.</td>
 </tr>
 <tr>
 <td><code>ARM_TENANT_ID</code></td>
-<td><em>Optional for manual deployment. If not specified the <code>az cli</code> selected subscription will be used.</em> The Microsoft Entra ID tenant of the client defined in <code>ARM_CLIENT_ID</code>.</td>
+<td><em>Optional for manual deployment. If not specified the <code>az cli</code> selected subscription will be used.</em> The Microsoft Entra ID tenant of the client defined in <code>ARM_CLIENT_ID</code>. For CI/CD, this is set via repository variables.</td>
 </tr>
 </tbody>
 </table>
@@ -4668,21 +4646,6 @@
 </tr>
 </tbody>
 </table>
-<h2 id="for-cicd-pipelines-in-github-environment-secrets">For CI/CD pipelines in github environment secrets</h2>
-<table>
-<thead>
-<tr>
-<th>Variable</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AZURE_CREDENTIALS</code></td>
-<td>Credentials used to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services. This is basically your ARM client credentials in json format. Read more about how to create it and its format <a href="../setup-instructions/workflows/##create-a-service principal-for-provisioning-resources">here</a></td>
-</tr>
-</tbody>
-</table>
 
 
 
@@ -4732,10 +4695,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
