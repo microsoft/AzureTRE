@@ -104,3 +104,7 @@ Runs the linter on the project.<br>
 ### `yarn format`
 
 Runs the formatter on the project.<br>
+
+## Testing
+
+The UI includes comprehensive unit and component tests using Vitest and React Testing Library. For detailed information about testing practices, setup, and guidelines, see [UI Testing](ui-testing.md).

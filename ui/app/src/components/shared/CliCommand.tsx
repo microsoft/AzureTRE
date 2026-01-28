@@ -54,7 +54,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
           {commandWithoutParams}
         </code>
         <Stack.Item style={{ paddingLeft: "30px" }}>
-          {paramsList?.map((paramWithValue) => {
+          {paramsList?.map((paramWithValue, index) => {
             // split the parameter from it's value
             const splitParam = paramWithValue.split(/\s(.*)/);
 
@@ -63,7 +63,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
             const paramValueIsComment = paramValue?.match(/<.*?>/);
 
             return (
-              <div style={{ wordBreak: "break-all", fontSize: "13px" }}>
+              <div key={`${param}-${index}`} style={{ wordBreak: "break-all", fontSize: "13px" }}>
                 <code style={{ color: "teal" }}>{param}</code>
                 <code
                   style={{ color: paramValueIsComment ? "firebrick" : "black" }}
@@ -93,7 +93,9 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
               iconProps={{ iconName: "copy" }}
               styles={{ root: { minWidth: "40px" } }}
               onClick={() => {
-                props.command && handleCopyCommand();
+                if (props.command) {
+                  handleCopyCommand();
+                }
               }}
             />
           </TooltipHost>
