@@ -19,7 +19,7 @@ else
             docker buildx use tre-builder
         fi
 
-        ref="${CI_CACHE_ACR_FQDN}/build-cache/$(yq ".name" porter.yaml):porter"
+        ref="${CI_CACHE_ACR_FQDN}/build-cache/$(yq '.name' porter.yaml):porter"
         cache=(--cache-to "type=registry,ref=${ref},mode=max" --cache-from "type=registry,ref=${ref}")
     fi
 
