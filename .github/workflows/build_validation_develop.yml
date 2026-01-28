@@ -102,6 +102,8 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
+          TYPESCRIPT_ES_CONFIG_FILE: ui/app/eslint.config.js
+          TSX_CONFIG_FILE: ui/app/eslint.config.js
 
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
