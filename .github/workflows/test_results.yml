@@ -85,9 +85,9 @@ jobs:
           if [ -d "artifacts/test-results/ui-coverage" ]; then
             mkdir -p ui/app/coverage
             cp -r artifacts/test-results/ui-coverage/* ui/app/coverage/
-            echo "has_coverage=true" >> $GITHUB_OUTPUT
+            echo "has_coverage=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_coverage=false" >> $GITHUB_OUTPUT
+            echo "has_coverage=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Report coverage comparison
