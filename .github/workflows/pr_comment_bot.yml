@@ -74,7 +74,7 @@ jobs:
   destroy_pr_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
@@ -114,7 +114,7 @@ jobs:
   destroy_branch_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefId != '' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read

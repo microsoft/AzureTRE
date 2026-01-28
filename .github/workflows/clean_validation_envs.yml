@@ -13,7 +13,7 @@ permissions:
 jobs:
   clean:
     name: Clean
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     environment: CICD
     timeout-minutes: 30
     permissions:
