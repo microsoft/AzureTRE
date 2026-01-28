@@ -64,6 +64,7 @@ jobs:
     needs: [prepare-not-main]
     uses: ./.github/workflows/deploy_tre_reusable.yml
     permissions:
+      id-token: write
       checks: write
       contents: read
       pull-requests: write
@@ -75,9 +76,11 @@ jobs:
       E2E_TESTS_NUMBER_PROCESSES: ${{ fromJSON(github.event.inputs.e2eProcesses) }}
       DEVCONTAINER_TAG: ${{ needs.prepare-not-main.outputs.refid }}
     secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
