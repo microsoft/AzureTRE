@@ -17,6 +17,7 @@ ENHANCEMENTS:
 * Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
 * Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
 * Add porter build cache in CI ([#4827](https://github.com/microsoft/AzureTRE/issues/4827))
+* Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost
 
 BUG FIXES:
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))

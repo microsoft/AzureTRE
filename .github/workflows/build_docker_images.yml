@@ -20,7 +20,7 @@ permissions:
 jobs:
   docker_build:
     name: Build images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       actions: write # For uploading artifacts
