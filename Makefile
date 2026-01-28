@@ -279,6 +279,9 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
+	&& if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
+		az acr login -n $${CI_CACHE_ACR_NAME}; \
+		export CI_CACHE_ACR_FQDN="$${CI_CACHE_ACR_NAME:+$${CI_CACHE_ACR_NAME}${ACR_DOMAIN_SUFFIX}}"; fi \
 	&& ${MAKEFILE_DIR}/devops/scripts/porter_build_bundle.sh \
 	  $(MAKE) bundle-check-params
 
