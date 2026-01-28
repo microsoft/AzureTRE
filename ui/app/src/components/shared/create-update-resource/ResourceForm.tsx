@@ -179,8 +179,6 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
       );
     case LoadingState.Error:
       return <ExceptionLayout e={apiError} />;
-    case LoadingState.Error:
-      return <ExceptionLayout e={apiError} />;
     default:
       return (
         <div style={{ marginTop: 20 }}>
