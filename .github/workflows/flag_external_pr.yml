@@ -12,7 +12,7 @@ permissions:
 jobs:
   check_author:
     name: Check PR author
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: write
