@@ -32,6 +32,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
 ) => {
   const [template, setTemplate] = useState<any | null>(null);
   const [formData, setFormData] = useState({});
+  const [originalFormData, setOriginalFormData] = useState({});
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
   const [sendingData, setSendingData] = useState(false);
   const apiCall = useAuthApiCall();
@@ -51,6 +52,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
         // if it's an update, populate the form with the props that are available in the template
         if (props.updateResource) {
           setFormData(props.updateResource.properties);
+          setOriginalFormData(props.updateResource.properties);
         }
 
         const sanitisedTemplate = sanitiseTemplateForRJSF(templateResponse);
@@ -99,8 +101,27 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
     return data;
   };
 
+  const getChangedProperties = (current: any, original: any): any => {
+    const changed: any = {};
+    
+    // Find properties that have changed
+    for (const key in current) {
+      if (current[key] !== original[key]) {
+        changed[key] = current[key];
+      }
+    }
+    
+    return changed;
+  };
+
   const createUpdateResource = async (formData: any) => {
-    const data = removeReadOnlyProps(formData, template);
+    let data = removeReadOnlyProps(formData, template);
+    
+    // For updates, only send properties that have changed from the original
+    if (props.updateResource) {
+      data = getChangedProperties(data, originalFormData);
+    }
+    
     console.log("parsed payload to send", data);
 
     setSendingData(true);
@@ -166,7 +187,8 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
               />
             ) : (
               <Form
-                omitExtraData={false}
+                omitExtraData={true}
+                liveOmit={false}
                 schema={template}
                 formData={formData}
                 uiSchema={uiSchema}
