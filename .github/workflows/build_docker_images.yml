@@ -112,13 +112,12 @@ jobs:
           || github.event_name == 'workflow_dispatch')
         working-directory: ui/app
         run: |
-          mkdir -p ../../test-results/ui-coverage
+          mkdir -p ../../test-results
           yarn install
           cp src/config.source.json src/config.json
-          if ! yarn test:coverage --run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
+          if ! yarn test run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
             touch ../../test-results/ui_tests_failed
           fi
-          cp -r coverage/* ../../test-results/ui-coverage/
 
       - name: Set up Docker Buildx
         id: buildx
