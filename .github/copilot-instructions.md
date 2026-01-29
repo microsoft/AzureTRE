@@ -54,6 +54,7 @@ Azure TRE uses the following key technologies:
 ├── api_app               - API source code and docs
 ├── resource_processor    - VMSS Porter Runner
 ├── scripts               - Utility scripts
+├── ui                    - React-based web UI with TypeScript
 └── templates             - Resource templates
     ├── core/terraform    - Terraform definitions of Azure TRE core resources
     ├── shared_services   - Terraform definitions of shared services
@@ -81,6 +82,12 @@ Azure TRE uses the following key technologies:
 
 - **TypeScript/JavaScript**:
   - Follow standard ESLint configuration
+  - Use Vitest for testing React components
+  - Use React Testing Library for component testing
+  - Mock FluentUI components in tests due to JSDOM limitations
+  - Maintain 80% code coverage across branches, functions, lines, and statements
+  - Focus on testing user interactions and component behavior
+  - Use semantic queries (getByRole, getByLabelText) over test IDs when possible
   - Use Yarn for package management
 
 - **YAML**:
