@@ -98,6 +98,27 @@ jobs:
           steps.filter.outputs.ui_app_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
+      - name: Setup Node.js
+        if: |
+          (steps.filter.outputs.ui_app == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: "Test: UI"
+        if: |
+          (steps.filter.outputs.ui_app == 'true'
+          || github.event_name == 'workflow_dispatch')
+        working-directory: ui/app
+        run: |
+          mkdir -p ../../test-results
+          yarn install
+          cp src/config.source.json src/config.json
+          if ! yarn test run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
+            touch ../../test-results/ui_tests_failed
+          fi
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
