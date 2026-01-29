@@ -74,24 +74,3 @@ jobs:
           status: "completed"
           conclusion: ${{ github.event.workflow_run.conclusion }}
           details_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      ## Vitest Coverage Report
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Prepare Coverage Report
-        id: coverage-prep
-        run: |
-          if [ -d "artifacts/test-results/ui-coverage" ]; then
-            mkdir -p ui/app/coverage
-            cp -r artifacts/test-results/ui-coverage/* ui/app/coverage/
-            echo "has_coverage=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_coverage=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Report coverage comparison
-        if: steps.coverage-prep.outputs.has_coverage == 'true'
-        uses: davelosert/vitest-coverage-report-action@v2
-        with:
-          working-directory: ui/app/
