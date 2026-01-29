@@ -148,6 +148,7 @@ nav:
               - Introduction: tre-developers/index.md
               - API: tre-developers/api.md
               - UI: tre-developers/ui.md
+              - UI Testing: tre-developers/ui-testing.md
               - Resource Processor: tre-developers/resource-processor.md
               - End to End Tests: tre-developers/end-to-end-tests.md
               - Letsencrypt: tre-developers/letsencrypt.md
