@@ -69,9 +69,6 @@ Some of the applications require **admin consent** to allow them to validate use
 
 We strongly recommend that you use `make auth` to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the [Azure Portal](https://learn.microsoft.com/en-gb/entra/identity-platform/quickstart-register-app); more information can be found in the [manual authentication setup guide](./identities/auth-manual.md).
 
-### Conditional Access / Multifactor Authentication
-To enable multifactor authentication on the TRE UI you should add the "TRE UX" application to your conditional access policy.
-
 ### Enabling users
 
 For a user to gain access to the system, they have to:
