@@ -148,7 +148,7 @@ nav:
               - Introduction: tre-developers/index.md
               - API:
                   - API Overview: tre-developers/api.md
-                  - API Permissions Map: tre-developers/api-permissions.md
+                  - API Permissions Map: tre-developers/api-permissions-map.md
               - UI: tre-developers/ui.md
               - UI Testing: tre-developers/ui-testing.md
               - Resource Processor: tre-developers/resource-processor.md
