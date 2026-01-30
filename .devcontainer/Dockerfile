@@ -16,6 +16,11 @@ RUN usermod --uid $USER_UID $USERNAME
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Fix expired Yarn GPG key - see https://github.com/yarnpkg/yarn/issues/9218
+# Update to the new signing key to avoid apt update failures
+RUN curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg \
+    | gpg --batch --yes --dearmor -o /usr/share/keyrings/yarn-archive-keyring.gpg
+
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
 
