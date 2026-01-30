@@ -18,7 +18,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Fix expired Yarn GPG key - see https://github.com/yarnpkg/yarn/issues/9218
 # Update to the new signing key to avoid apt update failures
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn-archive-keyring.gpg > /dev/null
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn-archive-keyring.gpg > /dev/null
 
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
