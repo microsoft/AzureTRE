@@ -115,7 +115,6 @@ nav:
           - Export Review VM: tre-templates/user-resources/export-reviewvm.md
 
   - Technical Guide: # All Technical Documentation (Admin, Development)
-
       - Administration: # Docs related to the deployment and operation of AzureTRE infrastructure
           - Starting and Stopping Azure TRE Services: tre-admins/start-stop.md
           - Environment Variables: tre-admins/environment-variables.md
@@ -141,12 +140,15 @@ nav:
           - Customer Managed Keys: tre-admins/customer-managed-keys.md
           - Custom Domain Name: tre-admins/custom-domain.md
           - Firewall Force Tunneling: tre-admins/configure-firewall-force-tunneling.md
+          - DNS Security Policy: tre-admins/dns-security-policy.md
 
       - Development: # Docs related to the developing code for the AzureTRE
           - Local Development: using-tre/local-development/local-development.md
           - Contributing to AzureTRE: # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
-              - API: tre-developers/api.md
+              - API:
+                  - API Overview: tre-developers/api.md
+                  - API Permissions Map: tre-developers/api-permissions.md
               - UI: tre-developers/ui.md
               - UI Testing: tre-developers/ui-testing.md
               - Resource Processor: tre-developers/resource-processor.md

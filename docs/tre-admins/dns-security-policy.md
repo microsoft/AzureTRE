@@ -11,10 +11,8 @@ of [DNS tunnelling][dnstunneling].
 
 ## Azure DNS Security Policy
 
-[Azure DNS security policy][azdnssec] is currently (May 2025) in public preview and enables a policy to log and
-filter all DNS requests originating from a virtual network. As the service is in preview it is not enabled by
-default on the TRE, but can be configured with a flag in the `config.yaml` file. Uncomment the line from the
-sample config file and set `enable_dns_policy` to __`true`__.
+[Azure DNS security policy][azdnssec] enables a policy to log and filter all DNS requests originating from a virtual network. The security policy setting can be configured with a flag in the `config.yaml` file.
+Uncomment the line from the sample config file and set `enable_dns_policy` to __`true`__.
 
 The filters applied include an allow-list of domains that are required for basic functionality of the TRE. This list can be
 seen in the [`allowed-dns.json`][allowed] file. DNS requests to all other domains are blocked. To add domain
