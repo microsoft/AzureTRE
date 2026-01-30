@@ -34,6 +34,7 @@ BUG FIXES:
 * Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
+* Fix property substitution not occuring where there only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 
 COMPONENTS:
 
