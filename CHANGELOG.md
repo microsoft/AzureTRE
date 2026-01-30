@@ -4,6 +4,7 @@
 * Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+* Transition GitHub Actions to use federated credentials. You should replace the `AZURE_CREDENTIALS` secret as described in the [cicd pre steps](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/). ([#4822](https://github.com/microsoft/AzureTRE/pull/4822))
 
 
 ENHANCEMENTS:
@@ -11,9 +12,15 @@ ENHANCEMENTS:
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+* Implement UI testing with vitest ([#4794](https://github.com/microsoft/AzureTRE/pull/4794))
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
+* Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
+* Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
+* Add porter build cache in CI ([#4827](https://github.com/microsoft/AzureTRE/issues/4827))
 
 BUG FIXES:
+* Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
+* Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
@@ -26,6 +33,7 @@ BUG FIXES:
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 * Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
+* Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
 
 COMPONENTS:
 
@@ -1029,7 +1037,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 * A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358))
-* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed [here](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
+* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed in [configure-core-variables](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
 
 FEATURES:
 * (UI) Added upgrade button to resources that have pending template upgrades ([#3387](https://github.com/microsoft/AzureTRE/pull/3387))
@@ -1460,7 +1468,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described [here](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
+* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described in [configuring-shared-services](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
 
 FEATURES:
 

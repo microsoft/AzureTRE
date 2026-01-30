@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 0.3.4
+version: 0.3.5
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -234,7 +234,7 @@ start:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Start the VM"
       arguments:
@@ -270,7 +270,7 @@ stop:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Stop the VM"
       arguments:
@@ -309,7 +309,7 @@ reset_password:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - exec:
       description: "Reset password and persist to keyvault"
       suppress-output: true
