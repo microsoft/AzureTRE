@@ -29,7 +29,7 @@ Currently the only CDM data source supported by the workspace service is Azure S
 
 If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the [networking configuration](#networking-configuration) section.  
 
-If you're data is in a different format, you can read [how to set up the ETL process](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) to convert your medical data to OMOP format.  
+If your data is in a different format, you can read [how to set up the ETL process](https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html) to convert your medical data to OMOP format.  
 
 ## Using a sample CDM data source
 If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the [OHDSI on Azure](https://github.com/microsoft/OHDSIonAzure) repository.  
