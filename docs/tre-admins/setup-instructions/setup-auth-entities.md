@@ -23,9 +23,7 @@ Next, you will set the configuration variables for the specific Azure TRE instan
 1. Once you have decided on which AD Tenant paradigm, then you should be able to set `aad_tenant_id` in the authentication section in your `config.yaml` file.
 1. Your Microsoft Entra ID Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the Microsoft Entra ID Applications that are used for TRE. The details of the script are covered in the [auth document](../auth.md).
 
-   ```bash
-   make auth
-   ```
+      make auth
   !!! note
       Credentials created by the `make auth` command will be added under the authentication section in your `config.yaml` file
 
