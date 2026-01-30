@@ -53,14 +53,14 @@ The `image_options` section defined the possible image choices for the template 
 
 Within the image definition in `image_options` there are a few properties that can be specified:
 
-| Name                     | Description                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| `source_image_name`      | Specify VM image to use by name (see notes below for identifying the image gallery containing the image) |
-| `source_image_reference` | Specify VM image to use by `publisher`, `offer`, `sku` & `version` (e.g. for Azure Marketplace images)   |
-| `install_ui`             | (Linux only) Set `true` to install desktop environment                                                   |
-| `conda_config`           | Set true to configure conda                                                                              |
-| `secure_boot_enabled`    | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#secure-boot).  Requires a Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image |
-| `vtpm_enabled`           | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#vtpm).  Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image |
+| Name                     | Description                                                                                                                                                                                                                          |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `source_image_name`      | Specify VM image to use by name (see notes below for identifying the image gallery containing the image)                                                                                                                             |
+| `source_image_reference` | Specify VM image to use by `publisher`, `offer`, `sku` & `version` (e.g. for Azure Marketplace images)                                                                                                                               |
+| `install_ui`             | (Linux only) Set `true` to install desktop environment                                                                                                                                                                               |
+| `conda_config`           | Set true to configure conda                                                                                                                                                                                                          |
+| `secure_boot_enabled`    | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#secure-boot). Requires a Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image |
+| `vtpm_enabled`           | Set true to enable [Secure Boot](https://learn.microsoft.com/en-us/azure/virtual-machines/trusted-launch#vtpm).  Requires a [Gen 2](https://learn.microsoft.com/en-us/azure/virtual-machines/generation-2) VM image                  |
 
 When specifying images using `source_image_name`, the image must be stored in an [image gallery](https://learn.microsoft.com/en-us/azure/virtual-machines/azure-compute-gallery).
 To enable re-using built user resource templates across environments where the image may vary, the image gallery is configured via the `RP_BUNDLE_VALUES` environment variable when deploying the TRE.

@@ -15,12 +15,13 @@ This application is used to authorize end-to-end test scenarios.
 This application does not have any roles defined.
 
 ## Permissions
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
-|TRE API / TREAdmin|Application|Yes|This allows this application to authenticate as a TRE Admin for running the tests locally and the E2E in the build.|
-|TRE API / user_impersonation|Delegated|No|This allows the application to impersonate the logged in user.|
-|TRE - workspace x API / WorkspaceOwner|Application|Yes|This allows this application to authenticate as a Workspace Owner for running the tests locally and the E2E in the build.|
-|TRE - workspace x  API / user_impersonation|Delegated|No|This allows the application to impersonate the logged in user.|
+
+| Name | Type* | Admin consent required | TRE usage |
+| --- | -- | ----- | --------- |
+| TRE API / TREAdmin | Application | Yes | This allows this application to authenticate as a TRE Admin for running the tests locally and the E2E in the build. |
+| TRE API / user_impersonation | Delegated | No | This allows the application to impersonate the logged in user. |
+| TRE - workspace x API / WorkspaceOwner | Application | Yes | This allows this application to authenticate as a Workspace Owner for running the tests locally and the E2E in the build. |
+| TRE - workspace x  API / user_impersonation | Delegated | No | This allows the application to impersonate the logged in user. |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
@@ -28,10 +29,11 @@ This application does not have any roles defined.
 This application is used locally to automatically register bundles against the API and is the user that runs the E2E locally and in the Build.
 
 ## Environment Variables
+
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|TEST_ACCOUNT_CLIENT_ID|The Client Id|`./config.yaml`|
-|TEST_ACCOUNT_CLIENT_SECRET|The client secret|`./config.yaml`|
+| TEST_ACCOUNT_CLIENT_ID | The Client Id | `./config.yaml` |
+| TEST_ACCOUNT_CLIENT_SECRET | The client secret | `./config.yaml` |
 
 ## How to create
 Example on how to run the script:
