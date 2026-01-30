@@ -14,8 +14,8 @@ Next, you will set the configuration variables for the specific Azure TRE instan
     | `acr_name` | A globally unique name for the [Azure Container Registry (ACR)](https://docs.microsoft.com/azure/container-registry/) that will be created to store deployment images. |
     | `arm_subscription_id` | The Azure subscription ID for all resources. |
 
-    !!! tip
-        To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
+  !!! tip
+      To retrieve your Azure subscription ID, use the `az` command line interface available in the development container. In the terminal window in Visual Studio Code, type `az login` followed by `az account show` to see your default subscription. Please refer to `az account -help` for further details on how to change your active subscription.
 
     The rest of the variables can have their default values.
 
