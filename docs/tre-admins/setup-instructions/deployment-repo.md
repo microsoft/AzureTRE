@@ -1,6 +1,6 @@
 # AzureTRE Deployment repo
 
-AzureTRE has an OSS deployment repository which you can find [here.](https://github.com/microsoft/AzureTRE-Deployment)
+AzureTRE has an OSS deployment repository which you can find in the [AzureTRE Deployment GitHub repository.](https://github.com/microsoft/AzureTRE-Deployment)
 It contains all the required tooling to develop your custom templates and deploy the Azure TRE:
 
 - Github Actions implementing AzureTRE automation, including running deployments to Azure

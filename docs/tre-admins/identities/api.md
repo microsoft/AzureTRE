@@ -14,13 +14,14 @@ This identity's credentials are stored in the `core` Key Vault and mandatory for
 | TRE Users | Provides access to the TRE application. | Users/Groups,Applications | `TREUser` |
 
 ## Microsoft Graph Permissions
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
+
+| Name | Type* | Admin consent required | TRE usage |
+| --- | -- | ----- | --------- |
 | Directory.Read.All | Application | Yes | Allows the app to read directory objects (roles/permissions) in your organization's directory, such as roles and permissions, without a signed-in user. |
 | User.Read.All | Application | Yes | Allows the app to read user profiles without a signed in user to check that the user has permissions to execute an action e.g., to view workspaces. See `/api_app/services/aad_authentication.py`. |
-|email|Delegated|No|Used to read the user's email address when creating TRE resources|
-|openid|Delegated|No|Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information.|
-|profile|Delegated|No|Used to read the user's profile when creating TRE resources|
+| email | Delegated | No | Used to read the user's email address when creating TRE resources |
+| openid | Delegated | No | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. |
+| profile | Delegated | No | Used to read the user's profile when creating TRE resources |
 
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
@@ -50,7 +51,7 @@ Below is a sample where `TRE_ID` has value `mytre`:
 | `--name` | The prefix of the name of the app registrations. `TRE` will give you `TRE API`. |
 | `--tre-url` | Used to construct auth redirection URLs for the UI and Swagger app. Use the values of the [environment variables](../environment-variables.md) `TRE_ID` and `LOCATION` in the URL. Reply URL for the localhost, `http://localhost:8000/api/docs/oauth2-redirect`, will be added by default. |
 | `--admin-consent` | Grants admin consent for the app registrations. This is required for them to function properly, but requires Microsoft Entra ID admin privileges. |
-| `--automation-clientid` | This is an optional parameter but will grant TREAdmin permission to the Service Principal of the Automation Admin.|
+| `--automation-clientid` | This is an optional parameter but will grant TREAdmin permission to the Service Principal of the Automation Admin. |
 | `--reset-password` | Optional, default is 0. When run in a headless fashion, 1 is passed in to always reset the password. |
 
 
@@ -63,10 +64,11 @@ You can create an automation account which will aid your development flow, if yo
 You can run the script without the `--admin-consent` and ask your admin to grant consent. If you don't have permissions and just want to create a development environment then skip this step and see the steps in the "Using a separate Microsoft Entra ID tenant) below.
 
 ## Environment Variables
+
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|API_CLIENT_ID|The Client Id|`./config.yaml`|
-|API_CLIENT_SECRET|The client secret|`./config.yaml`|
+| API_CLIENT_ID | The Client Id | `./config.yaml` |
+| API_CLIENT_SECRET | The client secret | `./config.yaml` |
 
 ## Comments
 
