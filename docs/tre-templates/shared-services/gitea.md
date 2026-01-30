@@ -46,7 +46,7 @@ Gitea needs to be able to access the following resource outside the Azure TRE VN
 | --- | --- |
 | AzureActiveDirectory | Authorize the signed in user against Microsoft Entra ID. |
 | AzureContainerRegistry | Pull the Gitea container image, as it is located in Azure Container Registry. |
-| (<www.)github.com> | Allows Gitea to mirror any repo on GitHub |
+| `(www.)github.com` | Allows Gitea to mirror any repo on GitHub |
 
 ## Upgrading to version 1.0.0
 
