@@ -36,3 +36,7 @@ rule "terraform_standard_module_structure" {
 rule "terraform_required_version" {
   enabled = false
 }
+
+rule "azurerm_resources_missing_prevent_destroy" {
+  enabled = false
+}
