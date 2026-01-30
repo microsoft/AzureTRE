@@ -45,5 +45,5 @@ DNSQueryLogs | where ResolverPolicyRuleAction == "None" and ResponseCode == 2
 [dnstunneling]: https://www.paloaltonetworks.com/cyberpedia/what-is-dns-tunneling "What Is DNS Tunneling?"
 [iodine]: https://code.kryo.se/iodine/
 [dns2tcp]: https://www.kali.org/tools/dns2tcp/
-[azdnssec]: https://learn.microsoft.com/azure/dns/dns-security-policy "DNS security policy (Preview)"
+[azdnssec]: https://learn.microsoft.com/azure/dns/dns-security-policy "DNS security policy"
 [allowed]: https://github.com/microsoft/AzureTRE/blob/main/core/terraform/allowed-dns.json
