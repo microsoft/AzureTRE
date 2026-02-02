@@ -34,6 +34,7 @@ BUG FIXES:
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
 * Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
+* Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
 
 COMPONENTS:
