@@ -35,7 +35,7 @@ permissions:
 jobs:
   prepare-not-main:
     name: Preparation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: |
       github.ref != 'refs/heads/main'
     outputs:
