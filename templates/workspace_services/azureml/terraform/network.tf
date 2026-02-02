@@ -171,61 +171,7 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
   source_port_range           = "*"
 }
 
-resource "azurerm_network_security_rule" "allow_outbound_to_aml_udp_5831" {
-  access                      = "Allow"
-  destination_address_prefix  = "AzureMachineLearning"
-  destination_port_range      = "5831"
-  direction                   = "Outbound"
-  name                        = "to-aml-udp"
-  network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 106
-  protocol                    = "Udp"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
 
-resource "azurerm_network_security_rule" "allow_outbound_to_aml_tcp_443" {
-  access                      = "Allow"
-  destination_address_prefix  = "AzureMachineLearning"
-  destination_port_range      = "443"
-  direction                   = "Outbound"
-  name                        = "to-aml-tcp-443"
-  network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 107
-  protocol                    = "Tcp"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
-
-resource "azurerm_network_security_rule" "allow_outbound_to_aml_tcp_8787" {
-  access                      = "Allow"
-  destination_address_prefix  = "AzureMachineLearning"
-  destination_port_range      = "8787"
-  direction                   = "Outbound"
-  name                        = "to-aml-tcp-8787-rstudio"
-  network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 108
-  protocol                    = "Tcp"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
-
-resource "azurerm_network_security_rule" "allow_outbound_to_aml_tcp_18881" {
-  access                      = "Allow"
-  destination_address_prefix  = "AzureMachineLearning"
-  destination_port_range      = "18881"
-  direction                   = "Outbound"
-  name                        = "to-aml-tcp-18881-language-server"
-  network_security_group_name = azurerm_network_security_group.aml.name
-  priority                    = 109
-  protocol                    = "Tcp"
-  resource_group_name         = data.azurerm_resource_group.ws.name
-  source_address_prefix       = "*"
-  source_port_range           = "*"
-}
 
 resource "azurerm_network_security_rule" "allow_outbound_within_workspace_vnet" {
   access                       = "Allow"

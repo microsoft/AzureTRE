@@ -1,6 +1,6 @@
 {
   "name": "tre-ui",
-  "version": "0.8.23",
+  "version": "0.8.24",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -27,15 +27,14 @@
     "strip-ansi": "^7.1.0",
     "typescript": "^5.6.3",
     "vite": "latest",
-    "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-svgr": "latest",
     "vite-tsconfig-paths": "latest",
     "web-vitals": "^3.3.0"
   },
   "devDependencies": {
-    "@testing-library/dom": "^7.21.4",
-    "@testing-library/jest-dom": "^6.2.0",
-    "@testing-library/react": "^14.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.17.14",
     "@types/react": "^18.3.16",
@@ -43,7 +42,8 @@
     "@typescript-eslint/eslint-plugin": "^8.24.0",
     "@typescript-eslint/parser": "^8.24.0",
     "@vitest/coverage-v8": "latest",
-    "eslint": "^9.35.0",
+    "@vitest/ui": "4.0.13",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.37.4",
@@ -53,6 +53,7 @@
     "jsdom": "latest",
     "prettier": "3.5.0",
     "sass-embedded": "^1.83.4",
+    "vite-plugin-checker": "^0.12.0",
     "vitest": "latest"
   },
   "scripts": {
@@ -61,6 +62,7 @@
     "serve": "vite preview",
     "test": "vitest",
     "test:coverage": "vitest run --coverage --watch=false",
+    "test:ui": "vitest --ui",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -75,6 +77,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "engines": {
+    "node": ">=21.0.0"
   },
   "resolutions": {
     "nth-check": "^2.0.1",
