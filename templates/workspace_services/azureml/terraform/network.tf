@@ -65,7 +65,7 @@ resource "azurerm_subnet" "aml" {
   virtual_network_name            = data.azurerm_virtual_network.ws.name
   resource_group_name             = data.azurerm_virtual_network.ws.resource_group_name
   address_prefixes                = [var.address_space]
-  default_outbound_access_enabled = var.is_exposed_externally ? true : false
+  default_outbound_access_enabled = false
 
   # need to be disabled for AML private compute
   private_endpoint_network_policies             = "Disabled"
