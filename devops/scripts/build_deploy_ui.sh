@@ -26,8 +26,8 @@ jq --arg rootClientId "${SWAGGER_UI_CLIENT_ID}" \
   '.rootClientId = $rootClientId | .rootTenantId = $rootTenantId | .treApplicationId = $treApplicationId | .treUrl = $treUrl | .treId = $treId | .version = $version | .activeDirectoryUri = $activeDirectoryUri | .userManagementEnabled = $userManagementEnabled | .uiSiteName = $uiSiteName | .uiFooterText = $uiFooterText' ./src/config.source.json > ./src/config.json
 
 # build and deploy the app
-yarn install
-yarn build
+npm install
+npm run build
 
 popd
 
