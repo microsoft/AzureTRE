@@ -37,19 +37,16 @@ The Azure TRE uses several Microsoft Entra ID applications as described in the [
 - **Workspace API applications**: Individual applications for each workspace (see [Workspace Applications](./identities/workspace.md))
 
 !!! important "Covering New Workspaces"
-    Since each workspace has its own Microsoft Entra ID application that is created on-demand, you must ensure your TRE-wide Conditional Access Policies automatically cover new workspaces. There are two recommended strategies:
+    Since each workspace has its own Microsoft Entra ID application that is created on-demand, you must ensure your TRE-wide Conditional Access Policies automatically cover new workspaces.
 
-    1. **Use "All cloud apps" with exclusions** (Recommended for TRE-wide policies):
-       - Select **All cloud apps** under **Cloud apps or actions**
-       - Add specific exclusions if needed (e.g., exclude certain administrative apps)
-       - This ensures all workspace applications are automatically covered, including future ones
-       - Use this approach for critical policies like MFA requirements
-       - **This is the most sustainable approach and requires no ongoing maintenance**
+    **The only sustainable approach is to use "All cloud apps":**
+    - Select **All cloud apps** under **Cloud apps or actions**
+    - Add specific exclusions if needed (e.g., exclude certain administrative apps)
+    - This ensures all workspace applications are automatically covered, including future ones
+    - This requires no ongoing maintenance
 
-    2. **Use Azure AD Security Groups** (If AUTO_WORKSPACE_GROUP_CREATION is enabled):
-       - If using automated workspace app registration with group assignment, you can target the security groups in your Conditional Access Policies
-       - See [Application Admin](./identities/application_admin.md) for more details on AUTO_WORKSPACE_GROUP_CREATION
-       - This provides more granular control while still being automatically maintained
+    !!! warning "Security groups don't solve this problem"
+        While AUTO_WORKSPACE_GROUP_CREATION creates security groups for workspace roles, these groups are created per workspace (e.g., "TRE-ws01-WorkspaceOwner") and cannot be targeted in advance in Conditional Access Policies. Security groups are useful for assigning users to workspace roles, but not for targeting applications in TRE-wide CAPs.
 
     !!! warning "Avoid manual updates"
         Do not rely on manually updating Conditional Access Policies each time a workspace is created. This is not sustainable and can lead to security gaps if forgotten.
