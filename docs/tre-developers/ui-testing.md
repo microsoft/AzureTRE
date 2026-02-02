@@ -146,25 +146,25 @@ it("handles async operations", async () => {
 cd ui/app
 
 # Run tests in watch mode (waits for file changes)
-yarn test
+npm test
 
 # Run tests in run mode
-yarn test --run
+npm test --run
 
 # Run tests and produces a coverage report
-yarn test:coverage
+npm run test:coverage
 
 # Launches a web page where you can visualise your tests
-yarn test:ui
+npm run test:ui
 
 # Build and test (CI)
-yarn run build && yarn test --run
+npm run build && npm test --run
 ```
 
 ### Test Scripts
 
-- `yarn test`: Runs tests in watch mode for development
-- `yarn run test:coverage`: Runs tests once and generates coverage report
+- `npm test`: Runs tests in watch mode for development
+- `npm run test:coverage`: Runs tests once and generates coverage report
 - Coverage reports are generated in HTML, LCOV, JSON, and text formats
 
 ## Coverage Requirements
