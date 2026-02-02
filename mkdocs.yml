@@ -129,6 +129,7 @@ nav:
                   - Client: tre-admins/identities/client.md
                   - Automation Test Account: tre-admins/identities/test-account.md
                   - Workspaces: tre-admins/identities/workspace.md
+          - Conditional Access Policies and MFA: tre-admins/conditional-access.md
           - Registering Templates: tre-admins/registering-templates.md
           - Install Resources via API:
               - Install Base Workspace: tre-admins/setup-instructions/installing-base-workspace.md
