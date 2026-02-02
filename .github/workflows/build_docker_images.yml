@@ -115,7 +115,7 @@ jobs:
           mkdir -p ../../test-results
           npm install
           cp src/config.source.json src/config.json
-          if ! npm test run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
+          if ! npm test -- run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
             touch ../../test-results/ui_tests_failed
           fi
 
