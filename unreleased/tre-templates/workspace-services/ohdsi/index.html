@@ -2548,6 +2548,8 @@
       
         
       
+        
+      
     
     
     
@@ -3339,6 +3341,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-admins/dns-security-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DNS Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3516,9 +3546,26 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../../tre-developers/api/" class="md-nav__link">
+    
+    
+      
         
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2_2" id="__nav_5_2_2_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3532,7 +3579,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api-permissions-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Permissions Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4515,7 +4634,7 @@ one example would be to to deploy a private endpoint for the CDM data source in 
 <h2 id="setting-up-a-cdm-data-source">Setting up a CDM data source</h2>
 <p>Currently the only CDM data source supported by the workspace service is Azure Synapse.  </p>
 <p>If you already have an OMOP CDM data source, then all you have to do is to configure the network as described in the <a href="#networking-configuration">networking configuration</a> section.  </p>
-<p>If you're data is in a different format, you can read <a href="https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html">here</a> how to set up the ETL process to convert your medical data to OMOP format.  </p>
+<p>If your data is in a different format, you can read <a href="https://ohdsi.github.io/TheBookOfOhdsi/ExtractTransformLoad.html">how to set up the ETL process</a> to convert your medical data to OMOP format.  </p>
 <h2 id="using-a-sample-cdm-data-source">Using a sample CDM data source</h2>
 <p>If you don't have any data yet, or if you just want a quick start, you can deploy an Azure Synapse CDM data source with sample data using the <a href="https://github.com/microsoft/OHDSIonAzure">OHDSI on Azure</a> repository.<br />
 When deploying set <code>OMOP CDM Database Type</code> to <code>Synapse Dedicated Pool</code> as per the <a href="https://github.com/microsoft/OHDSIonAzure/blob/main/docs/DeploymentGuide.md#:~:text=OMOP%20CDM%20Database%20Type">deployment guide</a>.</p>

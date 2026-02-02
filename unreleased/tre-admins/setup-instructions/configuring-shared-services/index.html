@@ -2557,6 +2557,8 @@
       
         
       
+        
+      
     
     
     
@@ -3348,6 +3350,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dns-security-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DNS Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3525,9 +3555,26 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../../tre-developers/api/" class="md-nav__link">
+    
+    
+      
         
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2_2" id="__nav_5_2_2_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3541,7 +3588,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api-permissions-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Permissions Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4556,7 +4675,7 @@
 <p>This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the <code>./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config</code> folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</p>
 <p>You can optionally go to the Nexus web interface by visiting <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/</code> in the jumpbox and signing in with the username <code>admin</code> and the password secret located in your core keyvault, with the key <code>nexus-admin-password</code>. Here you should be able to see all of the configured repositories and you can use the UI to manage settings etc.</p>
 <p>Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the <code>./nexus_repos_config</code> directory and redeploy.</p>
-<p>You can view further information on the Nexus shared service <a href="../../../tre-templates/shared-services/nexus/">here</a>.</p>
+<p>You can view further information on the <a href="../../../tre-templates/shared-services/nexus/">Nexus shared service documentation</a>.</p>
 <h2 id="optional-install-gitea-and-configure-repositories">(Optional) Install Gitea and configure repositories</h2>
 <p>Gitea allows you to mirror Git repositories to make them available within the TRE. This is optional as part of this quickstart.</p>
 <p>Note : This is a Gitea <em>shared service</em> which will be accessible from all workspaces intended for mirroring external Git repositories. A Gitea <em>workspace service</em> can also be deployed per workspace to enable Gitea to be used within a specific workspace.</p>
@@ -4584,7 +4703,7 @@
 <p>From a virtual machine within a workspace:
 - Command line: <code>git clone https://gitea-&lt;TRE_ID&gt;.azurewebsites.net/giteaadmin/&lt;NameOfrepository&gt;</code>
 - Gitea Web Interface: <code>https://gitea-&lt;TRE_ID&gt;.azurewebsites.net/</code></p>
-<p>More info on the Gitea shared service is available <a href="../../../tre-templates/shared-services/gitea/">here</a>.</p>
+<p>More info on the Gitea shared service is available in the <a href="../../../tre-templates/shared-services/gitea/">Gitea shared service documentation</a>.</p>
 <h2 id="next-steps">Next steps</h2>
 <ul>
 <li><a href="../installing-base-workspace/">Install Base Workspace</a></li>

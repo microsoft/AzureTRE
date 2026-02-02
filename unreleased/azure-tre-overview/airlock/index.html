@@ -2564,6 +2564,8 @@
       
         
       
+        
+      
     
     
     
@@ -3355,6 +3357,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-admins/dns-security-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DNS Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3532,9 +3562,26 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../tre-developers/api/" class="md-nav__link">
+    
+    
+      
         
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2_2" id="__nav_5_2_2_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3548,7 +3595,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-developers/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-developers/api-permissions-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Permissions Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4588,7 +4707,7 @@ The airlock feature brings several actions: ingress/egress Mechanism; Data movem
 <p>This storage location is external for import (<code>stalimex</code>) or internal for export (<code>stalexint</code>), however only accessible to the requestor (ex: a TRE user/researcher).
 The user will be able to upload a file to the provided storage location, using any tool of their preference: <a href="https://azure.microsoft.com/en-us/features/storage-explorer/">Azure Storage Explorer</a> or <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a> which is a command line tool.</p>
 <p>The user Submits the request (TRE API call) starting the data movement (to the <code>stalimip</code> - import in-progress or <code>stalexip</code> - export in-progress). The airlock request is now in state <strong>Submitted</strong>.
-If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in details <a href="https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction">here</a>.
+If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in detail in the <a href="https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction">Microsoft Defender for Storage documentation</a>.
 In the case that security flaws are found, the request state becomes <strong>Blocking In-progress</strong> while the data is moved to blocked storage  (either import blocked <code>stalimblocked</code> or export blocked <code>stalexblocked</code>). In this case, the request is finalized with the state <strong>Blocked By Scan</strong>.
 If the Security Scanning does not identify any security flaws, the request state becomes <strong>In-Review</strong>. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).</p>
 <blockquote>
@@ -4718,6 +4837,11 @@ When the state changes to <code>In-progress</code> the Workspace Owner (Airlock 
 <td><code>POST</code></td>
 <td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link</code></td>
 <td>Get the url and token to access an Airlock Request</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit</code></td>
+<td>Submits an Airlock request</td>
 </tr>
 <tr>
 <td><code>POST</code></td>

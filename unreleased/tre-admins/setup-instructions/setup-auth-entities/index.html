@@ -2496,6 +2496,8 @@
       
         
       
+        
+      
     
     
     
@@ -3287,6 +3289,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dns-security-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DNS Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3464,9 +3494,26 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../../tre-developers/api/" class="md-nav__link">
+    
+    
+      
         
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2_2" id="__nav_5_2_2_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3480,7 +3527,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tre-developers/api-permissions-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Permissions Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4426,8 +4545,10 @@
 </tr>
 </tbody>
 </table>
-<p>!!! tip
-      To retrieve your Azure subscription ID, use the <code>az</code> command line interface available in the development container. In the terminal window in Visual Studio Code, type <code>az login</code> followed by <code>az account show</code> to see your default subscription. Please refer to <code>az account -help</code> for further details on how to change your active subscription.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>To retrieve your Azure subscription ID, use the <code>az</code> command line interface available in the development container. In the terminal window in Visual Studio Code, type <code>az login</code> followed by <code>az account show</code> to see your default subscription. Please refer to <code>az account -help</code> for further details on how to change your active subscription.</p>
+</div>
 <p>The rest of the variables can have their default values.</p>
 </li>
 <li>
@@ -4436,7 +4557,7 @@
 <li>Once you have decided on which AD Tenant paradigm, then you should be able to set <code>aad_tenant_id</code> in the authentication section in your <code>config.yaml</code> file.</li>
 <li>
 <p>Your Microsoft Entra ID Tenant Admin can now use the terminal window in Visual Studio Code to execute the following script from within the development container to create all the Microsoft Entra ID Applications that are used for TRE. The details of the script are covered in the <a href="../../auth/">auth document</a>.</p>
-<div class="highlight"><pre><span></span><code>make<span class="w"> </span>auth
+<div class="highlight"><pre><span></span><code>make auth
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

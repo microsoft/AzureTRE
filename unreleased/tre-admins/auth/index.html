@@ -2440,6 +2440,8 @@
       
         
       
+        
+      
     
     
     
@@ -3347,6 +3349,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dns-security-policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DNS Security Policy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3524,9 +3554,26 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../tre-developers/api/" class="md-nav__link">
+    
+    
+      
         
+      
+        
+      
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_2_2" id="__nav_5_2_2_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3540,7 +3587,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_2_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-developers/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Overview
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tre-developers/api-permissions-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Permissions Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -4532,11 +4651,11 @@
 </tr>
 <tr>
 <td>AUTO_WORKSPACE_APP_REGISTRATION</td>
-<td>Default of <code>false</code>. Setting this to true grants the <code>Application.ReadWrite.All</code> and <code>Directory.Read.All</code> permission to the <em>Application Admin</em> identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have <code>Application.ReadWrite.OwnedBy</code>. Further information can be found&nbsp;<a href="../identities/application_admin/">here</a>.</td>
+<td>Default of <code>false</code>. Setting this to true grants the <code>Application.ReadWrite.All</code> and <code>Directory.Read.All</code> permission to the <em>Application Admin</em> identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have <code>Application.ReadWrite.OwnedBy</code>. Further information can be found&nbsp;<a href="../identities/application_admin/">in the application admin documentation</a>.</td>
 </tr>
 <tr>
 <td>AUTO_WORKSPACE_GROUP_CREATION</td>
-<td>Set to <code>false</code> by default. Setting this to <code>true</code> grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each applciation role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">You can read mode about Group Assignment here</a>.</td>
+<td>Set to <code>false</code> by default. Setting this to <code>true</code> grants the <code>Group.ReadWrite.All</code> permission to the <em>Application Admin</em> identity. This identity can then create security groups aligned to each application role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. <a href="https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles">You can read mode about Group Assignment here</a>.</td>
 </tr>
 <tr>
 <td>AUTO_GRANT_WORKSPACE_CONSENT</td>
@@ -4646,7 +4765,7 @@ For production deployments, work with your Microsoft Entra ID administrator to p
 </tbody>
 </table>
 <p>Some of the applications require <strong>admin consent</strong> to allow them to validate users against the Microsoft Entra ID. Check the Microsoft Docs on <a href="https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/configure-admin-consent-workflow">Configure the admin consent workflow</a> on how to request admin consent and handle admin consent requests.</p>
-<p>We strongly recommend that you use <code>make auth</code> to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the <a href="https://learn.microsoft.com/en-gb/entra/identity-platform/quickstart-register-app">Azure Portal</a>; more information can be found <a href="../identities/auth-manual/">here</a>.</p>
+<p>We strongly recommend that you use <code>make auth</code> to create the Microsoft Entra ID assets as this has been tested extensively. Should you wish to create these manually via the <a href="https://learn.microsoft.com/en-gb/entra/identity-platform/quickstart-register-app">Azure Portal</a>; more information can be found in the <a href="../identities/auth-manual/">manual authentication setup guide</a>.</p>
 <h3 id="enabling-users">Enabling users</h3>
 <p>For a user to gain access to the system, they have to:</p>
 <ol>
