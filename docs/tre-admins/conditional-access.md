@@ -34,7 +34,25 @@ The Azure TRE uses several Microsoft Entra ID applications as described in the [
 
 - **TRE API application**: Controls access to the TRE API
 - **TRE UX**: The client application for the TRE portal
-- **Workspace API applications**: Individual applications for each workspace
+- **Workspace API applications**: Individual applications for each workspace (see [Workspace Applications](./identities/workspace.md))
+
+!!! important "Covering New Workspaces"
+    Since each workspace has its own Microsoft Entra ID application that is created on-demand, you must ensure your TRE-wide Conditional Access Policies automatically cover new workspaces. There are several strategies:
+
+    1. **Use "All cloud apps" with exclusions** (Recommended for TRE-wide policies):
+       - Select **All cloud apps** under **Cloud apps or actions**
+       - Add specific exclusions if needed (e.g., exclude certain administrative apps)
+       - This ensures all workspace applications are automatically covered, including future ones
+       - Use this approach for critical policies like MFA requirements
+
+    2. **Regularly update policies** (When using specific app selection):
+       - When a new workspace is created, manually add its application to existing TRE-wide Conditional Access Policies
+       - Set up a process to review and update policies when new workspaces are provisioned
+       - This approach provides more granular control but requires ongoing maintenance
+
+    3. **Use Azure AD Security Groups** (If AUTO_WORKSPACE_APP_REGISTRATION is enabled):
+       - If using automated workspace app registration with group assignment, you can target the security groups in your Conditional Access Policies
+       - See [Application Admin](./identities/application_admin.md) for more details on AUTO_WORKSPACE_GROUP_CREATION
 
 ### Recommended TRE-Wide Policies
 
@@ -49,7 +67,9 @@ Multi-factor authentication adds an essential layer of security by requiring use
 3. Give your policy a name (e.g., "TRE - Require MFA")
 4. Under **Assignments**:
    - **Users**: Select the users or groups that will access the TRE
-   - **Cloud apps or actions**: Select the TRE API and TRE UX applications
+   - **Cloud apps or actions**: 
+     - **Recommended**: Select **All cloud apps** to automatically cover all TRE applications including future workspace applications
+     - **Alternative**: Select specific applications (TRE API, TRE UX, and all workspace applications), but remember to update this list when new workspaces are created
 5. Under **Access controls** > **Grant**:
    - Select **Grant access**
    - Check **Require multi-factor authentication**
@@ -58,6 +78,9 @@ Multi-factor authentication adds an essential layer of security by requiring use
 
 !!! tip
     Consider using [Microsoft Entra ID Conditional Access template policies](https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-policy-common) as a starting point.
+
+!!! warning "Using specific app selection"
+    If you choose to select specific applications instead of "All cloud apps", you must update the policy each time a new workspace is created to ensure the workspace application is covered. This can lead to security gaps if forgotten. For critical policies like MFA, use "All cloud apps" to ensure comprehensive coverage.
 
 #### 2. Require Compliant or Hybrid Joined Devices
 
@@ -69,7 +92,7 @@ For additional security, you can require that devices accessing the TRE are mana
 2. Name the policy (e.g., "TRE - Require Compliant Device")
 3. Under **Assignments**:
    - **Users**: Select TRE users or groups
-   - **Cloud apps**: Select TRE applications
+   - **Cloud apps**: Select **All cloud apps** (recommended) or select specific TRE applications
 4. Under **Access controls** > **Grant**:
    - Select **Grant access**
    - Check **Require device to be marked as compliant** or **Require Hybrid Azure AD joined device**
@@ -88,7 +111,7 @@ You may want to block access to the TRE from certain countries or regions for co
 3. Name the policy (e.g., "TRE - Block Untrusted Locations")
 4. Under **Assignments**:
    - **Users**: Select TRE users or groups
-   - **Cloud apps**: Select TRE applications
+   - **Cloud apps**: Select **All cloud apps** (recommended) or select specific TRE applications
    - **Conditions** > **Locations**:
      - Configure **Yes**
      - Under **Exclude**, select the trusted named locations
