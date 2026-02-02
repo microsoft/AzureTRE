@@ -21,12 +21,16 @@ on: # yamllint disable-line rule:truthy
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: "${{ github.workflow }}-${{ github.ref }}"
 
+permissions:
+  contents: read
+
 jobs:
   run-deploy-tre-main:
     name: "Deploy main"
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy_tre_reusable.yml
     permissions:
+      id-token: write
       checks: write
       contents: read
       pull-requests: write
@@ -39,9 +43,11 @@ jobs:
       E2E_TESTS_NUMBER_PROCESSES: 1
       DEVCONTAINER_TAG: "latest"
     secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ secrets.ACR_NAME }}
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}

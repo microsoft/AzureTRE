@@ -9,7 +9,6 @@ ACR_DOMAIN_SUFFIX?=`az cloud show --query suffixes.acrLoginServerEndpoint --outp
 ACR_NAME?=`echo "$${ACR_NAME}" | tr A-Z a-z`
 ACR_FQDN?="${ACR_NAME}${ACR_DOMAIN_SUFFIX}"
 FULL_IMAGE_NAME_PREFIX:=${ACR_FQDN}/${IMAGE_NAME_PREFIX}
-LINTER_REGEX_INCLUDE?=all # regular expression used to specify which files to include in local linting (defaults to "all")
 E2E_TESTS_NUMBER_PROCESSES_DEFAULT=4  # can be overridden in e2e_tests/.env
 
 target_title = @echo -e "\n\e[34m»»» 🧩 \e[96m$(1)\e[0m..."
@@ -239,7 +238,8 @@ lint: ## 🧹 Lint all files
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
 	@docker run --name superlinter --pull=always --rm \
 		-e RUN_LOCAL=true \
-		-e LOG_LEVEL=NOTICE \
+		-e LOG_LEVEL=INFO \
+		-e DEFAULT_BRANCH=main \
 		-e VALIDATE_MARKDOWN=true \
 		-e VALIDATE_PYTHON_FLAKE8=true \
 		-e VALIDATE_YAML=true \
@@ -251,10 +251,13 @@ lint: ## 🧹 Lint all files
 		-e VALIDATE_GITHUB_ACTIONS=true \
 		-e VALIDATE_DOCKERFILE_HADOLINT=true \
 		-e VALIDATE_TSX=true \
-    -e VALIDATE_TYPESCRIPT_ES=true \
+		-e VALIDATE_TYPESCRIPT_ES=true \
 		-e FILTER_REGEX_INCLUDE=${LINTER_REGEX_INCLUDE} \
+		-e VALIDATE_ALL_CODEBASE=true \
+		-e TYPESCRIPT_ES_CONFIG_FILE=../../ui/app/eslint.config.js \
+		-e TSX_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		github/super-linter:slim-v5.0.0
+		ghcr.io/super-linter/super-linter:slim-v8.3.2
 
 # Description: Lint documentation files
 # # This will validate all files, not only the changed ones as the CI version does.
@@ -276,6 +279,9 @@ bundle-build:
 	&& if [ -d terraform ]; then terraform -chdir=terraform init -backend=false; terraform -chdir=terraform validate; fi \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} IMAGE_NAME_PREFIX=${IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_build.sh \
+	&& if [ -n "$${CI_CACHE_ACR_NAME:-}" ]; then \
+		az acr login -n $${CI_CACHE_ACR_NAME}; \
+		export CI_CACHE_ACR_FQDN="$${CI_CACHE_ACR_NAME:+$${CI_CACHE_ACR_NAME}${ACR_DOMAIN_SUFFIX}}"; fi \
 	&& ${MAKEFILE_DIR}/devops/scripts/porter_build_bundle.sh \
 	  $(MAKE) bundle-check-params
 

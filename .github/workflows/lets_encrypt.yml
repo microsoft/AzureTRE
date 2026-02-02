@@ -1,7 +1,7 @@
 ---
 name: Renew Lets Encrypt Certificates
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   # schedule:
   #   # 3am each month https://crontab.guru/#0_3_1_*_*
   #   - cron: "0 3 1 * *"
@@ -17,10 +17,14 @@ on:  # yamllint disable-line rule:truthy
 # We should NOT cancel in progress runs as that can destabilize the environment.
 concurrency: letsencrypt
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   USE_ENV_VARS_NOT_FILES: true
-  TF_INPUT: 0  # interactive is off
-  TF_IN_AUTOMATION: 1  # Run in headless mode
+  TF_INPUT: 0 # interactive is off
+  TF_IN_AUTOMATION: 1 # Run in headless mode
 
 jobs:
   renew_letsencrypt_certs:
@@ -29,15 +33,14 @@ jobs:
     environment: ${{ github.event.inputs.environment || 'CICD' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      # Pin specific version due to az cli issue in 2.74.0 https://github.com/microsoft/AzureTRE/issues/4593
       - name: Install specific Azure CLI version
         run: |
           AZ_DIST=$(lsb_release -cs)
-          AZ_VER=2.73.0
+          AZ_VER=2.81.0
 
           apt-cache policy azure-cli
           sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
@@ -46,17 +49,24 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8
+          terraform_version: 1.14.3
           terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Renew Certificates
         shell: bash
         env:
-          ARM_CLIENT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientId }}
-          ARM_CLIENT_SECRET: ${{ fromJSON(secrets.AZURE_CREDENTIALS).clientSecret }}
-          ARM_SUBSCRIPTION_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).subscriptionId }}
-          ARM_TENANT_ID: ${{ fromJSON(secrets.AZURE_CREDENTIALS).tenantId }}
-          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENVIRONMENT: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
           TRE_ID: ${{ secrets.TRE_ID }}
           TF_VAR_terraform_state_container_name: ${{ secrets.TERRAFORM_STATE_CONTAINER_NAME || 'tfstate' }}
           TF_VAR_mgmt_resource_group_name: ${{ secrets.MGMT_RESOURCE_GROUP_NAME }}
