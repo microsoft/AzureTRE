@@ -15,7 +15,7 @@ permissions:
 jobs:
   deploy:
     name: Deploy Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: write
     steps:

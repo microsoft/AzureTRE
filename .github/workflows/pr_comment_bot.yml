@@ -20,7 +20,7 @@ jobs:
     # - the comment is on a PR
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
     if: ${{ github.event.issue.pull_request }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
       checks: write
