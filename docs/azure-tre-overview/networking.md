@@ -9,7 +9,7 @@ Azure TRE VNETs are segregated allowing limited traffic between the TRE Core VNE
 The Core VNET is further divided into subnets.
 
 | <div style="width:200px">Subnet</div> | Description |
-| -------| ----------- |
+| ------- | ----------- |
 | `AzureBastionSubnet` | A dedicated subnet for Azure Bastion hosts. |
 | `AppGwSubnet` | Subnet for Azure Application Gateway controlling ingress traffic. |
 | `AzureFirewallSubnet` | Subnet for Azure Firewall controlling egress traffic. |
