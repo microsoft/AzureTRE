@@ -3,7 +3,7 @@
 **Azure TRE documentation site**: <https://microsoft.github.io/AzureTRE/>
 
 ## Background
-<img align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
+<img alt="Azure TRE logo" align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
 
 Across multiple industries, be it a pharmaceutical company interrogating clinical trial results, a public health provider analyzing electronic health records, or an engineering organization working on next-generation systems, there is a need to enable researchers and solution developers to collaborate on sensitive data.
 
