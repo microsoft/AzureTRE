@@ -76,6 +76,10 @@ All the values for the required parameters will be provided by the deployment ru
 
 Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle. This file follows the [JSON schema standard](http://json-schema.org/) and can be used by a user interface to generate a UI for the user to input the parameters.
 
+### Template properties
+
+When authoring a `template_schema.json` file, you can reference properties from the resource being deployed, or its parent resources. For more information see [Pipeline Template Schema](../tre-templates/pipeline-templates/pipeline-schema.md#substituting-resource-property-values).
+
 ### Output
 
 !!! todo
@@ -109,7 +113,7 @@ The size of the `address_space` will default to `/24`, however other sizes can b
 
 The `address_space` allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.
 
-In your install pipeline you also need to include a workspace upgrade step for the workspace to update it's `address_spaces` property.
+In your install and uninstall pipelines you also need to include a workspace upgrade step for the workspace to update it's `address_spaces` property.
 
 ```json
   "pipeline": {
