@@ -53,7 +53,7 @@ The UI is deployed as part of the `tre-deploy` make target (unless you set `depl
 
 To re-deploy _just_ the UI (after an initial deploy), run `make build-and-deploy-ui` from the root of the dev container. This will:
 - Use the environment variables from your deployment to create a `config.json` file for the UI
-- Build the source code, via `yarn build`
+- Build the source code, via `npm run build`
 - Deploy the code to Azure blob storage, where it will be statically served behind the App Gateway that also fronts the API.
 
 ## Run the UI
@@ -69,7 +69,7 @@ At this point you should be able to navigate to the web app in Azure, log in, an
 
 In the UI directory, you can run:
 
-### `yarn start`
+### `npm start`
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
@@ -77,11 +77,11 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 The page will reload if you make edits.<br>
 You will also see any lint errors in the console.
 
-### `yarn test`
+### `npm test`
 
 Launches the test runner in the interactive watch mode.<br>
 
-### `yarn run build`
+### `npm run build`
 
 Builds the app for production to the `build` folder.<br>
 It correctly bundles React in production mode and optimizes the build for the best performance.
@@ -89,19 +89,19 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.<br>
 Your app is ready to be deployed!
 
-### `yarn run serve`
+### `npm run serve`
 
 Serves the production build from the `build` folder.<br>
 
-### `yarn run test:coverage`
+### `npm run test:coverage`
 
 Runs the tests and generates a coverage report.<br>
 
-### `yarn lint`
+### `npm run lint`
 
 Runs the linter on the project.<br>
 
-### `yarn format`
+### `npm run format`
 
 Runs the formatter on the project.<br>
 

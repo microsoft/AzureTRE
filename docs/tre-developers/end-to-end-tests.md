@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-1. Authentication and Authorization configuration set up as noted [here](../tre-admins/auth.md)
+1. Authentication and Authorization configuration set up as noted in the [Authentication documentation](../tre-admins/auth.md)
 1. An Azure Tre deployed environment.
 
 ## Registering bundles to run End-to-end tests
