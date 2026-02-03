@@ -5256,24 +5256,24 @@
 <span class="nb">cd</span><span class="w"> </span>ui/app
 
 <span class="c1"># Run tests in watch mode (waits for file changes)</span>
-yarn<span class="w"> </span><span class="nb">test</span>
+npm<span class="w"> </span><span class="nb">test</span>
 
 <span class="c1"># Run tests in run mode</span>
-yarn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run
+npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run
 
 <span class="c1"># Run tests and produces a coverage report</span>
-yarn<span class="w"> </span>test:coverage
+npm<span class="w"> </span>run<span class="w"> </span>test:coverage
 
 <span class="c1"># Launches a web page where you can visualise your tests</span>
-yarn<span class="w"> </span>test:ui
+npm<span class="w"> </span>run<span class="w"> </span>test:ui
 
 <span class="c1"># Build and test (CI)</span>
-yarn<span class="w"> </span>run<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run
+npm<span class="w"> </span>run<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span><span class="nb">test</span><span class="w"> </span>--run
 </code></pre></div>
 <h3 id="test-scripts">Test Scripts</h3>
 <ul>
-<li><code>yarn test</code>: Runs tests in watch mode for development</li>
-<li><code>yarn run test:coverage</code>: Runs tests once and generates coverage report</li>
+<li><code>npm test</code>: Runs tests in watch mode for development</li>
+<li><code>npm run test:coverage</code>: Runs tests once and generates coverage report</li>
 <li>Coverage reports are generated in HTML, LCOV, JSON, and text formats</li>
 </ul>
 <h2 id="coverage-requirements">Coverage Requirements</h2>
