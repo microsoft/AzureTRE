@@ -111,6 +111,18 @@ jobs:
           pip install -r docs/requirements.txt
           mkdocs build --strict
 
+      - name: Setup Terraform for Core
+        if: ${{ steps.filter.outputs.terraform_core == 'true' }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.14.3"
+
+      - name: Init Core Terraform folders
+        if: ${{ steps.filter.outputs.terraform_core == 'true' }}
+        run: |
+          find core -type d -name 'terraform' -not -path '*cnab*' -print0 \
+            | xargs -0 -I{} sh -c 'echo "***** Initializing: {} *****"; terraform -chdir={} init -backend=false'
+
       - name: Core Tags
         if: ${{ steps.filter.outputs.terraform_core == 'true' }}
         uses: super-linter/super-linter/slim@v8.3.2
