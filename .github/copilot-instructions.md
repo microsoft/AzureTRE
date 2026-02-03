@@ -88,7 +88,7 @@ Azure TRE uses the following key technologies:
   - Maintain 80% code coverage across branches, functions, lines, and statements
   - Focus on testing user interactions and component behavior
   - Use semantic queries (getByRole, getByLabelText) over test IDs when possible
-  - Use Yarn for package management
+  - Use npm for package management
 
 - **YAML**:
   - Use consistent indentation (2 spaces)
