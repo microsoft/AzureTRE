@@ -250,12 +250,27 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
         const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
 
-        // Store all new properties (including hidden ones) for schema building
-        setAllNewProperties(newPropKeys);
+        // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
+        const pipelineProps = new Set<string>();
+        if (newTemplate?.pipeline?.upgrade) {
+          newTemplate.pipeline.upgrade.forEach((step: any) => {
+            if (step.properties) {
+              step.properties.forEach((prop: any) => {
+                pipelineProps.add(prop.name);
+              });
+            }
+          });
+        }
+
+        // Filter out properties that are in the pipeline - they will be substituted by the backend
+        const newPropKeysWithoutPipeline = newPropKeys.filter((key) => {
+          const topKey = key.split('.')[0];
+          return !pipelineProps.has(topKey);
+        });
 
         // Filter out properties that are hidden (tre-hidden) - they don't need user input
         const uiSchema = newTemplate?.uiSchema || {};
-        const visibleNewPropKeys = newPropKeys.filter((key) => {
+        const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
           const topKey = key.split('.')[0];
           const propertyUiSchema = uiSchema[topKey];
           // Check if property has "tre-hidden" in its classNames (support both old and new format)
@@ -267,9 +282,16 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         setNewPropertiesToFill(visibleNewPropKeys);
         setRemovedProperties(removedPropsArray);
 
-        // prefill newPropertyValues with schema defaults or empty string
+        // Include ALL new properties not in pipeline to be sent to API
+        // This ensures hidden properties with defaults are correctly passed
+        const newPropKeysToSend = newPropKeysWithoutPipeline;
+
+        // Set allNewProperties to the filtered list (for schema building)
+        setAllNewProperties(newPropKeysToSend);
+
+        // prefill newPropertyValues with schema defaults or empty string (excluding pipeline properties)
         setNewPropertyValues(
-          newPropKeys.reduce((acc, key) => {
+          newPropKeysToSend.reduce((acc, key) => {
             // Get top-level portion of the key
             const topKey = key.split('.')[0];
             const defaultValue = newTemplate?.properties?.[topKey]?.default;
