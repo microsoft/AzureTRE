@@ -36,7 +36,8 @@ BUG FIXES:
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
 * Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
-* Fix property substitution not occuring where there only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
+* Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
+* Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
 
 COMPONENTS:
 

@@ -113,9 +113,9 @@ jobs:
         working-directory: ui/app
         run: |
           mkdir -p ../../test-results
-          yarn install
+          npm install
           cp src/config.source.json src/config.json
-          if ! yarn test run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
+          if ! npm test -- run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
             touch ../../test-results/ui_tests_failed
           fi
 
