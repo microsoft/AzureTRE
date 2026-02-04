@@ -54,7 +54,7 @@ jobs:
       # The following step is the catch situations where the tests didn't run at all.
       - name: Check failure files
         run: |
-          if compgen -G "artifacts/**/pytest*failed" > /dev/null; then
+          if compgen -G "artifacts/**/*failed" > /dev/null; then
             echo "Tests failure file(s) exist. Some tests have failed or didn't run at all! \
               Check the artifacts for details."
             exit 1

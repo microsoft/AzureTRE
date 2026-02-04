@@ -416,3 +416,28 @@ def test_substitution_array_replace_not_found(
     obj = substitute_properties(step, primary_resource, None, None, resource_to_update)
     assert len(obj["rule_collections"]) == 1
     assert obj["rule_collections"][0]["name"] == "Object 1"
+
+
+def test_substitution_boolean_preservation(primary_resource):
+    resource_dict = primary_resource.dict()
+    # Mock a boolean property in the resource dict
+    resource_dict["properties"]["isEnabled"] = True
+    resource_dict["properties"]["count"] = 42
+
+    # Test boolean preservation
+    val_to_sub = "{{ resource.properties.isEnabled }}"
+    val = substitute_value(val_to_sub, resource_dict, None, None)
+    assert val is True
+    assert isinstance(val, bool)
+
+    # Test int preservation
+    val_to_sub = "{{ resource.properties.count }}"
+    val = substitute_value(val_to_sub, resource_dict, None, None)
+    assert val == 42
+    assert isinstance(val, int)
+
+    # Test string concatenation (should fallback to string)
+    val_to_sub = "Count is {{ resource.properties.count }}"
+    val = substitute_value(val_to_sub, resource_dict, None, None)
+    assert val == "Count is 42"
+    assert isinstance(val, str)
