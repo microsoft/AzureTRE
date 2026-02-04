@@ -1,10 +1,17 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.6.3
+version: 3.7.8
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
+
+custom:
+  runtime_image:
+    name: sonatype/nexus3
+    import:
+      source: docker.io/sonatype/nexus3
+      tag: "3.77.2"
 
 credentials:
   - name: azure_tenant_id
@@ -25,6 +32,9 @@ parameters:
   - name: mgmt_acr_name
     type: string
     description: "The name of the Azure Container Registry"
+  - name: mgmt_resource_group_name
+    type: string
+    description: "The management resource group name"
   - name: tfstate_resource_group_name
     type: string
     description: "Resource group containing the Terraform state storage account"
@@ -88,7 +98,6 @@ outputs:
       - upgrade
 
 mixins:
-  - exec
   - terraform:
       clientVersion: 1.14.3
 
@@ -102,6 +111,9 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         vm_size: ${ bundle.parameters.vm_size }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        nexus_image_tag: ${ bundle.custom.runtime_image.import.tag }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -126,6 +138,9 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         vm_size: ${ bundle.parameters.vm_size }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        nexus_image_tag: ${ bundle.custom.runtime_image.import.tag }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -150,6 +165,9 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         vm_size: ${ bundle.parameters.vm_size }
+        mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
+        mgmt_resource_group_name: ${ bundle.parameters.mgmt_resource_group_name }
+        nexus_image_tag: ${ bundle.custom.runtime_image.import.tag }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
