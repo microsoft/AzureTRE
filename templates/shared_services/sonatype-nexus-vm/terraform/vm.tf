@@ -250,7 +250,7 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   name                       = "${azurerm_linux_virtual_machine.nexus.name}-KeyVault"
   publisher                  = "Microsoft.Azure.KeyVault"
   type                       = "KeyVaultForLinux"
-  type_handler_version       = "2.0"
+  type_handler_version       = "3.5"
   auto_upgrade_minor_version = true
   tags                       = local.tre_shared_service_tags
 
@@ -267,6 +267,33 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Wait for cloud-init to complete before reporting deployment as successful
+# This ensures any cloud-init failures are surfaced to the TRE deployment status
+# Ref: https://github.com/microsoft/AzureTRE/issues/4540
+resource "azurerm_virtual_machine_extension" "cloud_init_wait" {
+  virtual_machine_id         = azurerm_linux_virtual_machine.nexus.id
+  name                       = "${azurerm_linux_virtual_machine.nexus.name}-CloudInitWait"
+  publisher                  = "Microsoft.Azure.Extensions"
+  type                       = "CustomScript"
+  type_handler_version       = "2.1"
+  auto_upgrade_minor_version = true
+  tags                       = local.tre_shared_service_tags
+
+  protected_settings = jsonencode({
+    "commandToExecute" : "cloud-init status --wait && cloud-init status | grep -q 'status: done' || (echo 'Cloud-init failed'; exit 1)"
+  })
+
+  depends_on = [
+    azurerm_virtual_machine_extension.keyvault
+  ]
+
+  timeouts {
+    create = "30m"
+  }
 
   lifecycle { ignore_changes = [tags] }
 }

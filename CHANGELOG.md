@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## 0.27.0 (Unreleased)
 **BREAKING CHANGES**
+* Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 * Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
@@ -20,6 +21,7 @@ ENHANCEMENTS:
 * Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
 
 BUG FIXES:
+* Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition by using proper JSON escaping with jq when constructing the EULA acceptance payload, updating KeyVault VM extension to v3.5 for improved reliability, and adding cloud-init wait to ensure deployment reports actual status ([#4842](https://github.com/microsoft/AzureTRE/issues/4842), [#4540](https://github.com/microsoft/AzureTRE/issues/4540))
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
 * Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))

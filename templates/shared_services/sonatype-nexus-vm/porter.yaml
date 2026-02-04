@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.3.5
+version: 3.6.3
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -57,6 +57,10 @@ parameters:
     type: string
     default: "Standard_B2ms"
     description: "The size of the VM to be deployed"
+  - name: accept_nexus_eula
+    type: boolean
+    default: false
+    description: "User has accepted the Sonatype Nexus Community Edition EULA"
 outputs:
   - name: workspace_vm_allowed_fqdns_list
     type: string
