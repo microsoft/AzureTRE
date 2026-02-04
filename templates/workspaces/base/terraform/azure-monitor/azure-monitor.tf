@@ -230,6 +230,10 @@ resource "azapi_resource" "azure_monitor_dns_zone_group" {
     }
   }
 
+  response_export_values = [
+    "id"
+  ]
+
   depends_on = [
     azurerm_private_endpoint.azure_monitor_private_endpoint,
   ]
