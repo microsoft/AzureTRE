@@ -19,3 +19,7 @@ rule "azurerm_resource_missing_tags" {
 rule "azurerm_resources_missing_prevent_destroy" {
   enabled = false
 }
+
+rule "azurerm_resources_missing_prevent_destroy" {
+  enabled = false
+}
