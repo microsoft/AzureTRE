@@ -142,7 +142,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspace_services.hcl
-          FILTER_REGEX_INCLUDE: "./templates/workspaces/.*"
+          FILTER_REGEX_INCLUDE: "./templates/workspace_services/.*"
           FILTER_REGEX_EXCLUDE: ".*user_resource.*"
 
       - name: User Resources Tags
