@@ -37,6 +37,8 @@ BUG FIXES:
 * Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
 * Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
+* Fix Mysql template ignored storage_mb
+* Fix Super Linter issues
 
 COMPONENTS:
 
