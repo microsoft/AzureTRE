@@ -18,7 +18,7 @@ ENHANCEMENTS:
 * Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
 * Add porter build cache in CI ([#4827](https://github.com/microsoft/AzureTRE/issues/4827))
 * Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
-* Update terraform-azurerm-environment-configuration to v0.7.0. ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
+* Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
 
 BUG FIXES:
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
