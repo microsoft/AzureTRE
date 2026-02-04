@@ -1,7 +1,7 @@
 # This is used for TRE tags validation only.
 
 config {
-  call_module_type = "all"
+  call_module_type = "none"
   force = false
 }
 
