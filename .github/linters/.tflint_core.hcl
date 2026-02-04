@@ -7,13 +7,8 @@ config {
 
 plugin "azurerm" {
     enabled = true
-}
-
-required_plugins {
-  azurerm = {
-    source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
     version = "0.30.0"
-  }
+    source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 
 rule "terraform_typed_variables" {
