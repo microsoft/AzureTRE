@@ -271,9 +271,6 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Wait for cloud-init to complete before reporting deployment as successful
-# This ensures any cloud-init failures are surfaced to the TRE deployment status
-# Ref: https://github.com/microsoft/AzureTRE/issues/4540
 resource "azurerm_virtual_machine_extension" "cloud_init_wait" {
   virtual_machine_id         = azurerm_linux_virtual_machine.nexus.id
   name                       = "${azurerm_linux_virtual_machine.nexus.name}-CloudInitWait"
