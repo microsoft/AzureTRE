@@ -96,6 +96,7 @@ resource "azurerm_linux_function_app" "airlock_function_app" {
     "WEBSITE_CONTENTOVERVNET"                    = 1
     "STORAGE_ENDPOINT_SUFFIX"                    = module.terraform_azurerm_environment_configuration.storage_suffix
 
+    "TOPIC_SUBSCRIPTION_NAME"         = azurerm_servicebus_subscription.airlock_processor.name
     "AzureWebJobsStorage__clientId"   = azurerm_user_assigned_identity.airlock_id.client_id
     "AzureWebJobsStorage__credential" = "managedidentity"
 
