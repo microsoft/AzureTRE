@@ -20,6 +20,7 @@ ENHANCEMENTS:
 * Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
 
 BUG FIXES:
+* Fix Azure Health Data Services deployment failures by upgrading AzureRM provider to 4.58.0, switching to RBAC group assignments, and adding workspace group parameter mappings ([#4844](https://github.com/microsoft/AzureTRE/issues/4844))
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
 * Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
