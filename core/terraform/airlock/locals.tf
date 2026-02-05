@@ -5,7 +5,7 @@ locals {
   # STorage AirLock consolidated
   airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
   
-  # Global Workspace Airlock Storage Account (Option B)
+  # Global Workspace Airlock Storage Account - shared by all workspaces
   # STorage AirLock Global - all workspace stages for all workspaces
   airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
   

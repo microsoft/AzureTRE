@@ -210,7 +210,7 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
 }
 
 # ========================================================================================
-# OPTION B: GLOBAL WORKSPACE STORAGE ACCOUNT
+# GLOBAL WORKSPACE STORAGE ACCOUNT
 # ========================================================================================
 # This consolidates ALL workspace storage accounts into a single global account
 # Each workspace has its own private endpoint for network isolation
