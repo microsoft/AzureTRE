@@ -1,0 +1,351 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/ai-foundry/template_schema.json",
+  "type": "object",
+  "title": "AI Foundry Workspace Service",
+  "description": "Provides Azure AI Foundry capabilities within the workspace with private endpoint access only",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "The name of the workspace service to be displayed to users",
+      "default": "Azure AI Foundry",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Description of the workspace service",
+      "default": "Azure AI Foundry for building and deploying AI applications",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace Service Overview",
+      "description": "Long form description of the workspace service, in markdown syntax",
+      "default": "Azure AI Foundry is a comprehensive platform for developing, deploying, and managing AI applications. It provides access to a variety of AI models, including GPT-4, GPT-4o, and more. This service is deployed with private endpoints only, preventing any data exfiltration. For more information, see the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/).",
+      "updateable": true
+    },
+    "openai_model": {
+      "$id": "#/properties/openai_model",
+      "type": "string",
+      "title": "OpenAI Model",
+      "description": "Which OpenAI Model should be deployed? (be mindful of subscription limits)",
+      "enum": [
+        "gpt-4o | 2024-05-13",
+        "gpt-4o | 2024-08-06",
+        "gpt-4o-mini | 2024-07-18",
+        "gpt-4 | turbo-2024-04-09",
+        "gpt-4 | 0613",
+        "gpt-35-turbo | 0125",
+        "gpt-35-turbo | 1106"
+      ],
+      "default": "gpt-4o | 2024-05-13",
+      "updateable": true
+    },
+    "openai_model_capacity": {
+      "$id": "#/properties/openai_model_capacity",
+      "type": "integer",
+      "title": "Model Capacity",
+      "description": "The capacity (in thousands of tokens per minute) for the model deployment",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 100,
+      "updateable": true
+    },
+    "is_exposed_externally": {
+      "$id": "#/properties/is_exposed_externally",
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Is the Azure AI Foundry accessible from outside of the workspace network. When enabled, resources are accessible via public endpoints.",
+      "default": false
+    },
+    "enable_ai_search": {
+      "$id": "#/properties/enable_ai_search",
+      "type": "boolean",
+      "title": "Enable Azure AI Search",
+      "description": "Deploy Azure AI Search for RAG (Retrieval-Augmented Generation) and knowledge retrieval scenarios. Enables the AI Foundry project to search and index documents.",
+      "default": false,
+      "updateable": true
+    },
+    "enable_cosmos_db": {
+      "$id": "#/properties/enable_cosmos_db",
+      "type": "boolean",
+      "title": "Enable Azure Cosmos DB",
+      "description": "Deploy Azure Cosmos DB for AI agent state persistence and conversation history. Required for multi-turn agent conversations and long-running agent tasks.",
+      "default": false,
+      "updateable": true
+    },
+    "enable_agent_networking": {
+      "$id": "#/properties/enable_agent_networking",
+      "type": "boolean",
+      "title": "Enable Agent VNet Injection",
+      "description": "Enable VNet injection for Standard Agents to prevent data exfiltration. WARNING: This can take 30-60+ minutes to provision. Deploy without this first, then upgrade to enable.",
+      "default": false,
+      "updateable": true
+    },
+    "address_space": {
+      "$id": "#/properties/address_space",
+      "type": "string",
+      "title": "Address space",
+      "description": "The address space for use by AI Foundry agent subnet"
+    },
+    "workspace_owners_group_id": {
+      "$id": "#/properties/workspace_owners_group_id",
+      "type": "string",
+      "title": "Workspace Owners Group ID",
+      "description": "Object ID of the workspace owners AAD group"
+    },
+    "workspace_researchers_group_id": {
+      "$id": "#/properties/workspace_researchers_group_id",
+      "type": "string",
+      "title": "Workspace Researchers Group ID",
+      "description": "Object ID of the workspace researchers AAD group"
+    }
+  },
+  "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "openai_model": {
+      "ui:widget": "radio"
+    },
+    "openai_model_capacity": {
+      "ui:widget": "updown"
+    },
+    "is_exposed_externally": {
+      "ui:widget": "checkbox"
+    },
+    "enable_ai_search": {
+      "ui:widget": "checkbox"
+    },
+    "enable_cosmos_db": {
+      "ui:widget": "checkbox"
+    },
+    "enable_agent_networking": {
+      "ui:widget": "checkbox"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "aif-ws-upgrade",
+        "stepTitle": "Upgrade workspace to track address space allocation",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
+          }
+        ]
+      },
+      {
+        "stepId": "aif-firewall-rules",
+        "stepTitle": "Add network firewall rules for AI Foundry",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Authentication",
+                  "description": "AI Foundry Authentication and Portal Access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Portal",
+                  "description": "AI Foundry Portal Access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "ai.azure.com",
+                    "*.aadcdn.msftauth.net",
+                    "aadcdn.msftauth.net",
+                    "*.aadcdn.msauth.net",
+                    "aadcdn.msauth.net",
+                    "*.aadcdn.msauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoft.com",
+                    "*.login.microsoft.com",
+                    "login.microsoftonline.com",
+                    "*.login.microsoftonline.com",
+                    "login.live.com",
+                    "*.login.live.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "aif-firewall-rules-upgrade",
+        "stepTitle": "Update network firewall rules for AI Foundry",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Authentication",
+                  "description": "AI Foundry Authentication and Portal Access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "destination_addresses": [
+                    "AzureActiveDirectory",
+                    "AzureResourceManager"
+                  ],
+                  "destination_ports": [
+                    "443"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Portal",
+                  "description": "AI Foundry Portal Access",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "ai.azure.com",
+                    "*.aadcdn.msftauth.net",
+                    "aadcdn.msftauth.net",
+                    "*.aadcdn.msauth.net",
+                    "aadcdn.msauth.net",
+                    "*.aadcdn.msauthimages.net",
+                    "aadcdn.msauthimages.net",
+                    "*.msftauth.net",
+                    "*.msauth.net",
+                    "login.microsoft.com",
+                    "*.login.microsoft.com",
+                    "login.microsoftonline.com",
+                    "*.login.microsoftonline.com",
+                    "login.live.com",
+                    "*.login.live.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "aif-firewall-rules-remove",
+        "stepTitle": "Remove network firewall rules for AI Foundry",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}_aifoundry"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}
