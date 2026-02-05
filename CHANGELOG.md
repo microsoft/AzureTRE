@@ -8,7 +8,7 @@
 
 
 ENHANCEMENTS:
-* Consolidate airlock storage accounts from 56 to 11 (80% reduction) using metadata-based stage management with ABAC and App Gateway routing. Achieves $9,079/year cost savings and 97-99.9% faster stage transitions for 80% of operations. Public access routed via App Gateway to maintain zero direct internet access to storage. ([#issue](https://github.com/marrobi/AzureTRE/issues/issue))
+* Consolidate airlock storage accounts from 56 to 2 (96% reduction) using metadata-based stage management with ABAC workspace_id filtering (Option B - Global Workspace Storage). Achieves $7,943/month cost savings at 100 workspaces ($95,316/year) and 97-99.9% faster stage transitions for 80% of operations. Public access routed via App Gateway to maintain zero direct internet access to storage. Each workspace maintains dedicated private endpoint for network isolation with ABAC filtering by workspace_id + stage. ([#issue](https://github.com/marrobi/AzureTRE/issues/issue))
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
