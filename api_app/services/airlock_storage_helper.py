@@ -49,14 +49,18 @@ def get_storage_account_name_for_request(
     if use_metadata_stage_management():
         # Consolidated mode - 1 core account + 1 per workspace
         if request_type == constants.IMPORT_TYPE:
-            if status in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview,
-                         AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
-                         AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
-                # ALL core import stages in stalairlock (external, in-progress, rejected, blocked)
+            if status in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
+                # Core import stages that API can access: external, in-progress
+                # Note: Rejected/Blocked are in core but API doesn't have ABAC access to them
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
-            else:  # Approved, ApprovalInProgress
+            elif status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
                 # Workspace consolidated account
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE.format(short_workspace_id)
+            elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
+                           AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
+                # These are in core storage but API doesn't access them (processor does)
+                # Return core account for completeness, but API operations will be blocked by ABAC
+                return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
         else:  # export
             if status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
                 # Export approved in core (public access via App Gateway)
