@@ -128,8 +128,8 @@ class ApiClient:
         workspace_scope = workspace_json["workspace"]["properties"]["scope_id"]
         return workspace_scope
 
-    def get_auth_token() -> str:
-        pass
+    def get_auth_token(self, log, scope) -> str:
+        raise NotImplementedError()
 
 
 class ClientCredentialsApiClient(ApiClient):
