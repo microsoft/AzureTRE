@@ -190,20 +190,21 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
   
-  # ABAC condition using BOTH private endpoint source AND container metadata stage
+  # ABAC condition: Restrict blob operations to specific stages only
+  # Logic: Allow if (action is NOT a blob operation) OR (action is blob operation AND stage matches)
+  # This allows container operations (list, etc.) while restricting blob read/write/delete to allowed stages
   condition_version = "2.0"
   condition         = <<-EOT
     (
-      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
-      AND
-      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'})
-      AND
-      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action'})
-      AND
-      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
+      (
+        !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
+      )
+      OR
+      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+        StringIn ('import-external', 'import-in-progress', 'export-approved')
     )
-    OR
-    @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-      StringIn ('import-external', 'import-in-progress', 'export-approved')
   EOT
 }

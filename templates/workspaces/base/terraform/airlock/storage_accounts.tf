@@ -160,7 +160,9 @@ resource "azurerm_role_assignment" "api_workspace_blob_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
   
-  # ABAC condition: Allow blob operations only for specific stages
+  # ABAC condition: Restrict blob operations to specific stages only
+  # Logic: Allow if (action is NOT a blob operation) OR (action is blob operation AND stage matches)
+  # This allows container operations (list, etc.) while restricting blob read/write/delete to allowed stages
   condition_version = "2.0"
   condition         = <<-EOT
     (
