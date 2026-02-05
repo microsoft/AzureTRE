@@ -1,9 +1,15 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
-
+**BREAKING CHANGES**
 * _No changes yet_
 
-## 0.27.0 (Unreleased)
+ENHANCEMENTS:
+* _No changes yet_
+
+BUG FIXES:
+* _No changes yet_
+
+## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
 * Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
@@ -43,6 +49,36 @@ BUG FIXES:
 * Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
 
 COMPONENTS:
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.12 |
+| ui | 0.8.25 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.8.1 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.9 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-cyclecloud | 0.7.4 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.3.5 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-ohdsi | 0.3.5 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.2 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.1 |
+| tre-workspace-service-health | 0.2.13 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-workspace-service-azuresql | 1.0.16 |
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
@@ -112,9 +148,6 @@ COMPONENTS:
 | tre-service-guacamole-import-reviewvm | 0.4.3 |
 | tre-service-guacamole-windowsvm | 1.4.1 |
 | tre-workspace-service-ohdsi | 0.3.4 |
-
-COMPONENTS:
-* Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
