@@ -16,24 +16,31 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
     """
     Get storage account name for an airlock request.
     
-    In consolidated mode, returns consolidated account names.
+    In consolidated mode, returns consolidated account names (but keeps external/approved separate).
     In legacy mode, returns separate account names.
     """
     tre_id = os.environ.get("TRE_ID", "")
     
     if use_metadata_stage_management():
-        # Consolidated mode
+        # Consolidated mode - but keep public accounts separate
         if request_type == constants.IMPORT_TYPE:
-            if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, 
-                         constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
-                         constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
+            if status == constants.STAGE_DRAFT:
+                # Import draft stays in separate public account
+                return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
+            elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, 
+                           constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
+                           constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
+                # Consolidated private core account (in-progress, rejected, blocked)
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
             else:  # Approved, approval in progress
+                # Workspace consolidated account
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE + short_workspace_id
         else:  # export
             if status in [constants.STAGE_APPROVED, constants.STAGE_APPROVAL_INPROGRESS]:
-                return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
-            else:
+                # Export approved stays in separate public account
+                return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
+            else:  # Draft, submitted, in-review, rejected, blocked
+                # Workspace consolidated account
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE + short_workspace_id
     else:
         # Legacy mode

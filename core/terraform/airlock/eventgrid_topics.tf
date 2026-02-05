@@ -312,9 +312,8 @@ resource "azurerm_eventgrid_event_subscription" "scan_result" {
   ]
 }
 
-# Unified EventGrid Event Subscription for All Blob Created Events
-# This single subscription replaces 4 separate stage-specific subscriptions
-# The airlock processor will read container metadata to determine the actual stage and route accordingly
+# Unified EventGrid Event Subscription for Consolidated Core Storage (Private Stages)
+# This subscription handles blob created events for: import-in-progress, import-rejected, import-blocked
 resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   name  = "airlock-blob-created-${var.tre_id}"
   scope = azurerm_storage_account.sa_airlock_core.id
@@ -331,6 +330,44 @@ resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   depends_on = [
     azurerm_eventgrid_system_topic.airlock_blob_created,
     azurerm_role_assignment.servicebus_sender_airlock_blob_created
+  ]
+}
+
+# EventGrid Event Subscription for Import External (Public)
+resource "azurerm_eventgrid_event_subscription" "import_external_blob_created" {
+  name  = "import-external-blob-created-${var.tre_id}"
+  scope = azurerm_storage_account.sa_import_external.id
+
+  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  included_event_types = ["Microsoft.Storage.BlobCreated"]
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_external_blob_created,
+    azurerm_role_assignment.servicebus_sender_import_external_blob_created
+  ]
+}
+
+# EventGrid Event Subscription for Export Approved (Public)
+resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
+  name  = "export-approved-blob-created-${var.tre_id}"
+  scope = azurerm_storage_account.sa_export_approved.id
+
+  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  included_event_types = ["Microsoft.Storage.BlobCreated"]
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_approved_blob_created,
+    azurerm_role_assignment.servicebus_sender_export_approved_blob_created
   ]
 }
 
