@@ -3,7 +3,7 @@
 #
 # Previous architecture (5 storage accounts):
 # - stalimex{tre_id} (import-external)
-# - stalimip{tre_id} (import-inprogress)
+# - stalimip{tre_id} (import-in-progress)
 # - stalimrej{tre_id} (import-rejected)
 # - stalimblocked{tre_id} (import-blocked)
 # - stalexapp{tre_id} (export-approved)
@@ -11,7 +11,7 @@
 # New architecture (1 storage account):
 # - stalairlock{tre_id} with containers named: {stage}-{request_id}
 #   - import-external-{request_id}
-#   - import-inprogress-{request_id}
+#   - import-in-progress-{request_id}
 #   - import-rejected-{request_id}
 #   - import-blocked-{request_id}
 #   - export-approved-{request_id}
@@ -153,7 +153,7 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
 }
 
 # API Identity - restricted access using ABAC to specific stages only
-# API should only access: import-external (draft), import-inprogress (submitted/review), export-approved (final)
+# API should only access: import-external (draft), import-in-progress (submitted/review), export-approved (final)
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"

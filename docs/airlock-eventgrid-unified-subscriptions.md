@@ -135,7 +135,7 @@ update_container_stage(
     request_id="abc-123-def",
     new_stage="import-in-progress"
 )
-# Metadata updated: {"stage": "import-in-progress", "stage_history": "external,inprogress"}
+# Metadata updated: {"stage": "import-in-progress", "stage_history": "external,in-progress"}
 # Time: ~1 second
 # No blob copying!
 ```
