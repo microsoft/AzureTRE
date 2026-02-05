@@ -115,12 +115,11 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
   }
 }
 
-# System EventGrid Topics for Blob Created Events
-# These topics subscribe to blob creation events in the consolidated workspace storage account
-
-# Import Approved Blob Created Events
-resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
-  name                   = local.import_approved_sys_topic_name
+# Unified System EventGrid Topic for All Workspace Blob Created Events
+# This single topic replaces 4 separate stage-specific topics
+# The airlock processor will read container metadata to determine the actual stage
+resource "azurerm_eventgrid_system_topic" "airlock_workspace_blob_created" {
+  name                   = "evgt-airlock-blob-created-ws-${var.short_workspace_id}"
   location               = var.location
   resource_group_name    = var.ws_resource_group_name
   source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace.id
@@ -134,92 +133,14 @@ resource "azurerm_eventgrid_system_topic" "import_approved_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Export In-Progress Blob Created Events
-resource "azurerm_eventgrid_system_topic" "export_inprogress_blob_created" {
-  name                   = local.export_inprogress_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.ws_resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_workspace_tags
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-# Export Rejected Blob Created Events
-resource "azurerm_eventgrid_system_topic" "export_rejected_blob_created" {
-  name                   = local.export_rejected_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.ws_resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_workspace_tags
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-# Export Blocked Blob Created Events
-resource "azurerm_eventgrid_system_topic" "export_blocked_blob_created" {
-  name                   = local.export_blocked_sys_topic_name
-  location               = var.location
-  resource_group_name    = var.ws_resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_workspace_tags
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-# Role Assignments for EventGrid System Topics to send to Service Bus
-resource "azurerm_role_assignment" "servicebus_sender_import_approved_blob_created" {
+# Role Assignment for Unified EventGrid System Topic
+resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_blob_created" {
   scope                = data.azurerm_servicebus_namespace.airlock_sb.id
   role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_approved_blob_created.identity[0].principal_id
+  principal_id         = azurerm_eventgrid_system_topic.airlock_workspace_blob_created.identity[0].principal_id
 
   depends_on = [
-    azurerm_eventgrid_system_topic.import_approved_blob_created
-  ]
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_export_inprogress_blob_created" {
-  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_inprogress_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_inprogress_blob_created
-  ]
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_export_rejected_blob_created" {
-  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_rejected_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_rejected_blob_created
-  ]
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_export_blocked_blob_created" {
-  scope                = data.azurerm_servicebus_namespace.airlock_sb.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_blocked_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_blocked_blob_created
+    azurerm_eventgrid_system_topic.airlock_workspace_blob_created
   ]
 }
 

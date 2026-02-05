@@ -312,8 +312,11 @@ resource "azurerm_eventgrid_event_subscription" "scan_result" {
   ]
 }
 
-resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
-  name  = local.import_inprogress_eventgrid_subscription_name
+# Unified EventGrid Event Subscription for All Blob Created Events
+# This single subscription replaces 4 separate stage-specific subscriptions
+# The airlock processor will read container metadata to determine the actual stage and route accordingly
+resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
+  name  = "airlock-blob-created-${var.tre_id}"
   scope = azurerm_storage_account.sa_airlock_core.id
 
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
@@ -322,62 +325,12 @@ resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created"
     type = "SystemAssigned"
   }
 
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_inprogress_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_inprogress_blob_created
-  ]
-}
-
-resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
-  name  = local.import_rejected_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_airlock_core.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  # Todo add Dead_letter
+  # Include all blob created events - airlock processor will check container metadata for routing
+  included_event_types = ["Microsoft.Storage.BlobCreated"]
 
   depends_on = [
-    azurerm_eventgrid_system_topic.import_rejected_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_rejected_blob_created
-  ]
-}
-
-
-resource "azurerm_eventgrid_event_subscription" "import_blocked_blob_created" {
-  name  = local.import_blocked_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_airlock_core.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  # Todo add Dead_letter
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_blocked_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_blocked_blob_created
-  ]
-}
-
-resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
-  name  = local.export_approved_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_airlock_core.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_approved_blob_created,
-    azurerm_role_assignment.servicebus_sender_export_approved_blob_created
+    azurerm_eventgrid_system_topic.airlock_blob_created,
+    azurerm_role_assignment.servicebus_sender_airlock_blob_created
   ]
 }
 
