@@ -31,7 +31,7 @@ The airlock uses a consolidated storage architecture with **2 storage accounts**
 1. **Core Storage** (`stalairlock{tre_id}`): Handles all core stages
    - Import: external, in-progress, rejected, blocked
    - Export: approved
-   - Accessed via private endpoints and App Gateway for public stages
+   - Accessed via private endpoint (processor) and SAS tokens (public stages)
 
 2. **Global Workspace Storage** (`stalairlockg{tre_id}`): Handles all workspace stages for all workspaces
    - Import: approved

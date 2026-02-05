@@ -8,15 +8,14 @@
 # - stalimblocked{tre_id} (import-blocked) - private via PE
 # - stalexapp{tre_id} (export-approved) - public access
 #
-# New architecture (1 storage account with multiple PEs):
+# New architecture (1 storage account with PEs):
 # - stalairlock{tre_id} with containers named: {request_id}
 #   - Container metadata stage: import-external, import-in-progress, import-rejected, 
 #                               import-blocked, export-approved
-#   - PE #1: From app gateway subnet (for "public" access via App Gateway)
-#   - PE #2: From airlock_storage_subnet (for processor access)
-#   - PE #3: From import-review workspace (for manager review access)
-#   - ABAC controls which PE can access which stage containers
-#   - No direct public internet access - App Gateway routes external/approved stages
+#   - PE #1: From airlock_storage_subnet (for processor access)
+#   - PE #2: From import-review workspace (for manager review access)
+#   - ABAC controls which identity can access which stage containers
+#   - Public access (external/approved) via SAS tokens (original design)
 
 resource "azurerm_storage_account" "sa_airlock_core" {
   name                             = local.airlock_core_storage_name
@@ -115,32 +114,7 @@ resource "azurerm_private_endpoint" "stg_airlock_core_pe_processor" {
   }
 }
 
-# Private Endpoint #2: From App Gateway Subnet (Public Access Routing)
-# For routing "public" access to external/approved stages via App Gateway
-# This replaces direct public internet access with App Gateway-mediated access
-resource "azurerm_private_endpoint" "stg_airlock_core_pe_appgw" {
-  name                = "pe-stg-airlock-appgw-${var.tre_id}"
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  subnet_id           = var.app_gw_subnet_id
-  tags                = var.tre_core_tags
-
-  lifecycle { ignore_changes = [tags] }
-
-  private_dns_zone_group {
-    name                 = "pdzg-stg-airlock-appgw-${var.tre_id}"
-    private_dns_zone_ids = [var.blob_core_dns_zone_id]
-  }
-
-  private_service_connection {
-    name                           = "psc-stg-airlock-appgw-${var.tre_id}"
-    private_connection_resource_id = azurerm_storage_account.sa_airlock_core.id
-    is_manual_connection           = false
-    subresource_names              = ["Blob"]
-  }
-}
-
-# Private Endpoint #3: From Import Review Workspace (Added by review workspace)
+# Private Endpoint #2: From Import Review Workspace (Added by review workspace)
 # Note: This PE is created in the import-review workspace terraform
 # It allows Airlock Managers to review import in-progress data
 
