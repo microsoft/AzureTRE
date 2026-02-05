@@ -1,4 +1,4 @@
-# Option B: Global Workspace Storage with workspace_id ABAC
+# Global Workspace Storage with workspace_id ABAC
 # This file replaces storage_accounts.tf to use the global workspace storage account
 # created in core infrastructure instead of creating a per-workspace account
 

@@ -1,5 +1,5 @@
 """
-E2E tests for Option B: Global Workspace Storage with workspace_id ABAC filtering
+E2E tests for consolidated airlock storage with global workspace storage and workspace_id ABAC filtering
 
 These tests verify:
 1. Workspace isolation via ABAC (workspace A cannot access workspace B data)
@@ -28,7 +28,7 @@ BLOB_FILE_PATH = "./test_airlock_sample.txt"
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
-@pytest.mark.optionb
+@pytest.mark.airlock_consolidated
 async def test_workspace_isolation_via_abac(setup_test_workspace, verify):
     """
     Test that workspace A cannot access workspace B's airlock data via ABAC filtering.
@@ -112,7 +112,7 @@ async def test_workspace_isolation_via_abac(setup_test_workspace, verify):
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
-@pytest.mark.optionb
+@pytest.mark.airlock_consolidated
 async def test_metadata_based_stage_transitions(setup_test_workspace, verify):
     """
     Test that stage transitions use metadata updates instead of data copying.
@@ -213,7 +213,7 @@ async def test_metadata_based_stage_transitions(setup_test_workspace, verify):
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
-@pytest.mark.optionb
+@pytest.mark.airlock_consolidated
 async def test_global_storage_account_usage(setup_test_workspace, verify):
     """
     Test that both import and export requests use the correct storage accounts:
@@ -288,4 +288,4 @@ async def test_global_storage_account_usage(setup_test_workspace, verify):
         f"Import should use core storage, got: {import_url}"
     
     LOGGER.info(f"✅ Import uses core storage: {import_url}")
-    LOGGER.info("✅ All storage account assignments correct for Option B")
+    LOGGER.info("✅ All storage account assignments correct for consolidated storage")

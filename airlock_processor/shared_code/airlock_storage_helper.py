@@ -25,7 +25,7 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
     tre_id = os.environ.get("TRE_ID", "")
     
     if use_metadata_stage_management():
-        # Option B: Global workspace storage - all workspaces use same account
+        # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
             if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, 
                          constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
@@ -33,14 +33,14 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
                 # ALL core import stages in stalairlock
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
             else:  # Approved, approval in progress
-                # Global workspace storage (Option B)
+                # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL + tre_id
         else:  # export
             if status in [constants.STAGE_APPROVED, constants.STAGE_APPROVAL_INPROGRESS]:
                 # Export approved in core
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
             else:  # Draft, submitted, in-review, rejected, blocked
-                # Global workspace storage (Option B)
+                # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL + tre_id
     else:
         # Legacy mode

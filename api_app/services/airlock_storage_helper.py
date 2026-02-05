@@ -47,13 +47,13 @@ def get_storage_account_name_for_request(
         Storage account name for the given request state
     """
     if use_metadata_stage_management():
-        # Option B: Global workspace storage - all workspaces use same account
+        # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
             if status in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
                 # Core import stages
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
             elif status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
-                # Global workspace storage (Option B)
+                # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)
             elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
                            AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
@@ -64,7 +64,7 @@ def get_storage_account_name_for_request(
                 # Export approved in core
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
             else:  # Draft, Submitted, InReview, Rejected, Blocked, etc.
-                # Global workspace storage (Option B)
+                # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)
     else:
         # Legacy mode - return original separate account names
