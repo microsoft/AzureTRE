@@ -37,7 +37,7 @@ Processor parses container name from event subject
   ↓
 Processor calls: get_container_metadata(account, container_name)
   ↓
-Reads metadata: {"stage": "import-inprogress", ...}
+Reads metadata: {"stage": "import-in-progress", ...}
   ↓
 Routes to appropriate handler based on stage
   ↓
@@ -108,10 +108,10 @@ def main(msg):
     # Read container metadata
     metadata = get_container_metadata(storage_account, container_name)
     stage = metadata['stage']
-    # Result: "import-inprogress"
+    # Result: "import-in-progress"
     
     # Route based on stage
-    if stage in ['import-inprogress', 'export-inprogress']:
+    if stage in ['import-in-progress', 'export-in-progress']:
         if malware_scanning_enabled:
             # Wait for scan
         else:
@@ -133,9 +133,9 @@ def main(msg):
 update_container_stage(
     account_name="stalairlockmytre",
     request_id="abc-123-def",
-    new_stage="import-inprogress"
+    new_stage="import-in-progress"
 )
-# Metadata updated: {"stage": "import-inprogress", "stage_history": "external,inprogress"}
+# Metadata updated: {"stage": "import-in-progress", "stage_history": "external,inprogress"}
 # Time: ~1 second
 # No blob copying!
 ```

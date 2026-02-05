@@ -169,7 +169,7 @@ resource "azurerm_role_assignment" "api_workspace_blob_data_contributor" {
         OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
       OR
       @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-        StringIn ('import-approved', 'export-internal', 'export-inprogress')
+        StringIn ('import-approved', 'export-internal', 'export-in-progress')
     )
   EOT
 }
