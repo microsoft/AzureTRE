@@ -5,7 +5,7 @@ locals {
   # Global workspace airlock storage account name (in core) - shared by all workspaces
   airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
 
-  # Consolidated workspace airlock storage account (Option A - per workspace)
+  # Legacy per-workspace storage account name (kept for backwards compatibility during migration)
   airlock_workspace_storage_name = lower(replace("stalairlockws${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
 
   import_approved_sys_topic_name   = "evgt-airlock-import-approved-${local.workspace_resource_name_suffix}"
