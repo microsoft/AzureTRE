@@ -49,6 +49,7 @@ BUG FIXES:
 * Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
 
 COMPONENTS:
+
 | name | version |
 | ----- | ----- |
 | devops | 0.6.3 |
