@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* _No changes yet_
+* Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 
 BUG FIXES:
 * _No changes yet_
