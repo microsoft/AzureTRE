@@ -39,10 +39,28 @@
       "type": "string",
       "title": "Address space",
       "description": "The address space of the databricks subnets"
+    },
+    "workspace_owners_group_id": {
+      "$id": "#/properties/workspace_owners_group_id",
+      "type": "string",
+      "title": "Workspace Owners Group ID",
+      "description": "The object ID of the Entra ID group for TRE workspace owners"
+    },
+    "workspace_researchers_group_id": {
+      "$id": "#/properties/workspace_researchers_group_id",
+      "type": "string",
+      "title": "Workspace Researchers Group ID",
+      "description": "The object ID of the Entra ID group for TRE workspace researchers"
     }
   },
   "uiSchema": {
     "address_space": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
       "classNames": "tre-hidden"
     }
   },
@@ -56,7 +74,19 @@
         "properties": []
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
+          }
+        ]
       },
       {
         "stepId": "7ec5fa90-23bd-4809-b0d7-2d32c94016b1",
@@ -78,7 +108,9 @@
                   "name": "databricks",
                   "description": "Communication with Azure Databricks dependancies.",
                   "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
-                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_addresses": [
+                    "AzureDatabricks"
+                  ],
                   "destination_ports": [
                     "443"
                   ],
@@ -114,9 +146,15 @@
                   "name": "AzureAD",
                   "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": ["AzureActiveDirectory"],
-                  "destination_ports": ["*"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }
@@ -212,7 +250,9 @@
                   "name": "databricks",
                   "description": "Communication with Azure Databricks dependancies.",
                   "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
-                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_addresses": [
+                    "AzureDatabricks"
+                  ],
                   "destination_ports": [
                     "443"
                   ],
@@ -248,9 +288,15 @@
                   "name": "AzureAD",
                   "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": ["AzureActiveDirectory"],
-                  "destination_ports": ["*"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }

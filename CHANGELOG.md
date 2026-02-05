@@ -7,7 +7,7 @@ ENHANCEMENTS:
 * _No changes yet_
 
 BUG FIXES:
-* _No changes yet_
+* Fix workspace owners unable to access Databricks workspace by adding Azure RBAC Contributor role assignment ([#4854](https://github.com/microsoft/AzureTRE/issues/4854))
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**

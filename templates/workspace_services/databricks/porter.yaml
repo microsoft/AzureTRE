@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-databricks
-version: 1.0.14
+version: 1.3.0
 description: "An Azure TRE service for Azure Databricks."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -47,6 +47,12 @@ parameters:
     env: ARM_ENVIRONMENT
     type: string
     default: "public"
+  - name: workspace_owners_group_id
+    type: string
+    description: "The object ID of the Entra ID group for TRE workspace owners"
+  - name: workspace_researchers_group_id
+    type: string
+    description: "The object ID of the Entra ID group for TRE workspace researchers"
 
 outputs:
   - name: databricks_workspace_name
@@ -114,6 +120,8 @@ install:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -143,6 +151,8 @@ upgrade:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -172,6 +182,8 @@ uninstall:
         address_space: ${ bundle.parameters.address_space }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         arm_environment: ${ bundle.parameters.arm_environment }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

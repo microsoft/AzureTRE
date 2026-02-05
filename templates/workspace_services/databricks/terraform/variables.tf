@@ -26,3 +26,21 @@ variable "is_exposed_externally" {
 variable "arm_environment" {
   type = string
 }
+
+variable "workspace_owners_group_id" {
+  type        = string
+  description = "The object ID of the Entra ID group for TRE workspace owners"
+  validation {
+    condition     = length(trimspace(var.workspace_owners_group_id)) > 0
+    error_message = "workspace_owners_group_id must be provided; Entra ID workspace groups are required."
+  }
+}
+
+variable "workspace_researchers_group_id" {
+  type        = string
+  description = "The object ID of the Entra ID group for TRE workspace researchers"
+  validation {
+    condition     = length(trimspace(var.workspace_researchers_group_id)) > 0
+    error_message = "workspace_researchers_group_id must be provided; Entra ID workspace groups are required."
+  }
+}

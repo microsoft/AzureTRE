@@ -2,15 +2,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 3.117.0"
+      version = "= 4.14.0"
     }
     azapi = {
       source  = "Azure/azapi"
       version = "= 2.3.0"
-    }
-    databricks = {
-      source  = "databricks/databricks"
-      version = "= 1.48.0"
     }
     dns = {
       source  = "hashicorp/dns"
@@ -42,13 +38,6 @@ provider "azurerm" {
 provider "azapi" {
 }
 
-provider "databricks" {
-  host                        = azurerm_databricks_workspace.databricks.workspace_url
-  azure_workspace_resource_id = azurerm_databricks_workspace.databricks.id
-
-  azure_use_msi = true
-}
-
 module "azure_region" {
   source  = "claranet/regions/azurerm"
   version = "=6.1.0"
@@ -60,6 +49,6 @@ provider "dns" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.3.0"
   arm_environment = var.arm_environment
 }
