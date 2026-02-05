@@ -1,21 +1,4 @@
-# Consolidated Core Airlock Storage Account - ALL STAGES
-# This consolidates ALL 5 core storage accounts into 1 with ABAC-based access control
-#
-# Previous architecture (5 storage accounts):
-# - stalimex{tre_id} (import-external) - public access
-# - stalimip{tre_id} (import-in-progress) - private via PE
-# - stalimrej{tre_id} (import-rejected) - private via PE
-# - stalimblocked{tre_id} (import-blocked) - private via PE
-# - stalexapp{tre_id} (export-approved) - public access
-#
-# New architecture (1 storage account with PEs):
-# - stalairlock{tre_id} with containers named: {request_id}
-#   - Container metadata stage: import-external, import-in-progress, import-rejected, 
-#                               import-blocked, export-approved
-#   - PE #1: From airlock_storage_subnet (for processor access)
-#   - PE #2: From import-review workspace (for manager review access)
-#   - ABAC controls which identity can access which stage containers
-#   - Public access (external/approved) via SAS tokens (original design)
+
 
 resource "azurerm_storage_account" "sa_airlock_core" {
   name                             = local.airlock_core_storage_name
@@ -114,13 +97,6 @@ resource "azurerm_private_endpoint" "stg_airlock_core_pe_processor" {
   }
 }
 
-# Private Endpoint #2: From Import Review Workspace (Added by review workspace)
-# Note: This PE is created in the import-review workspace terraform
-# It allows Airlock Managers to review import in-progress data
-
-# Unified System EventGrid Topic for ALL Core Blob Created Events
-# This single topic handles blob events for ALL 5 core stages:
-# import-external, import-in-progress, import-rejected, import-blocked, export-approved
 resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   name                   = "evgt-airlock-blob-created-${var.tre_id}"
   location               = var.location
@@ -136,7 +112,6 @@ resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Role Assignment for Unified EventGrid System Topic
 resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
@@ -163,7 +138,7 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-  
+
   # ABAC condition: Restrict blob operations to specific stages only
   # Logic: Allow if (action is NOT a blob operation) OR (action is blob operation AND stage matches)
   # This allows container operations (list, etc.) while restricting blob read/write/delete to allowed stages
@@ -177,18 +152,11 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
         AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
       )
       OR
-      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
         StringIn ('import-external', 'import-in-progress', 'export-approved')
     )
   EOT
 }
-
-# ========================================================================================
-# GLOBAL WORKSPACE STORAGE ACCOUNT
-# ========================================================================================
-# This consolidates ALL workspace storage accounts into a single global account
-# Each workspace has its own private endpoint for network isolation
-# ABAC filters by workspace_id + stage to provide access control
 
 resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   name                             = local.airlock_workspace_global_storage_name
@@ -203,7 +171,7 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   shared_access_key_enabled        = false
   local_user_enabled               = false
 
-  # Important! we rely on the fact that the blob created events are issued when the creation of the blobs are done.
+  # Important! we rely on the fact that the blob craeted events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
@@ -213,8 +181,7 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
-    
-    # The Airlock processor needs to access all workspace data
+
     virtual_network_subnet_ids = [data.azurerm_subnet.airlock_storage.id]
   }
 
@@ -241,7 +208,7 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-# Enable Airlock Malware Scanning on Global Workspace Storage Account
+
 resource "azapi_resource_action" "enable_defender_for_storage_workspace_global" {
   count       = var.enable_malware_scanning ? 1 : 0
   type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
@@ -266,9 +233,7 @@ resource "azapi_resource_action" "enable_defender_for_storage_workspace_global" 
   }
 }
 
-# Unified System EventGrid Topic for Global Workspace Blob Created Events
-# This single topic receives all blob events from all workspaces
-# The airlock processor reads container metadata (workspace_id + stage) to route
+
 resource "azurerm_eventgrid_system_topic" "airlock_workspace_global_blob_created" {
   name                   = "evgt-airlock-blob-created-global-${var.tre_id}"
   location               = var.location
@@ -301,9 +266,3 @@ resource "azurerm_role_assignment" "airlock_workspace_global_blob_data_contribut
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
-
-# NOTE: Per-workspace ABAC conditions are applied in workspace Terraform
-# Each workspace will create a role assignment with conditions filtering by:
-# - @Environment[Microsoft.Network/privateEndpoints] (their PE)
-# - @Resource[...containers].metadata['workspace_id'] (their workspace ID)
-# - @Resource[...containers].metadata['stage'] (allowed stages)

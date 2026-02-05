@@ -2,8 +2,7 @@
 # The Dockerfile includes a RUN command to change the extension from .terraform to .tf after the files from the base workspace are copied to this directory.
 
 locals {
-  core_resource_group_name = "rg-${var.tre_id}"
-  # Reference to consolidated core airlock storage (import in-progress, rejected, blocked)
+  core_resource_group_name  = "rg-${var.tre_id}"
   airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
 }
 
@@ -12,14 +11,12 @@ module "terraform_azurerm_environment_configuration" {
   arm_environment = var.arm_environment
 }
 
-# Reference the consolidated core airlock storage account
 data "azurerm_storage_account" "sa_airlock_core" {
   provider            = azurerm.core
   name                = local.airlock_core_storage_name
   resource_group_name = local.core_resource_group_name
 }
 
-# Private endpoint to consolidated core storage for import review access
 resource "azurerm_private_endpoint" "sa_airlock_core_pe" {
   name                = "pe-airlock-import-review-${local.workspace_resource_name_suffix}"
   location            = var.location
@@ -69,31 +66,25 @@ resource "azurerm_private_dns_zone_virtual_network_link" "stg_airlock_core_blob"
   depends_on = [azurerm_private_dns_a_record.stg_airlock_core_blob]
 }
 
-# ABAC Role Assignment for Import Review Workspace
-# Restricts access to import-in-progress stage only via this workspace's private endpoint
 resource "azurerm_role_assignment" "review_workspace_import_access" {
   scope                = data.azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = azurerm_user_assigned_identity.ws_id.principal_id
-  
-  # ABAC condition: Restrict read access to import-in-progress stage via specific PE only
-  # Logic: Allow if (action is NOT read) OR (action is read AND PE matches AND stage matches)
-  # This allows other operations while restricting read to import-in-progress from review workspace PE
-  # Note: Using @Environment for PE as per Azure ABAC documentation
+
   condition_version = "2.0"
   condition         = <<-EOT
     (
       !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
       OR
       (
-        @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase 
+        @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase
           '${azurerm_private_endpoint.sa_airlock_core_pe.id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
           StringEquals 'import-in-progress'
       )
     )
   EOT
-  
+
   depends_on = [azurerm_private_endpoint.sa_airlock_core_pe]
 }
