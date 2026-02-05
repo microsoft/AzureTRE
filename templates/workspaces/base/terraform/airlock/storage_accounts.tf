@@ -146,16 +146,30 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_blob_cre
 
 # Role Assignments for Consolidated Workspace Storage Account
 
-# Airlock Processor Identity - needs access to all workspace containers
+# Airlock Processor Identity - needs access to all workspace containers (no restrictions)
 resource "azurerm_role_assignment" "airlock_workspace_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_workspace.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-# API Identity - needs access to approved, internal, and in-progress containers
+# API Identity - restricted access using ABAC to specific stages only
+# API should only access: import-approved (final), export-internal (draft), export-inprogress (submitted/review)
 resource "azurerm_role_assignment" "api_workspace_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_workspace.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+  
+  # ABAC condition to restrict API access to specific stages based on container metadata
+  condition_version = "2.0"
+  condition         = <<-EOT
+    (
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} 
+        OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'}
+        OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
+      OR
+      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+        StringIn ('import-approved', 'export-internal', 'export-inprogress')
+    )
+  EOT
 }
