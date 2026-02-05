@@ -1,20 +1,109 @@
-# Consolidated Core Airlock Storage Account
-# This replaces 5 separate storage accounts with 1 consolidated account using stage-prefixed containers
+# Import External Storage Account (PUBLIC ACCESS)
+# This account must remain separate as it requires public internet access for researchers to upload
+resource "azurerm_storage_account" "sa_import_external" {
+  name                             = local.import_external_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
+  allow_nested_items_to_be_public  = false
+  is_hns_enabled                   = false
+  infrastructure_encryption_enabled = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
+  # Public access allowed for researcher uploads via SAS tokens
+  network_rules {
+    default_action = "Allow"
+    bypass         = ["AzureServices"]
+  }
+
+  tags = merge(var.tre_core_tags, {
+    description = "airlock;import;external;public"
+  })
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+# Export Approved Storage Account (PUBLIC ACCESS)
+# This account must remain separate as it requires public internet access for researchers to download
+resource "azurerm_storage_account" "sa_export_approved" {
+  name                             = local.export_approved_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
+  allow_nested_items_to_be_public  = false
+  is_hns_enabled                   = false
+  infrastructure_encryption_enabled = true
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
+  # Public access allowed for researcher downloads via SAS tokens
+  network_rules {
+    default_action = "Allow"
+    bypass         = ["AzureServices"]
+  }
+
+  tags = merge(var.tre_core_tags, {
+    description = "airlock;export;approved;public"
+  })
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+# Consolidated Core Airlock Storage Account (PRIVATE ACCESS via PEs)
+# Consolidates 3 private core accounts: import in-progress, import rejected, import blocked
 #
-# Previous architecture (5 storage accounts):
-# - stalimex{tre_id} (import-external)
+# Previous architecture (3 storage accounts):
 # - stalimip{tre_id} (import-in-progress)
 # - stalimrej{tre_id} (import-rejected)
 # - stalimblocked{tre_id} (import-blocked)
-# - stalexapp{tre_id} (export-approved)
 #
-# New architecture (1 storage account):
-# - stalairlock{tre_id} with containers named: {stage}-{request_id}
-#   - import-external-{request_id}
-#   - import-in-progress-{request_id}
-#   - import-rejected-{request_id}
-#   - import-blocked-{request_id}
-#   - export-approved-{request_id}
+# New architecture (1 storage account with 2 private endpoints):
+# - stalairlock{tre_id} with containers named: {request_id}
+#   - Container metadata stage: import-in-progress, import-rejected, import-blocked
+#   - PE #1: From airlock_storage_subnet (processor access)
+#   - PE #2: From import-review workspace (manager review access)
+#   - ABAC controls which PE can access which stage
 
 resource "azurerm_storage_account" "sa_airlock_core" {
   name                             = local.airlock_core_storage_name
@@ -113,9 +202,8 @@ resource "azurerm_private_endpoint" "stg_airlock_core_pe" {
   }
 }
 
-# Unified System EventGrid Topic for All Blob Created Events
-# This single topic replaces 4 separate stage-specific topics since we can't filter by container metadata
-# The airlock processor will read container metadata to determine the actual stage
+# Unified System EventGrid Topic for Consolidated Core Storage (Private Stages)
+# This single topic handles blob events for: import-in-progress, import-rejected, import-blocked
 resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   name                   = "evgt-airlock-blob-created-${var.tre_id}"
   location               = var.location
@@ -131,7 +219,39 @@ resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Role Assignment for Unified EventGrid System Topic
+# System EventGrid Topic for Import External (Public)
+resource "azurerm_eventgrid_system_topic" "import_external_blob_created" {
+  name                   = "evgt-airlock-import-external-${var.tre_id}"
+  location               = var.location
+  resource_group_name    = var.resource_group_name
+  source_arm_resource_id = azurerm_storage_account.sa_import_external.id
+  topic_type             = "Microsoft.Storage.StorageAccounts"
+  tags                   = var.tre_core_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# System EventGrid Topic for Export Approved (Public)
+resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
+  name                   = "evgt-airlock-export-approved-${var.tre_id}"
+  location               = var.location
+  resource_group_name    = var.resource_group_name
+  source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
+  topic_type             = "Microsoft.Storage.StorageAccounts"
+  tags                   = var.tre_core_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Role Assignments for EventGrid System Topics to send to Service Bus
 resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
@@ -139,6 +259,26 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
 
   depends_on = [
     azurerm_eventgrid_system_topic.airlock_blob_created
+  ]
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_import_external_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.import_external_blob_created.identity[0].principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.import_external_blob_created
+  ]
+}
+
+resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_created.identity[0].principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.export_approved_blob_created
   ]
 }
 
@@ -153,22 +293,53 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
 }
 
 # API Identity - restricted access using ABAC to specific stages only
-# API should only access: import-external (draft), import-in-progress (submitted/review), export-approved (final)
+# API should only access import-in-progress stage in core consolidated storage
+# Uses @Environment to check private endpoint source for additional security
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
   
-  # ABAC condition to restrict API access to specific stages based on container metadata
+  # ABAC condition using BOTH private endpoint source AND container metadata stage
   condition_version = "2.0"
   condition         = <<-EOT
     (
-      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} 
-        OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'}
-        OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
-      OR
-      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-        StringIn ('import-external', 'import-in-progress', 'export-approved')
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
+      AND
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'})
+      AND
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action'})
+      AND
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
     )
+    OR
+    @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+      StringEquals 'import-in-progress'
   EOT
+}
+
+# API also needs access to external and approved accounts (public access)
+resource "azurerm_role_assignment" "api_import_external_blob_data_contributor" {
+  scope                = azurerm_storage_account.sa_import_external.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+}
+
+resource "azurerm_role_assignment" "api_export_approved_blob_data_contributor" {
+  scope                = azurerm_storage_account.sa_export_approved.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+}
+
+# Airlock Processor also needs access to external and approved accounts
+resource "azurerm_role_assignment" "airlock_import_external_blob_data_contributor" {
+  scope                = azurerm_storage_account.sa_import_external.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+resource "azurerm_role_assignment" "airlock_export_approved_blob_data_contributor" {
+  scope                = azurerm_storage_account.sa_export_approved.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }

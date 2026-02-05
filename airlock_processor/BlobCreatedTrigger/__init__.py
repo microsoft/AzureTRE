@@ -27,28 +27,39 @@ def main(msg: func.ServiceBusMessage,
     use_metadata_routing = os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
     
     if use_metadata_routing:
-        # NEW: Get stage from container metadata for consolidated storage
-        from shared_code.blob_operations_metadata import get_container_metadata
-        storage_account_name = parse_storage_account_name_from_topic(topic)
-        metadata = get_container_metadata(storage_account_name, request_id)
-        stage = metadata.get('stage', 'unknown')
-        
-        # Route based on metadata stage instead of storage account name
-        if stage in ['import-in-progress', 'export-in-progress']:
-            handle_inprogress_stage(stage, request_id, dataDeletionEvent, json_body, stepResultEvent)
+        # NEW: Determine if this is from external/approved (public) or consolidated (private with metadata)
+        if constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL in topic:
+            # Import external (draft) - no processing needed, wait for submit
+            logging.info('Blob created in import external storage. No action needed.')
             return
-        elif stage in ['import-approved', 'export-approved']:
+        elif constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
+            # Export approved - finalize as approved
             completed_step = constants.STAGE_APPROVAL_INPROGRESS
             new_status = constants.STAGE_APPROVED
-        elif stage in ['import-rejected', 'export-rejected']:
-            completed_step = constants.STAGE_REJECTION_INPROGRESS
-            new_status = constants.STAGE_REJECTED
-        elif stage in ['import-blocked', 'export-blocked']:
-            completed_step = constants.STAGE_BLOCKING_INPROGRESS
-            new_status = constants.STAGE_BLOCKED_BY_SCAN
         else:
-            logging.warning(f"Unknown stage in container metadata: {stage}")
-            return
+            # Consolidated storage - get stage from container metadata
+            from shared_code.blob_operations_metadata import get_container_metadata
+            storage_account_name = parse_storage_account_name_from_topic(topic)
+            metadata = get_container_metadata(storage_account_name, request_id)
+            stage = metadata.get('stage', 'unknown')
+            
+            # Route based on metadata stage
+            if stage in ['import-in-progress', 'export-in-progress']:
+                handle_inprogress_stage(stage, request_id, dataDeletionEvent, json_body, stepResultEvent)
+                return
+            elif stage in ['import-approved', 'export-approved']:
+                # Shouldn't happen - approved goes to separate accounts now
+                logging.warning(f"Unexpected approved stage in consolidated storage: {stage}")
+                return
+            elif stage in ['import-rejected', 'export-rejected']:
+                completed_step = constants.STAGE_REJECTION_INPROGRESS
+                new_status = constants.STAGE_REJECTED
+            elif stage in ['import-blocked', 'export-blocked']:
+                completed_step = constants.STAGE_BLOCKING_INPROGRESS
+                new_status = constants.STAGE_BLOCKED_BY_SCAN
+            else:
+                logging.warning(f"Unknown stage in container metadata: {stage}")
+                return
     else:
         # LEGACY: Determine stage from storage account name in topic
         if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:

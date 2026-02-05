@@ -31,7 +31,7 @@ def get_storage_account_name_for_request(
     """
     Get the storage account name for an airlock request based on its type and status.
     
-    In consolidated mode, returns consolidated account names.
+    In consolidated mode, returns consolidated account names (but keeps external/approved separate for public access).
     In legacy mode, returns the original separate account names.
     
     Args:
@@ -44,20 +44,23 @@ def get_storage_account_name_for_request(
         Storage account name for the given request state
     """
     if use_metadata_stage_management():
-        # Consolidated mode - return consolidated account names
+        # Consolidated mode - but keep public accounts separate for network isolation
         if request_type == constants.IMPORT_TYPE:
-            if status in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted,
-                         AirlockRequestStatus.InReview, AirlockRequestStatus.Rejected,
-                         AirlockRequestStatus.Blocked]:
-                # Core consolidated account
+            if status == AirlockRequestStatus.Draft:
+                # Import draft stays in separate public account (internet access)
+                return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
+            elif status in [AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview,
+                           AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
+                           AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
+                # Consolidated core private account (in-progress, rejected, blocked)
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
             else:  # Approved, ApprovalInProgress
                 # Workspace consolidated account
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE.format(short_workspace_id)
         else:  # export
-            if status == AirlockRequestStatus.Approved:
-                # Core consolidated account
-                return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
+            if status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
+                # Export approved stays in separate public account (internet access)
+                return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
             else:  # Draft, Submitted, InReview, Rejected, Blocked, etc.
                 # Workspace consolidated account
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE.format(short_workspace_id)
