@@ -4,7 +4,7 @@
 # Previous architecture (5 storage accounts per workspace):
 # - stalimappws{ws_id} (import-approved)
 # - stalexintws{ws_id} (export-internal)
-# - stalexipws{ws_id} (export-inprogress)
+# - stalexipws{ws_id} (export-in-progress)
 # - stalexrejws{ws_id} (export-rejected)
 # - stalexblockedws{ws_id} (export-blocked)
 #
@@ -154,7 +154,7 @@ resource "azurerm_role_assignment" "airlock_workspace_blob_data_contributor" {
 }
 
 # API Identity - restricted access using ABAC to specific stages only
-# API should only access: import-approved (final), export-internal (draft), export-inprogress (submitted/review)
+# API should only access: import-approved (final), export-internal (draft), export-in-progress (submitted/review)
 resource "azurerm_role_assignment" "api_workspace_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_workspace.id
   role_definition_name = "Storage Blob Data Contributor"

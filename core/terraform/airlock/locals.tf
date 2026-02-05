@@ -7,7 +7,7 @@ locals {
   
   # Container prefixes for stage segregation within consolidated storage account
   container_prefix_import_external    = "import-external"
-  container_prefix_import_in_progress = "import-inprogress"
+  container_prefix_import_in_progress = "import-in-progress"
   container_prefix_import_rejected    = "import-rejected"
   container_prefix_import_blocked     = "import-blocked"
   container_prefix_export_approved    = "export-approved"
