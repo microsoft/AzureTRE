@@ -11,12 +11,12 @@ STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE = "stalairlockws{}"  # Consolidated works
 
 # Stage values for container metadata
 STAGE_IMPORT_EXTERNAL = "import-external"
-STAGE_IMPORT_INPROGRESS = "import-inprogress"
+STAGE_IMPORT_IN_PROGRESS = "import-in-progress"
 STAGE_IMPORT_APPROVED = "import-approved"
 STAGE_IMPORT_REJECTED = "import-rejected"
 STAGE_IMPORT_BLOCKED = "import-blocked"
 STAGE_EXPORT_INTERNAL = "export-internal"
-STAGE_EXPORT_INPROGRESS = "export-inprogress"
+STAGE_EXPORT_IN_PROGRESS = "export-in-progress"
 STAGE_EXPORT_APPROVED = "export-approved"
 STAGE_EXPORT_REJECTED = "export-rejected"
 STAGE_EXPORT_BLOCKED = "export-blocked"

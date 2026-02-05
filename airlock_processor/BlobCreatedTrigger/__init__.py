@@ -34,7 +34,7 @@ def main(msg: func.ServiceBusMessage,
         stage = metadata.get('stage', 'unknown')
         
         # Route based on metadata stage instead of storage account name
-        if stage in ['import-inprogress', 'export-inprogress']:
+        if stage in ['import-in-progress', 'export-in-progress']:
             handle_inprogress_stage(stage, request_id, dataDeletionEvent, json_body, stepResultEvent)
             return
         elif stage in ['import-approved', 'export-approved']:

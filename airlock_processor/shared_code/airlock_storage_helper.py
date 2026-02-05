@@ -69,7 +69,7 @@ def get_stage_from_status(request_type: str, status: str) -> str:
         if status == constants.STAGE_DRAFT:
             return constants.STAGE_IMPORT_EXTERNAL
         elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW]:
-            return constants.STAGE_IMPORT_INPROGRESS
+            return constants.STAGE_IMPORT_IN_PROGRESS
         elif status in [constants.STAGE_APPROVED, constants.STAGE_APPROVAL_INPROGRESS]:
             return constants.STAGE_IMPORT_APPROVED
         elif status in [constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS]:
@@ -80,7 +80,7 @@ def get_stage_from_status(request_type: str, status: str) -> str:
         if status == constants.STAGE_DRAFT:
             return constants.STAGE_EXPORT_INTERNAL
         elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW]:
-            return constants.STAGE_EXPORT_INPROGRESS
+            return constants.STAGE_EXPORT_IN_PROGRESS
         elif status in [constants.STAGE_APPROVED, constants.STAGE_APPROVAL_INPROGRESS]:
             return constants.STAGE_EXPORT_APPROVED
         elif status in [constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS]:

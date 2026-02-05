@@ -102,7 +102,7 @@ def get_stage_from_status(request_type: str, status: AirlockRequestStatus) -> st
         if status == AirlockRequestStatus.Draft:
             return constants.STAGE_IMPORT_EXTERNAL
         elif status in [AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
-            return constants.STAGE_IMPORT_INPROGRESS
+            return constants.STAGE_IMPORT_IN_PROGRESS
         elif status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
             return constants.STAGE_IMPORT_APPROVED
         elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress]:
@@ -113,7 +113,7 @@ def get_stage_from_status(request_type: str, status: AirlockRequestStatus) -> st
         if status == AirlockRequestStatus.Draft:
             return constants.STAGE_EXPORT_INTERNAL
         elif status in [AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
-            return constants.STAGE_EXPORT_INPROGRESS
+            return constants.STAGE_EXPORT_IN_PROGRESS
         elif status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
             return constants.STAGE_EXPORT_APPROVED
         elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress]:

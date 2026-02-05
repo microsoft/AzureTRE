@@ -46,13 +46,13 @@ This document outlines the design for consolidating airlock storage accounts fro
 **Core:**
 - `stalairlock{tre_id}` - Single consolidated account
   - Containers use prefix naming: `{stage}-{request_id}`
-  - Stages: import-external, import-inprogress, import-rejected, import-blocked, export-approved
+  - Stages: import-external, import-in-progress, import-rejected, import-blocked, export-approved
 - `stairlockp{tre_id}` - Airlock Processor (unchanged)
 
 **Per Workspace:**
 - `stalairlockws{ws_id}` - Single consolidated account
   - Containers use prefix naming: `{stage}-{request_id}`
-  - Stages: import-approved, export-internal, export-inprogress, export-rejected, export-blocked
+  - Stages: import-approved, export-internal, export-in-progress, export-rejected, export-blocked
 
 ### Private Endpoints
 - Core: 1 PE (80% reduction from 5 to 1)
@@ -62,7 +62,7 @@ This document outlines the design for consolidating airlock storage accounts fro
 1. Container created with `{request_id}` as name in consolidated storage account
 2. Container metadata set with `stage={current_stage}` (e.g., `stage=import-external`)
 3. Data uploaded to container
-4. On status change, container metadata **updated** to `stage={new_stage}` (e.g., `stage=import-inprogress`)
+4. On status change, container metadata **updated** to `stage={new_stage}` (e.g., `stage=import-in-progress`)
 5. No data copying required - same container persists through all stages
 6. ABAC conditions restrict access based on container metadata `stage` value
 
@@ -295,7 +295,7 @@ Instead of copying data between storage accounts or containers, we use container
 - Container metadata:
   ```json
   {
-    "stage": "import-inprogress",
+    "stage": "import-in-progress",
     "stage_history": "draft,submitted,inprogress",
     "created_at": "2024-01-15T10:30:00Z",
     "last_stage_change": "2024-01-15T11:45:00Z",
@@ -306,12 +306,12 @@ Instead of copying data between storage accounts or containers, we use container
 
 ### Stage Values
 - `import-external` - Draft import requests (external drop zone)
-- `import-inprogress` - Import requests being scanned/reviewed
+- `import-in-progress` - Import requests being scanned/reviewed
 - `import-approved` - Approved import requests (moved to workspace)
 - `import-rejected` - Rejected import requests
 - `import-blocked` - Import requests blocked by malware scan
 - `export-internal` - Draft export requests (internal workspace)
-- `export-inprogress` - Export requests being scanned/reviewed
+- `export-in-progress` - Export requests being scanned/reviewed
 - `export-approved` - Approved export requests (available externally)
 - `export-rejected` - Rejected export requests
 - `export-blocked` - Export requests blocked by malware scan
@@ -355,7 +355,7 @@ resource "azurerm_role_assignment" "api_limited_access" {
   condition = <<-EOT
     (
       @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-      StringIn ('import-external', 'import-inprogress', 'export-approved')
+      StringIn ('import-external', 'import-in-progress', 'export-approved')
     )
   EOT
 }
@@ -533,7 +533,7 @@ def update_container_stage(account_name: str, request_id: str,
 - Container name: `{request_id}` (e.g., `abc-123-def-456`)
 - Stage tracked in metadata: `stage=import-external`
 - Storage account: Consolidated account
-- Example: Container `abc-123-def` with metadata `stage=import-inprogress` in storage account `stalairlockmytre`
+- Example: Container `abc-123-def` with metadata `stage=import-in-progress` in storage account `stalairlockmytre`
 
 **Advantages:**
 - Minimal code changes (container naming stays the same)
@@ -573,7 +573,7 @@ condition_version = "2.0"
 condition = <<-EOT
   (
     @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-    StringIn ('import-external', 'import-inprogress', 'export-approved')
+    StringIn ('import-external', 'import-in-progress', 'export-approved')
   )
 EOT
 ```
