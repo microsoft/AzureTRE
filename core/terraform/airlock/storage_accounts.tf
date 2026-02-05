@@ -1,109 +1,22 @@
-# Import External Storage Account (PUBLIC ACCESS)
-# This account must remain separate as it requires public internet access for researchers to upload
-resource "azurerm_storage_account" "sa_import_external" {
-  name                             = local.import_external_storage_name
-  location                         = var.location
-  resource_group_name              = var.resource_group_name
-  account_tier                     = "Standard"
-  account_replication_type         = "LRS"
-  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  cross_tenant_replication_enabled = false
-  shared_access_key_enabled        = false
-  local_user_enabled               = false
-  allow_nested_items_to_be_public  = false
-  is_hns_enabled                   = false
-  infrastructure_encryption_enabled = true
-
-  dynamic "identity" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [var.encryption_identity_id]
-    }
-  }
-
-  dynamic "customer_managed_key" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      key_vault_key_id          = var.encryption_key_versionless_id
-      user_assigned_identity_id = var.encryption_identity_id
-    }
-  }
-
-  # Public access allowed for researcher uploads via SAS tokens
-  network_rules {
-    default_action = "Allow"
-    bypass         = ["AzureServices"]
-  }
-
-  tags = merge(var.tre_core_tags, {
-    description = "airlock;import;external;public"
-  })
-
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
-
-# Export Approved Storage Account (PUBLIC ACCESS)
-# This account must remain separate as it requires public internet access for researchers to download
-resource "azurerm_storage_account" "sa_export_approved" {
-  name                             = local.export_approved_storage_name
-  location                         = var.location
-  resource_group_name              = var.resource_group_name
-  account_tier                     = "Standard"
-  account_replication_type         = "LRS"
-  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
-  cross_tenant_replication_enabled = false
-  shared_access_key_enabled        = false
-  local_user_enabled               = false
-  allow_nested_items_to_be_public  = false
-  is_hns_enabled                   = false
-  infrastructure_encryption_enabled = true
-
-  dynamic "identity" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      type         = "UserAssigned"
-      identity_ids = [var.encryption_identity_id]
-    }
-  }
-
-  dynamic "customer_managed_key" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      key_vault_key_id          = var.encryption_key_versionless_id
-      user_assigned_identity_id = var.encryption_identity_id
-    }
-  }
-
-  # Public access allowed for researcher downloads via SAS tokens
-  network_rules {
-    default_action = "Allow"
-    bypass         = ["AzureServices"]
-  }
-
-  tags = merge(var.tre_core_tags, {
-    description = "airlock;export;approved;public"
-  })
-
-  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
-}
-
-# Consolidated Core Airlock Storage Account (PRIVATE ACCESS via PEs)
-# Consolidates 3 private core accounts: import in-progress, import rejected, import blocked
+# Consolidated Core Airlock Storage Account - ALL STAGES
+# This consolidates ALL 5 core storage accounts into 1 with ABAC-based access control
 #
-# Previous architecture (3 storage accounts):
-# - stalimip{tre_id} (import-in-progress)
-# - stalimrej{tre_id} (import-rejected)
-# - stalimblocked{tre_id} (import-blocked)
+# Previous architecture (5 storage accounts):
+# - stalimex{tre_id} (import-external) - public access
+# - stalimip{tre_id} (import-in-progress) - private via PE
+# - stalimrej{tre_id} (import-rejected) - private via PE
+# - stalimblocked{tre_id} (import-blocked) - private via PE
+# - stalexapp{tre_id} (export-approved) - public access
 #
-# New architecture (1 storage account with 2 private endpoints):
+# New architecture (1 storage account with multiple PEs):
 # - stalairlock{tre_id} with containers named: {request_id}
-#   - Container metadata stage: import-in-progress, import-rejected, import-blocked
-#   - PE #1: From airlock_storage_subnet (processor access)
-#   - PE #2: From import-review workspace (manager review access)
-#   - ABAC controls which PE can access which stage
+#   - Container metadata stage: import-external, import-in-progress, import-rejected, 
+#                               import-blocked, export-approved
+#   - PE #1: From app gateway subnet (for "public" access via App Gateway)
+#   - PE #2: From airlock_storage_subnet (for processor access)
+#   - PE #3: From import-review workspace (for manager review access)
+#   - ABAC controls which PE can access which stage containers
+#   - No direct public internet access - App Gateway routes external/approved stages
 
 resource "azurerm_storage_account" "sa_airlock_core" {
   name                             = local.airlock_core_storage_name
