@@ -26,8 +26,7 @@ if [ -n "$ACR_NAME" ]; then
       exit 1
     fi
     # Login to Docker with ACR refresh token
-    echo "${ACR_REFRESH_TOKEN}" | docker login "${ACR_LOGIN_SERVER}" --username 00000000-0000-0000-0000-000000000000 --password-stdin
-    if [ $? -ne 0 ]; then
+    if ! echo "${ACR_REFRESH_TOKEN}" | docker login "${ACR_LOGIN_SERVER}" --username 00000000-0000-0000-0000-000000000000 --password-stdin; then
       echo "ERROR - Docker login to ACR failed"
       exit 1
     fi
