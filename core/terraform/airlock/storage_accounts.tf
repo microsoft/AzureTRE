@@ -39,6 +39,8 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
+    # Allow App Gateway subnet for public access via App Gateway
+    virtual_network_subnet_ids = [var.app_gateway_subnet_id]
   }
 
   tags = merge(var.tre_core_tags, {
@@ -182,6 +184,8 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
 
+    # Workspace storage is only accessed internally via private endpoints from within workspaces
+    # No public App Gateway access needed - only allow airlock storage subnet for processor access
     virtual_network_subnet_ids = [data.azurerm_subnet.airlock_storage.id]
   }
 

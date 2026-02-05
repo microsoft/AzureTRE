@@ -4,18 +4,18 @@ locals {
   # Consolidated core airlock storage account
   # STorage AirLock consolidated
   airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
-  
+
   # Global Workspace Airlock Storage Account - shared by all workspaces
   # STorage AirLock Global - all workspace stages for all workspaces
   airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
-  
+
   # Container prefixes for stage segregation within consolidated storage account
   container_prefix_import_external    = "import-external"
   container_prefix_import_in_progress = "import-in-progress"
   container_prefix_import_rejected    = "import-rejected"
   container_prefix_import_blocked     = "import-blocked"
   container_prefix_export_approved    = "export-approved"
-  
+
   # Legacy storage account names (kept for backwards compatibility during migration)
   # These will be removed in future versions after migration is complete
   # STorage AirLock EXternal

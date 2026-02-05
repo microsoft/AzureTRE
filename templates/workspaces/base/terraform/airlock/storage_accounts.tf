@@ -39,18 +39,11 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
   }
 }
 
-# API Identity - restricted access using ABAC with workspace_id filtering
-# API should only access containers for THIS workspace with specific stages:
-# - import-approved (final)
-# - export-internal (draft)
-# - export-in-progress (submitted/review)
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
   scope                = data.azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-  
-  # ABAC condition: Restrict to THIS workspace's containers via PE + workspace_id + stage
-  # Logic: Allow if (action is NOT a blob operation) OR (correct PE AND correct workspace_id AND allowed stage)
+
   condition_version = "2.0"
   condition         = <<-EOT
     (
@@ -62,13 +55,13 @@ resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" 
       )
       OR
       (
-        @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase 
+        @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase
           '${azurerm_private_endpoint.airlock_workspace_pe.id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['workspace_id'] 
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['workspace_id']
           StringEquals '${var.workspace_id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
           StringIn ('import-approved', 'export-internal', 'export-in-progress')
       )
     )
