@@ -235,7 +235,7 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   }
 
   tags = merge(var.tre_core_tags, {
-    description = "airlock;workspace;global;option-b"
+    description = "airlock;workspace;global"
   })
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
