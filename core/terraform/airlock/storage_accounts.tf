@@ -91,10 +91,10 @@ resource "azapi_resource_action" "enable_defender_for_storage_core" {
   }
 }
 
-# Single Private Endpoint for Consolidated Core Storage Account
-# This replaces 5 separate private endpoints
-resource "azurerm_private_endpoint" "stg_airlock_core_pe" {
-  name                = "pe-stg-airlock-core-blob-${var.tre_id}"
+# Private Endpoint #1: From Airlock Storage Subnet (Processor Access)
+# For airlock processor to access all stages
+resource "azurerm_private_endpoint" "stg_airlock_core_pe_processor" {
+  name                = "pe-stg-airlock-processor-${var.tre_id}"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.airlock_storage_subnet_id
@@ -103,20 +103,50 @@ resource "azurerm_private_endpoint" "stg_airlock_core_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_dns_zone_group {
-    name                 = "pdzg-stg-airlock-core-blob-${var.tre_id}"
+    name                 = "pdzg-stg-airlock-processor-${var.tre_id}"
     private_dns_zone_ids = [var.blob_core_dns_zone_id]
   }
 
   private_service_connection {
-    name                           = "psc-stg-airlock-core-blob-${var.tre_id}"
+    name                           = "psc-stg-airlock-processor-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_airlock_core.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
 }
 
-# Unified System EventGrid Topic for Consolidated Core Storage (Private Stages)
-# This single topic handles blob events for: import-in-progress, import-rejected, import-blocked
+# Private Endpoint #2: From App Gateway Subnet (Public Access Routing)
+# For routing "public" access to external/approved stages via App Gateway
+# This replaces direct public internet access with App Gateway-mediated access
+resource "azurerm_private_endpoint" "stg_airlock_core_pe_appgw" {
+  name                = "pe-stg-airlock-appgw-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.app_gw_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "pdzg-stg-airlock-appgw-${var.tre_id}"
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stg-airlock-appgw-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.sa_airlock_core.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
+
+# Private Endpoint #3: From Import Review Workspace (Added by review workspace)
+# Note: This PE is created in the import-review workspace terraform
+# It allows Airlock Managers to review import in-progress data
+
+# Unified System EventGrid Topic for ALL Core Blob Created Events
+# This single topic handles blob events for ALL 5 core stages:
+# import-external, import-in-progress, import-rejected, import-blocked, export-approved
 resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   name                   = "evgt-airlock-blob-created-${var.tre_id}"
   location               = var.location
@@ -132,39 +162,7 @@ resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# System EventGrid Topic for Import External (Public)
-resource "azurerm_eventgrid_system_topic" "import_external_blob_created" {
-  name                   = "evgt-airlock-import-external-${var.tre_id}"
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_import_external.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_core_tags
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-# System EventGrid Topic for Export Approved (Public)
-resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
-  name                   = "evgt-airlock-export-approved-${var.tre_id}"
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_export_approved.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_core_tags
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-# Role Assignments for EventGrid System Topics to send to Service Bus
+# Role Assignment for Unified EventGrid System Topic
 resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
@@ -172,26 +170,6 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
 
   depends_on = [
     azurerm_eventgrid_system_topic.airlock_blob_created
-  ]
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_import_external_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_external_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_external_blob_created
-  ]
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_approved_blob_created
   ]
 }
 
@@ -205,9 +183,8 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
   principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-# API Identity - restricted access using ABAC to specific stages only
-# API should only access import-in-progress stage in core consolidated storage
-# Uses @Environment to check private endpoint source for additional security
+# API Identity - restricted access using ABAC to specific stages and private endpoints
+# API accesses via processor PE and can access import-external, import-in-progress, export-approved
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
@@ -227,32 +204,6 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
     )
     OR
     @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage'] 
-      StringEquals 'import-in-progress'
+      StringIn ('import-external', 'import-in-progress', 'export-approved')
   EOT
-}
-
-# API also needs access to external and approved accounts (public access)
-resource "azurerm_role_assignment" "api_import_external_blob_data_contributor" {
-  scope                = azurerm_storage_account.sa_import_external.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-resource "azurerm_role_assignment" "api_export_approved_blob_data_contributor" {
-  scope                = azurerm_storage_account.sa_export_approved.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}
-
-# Airlock Processor also needs access to external and approved accounts
-resource "azurerm_role_assignment" "airlock_import_external_blob_data_contributor" {
-  scope                = azurerm_storage_account.sa_import_external.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-resource "azurerm_role_assignment" "airlock_export_approved_blob_data_contributor" {
-  scope                = azurerm_storage_account.sa_export_approved.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
 }

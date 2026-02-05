@@ -27,38 +27,61 @@ def main(msg: func.ServiceBusMessage,
     use_metadata_routing = os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
     
     if use_metadata_routing:
-        # NEW: Determine if this is from external/approved (public) or consolidated (private with metadata)
-        if constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL in topic:
-            # Import external (draft) - no processing needed, wait for submit
-            logging.info('Blob created in import external storage. No action needed.')
-            return
-        elif constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED in topic:
-            # Export approved - finalize as approved
-            completed_step = constants.STAGE_APPROVAL_INPROGRESS
-            new_status = constants.STAGE_APPROVED
-        else:
-            # Consolidated storage - get stage from container metadata
-            from shared_code.blob_operations_metadata import get_container_metadata
-            storage_account_name = parse_storage_account_name_from_topic(topic)
+        # NEW: All core stages in one account - get stage from container metadata
+        from shared_code.blob_operations_metadata import get_container_metadata
+        storage_account_name = parse_storage_account_name_from_topic(topic)
+        
+        # Determine if this is core or workspace storage
+        if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in storage_account_name:
+            # Core storage - read metadata to route
             metadata = get_container_metadata(storage_account_name, request_id)
             stage = metadata.get('stage', 'unknown')
             
-            # Route based on metadata stage
-            if stage in ['import-in-progress', 'export-in-progress']:
+            # Route based on stage
+            if stage == 'import-external':
+                # Draft stage - no processing needed until submitted
+                logging.info('Blob created in import-external stage. No action needed.')
+                return
+            elif stage in ['import-in-progress', 'export-in-progress']:
                 handle_inprogress_stage(stage, request_id, dataDeletionEvent, json_body, stepResultEvent)
                 return
-            elif stage in ['import-approved', 'export-approved']:
-                # Shouldn't happen - approved goes to separate accounts now
-                logging.warning(f"Unexpected approved stage in consolidated storage: {stage}")
-                return
-            elif stage in ['import-rejected', 'export-rejected']:
+            elif stage == 'export-approved':
+                # Export completed successfully
+                completed_step = constants.STAGE_APPROVAL_INPROGRESS
+                new_status = constants.STAGE_APPROVED
+            elif stage == 'import-rejected':
                 completed_step = constants.STAGE_REJECTION_INPROGRESS
                 new_status = constants.STAGE_REJECTED
-            elif stage in ['import-blocked', 'export-blocked']:
+            elif stage == 'import-blocked':
                 completed_step = constants.STAGE_BLOCKING_INPROGRESS
                 new_status = constants.STAGE_BLOCKED_BY_SCAN
             else:
-                logging.warning(f"Unknown stage in container metadata: {stage}")
+                logging.warning(f"Unknown stage in core storage metadata: {stage}")
+                return
+        else:
+            # Workspace storage - read metadata to route
+            metadata = get_container_metadata(storage_account_name, request_id)
+            stage = metadata.get('stage', 'unknown')
+            
+            if stage == 'export-internal':
+                # Draft stage - no processing needed
+                logging.info('Blob created in export-internal stage. No action needed.')
+                return
+            elif stage == 'export-in-progress':
+                handle_inprogress_stage(stage, request_id, dataDeletionEvent, json_body, stepResultEvent)
+                return
+            elif stage == 'import-approved':
+                # Import completed successfully
+                completed_step = constants.STAGE_APPROVAL_INPROGRESS
+                new_status = constants.STAGE_APPROVED
+            elif stage == 'export-rejected':
+                completed_step = constants.STAGE_REJECTION_INPROGRESS
+                new_status = constants.STAGE_REJECTED
+            elif stage == 'export-blocked':
+                completed_step = constants.STAGE_BLOCKING_INPROGRESS
+                new_status = constants.STAGE_BLOCKED_BY_SCAN
+            else:
+                logging.warning(f"Unknown stage in workspace storage metadata: {stage}")
                 return
     else:
         # LEGACY: Determine stage from storage account name in topic
