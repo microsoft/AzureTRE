@@ -60,22 +60,6 @@ locals {
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
 
-  # Legacy role assignments - these reference the old separate storage accounts
-  # To be updated to reference the consolidated storage account
-  airlock_sa_blob_data_contributor = [
-    azurerm_storage_account.sa_import_external.id,
-    azurerm_storage_account.sa_import_in_progress.id,
-    azurerm_storage_account.sa_import_rejected.id,
-    azurerm_storage_account.sa_export_approved.id,
-    azurerm_storage_account.sa_import_blocked.id
-  ]
-
-  api_sa_data_contributor = [
-    azurerm_storage_account.sa_import_external.id,
-    azurerm_storage_account.sa_import_in_progress.id,
-    azurerm_storage_account.sa_export_approved.id
-  ]
-
   servicebus_connection              = "SERVICEBUS_CONNECTION"
   step_result_eventgrid_connection   = "EVENT_GRID_STEP_RESULT_CONNECTION"
   data_deletion_eventgrid_connection = "EVENT_GRID_DATA_DELETION_CONNECTION"
