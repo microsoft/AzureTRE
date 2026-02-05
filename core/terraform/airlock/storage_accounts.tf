@@ -208,3 +208,128 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
     )
   EOT
 }
+
+# ========================================================================================
+# OPTION B: GLOBAL WORKSPACE STORAGE ACCOUNT
+# ========================================================================================
+# This consolidates ALL workspace storage accounts into a single global account
+# Each workspace has its own private endpoint for network isolation
+# ABAC filters by workspace_id + stage to provide access control
+
+resource "azurerm_storage_account" "sa_airlock_workspace_global" {
+  name                             = local.airlock_workspace_global_storage_name
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  account_tier                     = "Standard"
+  account_replication_type         = "LRS"
+  table_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  queue_encryption_key_type        = var.enable_cmk_encryption ? "Account" : "Service"
+  allow_nested_items_to_be_public  = false
+  cross_tenant_replication_enabled = false
+  shared_access_key_enabled        = false
+  local_user_enabled               = false
+
+  # Important! we rely on the fact that the blob created events are issued when the creation of the blobs are done.
+  # This is true ONLY when Hierarchical Namespace is DISABLED
+  is_hns_enabled = false
+
+  # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
+  infrastructure_encryption_enabled = true
+
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+    
+    # The Airlock processor needs to access all workspace data
+    virtual_network_subnet_ids = [data.azurerm_subnet.airlock_storage.id]
+  }
+
+  dynamic "identity" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = [var.encryption_identity_id]
+    }
+  }
+
+  dynamic "customer_managed_key" {
+    for_each = var.enable_cmk_encryption ? [1] : []
+    content {
+      key_vault_key_id          = var.encryption_key_versionless_id
+      user_assigned_identity_id = var.encryption_identity_id
+    }
+  }
+
+  tags = merge(var.tre_core_tags, {
+    description = "airlock;workspace;global;option-b"
+  })
+
+  lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
+}
+
+# Enable Airlock Malware Scanning on Global Workspace Storage Account
+resource "azapi_resource_action" "enable_defender_for_storage_workspace_global" {
+  count       = var.enable_malware_scanning ? 1 : 0
+  type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
+  resource_id = "${azurerm_storage_account.sa_airlock_workspace_global.id}/providers/Microsoft.Security/defenderForStorageSettings/current"
+  method      = "PUT"
+
+  body = {
+    properties = {
+      isEnabled = true
+      malwareScanning = {
+        onUpload = {
+          isEnabled     = true
+          capGBPerMonth = 5000
+        },
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result.id
+      }
+      sensitiveDataDiscovery = {
+        isEnabled = false
+      }
+      overrideSubscriptionLevelSettings = true
+    }
+  }
+}
+
+# Unified System EventGrid Topic for Global Workspace Blob Created Events
+# This single topic receives all blob events from all workspaces
+# The airlock processor reads container metadata (workspace_id + stage) to route
+resource "azurerm_eventgrid_system_topic" "airlock_workspace_global_blob_created" {
+  name                   = "evgt-airlock-blob-created-global-${var.tre_id}"
+  location               = var.location
+  resource_group_name    = var.resource_group_name
+  source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace_global.id
+  topic_type             = "Microsoft.Storage.StorageAccounts"
+  tags                   = var.tre_core_tags
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+# Role Assignment for Global Workspace EventGrid System Topic
+resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_global_blob_created" {
+  scope                = var.airlock_servicebus.id
+  role_definition_name = "Azure Service Bus Data Sender"
+  principal_id         = azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.identity[0].principal_id
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created
+  ]
+}
+
+# Airlock Processor Identity - needs access to all workspace containers (no restrictions)
+resource "azurerm_role_assignment" "airlock_workspace_global_blob_data_contributor" {
+  scope                = azurerm_storage_account.sa_airlock_workspace_global.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+}
+
+# NOTE: Per-workspace ABAC conditions are applied in workspace Terraform
+# Each workspace will create a role assignment with conditions filtering by:
+# - @Environment[Microsoft.Network/privateEndpoints] (their PE)
+# - @Resource[...containers].metadata['workspace_id'] (their workspace ID)
+# - @Resource[...containers].metadata['stage'] (allowed stages)

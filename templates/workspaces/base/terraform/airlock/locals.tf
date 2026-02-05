@@ -2,7 +2,10 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   workspace_resource_name_suffix = "${var.tre_id}-ws-${var.short_workspace_id}"
 
-  # Consolidated workspace airlock storage account
+  # Option B: Global workspace airlock storage account name (in core)
+  airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
+
+  # Consolidated workspace airlock storage account (Option A - per workspace)
   airlock_workspace_storage_name = lower(replace("stalairlockws${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
 
   import_approved_sys_topic_name   = "evgt-airlock-import-approved-${local.workspace_resource_name_suffix}"
