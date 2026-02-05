@@ -1,6 +1,19 @@
 locals {
   version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 
+  # Consolidated core airlock storage account
+  # STorage AirLock consolidated
+  airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
+  
+  # Container prefixes for stage segregation within consolidated storage account
+  container_prefix_import_external    = "import-external"
+  container_prefix_import_in_progress = "import-inprogress"
+  container_prefix_import_rejected    = "import-rejected"
+  container_prefix_import_blocked     = "import-blocked"
+  container_prefix_export_approved    = "export-approved"
+  
+  # Legacy storage account names (kept for backwards compatibility during migration)
+  # These will be removed in future versions after migration is complete
   # STorage AirLock EXternal
   import_external_storage_name = lower(replace("stalimex${var.tre_id}", "-", ""))
   # STorage AirLock IMport InProgress
@@ -47,6 +60,8 @@ locals {
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
 
+  # Legacy role assignments - these reference the old separate storage accounts
+  # To be updated to reference the consolidated storage account
   airlock_sa_blob_data_contributor = [
     azurerm_storage_account.sa_import_external.id,
     azurerm_storage_account.sa_import_in_progress.id,
