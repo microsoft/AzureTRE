@@ -9,6 +9,18 @@ EXPORT_TYPE = "export"
 STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"  # Consolidated core account
 STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE = "stalairlockws"  # Consolidated workspace account
 
+# Stage metadata values for container metadata
+STAGE_IMPORT_EXTERNAL = "import-external"
+STAGE_IMPORT_INPROGRESS = "import-inprogress"
+STAGE_IMPORT_APPROVED = "import-approved"
+STAGE_IMPORT_REJECTED = "import-rejected"
+STAGE_IMPORT_BLOCKED = "import-blocked"
+STAGE_EXPORT_INTERNAL = "export-internal"
+STAGE_EXPORT_INPROGRESS = "export-inprogress"
+STAGE_EXPORT_APPROVED = "export-approved"
+STAGE_EXPORT_REJECTED = "export-rejected"
+STAGE_EXPORT_BLOCKED = "export-blocked"
+
 # Legacy storage account names (for backwards compatibility)
 # These will be removed after migration is complete
 # Import
