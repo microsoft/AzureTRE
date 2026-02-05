@@ -53,17 +53,22 @@ For a TRE with 10 workspaces:
      - Added consolidated storage account names
      - Maintained existing stage constants
 
-4. **Terraform Infrastructure (Partial)**
-   - New core storage account definition (`core/terraform/airlock/storage_accounts_new.tf`)
-     - Single consolidated storage account for core
-     - Single private endpoint (vs. 5 previously)
-     - Malware scanning configuration
-     - EventGrid system topics
-     - Role assignments for airlock processor and API
-   - Updated locals (`core/terraform/airlock/locals.tf`)
-     - Added consolidated storage account name
-     - Added container prefix definitions
-     - Preserved legacy names for migration
+4. **Terraform Infrastructure (COMPLETE)**
+   - **Core Infrastructure:**
+     - ✅ Consolidated 6 storage accounts into 1 (`stalairlock{tre_id}`)
+     - ✅ Reduced 5 private endpoints to 1
+     - ✅ EventGrid system topics configured on consolidated storage
+     - ✅ Role assignments for airlock processor and API
+     - ✅ Updated all event subscriptions
+     - ✅ Malware scanning configuration
+   - **Workspace Infrastructure:**
+     - ✅ Consolidated 5 storage accounts into 1 per workspace (`stalairlockws{ws_id}`)
+     - ✅ Reduced 5 private endpoints to 1 per workspace
+     - ✅ EventGrid system topics for all blob events
+     - ✅ Role assignments for service bus and blob access
+     - ✅ Updated all event subscriptions
+   - Updated locals with consolidated naming
+   - Cleaned up duplicate definitions
 
 5. **Documentation**
    - Updated CHANGELOG.md with enhancement entry
