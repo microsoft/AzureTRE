@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-mysql
-version: 1.0.10
+version: 1.0.11
 description: "A MySQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -50,7 +50,7 @@ parameters:
     default: "B | 4GB 2vCores"
   - name: storage_mb
     type: integer
-    default: 5120
+    default: 20480
   - name: db_name
     type: string
     default: tredb
