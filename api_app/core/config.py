@@ -70,6 +70,11 @@ API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=bool, default=False)
 
+# Airlock storage configuration (set from Terraform outputs)
+# Airlock storage URLs are always routed through the App Gateway for public access
+APP_GATEWAY_FQDN: str = config("APP_GATEWAY_FQDN", default="")
+USE_METADATA_STAGE_MANAGEMENT: bool = config("USE_METADATA_STAGE_MANAGEMENT", cast=bool, default=False)
+
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 
 # User Management

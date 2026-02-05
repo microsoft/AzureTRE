@@ -1,9 +1,3 @@
-"""
-Blob operations with metadata-based stage management.
-
-This module provides functions for managing airlock containers using metadata
-to track stages instead of copying data between storage accounts.
-"""
 import os
 import logging
 import json
@@ -23,29 +17,16 @@ def get_account_url(account_name: str) -> str:
 
 
 def get_storage_endpoint_suffix() -> str:
-    """Get the storage endpoint suffix from environment."""
     return os.environ.get("STORAGE_ENDPOINT_SUFFIX", "core.windows.net")
 
 
 def get_credential():
-    """Get Azure credential for authentication."""
     return DefaultAzureCredential()
 
 
 def create_container_with_metadata(account_name: str, request_id: str, stage: str, 
                                    workspace_id: str = None, request_type: str = None,
                                    created_by: str = None) -> None:
-    """
-    Create a container with initial stage metadata.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (used as container name)
-        stage: Initial stage (e.g., 'import-external', 'export-internal')
-        workspace_id: Workspace ID (optional)
-        request_type: 'import' or 'export' (optional)
-        created_by: User who created the request (optional)
-    """
     try:
         container_name = request_id
         blob_service_client = BlobServiceClient(
@@ -80,18 +61,6 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
 
 def update_container_stage(account_name: str, request_id: str, new_stage: str, 
                           changed_by: str = None, additional_metadata: Dict[str, str] = None) -> None:
-    """
-    Update container stage metadata instead of copying data.
-    
-    This replaces the copy_data() function for metadata-based stage management.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (container name)
-        new_stage: New stage to transition to
-        changed_by: User/system that triggered the stage change
-        additional_metadata: Additional metadata to add/update (e.g., scan_result)
-    """
     try:
         container_name = request_id
         blob_service_client = BlobServiceClient(
@@ -142,16 +111,6 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
 
 
 def get_container_stage(account_name: str, request_id: str) -> str:
-    """
-    Get the current stage of a container.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (container name)
-        
-    Returns:
-        Current stage from container metadata
-    """
     container_name = request_id
     blob_service_client = BlobServiceClient(
         account_url=get_account_url(account_name),
@@ -168,16 +127,6 @@ def get_container_stage(account_name: str, request_id: str) -> str:
 
 
 def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]:
-    """
-    Get all metadata for a container.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (container name)
-        
-    Returns:
-        Dictionary of all container metadata
-    """
     container_name = request_id
     blob_service_client = BlobServiceClient(
         account_url=get_account_url(account_name),
@@ -194,7 +143,6 @@ def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]
 
 
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
-    """Get blob client for a specific blob."""
     source_blob_service_client = BlobServiceClient(
         account_url=get_account_url(storage_account_name),
         credential=get_credential()
@@ -204,16 +152,6 @@ def get_blob_client_from_blob_info(storage_account_name: str, container_name: st
 
 
 def get_request_files(account_name: str, request_id: str) -> list:
-    """
-    Get list of files in a request container.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (container name)
-        
-    Returns:
-        List of files with name and size
-    """
     files = []
     blob_service_client = BlobServiceClient(
         account_url=get_account_url(account_name),
@@ -228,13 +166,6 @@ def get_request_files(account_name: str, request_id: str) -> list:
 
 
 def delete_container_by_request_id(account_name: str, request_id: str) -> None:
-    """
-    Delete a container and all its contents.
-    
-    Args:
-        account_name: Storage account name
-        request_id: Unique request identifier (container name)
-    """
     try:
         container_name = request_id
         blob_service_client = BlobServiceClient(

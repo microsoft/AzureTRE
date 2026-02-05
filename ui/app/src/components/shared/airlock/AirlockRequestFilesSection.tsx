@@ -53,19 +53,8 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
     }
   }, [apiCall, props.request, props.workspaceApplicationIdURI]);
 
-  const parseSasUrl = (sasUrl: string) => {
-    const match = sasUrl.match(
-      /https:\/\/(.*?).blob.core.windows.net\/(.*)\?(.*)$/,
-    );
-    if (!match) {
-      return;
-    }
-
-    return {
-      StorageAccountName: match[1],
-      containerName: match[2],
-      sasToken: match[3],
-    };
+  const isValidSasUrl = (sasUrl: string) => {
+    return /https:\/\/(.*?)\/airlock-storage\/(.*)\?(.*)$/.test(sasUrl);
   };
 
   const handleCopySasUrl = () => {
@@ -81,19 +70,15 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
   };
 
   const getAzureCliCommand = (sasUrl: string) => {
-    let containerDetails = parseSasUrl(sasUrl);
-    if (!containerDetails) {
+    if (!isValidSasUrl(sasUrl)) {
       return "";
     }
 
-    let cliCommand = "";
     if (props.request.status === AirlockRequestStatus.Draft) {
-      cliCommand = `az storage blob upload --file </path/to/file> --name <filename.filetype> --account-name ${containerDetails.StorageAccountName} --type block --container-name ${containerDetails.containerName} --sas-token "${containerDetails.sasToken}"`;
+      return `az storage blob upload --file </path/to/file> --blob-url "${sasUrl}/<filename.filetype>"`;
     } else {
-      cliCommand = `az storage blob download-batch --destination </destination/path/for/file> --source ${containerDetails.containerName} --account-name ${containerDetails.StorageAccountName} --sas-token "${containerDetails.sasToken}"`;
+      return `az storage blob download --file </destination/path/for/file> --blob-url "${sasUrl}/<blob-name>"`;
     }
-
-    return cliCommand;
   };
 
   useEffect(() => {
