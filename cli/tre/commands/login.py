@@ -290,7 +290,8 @@ def login_interactive(base_url: str, verify: bool):
 
     cache = msal.SerializableTokenCache()
     if os.path.exists(token_cache_file):
-        cache.deserialize(open(token_cache_file, "r").read())
+        with open(token_cache_file, "r", encoding="utf-8") as cache_file:
+            cache.deserialize(cache_file.read())
 
     app = get_public_client_application(client_id, aad_tenant_id, cache)
 

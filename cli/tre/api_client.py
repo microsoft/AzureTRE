@@ -213,7 +213,7 @@ class DeviceCodeApiClient(ApiClient):
                 else:
                     raise click.ClickException(f"Failed to get access_token: ${str(auth_result)}")
 
-        raise RuntimeError(f"Failed to get auth token for scope '{scope}'")
+        raise RuntimeError(f"Failed to get auth token for scope '{effective_scope}'")
 
     def get_workspace_scope(self, log, workspace_id: str) -> str:
         # device code flow wants "/user_impersonation" suffix, but client creds doesn't
@@ -278,7 +278,7 @@ class InteractiveApiClient(ApiClient):
                 else:
                     raise click.ClickException(f"Failed to get access_token: {str(auth_result)}")
 
-        raise RuntimeError(f"Failed to get auth token for scope '{scope}'")
+        raise RuntimeError(f"Failed to get auth token for scope '{effective_scope}'")
 
     def get_workspace_scope(self, log, workspace_id: str) -> str:
         # interactive flow wants "/user_impersonation" suffix, but client creds doesn't
