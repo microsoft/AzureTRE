@@ -4,6 +4,13 @@ WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 
 IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
+
+# Consolidated storage account names (metadata-based approach)
+STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"  # Consolidated core account
+STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE = "stalairlockws"  # Consolidated workspace account
+
+# Legacy storage account names (for backwards compatibility)
+# These will be removed after migration is complete
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex"
 STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS = "stalimip"
