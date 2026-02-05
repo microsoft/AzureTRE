@@ -76,6 +76,10 @@ resource "azurerm_role_assignment" "review_workspace_import_access" {
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = azurerm_user_assigned_identity.ws_id.principal_id
   
+  # ABAC condition: Restrict read access to import-in-progress stage via specific PE only
+  # Logic: Allow if (action is NOT read) OR (action is read AND PE matches AND stage matches)
+  # This allows other operations while restricting read to import-in-progress from review workspace PE
+  # Note: Using @Environment for PE as per Azure ABAC documentation
   condition_version = "2.0"
   condition         = <<-EOT
     (
