@@ -8,13 +8,13 @@ def use_metadata_stage_management() -> bool:
 
 def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str) -> str:
     tre_id = os.environ.get("TRE_ID", "")
-    
+
     if use_metadata_stage_management():
         # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
-            if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, 
-                         constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
-                         constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
+            if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW,
+                          constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
+                          constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
                 # ALL core import stages in stalairlock
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
             else:  # Approved, approval in progress
@@ -32,8 +32,8 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
         if request_type == constants.IMPORT_TYPE:
             if status == constants.STAGE_DRAFT:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
-            elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, constants.STAGE_APPROVAL_INPROGRESS, 
-                           constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+            elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, constants.STAGE_APPROVAL_INPROGRESS,
+                            constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
             elif status == constants.STAGE_APPROVED:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
@@ -45,7 +45,7 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
             if status == constants.STAGE_DRAFT:
                 return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
             elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, constants.STAGE_APPROVAL_INPROGRESS,
-                           constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+                            constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                 return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + short_workspace_id
             elif status == constants.STAGE_APPROVED:
                 return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED + tre_id
@@ -78,5 +78,5 @@ def get_stage_from_status(request_type: str, status: str) -> str:
             return constants.STAGE_EXPORT_REJECTED
         elif status in [constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
             return constants.STAGE_EXPORT_BLOCKED
-    
+
     return "unknown"

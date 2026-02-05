@@ -25,7 +25,7 @@ def get_storage_account_name_for_request(
                 # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)
             elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
-                           AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
+                            AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
                 # These are in core storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
         else:  # export
@@ -84,6 +84,6 @@ def get_stage_from_status(request_type: str, status: AirlockRequestStatus) -> st
             return constants.STAGE_EXPORT_REJECTED
         elif status in [AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
             return constants.STAGE_EXPORT_BLOCKED
-    
+
     # Default fallback
     return "unknown"

@@ -24,7 +24,7 @@ def get_credential():
     return DefaultAzureCredential()
 
 
-def create_container_with_metadata(account_name: str, request_id: str, stage: str, 
+def create_container_with_metadata(account_name: str, request_id: str, stage: str,
                                    workspace_id: str = None, request_type: str = None,
                                    created_by: str = None) -> None:
     try:
@@ -33,7 +33,7 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
             account_url=get_account_url(account_name),
             credential=get_credential()
         )
-        
+
         # Prepare initial metadata
         metadata = {
             "stage": stage,
@@ -41,26 +41,26 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
             "created_at": datetime.now(UTC).isoformat(),
             "last_stage_change": datetime.now(UTC).isoformat(),
         }
-        
+
         if workspace_id:
             metadata["workspace_id"] = workspace_id
         if request_type:
             metadata["request_type"] = request_type
         if created_by:
             metadata["created_by"] = created_by
-            
+
         # Create container with metadata
         container_client = blob_service_client.get_container_client(container_name)
         container_client.create_container(metadata=metadata)
-        
+
         logging.info(f'Container created for request id: {request_id} with stage: {stage}')
-        
+
     except ResourceExistsError:
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
-def update_container_stage(account_name: str, request_id: str, new_stage: str, 
-                          changed_by: str = None, additional_metadata: Dict[str, str] = None) -> None:
+def update_container_stage(account_name: str, request_id: str, new_stage: str,
+                           changed_by: str = None, additional_metadata: Dict[str, str] = None) -> None:
     try:
         container_name = request_id
         blob_service_client = BlobServiceClient(
@@ -68,7 +68,7 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
             credential=get_credential()
         )
         container_client = blob_service_client.get_container_client(container_name)
-        
+
         # Get current metadata
         try:
             properties = container_client.get_container_properties()
@@ -76,35 +76,35 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
         except ResourceNotFoundError:
             logging.error(f"Container {request_id} not found in account {account_name}")
             raise
-        
+
         # Track old stage for logging
         old_stage = metadata.get('stage', 'unknown')
-        
+
         # Update stage metadata
         metadata['stage'] = new_stage
-        
+
         # Update stage history
         stage_history = metadata.get('stage_history', old_stage)
         metadata['stage_history'] = f"{stage_history},{new_stage}"
-        
+
         # Update timestamp
         metadata['last_stage_change'] = datetime.now(UTC).isoformat()
-        
+
         # Track who made the change
         if changed_by:
             metadata['last_changed_by'] = changed_by
-        
+
         # Add any additional metadata (e.g., scan results)
         if additional_metadata:
             metadata.update(additional_metadata)
-        
+
         # Apply the updated metadata
         container_client.set_container_metadata(metadata)
-        
+
         logging.info(
             f"Updated container {request_id} from stage '{old_stage}' to '{new_stage}' in account {account_name}"
         )
-        
+
     except HttpResponseError as e:
         logging.error(f"Failed to update container metadata: {str(e)}")
         raise
@@ -117,7 +117,7 @@ def get_container_stage(account_name: str, request_id: str) -> str:
         credential=get_credential()
     )
     container_client = blob_service_client.get_container_client(container_name)
-    
+
     try:
         properties = container_client.get_container_properties()
         return properties.metadata.get('stage', 'unknown')
@@ -133,7 +133,7 @@ def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]
         credential=get_credential()
     )
     container_client = blob_service_client.get_container_client(container_name)
-    
+
     try:
         properties = container_client.get_container_properties()
         return properties.metadata
@@ -174,9 +174,9 @@ def delete_container_by_request_id(account_name: str, request_id: str) -> None:
         )
         container_client = blob_service_client.get_container_client(container_name)
         container_client.delete_container()
-        
+
         logging.info(f"Deleted container {request_id} from account {account_name}")
-        
+
     except ResourceNotFoundError:
         logging.warning(f"Container {request_id} not found in account {account_name}, may have been already deleted")
     except HttpResponseError as e:
