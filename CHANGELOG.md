@@ -7,7 +7,9 @@ ENHANCEMENTS:
 * _No changes yet_
 
 BUG FIXES:
-* _No changes yet_
+* Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
+* Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
+* Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
@@ -47,10 +49,7 @@ BUG FIXES:
 * Remove duplicate auth dependencies in API ([#4796](https://github.com/microsoft/AzureTRE/pull/4796))
 * Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
-* Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
-* Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
-* Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 
 COMPONENTS:
 
