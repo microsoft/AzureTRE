@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* _No changes yet_
+* Allow new template properties to be specified during template upgrades. Remove Template properties that no longer exist.
 
 BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
@@ -24,7 +24,6 @@ ENHANCEMENTS:
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
-* Allow new template properties to be specified during template upgrades. Remove Template properties that no longer exist.
 * Implement UI testing with vitest ([#4794](https://github.com/microsoft/AzureTRE/pull/4794))
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
 * Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
