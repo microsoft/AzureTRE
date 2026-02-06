@@ -62,7 +62,7 @@ resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" 
           StringEquals '${var.workspace_id}'
         AND
         @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
-          StringIn ('import-approved', 'export-internal', 'export-in-progress')
+          StringIn ('import-approved', 'export-internal', 'export-in-progress', 'import-in-progress')
       )
     )
   EOT

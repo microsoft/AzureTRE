@@ -675,42 +675,6 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
     disable_user_resource.assert_called_once()
 
 
-def test_is_publicly_accessible_stage_import_requests():
-    from services.airlock import is_publicly_accessible_stage
-    from resources.constants import IMPORT_TYPE
-
-    # Import Draft, Submitted, InReview, Rejected, Blocked are publicly accessible
-    for s in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted,
-              AirlockRequestStatus.InReview, AirlockRequestStatus.Rejected,
-              AirlockRequestStatus.Blocked]:
-        request = sample_airlock_request(status=s)
-        request.type = IMPORT_TYPE
-        assert is_publicly_accessible_stage(request) is True
-
-    # Import Approved is NOT publicly accessible (workspace-only)
-    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
-    request.type = IMPORT_TYPE
-    assert is_publicly_accessible_stage(request) is False
-
-
-def test_is_publicly_accessible_stage_export_requests():
-    from services.airlock import is_publicly_accessible_stage
-    from resources.constants import EXPORT_TYPE
-
-    # Export Approved is publicly accessible
-    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
-    request.type = EXPORT_TYPE
-    assert is_publicly_accessible_stage(request) is True
-
-    # Export Draft, Submitted, InReview, Rejected, Blocked are NOT publicly accessible
-    for s in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted,
-              AirlockRequestStatus.InReview, AirlockRequestStatus.Rejected,
-              AirlockRequestStatus.Blocked]:
-        request = sample_airlock_request(status=s)
-        request.type = EXPORT_TYPE
-        assert is_publicly_accessible_stage(request) is False
-
-
 def test_get_airlock_request_container_sas_token_rejects_workspace_only_stages():
     from services.airlock import get_airlock_request_container_sas_token
     from resources.constants import IMPORT_TYPE

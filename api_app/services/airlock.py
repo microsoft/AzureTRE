@@ -74,10 +74,10 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
 
 def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
     if airlock_request.type == constants.IMPORT_TYPE:
-        # All import stages except Approved are in core storage (publicly accessible)
-        return airlock_request.status != AirlockRequestStatus.Approved
+        # Only import Draft (external upload) is publicly accessible via App GW/SAS
+        return airlock_request.status == AirlockRequestStatus.Draft
     else:
-        # Only export Approved is in core storage (publicly accessible)
+        # Only export Approved is publicly accessible via App GW/SAS
         return airlock_request.status == AirlockRequestStatus.Approved
 
 
@@ -114,21 +114,13 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest):
                                    start=start,
                                    expiry=expiry)
 
-    # Route through App Gateway for public access to core storage
-    return "https://{}/airlock-storage/{}?{}" \
-        .format(config.APP_GATEWAY_FQDN, airlock_request.id, token)
+    # Return standard blob storage URL format
+    return "https://{}.blob.{}/{}?{}" \
+        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
 
 def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
-
-
-def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
-    if airlock_request.type == AirlockRequestType.Import:
-        return airlock_request.status == AirlockRequestStatus.Draft
-    elif airlock_request.type == AirlockRequestType.Export:
-        return airlock_request.status == AirlockRequestStatus.Approved
-    return False
 
 
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,

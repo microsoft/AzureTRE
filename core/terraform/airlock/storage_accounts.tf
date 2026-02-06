@@ -39,8 +39,6 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
-    # Allow App Gateway subnet for public access via App Gateway
-    virtual_network_subnet_ids = [var.app_gateway_subnet_id]
   }
 
   tags = merge(var.tre_core_tags, {
@@ -135,7 +133,7 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
 }
 
 # API Identity - restricted access using ABAC to specific stages and private endpoints
-# API accesses via processor PE and can access import-external, import-in-progress, export-approved
+# API accesses via processor PE and can access import-external, export-approved
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
@@ -155,7 +153,7 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
       )
       OR
       @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
-        StringIn ('import-external', 'import-in-progress', 'export-approved')
+        StringIn ('import-external', 'export-approved')
     )
   EOT
 }
