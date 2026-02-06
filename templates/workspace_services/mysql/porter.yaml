@@ -50,7 +50,7 @@ parameters:
     default: "B | 4GB 2vCores"
   - name: storage_mb
     type: integer
-    default: 5120
+    default: 20480
   - name: db_name
     type: string
     default: tredb
