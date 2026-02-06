@@ -6,21 +6,29 @@ from azure.eventgrid import EventGridEvent
 from models.domain.events import AirlockNotificationRequestData, AirlockNotificationWorkspaceData, StatusChangedData, AirlockNotificationData
 from event_grid.helpers import publish_event
 from core import config
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
 from services.logging import logger
 
 
-async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus]):
+async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus], workspace: Optional[Workspace] = None):
     request_id = airlock_request.id
     new_status = airlock_request.status.value
     previous_status = previous_status.value if previous_status else None
     request_type = airlock_request.type.value
     short_workspace_id = airlock_request.workspaceId[-4:]
 
+    review_workspace_id = None
+    if workspace and airlock_request.type == AirlockRequestType.Import:
+        try:
+            full_review_ws_id = workspace.properties["airlock_review_config"]["import"]["import_vm_workspace_id"]
+            review_workspace_id = full_review_ws_id[-4:]
+        except (KeyError, TypeError):
+            pass
+
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id).__dict__,
+        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id, review_workspace_id=review_workspace_id).__dict__,
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )
