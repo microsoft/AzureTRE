@@ -74,10 +74,10 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
 
 def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
     if airlock_request.type == constants.IMPORT_TYPE:
-        # All import stages except Approved are in core storage (publicly accessible)
-        return airlock_request.status != AirlockRequestStatus.Approved
+        # Only import Draft (external upload) is publicly accessible via App GW/SAS
+        return airlock_request.status == AirlockRequestStatus.Draft
     else:
-        # Only export Approved is in core storage (publicly accessible)
+        # Only export Approved is publicly accessible via App GW/SAS
         return airlock_request.status == AirlockRequestStatus.Approved
 
 
@@ -114,9 +114,9 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest):
                                    start=start,
                                    expiry=expiry)
 
-    # Route through App Gateway for public access to core storage
-    return "https://{}/airlock-storage/{}?{}" \
-        .format(config.APP_GATEWAY_FQDN, airlock_request.id, token)
+    # Return standard blob storage URL format
+    return "https://{}.blob.{}/{}?{}" \
+        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
 
 def get_account_url(account_name: str) -> str:
@@ -277,7 +277,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
+        await send_status_changed_event(airlock_request=airlock_request, previous_status=None, workspace=workspace)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
         await airlock_request_repo.delete_item(airlock_request.id)
@@ -319,7 +319,7 @@ async def update_and_publish_event_airlock_request(
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
+        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status, workspace=workspace)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)

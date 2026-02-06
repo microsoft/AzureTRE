@@ -4,7 +4,7 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, revoke_request
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, revoke_request, is_publicly_accessible_stage
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -24,6 +24,7 @@ AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
 AIRLOCK_REVIEW_ID = "96d909c5-e913-4c05-ae53-668a702ba2e5"
 USER_RESOURCE_ID = "cce59042-1dee-42dc-9388-6db846feeb3b"
 WORKSPACE_SERVICE_ID = "30f2fefa-e7bb-4e5b-93aa-e50bb037502a"
+REVIEW_WORKSPACE_ID = "def111e4-93eb-4afc-c7fa-0b8964fg864f"
 CURRENT_TIME = time.time()
 ALL_ROLES = AzureADAuthorization.WORKSPACE_ROLES_DICT.keys()
 
@@ -45,6 +46,26 @@ def sample_workspace():
             "client_id": "12345",
             "display_name": "my research workspace",
             "description": "for science!"},
+        resourcePath="test")
+
+
+def sample_workspace_with_review_config():
+    return Workspace(
+        id=WORKSPACE_ID,
+        templateName='template name',
+        templateVersion='1.0',
+        etag='',
+        properties={
+            "client_id": "12345",
+            "display_name": "my research workspace",
+            "description": "for science!",
+            "airlock_review_config": {
+                "import": {
+                    "import_vm_workspace_id": REVIEW_WORKSPACE_ID,
+                    "import_vm_workspace_service_id": WORKSPACE_SERVICE_ID,
+                    "import_vm_user_resource_template_name": "test-template"
+                }
+            }},
         resourcePath="test")
 
 
@@ -82,10 +103,10 @@ def sample_airlock_user_resource_object():
     )
 
 
-def sample_status_changed_event(new_status="draft", previous_status=None):
+def sample_status_changed_event(new_status="draft", previous_status=None, review_workspace_id=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:], review_workspace_id=review_workspace_id).__dict__,
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -238,6 +259,48 @@ def test_get_required_permission_return_read_and_write_permissions_for_draft_req
     assert permissions.delete is True
     assert permissions.list is True
     assert permissions.read is True
+
+
+def test_is_publicly_accessible_stage_import_draft_is_public():
+    airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
+    assert is_publicly_accessible_stage(airlock_request) is True
+
+
+@pytest.mark.parametrize('airlock_status',
+                         [AirlockRequestStatus.Submitted,
+                          AirlockRequestStatus.InReview,
+                          AirlockRequestStatus.ApprovalInProgress,
+                          AirlockRequestStatus.Approved,
+                          AirlockRequestStatus.RejectionInProgress,
+                          AirlockRequestStatus.Rejected,
+                          AirlockRequestStatus.Cancelled,
+                          AirlockRequestStatus.BlockingInProgress,
+                          AirlockRequestStatus.Blocked])
+def test_is_publicly_accessible_stage_import_non_draft_is_not_public(airlock_status):
+    airlock_request = sample_airlock_request(airlock_status)
+    assert is_publicly_accessible_stage(airlock_request) is False
+
+
+def test_is_publicly_accessible_stage_export_approved_is_public():
+    airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
+    airlock_request.type = AirlockRequestType.Export
+    assert is_publicly_accessible_stage(airlock_request) is True
+
+
+@pytest.mark.parametrize('airlock_status',
+                         [AirlockRequestStatus.Draft,
+                          AirlockRequestStatus.Submitted,
+                          AirlockRequestStatus.InReview,
+                          AirlockRequestStatus.ApprovalInProgress,
+                          AirlockRequestStatus.RejectionInProgress,
+                          AirlockRequestStatus.Rejected,
+                          AirlockRequestStatus.Cancelled,
+                          AirlockRequestStatus.BlockingInProgress,
+                          AirlockRequestStatus.Blocked])
+def test_is_publicly_accessible_stage_export_non_approved_is_not_public(airlock_status):
+    airlock_request = sample_airlock_request(airlock_status)
+    airlock_request.type = AirlockRequestType.Export
+    assert is_publicly_accessible_stage(airlock_request) is False
 
 
 @pytest.mark.asyncio
@@ -399,6 +462,30 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
     assert actual_status_changed_event.data == status_changed_event_mock.data
     actual_airlock_notification_event = event_grid_sender_client_mock.send.await_args_list[1].args[0][0]
     assert actual_airlock_notification_event.data == airlock_notification_event_mock.data
+
+
+@pytest.mark.asyncio
+@patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
+async def test_update_and_publish_event_includes_review_workspace_id_for_import(_, event_grid_publisher_client_mock,
+                                                                                 airlock_request_repo_mock):
+    airlock_request_mock = sample_airlock_request()
+    updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
+    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft", review_workspace_id=REVIEW_WORKSPACE_ID[-4:])
+    airlock_request_repo_mock.update_airlock_request = AsyncMock(return_value=updated_airlock_request_mock)
+    event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
+    event_grid_sender_client_mock.send = AsyncMock()
+
+    await update_and_publish_event_airlock_request(
+        airlock_request=airlock_request_mock,
+        airlock_request_repo=airlock_request_repo_mock,
+        updated_by=create_test_user(),
+        new_status=AirlockRequestStatus.Submitted,
+        workspace=sample_workspace_with_review_config())
+
+    actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
+    assert actual_status_changed_event.data == status_changed_event_mock.data
+    assert actual_status_changed_event.data["review_workspace_id"] == REVIEW_WORKSPACE_ID[-4:]
 
 
 @pytest.mark.asyncio
@@ -586,42 +673,6 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
                                       resource_history_repo=AsyncMock(),
                                       user=create_test_user())
     disable_user_resource.assert_called_once()
-
-
-def test_is_publicly_accessible_stage_import_requests():
-    from services.airlock import is_publicly_accessible_stage
-    from resources.constants import IMPORT_TYPE
-
-    # Import Draft, Submitted, InReview, Rejected, Blocked are publicly accessible
-    for s in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted,
-              AirlockRequestStatus.InReview, AirlockRequestStatus.Rejected,
-              AirlockRequestStatus.Blocked]:
-        request = sample_airlock_request(status=s)
-        request.type = IMPORT_TYPE
-        assert is_publicly_accessible_stage(request) is True
-
-    # Import Approved is NOT publicly accessible (workspace-only)
-    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
-    request.type = IMPORT_TYPE
-    assert is_publicly_accessible_stage(request) is False
-
-
-def test_is_publicly_accessible_stage_export_requests():
-    from services.airlock import is_publicly_accessible_stage
-    from resources.constants import EXPORT_TYPE
-
-    # Export Approved is publicly accessible
-    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
-    request.type = EXPORT_TYPE
-    assert is_publicly_accessible_stage(request) is True
-
-    # Export Draft, Submitted, InReview, Rejected, Blocked are NOT publicly accessible
-    for s in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted,
-              AirlockRequestStatus.InReview, AirlockRequestStatus.Rejected,
-              AirlockRequestStatus.Blocked]:
-        request = sample_airlock_request(status=s)
-        request.type = EXPORT_TYPE
-        assert is_publicly_accessible_stage(request) is False
 
 
 def test_get_airlock_request_container_sas_token_rejects_workspace_only_stages():
