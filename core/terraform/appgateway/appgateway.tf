@@ -153,7 +153,6 @@ resource "azurerm_application_gateway" "agw" {
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.insecure_frontend_port_name
     protocol                       = "Http"
-    host_name                      = var.custom_domain != "" ? var.custom_domain : null
   }
 
   request_routing_rule {

@@ -179,10 +179,6 @@ inputs:
     description: "Add allowed domain name to the DNS security policy"
     required: false
     default: "[]"
-  CUSTOM_DOMAIN:
-    description: "Custom domain name to access the Azure TRE portal"
-    required: false
-    default: ""
 
 runs:
   using: composite
@@ -331,7 +327,6 @@ runs:
           -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \
           -e TF_VAR_enable_dns_policy="${{ (inputs.ENABLE_DNS_POLICY != '' && inputs.ENABLE_DNS_POLICY) || 'false' }}" \
           -e TF_VAR_allowed_dns='${{ (toJson(inputs.ALLOWED_DNS) != '""' && inputs.ALLOWED_DNS) || '[]' }}' \
-          -e TF_VAR_custom_domain="${{ inputs.CUSTOM_DOMAIN }}" \
           -e E2E_TESTS_NUMBER_PROCESSES="${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}" \
           '${{ inputs.CI_CACHE_ACR_NAME }}${{ env.ACR_DOMAIN_SUFFIX }}/tredev:${{ inputs.DEVCONTAINER_TAG }}' \
         bash -c -x "./command.sh"

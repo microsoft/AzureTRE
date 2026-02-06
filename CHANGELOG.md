@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* When using a custom_domain the default cloudapps.azure.com domain will not load the UI. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
+* _No changes yet_
 
 ENHANCEMENTS:
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
