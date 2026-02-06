@@ -300,9 +300,3 @@ variable "private_agent_subnet_id" {
   type        = string
   default     = ""
 }
-
-variable "custom_domain" {
-  type        = string
-  description = "Custom domain name to access the Azure TRE portal"
-  default     = ""
-}
