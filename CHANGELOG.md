@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* _No changes yet_
+* Allow new template properties to be specified during template upgrades. Remove Template properties that no longer exist.
 
 BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))

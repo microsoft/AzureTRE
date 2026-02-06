@@ -111,6 +111,16 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
+    def _get_all_property_keys_from_template(self, resource_template: ResourceTemplate) -> set:
+        properties = set(resource_template.properties.keys())
+        if "allOf" in resource_template:
+            for condition in resource_template.allOf:
+                if "then" in condition and "properties" in condition["then"]:
+                    properties.update(condition["then"]["properties"].keys())
+                if "else" in condition and "properties" in condition["else"]:
+                    properties.update(condition["else"]["properties"].keys())
+        return properties
+
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
@@ -123,10 +133,20 @@ class ResourceRepository(BaseRepository):
 
         if resource_patch.templateVersion is not None:
             await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+            new_template = await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource.resourceType)
+
+            old_properties = self._get_all_property_keys_from_template(resource_template)
+            new_properties = self._get_all_property_keys_from_template(new_template)
+
+            properties_to_remove = old_properties - new_properties
+            for prop in properties_to_remove:
+                if prop in resource.properties:
+                    del resource.properties[prop]
+
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-            self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
+            await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
 
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
@@ -183,16 +203,56 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
+    def _get_pipeline_properties(self, enriched_template) -> List[str]:
+        properties = []
+        pipeline = enriched_template.get("pipeline")
+        if pipeline:
+            for phase in ["install", "upgrade"]:
+                if phase in pipeline and pipeline[phase]:
+                    for step in pipeline[phase]:
+                        if "properties" in step and step["properties"]:
+                            for prop in step["properties"]:
+                                properties.append(prop["name"])
+        return properties
+
+    async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-        # validate the PATCH data against a cut down version of the full template.
+        # get the old template properties for comparison during upgrades
+        old_template_properties = set(enriched_template["properties"].keys())
+
+        # get the schema for the target version if upgrade is happening
+        if resource_patch.templateVersion is not None:
+            # fetch the template for the target version
+            target_template = await resource_template_repo.get_template_by_name_and_version(resource_template.name, resource_patch.templateVersion, resource_template.resourceType)
+            enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
+
+        # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
         update_template["required"] = []
         update_template["properties"] = {}
+
+        pipeline_properties = self._get_pipeline_properties(enriched_template)
+
         for prop_name, prop in enriched_template["properties"].items():
-            if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
+            # Allow property if:
+            # 1. Installing (all properties allowed)
+            # 2. Property is explicitly updateable (updateable: true in template)
+            # 3. Upgrading and the property is NEW (not in old template) and being added in this patch
+            # 4. Property is set using a parent property using {{ resource.parent.properties.my_parent_property }}
+            if (
+                resource_action == RESOURCE_ACTION_INSTALL
+                or prop.get("updateable", False) is True
+                or (
+                    resource_patch.templateVersion is not None
+                    and resource_patch.templateVersion != resource_template.version
+                    and resource_patch.properties is not None
+                    and prop_name in resource_patch.properties
+                    and prop_name not in old_template_properties
+                )
+                or prop_name in pipeline_properties
+            ):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
