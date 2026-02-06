@@ -27,5 +27,10 @@
       "default": "Azure Databricks Private Authentication Shared Service is a Databricks workspace that in the same region as your Azure Databricks workspaces, and its only purpose is hosting the browser authentication private endpoint connection for your Azure Databricks workspace services.",
       "updateable": true
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }

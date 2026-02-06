@@ -52,5 +52,10 @@
       "default": "gpt-35-turbo | 0301",
       "updateable": true
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }

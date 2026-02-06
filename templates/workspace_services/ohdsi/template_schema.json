@@ -142,6 +142,9 @@
     }
   ],
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "address_space": {
       "classNames": "tre-hidden"
     }

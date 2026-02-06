@@ -29,5 +29,10 @@
       "title": "VM SKU",
       "description": "The SKU of the VM that will be deployed."
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }
