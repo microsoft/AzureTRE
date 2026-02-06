@@ -54,7 +54,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
   }, [apiCall, props.request, props.workspaceApplicationIdURI]);
 
   const isValidSasUrl = (sasUrl: string) => {
-    return /https:\/\/(.*?)\/airlock-storage\/(.*)\?(.*)$/.test(sasUrl);
+    return /https:\/\/(.*?)\.blob\.core\.windows\.net\/(.*)\?(.*)$/.test(sasUrl);
   };
 
   const handleCopySasUrl = () => {

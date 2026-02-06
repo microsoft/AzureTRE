@@ -4,7 +4,7 @@ import pytest
 from mock import MagicMock, patch
 
 from pydantic import ValidationError
-from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy, get_storage_account_destination_for_copy, handle_status_changed
+from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy, get_storage_account_destination_for_copy
 from azure.functions.servicebus import ServiceBusMessage
 from shared_code import constants
 
