@@ -25,8 +25,6 @@ resource "azurerm_application_gateway" "agw" {
   location            = var.location
   tags                = local.tre_core_tags
 
-  enable_http2 = false
-
   sku {
     name     = coalesce(var.app_gateway_sku, "Standard_v2")
     tier     = coalesce(var.app_gateway_sku, "Standard_v2")
