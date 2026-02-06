@@ -25,6 +25,8 @@ resource "azurerm_application_gateway" "agw" {
   location            = var.location
   tags                = local.tre_core_tags
 
+  enable_http2 = true
+
   sku {
     name     = coalesce(var.app_gateway_sku, "Standard_v2")
     tier     = coalesce(var.app_gateway_sku, "Standard_v2")
@@ -69,8 +71,12 @@ resource "azurerm_application_gateway" "agw" {
 
   # SSL policy
   ssl_policy {
-    policy_type = "Predefined"
-    policy_name = "AppGwSslPolicy20220101"
+    policy_type          = "CustomV2"
+    min_protocol_version = "TLSv1_2"
+    cipher_suites = [
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+    ]
   }
 
   # Backend pool with the static website in storage account.
@@ -148,11 +154,12 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   request_routing_rule {
-    name               = local.request_routing_rule_name
-    rule_type          = "PathBasedRouting"
-    http_listener_name = local.secure_listener_name
-    url_path_map_name  = local.app_path_map_name
-    priority           = 100
+    name                  = local.request_routing_rule_name
+    rule_type             = "PathBasedRouting"
+    http_listener_name    = local.secure_listener_name
+    url_path_map_name     = local.app_path_map_name
+    priority              = 100
+    rewrite_rule_set_name = "security-headers-rewrite-rule"
   }
 
   # Routing rule to redirect non-secure traffic to HTTPS
@@ -162,6 +169,45 @@ resource "azurerm_application_gateway" "agw" {
     http_listener_name = local.insecure_listener_name
     url_path_map_name  = local.redirect_path_map_name
     priority           = 10
+  }
+
+  rewrite_rule_set {
+    name = "security-headers-rewrite-rule"
+
+    rewrite_rule {
+      name          = "Strict-Transport-Security"
+      rule_sequence = 100
+
+      response_header_configuration {
+        header_name  = "Strict-Transport-Security"
+        header_value = "max-age=31536000; includeSubDomains"
+      }
+    }
+
+    rewrite_rule {
+      name          = "X-Content-Type-Options"
+      rule_sequence = 110
+
+      response_header_configuration {
+        header_name  = "X-Content-Type-Options"
+        header_value = "nosniff"
+      }
+    }
+
+    rewrite_rule {
+      name          = "Remove-Information-Disclosure-Headers"
+      rule_sequence = 120
+
+      response_header_configuration {
+        header_name  = "Server"
+        header_value = ""
+      }
+
+      response_header_configuration {
+        header_name  = "x-ms-version"
+        header_value = ""
+      }
+    }
   }
 
   # Default traffic is routed to the static website. Exception is API.
@@ -259,5 +305,3 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
-
-
