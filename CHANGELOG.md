@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* _No changes yet_
+* Allow numeric CIDR masks in `address_space_size` (e.g. "25") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 
 BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
