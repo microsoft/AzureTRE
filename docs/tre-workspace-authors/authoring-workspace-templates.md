@@ -76,6 +76,10 @@ All the values for the required parameters will be provided by the deployment ru
 
 Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle. This file follows the [JSON schema standard](http://json-schema.org/) and can be used by a user interface to generate a UI for the user to input the parameters.
 
+### Template properties
+
+When authoring a `template_schema.json` file, you can reference properties from the resource being deployed, or its parent resources. For more information see [Pipeline Template Schema](../tre-templates/pipeline-templates/pipeline-schema.md#substituting-resource-property-values).
+
 ### Output
 
 !!! todo

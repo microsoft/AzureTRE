@@ -151,6 +151,8 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
         if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
             return prop_to_get
         else:
+            if val == "{{" + t + "}}":
+                return prop_to_get
             val = val.replace("{{" + t + "}}", str(prop_to_get))
 
     return val
