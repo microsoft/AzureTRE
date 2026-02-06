@@ -9,7 +9,7 @@ Before you deploy a Trusted Research Environment based on the Azure TRE solution
 While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  
 
 | Role | Key task | TRE RBAC |
-|------|----------|----------|
+| ------ | ---------- | ---------- |
 | Azure administrator | Deploy the TRE | |
 | TRE administrator | Administer the TRE | ✔ |
 | TRE workspace owner | Own a workspace | ✔ |
@@ -21,7 +21,7 @@ While we have defined 8 different user roles for the Azure TRE solution, not all
 | Information security officer | Validate and sign-off TRE deployment | |
 
 !!! info
-    More granular RBAC information is available [here](../tre-developers/api-permissions-map.md).
+    More granular RBAC information is available in [the API permissions map](../tre-developers/api-permissions-map.md).
 
 ## Azure administrator
 

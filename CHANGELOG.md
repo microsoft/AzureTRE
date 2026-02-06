@@ -1,17 +1,33 @@
 <!-- markdownlint-disable MD041 -->
-## 0.27.0 (Unreleased)
+## (Unreleased)
 **BREAKING CHANGES**
+* _No changes yet_
+
+ENHANCEMENTS:
+* _No changes yet_
+
+BUG FIXES:
+* _No changes yet_
+
+## 0.27.0 (February 5, 2026)
+**BREAKING CHANGES**
+* Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
 * Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
 * Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+* Transition GitHub Actions to use federated credentials. You should replace the `AZURE_CREDENTIALS` secret as described in the [cicd pre steps](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/). ([#4822](https://github.com/microsoft/AzureTRE/pull/4822))
+
 
 ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+* Implement UI testing with vitest ([#4794](https://github.com/microsoft/AzureTRE/pull/4794))
 * Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
 * Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
 * Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
+* Add porter build cache in CI ([#4827](https://github.com/microsoft/AzureTRE/issues/4827))
+* Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
 
 BUG FIXES:
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
@@ -26,10 +42,47 @@ BUG FIXES:
 * Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
 * Add timeouts to Graph requests in API ([#4723](https://github.com/microsoft/AzureTRE/issues/4723))
 * Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
+* Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
 * Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
+* Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
 * Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
+* Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
+* Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
+* Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
+* Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 
 COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.12 |
+| ui | 0.8.25 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.8.1 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.9 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-cyclecloud | 0.7.4 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.3.5 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-ohdsi | 0.3.5 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.2 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.1 |
+| tre-workspace-service-health | 0.2.13 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-workspace-service-azuresql | 1.0.16 |
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**
@@ -99,9 +152,6 @@ COMPONENTS:
 | tre-service-guacamole-import-reviewvm | 0.4.3 |
 | tre-service-guacamole-windowsvm | 1.4.1 |
 | tre-workspace-service-ohdsi | 0.3.4 |
-
-COMPONENTS:
-* Base workspace version bumped to 2.5.0 ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 
 ## 0.25.0 (July 18, 2025)
 **IMPORTANT**:
