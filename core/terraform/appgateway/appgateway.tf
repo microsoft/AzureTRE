@@ -144,7 +144,6 @@ resource "azurerm_application_gateway" "agw" {
     frontend_port_name             = local.secure_frontend_port_name
     protocol                       = "Https"
     ssl_certificate_name           = local.certificate_name
-    host_name                      = var.custom_domain != "" ? var.custom_domain : null
   }
 
   # Public HTTP listener
