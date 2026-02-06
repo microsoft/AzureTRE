@@ -66,3 +66,7 @@ data "azurerm_role_definition" "storage_blob_data_contributor" {
 data "azurerm_role_definition" "storage_file_data_contributor" {
   name = "Storage File Data Privileged Contributor"
 }
+
+data "azurerm_role_definition" "azureml_compute_operator" {
+  name = "AzureML Compute Operator"
+}

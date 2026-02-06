@@ -19,7 +19,7 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 1. Configure repository secrets
 1. Deploy the TRE using the workflow
 
-### Create a service principal for provisioning resources
+### Create a service principal and configure OIDC authentication
 
 1. Login to Azure
 
@@ -40,21 +40,47 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
   Create a main service principal with "**Owner**" role:
 
   ```cmd
-  az ad sp create-for-rbac --name "sp-aztre-cicd" --role Owner --scopes /subscriptions/<subscription_id> --sdk-auth
+  az ad sp create-for-rbac --name "sp-aztre-cicd" --role Owner --scopes /subscriptions/<subscription_id>
   ```
 
   !!! caution
-      Save the JSON output locally - as you will need it later for setting secrets in the build
+      Save the output (especially the `appId` and `tenant`) - you will need it for the next steps
 
-1. Create a repository secret named `AZURE_CREDENTIALS` and use the JSON output from the previous step as its value. Note it should look similar to this:
-```json
-{
-  "clientId": "",
-  "clientSecret": "",
-  "subscriptionId": "",
-  "tenantId": ""
-}
-```
+1. Configure federated identity credentials for GitHub Actions OIDC
+
+  Configure the service principal to trust GitHub Actions OIDC tokens from your repository:
+
+  ```cmd
+  az ad app federated-credential create --id <APPLICATION_OBJECT_ID> --parameters credential.json
+  ```
+
+  Where `credential.json` contains (replace `OWNER`, `REPO`, and `ENVIRONMENT` with your values):
+
+  ```json
+  {
+    "name": "GitHubActions",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:OWNER/REPO:environment:ENVIRONMENT",
+    "description": "GitHub Actions OIDC for Azure TRE",
+    "audiences": [
+      "api://AzureADTokenExchange"
+    ]
+  }
+  ```
+
+  For the main/develop branches, you may also want to add federated credentials with subject `repo:OWNER/REPO:ref:refs/heads/main` and `repo:OWNER/REPO:ref:refs/heads/develop`.
+
+  See [Configure a federated identity credential on an app](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azcli) for more details.
+
+1. Configure repository secrets for OIDC authentication
+
+  Configure the following **secrets** (not variables) in your repository or environment:
+
+  | <div style="width: 230px">Secret name</div> | Description |
+  | ----------- | ----------- |
+  | `AZURE_CLIENT_ID` | The application (client) ID of the service principal created above |
+  | `AZURE_TENANT_ID` | The tenant ID where the service principal was created |
+  | `AZURE_SUBSCRIPTION_ID` | The Azure subscription ID where resources will be deployed |
 
 ### Decide on a TRE ID and Azure resources location
 
@@ -123,8 +149,7 @@ Configure variables used in the deployment workflow:
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `CORE_ADDRESS_SPACE` | Optional. The address space for the Azure TRE core virtual network. Default value is `10.0.0.0/22`. |
-| `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16`|
-| `AZURE_ENVIRONMENT` | Optional. The name of the Azure environment. Supported values are `AzureCloud` and `AzureUSGovernment`. Default value is `AzureCloud`. |
+| `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16` |
 | `CORE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan for core infrastructure. Default value is `P1v2`. |
 | `WORKSPACE_APP_SERVICE_PLAN_SKU` | Optional. The SKU used for AppService plan used in E2E tests. Default value is `P1v2`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |

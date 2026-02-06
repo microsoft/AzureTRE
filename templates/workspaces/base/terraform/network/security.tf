@@ -21,7 +21,7 @@ resource "azurerm_subnet_network_security_group_association" "webapps" {
   subnet_id                 = azurerm_subnet.webapps.id
   depends_on = [
     # meant to resolve AnotherOperation errors with one operation in the vnet at a time
-    azurerm_subnet_network_security_group_association.webapps
+    azurerm_subnet_network_security_group_association.services
   ]
 }
 

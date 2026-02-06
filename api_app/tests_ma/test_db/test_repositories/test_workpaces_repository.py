@@ -8,6 +8,7 @@ import uuid
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
+from models.domain.operation import Status
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
@@ -85,14 +86,26 @@ async def test_get_workspace_by_id_raises_entity_does_not_exist_if_item_does_not
 
 
 @pytest.mark.asyncio
+async def test_get_workspace_by_id_raises_entity_does_not_exist_if_workspace_is_deleted(workspace_repo, workspace):
+    workspace_id = workspace.id
+    workspace_repo.container.query_items = MagicMock()
+    workspace_repo.container.query_items.return_value = AsyncMock()
+    workspace_repo.container.query_items.return_value.__aiter__.return_value = []
+
+    with pytest.raises(EntityDoesNotExist):
+        await workspace_repo.get_workspace_by_id(workspace_id)
+
+
+@pytest.mark.asyncio
 async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_query_item_result = AsyncMock()
     workspace_query_item_result.__aiter__.return_value = [workspace.dict()]
     workspace_repo.container.query_items = MagicMock(return_value=workspace_query_item_result)
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus'
     expected_parameters = [
         {'name': '@resourceType', 'value': ResourceType.Workspace},
-        {'name': '@workspaceId', 'value': workspace.id}
+        {'name': '@workspaceId', 'value': workspace.id},
+        {'name': '@deletedStatus', 'value': Status.Deleted}
     ]
 
     await workspace_repo.get_workspace_by_id(workspace.id)
@@ -130,8 +143,7 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
     assert workspace.properties["tre_id"] != workspace_to_create.properties["tre_id"]
     # a new CIDR was allocated
     assert workspace.properties["address_space"] == "1.2.3.4/24"
-    # TODO: uncomment with https://github.com/microsoft/AzureTRE/pull/2902
-    # assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
+    assert workspace.properties["address_spaces"] == ["1.2.3.4/24"]
     assert workspace.properties["workspace_owner_object_id"] == "test_object_id"
 
 

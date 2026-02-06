@@ -13,13 +13,19 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref }}"
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # For paths-filter and super-linter
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Full git history is needed to get a proper list of
           # changed files within `super-linter`
@@ -55,7 +61,7 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         with:
-          terraform_version: "1.9.8"
+          terraform_version: "1.14.3"
 
       - name: Terraform format check
         if: ${{ steps.filter.outputs.terraform == 'true' }}
@@ -79,7 +85,7 @@ jobs:
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue:
         # https://github.com/github/super-linter/issues/2433
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -96,6 +102,8 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
+          TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
+          TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
@@ -105,7 +113,7 @@ jobs:
 
       - name: Core Tags
         if: ${{ steps.filter.outputs.terraform_core == 'true' }}
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -116,7 +124,7 @@ jobs:
 
       - name: Workspace Tags
         if: ${{ steps.filter.outputs.terraform_workspaces == 'true' }}
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -127,19 +135,19 @@ jobs:
 
       - name: Workspace Services Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspace_services.hcl
-          FILTER_REGEX_INCLUDE: "./templates/workspaces/.*"
+          FILTER_REGEX_INCLUDE: "./templates/workspace_services/.*"
           FILTER_REGEX_EXCLUDE: ".*user_resource.*"
 
       - name: User Resources Tags
         if: ${{ steps.filter.outputs.terraform_workspace_services == 'true' }}
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
@@ -150,7 +158,7 @@ jobs:
 
       - name: Shared Services Tags
         if: ${{ steps.filter.outputs.terraform_shared_services == 'true' }}
-        uses: github/super-linter/slim@v5.0.0
+        uses: super-linter/super-linter/slim@v8.3.2
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main

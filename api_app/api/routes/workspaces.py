@@ -109,7 +109,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except InvalidInput as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))
 
     operation = await save_and_deploy_resource(
         resource=workspace,

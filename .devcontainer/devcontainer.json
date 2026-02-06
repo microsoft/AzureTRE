@@ -65,7 +65,7 @@
           "configurations": [
             {
               "name": "TRE API",
-              "type": "python",
+              "type": "debugpy",
               "module": "uvicorn",
               "request": "launch",
               "args": [
@@ -88,7 +88,7 @@
             },
             {
               "name": "E2E Extended",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -103,7 +103,7 @@
             },
             {
               "name": "E2E Extended AAD",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -118,7 +118,7 @@
             },
             {
               "name": "E2E Shared Services",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -133,7 +133,7 @@
             },
             {
               "name": "E2E Performance",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -148,7 +148,7 @@
             },
             {
               "name": "E2E Smoke",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -163,7 +163,7 @@
             },
             {
               "name": "E2E Airlock",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "module": "pytest",
               "justMyCode": true,
@@ -178,7 +178,7 @@
             },
             {
               "name": "Resource Processor",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "program": "vmss_porter/runner.py",
               "console": "integratedTerminal",
@@ -193,7 +193,7 @@
             },
             {
               "name": "Debug Python file",
-              "type": "python",
+              "type": "debugpy",
               "request": "launch",
               "program": "${file}",
               "console": "integratedTerminal",
@@ -203,14 +203,14 @@
             },
             {
               "name": "Launch Edge (localhost)",
-              "type": "pwa-msedge",
+              "type": "msedge",
               "request": "launch",
               "url": "http://localhost:3000",
               "webRoot": "${workspaceFolder}/ui/app"
             },
             {
               "name": "Launch Chrome (localhost)",
-              "type": "pwa-chrome",
+              "type": "chrome",
               "request": "launch",
               "url": "http://localhost:3000",
               "webRoot": "${workspaceFolder}/ui/app"
@@ -280,7 +280,9 @@
         "mikestead.dotenv",
         "humao.rest-client",
         "timonwong.shellcheck",
-        "ms-azuretools.vscode-azurefunctions"
+        "ms-azuretools.vscode-azurefunctions",
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint"
       ]
     }
   },

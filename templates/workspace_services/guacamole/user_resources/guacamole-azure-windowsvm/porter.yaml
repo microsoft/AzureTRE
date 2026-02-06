@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.4.1
+version: 1.4.4
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -27,7 +27,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-24h2-pro
+        sku: win11-25h2-pro
         version: latest
       conda_config: false
       secure_boot_enabled: true
@@ -128,7 +128,7 @@ parameters:
     default: ""
     type: string
     description: "Time of day to shutdown the VM (HHmm format)"
-    pattern: "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
+    pattern: "^(([01]?[0-9]|2[0-3])[0-5][0-9])?$"
   - name: shutdown_timezone
     type: string
     description: "Timezone for the shutdown schedule"
@@ -170,9 +170,9 @@ outputs:
 mixins:
   - exec
   - terraform:
-      clientVersion: 1.9.8
+      clientVersion: 1.14.3
   - az:
-      clientVersion: 2.67.0
+      clientVersion: 2.81.0
 
 install:
   - terraform:
@@ -319,7 +319,7 @@ start:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Start the VM"
       arguments:
@@ -355,7 +355,7 @@ stop:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Stop the VM"
       arguments:
@@ -394,7 +394,7 @@ reset_password:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - exec:
       description: "Reset password and persist to keyvault"
       suppress-output: true

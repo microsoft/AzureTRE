@@ -116,7 +116,8 @@ def initialize_logging() -> logging.Logger:
                 "django": {"enabled": False},
                 "fastapi": {"enabled": True},
                 "psycopg2": {"enabled": False},
-            }
+            },
+            connection_string=APPLICATIONINSIGHTS_CONNECTION_STRING
         )
 
     LoggingInstrumentor().instrument(
