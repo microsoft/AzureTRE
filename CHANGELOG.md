@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* _No changes yet_
+* Users with custom templates should update their `template_schema.json` to set `uiSchema.overview` widget to `textarea` to ensure a consistent UI experience as per ([#4860](https://github.com/microsoft/AzureTRE/pull/4860)).
 
 ENHANCEMENTS:
 * _No changes yet_
