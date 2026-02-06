@@ -1,6 +1,6 @@
-import pytest
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, get_sample_airlock_request
 from models.schemas.operation import get_sample_operation
+
 
 def test_airlock_request_and_operation_in_response_schema_is_valid():
     workspace_id = "933ad738-7265-4b5f-9eae-a1a62928772e"
