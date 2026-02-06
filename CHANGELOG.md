@@ -10,6 +10,7 @@ BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
+* Remove duplicate auth dependencies in API ([#4796](https://github.com/microsoft/AzureTRE/pull/4796))
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
