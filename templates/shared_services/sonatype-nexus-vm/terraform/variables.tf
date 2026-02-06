@@ -25,3 +25,19 @@ variable "vm_size" {
   description = "The size of the VM to be deployed"
   default     = "Standard_B2ms"
 }
+
+variable "mgmt_acr_name" {
+  type        = string
+  description = "The name of the management ACR"
+}
+
+variable "mgmt_resource_group_name" {
+  type        = string
+  description = "The management resource group name"
+}
+
+variable "nexus_image_tag" {
+  type        = string
+  description = "The tag of the Nexus image to deploy"
+  default     = "latest"
+}
