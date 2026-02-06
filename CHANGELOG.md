@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* _No changes yet_
+* `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
 
 BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))

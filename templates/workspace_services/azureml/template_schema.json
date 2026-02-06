@@ -417,6 +417,13 @@
       },
       {
         "stepId": "main"
+      },
+      {
+        "stepId": "f720975a-c81e-477e-854e-53fde86e5e57",
+        "stepTitle": "Upgrade to ensure workspace is aware of address space removal",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
       }
     ]
   }
