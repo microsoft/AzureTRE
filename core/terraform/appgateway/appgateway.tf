@@ -25,7 +25,7 @@ resource "azurerm_application_gateway" "agw" {
   location            = var.location
   tags                = local.tre_core_tags
 
-  enable_http2 = true
+  enable_http2 = false
 
   sku {
     name     = coalesce(var.app_gateway_sku, "Standard_v2")
@@ -73,6 +73,7 @@ resource "azurerm_application_gateway" "agw" {
   ssl_policy {
     policy_type          = "CustomV2"
     min_protocol_version = "TLSv1_2"
+    # The cipher suites TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 are mandatory for TLSv1.3. You need NOT mention these explicitly when setting a CustomV2 policy
     cipher_suites = [
       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
       "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
