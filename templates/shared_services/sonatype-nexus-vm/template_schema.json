@@ -57,6 +57,9 @@
     }
   },
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "is_exposed_externally": {
       "classNames": "tre-hidden"
     }

@@ -93,6 +93,9 @@
     ]
   },
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "smtpPassword" : {
       "ui:widget": "password"
     },

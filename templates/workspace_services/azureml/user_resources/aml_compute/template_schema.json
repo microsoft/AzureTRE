@@ -46,5 +46,10 @@
       "default": "",
       "minLength": 1
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }
