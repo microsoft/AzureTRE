@@ -7,7 +7,7 @@ ENHANCEMENTS:
 * _No changes yet_
 
 BUG FIXES:
-* _No changes yet_
+* Fix uiSchema.overview params overwritten by ui
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
