@@ -143,6 +143,7 @@ resource "azurerm_application_gateway" "agw" {
     frontend_port_name             = local.secure_frontend_port_name
     protocol                       = "Https"
     ssl_certificate_name           = local.certificate_name
+    host_name                      = var.custom_domain != "" ? var.custom_domain : null
   }
 
   # Public HTTP listener
@@ -151,15 +152,15 @@ resource "azurerm_application_gateway" "agw" {
     frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = local.insecure_frontend_port_name
     protocol                       = "Http"
+    host_name                      = var.custom_domain != "" ? var.custom_domain : null
   }
 
   request_routing_rule {
-    name                  = local.request_routing_rule_name
-    rule_type             = "PathBasedRouting"
-    http_listener_name    = local.secure_listener_name
-    url_path_map_name     = local.app_path_map_name
-    priority              = 100
-    rewrite_rule_set_name = "security-headers-rewrite-rule"
+    name               = local.request_routing_rule_name
+    rule_type          = "PathBasedRouting"
+    http_listener_name = local.secure_listener_name
+    url_path_map_name  = local.app_path_map_name
+    priority           = 100
   }
 
   # Routing rule to redirect non-secure traffic to HTTPS
@@ -193,21 +194,6 @@ resource "azurerm_application_gateway" "agw" {
         header_value = "nosniff"
       }
     }
-
-    rewrite_rule {
-      name          = "Remove-Information-Disclosure-Headers"
-      rule_sequence = 120
-
-      response_header_configuration {
-        header_name  = "Server"
-        header_value = ""
-      }
-
-      response_header_configuration {
-        header_name  = "x-ms-version"
-        header_value = ""
-      }
-    }
   }
 
   # Default traffic is routed to the static website. Exception is API.
@@ -215,12 +201,14 @@ resource "azurerm_application_gateway" "agw" {
     name                               = local.app_path_map_name
     default_backend_address_pool_name  = local.staticweb_backend_pool_name
     default_backend_http_settings_name = local.staticweb_http_setting_name
+    default_rewrite_rule_set_name      = "security-headers-rewrite-rule"
 
     path_rule {
       name                       = "api"
       paths                      = ["/api/*", "/openapi.json"]
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
+      rewrite_rule_set_name      = "security-headers-rewrite-rule"
     }
 
   }
@@ -305,3 +293,5 @@ resource "azurerm_monitor_diagnostic_setting" "agw" {
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }
 }
+
+

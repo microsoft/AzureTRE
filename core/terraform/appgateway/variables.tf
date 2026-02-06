@@ -41,3 +41,7 @@ variable "encryption_key_versionless_id" {
 variable "deployer_principal_id" {
   type = string
 }
+
+variable "custom_domain" {
+  type = string
+}
