@@ -4,7 +4,7 @@ import pytest
 from mock import MagicMock, patch
 
 from pydantic import ValidationError
-from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy
+from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy, get_storage_account_destination_for_copy
 from azure.functions.servicebus import ServiceBusMessage
 from shared_code import constants
 
@@ -19,6 +19,18 @@ class TestPropertiesExtraction():
         assert req_prop.previous_status == "789"
         assert req_prop.type == "101112"
         assert req_prop.workspace_id == "ws1"
+
+    def test_extract_prop_with_review_workspace_id(self):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"456\" ,\"previous_status\":\"789\" , \"type\":\"101112\", \"workspace_id\":\"ws1\", \"review_workspace_id\":\"rw01\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        req_prop = extract_properties(message)
+        assert req_prop.review_workspace_id == "rw01"
+
+    def test_extract_prop_without_review_workspace_id_defaults_to_none(self):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"456\" ,\"previous_status\":\"789\" , \"type\":\"101112\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        req_prop = extract_properties(message)
+        assert req_prop.review_workspace_id is None
 
     def test_extract_prop_missing_arg_throws(self):
         message_body = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
@@ -117,6 +129,50 @@ class TestFilesDeletion():
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert mock_set_output_event_to_trigger_container_deletion.called
+
+
+class TestImportSubmitUsesReviewWorkspaceId():
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_import_submit_destination_uses_review_workspace_id(self):
+        dest = get_storage_account_destination_for_copy(
+            new_status=constants.STAGE_SUBMITTED,
+            request_type=constants.IMPORT_TYPE,
+            short_workspace_id="ws01",
+            review_workspace_id="rw01"
+        )
+        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "rw01"
+
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_import_submit_destination_falls_back_to_tre_id_when_no_review_workspace_id(self):
+        dest = get_storage_account_destination_for_copy(
+            new_status=constants.STAGE_SUBMITTED,
+            request_type=constants.IMPORT_TYPE,
+            short_workspace_id="ws01",
+            review_workspace_id=None
+        )
+        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
+
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_export_submit_destination_ignores_review_workspace_id(self):
+        dest = get_storage_account_destination_for_copy(
+            new_status=constants.STAGE_SUBMITTED,
+            request_type=constants.EXPORT_TYPE,
+            short_workspace_id="ws01",
+            review_workspace_id="rw01"
+        )
+        assert dest == constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + "ws01"
+
+
+class TestImportApproval():
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.create_container")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_import_approval_copies_data_in_legacy_mode(self, mock_create_container, mock_copy_data):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"approval_in_progress\" ,\"previous_status\":\"in_review\" , \"type\":\"import\", \"workspace_id\":\"ws01\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+        mock_create_container.assert_called_once()
+        mock_copy_data.assert_called_once()
 
 
 def _mock_service_bus_message(body: str):
