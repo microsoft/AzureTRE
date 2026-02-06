@@ -9,15 +9,15 @@ from models.domain.airlock_request import AirlockActions, AirlockRequest, Airloc
 
 def get_sample_airlock_review(airlock_review_id: str) -> dict:
     return {
-        "reviewId": airlock_review_id,
-        "reviewDecision": "Describe why the request was approved/rejected",
+        "id": airlock_review_id,
+        "reviewDecision": "approved",
         "decisionExplanation": "Describe why the request was approved/rejected"
     }
 
 
 def get_sample_airlock_request(workspace_id: str, airlock_request_id: str) -> dict:
     return {
-        "requestId": airlock_request_id,
+        "id": airlock_request_id,
         "workspaceId": workspace_id,
         "status": "draft",
         "type": "import",

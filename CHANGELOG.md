@@ -7,7 +7,8 @@ ENHANCEMENTS:
 * _No changes yet_
 
 BUG FIXES:
-* _No changes yet_
+* Fix test function get_sample_operation step params. ([#4684](https://github.com/microsoft/AzureTRE/issues/4864))
+* Fix airlock request sample data fields and enum values.
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
