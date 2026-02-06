@@ -123,6 +123,14 @@ def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
 
 
+def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
+    if airlock_request.type == AirlockRequestType.Import:
+        return airlock_request.status == AirlockRequestStatus.Draft
+    elif airlock_request.type == AirlockRequestType.Export:
+        return airlock_request.status == AirlockRequestStatus.Approved
+    return False
+
+
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
                                  airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository,
                                  workspace_service_repo, operation_repo: WorkspaceServiceRepository, resource_template_repo: ResourceTemplateRepository,
@@ -277,7 +285,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
+        await send_status_changed_event(airlock_request=airlock_request, previous_status=None, workspace=workspace)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
         await airlock_request_repo.delete_item(airlock_request.id)
@@ -319,7 +327,7 @@ async def update_and_publish_event_airlock_request(
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
+        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status, workspace=workspace)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
