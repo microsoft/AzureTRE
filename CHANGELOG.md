@@ -7,7 +7,7 @@ ENHANCEMENTS:
 * _No changes yet_
 
 BUG FIXES:
-* Fix uiSchema.overview params overwritten by ui
+* Fix uiSchema.overview params overwritten by ui ([#4861](https://github.com/microsoft/AzureTRE/issues/4861))
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
