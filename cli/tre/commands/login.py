@@ -241,5 +241,92 @@ def login_client_credentials(
     click.echo("Login details saved\n")
 
 
+@click.command(
+    name="interactive",
+    help="Use interactive browser flow to authenticate.",
+)
+@click.option(
+    "--base-url",
+    required=False,
+    help="The TRE base URL, e.g. " + "https://<id>.<location>.cloudapp.azure.com/ (uses existing config if not specified)",
+)
+@click.option(
+    "--verify/--no-verify", help="Enable/disable SSL verification", default=True
+)
+def login_interactive(base_url: str, verify: bool):
+
+    # If no base-url provided, try to get from existing config or tre_output.json
+    if not base_url:
+        # Try existing CLI config
+        config_path = Path("~/.config/tre/environment.json").expanduser()
+        if config_path.exists():
+            config_text = config_path.read_text(encoding="utf-8")
+            config = json.loads(config_text)
+            base_url = config.get("base-url")
+
+        # Try tre_output.json in workspace
+        if not base_url:
+            tre_output_path = Path("core/tre_output.json")
+            if tre_output_path.exists():
+                tre_output = json.loads(tre_output_path.read_text(encoding="utf-8"))
+                if "azure_tre_fqdn" in tre_output:
+                    base_url = f"https://{tre_output['azure_tre_fqdn']['value']}/"
+                    click.echo(f"Using base URL from core/tre_output.json: {base_url}")
+
+        if not base_url:
+            raise click.ClickException("No --base-url specified and no existing configuration found. Please specify --base-url.")
+
+    # Load metadata from API
+    metadata = ApiClient.get_api_metadata(base_url)
+    if not metadata:
+        raise click.ClickException("Unable to query API metadata endpoint")
+    client_id = metadata["api_client_id"]
+    aad_tenant_id = metadata["aad_tenant_id"]
+    api_scope = metadata["api_root_scope"]
+
+    # Set up token cache
+    Path('~/.config/tre').expanduser().mkdir(parents=True, exist_ok=True)
+    token_cache_file = Path('~/.config/tre/token_cache.json').expanduser()
+
+    cache = msal.SerializableTokenCache()
+    if os.path.exists(token_cache_file):
+        with open(token_cache_file, "r", encoding="utf-8") as cache_file:
+            cache.deserialize(cache_file.read())
+
+    app = get_public_client_application(client_id, aad_tenant_id, cache)
+
+    click.echo('Opening browser for interactive login...')
+
+    try:
+        auth_result = app.acquire_token_interactive(scopes=[api_scope])
+    except Exception as ex:
+        raise click.ClickException(f"Failed to complete interactive login: {ex}")
+
+    if "access_token" not in auth_result:
+        raise click.ClickException(f"Failed to get access token: {str(auth_result)}")
+
+    # Save the auth details to ~/.config/tre/environment.json
+    environment_config = {
+        'base-url': base_url,
+        'login-method': 'interactive',
+        'token-cache-file': str(token_cache_file.absolute()),
+        'client-id': client_id,
+        'aad-tenant-id': aad_tenant_id,
+        'api-scope': api_scope,
+        'verify': verify,
+    }
+    Path('~/.config/tre/environment.json').expanduser().write_text(
+        json.dumps(environment_config, indent=4),
+        encoding='utf-8')
+
+    # Save the token cache
+    if cache.has_state_changed:
+        with open(token_cache_file, "w") as cache_file:
+            cache_file.write(cache.serialize())
+
+    click.echo("Successfully logged in")
+
+
 login.add_command(login_client_credentials)
 login.add_command(login_device_code)
+login.add_command(login_interactive)
