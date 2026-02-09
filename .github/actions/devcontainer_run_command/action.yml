@@ -223,17 +223,6 @@ runs:
       run: |
         echo "ACR_DOMAIN_SUFFIX=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)" >> $GITHUB_ENV
 
-    # - name: Get GitHub OIDC Token
-    #   id: get_oidc_token
-    #   shell: bash
-    #   run: |
-    #     # Request the GitHub OIDC token for federated authentication
-    #     OIDC_TOKEN=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -H "Accept: application/json; api-version=2.0" | jq -r '.value')
-
-    #     # Write token to a temporary file for safe transport into container
-    #     echo "$OIDC_TOKEN" > /tmp/github_oidc_token
-    #     chmod 600 /tmp/github_oidc_token
-
     - name: Run command in DevContainer
       shell: bash
       run: |
