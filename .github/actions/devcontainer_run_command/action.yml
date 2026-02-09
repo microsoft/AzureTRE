@@ -250,7 +250,7 @@ runs:
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v "./command.sh:/workspaces/tre/command.sh" \
-          -v "~/.azure:/home/vscode/.azure" \
+          -v "$HOME/.azure:/home/vscode/.azure" \
           --workdir /workspaces/tre \
           --user vscode \
           -e TF_INPUT="0" \
