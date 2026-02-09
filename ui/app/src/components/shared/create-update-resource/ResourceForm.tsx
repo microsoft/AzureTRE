@@ -142,8 +142,10 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
   };
 
   // use the supplied uiSchema or create a blank one, and set the overview field to textarea manually.
+  // TODO: remove this in future when all templates have been updated to specify this in their uiSchema (since v0.28.0)
   const uiSchema = (template && template.uiSchema) || {};
   uiSchema.overview = {
+    ...uiSchema.overview,
     "ui:widget": "textarea",
   };
 

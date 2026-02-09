@@ -248,6 +248,9 @@
     }
   ],
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "admin_username": {
       "classNames": "tre-hidden"
     }

@@ -1,12 +1,13 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* _No changes yet_
+* Users with custom templates should update their `template_schema.json` to set `uiSchema.overview` widget to `textarea` to ensure a consistent UI experience as per ([#4860](https://github.com/microsoft/AzureTRE/pull/4860)).
 
 ENHANCEMENTS:
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 
 BUG FIXES:
+* Fix uiSchema.overview params overwritten by ui ([#4861](https://github.com/microsoft/AzureTRE/issues/4861))
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
