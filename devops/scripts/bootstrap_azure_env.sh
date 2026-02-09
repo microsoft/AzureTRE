@@ -80,7 +80,8 @@ set_account_context() {
 
 print_header
 load_environment_config
-ensure_automation_login
+# ensure_automation_login
+az account show
 set_account_context
 
 # Ensure nounset is restored to avoid affecting caller
