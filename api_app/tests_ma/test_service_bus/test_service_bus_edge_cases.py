@@ -1,66 +1,69 @@
 import asyncio
+import time
 import pytest
-import os
 from unittest.mock import patch
-from service_bus.service_bus_consumer import ServiceBusConsumer
+from service_bus.service_bus_consumer import (
+    ServiceBusConsumer,
+    RESTART_DELAY_SECONDS,
+    HEARTBEAT_CHECK_INTERVAL_SECONDS,
+    HEARTBEAT_STALENESS_THRESHOLD_SECONDS,
+    MAX_RESTART_DELAY_SECONDS,
+    SUPERVISOR_ERROR_DELAY_SECONDS,
+)
 
 
 # Create a concrete implementation for testing edge cases
 class MockConsumerForEdgeCases(ServiceBusConsumer):
-    def __init__(self, skip_init=False):
-        if not skip_init:
-            super().__init__("test_consumer_edge")
+    def __init__(self):
+        super().__init__("test_consumer_edge")
         self.receive_messages_called = False
 
     async def receive_messages(self):
         self.receive_messages_called = True
-        await asyncio.sleep(0.01)  # Small delay to make it a proper coroutine
+        await asyncio.sleep(0.01)
         return
 
 
 @pytest.mark.asyncio
-async def test_heartbeat_file_corruption():
-    """Test handling of corrupted heartbeat file."""
-    consumer = MockConsumerForEdgeCases(skip_init=True)
-    # Manually set required attributes to avoid init issues
-    consumer.heartbeat_file = "/tmp/test_heartbeat_corruption.txt"
-
-    with patch("service_bus.service_bus_consumer.os.path.exists", return_value=True), \
-            patch("builtins.open") as mock_open:
-
-        # Simulate corrupted file with invalid float content
-        mock_open.return_value.__enter__.return_value.read.return_value = "not_a_number"
-
-        result = consumer.check_heartbeat()
-        assert result is False
+async def test_stale_heartbeat_detection():
+    """Test that stale heartbeat is correctly detected."""
+    consumer = MockConsumerForEdgeCases()
+    consumer._last_heartbeat = time.monotonic() - 400
+    assert consumer.check_heartbeat(max_age_seconds=300) is False
 
 
 @pytest.mark.asyncio
-async def test_heartbeat_permission_denied():
-    """Test heartbeat update when permission denied."""
-    consumer = MockConsumerForEdgeCases(skip_init=True)
-    consumer.heartbeat_file = "/tmp/test_heartbeat_permission.txt"
-
-    with patch("builtins.open", side_effect=PermissionError("Permission denied")), \
-            patch("service_bus.service_bus_consumer.logger") as mock_logger:
-
-        # Should not crash, just log error
-        consumer.update_heartbeat()
-        mock_logger.error.assert_called_once()
+async def test_fresh_heartbeat_detection():
+    """Test that fresh heartbeat is correctly detected."""
+    consumer = MockConsumerForEdgeCases()
+    assert consumer.check_heartbeat(max_age_seconds=300) is True
 
 
 @pytest.mark.asyncio
-async def test_heartbeat_disk_full():
-    """Test heartbeat update when disk is full."""
-    consumer = MockConsumerForEdgeCases(skip_init=True)
-    consumer.heartbeat_file = "/tmp/test_heartbeat_disk_full.txt"
+async def test_backoff_resets_after_long_running_receive():
+    """Test that backoff resets when receive_messages ran longer than the current delay."""
+    consumer = MockConsumerForEdgeCases()
+    consumer._restart_delay = 80
 
-    with patch("builtins.open", side_effect=OSError("No space left on device")), \
-            patch("service_bus.service_bus_consumer.logger") as mock_logger:
+    monotonic_values = iter([100.0, 200.0, 200.0])  # start=100, elapsed_check=200 (ran 100s > 80s delay), then next start
 
-        # Should not crash, just log error
-        consumer.update_heartbeat()
-        mock_logger.error.assert_called_once()
+    async def long_running_receive():
+        raise RuntimeError("Failure after running a while")
+
+    consumer.receive_messages = long_running_receive
+
+    async def mock_sleep(duration):
+        raise asyncio.CancelledError()
+
+    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
+            patch("service_bus.service_bus_consumer.time.monotonic", side_effect=monotonic_values):
+        try:
+            await consumer._receive_messages_loop()
+        except asyncio.CancelledError:
+            pass
+
+    # Backoff should have reset to base since elapsed (100s) > old delay (80s)
+    assert consumer._restart_delay == RESTART_DELAY_SECONDS
 
 
 @pytest.mark.asyncio
@@ -102,8 +105,13 @@ async def test_supervisor_cleanup_on_exception():
         if call_count >= 2:  # Trigger cleanup after heartbeat check
             raise KeyboardInterrupt("Test cleanup")
 
+    def create_mock_task(coro):
+        # Close the coroutine to avoid "coroutine never awaited" warning
+        coro.close()
+        return MockTask()
+
     with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
-            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=lambda coro: MockTask()), \
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_mock_task), \
             patch.object(consumer, "check_heartbeat", return_value=True):
 
         try:
@@ -118,34 +126,57 @@ async def test_supervisor_cleanup_on_exception():
 
 
 def test_restart_delay_configuration():
-    """Test that restart delay configuration constants exist and have reasonable values."""
-    # Import and test constants directly without creating consumer instances
-    from service_bus.service_bus_consumer import (
-        RESTART_DELAY_SECONDS,
-        HEARTBEAT_CHECK_INTERVAL_SECONDS,
-        HEARTBEAT_STALENESS_THRESHOLD_SECONDS,
-        SUPERVISOR_ERROR_DELAY_SECONDS
-    )
-
-    # Validate configuration values
-    assert RESTART_DELAY_SECONDS > 0, "Restart delay should be positive"
-    assert RESTART_DELAY_SECONDS <= 10, "Restart delay should not be too long"
+    """Test that configuration constants exist and have reasonable values."""
+    assert RESTART_DELAY_SECONDS > 0
+    assert RESTART_DELAY_SECONDS <= 10
+    assert MAX_RESTART_DELAY_SECONDS >= RESTART_DELAY_SECONDS
+    assert MAX_RESTART_DELAY_SECONDS <= 600
     assert HEARTBEAT_CHECK_INTERVAL_SECONDS > 0
     assert HEARTBEAT_STALENESS_THRESHOLD_SECONDS > HEARTBEAT_CHECK_INTERVAL_SECONDS
     assert SUPERVISOR_ERROR_DELAY_SECONDS > 0
 
 
-def test_heartbeat_directory_creation():
-    """Test that heartbeat directory is created if it doesn't exist."""
-    consumer = MockConsumerForEdgeCases(skip_init=True)
-    consumer.heartbeat_file = "/tmp/test_dir/test_heartbeat.txt"
+@pytest.mark.asyncio
+async def test_supervisor_resets_backoff_on_stale_heartbeat_restart():
+    """Test that supervisor resets backoff when restarting due to stale heartbeat."""
+    consumer = MockConsumerForEdgeCases()
+    consumer._restart_delay = 160
 
-    with patch("service_bus.service_bus_consumer.os.makedirs") as mock_makedirs:
+    heartbeat_calls = 0
 
-        consumer.update_heartbeat()
+    def mock_check_heartbeat(**kwargs):
+        nonlocal heartbeat_calls
+        heartbeat_calls += 1
+        if heartbeat_calls == 1:
+            return False
+        raise KeyboardInterrupt("Test complete")
 
-        # Verify makedirs was called with exist_ok=True
-        mock_makedirs.assert_called_once_with(
-            os.path.dirname(consumer.heartbeat_file),
-            exist_ok=True
-        )
+    async def mock_sleep(duration):
+        pass
+
+    class MockTask:
+        def done(self):
+            return False
+
+        def cancel(self):
+            pass
+
+        def __await__(self):
+            async def _await():
+                return None
+            return _await().__await__()
+
+    consumer.check_heartbeat = mock_check_heartbeat
+
+    def create_mock_task(coro):
+        coro.close()
+        return MockTask()
+
+    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_mock_task):
+        try:
+            await consumer.supervisor_with_heartbeat_check()
+        except KeyboardInterrupt:
+            pass
+
+    assert consumer._restart_delay == RESTART_DELAY_SECONDS

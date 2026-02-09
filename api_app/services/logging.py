@@ -61,8 +61,9 @@ class WorkerIdFilter(logging.Filter):
         self.worker_id = os.getpid()
 
     def filter(self, record: logging.LogRecord) -> bool:
-        # Add worker_id as an attribute to the log record
-        record.worker_id = self.worker_id
+        # Add worker_id as an attribute to the log record if not already set
+        if not hasattr(record, 'worker_id'):
+            record.worker_id = self.worker_id
         return True
 
 

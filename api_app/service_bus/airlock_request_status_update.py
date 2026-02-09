@@ -38,7 +38,7 @@ class AirlockStatusUpdater(ServiceBusConsumer):
                     current_time = time.time()
                     polling_count += 1
 
-                    # Update heartbeat file for supervisor monitoring
+                    # Update heartbeat for supervisor monitoring
                     self.update_heartbeat()
 
                     # Log a heartbeat message every 60 seconds to show the service is still working
@@ -69,13 +69,13 @@ class AirlockStatusUpdater(ServiceBusConsumer):
                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
                     logger.debug("No sessions for this process. Will look again...")
 
-                except ServiceBusConnectionError:
+                except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
+                    logger.warning(f"Service Bus connection error (will retry): {e}")
 
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                    logger.exception(f"Unknown exception. Will retry - {e}")
+                    logger.exception(f"Unexpected error in message processing: {type(e).__name__}: {e}")
 
     async def process_message(self, msg):
         with tracer.start_as_current_span("process_message") as current_span:

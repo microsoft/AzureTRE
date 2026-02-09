@@ -44,7 +44,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                     current_time = time.time()
                     polling_count += 1
 
-                    # Update heartbeat file for supervisor monitoring
+                    # Update heartbeat for supervisor monitoring
                     self.update_heartbeat()
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
