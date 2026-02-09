@@ -1,10 +1,11 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* _No changes yet_
+* Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
 ENHANCEMENTS:
-* _No changes yet_
+* Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
+* Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 
 BUG FIXES:
 * Fix test function get_sample_operation step params. ([#4684](https://github.com/microsoft/AzureTRE/issues/4864))
@@ -12,6 +13,7 @@ BUG FIXES:
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
+* Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
