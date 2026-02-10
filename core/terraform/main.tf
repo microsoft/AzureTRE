@@ -144,7 +144,6 @@ module "appgateway" {
     module.airlock_resources,
     azurerm_key_vault.kv,
     azurerm_role_assignment.keyvault_deployer_role,
-    azurerm_private_endpoint.api_private_endpoint,
     azurerm_key_vault_key.tre_encryption[0]
   ]
 }

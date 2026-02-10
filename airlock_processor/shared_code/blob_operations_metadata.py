@@ -21,6 +21,11 @@ def get_storage_endpoint_suffix() -> str:
 
 
 def get_credential():
+    managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
+    if managed_identity:
+        logging.info("using the Airlock processor's managed identity to get credentials.")
+        return DefaultAzureCredential(managed_identity_client_id=managed_identity,
+                                      exclude_shared_token_cache_credential=True)
     return DefaultAzureCredential()
 
 

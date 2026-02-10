@@ -62,6 +62,7 @@ module "airlock" {
   enable_local_debugging                 = var.enable_local_debugging
   services_subnet_id                     = module.network.services_subnet_id
   short_workspace_id                     = local.short_workspace_id
+  workspace_id                           = var.tre_resource_id
   airlock_processor_subnet_id            = module.network.airlock_processor_subnet_id
   arm_environment                        = var.arm_environment
   enable_cmk_encryption                  = var.enable_cmk_encryption

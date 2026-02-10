@@ -66,10 +66,22 @@ resource "azurerm_private_dns_zone_virtual_network_link" "stg_airlock_core_blob"
   depends_on = [azurerm_private_dns_a_record.stg_airlock_core_blob]
 }
 
+# Per-workspace managed identity for accessing import-in-progress blobs
+# Each workspace needs its own identity so that role assignments don't conflict
+resource "azurerm_user_assigned_identity" "import_review_id" {
+  name                = "id-airlock-import-review-${local.workspace_resource_name_suffix}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.ws.name
+
+  tags = local.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 resource "azurerm_role_assignment" "review_workspace_import_access" {
   scope                = data.azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Reader"
-  principal_id         = azurerm_user_assigned_identity.ws_id.principal_id
+  principal_id         = azurerm_user_assigned_identity.import_review_id.principal_id
 
   condition_version = "2.0"
   condition         = <<-EOT
@@ -80,7 +92,7 @@ resource "azurerm_role_assignment" "review_workspace_import_access" {
         @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase
           '${azurerm_private_endpoint.sa_airlock_core_pe.id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
           StringEquals 'import-in-progress'
       )
     )
@@ -88,3 +100,4 @@ resource "azurerm_role_assignment" "review_workspace_import_access" {
 
   depends_on = [azurerm_private_endpoint.sa_airlock_core_pe]
 }
+
