@@ -37,8 +37,16 @@ resource "azurerm_storage_account" "sa_airlock_core" {
     }
   }
 
+  # Core storage is publicly accessible for user-facing stages (import-draft, export-approved)
+  # matching the original sa_import_external / sa_export_approved security model.
+  # Security is enforced by:
+  #   - ABAC conditions on role assignments (API restricted to import-external + export-approved stages)
+  #   - User delegation SAS tokens (inherit ABAC restrictions of the signing identity)
+  #   - SAS tokens are only generated for publicly-accessible stages
+  # Internal stages (in-progress, rejected, blocked) are protected by ABAC even though
+  # the storage account allows public network access.
   network_rules {
-    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    default_action = "Allow"
     bypass         = ["AzureServices"]
   }
 
