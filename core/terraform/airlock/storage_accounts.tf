@@ -12,6 +12,7 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   shared_access_key_enabled        = false
   local_user_enabled               = false
   allow_nested_items_to_be_public  = false
+  public_network_access_enabled    = true
 
   # Important! we rely on the fact that the blob created events are issued when the creation of the blobs are done.
   # This is true ONLY when Hierarchical Namespace is DISABLED
@@ -129,7 +130,7 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
 resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
 # API Identity - restricted access using ABAC to specific stages and private endpoints
@@ -137,7 +138,7 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+  principal_id         = var.api_principal_id
 
   # ABAC condition: Restrict blob operations to specific stages only
   # Logic: Allow if (action is NOT a blob operation) OR (action is blob operation AND stage matches)
@@ -152,8 +153,11 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
         AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
       )
       OR
-      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
-        StringIn ('import-external', 'export-approved')
+      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+        StringEquals 'import-external'
+      OR
+      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+        StringEquals 'export-approved'
     )
   EOT
 }
@@ -181,10 +185,6 @@ resource "azurerm_storage_account" "sa_airlock_workspace_global" {
   network_rules {
     default_action = var.enable_local_debugging ? "Allow" : "Deny"
     bypass         = ["AzureServices"]
-
-    # Workspace storage is only accessed internally via private endpoints from within workspaces
-    # No public App Gateway access needed - only allow airlock storage subnet for processor access
-    virtual_network_subnet_ids = [data.azurerm_subnet.airlock_storage.id]
   }
 
   dynamic "identity" {
@@ -225,7 +225,7 @@ resource "azapi_resource_action" "enable_defender_for_storage_workspace_global" 
           isEnabled     = true
           capGBPerMonth = 5000
         },
-        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result.id
+        scanResultsEventGridTopicResourceId = azurerm_eventgrid_topic.scan_result[0].id
       }
       sensitiveDataDiscovery = {
         isEnabled = false
@@ -262,9 +262,32 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_global_b
   ]
 }
 
+# Private Endpoint for workspace global storage (processor access via private endpoint, not service endpoint)
+resource "azurerm_private_endpoint" "stg_airlock_workspace_global_pe_processor" {
+  name                = "pe-stg-airlock-ws-global-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.airlock_storage_subnet_id
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_dns_zone_group {
+    name                 = "pdzg-stg-airlock-ws-global-${var.tre_id}"
+    private_dns_zone_ids = [var.blob_core_dns_zone_id]
+  }
+
+  private_service_connection {
+    name                           = "psc-stg-airlock-ws-global-${var.tre_id}"
+    private_connection_resource_id = azurerm_storage_account.sa_airlock_workspace_global.id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+}
+
 # Airlock Processor Identity - needs access to all workspace containers (no restrictions)
 resource "azurerm_role_assignment" "airlock_workspace_global_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.airlock_id.principal_id
+  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }

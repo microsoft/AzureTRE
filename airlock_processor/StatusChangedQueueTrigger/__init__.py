@@ -32,6 +32,8 @@ class ContainersCopyMetadata:
 
 
 def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
+    request_properties = None
+    request_files = None
     try:
         request_properties = extract_properties(msg)
         request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
@@ -105,6 +107,25 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
                 create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
                 blob_operations.copy_data(source_account, dest_account, req_id)
+
+            # In metadata mode, there is no BlobCreatedTrigger to signal completion,
+            # so we must send the step result event directly for terminal transitions.
+            completion_status_map = {
+                constants.STAGE_APPROVAL_INPROGRESS: constants.STAGE_APPROVED,
+                constants.STAGE_REJECTION_INPROGRESS: constants.STAGE_REJECTED,
+                constants.STAGE_BLOCKING_INPROGRESS: constants.STAGE_BLOCKED_BY_SCAN,
+            }
+            if new_status in completion_status_map:
+                final_status = completion_status_map[new_status]
+                logging.info(f'Request {req_id}: Metadata mode - sending step result for {new_status} -> {final_status}')
+                stepResultEvent.set(
+                    func.EventGridOutputEvent(
+                        id=str(uuid.uuid4()),
+                        data={"completed_step": new_status, "new_status": final_status, "request_id": req_id},
+                        subject=req_id,
+                        event_type="Airlock.StepResult",
+                        event_time=datetime.datetime.now(datetime.UTC),
+                        data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
         else:
             # Legacy mode: Copy data between storage accounts
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
@@ -260,7 +281,12 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 
 
 def get_request_files(request_properties: RequestProperties):
-    storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+    use_metadata = os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
+    if use_metadata:
+        storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(
+            request_properties.type, request_properties.previous_status, request_properties.workspace_id)
+    else:
+        storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
 
 

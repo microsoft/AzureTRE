@@ -58,11 +58,19 @@ resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" 
         @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase
           '${azurerm_private_endpoint.airlock_workspace_pe.id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['workspace_id']
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:workspace_id]
           StringEquals '${var.workspace_id}'
         AND
-        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers].metadata['stage']
-          StringIn ('import-approved', 'export-internal', 'export-in-progress', 'import-in-progress')
+        (
+          @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+            StringEquals 'import-approved'
+          OR
+          @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+            StringEquals 'export-internal'
+          OR
+          @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+            StringEquals 'export-in-progress'
+        )
       )
     )
   EOT
