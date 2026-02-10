@@ -30,18 +30,14 @@ ensure_automation_login() {
   if [[ -n "${TF_IN_AUTOMATION:-}" ]]; then
     if [[ -d "$HOME/.azure" ]]; then
       echo "Using existing Azure CLI login."
-    else
+    elif [[ -n "${ARM_CLIENT_SECRET:-}" ]]; then
+      echo "Warning: Using classic service principal authentication."
       az cloud set --name "${AZURE_ENVIRONMENT}"
-
-      if [[ -n "${ARM_CLIENT_SECRET:-}" ]]; then
-        echo "Warning: Using classic service principal authentication."
-        az login --service-principal -u "${ARM_CLIENT_ID}" -p "${ARM_CLIENT_SECRET}" --tenant "${ARM_TENANT_ID}"
-      else
-        echo "Error: No authentication method available (Azure CLI or client secret required)"
-        exit 1
-      fi
-
+      az login --service-principal -u "${ARM_CLIENT_ID}" -p "${ARM_CLIENT_SECRET}" --tenant "${ARM_TENANT_ID}"
       az account set -s "${ARM_SUBSCRIPTION_ID}"
+    else
+      echo "Error: No authentication method available (Azure CLI or client secret required)"
+      exit 1
     fi
   fi
 }
