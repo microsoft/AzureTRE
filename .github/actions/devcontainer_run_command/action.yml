@@ -256,6 +256,9 @@ runs:
           -e ARM_CLIENT_ID="${{ inputs.AZURE_CLIENT_ID }}" \
           -e ARM_TENANT_ID="${{ inputs.AZURE_TENANT_ID }}" \
           -e ARM_SUBSCRIPTION_ID="${{ inputs.AZURE_SUBSCRIPTION_ID }}" \
+          -e ARM_USE_OIDC="true" \
+          -e ACTIONS_ID_TOKEN_REQUEST_URL \
+          -e ACTIONS_ID_TOKEN_REQUEST_TOKEN \
           -e TF_VAR_terraform_state_container_name="${{ (inputs.TERRAFORM_STATE_CONTAINER_NAME != ''
             && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
