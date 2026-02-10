@@ -313,7 +313,7 @@ resource "azurerm_eventgrid_event_subscription" "scan_result" {
 }
 
 # Unified EventGrid Event Subscription for ALL Core Blob Created Events
-# This single subscription handles ALL 5 core stages: import-external, import-in-progress, 
+# This single subscription handles ALL 5 core stages: import-external, import-in-progress,
 # import-rejected, import-blocked, export-approved
 resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   name  = "airlock-blob-created-${var.tre_id}"
