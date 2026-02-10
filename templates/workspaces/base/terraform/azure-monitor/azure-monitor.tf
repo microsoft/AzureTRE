@@ -189,12 +189,11 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
 # Separate DNS zone group using azapi to avoid AnotherOperationInProgress errors
 # See: https://github.com/hashicorp/terraform-provider-azurerm/issues/28715
 resource "azapi_resource" "azure_monitor_dns_zone_group" {
-  type                      = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01"
-  name                      = "azure-monitor-private-dns-zone-group"
-  parent_id                 = azurerm_private_endpoint.azure_monitor_private_endpoint.id
-  schema_validation_enabled = false
+  type      = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01"
+  name      = "azure-monitor-private-dns-zone-group"
+  parent_id = azurerm_private_endpoint.azure_monitor_private_endpoint.id
 
-  body = jsonencode({
+  body = {
     properties = {
       privateDnsZoneConfigs = [
         {
@@ -229,7 +228,9 @@ resource "azapi_resource" "azure_monitor_dns_zone_group" {
         }
       ]
     }
-  })
+  }
+
+  response_export_values = ["id"]
 
   depends_on = [
     azurerm_private_endpoint.azure_monitor_private_endpoint,
