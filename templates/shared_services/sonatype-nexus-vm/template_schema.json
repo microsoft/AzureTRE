@@ -5,9 +5,16 @@
   "title": "Sonatype Nexus Repository Manager",
   "description": "Sonatype Nexus is a repository manager that helps you manage components, binaries, and build artifacts. Its proxy functionality enables users without public Internet connectivity to access software packages.",
   "required": [
-    "ssl_cert_name"
+    "ssl_cert_name",
+    "accept_nexus_eula"
   ],
   "properties": {
+    "accept_nexus_eula": {
+      "type": "boolean",
+      "title": "I accept the Sonatype Nexus Community Edition EULA",
+      "default": false,
+      "const": true
+    },
     "display_name": {
       "type": "string",
       "title": "Name for the workspace service",
@@ -57,6 +64,11 @@
     }
   },
   "uiSchema": {
+    "ui:order": ["accept_nexus_eula", "display_name", "description", "overview", "ssl_cert_name", "vm_size", "*"],
+    "accept_nexus_eula": {
+      "ui:widget": "checkbox",
+      "ui:help": "View the EULA at: https://links.sonatype.com/products/nxrm/ce-eula"
+    },
     "is_exposed_externally": {
       "classNames": "tre-hidden"
     }
