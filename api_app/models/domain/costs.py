@@ -18,9 +18,16 @@ class CurrencyEnum(StrEnum):
 
 def generate_cost_row_dict_example(granularity: GranularityEnum, currency: CurrencyEnum):
     return dict({
-        "cost": random.uniform(0, 365), "currency": currency, "date":
-            (datetime.today() - timedelta(
-                days=-1 * random.randint(0, 1000))).date() if granularity == GranularityEnum.daily else None
+        "cost": random.uniform(0, 365),  # nosec B311 - non-cryptographic random for sample data
+        "currency": currency, 
+        "date":(
+            datetime.today() 
+            - timedelta(
+                days=-1 * random.randint(0, 1000)  # nosec B311 - non-cryptographic random for sample data
+            )
+        ).date()
+        if granularity == GranularityEnum.daily 
+        else None,
     })
 
 
