@@ -93,6 +93,12 @@ resource "azurerm_role_assignment" "keyvault_nexus_role" {
   principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
 }
 
+resource "azurerm_role_assignment" "acr_pull_nexus_role" {
+  scope                = data.azurerm_container_registry.mgmt_acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
+}
+
 resource "azurerm_linux_virtual_machine" "nexus" {
   name                            = "nexus-${var.tre_id}"
   resource_group_name             = local.core_resource_group_name
@@ -236,6 +242,9 @@ data "cloudinit_config" "nexus_config" {
 locals {
   nexus_bootstrapping_content = templatefile("${path.module}/cloud-config.yaml", {
     NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
+    MSI_ID               = azurerm_user_assigned_identity.nexus_msi.client_id
+    ACR_NAME             = data.azurerm_container_registry.mgmt_acr.name
+    NEXUS_IMAGE_TAG      = var.nexus_image_tag
   })
 
   configure_nexus_ssl_content = templatefile("${path.module}/../scripts/configure_nexus_ssl.sh", {
@@ -250,7 +259,7 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   name                       = "${azurerm_linux_virtual_machine.nexus.name}-KeyVault"
   publisher                  = "Microsoft.Azure.KeyVault"
   type                       = "KeyVaultForLinux"
-  type_handler_version       = "2.0"
+  type_handler_version       = "3.5"
   auto_upgrade_minor_version = true
   tags                       = local.tre_shared_service_tags
 
@@ -267,6 +276,30 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_virtual_machine_extension" "cloud_init_wait" {
+  virtual_machine_id         = azurerm_linux_virtual_machine.nexus.id
+  name                       = "${azurerm_linux_virtual_machine.nexus.name}-CloudInitWait"
+  publisher                  = "Microsoft.Azure.Extensions"
+  type                       = "CustomScript"
+  type_handler_version       = "2.1"
+  auto_upgrade_minor_version = true
+  tags                       = local.tre_shared_service_tags
+
+  protected_settings = jsonencode({
+    "commandToExecute" : "cloud-init status --wait && cloud-init status | grep -q 'status: done' || (echo 'Cloud-init failed'; exit 1)"
+  })
+
+  depends_on = [
+    azurerm_virtual_machine_extension.keyvault
+  ]
+
+  timeouts {
+    create = "30m"
+  }
 
   lifecycle { ignore_changes = [tags] }
 }

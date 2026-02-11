@@ -49,3 +49,8 @@ data "azurerm_user_assigned_identity" "tre_encryption_identity" {
   name                = local.encryption_identity_name
   resource_group_name = local.core_resource_group_name
 }
+
+data "azurerm_container_registry" "mgmt_acr" {
+  name                = var.mgmt_acr_name
+  resource_group_name = var.mgmt_resource_group_name
+}

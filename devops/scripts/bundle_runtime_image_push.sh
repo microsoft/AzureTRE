@@ -5,6 +5,12 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
+# Skip if using import (image already in ACR from import step)
+if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
+  echo "Using imported image, skipping push..."
+  exit 0
+fi
+
 if [ "$(yq eval ".custom.runtime_image.build" porter.yaml)" == "null" ]; then
   echo "Runtime image build section isn't specified. Exiting..."
   exit 0
