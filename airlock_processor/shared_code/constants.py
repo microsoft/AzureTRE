@@ -6,7 +6,7 @@ IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
 
 # Consolidated storage account names (metadata-based approach)
-STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"  # Consolidated core account  
+STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"  # Consolidated core account
 STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg"  # Global workspace account for all workspaces
 
 # Stage metadata values for container metadata

@@ -468,7 +468,7 @@ async def test_update_and_publish_event_airlock_request_updates_item(_, event_gr
 @patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
 @patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]})
 async def test_update_and_publish_event_includes_review_workspace_id_for_import(_, event_grid_publisher_client_mock,
-                                                                                 airlock_request_repo_mock):
+                                                                                airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
     status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft", review_workspace_id=REVIEW_WORKSPACE_ID[-4:])

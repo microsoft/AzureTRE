@@ -9,10 +9,6 @@ terraform {
         azurerm.core
       ]
     }
-    azapi = {
-      source  = "Azure/azapi"
-      version = ">= 2.3.0"
-    }
   }
 }
 

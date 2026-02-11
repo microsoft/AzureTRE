@@ -1,6 +1,5 @@
 import pytest
-from datetime import datetime, UTC
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError
 

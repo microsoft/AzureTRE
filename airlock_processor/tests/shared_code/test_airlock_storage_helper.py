@@ -1,5 +1,4 @@
 import os
-import pytest
 from unittest.mock import patch
 
 from shared_code.airlock_storage_helper import (
