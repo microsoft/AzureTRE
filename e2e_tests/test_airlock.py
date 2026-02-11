@@ -184,22 +184,32 @@ async def test_airlock_flow(setup_test_workspace, verify) -> None:
     # 4. check the file has been deleted from the source
     # NOTE: We should really be checking that the file is deleted from in progress location too,
     # but doing that will require setting up network access to in-progress storage account
-    try:
-        container_client = ContainerClient.from_container_url(container_url=container_url)
-        # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
-        # Checking that at least there are no blobs within the container
-        for _ in container_client.list_blobs():
-            container_url_without_sas = container_url.split("?")[0]
-            assert False, f"The source blob in container {container_url_without_sas} should be deleted"
-    except ResourceNotFoundError:
-        # Expecting this exception
-        pass
+    # In consolidated/metadata storage mode, data stays in the same container (only stage metadata changes),
+    # so the source blob deletion check only applies to the legacy per-stage-account model.
+    container_url_without_sas = container_url.split("?")[0]
+    is_consolidated_storage = "stalairlock" in container_url_without_sas
+    if not is_consolidated_storage:
+        try:
+            container_client = ContainerClient.from_container_url(container_url=container_url)
+            # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
+            # Checking that at least there are no blobs within the container
+            for _ in container_client.list_blobs():
+                assert False, f"The source blob in container {container_url_without_sas} should be deleted"
+        except ResourceNotFoundError:
+            # Expecting this exception
+            pass
+    else:
+        LOGGER.info("Consolidated storage mode - skipping source blob deletion check (data stays in same container)")
 
     # 5. get a link to the blob in the approved location.
     # For a full E2E we should try to download it, but can't without special networking setup.
-    # So at the very least we check that we get the link for it.
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    container_url = request_result["containerUrl"]
+    # In consolidated storage mode, import-approved data is only accessible from within the workspace
+    # via private endpoints, so the API correctly returns 403 when accessed from outside.
+    if not is_consolidated_storage:
+        request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+        container_url = request_result["containerUrl"]
+    else:
+        LOGGER.info("Consolidated storage mode - import-approved link only accessible from within workspace, skipping link check")
 
     # 6. create airlock export request
     LOGGER.info("Creating airlock export request")
@@ -218,8 +228,12 @@ async def test_airlock_flow(setup_test_workspace, verify) -> None:
     request_id = request_result["airlockRequest"]["id"]
 
     # 7. get container link
+    # In consolidated storage mode, export draft is only accessible from within the workspace
     LOGGER.info("Getting airlock request container URL")
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    container_url = request_result["containerUrl"]
+    if not is_consolidated_storage:
+        request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+        container_url = request_result["containerUrl"]
+    else:
+        LOGGER.info("Consolidated storage mode - export draft link only accessible from within workspace, skipping link check")
     # we can't test any more the export flow since we don't have the network
     # access to upload the file from within the workspace.

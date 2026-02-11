@@ -55,6 +55,9 @@ def main(msg: func.ServiceBusMessage,
     elif constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED in topic:
         completed_step = constants.STAGE_BLOCKING_INPROGRESS
         new_status = constants.STAGE_BLOCKED_BY_SCAN
+    else:
+        logging.warning(f"Unknown storage account in topic: {topic}")
+        return
 
     # reply with a step completed event
     stepResultEvent.set(
