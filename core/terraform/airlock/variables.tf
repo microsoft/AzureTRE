@@ -107,8 +107,3 @@ variable "encryption_key_versionless_id" {
   type        = string
   description = "Versionless ID of the encryption key in the key vault"
 }
-
-variable "app_gateway_subnet_id" {
-  type        = string
-  description = "Subnet ID of the App Gateway for storage account network rules"
-}

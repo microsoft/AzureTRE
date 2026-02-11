@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from models.domain.airlock_request import AirlockRequestStatus
 from services.airlock_storage_helper import (
