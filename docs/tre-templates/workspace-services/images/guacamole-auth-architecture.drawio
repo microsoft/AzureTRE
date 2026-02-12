@@ -1,0 +1,148 @@
+<mxfile host="65bd71144e">
+    <diagram id="guacamole-auth-flow" name="Guacamole Auth Architecture">
+        <mxGraphModel dx="1208" dy="692" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="Apache Guacamole Workspace Service — Authentication Architecture" style="text;html=1;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;whiteSpace=wrap;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="20" width="800" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="user" value="&lt;b&gt;User Browser&lt;/b&gt;" style="shape=mxgraph.azure.user;fillColor=#0078D4;fontColor=#ffffff;strokeColor=#005A9E;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;imageWidth=40;imageHeight=40;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="340" width="100" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="container" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=2;dashed=1;dashPattern=5 5;arcSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="120" width="620" height="560" as="geometry"/>
+                </mxCell>
+                <mxCell id="container_label" value="&lt;b&gt;Azure Linux Web App&lt;/b&gt;&lt;br&gt;(Docker Container)" style="text;html=1;fontSize=14;fontStyle=0;align=left;verticalAlign=top;whiteSpace=wrap;fillColor=none;strokeColor=none;fontColor=#333333;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="125" width="250" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="oauth2proxy" value="&lt;b&gt;OAuth2 Proxy&lt;/b&gt;&lt;br&gt;(v7.13.0)&lt;br&gt;&lt;br&gt;Port 8085 (external)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• OIDC provider&lt;br&gt;• Session cookies&lt;br&gt;• Token forwarding&lt;br&gt;• skip-provider-button&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1BA1E2;fontColor=#ffffff;strokeColor=#006EAF;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="180" width="200" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="guacweb" value="&lt;b&gt;Apache Guacamole&lt;/b&gt;&lt;br&gt;(Tomcat)&lt;br&gt;&lt;br&gt;Port 8080 (internal)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• Guacamole UI&lt;br&gt;• REST API&lt;br&gt;• OpenID extension&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#60A917;fontColor=#ffffff;strokeColor=#2D7600;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="400" width="200" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="authext" value="&lt;b&gt;guacamole-auth-tre&lt;/b&gt;&lt;br&gt;(Custom Extension)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• JWT validation&lt;br&gt;• Role checking&lt;br&gt;• Connection fetching&lt;br&gt;• Credential injection&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FA6800;fontColor=#ffffff;strokeColor=#C73500;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="400" width="200" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="guacd" value="&lt;b&gt;guacd&lt;/b&gt;&lt;br&gt;(Daemon)&lt;br&gt;&lt;br&gt;Port 4822 (internal)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• RDP / VNC / SSH&lt;br&gt;• Protocol translation&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A61C00;fontColor=#ffffff;strokeColor=#6F0000;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="570" width="200" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="entraid" value="&lt;b&gt;Microsoft Entra ID&lt;/b&gt;&lt;br&gt;(Azure AD)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• OIDC Identity Provider&lt;br&gt;• /authorize &amp; /token endpoints&lt;br&gt;• JWKS signing keys&lt;br&gt;• Workspace App Registration&lt;br&gt;• Role claims (WorkspaceOwner,&lt;br&gt;&amp;nbsp;&amp;nbsp;Researcher, AirlockManager)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0078D4;fontColor=#ffffff;strokeColor=#00366E;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="770" width="240" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="treapi" value="&lt;b&gt;TRE API&lt;/b&gt;&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;GET /api/workspaces/&lt;br&gt;&amp;nbsp;&amp;nbsp;{ws}/workspace-services/&lt;br&gt;&amp;nbsp;&amp;nbsp;{svc}/user-resources&lt;br&gt;&lt;br&gt;Returns VM list:&lt;br&gt;• hostname&lt;br&gt;• IP address&lt;br&gt;• display_name&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#6264A7;fontColor=#ffffff;strokeColor=#3B3D87;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="1060" y="180" width="200" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="keyvault" value="&lt;b&gt;Azure Key Vault&lt;/b&gt;&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;Stores:&lt;br&gt;• workspace-client-id&lt;br&gt;• workspace-client-secret&lt;br&gt;• {hostname}-admin-credentials&lt;br&gt;&lt;br&gt;Access via Managed Identity&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#00BCF2;fontColor=#ffffff;strokeColor=#0078D4;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="1060" y="430" width="200" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="vm" value="&lt;b&gt;Workspace VM&lt;/b&gt;&lt;br&gt;(User Resource)&lt;br&gt;&lt;hr&gt;&lt;font style=&quot;font-size:10px&quot;&gt;• RDP port 3389&lt;br&gt;• Inside workspace VNet&lt;br&gt;• ignore-cert = true&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#767676;fontColor=#ffffff;strokeColor=#4D4D4D;fontSize=12;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="1060" y="640" width="200" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1" value="① HTTPS request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#333333;fontSize=11;fontColor=#333333;" parent="1" source="user" target="oauth2proxy" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2" value="② OIDC redirect&#xa;&amp; token exchange" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0078D4;fontSize=11;fontColor=#0078D4;dashed=0;" parent="1" source="oauth2proxy" target="entraid" edge="1">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="270" y="340"/>
+                            <mxPoint x="270" y="750"/>
+                            <mxPoint x="340" y="750"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e2b" value="② Login / MFA" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0078D4;fontSize=11;fontColor=#0078D4;dashed=1;dashPattern=8 4;" parent="1" source="user" target="entraid" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="110" y="860"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e3" value="③ Forward request +&#xa;X-Forwarded-Access-Token&#xa;X-Forwarded-Preferred-Username" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#2D7600;fontSize=10;fontColor=#2D7600;" parent="1" source="oauth2proxy" target="guacweb" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4" value="④ Authenticate user" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#C73500;fontSize=11;fontColor=#C73500;" parent="1" source="guacweb" target="authext" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5" value="⑤ Validate JWT&#xa;(JWKS)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0078D4;fontSize=11;fontColor=#0078D4;dashed=1;dashPattern=8 4;" parent="1" source="authext" target="entraid" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="720" y="750"/>
+                            <mxPoint x="580" y="750"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e6" value="⑥ Fetch user VMs&#xa;(Bearer token)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#6264A7;fontSize=11;fontColor=#6264A7;" parent="1" source="authext" target="treapi" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="980" y="400"/>
+                            <mxPoint x="980" y="270"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e7" value="⑦ Get VM credentials&#xa;(Managed Identity)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#00BCF2;fontSize=11;fontColor=#0078D4;" parent="1" source="authext" target="keyvault" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="980" y="470"/>
+                            <mxPoint x="980" y="505"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e8" value="⑧ RDP tunnel&#xa;(with injected creds)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#A61C00;fontSize=11;fontColor=#A61C00;" parent="1" source="authext" target="guacd" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e9" value="⑨ RDP (port 3389)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#767676;fontSize=11;fontColor=#4D4D4D;" parent="1" source="guacd" target="vm" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10" value="⑩ Streamed desktop session" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#60A917;fontSize=11;fontColor=#2D7600;dashed=1;dashPattern=8 4;" parent="1" source="guacweb" target="user" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="340" y="560"/>
+                            <mxPoint x="230" y="560"/>
+                            <mxPoint x="230" y="300"/>
+                            <mxPoint x="110" y="300"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#999999;strokeWidth=1;arcSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1060" y="810" width="250" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_title" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;fontSize=12;fontStyle=0;align=left;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="1070" y="815" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg1" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1080" y="850" as="sourcePoint"/>
+                        <mxPoint x="1130" y="850" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg1t" value="Request / data flow" style="text;html=1;fontSize=10;align=left;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="840" width="150" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg2" value="" style="endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;dashed=1;dashPattern=8 4;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1080" y="880" as="sourcePoint"/>
+                        <mxPoint x="1130" y="880" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg2t" value="Redirect / async flow" style="text;html=1;fontSize=10;align=left;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="870" width="150" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;strokeWidth=1;dashed=1;dashPattern=5 5;arcSize=8;" parent="1" vertex="1">
+                    <mxGeometry x="1080" y="900" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg3t" value="Docker container boundary" style="text;html=1;fontSize=10;align=left;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="900" width="150" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg4" value="①–⑩" style="text;html=1;fontSize=10;align=center;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1080" y="925" width="40" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg4t" value="Authentication flow sequence" style="text;html=1;fontSize=10;align=left;verticalAlign=middle;whiteSpace=wrap;fillColor=none;strokeColor=none;" parent="1" vertex="1">
+                    <mxGeometry x="1140" y="925" width="150" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
