@@ -41,6 +41,7 @@ BUG FIXES:
 * Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Fix workspace deletion failures due to AnotherOperationInProgress errors on AMPLS private endpoint ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 * Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
 * Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
@@ -56,6 +57,7 @@ BUG FIXES:
 * Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
 
 COMPONENTS:
+* Bump workspace base template version to 2.7.2 ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
 
 | name | version |
 | ----- | ----- |

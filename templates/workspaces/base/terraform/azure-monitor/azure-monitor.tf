@@ -180,20 +180,60 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
     is_manual_connection           = false
   }
 
-  private_dns_zone_group {
-    name = "azure-monitor-private-dns-zone-group"
-
-    private_dns_zone_ids = [
-      var.azure_monitor_dns_zone_id,
-      var.azure_monitor_oms_opinsights_dns_zone_id,
-      var.azure_monitor_ods_opinsights_dns_zone_id,
-      var.azure_monitor_agentsvc_dns_zone_id,
-      var.blob_core_dns_zone_id,
-    ]
-  }
-
   depends_on = [
     azurerm_monitor_private_link_scoped_service.ampls_app_insights,
+    azurerm_monitor_private_link_scoped_service.ampls_log_anaytics,
+  ]
+}
+
+# Separate DNS zone group using azapi to avoid AnotherOperationInProgress errors
+# See: https://github.com/hashicorp/terraform-provider-azurerm/issues/28715
+resource "azapi_resource" "azure_monitor_dns_zone_group" {
+  type      = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01"
+  name      = "azure-monitor-private-dns-zone-group"
+  parent_id = azurerm_private_endpoint.azure_monitor_private_endpoint.id
+
+  body = {
+    properties = {
+      privateDnsZoneConfigs = [
+        {
+          name = "privatelink-monitor-azure-com"
+          properties = {
+            privateDnsZoneId = var.azure_monitor_dns_zone_id
+          }
+        },
+        {
+          name = "privatelink-oms-opinsights-azure-com"
+          properties = {
+            privateDnsZoneId = var.azure_monitor_oms_opinsights_dns_zone_id
+          }
+        },
+        {
+          name = "privatelink-ods-opinsights-azure-com"
+          properties = {
+            privateDnsZoneId = var.azure_monitor_ods_opinsights_dns_zone_id
+          }
+        },
+        {
+          name = "privatelink-agentsvc-azure-automation-net"
+          properties = {
+            privateDnsZoneId = var.azure_monitor_agentsvc_dns_zone_id
+          }
+        },
+        {
+          name = "privatelink-blob-core-windows-net"
+          properties = {
+            privateDnsZoneId = var.blob_core_dns_zone_id
+          }
+        }
+      ]
+    }
+  }
+
+  response_export_values = ["id"]
+
+  depends_on = [
+    azurerm_private_endpoint.azure_monitor_private_endpoint,
   ]
 }
 
