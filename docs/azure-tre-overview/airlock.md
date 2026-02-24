@@ -24,6 +24,21 @@ Typically in a TRE, the Airlock feature would be used to allow a researcher to e
 
 The Airlock feature will create events on every meaningful step of the process. This will enable increased flexibility by allowing an organization to extend the notification mechanism.
 
+## Storage Architecture
+
+The airlock uses a consolidated storage architecture with **2 storage accounts** and metadata-based stage management:
+
+1. **Core Storage** (`stalairlock{tre_id}`): Handles all core stages
+   - Import: external, in-progress, rejected, blocked
+   - Export: approved
+   - Accessed via private endpoint (processor) and SAS tokens (public stages)
+
+2. **Global Workspace Storage** (`stalairlockg{tre_id}`): Handles all workspace stages for all workspaces
+   - Import: approved
+   - Export: internal, in-progress, rejected, blocked
+   - Each workspace has its own private endpoint for network isolation
+   - ABAC (Attribute-Based Access Control) filters access by workspace_id + stage
+
 ## Ingress/Egress Mechanism
 
 The Airlock allows a TRE user to start the `import` or `export` process to a given workspace. A number of milestones must be reached in order to complete a successful import or export. These milestones are defined using the following states:
@@ -62,39 +77,46 @@ graph TD
 
 When an airlock process is created the initial state is **Draft** and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user will be able to get a link for this container inside the storage account (URL + SAS token) that they can use to upload the desired data to be processed (import or export).
 
-This storage location is external for import (`stalimex`) or internal for export (`stalexint`), however only accessible to the requestor (ex: a TRE user/researcher).
+This storage location is in the core storage account (`stalairlock`) for import external or the global workspace storage (`stalairlockg`) for export internal, accessible only to the requestor (ex: a TRE user/researcher) via SAS token.
 The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line tool.
 
-The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**.
+The user Submits the request (TRE API call) updating the container metadata to the next stage. For import, the container remains in core storage. For export, the container remains in workspace storage. The airlock request is now in state **Submitted**.
 If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in detail in the [Microsoft Defender for Storage documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction).
-In the case that security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to blocked storage  (either import blocked `stalimblocked` or export blocked `stalexblocked`). In this case, the request is finalized with the state **Blocked By Scan**.
-If the Security Scanning does not identify any security flaws, the request state becomes **In-Review**. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).
+In the case that security flaws are found, the container metadata is updated to blocked status. In this case, the request is finalized with the state **Blocked By Scan**.
+If the Security Scanning does not identify any security flaws, the container metadata is updated to in-review status, and the request state becomes **In-Review**. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call.
-At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - export approved  or `stalimapp` - import approved.
-With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, through a TRE API call.
+At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**. For approval, data is copied to the final destination (core storage to workspace storage for import, workspace storage to core storage for export). For rejection, only metadata is updated. The request then moves to **Approved** or **Rejected** accordingly.
 
 ## Data movement
 
 For any airlock process, there is data movement either **into** a TRE workspace (in import process) or **from** a TRE workspace (in export process). Being a TRE Workspace boundary, there are networking configurations designed to achieve this goal. The data movement will guarantee that the data is automatically verified for security flaws and manually reviewed, before placing data inside the TRE Workspace.
 Also, the process guarantees that data is not tampered with throughout the process.
 
+**Metadata-Based Stage Management:**
+Most stage transitions update container metadata only, providing near-instant transitions. Data is copied only when moving between storage accounts:
+- **Import approved**: Core storage → Global workspace storage  (1 copy per import)
+- **Export approved**: Global workspace storage → Core storage (1 copy per export)
+
+All other transitions (draft→submitted, submitted→in-review, in-review→rejected/blocked) update metadata only.
+
 In an import process, data will transition from more public locations (yet confined to the requestor) to TRE workspace storage, after guaranteeing security automatically and by manual review.
 
 In an export process, data will transition from internal locations (available to the requestor) to public locations in the TRE, after going through a manual review.
 
-Considering that the Airlock requests may require large data movements, the operations can have longer durations, hence becoming the operations asynchronous. This is why states like **Approval In-progress**, **Rejection In-progress** or **Blocking In-progress** will be set while there are data movement operations.
-
-> The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between
+The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between states.
 
 ## Security Scan
 
-The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
+The identified data in an airlock process, will be submitted to a security scan. If the security scan
+identifies issues the data is quarantined by updating the container metadata to blocked status and a report
+is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful
+security scan, the container metadata remains at in-progress status, and accessible to the Workspace Owner.
 
-> * The Security scan will be optional, behind a feature flag enabled by a script
-> * The outcome of the security scan will be either the in-progress (`stalexip`) storage or blocked (`stalexblocked`)
+> * The Security scan is optional, behind a feature flag enabled by a script
+> * The outcome of the security scan will be either the in-progress metadata status or blocked metadata status
 > * An airlock process will guarantee that the content being imported/exported is secure. It is envisioned that a set of **security gates** are identified to be executed successfully for a process to be approved.
 
 ## Approval mechanism
@@ -121,69 +143,77 @@ When the state changes to `In-progress` the Workspace Owner (Airlock Manager) ge
 
 ## Architecture
 
-The Airlock feature is supported by infrastructure at the TRE and workspace level, containing a set of storage accounts. Each Airlock request will provision and use unique storage containers with the request id in its name.
+The Airlock feature is supported by a consolidated storage architecture with **2 storage accounts** and metadata-based stage management. Each Airlock request uses a unique storage container named with the request ID, and the stage is tracked via container metadata.
+
+**Storage Accounts:**
+
+1. **Core Storage** (`stalairlock{tre_id}`): Handles all core stages
+   - Import: external, in-progress, rejected, blocked
+   - Export: approved
+   - Private endpoint from airlock processor subnet
+   - Public access for external/approved stages via SAS tokens
+
+2. **Global Workspace Storage** (`stalairlockg{tre_id}`): Handles all workspace stages for all workspaces
+   - Import: approved
+   - Export: internal, in-progress, rejected, blocked
+   - Each workspace has its own private endpoint for network isolation
+   - ABAC (Attribute-Based Access Control) filters access by workspace_id + stage
 
 ```mermaid
 graph LR
-  subgraph TRE Workspace
-  E[(stalimapp</br>import approved)]
+  subgraph Global Workspace Storage
+  E[(container: request-id</br>metadata: import-approved)]
   end
-  subgraph TRE
-  A[(stalimex</br>import external)]-->|Request Submitted| B
-  B[(stalimip</br>import in-progress)]-->|Security issues found| D[(stalimblocked</br>import blocked)] 
-  B-->|No security issues found| review{Manual</br>Approval} 
-  review-->|Rejected| C[(stalimrej</br>import rejected)]
-  review-->|Approved| E
+  subgraph Core Storage
+  A[(container: request-id</br>metadata: import-external)]-->|"Submitted</br>(metadata update)"| B
+  B[(container: request-id</br>metadata: import-in-progress)]-->|"Security issues found</br>(metadata update)"| D[(container: request-id</br>metadata: import-blocked)] 
+  B-->|"No issues found</br>(metadata update)"| review{Manual</br>Approval} 
+  review-->|"Rejected</br>(metadata update)"| C[(container: request-id</br>metadata: import-rejected)]
+  review-->|"Approved</br>(data copy)"| E
   end
   subgraph External
       data(Data to import)-->A
   end
 ```
-> Data movement in an Airlock import request
+> Data movement in an Airlock import request. Most transitions update metadata only; data is copied only on approval.
 
 ```mermaid
 graph LR
-  subgraph TRE workspace
+  subgraph Global Workspace Storage
   data(Data to export)-->A
-  A[(stalexint</br>export internal)]-->|Request Submitted| B
-  B[(stalexip</br>export in-progress)]-->|Security issues found| D[(stalexblocked</br>export blocked)] 
-  B-->|No security issues found| review{Manual</br>Approval} 
-  review-->|Rejected| C[(stalexrej</br>export rejected)]
+  A[(container: request-id</br>metadata: export-internal)]-->|"Submitted</br>(metadata update)"| B
+  B[(container: request-id</br>metadata: export-in-progress)]-->|"Security issues found</br>(metadata update)"| D[(container: request-id</br>metadata: export-blocked)] 
+  B-->|"No issues found</br>(metadata update)"| review{Manual</br>Approval} 
+  review-->|"Rejected</br>(metadata update)"| C[(container: request-id</br>metadata: export-rejected)]
   end
-  subgraph External
-  review-->|Approved| E[(stalexapp</br>export approved)]
+  subgraph Core Storage
+  review-->|"Approved</br>(data copy)"| E[(container: request-id</br>metadata: export-approved)]
   end
 ```
-> Data movement in an Airlock export request
+> Data movement in an Airlock export request. Most transitions update metadata only; data is copied only on approval.
 
+**Container Metadata Stages:**
 
-TRE:
+Core Storage (`stalairlock`):
+* `import-external` - Initial upload location for imports (public via SAS)
+* `import-in-progress` - After submission, during review
+* `import-rejected` - Import rejected by reviewer
+* `import-blocked` - Import blocked by security scan
+* `export-approved` - Final location for approved exports (public via SAS)
 
-* `stalimex` - storage (st) airlock (al) import (im) external (ex)
-* `stalimip` - storage (st) airlock (al) import (im) in-progress (ip)
-* `stalimrej` - storage (st) airlock (al) import (im) rejected (rej)
-* `stalimblocked` - storage (st) airlock (al) import (im) blocked
-* `stalexapp` - storage (st) airlock (al) export (ex) approved (app)
+Global Workspace Storage (`stalairlockg`):
+* `import-approved` - Final location for approved imports (workspace access)
+* `export-internal` - Initial upload location for exports (workspace access)
+* `export-in-progress` - After submission, during review
+* `export-rejected` - Export rejected by reviewer
+* `export-blocked` - Export blocked by security scan
 
-Workspace:
-
-* `stalimapp` - workspace storage (st) airlock (al) import (im) approved (app)
-* `stalexint` - workspace storage (st) airlock (al) export (ex) internal (int)
-* `stalexip` - workspace storage (st) airlock (al) export (ex) in-progress (ip)
-* `stalexrej` - workspace storage (st) airlock (al) export (ex) rejected (rej)
-* `stalexblocked` - workspace storage (st) airlock (al) export (ex) blocked
-
-> * The external storage accounts (`stalimex`, `stalexapp`), are not bound to any vnet and are accessible (with SAS token) via the internet
-> * The internal storage account (`stalexint`) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it
-> * The (export) in-progress storage account (`stalexip`) is bound to the workspace vnet
-> * The (export) blocked storage account (`stalexblocked`) is bound to the workspace vnet
-> * The (export) rejected storage account (`stalexrej`) is bound to the workspace vnet
-> * The (import) in-progress storage account (`stalimip`) is bound to the TRE CORE vnet
-> * The (import) blocked storage account (`stalimblocked`) is bound to the TRE CORE vnet
-> * The (import) rejected storage account (`stalimrej`) is bound to the TRE CORE vnet
-> * The (import) approved storage account (`stalimapp`) is bound to the workspace vnet
-
-[![Airlock networking](../assets/airlock-networking.png)](../assets/airlock-networking.png)
+**Network Access:**
+> * Core storage has a private endpoint from the airlock processor subnet for internal processing
+> * Core storage allows public access via SAS tokens for import-external and export-approved stages
+> * Global workspace storage has a private endpoint per workspace for network isolation
+> * ABAC conditions restrict each workspace's access to containers matching their workspace_id
+> * The airlock processor has unrestricted access to both storage accounts for data operations
 
 In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
 
@@ -200,6 +230,67 @@ Also in the airlock feature there is the **Airlock Processor** which handles the
 
 ## Airlock flow
 
-The following sequence diagram detailing the Airlock feature and its event driven behaviour:
+The following sequence diagram details the Airlock feature and its event-driven behaviour with consolidated storage:
 
-[![Airlock flow](../assets/airlock-swimlanes.png)](../assets/airlock-swimlanes.png)
+```mermaid
+sequenceDiagram
+    participant R as Researcher
+    participant API as TRE API
+    participant CS as Core Storage<br/>(stalairlock)
+    participant WS as Workspace Storage<br/>(stalairlockg)
+    participant AP as Airlock Processor
+    participant EG as Event Grid
+    participant SB as Service Bus
+    participant DB as Cosmos DB
+
+    Note over R,DB: Creating a Draft Request (Import Example)
+    R->>API: create draft request
+    API->>CS: create container (metadata: import-external)
+    API->>DB: save request (status: draft)
+    API-->>R: OK + container link
+
+    Note over R,DB: Uploading Files
+    R->>CS: upload file to container
+
+    Note over R,DB: Submitting Request
+    R->>API: submit request
+    API->>CS: update metadata → import-in-progress
+    API->>DB: update status → submitted
+    API->>EG: StatusChangedEvent(submitted)
+    EG->>SB: queue status change
+    SB->>AP: consume StatusChangedEvent
+
+    Note over R,DB: Security Scan (if enabled)
+    CS->>EG: Defender scan result
+    EG->>SB: queue scan result
+    SB->>AP: consume ScanResultEvent
+    
+    alt Threat Found
+        AP->>CS: update metadata → import-blocked
+        AP->>DB: update status → blocked
+    else No Threat
+        AP->>DB: update status → in_review
+        AP->>EG: NotificationEvent (to reviewer)
+    end
+
+    Note over R,DB: Approval/Rejection
+    R->>API: approve/reject request
+    API->>DB: update status → approval_in_progress
+    API->>EG: StatusChangedEvent(approval_in_progress)
+    EG->>SB: queue status change
+    SB->>AP: consume StatusChangedEvent
+    
+    alt Approved
+        AP->>WS: create container (metadata: import-approved, workspace_id)
+        AP->>WS: copy blob from Core → Workspace storage
+        WS->>EG: BlobCreatedEvent
+        EG->>SB: queue blob created
+        SB->>AP: consume BlobCreatedEvent
+        AP->>DB: update status → approved
+    else Rejected
+        AP->>CS: update metadata → import-rejected
+        AP->>DB: update status → rejected
+    end
+    
+    AP->>EG: NotificationEvent (to researcher)
+```

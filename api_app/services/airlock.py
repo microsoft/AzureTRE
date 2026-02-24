@@ -36,37 +36,6 @@ from event_grid.event_sender import send_status_changed_event, send_airlock_noti
 STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
 
 
-def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
-    tre_id = config.TRE_ID
-    short_workspace_id = workspace.id[-4:]
-    if airlock_request.type == constants.IMPORT_TYPE:
-        if airlock_request.status == AirlockRequestStatus.Draft:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
-        elif airlock_request.status == AirlockRequestStatus.Submitted:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
-        elif airlock_request.status == AirlockRequestStatus.InReview:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
-        elif airlock_request.status == AirlockRequestStatus.Approved:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
-        elif airlock_request.status == AirlockRequestStatus.Rejected:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
-        elif airlock_request.status == AirlockRequestStatus.Blocked:
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id)
-    else:
-        if airlock_request.status == AirlockRequestStatus.Draft:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
-        elif airlock_request.status in AirlockRequestStatus.Submitted:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-        elif airlock_request.status == AirlockRequestStatus.InReview:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
-        elif airlock_request.status == AirlockRequestStatus.Approved:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
-        elif airlock_request.status == AirlockRequestStatus.Rejected:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
-        elif airlock_request.status == AirlockRequestStatus.Blocked:
-            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id)
-
-
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
     allowed_roles = []
 
@@ -103,8 +72,28 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
         return ContainerSasPermissions(read=True, list=True)
 
 
-def get_airlock_request_container_sas_token(account_name: str,
-                                            airlock_request: AirlockRequest):
+def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
+    if airlock_request.type == constants.IMPORT_TYPE:
+        # Only import Draft (external upload) is publicly accessible via App GW/SAS
+        return airlock_request.status == AirlockRequestStatus.Draft
+    else:
+        # Only export Approved is publicly accessible via App GW/SAS
+        return airlock_request.status == AirlockRequestStatus.Approved
+
+
+def get_airlock_request_container_sas_token(airlock_request: AirlockRequest):
+    # Only core storage stages are accessible via public App Gateway
+    # Workspace-only stages (import-approved, export-internal, export-in-progress, etc.)
+    # are only accessible from within the workspace via private endpoints
+    if not is_publicly_accessible_stage(airlock_request):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This airlock request stage is only accessible from within the workspace via private endpoints"
+        )
+
+    tre_id = config.TRE_ID
+    account_name = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
+
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
 
@@ -125,6 +114,7 @@ def get_airlock_request_container_sas_token(account_name: str,
                                    start=start,
                                    expiry=expiry)
 
+    # Return standard blob storage URL format
     return "https://{}.blob.{}/{}?{}" \
         .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
@@ -168,8 +158,7 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
-    account_name: str = get_account_by_request(airlock_request, workspace)
-    return get_airlock_request_container_sas_token(account_name, airlock_request)
+    return get_airlock_request_container_sas_token(airlock_request)
 
 
 async def create_review_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
@@ -288,7 +277,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
+        await send_status_changed_event(airlock_request=airlock_request, previous_status=None, workspace=workspace)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
     except Exception:
         await airlock_request_repo.delete_item(airlock_request.id)
@@ -330,7 +319,7 @@ async def update_and_publish_event_airlock_request(
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
-        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
+        await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status, workspace=workspace)
         access_service = get_access_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)

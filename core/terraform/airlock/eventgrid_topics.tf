@@ -191,136 +191,6 @@ resource "azurerm_role_assignment" "servicebus_sender_scan_result" {
 }
 
 # System topic
-resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
-  name                = local.import_inprogress_sys_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  source_resource_id  = azurerm_storage_account.sa_import_in_progress.id
-  topic_type          = "Microsoft.Storage.StorageAccounts"
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_core_tags, {
-    Publishers = "airlock;import-in-progress-sa"
-  })
-
-  depends_on = [
-    azurerm_storage_account.sa_import_in_progress
-  ]
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_import_inprogress_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_inprogress_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_inprogress_blob_created
-  ]
-}
-
-
-resource "azurerm_eventgrid_system_topic" "import_rejected_blob_created" {
-  name                = local.import_rejected_sys_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  source_resource_id  = azurerm_storage_account.sa_import_rejected.id
-  topic_type          = "Microsoft.Storage.StorageAccounts"
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_core_tags, {
-    Publishers = "airlock;import-rejected-sa"
-  })
-
-  depends_on = [
-    azurerm_storage_account.sa_import_rejected,
-  ]
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_import_rejected_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_rejected_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_rejected_blob_created
-  ]
-}
-
-resource "azurerm_eventgrid_system_topic" "import_blocked_blob_created" {
-  name                = local.import_blocked_sys_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  source_resource_id  = azurerm_storage_account.sa_import_blocked.id
-  topic_type          = "Microsoft.Storage.StorageAccounts"
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_core_tags, {
-    Publishers = "airlock;import-blocked-sa"
-  })
-
-  depends_on = [
-    azurerm_storage_account.sa_import_blocked,
-  ]
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_import_blocked_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.import_blocked_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_blocked_blob_created
-  ]
-}
-
-
-resource "azurerm_eventgrid_system_topic" "export_approved_blob_created" {
-  name                = local.export_approved_sys_topic_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  source_resource_id  = azurerm_storage_account.sa_export_approved.id
-  topic_type          = "Microsoft.Storage.StorageAccounts"
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge(var.tre_core_tags, {
-    Publishers = "airlock;export-approved-sa"
-  })
-
-  depends_on = [
-    azurerm_storage_account.sa_export_approved,
-  ]
-
-  lifecycle { ignore_changes = [tags] }
-}
-
-resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_created" {
-  scope                = var.airlock_servicebus.id
-  role_definition_name = "Azure Service Bus Data Sender"
-  principal_id         = azurerm_eventgrid_system_topic.export_approved_blob_created.identity[0].principal_id
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_approved_blob_created
-  ]
-}
-
 # Custom topic (for airlock notifications)
 resource "azurerm_eventgrid_topic" "airlock_notification" {
   name                          = local.notification_topic_name
@@ -442,9 +312,12 @@ resource "azurerm_eventgrid_event_subscription" "scan_result" {
   ]
 }
 
-resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
-  name  = local.import_inprogress_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_import_in_progress.id
+# Unified EventGrid Event Subscription for ALL Core Blob Created Events
+# This single subscription handles ALL 5 core stages: import-external, import-in-progress,
+# import-rejected, import-blocked, export-approved
+resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
+  name  = "airlock-blob-created-${var.tre_id}"
+  scope = azurerm_storage_account.sa_airlock_core.id
 
   service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
 
@@ -452,62 +325,12 @@ resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created"
     type = "SystemAssigned"
   }
 
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_inprogress_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_inprogress_blob_created
-  ]
-}
-
-resource "azurerm_eventgrid_event_subscription" "import_rejected_blob_created" {
-  name  = local.import_rejected_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_import_rejected.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  # Todo add Dead_letter
+  # Include all blob created events - airlock processor will check container metadata for routing
+  included_event_types = ["Microsoft.Storage.BlobCreated"]
 
   depends_on = [
-    azurerm_eventgrid_system_topic.import_rejected_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_rejected_blob_created
-  ]
-}
-
-
-resource "azurerm_eventgrid_event_subscription" "import_blocked_blob_created" {
-  name  = local.import_blocked_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_import_blocked.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  # Todo add Dead_letter
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.import_blocked_blob_created,
-    azurerm_role_assignment.servicebus_sender_import_blocked_blob_created
-  ]
-}
-
-resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
-  name  = local.export_approved_eventgrid_subscription_name
-  scope = azurerm_storage_account.sa_export_approved.id
-
-  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
-
-  delivery_identity {
-    type = "SystemAssigned"
-  }
-
-  depends_on = [
-    azurerm_eventgrid_system_topic.export_approved_blob_created,
-    azurerm_role_assignment.servicebus_sender_export_approved_blob_created
+    azurerm_eventgrid_system_topic.airlock_blob_created,
+    azurerm_role_assignment.servicebus_sender_airlock_blob_created
   ]
 }
 
@@ -538,10 +361,8 @@ resource "azurerm_monitor_diagnostic_setting" "eventgrid_custom_topics" {
 
 resource "azurerm_monitor_diagnostic_setting" "eventgrid_system_topics" {
   for_each = {
-    (azurerm_eventgrid_system_topic.import_inprogress_blob_created.name) = azurerm_eventgrid_system_topic.import_inprogress_blob_created.id,
-    (azurerm_eventgrid_system_topic.import_rejected_blob_created.name)   = azurerm_eventgrid_system_topic.import_rejected_blob_created.id,
-    (azurerm_eventgrid_system_topic.import_blocked_blob_created.name)    = azurerm_eventgrid_system_topic.import_blocked_blob_created.id,
-    (azurerm_eventgrid_system_topic.export_approved_blob_created.name)   = azurerm_eventgrid_system_topic.export_approved_blob_created.id,
+    (azurerm_eventgrid_system_topic.airlock_blob_created.name)                  = azurerm_eventgrid_system_topic.airlock_blob_created.id,
+    (azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.name) = azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.id,
   }
 
   name                       = "${each.key}-diagnostics"
