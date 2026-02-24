@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-health
-version: 0.3.4
+version: 0.3.5
 description: "An Azure Data Health Services workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
