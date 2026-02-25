@@ -1,7 +1,7 @@
-import asyncio
 import json
 import uuid
 import time
+from typing import Dict, List, Any
 
 from pydantic import ValidationError, parse_obj_as
 
@@ -21,20 +21,18 @@ from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
-class DeploymentStatusUpdater():
+class DeploymentStatusUpdater(ServiceBusConsumer):
     def __init__(self):
-        pass
+        super().__init__("deployment_status_updater")
 
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
         self.resource_repo = await ResourceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
-
-    def run(self, *args, **kwargs):
-        asyncio.run(self.receive_messages())
 
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
@@ -45,9 +43,12 @@ class DeploymentStatusUpdater():
                 try:
                     current_time = time.time()
                     polling_count += 1
+
+                    # Update heartbeat for supervisor monitoring
+                    self.update_heartbeat()
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
+                        logger.info(f"{config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue polled {polling_count} times in the last minute")
                         last_heartbeat_time = current_time
                         polling_count = 0
 
@@ -73,15 +74,15 @@ class DeploymentStatusUpdater():
                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
                     logger.debug("No sessions for this process. Will look again...")
 
-                except ServiceBusConnectionError:
+                except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
+                    logger.warning(f"Service Bus connection error (will retry): {e}")
 
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                    logger.exception(f"Unknown exception. Will retry - {e}")
+                    logger.exception(f"Unexpected error in message processing: {type(e).__name__}: {e}")
 
-    async def process_message(self, msg):
+    async def process_message(self, msg) -> bool:
         complete_message = False
         message = ""
 
@@ -115,6 +116,11 @@ class DeploymentStatusUpdater():
         try:
             # update the op
             operation = await self.operations_repo.get_operation_by_id(str(message.operationId))
+
+            # Add null safety for operation steps
+            if not operation.steps:
+                raise ValueError(f"Operation {message.operationId} has no steps")
+
             step_to_update = None
             is_last_step = False
 
@@ -128,7 +134,7 @@ class DeploymentStatusUpdater():
                         is_last_step = True
 
             if step_to_update is None:
-                raise f"Error finding step {message.stepId} in operation {message.operationId}"
+                raise ValueError(f"Step {message.stepId} not found in operation {message.operationId}")
 
             # update the step status
             step_to_update.status = message.status
@@ -159,7 +165,8 @@ class DeploymentStatusUpdater():
 
             # more steps in the op to do?
             if is_last_step is False:
-                assert current_step_index < (len(operation.steps) - 1)
+                if current_step_index >= len(operation.steps) - 1:
+                    raise ValueError(f"Step index {current_step_index} is the last step in operation (has {len(operation.steps)} steps), but more steps were expected")
                 next_step = operation.steps[current_step_index + 1]
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
@@ -255,7 +262,7 @@ class DeploymentStatusUpdater():
 
         return status
 
-    def create_updated_resource_document(self, resource: dict, message: DeploymentStatusUpdateMessage):
+    def create_updated_resource_document(self, resource: Dict[str, Any], message: DeploymentStatusUpdateMessage) -> Dict[str, Any]:
         """
         Merge the outputs with the resource document to persist
         """
@@ -268,7 +275,7 @@ class DeploymentStatusUpdater():
 
         return resource
 
-    def convert_outputs_to_dict(self, outputs_list: [Output]):
+    def convert_outputs_to_dict(self, outputs_list: List[Output]) -> Dict[str, Any]:
         """
         Convert a list of Porter outputs to a dictionary
         """
