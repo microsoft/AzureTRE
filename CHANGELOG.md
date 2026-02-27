@@ -4,6 +4,7 @@
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
 ENHANCEMENTS:
+* Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
