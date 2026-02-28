@@ -105,6 +105,21 @@ jobs:
           TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
           TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Bandit
+        if: ${{ steps.filter.outputs.core == 'true' }}
+        run: pip install bandit
+
+      - name: Run Bandit security checks
+        if: ${{ steps.filter.outputs.core == 'true' }}
+        run: bandit -c pyproject.toml -r .
+
+
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
