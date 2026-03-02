@@ -1,5 +1,9 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+
+* _No changes yet_
+
+## (Unreleased)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
