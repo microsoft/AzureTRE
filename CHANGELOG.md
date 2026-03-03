@@ -3,6 +3,7 @@
 **BREAKING CHANGES & MIGRATIONS**:
 
 ENHANCEMENTS:
+* Gitea shared service: sync with upstream v0.21.0 — azurerm provider 3.33.0 → 4.14.0, TLS 1.3, RBAC role assignment replacing Key Vault access policy, Debian bookworm base image, Terraform mixin 1.9.8, OIDC backend auth.
 
 BUG FIXES:
 
