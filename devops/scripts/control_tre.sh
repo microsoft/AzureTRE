@@ -90,14 +90,7 @@ elif [[ "$1" == *"stop"* ]]; then
   # Destroy Service Bus (Premium SKU)
   if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
     echo "Destroying Service Bus (Premium SKU) to save costs"
-    # shellcheck disable=SC2154
-    "${SCRIPT_DIR}/terraform_wrapper.sh" \
-      -d "${SCRIPT_DIR}/../../core/terraform" \
-      -g "${TF_VAR_mgmt_resource_group_name}" \
-      -s "${TF_VAR_mgmt_storage_account_name}" \
-      -n "${TF_VAR_terraform_state_container_name}" \
-      -k "${TRE_ID}" \
-      -c "terraform destroy -auto-approve -target=azurerm_servicebus_namespace.sb"
+    az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
   fi
 
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
