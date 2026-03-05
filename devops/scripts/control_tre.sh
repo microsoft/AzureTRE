@@ -9,6 +9,7 @@ if [[ -z ${TRE_ID:-} ]]; then
     exit 1
 fi
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 core_rg_name="rg-${TRE_ID}"
 fw_name="fw-${TRE_ID}"
 agw_name="agw-$TRE_ID"
@@ -26,6 +27,19 @@ az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
 if [[ "$1" == *"start"* ]]; then
+  # Recreate Service Bus (Premium SKU) if it doesn't exist
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
+    echo "Recreating Service Bus (Premium SKU)"
+    # shellcheck disable=SC2154
+    "${SCRIPT_DIR}/terraform_wrapper.sh" \
+      -d "${SCRIPT_DIR}/../../core/terraform" \
+      -g "${TF_VAR_mgmt_resource_group_name}" \
+      -s "${TF_VAR_mgmt_storage_account_name}" \
+      -n "${TF_VAR_terraform_state_container_name}" \
+      -k "${TRE_ID}" \
+      -c "terraform apply -auto-approve"
+  fi
+
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
     if [ -z "$CURRENT_PUBLIC_IP" ]; then
@@ -73,6 +87,19 @@ if [[ "$1" == *"start"* ]]; then
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
 elif [[ "$1" == *"stop"* ]]; then
+  # Destroy Service Bus (Premium SKU)
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
+    echo "Destroying Service Bus (Premium SKU) to save costs"
+    # shellcheck disable=SC2154
+    "${SCRIPT_DIR}/terraform_wrapper.sh" \
+      -d "${SCRIPT_DIR}/../../core/terraform" \
+      -g "${TF_VAR_mgmt_resource_group_name}" \
+      -s "${TF_VAR_mgmt_storage_account_name}" \
+      -n "${TF_VAR_terraform_state_container_name}" \
+      -k "${TRE_ID}" \
+      -c "terraform destroy -auto-approve -target=azurerm_servicebus_namespace.sb"
+  fi
+
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
 
