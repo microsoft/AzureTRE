@@ -4,6 +4,8 @@
 ENHANCEMENTS:
 * Add Service Bus (Premium SKU) recreation and destruction to `tre-start` and `tre-stop` to save costs ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
 
+BUG FIXES:
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
