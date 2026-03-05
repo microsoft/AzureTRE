@@ -89,7 +89,7 @@ if [[ "$1" == *"start"* ]]; then
 elif [[ "$1" == *"stop"* ]]; then
   # Destroy Service Bus (Premium SKU)
   if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
-    echo "Destroying Service Bus (Premium SKU) to save costs"
+    echo "Destroying Service Bus"
     az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
   fi
 
