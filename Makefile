@@ -179,10 +179,11 @@ tre-start: ## ⏩ Start the TRE Service
 # Description: Stop the TRE Service.
 # # This will deallocate the Azure Firewall public IP and stop the Azure Application Gateway service, stopping billing of both services.
 # Example: make tre-stop
+# Example: make tre-stop DELETE_SERVICE_BUS=true
 tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
 	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
-	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop
+	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh stop $(shell if [ "$(DELETE_SERVICE_BUS)" = "true" ]; then echo "--delete-service-bus"; fi)
 
 # Description: Destroy the TRE Service. This will destroy all the resources of the TRE service, including the Azure Firewall and Application Gateway.
 # Example: make tre-destroy

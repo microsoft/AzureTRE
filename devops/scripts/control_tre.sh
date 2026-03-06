@@ -29,23 +29,22 @@ az --version
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/kv_add_network_exception.sh"
 
-if [[ "$1" == *"start"* ]]; then
-  # Recreate Service Bus if it doesn't exist
-  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
-    echo "Ensuring Service Bus diagnostic settings are removed"
-    subscription_id=$(az account show --query id -o tsv)
-    diag_id="/subscriptions/${subscription_id}/resourceGroups/${core_rg_name}/providers/Microsoft.ServiceBus/namespaces/sb-${TRE_ID}/providers/microsoft.insights/diagnosticSettings/diagnostics-sb-${TRE_ID}"
-    az resource delete --ids "${diag_id}" 2>/dev/null || true
+DELETE_SERVICE_BUS=false
+COMMAND=""
+for arg in "$@"; do
+    case $arg in
+        *start*) COMMAND="start" ;;
+        *stop*)  COMMAND="stop" ;;
+        --delete-service-bus) DELETE_SERVICE_BUS=true ;;
+    esac
+done
 
-    echo "Recreating Service Bus"
-    # shellcheck disable=SC2154
-    "${SCRIPT_DIR}/terraform_wrapper.sh" \
-      -d "${SCRIPT_DIR}/../../core/terraform" \
-      -g "${TF_VAR_mgmt_resource_group_name}" \
-      -s "${TF_VAR_mgmt_storage_account_name}" \
-      -n "${TF_VAR_terraform_state_container_name}" \
-      -k "${TRE_ID}" \
-      -c "terraform apply -auto-approve"
+if [[ "$COMMAND" == "start" ]]; then
+  # Check if Service Bus exists
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
+    echo -e "\e[31mService Bus namespace 'sb-${TRE_ID}' does not exist.\e[0m"
+    echo -e "\e[31mIf the TRE was stopped or never deployed, please run 'make tre-deploy' to provision the infrastructure.\e[0m"
+    exit 1
   fi
 
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
@@ -108,7 +107,7 @@ if [[ "$1" == *"start"* ]]; then
 
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
-elif [[ "$1" == *"stop"* ]]; then
+elif [[ "$COMMAND" == "stop" ]]; then
 
   echo "Stopping Function Apps"
   az functionapp list --resource-group "${core_rg_name}" --query "[?state=='Running'].name" -o tsv |
@@ -125,21 +124,23 @@ elif [[ "$1" == *"stop"* ]]; then
   done
 
     # Destroy Service Bus
-  sb_id=$(az servicebus namespace show --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" --query id -o tsv 2>/dev/null || true)
-  if [[ -n "${sb_id}" ]]; then
-    echo "Deleting diagnostic settings for Service Bus"
-    # shellcheck disable=SC2015
-    { az monitor diagnostic-settings list --resource "${sb_id}" --query "value[].name" -o tsv 2>/dev/null \
-      && az monitor diagnostic-settings list --resource "${sb_id}" --query "[].name" -o tsv 2>/dev/null ; } |
-    while read -r diag_name; do
-      if [[ -n "${diag_name}" ]]; then
-        echo "Deleting diagnostic setting ${diag_name}"
-        az monitor diagnostic-settings delete --resource "${sb_id}" --name "${diag_name}" --output none || true
-      fi
-    done
+  if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+    sb_id=$(az servicebus namespace show --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" --query id -o tsv 2>/dev/null || true)
+    if [[ -n "${sb_id}" ]]; then
+      echo "Deleting diagnostic settings for Service Bus"
+      # shellcheck disable=SC2015
+      { az monitor diagnostic-settings list --resource "${sb_id}" --query "value[].name" -o tsv 2>/dev/null \
+        && az monitor diagnostic-settings list --resource "${sb_id}" --query "[].name" -o tsv 2>/dev/null ; } |
+      while read -r diag_name; do
+        if [[ -n "${diag_name}" ]]; then
+          echo "Deleting diagnostic setting ${diag_name}"
+          az monitor diagnostic-settings delete --resource "${sb_id}" --name "${diag_name}" --output none || true
+        fi
+      done
 
-    echo "Destroying Service Bus"
-    az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
+      echo "Destroying Service Bus"
+      az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
+    fi
   fi
 
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
