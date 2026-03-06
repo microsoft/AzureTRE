@@ -26,10 +26,13 @@ fi
 az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/kv_add_network_exception.sh"
+
 if [[ "$1" == *"start"* ]]; then
-  # Recreate Service Bus (Premium SKU) if it doesn't exist
+  # Recreate Service Bus if it doesn't exist
   if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
-    echo "Recreating Service Bus (Premium SKU)"
+    echo "Recreating Service Bus"
     # shellcheck disable=SC2154
     "${SCRIPT_DIR}/terraform_wrapper.sh" \
       -d "${SCRIPT_DIR}/../../core/terraform" \
