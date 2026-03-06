@@ -2,7 +2,7 @@
 ## (Unreleased)
 
 ENHANCEMENTS:
-* Reduce costs by starting and stopping Service Bus and function apps via `tre-start` and `tre-stop` ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
+* Destroy Service Bus to reduce costs when using make `tre-stop`. This also stops function apps and web apps in core rg to prevent excessive error logs due to the missing service bus. ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
 
 BUG FIXES:
 
