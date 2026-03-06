@@ -124,20 +124,6 @@ elif [[ "$1" == *"stop"* ]]; then
     az webapp stop --resource-group "${core_rg_name}" --name "${name}" &
   done
 
-  # Stopping all Function Apps in workspaces
-  az functionapp list --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && state=='Running'][name, resourceGroup]" -o tsv |
-  while read -r name rg; do
-    echo "Stopping Function App ${name} in ${rg}"
-    az functionapp stop --resource-group "${rg}" --name "${name}" &
-  done
-
-  # Stopping all Web Apps in workspaces
-  az webapp list --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && state=='Running'][name, resourceGroup]" -o tsv |
-  while read -r name rg; do
-    echo "Stopping Web App ${name} in ${rg}"
-    az webapp stop --resource-group "${rg}" --name "${name}" &
-  done
-
     # Destroy Service Bus
   sb_id=$(az servicebus namespace show --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" --query id -o tsv 2>/dev/null || true)
   if [[ -n "${sb_id}" ]]; then
