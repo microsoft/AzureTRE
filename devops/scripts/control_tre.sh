@@ -84,6 +84,20 @@ if [[ "$1" == *"start"* ]]; then
     az vm start --resource-group "${core_rg_name}" --name "${vm_name}" &
   done
 
+  echo "Starting Function Apps"
+  az functionapp list --resource-group "${core_rg_name}" --query "[?state=='Stopped'].name" -o tsv |
+  while read -r name; do
+    echo "Starting Function App ${name}"
+    az functionapp start --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+  echo "Starting Web Apps"
+  az webapp list --resource-group "${core_rg_name}" --query "[?state=='Stopped'].name" -o tsv |
+  while read -r name; do
+    echo "Starting Web App ${name}"
+    az webapp start --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
 elif [[ "$1" == *"stop"* ]]; then
@@ -92,6 +106,34 @@ elif [[ "$1" == *"stop"* ]]; then
     echo "Destroying Service Bus"
     az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
   fi
+
+  echo "Stopping Function Apps"
+  az functionapp list --resource-group "${core_rg_name}" --query "[?state=='Running'].name" -o tsv |
+  while read -r name; do
+    echo "Stopping Function App ${name}"
+    az functionapp stop --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+  echo "Stopping Web Apps"
+  az webapp list --resource-group "${core_rg_name}" --query "[?state=='Running'].name" -o tsv |
+  while read -r name; do
+    echo "Stopping Web App ${name}"
+    az webapp stop --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+  # Stopping all Function Apps in workspaces
+  az functionapp list --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && state=='Running'][name, resourceGroup]" -o tsv |
+  while read -r name rg; do
+    echo "Stopping Function App ${name} in ${rg}"
+    az functionapp stop --resource-group "${rg}" --name "${name}" &
+  done
+
+  # Stopping all Web Apps in workspaces
+  az webapp list --query "[?(starts_with(resourceGroup,'${core_rg_name}-ws') || starts_with(resourceGroup,'${core_rg_name^^}-WS')) && state=='Running'][name, resourceGroup]" -o tsv |
+  while read -r name rg; do
+    echo "Stopping Web App ${name} in ${rg}"
+    az webapp stop --resource-group "${rg}" --name "${name}" &
+  done
 
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
