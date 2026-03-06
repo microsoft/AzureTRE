@@ -32,6 +32,11 @@ source "${SCRIPT_DIR}/kv_add_network_exception.sh"
 if [[ "$1" == *"start"* ]]; then
   # Recreate Service Bus if it doesn't exist
   if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
+    echo "Ensuring Service Bus diagnostic settings are removed"
+    subscription_id=$(az account show --query id -o tsv)
+    diag_id="/subscriptions/${subscription_id}/resourceGroups/${core_rg_name}/providers/Microsoft.ServiceBus/namespaces/sb-${TRE_ID}/providers/microsoft.insights/diagnosticSettings/diagnostics-sb-${TRE_ID}"
+    az resource delete --ids "${diag_id}" 2>/dev/null || true
+
     echo "Recreating Service Bus"
     # shellcheck disable=SC2154
     "${SCRIPT_DIR}/terraform_wrapper.sh" \
@@ -105,7 +110,19 @@ if [[ "$1" == *"start"* ]]; then
 
 elif [[ "$1" == *"stop"* ]]; then
   # Destroy Service Bus (Premium SKU)
-  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
+  sb_id=$(az servicebus namespace show --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" --query id -o tsv 2>/dev/null || true)
+  if [[ -n "${sb_id}" ]]; then
+    echo "Deleting diagnostic settings for Service Bus"
+    # shellcheck disable=SC2015
+    { az monitor diagnostic-settings list --resource "${sb_id}" --query "value[].name" -o tsv 2>/dev/null \
+      && az monitor diagnostic-settings list --resource "${sb_id}" --query "[].name" -o tsv 2>/dev/null ; } |
+    while read -r diag_name; do
+      if [[ -n "${diag_name}" ]]; then
+        echo "Deleting diagnostic setting ${diag_name}"
+        az monitor diagnostic-settings delete --resource "${sb_id}" --name "${diag_name}" --output none || true
+      fi
+    done
+
     echo "Destroying Service Bus"
     az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
   fi
