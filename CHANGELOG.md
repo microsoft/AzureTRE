@@ -2,7 +2,7 @@
 ## (Unreleased)
 
 ENHANCEMENTS:
-* Add Service Bus (Premium SKU) recreation and destruction to `tre-start` and `tre-stop` to save costs ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
+* Reduce costs by starting and stopping Service Bus and function apps via `tre-start` and `tre-stop` ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
 
 BUG FIXES:
 
