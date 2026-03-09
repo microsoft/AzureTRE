@@ -9,7 +9,6 @@ if [[ -z ${TRE_ID:-} ]]; then
     exit 1
 fi
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 core_rg_name="rg-${TRE_ID}"
 fw_name="fw-${TRE_ID}"
 agw_name="agw-$TRE_ID"
@@ -27,24 +26,16 @@ az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
 # shellcheck disable=SC1091
-source "${SCRIPT_DIR}/kv_add_network_exception.sh"
+# source "${SCRIPT_DIR}/kv_add_network_exception.sh"
 
-DELETE_SERVICE_BUS=false
-COMMAND=""
-for arg in "$@"; do
-    case $arg in
-        *start*) COMMAND="start" ;;
-        *stop*)  COMMAND="stop" ;;
-        --delete-service-bus) DELETE_SERVICE_BUS=true ;;
-    esac
-done
+COMMAND="${1:-}"
+DELETE_SERVICE_BUS="${DELETE_SERVICE_BUS:-false}"
 
 if [[ "$COMMAND" == "start" ]]; then
   # Check if Service Bus exists
   if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
-    echo -e "\e[31mService Bus namespace 'sb-${TRE_ID}' does not exist.\e[0m"
-    echo -e "\e[31mIf the TRE was stopped or never deployed, please run 'make tre-deploy' to provision the infrastructure.\e[0m"
-    exit 1
+    echo -e "\e[33mService Bus namespace 'sb-${TRE_ID}' does not exist.\e[0m"
+    echo -e "\e[33mIf you ran 'make tre-start' you will also need to run 'make deploy-core' to reprovision the Service Bus.\e[0m"
   fi
 
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
