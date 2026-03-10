@@ -38,9 +38,6 @@ class AirlockStatusUpdater(ServiceBusConsumer):
                     current_time = time.time()
                     polling_count += 1
 
-                    # Update heartbeat for supervisor monitoring
-                    self.update_heartbeat()
-
                     # Log a heartbeat message every 60 seconds to show the service is still working
                     if current_time - last_heartbeat_time >= 60:
                         logger.info(f"{config.SERVICE_BUS_STEP_RESULT_QUEUE} queue polled {polling_count} times in the last minute")
@@ -64,6 +61,9 @@ class AirlockStatusUpdater(ServiceBusConsumer):
                                         await receiver.abandon_message(msg)
 
                         await asyncio.sleep(10)
+
+                    # Update heartbeat for supervisor monitoring
+                    self.update_heartbeat()
 
                 except OperationTimeoutError:
                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
