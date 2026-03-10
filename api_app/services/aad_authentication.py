@@ -1,6 +1,7 @@
 import base64
 from collections import defaultdict
 from enum import Enum
+import re
 from typing import List, Optional
 import jwt
 import requests
@@ -27,16 +28,14 @@ from semantic_version import Version
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 GRAPH_REQUEST_TIMEOUT = 10
 USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
+_UUID_PATTERN = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
 
 
 def _is_valid_aad_property(value) -> bool:
-    if value is None:
+    """Check that value is a valid AAD identifier (UUID format)."""
+    if not isinstance(value, str):
         return False
-    if isinstance(value, dict):
-        return False
-    if isinstance(value, str) and value.strip() == '':
-        return False
-    return True
+    return bool(_UUID_PATTERN.match(value.strip()))
 
 
 class PrincipalType(Enum):
@@ -322,10 +321,17 @@ class AzureADAuthorization(AccessService):
         return users
 
     def get_workspace_users(self, workspace: Workspace) -> List[AssignedUser]:
+        client_id = workspace.properties.get('client_id')
+        sp_id = workspace.properties.get('sp_id')
+        if not _is_valid_aad_property(client_id) or not _is_valid_aad_property(sp_id):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Workspace {workspace.id} has invalid AAD configuration. Please check the workspace deployment."
+            )
         msgraph_token = self._get_msgraph_token()
-        sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
+        sp_graph_data = self._get_app_sp_graph_data(client_id)
         app_id_to_role_name = {app_role["id"]: (app_role["value"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
         users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
 
@@ -390,28 +396,16 @@ class AzureADAuthorization(AccessService):
         """
         Assign a principal to a workspace role.
 
-        If workspace has AAD groups configured, tries group membership first.
-        Falls back to direct app role assignment if group assignment fails
-        (e.g., for service principals) or if groups are not configured.
+        If workspace has AAD groups configured, uses group membership.
+        Otherwise uses direct app role assignment (e.g., when groups are not configured).
         """
-        groups_in_use = self._is_workspace_role_group_in_use(workspace)
+        if self._is_workspace_role_group_in_use(workspace):
+            if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+                logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+                raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+            return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
-        if groups_in_use:
-            # Try group assignment first (works for users)
-            try:
-                if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-                    logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-                    raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-                self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
-                return
-            except UserRoleAssignmentError:
-                # Re-raise UserRoleAssignmentError (version check, group not found, etc.)
-                raise
-            except Exception as e:
-                # Group assignment failed (likely a service principal), fall through to direct assignment
-                logger.info(f"Group assignment failed for {user_id}: {e}. Using direct app role assignment.")
-
-        # Direct app role assignment for service principals or when no groups configured
+        # Direct app role assignment when no groups configured
         return self._assign_principal_to_app_role_direct(user_id, workspace, role_id)
 
     def _assign_principal_to_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
@@ -457,8 +451,8 @@ class AzureADAuthorization(AccessService):
         return any(r for r in user_app_roles["value"] if r["appRoleId"] == role_id)
 
     def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
-        aad_groups_in_user = workspace.properties["create_aad_groups"]
-        return aad_groups_in_user
+        aad_groups_in_use = workspace.properties.get("create_aad_groups", False)
+        return aad_groups_in_use
 
     def _get_workspace_group_name(self, workspace: Workspace, role_id: str) -> tuple:
         tre_id = workspace.properties["tre_id"]
@@ -543,13 +537,43 @@ class AzureADAuthorization(AccessService):
                                               role_id: str,
                                               workspace: Workspace
                                               ) -> None:
+        """
+        Remove a principal from a workspace role.
+
+        If workspace has AAD groups configured, uses group removal.
+        Otherwise uses direct app role removal (e.g., when groups are not configured).
+        """
         if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-        if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
-        return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
+            logger.error(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+
+        if self._is_workspace_role_group_in_use(workspace):
+            return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
+
+        # Direct app role removal when no groups configured
+        return self._remove_principal_from_app_role_direct(user_id, workspace, role_id)
+
+    def _remove_principal_from_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
+        """
+        Remove a principal's direct app role assignment via Graph API.
+        """
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration.")
+
+        # List all direct role assignments on the service principal
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo"
+        assignments = self._ms_graph_query(url, "GET")
+
+        for assignment in assignments.get("value", []):
+            if assignment["principalId"] == principal_id and assignment["appRoleId"] == role_id:
+                assignment_id = assignment["id"]
+                delete_url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo/{assignment_id}"
+                self._ms_graph_query(delete_url, "DELETE")
+                logger.info(f"Successfully removed principal {principal_id} from app role {role_id}")
+                return
+
+        logger.warning(f"No direct app role assignment found for principal {principal_id} with role {role_id}")
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}
@@ -651,8 +675,18 @@ class AzureADAuthorization(AccessService):
 
     # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
     # New bundles handle AAD app registration entirely in Terraform.
+    #
+    # Backwards compatibility:
+    # - Old bundles (<3.0.0) send auth_type; new bundles (3.0.0+) do not.
+    # - When auth_type is absent, we return {} and Terraform manages AAD entirely.
+    # - When auth_type=Automatic, we return register_aad_application=True which
+    #   old bundle Terraform expects. On upgrade to 3.0.0, this stale property
+    #   in Cosmos is harmlessly ignored because the new porter.yaml no longer
+    #   maps it to a Terraform variable.
+    # - When auth_type=Manual, we look up the app via Graph (requires
+    #   Application.ReadWrite.All). On upgrade to 3.0.0, the Terraform
+    #   import blocks adopt the existing app using client_id from Cosmos.
     def extract_workspace_auth_information(self, data: dict) -> dict:
-        # New bundles (v3.0.0+) don't use auth_type - they handle AAD in Terraform
         if "auth_type" not in data:
             return {}
 

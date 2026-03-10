@@ -9,6 +9,14 @@ from services.access_service import AuthConfigValidationError, UserRoleAssignmen
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
+# Valid UUID constants for test data (required by _is_valid_aad_property UUID validation)
+MOCK_SP_ID = "00000000-0000-4000-8000-000000000001"
+MOCK_SP_ID_2 = "00000000-0000-4000-8000-000000000002"
+MOCK_CLIENT_ID = "00000000-0000-4000-8000-000000000011"
+MOCK_OWNER_ROLE_ID = "00000000-0000-4000-8000-000000000021"
+MOCK_RESEARCHER_ROLE_ID = "00000000-0000-4000-8000-000000000022"
+MOCK_AIRLOCK_ROLE_ID = "00000000-0000-4000-8000-000000000023"
+
 
 class PrincipalRole:
     def __init__(self, principal_id, role_id, principal_type):
@@ -100,11 +108,11 @@ def workspace_with_groups():
             "create_aad_groups": True,
             "tre_id": "TRE-001",
             "workspace_id": "ws1",
-            "client_id": "app-client-id",
-            "sp_id": "sp123",
-            "app_role_id_workspace_owner": "owner-role-id",
-            "app_role_id_workspace_researcher": "researcher-role-id",
-            "app_role_id_workspace_airlock_manager": "airlock-role-id",
+            "client_id": MOCK_CLIENT_ID,
+            "sp_id": MOCK_SP_ID,
+            "app_role_id_workspace_owner": MOCK_OWNER_ROLE_ID,
+            "app_role_id_workspace_researcher": MOCK_RESEARCHER_ROLE_ID,
+            "app_role_id_workspace_airlock_manager": MOCK_AIRLOCK_ROLE_ID,
         }
     )
 
@@ -121,18 +129,18 @@ def workspace_without_groups():
             "create_aad_groups": False,
             "tre_id": "TRE-002",
             "workspace_id": "ws2",
-            "client_id": "app-client-id",
-            "sp_id": "sp456",
-            "app_role_id_workspace_owner": "owner-role-id",
-            "app_role_id_workspace_researcher": "researcher-role-id",
-            "app_role_id_workspace_airlock_manager": "airlock-role-id",
+            "client_id": MOCK_CLIENT_ID,
+            "sp_id": MOCK_SP_ID_2,
+            "app_role_id_workspace_owner": MOCK_OWNER_ROLE_ID,
+            "app_role_id_workspace_researcher": MOCK_RESEARCHER_ROLE_ID,
+            "app_role_id_workspace_airlock_manager": MOCK_AIRLOCK_ROLE_ID,
         }
     )
 
 
 @pytest.fixture
 def role_owner():
-    return Role(id="owner-role-id", displayName="Workspace Owner", type=AssignmentType.APP_ROLE)
+    return Role(id=MOCK_OWNER_ROLE_ID, displayName="Workspace Owner", type=AssignmentType.APP_ROLE)
 
 
 @pytest.fixture
@@ -149,6 +157,12 @@ def test_extract_workspace__raises_error_if_client_id_not_available():
     access_service = AzureADAuthorization()
     with pytest.raises(AuthConfigValidationError):
         access_service.extract_workspace_auth_information(data={"auth_type": "Manual"})
+
+
+def test_extract_workspace__returns_empty_dict_when_no_auth_type():
+    access_service = AzureADAuthorization()
+    result = access_service.extract_workspace_auth_information(data={"display_name": "test workspace"})
+    assert result == {}
 
 
 @patch("services.aad_authentication.AzureADAuthorization._get_app_sp_graph_data")
@@ -176,8 +190,8 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_returns_u
             templateVersion="0.1.0",
             etag="",
             properties={
-                "sp_id": "ab123",
-                "client_id": "ab124",
+                "sp_id": MOCK_SP_ID,
+                "client_id": MOCK_CLIENT_ID,
                 "app_role_id_workspace_owner": "1abc4",
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
@@ -216,8 +230,8 @@ def test_get_workspace_user_emails_by_role_assignment_with_single_user_with_no_m
             templateVersion="0.1.0",
             etag="",
             properties={
-                "sp_id": "ab123",
-                "client_id": "ab124",
+                "sp_id": MOCK_SP_ID,
+                "client_id": MOCK_CLIENT_ID,
                 "app_role_id_workspace_owner": "1abc4",
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
@@ -252,8 +266,8 @@ def test_get_workspace_user_emails_by_role_assignment_with_only_groups_assigned_
             templateVersion="0.1.0",
             etag="",
             properties={
-                "sp_id": "ab123",
-                "client_id": "ab124",
+                "sp_id": MOCK_SP_ID,
+                "client_id": MOCK_CLIENT_ID,
                 "app_role_id_workspace_owner": "1abc4",
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
@@ -291,8 +305,8 @@ def test_get_workspace_user_emails_by_role_assignment_with_groups_and_users_assi
             templateVersion="0.1.0",
             etag="",
             properties={
-                "sp_id": "ab123",
-                "client_id": "ab123",
+                "sp_id": MOCK_SP_ID,
+                "client_id": MOCK_CLIENT_ID,
                 "app_role_id_workspace_owner": "ab124",
                 "app_role_id_workspace_researcher": "ab125",
                 "app_role_id_workspace_airlock_manager": "ab130",
@@ -751,18 +765,18 @@ def test_assign_workspace_user_if_no_groups_uses_direct_assignment(workspace_rol
 @patch("services.aad_authentication.AzureADAuthorization._assign_principal_to_app_role_direct")
 @patch("services.aad_authentication.AzureADAuthorization._assign_workspace_user_to_application_group", side_effect=Exception("Group add failed"))
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
-def test_assign_workspace_user_fallback_to_direct_on_group_failure(workspace_role_in_use_mock,
-                                                                   group_assign_mock,
-                                                                   direct_assign_mock,
-                                                                   workspace_without_groups, role_owner,
-                                                                   user_with_role):
-    """When group assignment fails (e.g., for service principals), should fall back to direct assignment."""
+def test_assign_workspace_user_raises_when_group_assignment_fails(workspace_role_in_use_mock,
+                                                                  group_assign_mock,
+                                                                  direct_assign_mock,
+                                                                  workspace_without_groups, role_owner,
+                                                                  user_with_role):
+    """When groups are in use and group assignment fails, error should propagate (no fallback to direct)."""
     access_service = AzureADAuthorization()
-    access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
+    with pytest.raises(Exception, match="Group add failed"):
+        access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
 
-    # Should try group first, then fall back to direct
     assert group_assign_mock.call_count == 1
-    assert direct_assign_mock.call_count == 1
+    assert direct_assign_mock.call_count == 0
 
 
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
@@ -779,18 +793,36 @@ def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
     assert assign_user_to_group_mock.call_count == 1
 
 
+@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct")
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
-@patch("services.aad_authentication.AzureADAuthorization._get_role_assignment_for_user")
-def test_remove_workspace_user_if_no_groups_raises_error(_, get_role_assignment_mock,
-                                                         workspace_without_groups,
-                                                         role_owner,
-                                                         user_with_role):
-
+def test_remove_workspace_user_if_no_groups_uses_direct_removal(workspace_role_in_use_mock,
+                                                                direct_remove_mock,
+                                                                workspace_without_groups,
+                                                                role_owner,
+                                                                user_with_role):
+    """When no groups configured, should use direct app role removal."""
     access_service = AzureADAuthorization()
-    get_role_assignment_mock.return_value = []
+    access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
 
-    with pytest.raises(UserRoleAssignmentError):
+    assert direct_remove_mock.call_count == 1
+
+
+@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct")
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group", side_effect=Exception("Group removal failed"))
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+def test_remove_workspace_user_raises_when_group_removal_fails(workspace_role_in_use_mock,
+                                                               group_remove_mock,
+                                                               direct_remove_mock,
+                                                               workspace_without_groups,
+                                                               role_owner,
+                                                               user_with_role):
+    """When groups are in use and group removal fails, error should propagate (no fallback to direct)."""
+    access_service = AzureADAuthorization()
+    with pytest.raises(Exception, match="Group removal failed"):
         access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
+
+    assert group_remove_mock.call_count == 1
+    assert direct_remove_mock.call_count == 0
 
 
 @patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
