@@ -26,3 +26,7 @@ variable "auto_grant_workspace_consent" {
 variable "core_api_client_id" {
   type = string
 }
+variable "existing_identifier_uri" {
+  type    = string
+  default = ""
+}

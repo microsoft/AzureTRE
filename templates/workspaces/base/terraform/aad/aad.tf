@@ -11,7 +11,7 @@ resource "random_uuid" "app_role_workspace_airlock_manager_id" {}
 
 resource "azuread_application" "workspace" {
   display_name    = var.workspace_resource_name_suffix
-  identifier_uris = ["api://${var.workspace_resource_name_suffix}"]
+  identifier_uris = [var.existing_identifier_uri != "" ? var.existing_identifier_uri : "api://${var.workspace_resource_name_suffix}"]
   owners          = [data.azuread_client_config.current.object_id, data.azuread_service_principal.core_api.object_id]
 
   api {
