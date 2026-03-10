@@ -1,7 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 
-* _No changes yet_
+ENHANCEMENTS:
+* Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
