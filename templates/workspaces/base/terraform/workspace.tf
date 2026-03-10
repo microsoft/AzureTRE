@@ -10,9 +10,10 @@ data "azuread_application" "existing_workspace" {
   }
 }
 
-data "azuread_service_principal" "existing_workspace" {
-  count     = var.client_id != "" ? 1 : 0
-  client_id = var.client_id
+data "azuread_service_principals" "existing_workspace" {
+  count          = var.client_id != "" ? 1 : 0
+  client_ids     = [var.client_id]
+  ignore_missing = true
 }
 
 locals {
@@ -20,8 +21,8 @@ locals {
     existing = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
   } : {}
 
-  workspace_sp_imports = var.client_id != "" ? {
-    existing = data.azuread_service_principal.existing_workspace[0].object_id
+  workspace_sp_imports = var.client_id != "" && length(try(data.azuread_service_principals.existing_workspace[0].service_principals, [])) > 0 ? {
+    existing = format("/servicePrincipals/%s", data.azuread_service_principals.existing_workspace[0].service_principals[0].object_id)
   } : {}
 
   # Extract existing identifiers from the pre-created application so the
@@ -44,7 +45,7 @@ locals {
   ) : null
 
   existing_identifier_uri = var.client_id != "" && length(data.azuread_application.existing_workspace[0].identifier_uris) > 0 ? (
-    data.azuread_application.existing_workspace[0].identifier_uris[0]
+    tolist(data.azuread_application.existing_workspace[0].identifier_uris)[0]
   ) : ""
 
   # Conditional import maps for random_uuid resources

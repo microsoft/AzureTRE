@@ -15,7 +15,7 @@ output "client_id" {
 }
 
 output "scope_id" {
-  value = azuread_application.workspace.identifier_uris[0]
+  value = tolist(azuread_application.workspace.identifier_uris)[0]
 }
 
 output "sp_id" {
