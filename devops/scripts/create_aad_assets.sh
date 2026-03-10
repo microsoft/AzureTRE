@@ -71,7 +71,8 @@ APPLICATION_PERMISSION=$(IFS=,; echo "${APPLICATION_PERMISSIONS[*]}")
   --name "${TRE_ID}" \
   --tre-url "${TRE_URL}" \
   --admin-consent --automation-clientid "${TEST_ACCOUNT_CLIENT_ID}" \
-  --reset-password $RESET_PASSWORDS
+  --reset-password $RESET_PASSWORDS \
+  --custom-domain "${CUSTOM_DOMAIN:-}"
 
 if [ "${AUTO_WORKSPACE_APP_REGISTRATION:=false}" == false ]; then
   # Load the new values back in
