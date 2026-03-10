@@ -1,0 +1,32 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/workspaces/test-workspace/workspace-services/vm-service-001/user-resources"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "userResources": [
+          {
+            "id": "vm-resource-001",
+            "templateName": "tre-service-guacamole-windowsvm",
+            "templateVersion": "1.0.0",
+            "properties": {
+              "hostname": "vm-resource-001",
+              "ip": "xrdp",
+              "display_name": "Test Virtual Machine",
+              "vm_resource_id": "/subscriptions/test/resourceGroups/test/providers/Microsoft.Compute/virtualMachines/test-vm",
+              "is_exposed_externally": true
+            }
+          }
+        ]
+      }
+    }
+  }
+]

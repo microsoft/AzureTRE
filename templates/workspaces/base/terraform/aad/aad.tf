@@ -143,21 +143,21 @@ resource "azuread_app_role_assignment" "workspace_owner" {
 resource "azuread_group" "workspace_owners" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Workspace Owners"
-  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id, data.azuread_client_config.current.object_id]
   security_enabled = true
 }
 
 resource "azuread_group" "workspace_researchers" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Workspace Researchers"
-  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id, data.azuread_client_config.current.object_id]
   security_enabled = true
 }
 
 resource "azuread_group" "workspace_airlock_managers" {
   count            = var.create_aad_groups ? 1 : 0
   display_name     = "${var.workspace_resource_name_suffix} Airlock Managers"
-  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id]
+  owners           = [var.workspace_owner_object_id, data.azuread_service_principal.core_api.object_id, data.azuread_client_config.current.object_id]
   security_enabled = true
 }
 

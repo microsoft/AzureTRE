@@ -91,8 +91,7 @@ authentication:
   # automatically.
   # When this is false, the AAD Application will need creating manually.
   auto_workspace_app_registration: true
-  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with
-  # `Group.ReadWrite.All`
+  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`
   auto_workspace_group_creation: false
   # Setting this to true will remove the need for users to manually grant
   # consent when creating new workspaces.
@@ -117,8 +116,7 @@ ui_config:
   ui_site_name: "Azure TRE"
   # Footer text shown in the bottom left hand corner of the TRE portal
   ui_footer_text: "Azure Trusted Research Environment"
-
-developer_settings:
+#developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
 # TRE Core Key Vault purge protection will be disabled so it can be reused

@@ -61,11 +61,10 @@
                 "description": {
                   "title": "description",
                   "type": "string",
-                  "default": "",
                   "examples": [
                     "My rule description here"
                   ],
-                  "pattern": "^.*$"
+                  "pattern": "^.+$"
                 },
                 "protocols": {
                   "title": "protocols",
@@ -236,13 +235,12 @@
                   "pattern": "^.{5,80}$"
                 },
                 "description": {
-                  "title": "description DEPRECATED",
+                  "title": "description",
                   "type": "string",
-                  "default": "",
                   "examples": [
                     "My rule description here"
                   ],
-                  "pattern": "^.*$"
+                  "pattern": "^.+$"
                 },
                 "source_addresses": {
                   "title": "source addresses",

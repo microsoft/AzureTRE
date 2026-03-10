@@ -26,7 +26,13 @@
         </encoder>
     </appender>
 
-    <root level="debug">
+    <!-- Reduce noise from the built-in file auth provider which logs missing user-mapping.xml -->
+    <logger name="org.apache.guacamole.auth.file" level="WARN" />
+
+    <!-- Keep detailed debug from our custom Azure TRE auth extension -->
+    <logger name="org.apache.guacamole.auth.azuretre" level="INFO" />
+
+    <root level="INFO">
         <appender-ref ref="GUAC-DEFAULT" />
     </root>
 

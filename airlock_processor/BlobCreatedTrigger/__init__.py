@@ -63,7 +63,7 @@ def main(msg: func.ServiceBusMessage,
             data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
             subject=request_id,
             event_type="Airlock.StepResult",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
     send_delete_event(dataDeletionEvent, json_body, request_id)
@@ -84,7 +84,7 @@ def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], js
             data={"blob_to_delete": copied_from[-1]},  # last container in copied_from is the one we just copied from
             subject=request_id,
             event_type="Airlock.DataDeletion",
-            event_time=datetime.datetime.utcnow(),
+            event_time=datetime.datetime.now(datetime.UTC),
             data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )

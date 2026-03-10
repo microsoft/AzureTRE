@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# 1. Remove any previously run failed flag
-# 2. Run maven, but capture the exit code so we always succeed
-# 3. Output a file if the tests are not successful.
-rm -f /target/surefire-reports/guacamole_package_failed
-pytest_result=$(mvn package)
+set -euo pipefail
 
-if [ $? != 0 ]; then
+# Always start fresh so downstream automation can detect the latest run.
+rm -f /target/surefire-reports/guacamole_package_failed
+
+# Build the extension even if tests later fail so the produced JAR contains
+# the compiled classes and bundled resources Guacamole needs at runtime.
+mvn -B -Dmaven.test.skip=true package
+
+# Capture test failures without aborting the container build – the outer image
+# still needs the freshly built artifacts when packaging fails.
+if ! mvn -B test; then
   touch /target/surefire-reports/guacamole_package_failed
 fi

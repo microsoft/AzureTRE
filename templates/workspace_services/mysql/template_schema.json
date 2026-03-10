@@ -24,7 +24,9 @@
       "type": "number",
       "title": "Max storage allowed for a server",
       "description": "Max storage allowed for a server",
-      "default": 5120
+      "default": 20480,
+      "minimum": 20480,
+      "maximum": 16777216
     },
     "db_name": {
       "$id": "#/properties/db_name",

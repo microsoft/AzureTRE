@@ -1,8 +1,213 @@
 <!-- markdownlint-disable MD041 -->
-## 0.25.0 (Unreleased)
+## (Unreleased)
 
 ENHANCEMENTS:
+* Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Remove non-functional `tre_url` setting from `developer_settings` in `config.yaml`. Use `custom_domain` under `tre:` to configure a custom domain name for your TRE ([#4248](https://github.com/microsoft/AzureTRE/issues/4248))
+
+
+## (0.28.0) (March 2, 2026)
+**BREAKING CHANGES**
+* Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
+
+ENHANCEMENTS:
+* Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
+* Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
+* Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
+* Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
+
+BUG FIXES:
+* Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
+* Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
+* Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
+* Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.15 |
+| ui | 0.8.26 |
+| tre-workspace-airlock-import-review | 0.14.8 |
+| tre-workspace-base | 2.8.2 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.10 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.2 |
+| tre-shared-service-cyclecloud | 0.7.5 |
+| tre-shared-service-databricks-private-auth | 0.1.14 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.7.8 |
+| tre-workspace-service-mysql | 1.0.12 |
+| tre-workspace-service-ohdsi | 0.3.6 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.3 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.2 |
+| tre-workspace-service-health | 0.3.5 |
+| tre-workspace-service-gitea | 1.3.3 |
+| tre-service-databricks | 1.0.15 |
+| tre-workspace-service-openai | 1.0.8 |
+| tre-workspace-service-azuresql | 1.0.17 |
+
+## 0.27.0 (February 5, 2026)
+**BREAKING CHANGES**
+* Azure ML workspace service now requires auto group creation for RBAC; legacy service-principal role assignment fallback has been removed. ([#4687](https://github.com/microsoft/AzureTRE/pull/4687))
+* Fix missing arguments for airlock manager requests - change in API contract  ([#4544](https://github.com/microsoft/AzureTRE/issues/4544))
+* Clarify cost label time period and aggregation scope in UI tooltips ([#4607](https://github.com/microsoft/AzureTRE/pull/4607))
+* Transition GitHub Actions to use federated credentials. You should replace the `AZURE_CREDENTIALS` secret as described in the [cicd pre steps](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/). ([#4822](https://github.com/microsoft/AzureTRE/pull/4822))
+
+
+ENHANCEMENTS:
+* Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
+* API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
+* Change Group.ReadWrite.All permission to Group.Create for AUTO_WORKSPACE_GROUP_CREATION ([#4772](https://github.com/microsoft/AzureTRE/issues/4772))
+* Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
+* Implement UI testing with vitest ([#4794](https://github.com/microsoft/AzureTRE/pull/4794))
+* Update Porter, AzureCLI, Terraform and its providers across the solution ([#4799](https://github.com/microsoft/AzureTRE/issues/4799))
+* Update `api_healthcheck.sh` script with fixed 10-second check intervals and 7-minute timeout for improved API health monitoring ([#4807](https://github.com/microsoft/AzureTRE/issues/4807))
+* Update SuperLinter to version 8.3.2 ([#4815](https://github.com/microsoft/AzureTRE/issues/4815))
+* Add porter build cache in CI ([#4827](https://github.com/microsoft/AzureTRE/issues/4827))
+* Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
+
+BUG FIXES:
+* Fix Azure Health Data Services deployment failures by upgrading AzureRM provider to 4.58.0, switching to RBAC group assignments, and adding workspace group parameter mappings ([#4844](https://github.com/microsoft/AzureTRE/issues/4844))
+* Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
+* Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
+* Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
+* Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
+* Updated error messages when publishing a template version that is lower than the existing version. ([#4685](https://github.com/microsoft/AzureTRE/issues/4685))
+* Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
+* Mark `auth_client_secret` variable as sensitive in terraform templates ([#4736](https://github.com/microsoft/AzureTRE/pull/4736))
+* Fix Azure Machine Learning workspace deployment failure in unrestricted workspace by aligning missing parameters and outputs with base workspace ([#4768](https://github.com/microsoft/AzureTRE/issues/4768))
+* Fix firewall application rule validation error when description is empty string ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
+* Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
+* Add timeouts to Graph requests in API ([#4723](https://github.com/microsoft/AzureTRE/issues/4723))
+* Fix missing metastoreDomains for Databricks, which caused metastore outages for some domains ([#4779](https://github.com/microsoft/AzureTRE/issues/4779))
+* Fix data exfiltration vulnerability in Azure ML workspace service by removing unrestricted AzureMachineLearning service tag access and enforcing RBAC-based storage access ([#4660](https://github.com/microsoft/AzureTRE/issues/4660))
+* Fix cost display duplication when user resource is deleted - UI incorrectly reused cost data for remaining resources ([#4783](https://github.com/microsoft/AzureTRE/issues/4783))
+* Fix type mismatch error where `{{ resource.parent.my_boolean_property }}` was returning string instead of the correct type ([#4813](https://github.com/microsoft/AzureTRE/issues/4813))
+* Delete npm package lock file ([#4810](https://github.com/microsoft/AzureTRE/issues/4810))
+* Switch from yarn to npm ([#4837](https://github.com/microsoft/AzureTRE/issues/4837))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.12 |
+| ui | 0.8.25 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.8.1 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.9 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-cyclecloud | 0.7.4 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.3.5 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-ohdsi | 0.3.5 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.2 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.1 |
+| tre-workspace-service-health | 0.2.13 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-workspace-service-azuresql | 1.0.16 |
+
+## 0.26.0 (October 12, 2025)
+**BREAKING CHANGES**
+* The firewall network rule collection nrc-general containing the "time" ntp firewall rule has been removed. If you require NTP you will need to specify your own firewall rules.([#4720](https://github.com/microsoft/AzureTRE/pull/4720))
+* The updated `config_schema.json` will cause a validation error if you have the developer_settings configured with no items uncommented below it. To resolve this comment out developer_settings in your config.yaml (using #) if you do not have any developer settings configured. ([#4715](https://github.com/microsoft/AzureTRE/pull/4715))
+
+ENHANCEMENTS:
+* Create CODEOWNERS file with repository maintainers
+* Change Guacamole VM OS disk defaults to Standard SSD ([#4621](https://github.com/microsoft/AzureTRE/issues/4621))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add case study for Barts Health NHS Trust ([#4656](https://github.com/microsoft/AzureTRE/pull/4656))
+* Refactor the implementation of porter commands for improved clarity and maintainability ([#4663](https://github.com/microsoft/AzureTRE/pull/4663))
+* Add additional Databricks, Microsoft & Python domains to allowed-dns.json ([#4636](https://github.com/microsoft/AzureTRE/pull/4636))
+* Add `make plan-core` command for testing core deployments ([#4029](https://github.com/microsoft/AzureTRE/issues/4029))
+* Add `WORKSPACE_SERVICE_PREFIX` to `make user_resource_bundle` for use where a workspace-service bundle name does not start with `tre-service-` ([#4731](https://github.com/microsoft/AzureTRE/pull/4731))
+* Streamline Azure bootstrap by replacing legacy dependency checks with `bootstrap_azure_env.sh` ([#2993](https://github.com/microsoft/AzureTRE/issues/2993))
+* Create Azure provider registration script ([#2993](https://github.com/microsoft/AzureTRE/issues/4653))
+* Update oauth2-proxy and Tomcat versions to latest in Guacamole container ([#4688](https://github.com/microsoft/AzureTRE/pull/4688))
+* Standardize database query parameter handling across repository classes ([#4697](https://github.com/microsoft/AzureTRE/issues/4697))
+* Improve documentation on `address_space` allocation ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Upgrade to CodeQL v4 actions ([#4750](https://github.com/microsoft/AzureTRE/pull/4750))
+
+BUG FIXES:
+* Remove deprecated ms-teams-notification action from E2E test workflows ([#4716](https://github.com/microsoft/AzureTRE/issues/4716))
+* Fix disable public network access for stwebcertsTREID is still flagging in Defender ([#4640](https://github.com/microsoft/AzureTRE/issues/4640))
+* Fix error 'resource with the ID pip-fw-management already exists' during firewall migration ([#4661](https://github.com/microsoft/AzureTRE/issues/4661))
+* Add missing image_gallery_id parameter to porter.yaml for guacamole export review vm ([#4678](https://github.com/microsoft/AzureTRE/pull/4678))
+* Update Starlette and FastAPI versions ([#4683](https://github.com/microsoft/AzureTRE/pull/4683))
+* Fix recreation of route table associations ([#4666](https://github.com/microsoft/AzureTRE/issues/4666))
+* Fix exit trap error "unexpected EOF while looking for matching `''" in storage_enable_public_access.sh ([#4691](https://github.com/microsoft/AzureTRE/issues/4691))
+* Add tm-azurefd.net to allowed dns list ([#4705](https://github.com/microsoft/AzureTRE/pull/4705))
+* Fix issue where multiple lists in config.yaml incorrectly caused a validation error ([#4711](https://github.com/microsoft/AzureTRE/pull/4711))
+* Add Loading spinner to shared services page ([#4718](https://github.com/microsoft/AzureTRE/pull/4718))
+* Updated config_schema.json to include missing values. ([#4712](https://github.com/microsoft/AzureTRE/issues/4712))([#4714](https://github.com/microsoft/AzureTRE/issues/4714))
+* Remove workspace upgrade step from databricks template ([#4726](https://github.com/microsoft/AzureTRE/pull/4726))
+* Update Starlette and FastAPI versions ([#4738](https://github.com/microsoft/AzureTRE/pull/4738))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.2 |
+| core | 0.16.10 |
+| ui | 0.8.18 |
+| tre-shared-service-databricks-private-auth | 0.1.13 |
+| tre-shared-service-gitea | 1.2.1 |
+| tre-shared-service-sonatype-nexus | 3.3.4 |
+| tre-shared-service-firewall | 1.5.0 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-certs | 0.7.7 |
+| tre-shared-service-airlock-notifier | 1.0.9 |
+| tre-shared-service-cyclecloud | 0.7.3 |
+| tre-workspace-airlock-import-review | 0.14.7 |
+| tre-workspace-base | 2.7.0 |
+| tre-workspace-unrestricted | 0.13.5 |
+| tre-workspace-service-gitea | 1.3.2 |
+| tre-workspace-service-mysql | 1.0.10 |
+| tre-workspace-service-health | 0.2.12 |
+| tre-workspace-service-openai | 1.0.7 |
+| tre-service-azureml | 0.10.0 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-databricks | 1.0.14 |
+| tre-workspace-service-azuresql | 1.0.16 |
+| tre-service-guacamole | 0.13.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.4 |
+| tre-service-guacamole-linuxvm | 1.3.3 |
+| tre-service-guacamole-import-reviewvm | 0.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.1 |
+| tre-workspace-service-ohdsi | 0.3.4 |
+
+## 0.25.0 (July 18, 2025)
+**IMPORTANT**:
+* If you update core deployment prior to this release an upstream issue with Azure RM terraform provider means that
+ your App Gateway and certificates will be destroyed. ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+
+ENHANCEMENTS:
+* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
+
+BUG FIXES:
+* App Gateway is destroyed on 2nd and subsequent deploys ([#4632](https://github.com/microsoft/AzureTRE/issues/4632))
+* Fix issue where workspace deletion fails due to storage account lock ([#4664](https://github.com/microsoft/AzureTRE/issues/4664))
 
 ## 0.24.0 (July 16, 2025)
 
@@ -24,7 +229,6 @@ BUG FIXES:
 * Fix UI display issue when workspace is deploying & user management is enabled ([#4521](https://github.com/microsoft/AzureTRE/issues/4521))
 * Fix error details display when workspace deletion fails with deleted Entra app ([#4500](https://github.com/microsoft/AzureTRE/pull/4500))
 * Fixed cloud-init failure on VMSS startup by upgrading `gnupg2` to the latest available version in Ubuntu Jammy([#4620](https://github.com/microsoft/AzureTRE/pull/4620))
-* Allow ENABLE_DNS_POLICY and ALLOWED_DNS variables to set via CI/CD ([#4623](https://github.com/microsoft/AzureTRE/issues/4623))
 * Fix terraform dependency introduced by the migration of Azure Firewall and Route Tables to Core Terraform ([#4624](https://github.com/microsoft/AzureTRE/issues/4624))
 
 ## 0.23.0 (June 10, 2025)
@@ -921,7 +1125,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 * A migration for OperationSteps in Operation objects was added ([#3358](https://github.com/microsoft/AzureTRE/pull/3358))
-* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed [here](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
+* Some Github _secrets_ have moved to be _environment variables_ - `LOCATION` and a few optional others will need to be redefined as listed in [configure-core-variables](https://microsoft.github.io/AzureTRE/latest/tre-admins/setup-instructions/cicd-pre-deployment-steps/#configure-core-variables) ([#3084](https://github.com/microsoft/AzureTRE/pull/3084))
 
 FEATURES:
 * (UI) Added upgrade button to resources that have pending template upgrades ([#3387](https://github.com/microsoft/AzureTRE/pull/3387))
@@ -1352,7 +1556,7 @@ COMPONENTS:
 
 **BREAKING CHANGES & MIGRATIONS**:
 
-* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described [here](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
+* Remove support for Nexus V1 ([#2580](https://github.com/microsoft/AzureTRE/pull/2580)). Please migrate to the newer version as described in [configuring-shared-services](https://microsoft.github.io/AzureTRE/tre-admins/setup-instructions/configuring-shared-services/).
 
 FEATURES:
 

@@ -13,6 +13,24 @@ Cost APIs are based on [Azure Cost Management](https://docs.microsoft.com/en-us
 | GET | /api/costs | Get overall costs of a TRE Instance | TRE Admin | Core services, Shared services, workspaces |
 | GET | /api/workspace/{workspace\_id}/costs | Get workspace costs | TRE Admin, Workspace Owner | Workspace, workspace services, user resources |
 
+## Cost Labels in UI
+
+The Azure TRE user interface displays cost labels on resource cards to provide quick cost visibility:
+
+### Time Period
+- **Default behavior**: Cost labels show **month-to-date** costs when no custom date range is specified
+- **Custom date ranges**: Can be specified via API parameters (from_date, to_date) but UI currently shows default month-to-date
+
+### Cost Aggregation
+- **Workspace costs**: Include the total costs for the workspace itself **plus all sub-resources** (workspace services and user resources)
+- **Workspace service costs**: Include the service itself plus any associated user resources  
+- **User resource costs**: Show only the specific user resource costs
+- **Shared service costs**: Show only the specific shared service costs
+
+### Data Availability
+- Cost data is typically available within 8-24 hours from Azure Cost Management
+- If cost data is not yet available, a clock icon is displayed with a tooltip
+
 
 ## Get overall cost report
 
@@ -30,10 +48,10 @@ GET /api/costs
 
 **Query Parameters**
 
-| Parameter name| Type| Description| Default Value |
+| Parameter name | Type | Description | Default Value |
 | --- | --- | --- | --- |
 | from, to | datetime | Custom time period, up to 1 year timeframe, iso-8601 format | Month to date period |
-| granularity| Enum (Daily, None) | The granularity of rows in the query. | None |
+| granularity | Enum (Daily, None) | The granularity of rows in the query. | None |
 
 **Output**
 
@@ -74,11 +92,11 @@ GET /api/workspaces/{workspace_id}/costs
 
 **Query Parameters**
 
-| Parameter name| Type| Description| Default Value |
+| Parameter name | Type | Description | Default Value |
 | --- | --- | --- | --- |
 | from, to | datetime | Custom time period, up to 1 year timeframe, iso-8601 format | Month to date period |
-| granularity| Enum (Daily, None) | The granularity of rows in the query. | None |
-| workspace_id |Guid |The workspace id to generate report for | Required field for workspace and user resource level apis |
+| granularity | Enum (Daily, None) | The granularity of rows in the query. | None |
+| workspace_id | Guid | The workspace id to generate report for | Required field for workspace and user resource level apis |
 
 **Output**
 ```json

@@ -38,4 +38,4 @@ async def register_shared_service_template(template_input: SharedServiceTemplate
     except EntityVersionExist:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.SHARED_SERVICE_TEMPLATE_VERSION_EXISTS)
     except InvalidInput as e:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))

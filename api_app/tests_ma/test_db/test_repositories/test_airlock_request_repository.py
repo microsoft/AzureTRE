@@ -342,3 +342,96 @@ async def test_get_airlock_requests_for_airlock_manager_active_workspaces_but_no
     result = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user)
     assert result == []
     mock_get_requests.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
+@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
+async def test_get_airlock_requests_for_airlock_manager_passes_correct_arguments(
+    mock_workspace_repo,
+    mock_access_service,
+    mock_get_requests,
+    airlock_request_repo
+):
+    """Test that get_airlock_requests_for_airlock_manager passes correct arguments to get_airlock_requests"""
+    # Setup workspaces
+    workspace1 = sample_workspace(workspace_id="workspace-1", workspace_properties={"app_role_id_workspace_airlock_manager": "manager-role-1"})
+    mock_workspace_instance = MagicMock()
+    mock_workspace_instance.get_active_workspaces = AsyncMock(return_value=[workspace1])
+    mock_workspace_repo.create = AsyncMock(return_value=mock_workspace_instance)
+
+    # Setup user roles
+    role_assignment = RoleAssignment(resource_id="resource_id", role_id="manager-role-1")
+    mock_access_service.return_value.get_identity_role_assignments.return_value = [role_assignment]
+
+    # Setup return value for get_airlock_requests
+    mock_get_requests.return_value = []
+
+    user_id = "test-user-id"
+    test_type = AirlockRequestType.Import
+    test_status = AirlockRequestStatus.InReview
+    test_order_by = "updatedWhen"
+    test_order_ascending = False
+
+    # Call the method with all parameters
+    await airlock_request_repo.get_airlock_requests_for_airlock_manager(
+        user_id=user_id,
+        type=test_type,
+        status=test_status,
+        order_by=test_order_by,
+        order_ascending=test_order_ascending
+    )
+
+    # Verify get_airlock_requests was called with all correct arguments
+    mock_get_requests.assert_called_once_with(
+        workspace_id="workspace-1",  # This is crucial - workspace_id should be passed
+        type=test_type,
+        status=test_status,
+        order_by=test_order_by,
+        order_ascending=test_order_ascending
+    )
+
+
+@pytest.mark.asyncio
+@patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
+@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
+async def test_get_airlock_requests_for_airlock_manager_argument_compatibility(
+    mock_workspace_repo,
+    mock_access_service,
+    mock_get_requests,
+    airlock_request_repo
+):
+    """Test that the method signature is compatible with the API route parameters"""
+    # Setup minimal required mocks
+    workspace1 = sample_workspace(workspace_id="workspace-1", workspace_properties={"app_role_id_workspace_airlock_manager": "manager-role-1"})
+    mock_workspace_instance = MagicMock()
+    mock_workspace_instance.get_active_workspaces = AsyncMock(return_value=[workspace1])
+    mock_workspace_repo.create = AsyncMock(return_value=mock_workspace_instance)
+
+    role_assignment = RoleAssignment(resource_id="resource_id", role_id="manager-role-1")
+    mock_access_service.return_value.get_identity_role_assignments.return_value = [role_assignment]
+    mock_get_requests.return_value = []
+
+    # Test that all these parameter combinations don't cause TypeErrors
+    test_cases = [
+        # Minimal call (what the API route actually uses)
+        {"user_id": "test-user"},
+
+        # With optional parameters (from API route query parameters)
+        {"user_id": "test-user", "type": None, "status": None, "order_by": None, "order_ascending": True},
+
+        # With all parameters specified
+        {"user_id": "test-user", "type": AirlockRequestType.Export, "status": AirlockRequestStatus.Approved,
+         "order_by": "createdWhen", "order_ascending": False},
+    ]
+
+    for i, test_kwargs in enumerate(test_cases):
+        mock_get_requests.reset_mock()
+        try:
+            result = await airlock_request_repo.get_airlock_requests_for_airlock_manager(**test_kwargs)
+            # If we get here without a TypeError, the test passed
+            assert isinstance(result, list), f"Test case {i} should return a list"
+        except TypeError as e:
+            pytest.fail(f"Test case {i} failed with TypeError: {str(e)}. Parameters: {test_kwargs}")

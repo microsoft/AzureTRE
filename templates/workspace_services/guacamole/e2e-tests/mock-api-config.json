@@ -1,0 +1,53 @@
+[
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/workspaces/test-workspace/workspace-services/.*"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "body": {
+        "workspaceServices": [
+          {
+            "id": "vm-service-001",
+            "templateName": "tre-service-guacamole",
+            "properties": {
+              "vm_name": "test-vm",
+              "vm_resource_id": "/subscriptions/test/resourceGroups/test/providers/Microsoft.Compute/virtualMachines/test-vm",
+              "is_exposed_externally": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "httpRequest": {
+      "method": "GET",
+      "path": "/api/workspaces/test-workspace/workspace-services/.*/user-resources"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": ["application/json"]
+      },
+      "body": {
+        "userResources": [
+          {
+            "id": "vm-001",
+            "templateName": "tre-service-windows-vm",
+            "properties": {
+              "vm_name": "testvm001",
+              "fqdn": "xrdp",
+              "connection_port": "3389",
+              "is_exposed_externally": true
+            }
+          }
+        ]
+      }
+    }
+  }
+]

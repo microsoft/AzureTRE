@@ -23,24 +23,41 @@ import org.apache.guacamole.net.auth.AbstractAuthenticatedUser;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
 import org.apache.guacamole.net.auth.Credentials;
 
-public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
+/**
+ * Authenticated user implementation that retains TRE-specific context.
+ */
+public final class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
 
+    /** Provider that authenticated the user. */
     private final AuthenticationProvider authProvider;
 
+    /** Credentials originally supplied by the user. */
     private final Credentials credentials;
 
+    /** Azure AD object identifier for the user. */
     private final String objectId;
 
+    /** Access token issued for downstream API calls. */
     private final String accessToken;
 
-    public AzureTREAuthenticatedUser(final Credentials credentials,
-                                   final String accessToken,
-                                   final String username,
-                                   final String objectId,
-                                   final AuthenticationProvider provider) {
-        this.credentials = credentials;
-        this.accessToken = accessToken;
-        this.objectId = objectId;
+    /**
+     * Creates a new authenticated user.
+     *
+     * @param originalCredentials original credentials from the client.
+     * @param bearerToken         access token extracted from the headers.
+     * @param username            preferred username for the user.
+     * @param userObjectId        Azure AD object identifier.
+     * @param provider            provider that authenticated the user.
+     */
+    public AzureTREAuthenticatedUser(
+        final Credentials originalCredentials,
+        final String bearerToken,
+        final String username,
+        final String userObjectId,
+        final AuthenticationProvider provider) {
+        this.credentials = originalCredentials;
+        this.accessToken = bearerToken;
+        this.objectId = userObjectId;
         this.authProvider = provider;
         setIdentifier(username.toLowerCase());
     }
@@ -55,10 +72,20 @@ public class AzureTREAuthenticatedUser extends AbstractAuthenticatedUser {
         return credentials;
     }
 
+    /**
+     * Returns the bearer token associated with the user.
+     *
+     * @return the access token string.
+     */
     public String getAccessToken() {
         return accessToken;
     }
 
+    /**
+     * Returns the Azure AD object identifier associated with the user.
+     *
+     * @return object identifier value, or {@code null} if unavailable.
+     */
     public String getObjectId() {
         return objectId;
     }

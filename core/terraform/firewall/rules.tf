@@ -4,28 +4,6 @@ resource "azurerm_firewall_policy_rule_collection_group" "core" {
   priority           = 500
 
   network_rule_collection {
-    name     = "nrc-general"
-    priority = 201
-    action   = "Allow"
-
-    rule {
-      name = "time"
-      protocols = [
-        "UDP"
-      ]
-      destination_addresses = [
-        "*"
-      ]
-      destination_ports = [
-        "123"
-      ]
-      source_addresses = [
-        "*"
-      ]
-    }
-  }
-
-  network_rule_collection {
     name     = "nrc-resource-processor-subnet"
     priority = 202
     action   = "Allow"

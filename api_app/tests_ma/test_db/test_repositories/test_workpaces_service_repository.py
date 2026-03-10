@@ -6,6 +6,7 @@ import pytest_asyncio
 from db.errors import EntityDoesNotExist, ResourceIsNotDeployed
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
+from models.domain.operation import Status
 from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.workspace_service import WorkspaceServiceInCreate
@@ -50,10 +51,11 @@ def workspace_service():
 
 async def test_get_active_workspace_services_for_workspace_queries_db(workspace_service_repo):
     workspace_service_repo.query = AsyncMock(return_value=[])
+    query, parameters = WorkspaceServiceRepository.active_workspace_services_query(WORKSPACE_ID)
 
     await workspace_service_repo.get_active_workspace_services_for_workspace(WORKSPACE_ID)
 
-    workspace_service_repo.query.assert_called_once_with(query=WorkspaceServiceRepository.active_workspace_services_query(WORKSPACE_ID))
+    workspace_service_repo.query.assert_called_once_with(query=query, parameters=parameters)
 
 
 async def test_get_deployed_workspace_service_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_service_repo, workspace_service, operations_repo):
@@ -84,13 +86,26 @@ async def test_get_workspace_service_by_id_raises_entity_does_not_exist_if_no_av
         await workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
 
+async def test_get_workspace_service_by_id_raises_entity_does_not_exist_if_service_is_deleted(workspace_service_repo):
+    workspace_service_repo.query = AsyncMock(return_value=[])
+
+    with pytest.raises(EntityDoesNotExist):
+        await workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
+
+
 async def test_get_workspace_service_by_id_queries_db(workspace_service_repo, workspace_service):
     workspace_service_repo.query = AsyncMock(return_value=[workspace_service])
-    expected_query = f'SELECT * FROM c WHERE c.resourceType = "workspace-service" AND c.workspaceId = "{WORKSPACE_ID}" AND c.id = "{SERVICE_ID}"'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId AND c.id = @serviceId AND c.deploymentStatus != @deletedStatus'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
+        {'name': '@workspaceId', 'value': WORKSPACE_ID},
+        {'name': '@serviceId', 'value': SERVICE_ID},
+        {'name': '@deletedStatus', 'value': Status.Deleted}
+    ]
 
     await workspace_service_repo.get_workspace_service_by_id(WORKSPACE_ID, SERVICE_ID)
 
-    workspace_service_repo.query.assert_called_once_with(query=expected_query)
+    workspace_service_repo.query.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @patch('db.repositories.workspace_services.WorkspaceServiceRepository.validate_input_against_template')

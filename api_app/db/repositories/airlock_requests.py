@@ -1,7 +1,7 @@
 import copy
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
@@ -114,9 +114,9 @@ class AirlockRequestRepository(BaseRepository):
             businessJustification=airlock_request_input.businessJustification,
             type=airlock_request_input.type,
             createdBy=user,
-            createdWhen=datetime.utcnow().timestamp(),
+            createdWhen=datetime.now(UTC).timestamp(),
             updatedBy=user,
-            updatedWhen=datetime.utcnow().timestamp(),
+            updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
             reviews=[]
         )
@@ -160,12 +160,12 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
 
-    async def get_airlock_requests_for_airlock_manager(self, user: User, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
         access_service = get_access_service()
 
         workspaces = await workspace_repo.get_active_workspaces()
-        user_role_assignments = access_service.get_identity_role_assignments(user.id)
+        user_role_assignments = access_service.get_identity_role_assignments(user_id)
 
         valid_roles = {ra.role_id for ra in user_role_assignments}
 

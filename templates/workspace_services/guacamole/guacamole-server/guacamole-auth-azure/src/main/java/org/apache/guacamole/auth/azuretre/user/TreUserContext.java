@@ -19,7 +19,6 @@
 
 package org.apache.guacamole.auth.azuretre.user;
 
-
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider;
 import org.apache.guacamole.net.auth.AbstractUserContext;
@@ -37,33 +36,59 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Map;
 
-public class TreUserContext extends AbstractUserContext {
+/**
+ * User context that exposes TRE connections to authenticated users.
+ */
+public final class TreUserContext extends AbstractUserContext {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TreUserContext.class);
+    /** Logger for lifecycle events. */
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+        TreUserContext.class);
 
+    /** Backing authentication provider. */
     private final AuthenticationProvider authProvider;
+
+    /** Directory containing connections available to the user. */
     private final Directory<Connection> connectionDirectory;
+
+    /** Representation of the authenticated user. */
     private User self;
 
-    public TreUserContext(final AuthenticationProvider authProvider, Map<String, Connection> connections) {
-        LOGGER.debug("Creating a new tre user context.");
-
-        this.authProvider = authProvider;
-        this.connectionDirectory = new SimpleDirectory(connections);
+    /**
+     * Creates a new user context with the supplied connection directory.
+     *
+     * @param provider   backing authentication provider.
+     * @param connectionMap  available connection map.
+     */
+    public TreUserContext(
+        final AuthenticationProvider provider,
+        final Map<String, Connection> connectionMap) {
+        LOGGER.debug("Creating a new TRE user context");
+        this.authProvider = provider;
+        this.connectionDirectory = new SimpleDirectory<>(connectionMap);
     }
 
-    public void init(final AzureTREAuthenticatedUser user) throws GuacamoleException {
+    /**
+     * Initialises the context for the supplied authenticated user.
+     *
+     * @param user authenticated TRE user.
+     * @throws GuacamoleException if permission calculations fail.
+     */
+    public void init(final AzureTREAuthenticatedUser user)
+        throws GuacamoleException {
         self = new SimpleUser(user.getIdentifier()) {
 
             @Override
-            public ObjectPermissionSet getConnectionPermissions() throws GuacamoleException {
-                return new SimpleObjectPermissionSet(connectionDirectory.getIdentifiers());
+            public ObjectPermissionSet getConnectionPermissions()
+                throws GuacamoleException {
+                return new SimpleObjectPermissionSet(
+                    connectionDirectory.getIdentifiers());
             }
 
             @Override
             public ObjectPermissionSet getConnectionGroupPermissions() {
-                return new SimpleObjectPermissionSet(
-                Collections.singleton(AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP));
+                return new SimpleObjectPermissionSet(Collections.singleton(
+                    AzureTREAuthenticationProvider.ROOT_CONNECTION_GROUP));
             }
         };
     }
@@ -79,12 +104,14 @@ public class TreUserContext extends AbstractUserContext {
         return authProvider;
     }
 
-    public Object getResource() throws GuacamoleException {
-        return null;
-    }
-
-    public Directory<Connection> getConnectionDirectory() throws GuacamoleException {
+    /**
+     * Returns the directory containing the user's connections.
+     *
+     * @return directory of connections.
+     */
+    @Override
+    public Directory<Connection> getConnectionDirectory() {
         LOGGER.debug("getConnectionDirectory");
-        return this.connectionDirectory;
+        return connectionDirectory;
     }
 }

@@ -3,11 +3,11 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 3.117.0"
+      version = "= 4.57.0"
     }
-    template = {
-      source  = "hashicorp/template"
-      version = "= 2.2.0"
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = "= 2.3.5"
     }
     random = {
       source  = "hashicorp/random"
@@ -15,7 +15,7 @@ terraform {
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "3.3.0"
+      version = "= 3.7.0"
     }
   }
   backend "azurerm" {
@@ -24,6 +24,8 @@ terraform {
 
 
 provider "azurerm" {
+  subscription_id = coalesce(var.workspace_subscription_id, data.azurerm_client_config.current.subscription_id)
+
   features {
     virtual_machine {
       skip_shutdown_and_force_delete = true
@@ -43,6 +45,12 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azurerm" {
+  alias = "core"
+  features {
+  }
 }
 
 provider "azuread" {

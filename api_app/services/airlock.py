@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from services.logging import logger
 
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
@@ -108,8 +108,8 @@ def get_airlock_request_container_sas_token(account_name: str,
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
 
-    start = datetime.utcnow() - timedelta(minutes=15)
-    expiry = datetime.utcnow() + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
+    start = datetime.now(UTC) - timedelta(minutes=15)
+    expiry = datetime.now(UTC) + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
 
     try:
         udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
@@ -341,7 +341,7 @@ async def update_and_publish_event_airlock_request(
 
 
 def get_timestamp() -> float:
-    return datetime.utcnow().timestamp()
+    return datetime.now(UTC).timestamp()
 
 
 def check_email_exists(role_assignment_details: defaultdict(list)):

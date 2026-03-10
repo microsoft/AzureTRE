@@ -28,6 +28,7 @@ resource "azurerm_linux_web_app" "api" {
   public_network_access_enabled                  = false
   ftp_publish_basic_authentication_enabled       = false
   webdeploy_publish_basic_authentication_enabled = false
+  vnet_image_pull_enabled                        = true
   tags                                           = local.tre_core_tags
 
   app_settings = {
@@ -117,32 +118,6 @@ resource "azurerm_linux_web_app" "api" {
   ]
 }
 
-resource "azapi_update_resource" "api_vnet_container_pull_routing" {
-  resource_id = azurerm_linux_web_app.api.id
-  type        = "Microsoft.Web/sites@2022-09-01"
-
-  body = {
-    properties = {
-      vnetImagePullEnabled : true
-    }
-  }
-
-  depends_on = [
-    azurerm_linux_web_app.api
-  ]
-}
-
-resource "azapi_resource_action" "restart_api_webapp" {
-  type        = "Microsoft.Web/sites@2022-09-01"
-  resource_id = azurerm_linux_web_app.api.id
-  method      = "POST"
-  action      = "restart"
-
-  depends_on = [
-    azapi_update_resource.api_vnet_container_pull_routing
-  ]
-}
-
 resource "azurerm_private_endpoint" "api_private_endpoint" {
   name                = "pe-api-${var.tre_id}"
   resource_group_name = azurerm_resource_group.core.name
@@ -177,9 +152,8 @@ resource "azurerm_monitor_diagnostic_setting" "webapp_api" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

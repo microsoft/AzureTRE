@@ -1,12 +1,8 @@
 {
-
-    "guacamoleVersion" : "1.4.0",
-
-    "name"      : "Azure Trusted Research Environment Integration",
-    "namespace" : "guac-azuretre",
-
-    "authProviders" : [
-        "org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider"
-    ]
+  "guacamoleVersion": "1.6.0",
+  "name": "Azure Trusted Research Environment Integration",
+  "namespace": "guac-azuretre",
+  "authProviders": [
+    "org.apache.guacamole.auth.azuretre.AzureTREAuthenticationProvider"
+  ]
 }
-

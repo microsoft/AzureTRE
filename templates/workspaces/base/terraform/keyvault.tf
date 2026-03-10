@@ -1,14 +1,12 @@
-data "azurerm_client_config" "current" {}
-
 resource "azurerm_key_vault" "kv" {
-  name                      = local.keyvault_name
-  location                  = azurerm_resource_group.ws.location
-  resource_group_name       = azurerm_resource_group.ws.name
-  sku_name                  = "standard"
-  enable_rbac_authorization = true
-  purge_protection_enabled  = true
-  tenant_id                 = data.azurerm_client_config.current.tenant_id
-  tags                      = local.tre_workspace_tags
+  name                       = local.keyvault_name
+  location                   = azurerm_resource_group.ws.location
+  resource_group_name        = azurerm_resource_group.ws.name
+  sku_name                   = "standard"
+  rbac_authorization_enabled = true
+  purge_protection_enabled   = true
+  tenant_id                  = data.azurerm_client_config.core.tenant_id
+  tags                       = local.tre_workspace_tags
 
   network_acls {
     bypass         = "AzureServices"
@@ -56,15 +54,9 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
-}
-
-data "azurerm_user_assigned_identity" "resource_processor_vmss_id" {
-  name                = "id-vmss-${var.tre_id}"
-  resource_group_name = "rg-${var.tre_id}"
 }
 
 resource "azurerm_role_assignment" "keyvault_resourceprocessor_ws_role" {
@@ -80,7 +72,7 @@ resource "azurerm_role_assignment" "keyvault_deployer_ws_role" {
   count                = var.enable_local_debugging ? 1 : 0
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = data.azurerm_client_config.core.object_id
 }
 
 resource "terraform_data" "wait_for_dns_vault" {

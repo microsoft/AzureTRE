@@ -3,13 +3,12 @@ from typing import Optional
 from multiprocessing import Process
 import json
 import asyncio
-import logging
 import sys
-from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command
+from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
 from shared.config import get_config
 from helpers.httpserver import start_server
 
-from shared.logging import initialize_logging, logger, shell_output_logger, tracer
+from shared.logging import initialize_logging, logger, tracer
 from shared.config import VERSION
 from helpers import statuses
 from contextlib import asynccontextmanager
@@ -108,38 +107,38 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
             logger.exception("Unknown exception. Will retry...")
 
 
-async def run_porter(command, config: dict):
+async def run_porter(command_parts_list: list, config: dict):
     """
     Run a Porter command
     """
-    command = [
-        f"{azure_login_command(config)} && ",
-        f"{azure_acr_login_command(config)} && ",
-        f"{apply_porter_credentials_sets_command(config)} && ",
-        *command
-    ]
+    login_commands = azure_login_command(config)
+    for cmd in login_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Azure login")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    proc = await asyncio.create_subprocess_shell(
-        ''.join(command),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"]
-    )
+    acr_login_commands = azure_acr_login_command(config)
+    for cmd in acr_login_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Azure ACR login")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    stdout, stderr = await proc.communicate()
-    logger.debug(f'run porter exited with {proc.returncode}')
-    result_stdout = None
-    result_stderr = None
+    porter_cred_commands = apply_porter_credentials_sets_command(config)
+    for cmd in porter_cred_commands:
+        returncode, _, stderr_text = await run_command_helper(cmd, config, "Porter credential sets")
+        if returncode != 0:
+            return (returncode, None, stderr_text)
 
-    if stdout:
-        result_stdout = stdout.decode()
-        shell_output_logger(result_stdout, '[stdout]', logging.INFO)
+    last_returncode = None
+    last_stdout = None
+    last_stderr = None
 
-    if stderr:
-        result_stderr = stderr.decode()
-        shell_output_logger(result_stderr, '[stderr]', logging.WARN)
+    for command_parts in command_parts_list:
+        last_returncode, last_stdout, last_stderr = await run_command_helper(command_parts, config, "Porter command")
+        if last_returncode != 0:
+            return (last_returncode, last_stdout, last_stderr)
 
-    return (proc.returncode, result_stdout, result_stderr)
+    return (last_returncode, last_stdout, last_stderr)
 
 
 def service_bus_message_generator(sb_message: dict, status: str, deployment_message: str, outputs=None):
@@ -192,7 +191,13 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Handle command output
     if returncode != 0 and err is not None:
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + " ".join(porter_command)
+        # Construct a readable representation of the command(s)
+        command_representation = ""
+        for cmd in porter_command:
+            command_representation += " ".join(cmd) + "; "
+        command_representation = command_representation.rstrip("; ")
+
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + command_representation
         action_completed_without_error = False
 
         if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
@@ -284,7 +289,12 @@ async def check_runners(processes: list, httpserver: Process, keep_running=lambd
         await asyncio.sleep(30)
         if all(not process.is_alive() for process in processes):
             logger.error("All runner processes have failed!")
-            httpserver.kill()
+            # Support both sync and async kill methods for tests
+            kill_method = httpserver.kill
+            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, '__await__'):
+                await kill_method()
+            else:
+                kill_method()
 
 
 if __name__ == "__main__":
@@ -294,7 +304,10 @@ if __name__ == "__main__":
         config = set_up_config()
 
         logger.info("Verifying Azure CLI and Porter functionality...")
-        asyncio.run(run_porter(["az account show -o table"], config))
+        asyncio.run(run_porter([[
+            "az", "account", "show",
+            "-o", "table"
+        ]], config))
 
         httpserver = Process(target=start_server)
         httpserver.start()

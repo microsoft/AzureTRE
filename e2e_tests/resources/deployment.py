@@ -38,6 +38,11 @@ async def check_deployment(client, operation_endpoint, headers):
         message = response_json["operation"]["message"]
         operation_steps = stringify_operation_steps(response_json["operation"]["steps"])
         return deployment_status, message, operation_steps
+    elif response.status_code == 404:
+        # 404 indicates the resource has been deleted (filtered out by get_by_id methods)
+        # This is a valid state for deletion operations
+        LOGGER.info(f"Resource not found (404) - treating as deleted: {operation_endpoint}")
+        return strings.RESOURCE_STATUS_DELETED, "Resource has been deleted", ""
     else:
         LOGGER.error(f"Non 200 response in check_deployment: {response.status_code}")
         LOGGER.error(f"Full response: {response}")

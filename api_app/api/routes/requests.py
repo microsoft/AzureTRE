@@ -15,20 +15,26 @@ async def get_requests(
     user=Depends(get_current_tre_user_or_tre_admin),
     airlock_request_repo: AirlockRequestRepository = Depends(get_repository(AirlockRequestRepository)),
     airlock_manager: bool = False,
-    creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
-        order_by: Optional[str] = None, order_ascending: bool = True
+    type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,
+    order_by: Optional[str] = None, order_ascending: bool = True
 ) -> List[AirlockRequest]:
     try:
         if not airlock_manager:
             requests = await airlock_request_repo.get_airlock_requests(
-                creator_user_id=creator_user_id or user.id,
+                creator_user_id=user.id,
                 type=type,
                 status=status,
                 order_by=order_by,
                 order_ascending=order_ascending,
             )
         else:
-            requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(user)
+            requests = await airlock_request_repo.get_airlock_requests_for_airlock_manager(
+                user_id=user.id,
+                type=type,
+                status=status,
+                order_by=order_by,
+                order_ascending=order_ascending
+            )
 
         return requests
 

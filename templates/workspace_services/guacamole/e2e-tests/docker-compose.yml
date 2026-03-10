@@ -1,0 +1,81 @@
+services:
+  # Mock xrdp server for testing
+  xrdp:
+    image: danielguerra/ubuntu-xrdp:20.04
+    hostname: xrdp-test
+    ports:
+      - "3390:3389"
+    environment:
+      - TZ=UTC
+    networks:
+      - guac-test-network
+
+  # Guacamole backend server with TRE auth extension (Debian-based from-source build)
+  guacamole-backend:
+    image: guacamole-tre:latest
+    environment:
+      # Azure TRE Configuration (mock values for testing)
+      - TRE_ID=test-tre
+      - API_URL=http://mock-api:1080
+      - WORKSPACE_ID=test-workspace
+      - SERVICE_ID=vm-service-001
+      - KEYVAULT_URL=https://mock-keyvault.vault.azure.net/
+      - AAD_TENANT_ID=${GUAC_OIDC_TENANT_ID:?Set GUAC_OIDC_TENANT_ID (run ./run-tests.sh setup-auth)}
+      # Disable oauth2-proxy for E2E tests (routes are skipped via configuration)
+      - AUDIENCE=${GUAC_OIDC_AUDIENCE:?Set GUAC_OIDC_AUDIENCE (run ./run-tests.sh setup-auth)}
+      - ISSUER=${GUAC_OIDC_ISSUER_URL:?Set GUAC_OIDC_ISSUER_URL (run ./run-tests.sh setup-auth)}
+      - OAUTH2_PROXY_CLIENT_ID=${GUAC_OIDC_CLIENT_ID:?Set GUAC_OIDC_CLIENT_ID (run ./run-tests.sh setup-auth)}
+      - OAUTH2_PROXY_CLIENT_SECRET=${GUAC_OIDC_CLIENT_SECRET:?Set GUAC_OIDC_CLIENT_SECRET (run ./run-tests.sh setup-auth)}
+      - OAUTH2_PROXY_REDIRECT_URI=${GUAC_OIDC_REDIRECT_URI:?Set GUAC_OIDC_REDIRECT_URI (run ./run-tests.sh setup-auth)}
+      - OAUTH2_PROXY_EMAIL_DOMAIN=${GUAC_OIDC_EMAIL_DOMAIN:-*}
+      - OAUTH2_PROXY_OIDC_ISSUER_URL=${GUAC_OIDC_ISSUER_URL:?Set GUAC_OIDC_ISSUER_URL (run ./run-tests.sh setup-auth)}
+      - OAUTH2_PROXY_JWKS_ENDPOINT=${GUAC_OIDC_JWKS_URL:?Set GUAC_OIDC_JWKS_URL (run ./run-tests.sh setup-auth)}
+    ports:
+      - "8080:8085" # Expose OAuth2 proxy (HTTP)
+      - "8443:8086" # Optional HTTPS endpoint from oauth2-proxy
+    depends_on:
+      - xrdp
+      - mock-api
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/ping >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    networks:
+      - guac-test-network
+
+  # Mock TRE API server
+  mock-api:
+    image: mockserver/mockserver:5.15.0
+    ports:
+      - "8000:1080"
+    environment:
+      - MOCKSERVER_LOG_LEVEL=INFO
+    networks:
+      - guac-test-network
+
+  # Playwright test runner
+  playwright:
+    build:
+      context: ./playwright
+      dockerfile: Dockerfile
+    depends_on:
+      guacamole-backend:
+        condition: service_healthy
+      xrdp:
+        condition: service_started
+      mock-api:
+        condition: service_started
+    environment:
+      - GUACAMOLE_URL=http://guacamole-backend:8085
+    volumes:
+      - ./playwright/screenshots:/screenshots
+      - ./playwright/videos:/videos
+    networks:
+      - guac-test-network
+    command: npx playwright test --reporter=html
+
+networks:
+  guac-test-network:
+    driver: bridge

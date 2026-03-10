@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 4.27.0"
+      version = "= 4.57.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -11,7 +11,7 @@ terraform {
     }
     local = {
       source  = "hashicorp/local"
-      version = "= 2.5.2"
+      version = "= 2.6.1"
     }
     http = {
       source  = "hashicorp/http"
@@ -19,7 +19,12 @@ terraform {
     }
     azapi = {
       source  = "Azure/azapi"
-      version = "= 2.3.0"
+      version = "= 2.8.0"
+    }
+    # tflint-ignore: terraform_unused_required_providers
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = "= 2.3.5"
     }
   }
 
@@ -84,12 +89,13 @@ module "azure_monitor" {
 }
 
 module "network" {
-  source              = "./network"
-  tre_id              = var.tre_id
-  location            = var.location
-  resource_group_name = azurerm_resource_group.core.name
-  core_address_space  = var.core_address_space
-  arm_environment     = var.arm_environment
+  source                   = "./network"
+  tre_id                   = var.tre_id
+  location                 = var.location
+  resource_group_name      = azurerm_resource_group.core.name
+  core_address_space       = var.core_address_space
+  arm_environment          = var.arm_environment
+  firewall_force_tunnel_ip = var.firewall_force_tunnel_ip
 }
 
 module "firewall" {
@@ -224,6 +230,6 @@ module "resource_processor_vmss_porter" {
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.7.0"
   arm_environment = var.arm_environment
 }

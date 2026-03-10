@@ -190,13 +190,6 @@
     ],
     "upgrade": [
       {
-        "stepId": "12baaaad-ea6c-4d0d-9255-d316212f5ffa",
-        "stepTitle": "Upgrade to ensure aware of address space",
-        "resourceType": "workspace",
-        "resourceAction": "upgrade",
-        "properties": []
-      },
-      {
         "stepId": "main"
       },
       {

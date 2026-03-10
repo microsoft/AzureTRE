@@ -38,7 +38,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   secure_boot_enabled             = local.secure_boot_enabled
   vtpm_enabled                    = local.vtpm_enabled
 
-  custom_data = data.template_cloudinit_config.config.rendered
+  custom_data = data.cloudinit_config.config.rendered
 
   # set source_image_id/reference depending on the config for the selected image
   source_image_id = local.selected_image_source_id
@@ -55,7 +55,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   os_disk {
     name                   = "osdisk-${local.vm_name}"
     caching                = "ReadWrite"
-    storage_account_type   = "Standard_LRS"
+    storage_account_type   = "StandardSSD_LRS"
     disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.linuxvm_disk_encryption[0].id : null
   }
 
@@ -68,7 +68,7 @@ resource "azurerm_linux_virtual_machine" "linuxvm" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data] }
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, admin_username, custom_data, os_disk[0].storage_account_type] }
 }
 
 resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
@@ -86,44 +86,28 @@ resource "azurerm_disk_encryption_set" "linuxvm_disk_encryption" {
   }
 }
 
-data "template_cloudinit_config" "config" {
+data "cloudinit_config" "config" {
   gzip          = true
   base64_encode = true
 
   part {
     content_type = "text/x-shellscript"
-    content      = data.template_file.get_apt_keys.rendered
+    content      = local.get_apt_keys_content
   }
 
   part {
     content_type = "text/cloud-config"
-    content      = data.template_file.apt_sources_config.rendered
+    content      = local.apt_sources_config_content
   }
 
   part {
     content_type = "text/x-shellscript"
-    content      = data.template_file.pypi_sources_config.rendered
+    content      = local.pypi_sources_config_content
   }
 
   part {
     content_type = "text/x-shellscript"
-    content      = data.template_file.vm_config.rendered
-  }
-}
-
-data "template_file" "vm_config" {
-  template = file("${path.module}/vm_config.sh")
-  vars = {
-    INSTALL_UI            = local.selected_image.install_ui ? 1 : 0
-    SHARED_STORAGE_ACCESS = tobool(var.shared_storage_access) ? 1 : 0
-    STORAGE_ACCOUNT_NAME  = data.azurerm_storage_account.stg.name
-    STORAGE_ACCOUNT_KEY   = data.azurerm_storage_account.stg.primary_access_key
-    HTTP_ENDPOINT         = data.azurerm_storage_account.stg.primary_file_endpoint
-    FILESHARE_NAME        = var.shared_storage_access ? var.shared_storage_name : ""
-    NEXUS_PROXY_URL       = local.nexus_proxy_url
-    CONDA_CONFIG          = local.selected_image.conda_config ? 1 : 0
-    VM_USER               = local.admin_username
-    APT_SKU               = replace(local.apt_sku, ".", "")
+    content      = local.vm_config_content
   }
 }
 

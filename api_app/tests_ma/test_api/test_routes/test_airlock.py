@@ -381,7 +381,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     async def test_post_create_review_user_resource_returns_422_if_configuration_invalid(self, _, __, app, client):
         # Check the Airlock Request has been updated with VM information
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     @patch("services.airlock.WorkspaceServiceRepository.get_workspace_service_by_id", side_effect=EntityDoesNotExist)
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
@@ -389,7 +389,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     async def test_post_create_review_user_resource_returns_422_if_cannot_find_workspace_service(self, _, __, ___, app, client):
         # Check the Airlock Request has been updated with VM information
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Draft))
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace())
@@ -458,7 +458,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved))
     async def test_post_revoke_airlock_request_missing_reason_returns_422(self, _, app, client):
         response = await client.post(app.url_path_for(strings.API_REVOKE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json={})
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestAirlockRoutesPermissions():

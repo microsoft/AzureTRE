@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import semantic_version
 from copy import deepcopy
 from typing import Dict, Any, Optional
@@ -286,7 +286,7 @@ async def get_template(
 
 
 def get_timestamp() -> float:
-    return datetime.utcnow().timestamp()
+    return datetime.now(UTC).timestamp()
 
 
 async def update_user_resource(

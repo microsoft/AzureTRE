@@ -100,7 +100,7 @@ class TestUserResourceTemplatesRequiringAdminRights:
     async def test_creating_a_user_resource_template_raises_http_422_if_step_ids_are_duplicated(self, _, __, client, app, input_user_resource_template):
         response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE_TEMPLATES, service_template_name="guacamole"), json=input_user_resource_template.dict())
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 class TestUserResourceTemplatesNotRequiringAdminRights:

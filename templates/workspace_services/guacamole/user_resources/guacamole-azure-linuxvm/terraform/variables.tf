@@ -54,8 +54,14 @@ variable "auth_client_id" {
   type = string
 }
 variable "auth_client_secret" {
-  type = string
+  type      = string
+  sensitive = true
 }
 variable "admin_username" {
   type = string
+}
+variable "workspace_subscription_id" {
+  type        = string
+  description = "The id of the Azure subscription the workspace is deployed to"
+  default     = ""
 }

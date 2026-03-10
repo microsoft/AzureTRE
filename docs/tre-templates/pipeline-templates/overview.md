@@ -20,7 +20,7 @@ Consider the following `template_schema.json`:
         "stepId": "6d2d7eb7-984e-4330-bd3c-c7ec98658402",
         "stepTitle": "Update the firewall name",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared_service",
+        "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "properties": [
         {

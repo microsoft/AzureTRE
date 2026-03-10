@@ -76,12 +76,17 @@ async def test_create_workspace_template_succeeds_without_required(uuid_mock, sa
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "test" AND c.version = "1.0"'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.Workspace},
+        {'name': '@name', 'value': 'test'},
+        {'name': '@version', 'value': '1.0'}
+    ]
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0")]
 
     await resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.Workspace)
 
-    query_mock.assert_called_once_with(query=expected_query)
+    query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
@@ -109,12 +114,16 @@ async def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_templa
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_current_by_name_queries_db(query_mock, resource_template_repo):
     template_name = "template1"
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = "workspace" AND c.name = "template1" AND c.current = true'
+    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.current = true'
+    expected_parameters = [
+        {'name': '@resourceType', 'value': ResourceType.Workspace},
+        {'name': '@name', 'value': 'template1'}
+    ]
     query_mock.return_value = [sample_resource_template_as_dict(name="test")]
 
     await resource_template_repo.get_current_template(template_name=template_name, resource_type=ResourceType.Workspace)
 
-    query_mock.assert_called_once_with(query=expected_query)
+    query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')

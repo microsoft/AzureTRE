@@ -19,6 +19,10 @@ resource "azurerm_storage_account" "staticweb" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  network_rules {
+    default_action = "Deny"
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {

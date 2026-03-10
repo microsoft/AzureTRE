@@ -1,18 +1,17 @@
 import { Stack, Shimmer, TooltipHost, Icon } from "@fluentui/react";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { CostsContext } from "../../contexts/CostsContext";
 import { LoadingState } from "../../models/loadingState";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
 import {
-  useAuthApiCall,
-  HttpMethod,
-  ResultType,
+  useAuthApiCall
 } from "../../hooks/useAuthApiCall";
-import { ApiEndpoint } from "../../models/apiEndpoints";
+import { ResourceType } from "../../models/resourceType";
 
 interface CostsTagProps {
   resourceId: string;
+  resourceType?: ResourceType;
 }
 
 export const CostsTag: React.FunctionComponent<CostsTagProps> = (
@@ -29,9 +28,9 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
   useEffect(() => {
     async function fetchCostData() {
       let costs: CostResource[] = [];
-      if (workspaceCtx.costs.length > 0) {
+      if (workspaceCtx.costs?.length > 0) {
         costs = workspaceCtx.costs;
-      } else if (costsCtx.costs.length > 0) {
+      } else if (costsCtx.costs?.length > 0) {
         costs = costsCtx.costs;
       }
 
@@ -39,7 +38,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
         return cost.id === props.resourceId;
       });
 
-      if (resourceCosts && resourceCosts.costs.length > 0) {
+      if (resourceCosts && resourceCosts?.costs?.length > 0) {
         const formattedCost = new Intl.NumberFormat(undefined, {
           style: "currency",
           currency: resourceCosts?.costs[0].currency,
@@ -60,16 +59,36 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
     workspaceCtx.workspace.id,
   ]);
 
+  // Generate tooltip content based on resource type and cost availability
+  const getTooltipContent = () => {
+    if (!formattedCost) {
+      return "Cost data not yet available";
+    }
+
+    let baseMessage = "Month-to-date costs";
+
+    if (props.resourceType === ResourceType.Workspace) {
+      baseMessage += " (includes all workspace services and user resources)";
+    }
+
+    return baseMessage;
+  };
+
+  const showShimmer = loadingState === LoadingState.Loading ||
+    (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
-      {loadingState === LoadingState.Loading ? (
-        <Shimmer />
+      {showShimmer ? (
+        <Shimmer data-testid="shimmer" />
       ) : (
         <>
           {formattedCost ? (
-            formattedCost
+            <TooltipHost content={getTooltipContent()}>
+              {formattedCost}
+            </TooltipHost>
           ) : (
-            <TooltipHost content="Cost data not yet available">
+            <TooltipHost content={getTooltipContent()}>
               <Icon iconName="Clock" />
             </TooltipHost>
           )}

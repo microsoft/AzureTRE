@@ -111,4 +111,4 @@ class TestSharedServiceTemplates:
     async def test_creating_a_shared_service_template_raises_http_422_if_step_ids_are_duplicated(self, _, client, app, input_shared_service_template):
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE_TEMPLATES), json=input_shared_service_template.dict())
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

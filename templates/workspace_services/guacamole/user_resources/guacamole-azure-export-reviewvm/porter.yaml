@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 0.3.2
+version: 0.3.5
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -40,6 +40,10 @@ parameters:
     type: string
     description: "Resource group containing the shared ACR"
     env: PARENT_SERVICE_ID
+  - name: image_gallery_id
+    type: string
+    description: Azure resource ID for the compute image gallery to pull images from (if specifying custom images by name)
+    default: ""
   - name: id
     type: string
     description: "An Id for this installation"
@@ -125,6 +129,7 @@ install:
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: ${ bundle.parameters.airlock_request_sas_url }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -151,6 +156,7 @@ upgrade:
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: "unused"
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -189,6 +195,7 @@ uninstall:
         tre_resource_id: ${ bundle.parameters.id }
         image: ${ bundle.parameters.os_image }
         vm_size: ${ bundle.parameters.vm_size }
+        image_gallery_id: ${ bundle.parameters.image_gallery_id }
         airlock_request_sas_url: "unused"
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -227,7 +234,7 @@ start:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Start the VM"
       arguments:
@@ -263,7 +270,7 @@ stop:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Stop the VM"
       arguments:
@@ -302,7 +309,7 @@ reset_password:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - exec:
       description: "Reset password and persist to keyvault"
       suppress-output: true

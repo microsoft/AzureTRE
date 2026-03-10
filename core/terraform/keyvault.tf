@@ -1,12 +1,12 @@
 resource "azurerm_key_vault" "kv" {
-  name                      = local.kv_name
-  tenant_id                 = data.azurerm_client_config.current.tenant_id
-  location                  = azurerm_resource_group.core.location
-  resource_group_name       = azurerm_resource_group.core.name
-  sku_name                  = "standard"
-  enable_rbac_authorization = true
-  purge_protection_enabled  = var.kv_purge_protection_enabled
-  tags                      = local.tre_core_tags
+  name                       = local.kv_name
+  tenant_id                  = data.azurerm_client_config.current.tenant_id
+  location                   = azurerm_resource_group.core.location
+  resource_group_name        = azurerm_resource_group.core.name
+  sku_name                   = "standard"
+  rbac_authorization_enabled = true
+  purge_protection_enabled   = var.kv_purge_protection_enabled
+  tags                       = local.tre_core_tags
 
   public_network_access_enabled = local.kv_public_network_access_enabled
 
@@ -146,9 +146,8 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

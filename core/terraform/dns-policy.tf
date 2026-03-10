@@ -104,8 +104,7 @@ resource "azurerm_monitor_diagnostic_setting" "dns_policy" {
   enabled_log {
     category = "DnsResponse"
   }
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = false
   }
 }
