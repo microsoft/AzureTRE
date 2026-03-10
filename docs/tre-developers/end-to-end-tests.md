@@ -1,5 +1,10 @@
 # End-to-end (E2E) tests
 
+## Prerequisites
+
+1. Authentication and Authorization configuration set up as noted in the [Authentication documentation](../tre-admins/auth.md)
+1. An Azure Tre deployed environment.
+
 ## Registering bundles to run End-to-end tests
 
 End-to-end tests depend on certain bundles to be registered within the TRE API.

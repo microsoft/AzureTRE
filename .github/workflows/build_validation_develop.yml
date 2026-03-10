@@ -102,6 +102,8 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_TSX: true
           VALIDATE_TYPESCRIPT_ES: true
+          TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
+          TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
@@ -140,7 +142,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_TERRAFORM_TFLINT: true
           TERRAFORM_TFLINT_CONFIG_FILE: .tflint_workspace_services.hcl
-          FILTER_REGEX_INCLUDE: "./templates/workspaces/.*"
+          FILTER_REGEX_INCLUDE: "./templates/workspace_services/.*"
           FILTER_REGEX_EXCLUDE: ".*user_resource.*"
 
       - name: User Resources Tags

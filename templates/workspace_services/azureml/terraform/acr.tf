@@ -20,7 +20,6 @@ resource "azurerm_container_registry" "acr" {
   dynamic "encryption" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
-      enabled            = true
       key_vault_key_id   = data.azurerm_key_vault_key.ws_encryption_key[0].id
       identity_client_id = data.azurerm_user_assigned_identity.ws_encryption_identity[0].client_id
     }

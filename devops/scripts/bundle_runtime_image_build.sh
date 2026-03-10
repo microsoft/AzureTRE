@@ -5,6 +5,21 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
+# Check for import section (import image from external registry to ACR)
+if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
+  image_name=$(yq eval ".custom.runtime_image.name" porter.yaml)
+  source_image=$(yq eval ".custom.runtime_image.import.source" porter.yaml)
+  version=$(yq eval ".custom.runtime_image.import.tag" porter.yaml)
+
+  echo "Importing ${source_image}:${version} to ACR as ${image_name}:${version}..."
+  az acr import --name "${ACR_NAME}" \
+    --source "${source_image}:${version}" \
+    --image "${image_name}:${version}" \
+    --force
+  echo "Image imported successfully"
+  exit 0
+fi
+
 if [ "$(yq eval ".custom.runtime_image.build" porter.yaml)" == "null" ]; then
   echo "Runtime image build section isn't specified. Exiting..."
   exit 0

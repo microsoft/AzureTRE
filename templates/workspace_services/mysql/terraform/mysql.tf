@@ -18,6 +18,10 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   geo_redundant_backup_enabled = false
   tags                         = local.workspace_service_tags
 
+  storage {
+    size_gb = local.max_storage_gb
+  }
+
   lifecycle { ignore_changes = [tags, zone] }
 }
 

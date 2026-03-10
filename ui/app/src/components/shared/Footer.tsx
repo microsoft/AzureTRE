@@ -20,9 +20,18 @@ import config from "../../config.json";
 // - change text to link
 // - include any small print
 
+interface ApiMetadata {
+  api_version?: string;
+}
+
+interface UIConfig {
+  version?: string;
+  uiFooterText?: string;
+}
+
 export const Footer: React.FunctionComponent = () => {
   const [showInfo, setShowInfo] = useState(false);
-  const [apiMetadata, setApiMetadata] = useState<any>();
+  const [apiMetadata, setApiMetadata] = useState<ApiMetadata>();
   const [health, setHealth] = useState<{
     services: [{ service: string; status: string }];
   }>();
@@ -41,12 +50,12 @@ export const Footer: React.FunctionComponent = () => {
     getHealth();
   }, [apiCall]);
 
-  const uiConfig = config as any;
+  const uiConfig = config as UIConfig;
 
   return (
     <div className={contentClass}>
       <Stack horizontal style={{ alignItems: "center" }}>
-        <StackItem grow={1}>{(config.uiFooterText ?? "") === "" ? "Azure Trusted Research Environment" : config.uiFooterText}</StackItem>
+        <StackItem grow={1}>{(uiConfig.uiFooterText ?? "") === "" ? "Azure Trusted Research Environment" : uiConfig.uiFooterText}</StackItem>
         <StackItem>
           <IconButton
             styles={iconButtonStyles}
@@ -92,7 +101,7 @@ export const Footer: React.FunctionComponent = () => {
               borderTop: "1px solid #e8e8e8",
             }}
           >
-            {health?.services.map((s) => {
+            {health?.services?.map((s) => {
               return (
                 <Stack
                   horizontal

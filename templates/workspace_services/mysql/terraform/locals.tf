@@ -5,6 +5,7 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
   core_resource_group_name       = "rg-${var.tre_id}"
+  max_storage_gb                 = ceil(var.storage_mb / 1024)
   sql_sku = {
     "B | 4GB 2vCores"   = { value = "B_Standard_B2s" },
     "GP | 8GB 2vCores"  = { value = "GP_Standard_D2ds_v4" },

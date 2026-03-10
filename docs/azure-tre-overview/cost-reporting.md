@@ -48,10 +48,10 @@ GET /api/costs
 
 **Query Parameters**
 
-| Parameter name| Type| Description| Default Value |
+| Parameter name | Type | Description | Default Value |
 | --- | --- | --- | --- |
 | from, to | datetime | Custom time period, up to 1 year timeframe, iso-8601 format | Month to date period |
-| granularity| Enum (Daily, None) | The granularity of rows in the query. | None |
+| granularity | Enum (Daily, None) | The granularity of rows in the query. | None |
 
 **Output**
 
@@ -92,11 +92,11 @@ GET /api/workspaces/{workspace_id}/costs
 
 **Query Parameters**
 
-| Parameter name| Type| Description| Default Value |
+| Parameter name | Type | Description | Default Value |
 | --- | --- | --- | --- |
 | from, to | datetime | Custom time period, up to 1 year timeframe, iso-8601 format | Month to date period |
-| granularity| Enum (Daily, None) | The granularity of rows in the query. | None |
-| workspace_id |Guid |The workspace id to generate report for | Required field for workspace and user resource level apis |
+| granularity | Enum (Daily, None) | The granularity of rows in the query. | None |
+| workspace_id | Guid | The workspace id to generate report for | Required field for workspace and user resource level apis |
 
 **Output**
 ```json

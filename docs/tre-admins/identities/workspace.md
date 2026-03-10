@@ -43,5 +43,6 @@ Example on how to run the script:
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
 | `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE. |
 
+
 ## Comments
 When the Workspace Microsoft Entra ID app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace Microsoft Entra ID app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`

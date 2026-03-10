@@ -15,9 +15,9 @@
 | `EXTERNAL_KEY_STORE_ID` | The ID of the external Key Vault to store CMKs in. Should not be set if `ENCRYPTION_KV_NAME` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 | `ENCRYPTION_KV_NAME` | The name of the Key Vault for encryption keys. Should not be set if `EXTERNAL_KEY_STORE_ID` is set and only required if `ENABLE_CMK_ENCRYPTION` is true. |
 | `ARM_SUBSCRIPTION_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Azure subscription ID for all resources. |
-| `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. |
-| `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. |
-| `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Microsoft Entra ID tenant of the client defined in `ARM_CLIENT_ID`. |
+| `ARM_CLIENT_ID` | *Optional for manual deployment without logged-in credentials.* The client whose azure identity will be used to deploy the solution. For CI/CD, this is set via repository variables. |
+| `ARM_CLIENT_SECRET` | *Optional for manual deployment without logged-in credentials.* The password of the client defined in `ARM_CLIENT_ID`. **Note:** For CI/CD using GitHub Actions, this is no longer required as OIDC authentication is used instead. |
+| `ARM_TENANT_ID` | *Optional for manual deployment. If not specified the `az cli` selected subscription will be used.* The Microsoft Entra ID tenant of the client defined in `ARM_CLIENT_ID`. For CI/CD, this is set via repository variables. |
 
 ## For Azure TRE instance in `/config.yaml`
 

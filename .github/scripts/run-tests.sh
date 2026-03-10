@@ -67,6 +67,6 @@ else
 fi
 
 echo "Running JavaScript build tests..."
-(cd "$DIR" && yarn install && yarn "$test_command")
+(cd "$DIR" && npm install && npm run "$test_command")
 
 echo "Tests complete"

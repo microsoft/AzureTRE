@@ -48,7 +48,7 @@ You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE
 
 Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the `./nexus_repos_config` directory and redeploy.
 
-You can view further information on the Nexus shared service [here](../../tre-templates/shared-services/nexus.md).
+You can view further information on the [Nexus shared service documentation](../../tre-templates/shared-services/nexus.md).
 
 ## (Optional) Install Gitea and configure repositories
 
@@ -88,7 +88,7 @@ From a virtual machine within a workspace:
 - Command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 - Gitea Web Interface: ```https://gitea-<TRE_ID>.azurewebsites.net/```
 
-More info on the Gitea shared service is available [here](../../tre-templates/shared-services/gitea.md).
+More info on the Gitea shared service is available in the [Gitea shared service documentation](../../tre-templates/shared-services/gitea.md).
 
 ## Next steps
 

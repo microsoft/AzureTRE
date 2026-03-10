@@ -8,8 +8,14 @@ inputs:
   DEVCONTAINER_TAG:
     description: "The container label to use when running the command."
     required: true
-  AZURE_CREDENTIALS:
-    description: "Credentials to access Azure."
+  AZURE_CLIENT_ID:
+    description: "The Azure Client ID for OIDC authentication"
+    required: true
+  AZURE_TENANT_ID:
+    description: "The Azure Tenant ID"
+    required: true
+  AZURE_SUBSCRIPTION_ID:
+    description: "The Azure Subscription ID"
     required: true
   AZURE_ENVIRONMENT:
     description: "Azure Cloud Environment"
@@ -181,7 +187,9 @@ runs:
       uses: azure/login@v2
       if: contains(inputs.COMMAND, 'make bootstrap') != true
       with:
-        creds: ${{ inputs.AZURE_CREDENTIALS }}
+        client-id: ${{ inputs.AZURE_CLIENT_ID }}
+        tenant-id: ${{ inputs.AZURE_TENANT_ID }}
+        subscription-id: ${{ inputs.AZURE_SUBSCRIPTION_ID }}
         environment: "${{ env.AZURE_ENVIRONMENT }}"
 
     - name: ACR Login
@@ -225,6 +233,7 @@ runs:
           "type=bind,src=${{ github.workspace }},dst=/workspaces/tre" \
           -v /var/run/docker.sock:/var/run/docker.sock \
           -v "./command.sh:/workspaces/tre/command.sh" \
+          -v "$HOME/.azure:/home/vscode/.azure" \
           --workdir /workspaces/tre \
           --user vscode \
           -e TF_INPUT="0" \
@@ -238,10 +247,12 @@ runs:
           -e LOCATION="${{ inputs.LOCATION }}" \
           -e TF_VAR_location="${{ inputs.LOCATION }}" \
           -e RESOURCE_LOCATION="${{ inputs.LOCATION }}" \
-          -e ARM_CLIENT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientId }}" \
-          -e ARM_CLIENT_SECRET="${{ fromJSON(inputs.AZURE_CREDENTIALS).clientSecret }}" \
-          -e ARM_TENANT_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).tenantId }}" \
-          -e ARM_SUBSCRIPTION_ID="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e ARM_CLIENT_ID="${{ inputs.AZURE_CLIENT_ID }}" \
+          -e ARM_TENANT_ID="${{ inputs.AZURE_TENANT_ID }}" \
+          -e ARM_SUBSCRIPTION_ID="${{ inputs.AZURE_SUBSCRIPTION_ID }}" \
+          -e ARM_USE_OIDC="true" \
+          -e ACTIONS_ID_TOKEN_REQUEST_URL \
+          -e ACTIONS_ID_TOKEN_REQUEST_TOKEN \
           -e TF_VAR_terraform_state_container_name="${{ (inputs.TERRAFORM_STATE_CONTAINER_NAME != ''
             && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
@@ -253,7 +264,7 @@ runs:
           -e TF_VAR_api_client_secret="${{ inputs.API_CLIENT_SECRET }}" \
           -e TF_VAR_application_admin_client_id="${{ inputs.APPLICATION_ADMIN_CLIENT_ID }}" \
           -e TF_VAR_application_admin_client_secret="${{ inputs.APPLICATION_ADMIN_CLIENT_SECRET }}" \
-          -e TF_VAR_arm_subscription_id="${{ fromJSON(inputs.AZURE_CREDENTIALS).subscriptionId }}" \
+          -e TF_VAR_arm_subscription_id="${{ inputs.AZURE_SUBSCRIPTION_ID }}" \
           -e TF_VAR_enable_swagger="${{ (inputs.ENABLE_SWAGGER != ''
             && inputs.ENABLE_SWAGGER) || 'false' }}" \
           -e SWAGGER_UI_CLIENT_ID="${{ inputs.SWAGGER_UI_CLIENT_ID }}" \
