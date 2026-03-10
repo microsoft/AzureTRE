@@ -3,6 +3,8 @@
 
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
+* Remove non-functional `tre_url` setting from `developer_settings` in `config.yaml`. Use `custom_domain` under `tre:` to configure a custom domain name for your TRE ([#4248](https://github.com/microsoft/AzureTRE/issues/4248))
+
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
