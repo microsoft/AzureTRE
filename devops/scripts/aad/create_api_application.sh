@@ -13,14 +13,14 @@ Utility script for creating app registrations required by Azure TRE. This script
 Applications. The Client Application is the public facing app, whereas the API is an internal AAD Application.
 You must be logged in using Azure CLI with sufficient privileges to modify Azure Active Directory to run this script.
 
-Usage: $0 -n <app-name> [-u <tre-url>] [-a] [-d <custom-domain>] [--automation-account]
+Usage: $0 -n <app-name> [-u <tre-url>] [-a] [-d <custom-domain>] [-t <automation-clientid>]
 
 Options:
     -n,--name                   Required. The prefix for the app (registration) names e.g., "TRE", or "Workspace One".
     -u,--tre-url                TRE URL, used to construct auth redirection URLs for the UI and Swagger app.
     -a,--admin-consent          Optional, but recommended. Grants admin consent for the app registrations, when this flag is set.
                                 Requires directory admin privileges to the Azure AD in question.
-    -t,--automation-clientid    Optional, when --workspace is specified the client ID of the automation account can be added to the TRE workspace.
+    -t,--automation-clientid    Optional, the client ID of the automation account to add to the TRE workspace.
     -r,--reset-password         Optional, switch to automatically reset the password. Default 0
     -d,--custom-domain          Optional, custom domain, used to construct auth redirection URLs (in addition to --tre-url)
 
@@ -28,7 +28,7 @@ Examples:
     1. $0 -n TRE -u https://mytre.region.cloudapp.azure.com -a
 
     Using an Automation account
-    3. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-account
+    2. $0 --name 'TRE' --tre-url https://mytre.region.cloudapp.azure.com --admin-consent --automation-clientid <client-id>
 
 USAGE
     exit 2
