@@ -11,20 +11,15 @@ plugin "azurerm" {
     source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 
-rule "terraform_typed_variables" {
-  enabled = false
-}
-
 rule "azurerm_resource_missing_tags" {
   enabled = true
   tags = ["tre_id", "tre_workspace_id"]
 }
 
-# Disabled: Workspace secrets have a normal lifecycle and need to be deleted with the workspace
-
 rule "terraform_required_version" {
   enabled = false
 }
+
 rule "azurerm_resources_missing_prevent_destroy" {
   enabled = false
 }
