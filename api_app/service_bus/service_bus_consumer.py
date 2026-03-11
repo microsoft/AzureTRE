@@ -29,44 +29,25 @@ class ServiceBusConsumer:
             return False
         return True
 
-    async def _receive_messages_loop(self):
-        """Run receive_messages() in a loop with exponential backoff on failure."""
-        while True:
-            try:
-                start_time = time.monotonic()
-                logger.info(f"Starting {self.service_name} receive_messages loop...")
-                await self.receive_messages()
-                logger.warning(f"{self.service_name} receive_messages() returned unexpectedly")
-            except asyncio.CancelledError:
-                raise
-            except Exception as e:
-                logger.exception(f"{self.service_name} receive_messages failed: {e}")
-
-            # Reset backoff if the consumer ran long enough to be considered healthy
-            elapsed = time.monotonic() - start_time
-            if elapsed > self._restart_delay:
-                self._restart_delay = RESTART_DELAY_SECONDS
-
-            logger.info(f"{self.service_name} restarting in {self._restart_delay:.0f}s...")
-            await asyncio.sleep(self._restart_delay)
-            self._restart_delay = min(self._restart_delay * 2, MAX_RESTART_DELAY_SECONDS)
-
     async def supervisor_with_heartbeat_check(self):
         task = None
         try:
             while True:
                 try:
+                    task_just_started = False
                     if task is None or task.done():
                         if task and task.done():
                             try:
                                 await task
                             except Exception as e:
-                                logger.exception(f"{self.service_name} task failed unexpectedly: {e}")
-                            await asyncio.sleep(RESTART_DELAY_SECONDS)
+                                logger.exception(f"{self.service_name} task failed: {e}")
+                            await asyncio.sleep(self._restart_delay)
+                            self._restart_delay = min(self._restart_delay * 2, MAX_RESTART_DELAY_SECONDS)
 
                         logger.info(f"Starting {self.service_name} task...")
-                        task = asyncio.create_task(self._receive_messages_loop())
+                        task = asyncio.create_task(self.receive_messages())
                         self.update_heartbeat()
+                        task_just_started = True
 
                     await asyncio.sleep(HEARTBEAT_CHECK_INTERVAL_SECONDS)
 
@@ -78,6 +59,7 @@ class ServiceBusConsumer:
                         except asyncio.CancelledError:
                             pass
                         task = None
+                    elif not task_just_started:
                         self._restart_delay = RESTART_DELAY_SECONDS
                 except Exception as e:
                     logger.exception(f"{self.service_name} supervisor error: {e}")

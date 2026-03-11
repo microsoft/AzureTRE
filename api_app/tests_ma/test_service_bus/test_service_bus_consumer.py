@@ -8,6 +8,8 @@ from service_bus.service_bus_consumer import (
     HEARTBEAT_STALENESS_THRESHOLD_SECONDS,
     RESTART_DELAY_SECONDS,
     MAX_RESTART_DELAY_SECONDS,
+    HEARTBEAT_CHECK_INTERVAL_SECONDS,
+    SUPERVISOR_ERROR_DELAY_SECONDS,
 )
 
 
@@ -67,9 +69,20 @@ async def test_check_heartbeat_default_uses_constant():
     assert default == HEARTBEAT_STALENESS_THRESHOLD_SECONDS
 
 
+def test_restart_delay_configuration():
+    """Test that configuration constants exist and have reasonable values."""
+    assert RESTART_DELAY_SECONDS > 0
+    assert RESTART_DELAY_SECONDS <= 10
+    assert MAX_RESTART_DELAY_SECONDS >= RESTART_DELAY_SECONDS
+    assert MAX_RESTART_DELAY_SECONDS <= 600
+    assert HEARTBEAT_CHECK_INTERVAL_SECONDS > 0
+    assert HEARTBEAT_STALENESS_THRESHOLD_SECONDS > HEARTBEAT_CHECK_INTERVAL_SECONDS
+    assert SUPERVISOR_ERROR_DELAY_SECONDS > 0
+
+
 @pytest.mark.asyncio
 async def test_backoff_increases_on_consecutive_failures():
-    """Test that restart delay increases exponentially on immediate failures."""
+    """Test that restart delay increases exponentially on consecutive failures via supervisor."""
     consumer = MockConsumer()
 
     async def failing_receive():
@@ -78,53 +91,91 @@ async def test_backoff_increases_on_consecutive_failures():
     consumer.receive_messages = failing_receive
 
     sleep_calls = []
-    call_count = 0
+    task_create_calls = 0
+
+    class FailingTask:
+        def __init__(self):
+            nonlocal task_create_calls
+            task_create_calls += 1
+
+        def done(self):
+            return True
+
+        def cancel(self):
+            pass
+
+        def __await__(self):
+            async def _await():
+                raise RuntimeError("Simulated task failure")
+            return _await().__await__()
 
     async def mock_sleep(duration):
-        nonlocal call_count
         sleep_calls.append(duration)
-        call_count += 1
-        if call_count >= 3:
+        if task_create_calls >= 4:
             raise asyncio.CancelledError()
 
-    # Patch time.monotonic to always return the same value so elapsed time is 0 (immediate failure)
-    fixed_time = time.monotonic()
+    def create_failing_task(coro):
+        coro.close()
+        return FailingTask()
+
     with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
-            patch("service_bus.service_bus_consumer.time.monotonic", return_value=fixed_time):
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_failing_task):
         try:
-            await consumer._receive_messages_loop()
+            await consumer.supervisor_with_heartbeat_check()
         except asyncio.CancelledError:
             pass
 
-    assert sleep_calls[0] == RESTART_DELAY_SECONDS
-    assert sleep_calls[1] == RESTART_DELAY_SECONDS * 2
-    assert sleep_calls[2] == RESTART_DELAY_SECONDS * 4
+    # The backoff delays should increase exponentially: 5, 10, 20, ...
+    backoff_sleeps = [d for d in sleep_calls if d != HEARTBEAT_CHECK_INTERVAL_SECONDS]
+    assert backoff_sleeps[0] == RESTART_DELAY_SECONDS
+    assert backoff_sleeps[1] == RESTART_DELAY_SECONDS * 2
+    assert backoff_sleeps[2] == RESTART_DELAY_SECONDS * 4
 
 
 @pytest.mark.asyncio
 async def test_backoff_caps_at_maximum():
-    """Test that restart delay caps at MAX_RESTART_DELAY_SECONDS."""
+    """Test that restart delay caps at MAX_RESTART_DELAY_SECONDS via supervisor."""
     consumer = MockConsumer()
     consumer._restart_delay = MAX_RESTART_DELAY_SECONDS
 
-    async def failing_receive():
-        raise RuntimeError("Simulated failure")
+    task_create_calls = 0
 
-    consumer.receive_messages = failing_receive
+    class FailingTask:
+        def __init__(self):
+            nonlocal task_create_calls
+            task_create_calls += 1
+
+        def done(self):
+            return True
+
+        def cancel(self):
+            pass
+
+        def __await__(self):
+            async def _await():
+                raise RuntimeError("Simulated task failure")
+            return _await().__await__()
 
     sleep_calls = []
 
     async def mock_sleep(duration):
         sleep_calls.append(duration)
-        raise asyncio.CancelledError()
+        if task_create_calls >= 2:
+            raise asyncio.CancelledError()
 
-    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep):
+    def create_failing_task(coro):
+        coro.close()
+        return FailingTask()
+
+    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_failing_task):
         try:
-            await consumer._receive_messages_loop()
+            await consumer.supervisor_with_heartbeat_check()
         except asyncio.CancelledError:
             pass
 
-    assert sleep_calls[0] == MAX_RESTART_DELAY_SECONDS
+    backoff_sleeps = [d for d in sleep_calls if d != HEARTBEAT_CHECK_INTERVAL_SECONDS]
+    assert backoff_sleeps[0] == MAX_RESTART_DELAY_SECONDS
 
 
 @pytest.mark.asyncio
@@ -239,5 +290,106 @@ async def test_supervisor_restarts_on_stale_heartbeat():
     assert heartbeat_calls >= 2
     assert task_create_calls >= 2
     assert task_cancel_calls >= 1
-    assert 60 in sleep_calls
+    assert HEARTBEAT_CHECK_INTERVAL_SECONDS in sleep_calls
+    assert consumer._restart_delay == RESTART_DELAY_SECONDS
+
+
+@pytest.mark.asyncio
+async def test_supervisor_cleanup_on_shutdown():
+    """Test supervisor properly cleans up tasks when interrupted."""
+    consumer = MockConsumer()
+
+    task_created = False
+    task_cancelled = False
+
+    class MockTask:
+        def __init__(self):
+            nonlocal task_created
+            task_created = True
+            self.done_count = 0
+
+        def done(self):
+            return self.done_count > 0
+
+        def cancel(self):
+            nonlocal task_cancelled
+            task_cancelled = True
+            self.done_count = 1
+
+        def __await__(self):
+            async def _await():
+                if task_cancelled:
+                    raise asyncio.CancelledError()
+                return None
+            return _await().__await__()
+
+    call_count = 0
+
+    async def mock_sleep(duration):
+        nonlocal call_count
+        call_count += 1
+        if call_count >= 2:
+            raise KeyboardInterrupt("Test cleanup")
+
+    def create_mock_task(coro):
+        coro.close()
+        return MockTask()
+
+    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_mock_task), \
+            patch.object(consumer, "check_heartbeat", return_value=True):
+
+        try:
+            await consumer.supervisor_with_heartbeat_check()
+        except KeyboardInterrupt:
+            pass
+
+    assert task_created, "Task should have been created"
+    assert task_cancelled, "Task should have been cancelled during cleanup"
+
+
+@pytest.mark.asyncio
+async def test_supervisor_backoff_resets_after_healthy_cycle():
+    """Test that supervisor resets backoff after the task has been running through a full heartbeat cycle."""
+    consumer = MockConsumer()
+    consumer._restart_delay = 160
+
+    heartbeat_calls = 0
+
+    def mock_check_heartbeat(**kwargs):
+        nonlocal heartbeat_calls
+        heartbeat_calls += 1
+        if heartbeat_calls <= 2:
+            return True  # Two healthy cycles — backoff should reset on the second
+        raise KeyboardInterrupt("Test complete")
+
+    async def mock_sleep(duration):
+        pass
+
+    class MockTask:
+        def done(self):
+            return False
+
+        def cancel(self):
+            pass
+
+        def __await__(self):
+            async def _await():
+                return None
+            return _await().__await__()
+
+    consumer.check_heartbeat = mock_check_heartbeat
+
+    def create_mock_task(coro):
+        coro.close()
+        return MockTask()
+
+    with patch("service_bus.service_bus_consumer.asyncio.sleep", side_effect=mock_sleep), \
+            patch("service_bus.service_bus_consumer.asyncio.create_task", side_effect=create_mock_task):
+        try:
+            await consumer.supervisor_with_heartbeat_check()
+        except KeyboardInterrupt:
+            pass
+
+    # Backoff resets after a task has been running continuously through a healthy heartbeat cycle
     assert consumer._restart_delay == RESTART_DELAY_SECONDS
