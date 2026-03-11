@@ -5,7 +5,7 @@ from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
 from services.aad_authentication import AzureADAuthorization, compare_versions, GRAPH_REQUEST_TIMEOUT
-from services.access_service import AuthConfigValidationError, UserRoleAssignmentError
+from services.access_service import AuthConfigValidationError
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
