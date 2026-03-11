@@ -109,6 +109,25 @@ module "aad" {
   ]
 }
 
+# State migration: v2.9 used count on the AAD module (module.aad[0]),
+# v3.0 removed count (module.aad). This moved block tells Terraform to
+# update state addresses without destroying/recreating resources.
+moved {
+  from = module.aad[0]
+  to   = module.aad
+}
+
+# The password resource type changed from azuread_service_principal_password
+# to azuread_application_password. Remove the old resource from state without
+# destroying the credential in Azure AD.
+removed {
+  from = module.aad.azuread_service_principal_password.workspace
+
+  lifecycle {
+    destroy = false
+  }
+}
+
 import {
   for_each = local.workspace_app_imports
   to       = module.aad.azuread_application.workspace
