@@ -15,6 +15,7 @@ class UserRoleAssignmentError(Exception):
 
 
 class AccessService(OAuth2AuthorizationCodeBearer):
+    # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
     @abstractmethod
     def extract_workspace_auth_information(self, data: dict) -> dict:
         pass

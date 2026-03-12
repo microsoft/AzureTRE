@@ -10,13 +10,13 @@ This page describes the automated Auth setup for TRE.
 The automation utilises a `make` command, which reads a few environment variables and creates the Microsoft Entra ID assets. The following values are needed to be in place before you run the creation process. (`/config.yaml`)
 
 | Key | Description |
-| ----------- | ----------- |
+| --- | --- |
 | TRE_ID | This is used to build up the name of the identities |
 | AAD_TENANT_ID | The tenant id of where your Microsoft Entra ID identities will be placed. This can be different to the tenant where your Azure resources are created. |
 | LOCATION | Where your Azure assets will be provisioned (eg. westeurope). This is used to add a redirect URI from the Swagger UI to the API Application. |
-| AUTO_WORKSPACE_APP_REGISTRATION | Default of `false`. Setting this to true grants the `Application.ReadWrite.All` and `Directory.Read.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found&nbsp;[in the application admin documentation](./identities/application_admin.md). |
-| AUTO_WORKSPACE_GROUP_CREATION | Set to `false` by default. Setting this to `true` grants the `Group.ReadWrite.All` permission to the *Application Admin* identity. This identity can then create security groups aligned to each application role. Microsoft Entra ID licencing implications need to be considered as Group assignment is a premium feature. [You can read mode about Group Assignment here](https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles#roles-using-azure-ad-app-roles). |
-| AUTO_GRANT_WORKSPACE_CONSENT | Default of `false`.  Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
+| AUTO_WORKSPACE_APP_REGISTRATION | Default of `false`. Setting this to true grants the `Application.ReadWrite.All` permission to the *Application Admin* identity. This identity is used to manage other Microsoft Entra ID applications that it owns, e.g. Workspaces. If you do not set this, the identity will have `Application.ReadWrite.OwnedBy`. Further information can be found in the [Application Admin documentation](./identities/application_admin.md). |
+| AUTO_WORKSPACE_GROUP_CREATION | Set to `false` by default. Setting this to `true` grants the `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permission to the *Application Admin* identity. This identity can then create and manage security groups aligned to each application role. |
+| AUTO_GRANT_WORKSPACE_CONSENT | Default of `false`. Setting this to `true` will remove the need for users to manually grant consent when creating new workspaces. The identity will be granted `Application.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` permissions. |
 
 ## Create Authentication assets
 You can build all of the Identity assets by running the following at the command line
@@ -27,17 +27,16 @@ This will create five identities, and if successful will write the outputs to at
 
 The contents of your authentication section in `config.yaml` file should contain :
 
-  | Variable | Description |
-  | -------- | ----------- |
-  | `APPLICATION_ADMIN_CLIENT_ID` | This client will administer Microsoft Entra ID Applications for TRE |
-  | `APPLICATION_ADMIN_CLIENT_SECRET` | This client will administer Microsoft Entra ID Applications for TRE |
-  | `TEST_ACCOUNT_CLIENT_ID` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
-  | `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
-  | `API_CLIENT_ID` | API application (client) ID. |
-  | `API_CLIENT_SECRET` | API application client secret. |
-  | `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
-  | `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application |
-  | `WORKSPACE_API_CLIENT_SECRET` | Each workspace is secured behind it's own AD Application. This is the secret for that application. |
+| Variable | Description |
+| --- | --- |
+| `APPLICATION_ADMIN_CLIENT_ID` | This client will administer Microsoft Entra ID Applications for TRE |
+| `APPLICATION_ADMIN_CLIENT_SECRET` | This client will administer Microsoft Entra ID Applications for TRE |
+| `TEST_ACCOUNT_CLIENT_ID` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+| `TEST_ACCOUNT_CLIENT_SECRET` | This will be created by default, but can be disabled by editing `/devops/scripts/create_aad_assets.sh`. This is the user that will run the tests for you |
+| `API_CLIENT_ID` | API application (client) ID. |
+| `API_CLIENT_SECRET` | API application client secret. |
+| `SWAGGER_UI_CLIENT_ID` | Swagger (OpenAPI) UI application (client) ID. |
+| `WORKSPACE_API_CLIENT_ID` | Each workspace is secured behind it's own AD Application |
 
 ### Using a separate Microsoft Entra ID tenant
 

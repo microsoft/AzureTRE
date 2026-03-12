@@ -1,3 +1,60 @@
+data "azuread_application" "existing_workspace" {
+  count     = var.client_id != "" ? 1 : 0
+  client_id = var.client_id
+
+  lifecycle {
+    postcondition {
+      condition     = var.client_id == "" || self.client_id != ""
+      error_message = "Application with client_id ${var.client_id} not found in tenant. Ensure the application exists and the service principal has permission to read it."
+    }
+  }
+}
+
+data "azuread_service_principals" "existing_workspace" {
+  count          = var.client_id != "" ? 1 : 0
+  client_ids     = [var.client_id]
+  ignore_missing = true
+}
+
+locals {
+  workspace_app_imports = var.client_id != "" ? {
+    existing = format("/applications/%s", data.azuread_application.existing_workspace[0].object_id)
+  } : {}
+
+  workspace_sp_imports = var.client_id != "" && length(try(data.azuread_service_principals.existing_workspace[0].service_principals, [])) > 0 ? {
+    existing = format("/servicePrincipals/%s", data.azuread_service_principals.existing_workspace[0].service_principals[0].object_id)
+  } : {}
+
+  # Extract existing identifiers from the pre-created application so the
+  # corresponding random_uuid resources can be imported with matching values
+  # and Terraform does not try to rotate them on the first upgrade.
+  existing_owner_role_id = var.client_id != "" ? lookup(
+    data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceOwner", null
+  ) : null
+
+  existing_researcher_role_id = var.client_id != "" ? lookup(
+    data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceResearcher", null
+  ) : null
+
+  existing_airlock_manager_role_id = var.client_id != "" ? lookup(
+    data.azuread_application.existing_workspace[0].app_role_ids, "AirlockManager", null
+  ) : null
+
+  existing_user_impersonation_scope_id = var.client_id != "" ? lookup(
+    data.azuread_application.existing_workspace[0].oauth2_permission_scope_ids, "user_impersonation", null
+  ) : null
+
+  existing_identifier_uri = var.client_id != "" && length(data.azuread_application.existing_workspace[0].identifier_uris) > 0 ? (
+    tolist(data.azuread_application.existing_workspace[0].identifier_uris)[0]
+  ) : ""
+
+  # Conditional import maps for random_uuid resources
+  uuid_owner_imports      = local.existing_owner_role_id != null ? { existing = local.existing_owner_role_id } : {}
+  uuid_researcher_imports = local.existing_researcher_role_id != null ? { existing = local.existing_researcher_role_id } : {}
+  uuid_airlock_imports    = local.existing_airlock_manager_role_id != null ? { existing = local.existing_airlock_manager_role_id } : {}
+  uuid_scope_imports      = local.existing_user_impersonation_scope_id != null ? { existing = local.existing_user_impersonation_scope_id } : {}
+}
+
 resource "azurerm_resource_group" "ws" {
   location = var.location
   name     = "rg-${local.workspace_resource_name_suffix}"
@@ -36,7 +93,6 @@ module "network" {
 module "aad" {
   source                         = "./aad"
   tre_workspace_tags             = local.tre_workspace_tags
-  count                          = var.register_aad_application ? 1 : 0
   key_vault_id                   = azurerm_key_vault.kv.id
   workspace_resource_name_suffix = local.workspace_resource_name_suffix
   workspace_owner_object_id      = var.workspace_owner_object_id
@@ -45,11 +101,67 @@ module "aad" {
   ui_client_id                   = var.ui_client_id
   auto_grant_workspace_consent   = var.auto_grant_workspace_consent
   core_api_client_id             = var.core_api_client_id
+  existing_identifier_uri        = local.existing_identifier_uri
 
   depends_on = [
     azurerm_role_assignment.keyvault_resourceprocessor_ws_role,
     terraform_data.wait_for_dns_vault
   ]
+}
+
+# State migration: v2.9 used count on the AAD module (module.aad[0]),
+# v3.0 removed count (module.aad). This moved block tells Terraform to
+# update state addresses without destroying/recreating resources.
+moved {
+  from = module.aad[0]
+  to   = module.aad
+}
+
+# The password resource type changed from azuread_service_principal_password
+# to azuread_application_password. Remove the old resource from state without
+# destroying the credential in Azure AD.
+removed {
+  from = module.aad.azuread_service_principal_password.workspace
+
+  lifecycle {
+    destroy = false
+  }
+}
+
+import {
+  for_each = local.workspace_app_imports
+  to       = module.aad.azuread_application.workspace
+  id       = each.value
+}
+
+import {
+  for_each = local.workspace_sp_imports
+  to       = module.aad.azuread_service_principal.workspace
+  id       = each.value
+}
+
+import {
+  for_each = local.uuid_owner_imports
+  to       = module.aad.random_uuid.app_role_workspace_owner_id
+  id       = each.value
+}
+
+import {
+  for_each = local.uuid_researcher_imports
+  to       = module.aad.random_uuid.app_role_workspace_researcher_id
+  id       = each.value
+}
+
+import {
+  for_each = local.uuid_airlock_imports
+  to       = module.aad.random_uuid.app_role_workspace_airlock_manager_id
+  id       = each.value
+}
+
+import {
+  for_each = local.uuid_scope_imports
+  to       = module.aad.random_uuid.oauth2_user_impersonation_id
+  id       = each.value
 }
 
 module "airlock" {

@@ -31,7 +31,6 @@ async def get_workspace_roles(workspace=Depends(get_workspace_by_id_from_path), 
 
 @workspaces_users_admin_router.post("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_ASSIGN_WORKSPACE_USER)
 async def assign_workspace_user(response: Response, userRoleAssignmentRequest: UserRoleAssignmentRequest, workspace=Depends(get_workspace_by_id_from_path), access_service=Depends(get_access_service)) -> WorkspaceUserOperationResponse:
-
     for user_id in userRoleAssignmentRequest.user_ids:
         access_service.assign_workspace_user(
             user_id,

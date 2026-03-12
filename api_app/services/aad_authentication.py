@@ -1,6 +1,7 @@
 import base64
 from collections import defaultdict
 from enum import Enum
+import re
 from typing import List, Optional
 import jwt
 import requests
@@ -27,6 +28,14 @@ from semantic_version import Version
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 GRAPH_REQUEST_TIMEOUT = 10
 USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
+_UUID_PATTERN = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+
+
+def _is_valid_aad_property(value) -> bool:
+    """Check that value is a valid AAD identifier (UUID format)."""
+    if not isinstance(value, str):
+        return False
+    return bool(_UUID_PATTERN.match(value.strip()))
 
 
 class PrincipalType(Enum):
@@ -312,10 +321,17 @@ class AzureADAuthorization(AccessService):
         return users
 
     def get_workspace_users(self, workspace: Workspace) -> List[AssignedUser]:
+        client_id = workspace.properties.get('client_id')
+        sp_id = workspace.properties.get('sp_id')
+        if not _is_valid_aad_property(client_id) or not _is_valid_aad_property(sp_id):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Workspace {workspace.id} has invalid AAD configuration. Please check the workspace deployment."
+            )
         msgraph_token = self._get_msgraph_token()
-        sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
+        sp_graph_data = self._get_app_sp_graph_data(client_id)
         app_id_to_role_name = {app_role["id"]: (app_role["value"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
         users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
 
@@ -345,8 +361,23 @@ class AzureADAuthorization(AccessService):
         return result
 
     def get_workspace_roles(self, workspace: Workspace) -> List[Role]:
-        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{workspace.properties['sp_id']}/appRoles"
-        graph_data = self._ms_graph_query(app_roles_endpoint, "GET")
+        sp_id = workspace.properties.get('sp_id')
+        if not _is_valid_aad_property(sp_id):
+            logger.error(f"Workspace {workspace.id} has invalid sp_id: {sp_id!r}. The workspace may not have deployed correctly or is using an older template without automatic AAD registration.")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Workspace {workspace.id} has invalid service principal configuration. Please check the workspace deployment or upgrade to a template version that supports automatic AAD registration."
+            )
+
+        app_roles_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoles"
+        graph_data = self._ms_graph_query(app_roles_endpoint, "GET", raise_on_error=True)
+
+        if "value" not in graph_data:
+            logger.error(f"MS Graph response missing 'value' for workspace {workspace.id}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.ACCESS_MS_GRAPH_QUERY_FAILED
+            )
 
         roles = []
 
@@ -362,16 +393,57 @@ class AzureADAuthorization(AccessService):
         return roles
 
     def assign_workspace_user(self, user_id: str, workspace: Workspace, role_id: str) -> None:
-        # User already has the role, do nothing
-        if self._is_user_in_role(user_id, role_id):
+        """
+        Assign a principal to a workspace role.
+
+        If workspace has AAD groups configured, uses group membership.
+        Otherwise uses direct app role assignment (e.g., when groups are not configured).
+        """
+        if self._is_workspace_role_group_in_use(workspace):
+            if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+                logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+                raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+            return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
+
+        # Direct app role assignment when no groups configured
+        return self._assign_principal_to_app_role_direct(user_id, workspace, role_id)
+
+    def _assign_principal_to_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
+        """
+        Assign a principal directly to an app role via Graph API.
+        This bypasses group membership and propagates to tokens immediately.
+        """
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration.")
+
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo"
+        body = {
+            "principalId": principal_id,
+            "resourceId": sp_id,
+            "appRoleId": role_id
+        }
+
+        msgraph_token = self._get_msgraph_token()
+        auth_headers = self._get_auth_header(msgraph_token)
+        response = requests.post(url, json=body, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
+
+        if response.status_code == 201:
+            logger.info(f"Successfully assigned principal {principal_id} directly to app role {role_id}")
             return
-        if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-        if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
-        return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
+
+        if response.status_code == 400:
+            try:
+                error_data = response.json()
+                error_message = error_data.get("error", {}).get("message", "")
+                if "already exist" in error_message:
+                    logger.info(f"Principal {principal_id} already has app role {role_id}")
+                    return
+            except Exception:
+                pass
+
+        logger.error(f"Direct app role assignment failed: {response.status_code} - {response.text}")
+        raise UserRoleAssignmentError(f"Failed to assign principal {principal_id} to role {role_id}: {response.status_code}")
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
         user_app_role_query = f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}/appRoleAssignments"
@@ -379,21 +451,27 @@ class AzureADAuthorization(AccessService):
         return any(r for r in user_app_roles["value"] if r["appRoleId"] == role_id)
 
     def _is_workspace_role_group_in_use(self, workspace: Workspace) -> bool:
-        aad_groups_in_user = workspace.properties["create_aad_groups"]
-        return aad_groups_in_user
+        aad_groups_in_use = workspace.properties.get("create_aad_groups", False)
+        return aad_groups_in_use
 
     def _get_workspace_group_name(self, workspace: Workspace, role_id: str) -> tuple:
         tre_id = workspace.properties["tre_id"]
         workspace_id = workspace.properties["workspace_id"]
         group_name = ""
         app_role_id_suffix = ""
-        if workspace.properties["app_role_id_workspace_researcher"] == role_id:
+
+        # Get app role IDs, handling old bundles that may have empty/invalid values
+        researcher_role = workspace.properties.get("app_role_id_workspace_researcher")
+        owner_role = workspace.properties.get("app_role_id_workspace_owner")
+        airlock_role = workspace.properties.get("app_role_id_workspace_airlock_manager")
+
+        if _is_valid_aad_property(researcher_role) and researcher_role == role_id:
             group_name = "Workspace Researchers"
             app_role_id_suffix = "workspace_researcher"
-        elif workspace.properties["app_role_id_workspace_owner"] == role_id:
+        elif _is_valid_aad_property(owner_role) and owner_role == role_id:
             group_name = "Workspace Owners"
             app_role_id_suffix = "workspace_owner"
-        elif workspace.properties["app_role_id_workspace_airlock_manager"] == role_id:
+        elif _is_valid_aad_property(airlock_role) and airlock_role == role_id:
             group_name = "Airlock Managers"
             app_role_id_suffix = "workspace_airlock_manager"
         else:
@@ -402,7 +480,10 @@ class AzureADAuthorization(AccessService):
         return (f"{tre_id}-ws-{workspace_id} {group_name}", f"app_role_id_{app_role_id_suffix}")
 
     def _assign_workspace_user_to_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration. Cannot assign user to role.")
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -415,7 +496,10 @@ class AzureADAuthorization(AccessService):
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role_id}")
 
     def _remove_workspace_user_from_application_group(self, user_id: str, workspace: Workspace, role_id: str):
-        roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration. Cannot remove user from role.")
+        roles_graph_data = self._get_user_role_assignments(sp_id)
         group_details = self._get_workspace_group_name(workspace, role_id)
         group_name = group_details[0]
         workspace_app_role_field = group_details[1]
@@ -428,8 +512,9 @@ class AzureADAuthorization(AccessService):
 
     def _add_user_to_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
+        # Use directoryObjects which works for both users and service principals
         body = {
-            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
+            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/directoryObjects/{user_id}"
         }
 
         response = self._ms_graph_query(url, "POST", json=body)
@@ -452,13 +537,43 @@ class AzureADAuthorization(AccessService):
                                               role_id: str,
                                               workspace: Workspace
                                               ) -> None:
-        if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-        if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
-        return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
+        """
+        Remove a principal from a workspace role.
+
+        If workspace has AAD groups configured, uses group removal.
+        Otherwise uses direct app role removal (e.g., when groups are not configured).
+        """
+        if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+            logger.error(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+
+        if self._is_workspace_role_group_in_use(workspace):
+            return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
+
+        # Direct app role removal when no groups configured
+        return self._remove_principal_from_app_role_direct(user_id, workspace, role_id)
+
+    def _remove_principal_from_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
+        """
+        Remove a principal's direct app role assignment via Graph API.
+        """
+        sp_id = workspace.properties.get("sp_id")
+        if not _is_valid_aad_property(sp_id):
+            raise UserRoleAssignmentError(f"Workspace {workspace.id} has invalid service principal configuration.")
+
+        # List all direct role assignments on the service principal
+        url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo"
+        assignments = self._ms_graph_query(url, "GET")
+
+        for assignment in assignments.get("value", []):
+            if assignment["principalId"] == principal_id and assignment["appRoleId"] == role_id:
+                assignment_id = assignment["id"]
+                delete_url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo/{assignment_id}"
+                self._ms_graph_query(delete_url, "DELETE")
+                logger.info(f"Successfully removed principal {principal_id} from app role {role_id}")
+                return
+
+        logger.warning(f"No direct app role assignment found for principal {principal_id} with role {role_id}")
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}
@@ -480,9 +595,8 @@ class AzureADAuthorization(AccessService):
 
         return request_body
 
-    # This method is called when you create a workspace and you already have an AAD App Registration
-    # to link it to. You pass in the client_id and go and get the extra information you need from AAD
-    # If the auth_type is `Automatic`, then these values will be written by Terraform.
+    # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
+    # This method is only needed for auth_type=Manual which requires Directory.Read.All.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
         if 'value' not in graph_data or len(graph_data['value']) == 0:
@@ -499,10 +613,11 @@ class AzureADAuthorization(AccessService):
 
         return authInfo
 
-    def _ms_graph_query(self, url: str, http_method: str, json=None) -> dict:
+    def _ms_graph_query(self, url: str, http_method: str, json=None, raise_on_error: bool = False) -> dict:
         msgraph_token = self._get_msgraph_token()
         auth_headers = self._get_auth_header(msgraph_token)
         graph_data = {}
+        original_url = url
         while True:
             if not url:
                 break
@@ -517,9 +632,17 @@ class AzureADAuthorization(AccessService):
                 graph_data = merge_dict(graph_data, json_response)
                 if '@odata.nextLink' in json_response:
                     url = json_response['@odata.nextLink']
+            elif response.status_code == 204:
+                # 204 No Content is a success response for POST/DELETE operations
+                pass
             else:
-                logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
-                logger.error(f"Full response: {response}")
+                logger.error(f"MS Graph query to: {original_url} failed with status code {response.status_code}")
+                logger.error(f"Full response: {response.text}")
+                if raise_on_error:
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail=f"{strings.ACCESS_MS_GRAPH_QUERY_FAILED}: {response.status_code}"
+                    )
         return graph_data
 
     def _get_role_assignment_graph_data_for_user(self, user_id: str) -> dict:
@@ -550,14 +673,37 @@ class AzureADAuthorization(AccessService):
 
         return object_info["@odata.type"]
 
+    # DEPRECATED: Remove when workspace base bundles < 3.0.0 are no longer supported.
+    # New bundles handle AAD app registration entirely in Terraform.
+    #
+    # Backwards compatibility:
+    # - Old bundles (<3.0.0) send auth_type; new bundles (3.0.0+) do not.
+    # - When auth_type is absent, we return {} and Terraform manages AAD entirely.
+    # - When auth_type=Automatic, we return register_aad_application=True which
+    #   old bundle Terraform expects. On upgrade to 3.0.0, this stale property
+    #   in Cosmos is harmlessly ignored because the new porter.yaml no longer
+    #   maps it to a Terraform variable.
+    # - When auth_type=Manual, we look up the app via Graph (requires
+    #   Application.ReadWrite.All). On upgrade to 3.0.0, the Terraform
+    #   import blocks adopt the existing app using client_id from Cosmos.
     def extract_workspace_auth_information(self, data: dict) -> dict:
-        if ("auth_type" not in data) or (data["auth_type"] != "Automatic" and "client_id" not in data):
+        if "auth_type" not in data:
+            return {}
+
+        if data["auth_type"] != "Automatic" and "client_id" not in data:
             raise AuthConfigValidationError(strings.ACCESS_PLEASE_SUPPLY_CLIENT_ID)
 
         auth_info = {}
-        # The user may want us to create the AAD workspace app and therefore they
-        # don't know the client_id yet.
-        if data["auth_type"] != "Automatic":
+        if data["auth_type"] == "Automatic":
+            # Old bundles with auth_type=Automatic need register_aad_application=true
+            # so their Terraform knows to create the AAD app
+            auth_info["register_aad_application"] = True
+        else:
+            # auth_type=Manual - look up existing app via Graph API
+            logger.warning(
+                "DEPRECATION: auth_type=Manual requires Application.Read.All permission. "
+                "Upgrade to base workspace bundle v3.0.0+ which handles AAD registration in Terraform."
+            )
             auth_info = self._get_app_auth_info(data["client_id"])
 
             # Check we've get all our required roles
