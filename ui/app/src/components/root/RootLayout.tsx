@@ -24,10 +24,31 @@ import { CostsContext } from "../../contexts/CostsContext";
 import config from "../../config.json";
 
 export const RootLayout: React.FunctionComponent = () => {
-  const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
-  const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [loadingCostState, setLoadingCostState] = useState(
-    LoadingState.Loading,
+  const isMock = (config as any).mockMode === true;
+
+  const [workspaces, setWorkspaces] = useState<Array<Workspace>>(
+    isMock
+      ? [
+          {
+            id: "mock-ws-1",
+            templateName: "base",
+            templateVersion: "0.0.0",
+            properties: {
+              display_name: "Mock Workspace 1",
+              description: "Example workspace shown in mock mode",
+              scope_id: "",
+              updatedWhen: new Date().toISOString(),
+              deploymentStatus: "deployed",
+            } as any,
+          } as Workspace,
+        ]
+      : [],
+  );
+  const [loadingState, setLoadingState] = useState<LoadingState>(
+    isMock ? LoadingState.Ok : LoadingState.Loading,
+  );
+  const [loadingCostState, setLoadingCostState] = useState<LoadingState>(
+    isMock ? LoadingState.NotSupported : LoadingState.Loading,
   );
   const [apiError, setApiError] = useState({} as APIError);
   const [costApiError, setCostApiError] = useState({} as APIError);
@@ -36,6 +57,10 @@ export const RootLayout: React.FunctionComponent = () => {
   const costsWriteCtx = useRef(useContext(CostsContext));
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const getWorkspaces = async () => {
       try {
         const r = await apiCall(
@@ -55,9 +80,13 @@ export const RootLayout: React.FunctionComponent = () => {
     };
 
     getWorkspaces();
-  }, [apiCall]);
+  }, [apiCall, isMock]);
 
   useEffect(() => {
+    if (isMock) {
+      return;
+    }
+
     const getCosts = async () => {
       try {
         if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
@@ -115,7 +144,7 @@ export const RootLayout: React.FunctionComponent = () => {
 
     // run this on unmount - to clear the context
     return () => ctx.setCosts([]);
-  }, [apiCall, appRolesCtx.roles]);
+  }, [apiCall, appRolesCtx.roles, isMock]);
 
   const addWorkspace = (w: Workspace) => {
     const ws = [...workspaces];

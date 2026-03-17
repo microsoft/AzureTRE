@@ -27,6 +27,7 @@ import { initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { CostResource } from "./models/costs";
 import { CostsContext } from "./contexts/CostsContext";
 import { LoadingState } from "./models/loadingState";
+import config from "./config.json";
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -46,8 +47,13 @@ export const App: React.FunctionComponent = () => {
 
   const apiCall = useAuthApiCall();
 
-  // set the app roles
+  // set the app roles (skipped when mockMode is true)
   useEffect(() => {
+    if ((config as any).mockMode === true) {
+      setAppRoles(["TREAdmin"]);
+      return;
+    }
+
     const setAppRolesOnLoad = async () => {
       await apiCall(
         ApiEndpoint.Workspaces,
@@ -66,15 +72,69 @@ export const App: React.FunctionComponent = () => {
 
   useEffect(() => initializeFileTypeIcons(), []);
 
-  return (
-    <>
-      <Routes>
-        <Route
-          path="*"
-          element={
-            <MsalAuthenticationTemplate
-              interactionType={InteractionType.Redirect}
-            >
+  const shell = (
+    <Stack styles={stackStyles} className="tre-root">
+      <Stack.Item grow className="tre-top-nav">
+        <TopNav />
+      </Stack.Item>
+      <Stack.Item grow={100} className="tre-body">
+        <GenericErrorBoundary>
+          <CostsContext.Provider
+            value={{
+              loadingState: costsLoadingState,
+              costs: costs,
+              setCosts: (costs: Array<CostResource>) => {
+                setCosts(costs);
+              },
+              setLoadingState: (loadingState: LoadingState) => {
+                setCostsLoadingState(loadingState);
+              },
+            }}
+          >
+            <Routes>
+              <Route path="*" element={<RootLayout />} />
+              <Route
+                path="/workspaces/:workspaceId//*"
+                element={
+                  <WorkspaceContext.Provider
+                    value={{
+                      roles: workspaceRoles,
+                      setRoles: (roles: Array<string>) => {
+                        setWorkspaceRoles(roles);
+                      },
+                      costs: workspaceCosts,
+                      setCosts: (costs: Array<CostResource>) => {
+                        setWorkspaceCosts(costs);
+                      },
+                      workspace: selectedWorkspace,
+                      setWorkspace: (w: Workspace) => {
+                        setSelectedWorkspace(w);
+                      },
+                      workspaceApplicationIdURI:
+                        selectedWorkspace.properties?.scope_id,
+                    }}
+                  >
+                    <WorkspaceProvider />
+                  </WorkspaceContext.Provider>
+                }
+              />
+            </Routes>
+          </CostsContext.Provider>
+        </GenericErrorBoundary>
+      </Stack.Item>
+      <Stack.Item grow>
+        <Footer />
+      </Stack.Item>
+    </Stack>
+  );
+
+  const appContent =
+    (config as any).mockMode === true ? (
+      shell
+    ) : (
+      <MsalAuthenticationTemplate
+        interactionType={InteractionType.Redirect}
+      >
               <AppRolesContext.Provider
                 value={{
                   roles: appRoles,
@@ -85,9 +145,7 @@ export const App: React.FunctionComponent = () => {
               >
                 <CreateUpdateResourceContext.Provider
                   value={{
-                    openCreateForm: (
-                      createFormResource: CreateFormResource,
-                    ) => {
+                    openCreateForm: (createFormResource: CreateFormResource) => {
                       setCreateFormResource(createFormResource);
                       setCreateFormOpen(true);
                     },
@@ -104,64 +162,16 @@ export const App: React.FunctionComponent = () => {
                     }
                     updateResource={createFormResource.updateResource}
                   />
-                  <Stack styles={stackStyles} className="tre-root">
-                    <Stack.Item grow className="tre-top-nav">
-                      <TopNav />
-                    </Stack.Item>
-                    <Stack.Item grow={100} className="tre-body">
-                      <GenericErrorBoundary>
-                        <CostsContext.Provider
-                          value={{
-                            loadingState: costsLoadingState,
-                            costs: costs,
-                            setCosts: (costs: Array<CostResource>) => {
-                              setCosts(costs);
-                            },
-                            setLoadingState: (loadingState: LoadingState) => {
-                              setCostsLoadingState(loadingState);
-                            },
-                          }}
-                        >
-                          <Routes>
-                            <Route path="*" element={<RootLayout />} />
-                            <Route
-                              path="/workspaces/:workspaceId//*"
-                              element={
-                                <WorkspaceContext.Provider
-                                  value={{
-                                    roles: workspaceRoles,
-                                    setRoles: (roles: Array<string>) => {
-                                      setWorkspaceRoles(roles);
-                                    },
-                                    costs: workspaceCosts,
-                                    setCosts: (costs: Array<CostResource>) => {
-                                      setWorkspaceCosts(costs);
-                                    },
-                                    workspace: selectedWorkspace,
-                                    setWorkspace: (w: Workspace) => {
-                                      setSelectedWorkspace(w);
-                                    },
-                                    workspaceApplicationIdURI:
-                                      selectedWorkspace.properties?.scope_id,
-                                  }}
-                                >
-                                  <WorkspaceProvider />
-                                </WorkspaceContext.Provider>
-                              }
-                            />
-                          </Routes>
-                        </CostsContext.Provider>
-                      </GenericErrorBoundary>
-                    </Stack.Item>
-                    <Stack.Item grow>
-                      <Footer />
-                    </Stack.Item>
-                  </Stack>
+                  {shell}
                 </CreateUpdateResourceContext.Provider>
               </AppRolesContext.Provider>
             </MsalAuthenticationTemplate>
-          }
-        />
+    );
+
+  return (
+    <>
+      <Routes>
+        <Route path="*" element={appContent} />
         <Route
           path="/logout"
           element={
