@@ -67,6 +67,7 @@ resource "azurerm_windows_virtual_machine" "windowsvm" {
     name                   = "osdisk-${local.vm_name}"
     caching                = "ReadWrite"
     storage_account_type   = "Standard_LRS"
+    disk_size_gb           = 512
     disk_encryption_set_id = var.enable_cmk_encryption ? azurerm_disk_encryption_set.windowsvm_disk_encryption[0].id : null
   }
 
