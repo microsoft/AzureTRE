@@ -1,5 +1,10 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+
+ENHANCEMENTS:
+* Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
+
+## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
@@ -16,6 +21,39 @@ BUG FIXES:
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 * Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.15 |
+| ui | 0.8.26 |
+| tre-workspace-airlock-import-review | 0.14.8 |
+| tre-workspace-base | 2.8.2 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.10 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.2 |
+| tre-shared-service-cyclecloud | 0.7.5 |
+| tre-shared-service-databricks-private-auth | 0.1.14 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.7.8 |
+| tre-workspace-service-mysql | 1.0.12 |
+| tre-workspace-service-ohdsi | 0.3.6 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.3 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.2 |
+| tre-workspace-service-health | 0.3.5 |
+| tre-workspace-service-gitea | 1.3.3 |
+| tre-service-databricks | 1.0.15 |
+| tre-workspace-service-openai | 1.0.8 |
+| tre-workspace-service-azuresql | 1.0.17 |
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
