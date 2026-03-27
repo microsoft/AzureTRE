@@ -1,0 +1,13 @@
+[tool.bandit]
+exclude_dirs = [
+  "api_app/tests_ma",
+  "airlock_processor/tests",
+  "resource_processor/tests_rp",
+  "e2e_tests",
+  ".venv",
+  "venv"
+]
+
+skips = [
+  "B101",  # asserts in test code
+]
