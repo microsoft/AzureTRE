@@ -4,6 +4,7 @@
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
+* Allow numeric CIDR masks in `address_space_size` (e.g. "25") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

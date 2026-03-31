@@ -342,3 +342,29 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
 
     mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
     assert result is False
+
+
+@pytest.mark.asyncio
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_string_19(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    # request a /19
+    workspace_to_create.properties["address_space_size"] = "19"
+    address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert address_space.endswith('/19')
+
+
+@pytest.mark.asyncio
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_string_29(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    # request a /29
+    workspace_to_create.properties["address_space_size"] = "29"
+    address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert address_space.endswith('/29')

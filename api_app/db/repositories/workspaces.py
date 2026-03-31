@@ -143,13 +143,25 @@ class WorkspaceRepository(ResourceRepository):
         address_space_size = workspace_properties.get("address_space_size", "small").lower()
 
         # 773 allow custom sized networks to be requested
-        if (address_space_size == "custom"):
+        if address_space_size == "custom":
             if (await self.validate_address_space(workspace_properties.get("address_space"))):
                 return workspace_properties.get("address_space")
             else:
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
-        # Default mask is 24 (small)
+        # If a numeric cidr was provided (e.g as a string like "25"), accept it
+        try:
+            if address_space_size.isdigit():
+                cidr_netmask = int(address_space_size)
+                # basic validation for reasonable CIDR mask values
+                if cidr_netmask < 16 or cidr_netmask > 29:
+                    raise InvalidInput("'address_space_size' numeric value must be between 16 and 29")
+                return await self.get_new_address_space(cidr_netmask)
+        except ValueError:
+            # fall through to predefined handling
+            pass
+
+        # Default mask is 24 (small). Keep backwards compatibility with presets.
         cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
         return await self.get_new_address_space(cidr_netmask)
 
