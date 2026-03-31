@@ -44,9 +44,7 @@ locals {
     data.azuread_application.existing_workspace[0].oauth2_permission_scope_ids, "user_impersonation", null
   ) : null
 
-  existing_identifier_uri = var.client_id != "" && length(data.azuread_application.existing_workspace[0].identifier_uris) > 0 ? (
-    tolist(data.azuread_application.existing_workspace[0].identifier_uris)[0]
-  ) : ""
+  existing_identifier_uri = var.client_id != "" ? try(tolist(data.azuread_application.existing_workspace[0].identifier_uris)[0], "") : ""
 
   # Conditional import maps for random_uuid resources
   uuid_owner_imports      = local.existing_owner_role_id != null ? { existing = local.existing_owner_role_id } : {}
