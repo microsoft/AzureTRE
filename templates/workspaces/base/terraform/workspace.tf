@@ -28,20 +28,20 @@ locals {
   # Extract existing identifiers from the pre-created application so the
   # corresponding random_uuid resources can be imported with matching values
   # and Terraform does not try to rotate them on the first upgrade.
-  existing_owner_role_id = var.client_id != "" ? lookup(
-    data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceOwner", null
+  existing_owner_role_id = var.client_id != "" ? try(
+    lookup(data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceOwner", null), null
   ) : null
 
-  existing_researcher_role_id = var.client_id != "" ? lookup(
-    data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceResearcher", null
+  existing_researcher_role_id = var.client_id != "" ? try(
+    lookup(data.azuread_application.existing_workspace[0].app_role_ids, "WorkspaceResearcher", null), null
   ) : null
 
-  existing_airlock_manager_role_id = var.client_id != "" ? lookup(
-    data.azuread_application.existing_workspace[0].app_role_ids, "AirlockManager", null
+  existing_airlock_manager_role_id = var.client_id != "" ? try(
+    lookup(data.azuread_application.existing_workspace[0].app_role_ids, "AirlockManager", null), null
   ) : null
 
-  existing_user_impersonation_scope_id = var.client_id != "" ? lookup(
-    data.azuread_application.existing_workspace[0].oauth2_permission_scope_ids, "user_impersonation", null
+  existing_user_impersonation_scope_id = var.client_id != "" ? try(
+    lookup(data.azuread_application.existing_workspace[0].oauth2_permission_scope_ids, "user_impersonation", null), null
   ) : null
 
   existing_identifier_uri = var.client_id != "" ? try(tolist(data.azuread_application.existing_workspace[0].identifier_uris)[0], "") : ""
