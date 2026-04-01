@@ -27,7 +27,7 @@ custom:
         sku: winserver-2022
         version: latest
       conda_config: true
-      secure_boot_enabled: true
+      secure_boot_enabled: false # dsvm-win-2022 is not a gen2 image
       vtpm_enabled: true
 
 credentials:
