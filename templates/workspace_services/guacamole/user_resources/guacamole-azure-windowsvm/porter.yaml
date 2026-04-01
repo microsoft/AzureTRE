@@ -1,8 +1,8 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.4.4
-description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
+version: 1.4.5
+description: "An Azure TRE User Resource Template for Guacamole (Windows 11 or Windows Server Data Science VM)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
@@ -14,15 +14,6 @@ custom:
     "8 CPU | 32GB RAM": Standard_D8s_v6
     "16 CPU | 64GB RAM": Standard_D16s_v6
   image_options:
-    "Windows 10":
-      source_image_reference:
-        publisher: MicrosoftWindowsDesktop
-        offer: Windows-10
-        sku: win10-22h2-pro-g2
-        version: latest
-      conda_config: false
-      secure_boot_enabled: true
-      vtpm_enabled: true
     "Windows 11":
       source_image_reference:
         publisher: microsoftwindowsdesktop
@@ -41,6 +32,15 @@ custom:
       conda_config: true
       secure_boot_enabled: false # dsvm-win-2019 is not a gen2 image
       vtpm_enabled: false
+    "Server 2022 Data Science VM":
+      source_image_reference:
+        publisher: microsoft-dsvm
+        offer: dsvm-win-2022
+        sku: winserver-2022
+        version: latest
+      conda_config: true
+      secure_boot_enabled: true
+      vtpm_enabled: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: your-image
@@ -103,7 +103,7 @@ parameters:
     default: false
   - name: os_image
     type: string
-    default: "Windows 10"
+    default: "Windows 11"
   - name: admin_username
     type: string
     default: ""
