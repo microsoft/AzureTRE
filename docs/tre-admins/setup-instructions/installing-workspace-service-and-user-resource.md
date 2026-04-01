@@ -89,7 +89,7 @@ Once the workspace service has been created, we can use the workspace API to cre
     }
     ```
 
-    > Note: You can also specify "Windows 10" in "os_image" for a standard Windows 10 image.
+    > Note: You can also specify "Windows 11" in "os_image" for a standard Windows 11 image.
 
 The API will return an `operation` object with a `Location` header to query the operation status, as well as the `resourceId` and `resourcePath` properties to query the resource under creation.
 
