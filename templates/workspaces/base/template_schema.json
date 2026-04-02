@@ -116,7 +116,10 @@
             "title": "Airlock Version",
             "description": "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage",
             "default": 1,
-            "enum": [1, 2],
+            "enum": [
+              1,
+              2
+            ],
             "updateable": true
           },
           "configure_review_vms": {
