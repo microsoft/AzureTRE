@@ -1,19 +1,61 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+
+ENHANCEMENTS:
+* Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
+* Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
+
+## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
 ENHANCEMENTS:
 * Add per-workspace `airlock_version` property (1=legacy, 2=consolidated) for backwards-compatible airlock storage migration. Add core-level `enable_legacy_airlock` toggle. Remove `USE_METADATA_STAGE_MANAGEMENT` environment variable. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
+* Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
 
 BUG FIXES:
+* Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
+* Fix test airlock request sample data fields and enum values. ([#4866](https://github.com/microsoft/AzureTRE/issues/4866))
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 * Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.3 |
+| core | 0.16.15 |
+| ui | 0.8.26 |
+| tre-workspace-airlock-import-review | 0.14.8 |
+| tre-workspace-base | 2.8.2 |
+| tre-workspace-unrestricted | 0.13.6 |
+| tre-shared-service-airlock-notifier | 1.0.10 |
+| tre-shared-service-certs | 0.7.10 |
+| tre-shared-service-firewall | 1.6.1 |
+| tre-shared-service-gitea | 1.2.2 |
+| tre-shared-service-cyclecloud | 0.7.5 |
+| tre-shared-service-databricks-private-auth | 0.1.14 |
+| tre-shared-service-admin-vm | 0.5.4 |
+| tre-shared-service-sonatype-nexus | 3.7.8 |
+| tre-workspace-service-mysql | 1.0.12 |
+| tre-workspace-service-ohdsi | 0.3.6 |
+| tre-user-resource-aml-compute-instance | 0.5.12 |
+| tre-service-azureml | 1.1.3 |
+| tre-service-guacamole-linuxvm | 1.4.3 |
+| tre-service-guacamole-windowsvm | 1.4.4 |
+| tre-service-guacamole-import-reviewvm | 0.4.4 |
+| tre-service-guacamole-export-reviewvm | 0.3.5 |
+| tre-service-guacamole | 0.14.2 |
+| tre-workspace-service-health | 0.3.5 |
+| tre-workspace-service-gitea | 1.3.3 |
+| tre-service-databricks | 1.0.15 |
+| tre-workspace-service-openai | 1.0.8 |
+| tre-workspace-service-azuresql | 1.0.17 |
 
 ## 0.27.0 (February 5, 2026)
 **BREAKING CHANGES**
@@ -37,6 +79,7 @@ ENHANCEMENTS:
 * Migrate GitHub Actions workflows to use ubuntu-slim runners for improved efficiency and reduced cost ([#4831](https://github.com/microsoft/AzureTRE/pull/4831))
 
 BUG FIXES:
+* Fix Azure Health Data Services deployment failures by upgrading AzureRM provider to 4.58.0, switching to RBAC group assignments, and adding workspace group parameter mappings ([#4844](https://github.com/microsoft/AzureTRE/issues/4844))
 * Replace deprecated `--username` flag with `--client-id` in `az login --identity` commands across all Porter bundles ([#4817](https://github.com/microsoft/AzureTRE/issues/4817))
 * Fix deleted workspaces still accessible via URL - get_*_by_id methods now filter out deleted resources ([#4785](https://github.com/microsoft/AzureTRE/issues/4785))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
