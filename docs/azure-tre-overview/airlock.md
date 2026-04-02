@@ -488,7 +488,7 @@ The airlock is enabled per workspace via the following properties:
 | Property | Type | Default | Values | Description |
 | --- | --- | --- | --- | --- |
 | `enable_airlock` | bool | `false` | `true` / `false` | Enables or disables the airlock feature for the workspace |
-| `airlock_version` | int | `1` | `1` or `2` | `1` = Legacy per-stage storage accounts, `2` = Consolidated metadata-based storage (recommended) |
+| `airlock_version` | int | `2` | `1` or `2` | `2` = Consolidated metadata-based storage (recommended), `1` = Legacy per-stage storage accounts |
 
 The `airlock_version` property only appears when `enable_airlock` is set to `true`.
 
