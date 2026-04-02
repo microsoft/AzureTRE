@@ -209,9 +209,10 @@ class TestV2MetadataMode():
         mock_copy_data.assert_called_once()
         step_result.set.assert_not_called()
 
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc):
+    def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc, mock_get_files):
         """V2 submit with malware scanning disabled should emit StepResult to skip to in_review."""
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
@@ -221,8 +222,8 @@ class TestV2MetadataMode():
         assert step_result.set.call_count == 2
         # The second call should be the in_review step result
         second_call_event = step_result.set.call_args_list[1][0][0]
-        assert second_call_event.data["completed_step"] == constants.STAGE_SUBMITTED
-        assert second_call_event.data["new_status"] == constants.STAGE_IN_REVIEW
+        assert second_call_event.get_json()["completed_step"] == constants.STAGE_SUBMITTED
+        assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
 
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)

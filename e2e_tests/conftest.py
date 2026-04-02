@@ -104,7 +104,7 @@ async def clean_up_test_workspace_service(pre_created_workspace_service_id: str,
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_workspace(verify) -> Tuple[str, str, str]:
+async def setup_test_workspace(verify) -> Tuple[str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
     # Set up - uses a pre created app reg as has appropriate roles assigned, or falls back to Automatic
     auth_type = "Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic"

@@ -88,7 +88,7 @@ graph TB
 **Storage Accounts:**
 
 | Storage Account | Name Pattern | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | **Core Storage** | `stalairlock{tre_id}` | All core-managed stages: import external, in-progress, rejected, blocked; export approved |
 | **Global Workspace Storage** | `stalairlockg{tre_id}` | All workspace-managed stages: import approved; export internal, in-progress, rejected, blocked |
 
@@ -142,7 +142,11 @@ The user uploads a file using any tool of their preference: [Azure Storage Explo
 
 The user submits the request (TRE API call), which updates the container metadata to the next stage. The airlock request is now in state **Submitted**.
 
-If enabled, malware scanning is started using Microsoft Defender for Storage (see [Microsoft Defender for Storage documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction)). If security flaws are found, the container metadata is updated to blocked status and the request is finalised with state **Blocked By Scan**. If no issues are found, the metadata is updated to in-review status and the request state becomes **In-Review**. A notification is sent to the Airlock Manager.
+If enabled, malware scanning is started using Microsoft Defender for Storage
+(see [Microsoft Defender for Storage documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction)).
+If security flaws are found, the container metadata is updated to blocked status and the request is finalised with state **Blocked By Scan**.
+If no issues are found, the metadata is updated to in-review status and the request state becomes **In-Review**.
+A notification is sent to the Airlock Manager.
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
@@ -299,7 +303,7 @@ graph LR
 **Identity access summary:**
 
 | Identity | Core Storage | Workspace Storage | ABAC Condition |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TRE API | `Storage Blob Data Contributor` | — | Only `import-external` and `export-approved` stages |
 | Airlock Processor | `Storage Blob Data Contributor` | `Storage Blob Data Contributor` | None (unrestricted) |
 | Workspace PE | — | `Storage Blob Data Contributor` | `workspace_id` must match + stage restrictions |
@@ -318,7 +322,7 @@ Each container has a `stage` metadata key that tracks the current stage of the a
 **Core Storage (`stalairlock`):**
 
 | Stage | Description | Access |
-|---|---|---|
+| --- | --- | --- |
 | `import-external` | Initial upload location for imports | Public via SAS |
 | `import-in-progress` | After submission, during review | Processor only |
 | `import-rejected` | Import rejected by reviewer | Processor only |
@@ -328,7 +332,7 @@ Each container has a `stage` metadata key that tracks the current stage of the a
 **Global Workspace Storage (`stalairlockg`):**
 
 | Stage | Description | Access |
-|---|---|---|
+| --- | --- | --- |
 | `import-approved` | Final location for approved imports | Workspace PE |
 | `export-internal` | Initial upload location for exports | Workspace PE |
 | `export-in-progress` | After submission, during review | Processor only |
@@ -359,7 +363,7 @@ When the state changes to **In-Review**, the Workspace Owner (Airlock Manager) g
 The TRE API exposes the following airlock endpoints:
 
 | Method | Endpoint | Description |
-|---|---|---|
+| --- | --- | --- |
 | `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
 | `GET` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to access an Airlock Request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submit an Airlock request |
@@ -472,7 +476,7 @@ enable_legacy_airlock: false
 ```
 
 | Setting | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `enable_legacy_airlock` | bool | `true` | When `true`, deploys legacy per-stage storage accounts alongside the consolidated accounts for backward compatibility. When `false`, only the consolidated accounts (`stalairlock`, `stalairlockg`) are deployed. See [Legacy Airlock Architecture](airlock-legacy.md) for details. |
 
 The consolidated storage accounts (`stalairlock{tre_id}` and `stalairlockg{tre_id}`) are **always** provisioned regardless of this setting.
@@ -482,9 +486,9 @@ The consolidated storage accounts (`stalairlock{tre_id}` and `stalairlockg{tre_i
 The airlock is enabled per workspace via the following properties:
 
 | Property | Type | Default | Values | Description |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `enable_airlock` | bool | `false` | `true` / `false` | Enables or disables the airlock feature for the workspace |
-| `airlock_version` | int | `2` | `1` or `2` | `2` = Consolidated metadata-based storage (recommended), `1` = Legacy per-stage storage accounts |
+| `airlock_version` | int | `1` | `1` or `2` | `1` = Legacy per-stage storage accounts, `2` = Consolidated metadata-based storage (recommended) |
 
 The `airlock_version` property only appears when `enable_airlock` is set to `true`.
 
@@ -506,7 +510,7 @@ When creating or updating a workspace, the airlock version is available as a dro
 
 ### What Happens at Each Level
 
-```
+```text
 config.yaml                          Workspace Properties
 ┌─────────────────────────┐          ┌─────────────────────────────┐
 │ enable_legacy_airlock:  │          │ enable_airlock: true        │
@@ -532,7 +536,7 @@ Each workspace deployment creates a role assignment on the global workspace stor
 - The container's `workspace_id` metadata must match **that workspace's ID**
 - The container's `stage` metadata must be one of the allowed stages (`import-approved`, `export-internal`, `export-in-progress`)
 
-```
+```text
 ABAC condition (per workspace):
   @Environment[Microsoft.Network/privateEndpoints]
     == '/subscriptions/.../pe-sa-airlock-ws-global-{workspace_short_id}'
