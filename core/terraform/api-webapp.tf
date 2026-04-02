@@ -68,10 +68,7 @@ resource "azurerm_linux_web_app" "api" {
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS             = "azure_app_service"
     USER_MANAGEMENT_ENABLED                          = var.user_management_enabled
     # Airlock storage configuration
-    # Construct the App Gateway FQDN directly from variables to avoid a
-    # Terraform cycle (api → appgateway → api). The public IP's
-    # domain_name_label is set to var.tre_id so the FQDN is deterministic.
-    APP_GATEWAY_FQDN = "${var.tre_id}.${var.location}.cloudapp.azure.com"
+    APP_GATEWAY_FQDN = module.appgateway.app_gateway_fqdn
   }
 
   identity {

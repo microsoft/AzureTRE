@@ -1,5 +1,3 @@
-import pytest
-
 from models.domain.airlock_request import AirlockRequestStatus
 from services.airlock_storage_helper import (
     get_storage_account_name_for_request,

@@ -14,7 +14,7 @@ To use the legacy architecture, set `airlock_version: 1` (the default) in your w
 ### Core (TRE-level)
 
 | Storage Account | Name Pattern | Description | Network Access |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `stalimex` | `stalimex{tre_id}` | Import external — initial upload location | Public (SAS token) |
 | `stalimip` | `stalimip{tre_id}` | Import in-progress — during review | TRE Core VNet |
 | `stalimrej` | `stalimrej{tre_id}` | Import rejected | TRE Core VNet |
@@ -24,7 +24,7 @@ To use the legacy architecture, set `airlock_version: 1` (the default) in your w
 ### Workspace-level
 
 | Storage Account | Name Pattern | Description | Network Access |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `stalimappws` | `stalimappws{short_ws_id}` | Import approved — final import location | Workspace VNet |
 | `stalexintws` | `stalexintws{short_ws_id}` | Export internal — initial export upload | Workspace VNet |
 | `stalexipws` | `stalexipws{short_ws_id}` | Export in-progress — during review | Workspace VNet |
@@ -94,7 +94,7 @@ The following diagram shows the legacy airlock flow with data copies between sto
 ## Comparison with Current Architecture
 
 | Aspect | Current (Consolidated) | Legacy (Per-Stage) |
-|---|---|---|
+| --- | --- | --- |
 | **Storage accounts** | 2 total | 10+ (5 core + 5 per workspace) |
 | **Stage tracking** | Container metadata | Separate storage accounts |
 | **Data copies per request** | 1 (on approval only) | Up to 3 |

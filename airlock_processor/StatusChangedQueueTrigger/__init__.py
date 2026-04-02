@@ -124,6 +124,18 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
                     else:
                         logging.info(f'Request {req_id}: Malware scanning enabled, waiting for scan result')
+                elif new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+                    # Terminal transitions: emit StepResult immediately since no BlobCreated event will fire
+                    final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
+                    logging.info(f'Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}')
+                    stepResultEvent.set(
+                        func.EventGridOutputEvent(
+                            id=str(uuid.uuid4()),
+                            data={"completed_step": new_status, "new_status": final_status, "request_id": req_id},
+                            subject=req_id,
+                            event_type="Airlock.StepResult",
+                            event_time=datetime.datetime.now(datetime.UTC),
+                            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
             else:
                 # Different storage account (e.g., core → workspace on import approval,
                 # workspace → core on export approval) - need to copy.
