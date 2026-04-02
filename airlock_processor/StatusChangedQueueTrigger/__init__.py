@@ -95,11 +95,9 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id, airlock_version=request_properties.airlock_version)
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
-            # Import approval_in_progress: metadata-only update (data is already in workspace storage)
-            if new_status == constants.STAGE_APPROVAL_INPROGRESS and request_type.lower() == constants.IMPORT_TYPE:
-                logging.info(f'Request {req_id}: Import approval - updating metadata only (no copy needed)')
-                update_container_stage(source_account, req_id, new_stage, changed_by='system')
-            elif source_account == dest_account:
+            # Import approval_in_progress: source and dest differ (core → workspace), so copy is needed.
+            # The general logic below handles this correctly via the source_account == dest_account check.
+            if source_account == dest_account:
                 # Same storage account - just update metadata
                 logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
                 update_container_stage(source_account, req_id, new_stage, changed_by='system')

@@ -300,3 +300,11 @@ resource "azurerm_role_assignment" "airlock_workspace_global_blob_data_contribut
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
+
+# API Identity - needs Storage Blob Delegator to generate user delegation SAS tokens.
+# Blob-level access is controlled by ABAC-conditioned role assignments in workspace terraform.
+resource "azurerm_role_assignment" "api_workspace_global_blob_delegator" {
+  scope                = azurerm_storage_account.sa_airlock_workspace_global.id
+  role_definition_name = "Storage Blob Delegator"
+  principal_id         = var.api_principal_id
+}

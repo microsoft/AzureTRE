@@ -18,17 +18,21 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
     request_type = airlock_request.type.value
     short_workspace_id = airlock_request.workspaceId[-4:]
 
+    # For v2, container metadata must match ABAC conditions which use the full workspace ID.
+    # For v1, storage account names include the short (4-char) workspace ID.
+    workspace_id_for_event = airlock_request.workspaceId if airlock_request.airlock_version >= 2 else short_workspace_id
+
     review_workspace_id = None
     if workspace and airlock_request.type == AirlockRequestType.Import:
         try:
             full_review_ws_id = workspace.properties["airlock_review_config"]["import"]["import_vm_workspace_id"]
-            review_workspace_id = full_review_ws_id[-4:]
+            review_workspace_id = full_review_ws_id if airlock_request.airlock_version >= 2 else full_review_ws_id[-4:]
         except (KeyError, TypeError):
             pass
 
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id, review_workspace_id=review_workspace_id, airlock_version=airlock_request.airlock_version).__dict__,
+        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=workspace_id_for_event, review_workspace_id=review_workspace_id, airlock_version=airlock_request.airlock_version).__dict__,
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )
