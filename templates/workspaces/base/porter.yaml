@@ -71,24 +71,24 @@ parameters:
   - name: create_aad_groups
     type: boolean
     default: true
-    description: "Whether this bundle should create AAD groups for the workspace app roles (required for User Management)"
+    description: "Whether this bundle should create AAD groups for the workspace app
+      roles (required for User Management)"
   - name: core_api_client_id
     type: string
     description: "The client id of the core API"
   - name: workspace_owner_object_id
     type: string
-    description: "The object id of the user that will be granted WorkspaceOwner after it is created."
+    description: "The object id of the user that will be granted WorkspaceOwner
+      after it is created."
   - name: client_id
     type: string
     default: ""
-    description:
-      "The client id of the workspace in the identity provider. This value is typically provided to you
-      when you create the ws application"
+    description: "The client id of the workspace in the identity provider. This
+      value is typically provided to you when you create the ws application"
   - name: client_secret
     type: string
-    description:
-      "The client secret of the workspace in the identity provider. This value is typically provided to you
-      when you create the ws application"
+    description: "The client secret of the workspace in the identity provider. This
+      value is typically provided to you when you create the ws application"
     default: ""
   - name: ui_client_id
     type: string
@@ -109,7 +109,8 @@ parameters:
   - name: app_role_id_workspace_researcher
     type: string
     default: ""
-    description: "The id of the application role WorkspaceResearcher in the identity provider"
+    description: "The id of the application role WorkspaceResearcher in the identity
+      provider"
   - name: app_role_id_workspace_airlock_manager
     type: string
     default: ""
@@ -128,7 +129,8 @@ parameters:
   - name: airlock_version
     type: integer
     default: 1
-    description: "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage"
+    description: "Airlock storage version: 1 = legacy per-stage storage accounts, 2
+      = consolidated metadata-based storage"
   - name: arm_environment
     type: string
   - name: enable_cmk_encryption
@@ -140,7 +142,8 @@ parameters:
   - name: storage_account_redundancy
     type: string
     default: "GRS"
-    description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+    description: "The redundancy option for the storage account in the workspace:
+      GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
   - name: enable_backup
     type: boolean
     default: true
@@ -152,7 +155,8 @@ parameters:
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
-    description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
+    description: "Setting this to `true` will prevent the need for users to manually
+      grant consent to new workspaces"
   - name: enable_airlock_malware_scanning
     type: boolean
     default: false

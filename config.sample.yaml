@@ -16,7 +16,6 @@ management:
   # encryption_kv_name: __CHANGE_ME__
   # Azure Resource Manager credentials used for CI/CD pipelines
   arm_subscription_id: __CHANGE_ME__
-
   # If you want to override the currently signed in credentials
   # You would do this if running commands like `make terraform-install DIR=./templates/workspaces/base`
   # arm_tenant_id: __CHANGE_ME__
@@ -60,7 +59,6 @@ tre:
 
   # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
   user_management_enabled: false
-
   # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
   # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
   # Note, these need to be fully qualified, i.e. they end in a dot(.)
@@ -103,6 +101,7 @@ ui_config:
   ui_site_name: "Azure TRE"
   # Footer text shown in the bottom left hand corner of the TRE portal
   ui_footer_text: "Azure Trusted Research Environment"
+
 #developer_settings:
 # Locks will not be added to stateful resources so they can be easily removed
 # stateful_resources_locked: false
