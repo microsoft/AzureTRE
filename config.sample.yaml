@@ -38,6 +38,8 @@ tre:
   resource_processor_vmss_sku: Standard_B2s
   enable_swagger: true
   enable_airlock_malware_scanning: true
+  # Set to true to deploy v1 legacy per-stage airlock storage accounts (required for workspaces using airlock_version=1)
+  enable_legacy_airlock: true
 
   # Set to true if want to ensure users have an email address before airlock request is created
   # Used if rely on email notifications for governance purposes

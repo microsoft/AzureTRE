@@ -23,6 +23,7 @@ BUG FIXES:
 
 ENHANCEMENTS:
 * Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
+* Add per-workspace `airlock_version` property (1=legacy, 2=consolidated) for backwards-compatible airlock storage migration. Add core-level `enable_legacy_airlock` toggle. Remove `USE_METADATA_STAGE_MANAGEMENT` environment variable. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))

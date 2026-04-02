@@ -51,7 +51,8 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   }
 
   tags = merge(var.tre_core_tags, {
-    description = "airlock;core;consolidated"
+    description      = "airlock;core;consolidated"
+    SecurityControl  = "Ignore"
   })
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }

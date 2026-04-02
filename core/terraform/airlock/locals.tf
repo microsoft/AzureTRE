@@ -32,6 +32,39 @@ locals {
   data_deletion_eventgrid_subscription_name  = "evgs-airlock-data-deletion"
   scan_result_eventgrid_subscription_name    = "evgs-airlock-scan-result"
 
+  # Legacy (v1) per-stage storage account names - only used when enable_legacy_airlock = true
+  import_external_storage_name    = lower(replace("stalimex${var.tre_id}", "-", ""))
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+  import_rejected_storage_name    = lower(replace("stalimrej${var.tre_id}", "-", ""))
+  import_blocked_storage_name     = lower(replace("stalimblocked${var.tre_id}", "-", ""))
+  export_approved_storage_name    = lower(replace("stalexapp${var.tre_id}", "-", ""))
+
+  # Legacy (v1) eventgrid topic/subscription names
+  import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${local.topic_name_suffix}"
+  import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${local.topic_name_suffix}"
+  import_blocked_sys_topic_name    = "evgt-airlock-import-blocked-${local.topic_name_suffix}"
+  export_approved_sys_topic_name   = "evgt-airlock-export-approved-${local.topic_name_suffix}"
+
+  import_inprogress_eventgrid_subscription_name = "evgs-airlock-import-in-progress-blob-created"
+  import_rejected_eventgrid_subscription_name   = "evgs-airlock-import-rejected-blob-created"
+  import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
+  export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
+
+  # Legacy (v1) role assignment lists
+  airlock_sa_blob_data_contributor = var.enable_legacy_airlock ? [
+    azurerm_storage_account.sa_import_external[0].id,
+    azurerm_storage_account.sa_import_in_progress[0].id,
+    azurerm_storage_account.sa_import_rejected[0].id,
+    azurerm_storage_account.sa_export_approved[0].id,
+    azurerm_storage_account.sa_import_blocked[0].id
+  ] : []
+
+  api_sa_data_contributor = var.enable_legacy_airlock ? [
+    azurerm_storage_account.sa_import_external[0].id,
+    azurerm_storage_account.sa_import_in_progress[0].id,
+    azurerm_storage_account.sa_export_approved[0].id
+  ] : []
+
   airlock_function_app_name = "func-airlock-processor-${var.tre_id}"
   airlock_function_sa_name  = lower(replace("stairlockp${var.tre_id}", "-", ""))
 

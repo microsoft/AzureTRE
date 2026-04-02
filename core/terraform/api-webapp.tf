@@ -72,7 +72,6 @@ resource "azurerm_linux_web_app" "api" {
     # Terraform cycle (api → appgateway → api). The public IP's
     # domain_name_label is set to var.tre_id so the FQDN is deterministic.
     APP_GATEWAY_FQDN              = "${var.tre_id}.${var.location}.cloudapp.azure.com"
-    USE_METADATA_STAGE_MANAGEMENT = "true"
   }
 
   identity {

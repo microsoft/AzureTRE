@@ -1,41 +1,11 @@
 import pytest
-from unittest.mock import patch
 
 from models.domain.airlock_request import AirlockRequestStatus
 from services.airlock_storage_helper import (
-    use_metadata_stage_management,
     get_storage_account_name_for_request,
     get_stage_from_status
 )
 from resources import constants
-
-
-class TestUseMetadataStageManagement:
-
-    @patch("services.airlock_storage_helper.config")
-    def test_returns_true_when_enabled(self, mock_config):
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = True
-        assert use_metadata_stage_management() is True
-
-    @patch("services.airlock_storage_helper.config")
-    def test_returns_true_case_insensitive(self, mock_config):
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = True
-        assert use_metadata_stage_management() is True
-
-    @patch("services.airlock_storage_helper.config")
-    def test_returns_false_when_disabled(self, mock_config):
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = False
-        assert use_metadata_stage_management() is False
-
-    @patch("services.airlock_storage_helper.config")
-    def test_returns_false_when_not_set(self, mock_config):
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = False
-        assert use_metadata_stage_management() is False
-
-    @patch("services.airlock_storage_helper.config")
-    def test_returns_false_for_invalid_value(self, mock_config):
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = False
-        assert use_metadata_stage_management() is False
 
 
 class TestGetStageFromStatus:
@@ -129,107 +99,93 @@ class TestGetStageFromStatus:
         assert stage == "unknown"
 
 
-@pytest.fixture
-def consolidated_mode_config():
-    with patch("services.airlock_storage_helper.config") as mock_config:
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = True
-        yield mock_config
-
-
-@pytest.fixture
-def legacy_mode_config():
-    with patch("services.airlock_storage_helper.config") as mock_config:
-        mock_config.USE_METADATA_STAGE_MANAGEMENT = False
-        yield mock_config
-
-
 class TestGetStorageAccountNameForRequestConsolidatedMode:
 
     class TestImportRequestsConsolidated:
 
-        def test_import_draft_uses_core_storage(self, consolidated_mode_config):
+        def test_import_draft_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_import_submitted_uses_core_storage(self, consolidated_mode_config):
+        def test_import_submitted_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_import_in_review_uses_core_storage(self, consolidated_mode_config):
+        def test_import_in_review_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_import_approved_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_import_approved_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_import_approval_in_progress_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_import_approval_in_progress_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.ApprovalInProgress, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.ApprovalInProgress, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_import_rejected_uses_core_storage(self, consolidated_mode_config):
+        def test_import_rejected_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_import_blocked_uses_core_storage(self, consolidated_mode_config):
+        def test_import_blocked_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
     class TestExportRequestsConsolidated:
 
-        def test_export_draft_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_export_draft_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_export_submitted_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_export_submitted_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_export_in_review_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_export_in_review_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_export_approved_uses_core_storage(self, consolidated_mode_config):
+        def test_export_approved_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_export_approval_in_progress_uses_core_storage(self, consolidated_mode_config):
+        def test_export_approval_in_progress_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.ApprovalInProgress, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.ApprovalInProgress, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-        def test_export_rejected_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_export_rejected_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
-        def test_export_blocked_uses_workspace_global_storage(self, consolidated_mode_config):
+        def test_export_blocked_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
@@ -238,71 +194,71 @@ class TestGetStorageAccountNameForRequestLegacyMode:
 
     class TestImportRequestsLegacy:
 
-        def test_import_draft_uses_external_storage(self, legacy_mode_config):
+        def test_import_draft_uses_external_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimextre123"
 
-        def test_import_submitted_uses_inprogress_storage(self, legacy_mode_config):
+        def test_import_submitted_uses_inprogress_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimiptre123"
 
-        def test_import_in_review_uses_inprogress_storage(self, legacy_mode_config):
+        def test_import_in_review_uses_inprogress_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.InReview, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimiptre123"
 
-        def test_import_approved_uses_workspace_approved_storage(self, legacy_mode_config):
+        def test_import_approved_uses_workspace_approved_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimappwsws12"
 
-        def test_import_rejected_uses_rejected_storage(self, legacy_mode_config):
+        def test_import_rejected_uses_rejected_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimrejtre123"
 
-        def test_import_blocked_uses_blocked_storage(self, legacy_mode_config):
+        def test_import_blocked_uses_blocked_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12"
+                constants.IMPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalimblockedtre123"
 
     class TestExportRequestsLegacy:
 
-        def test_export_draft_uses_workspace_internal_storage(self, legacy_mode_config):
+        def test_export_draft_uses_workspace_internal_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Draft, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalexintwsws12"
 
-        def test_export_submitted_uses_workspace_inprogress_storage(self, legacy_mode_config):
+        def test_export_submitted_uses_workspace_inprogress_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Submitted, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalexipwsws12"
 
-        def test_export_approved_uses_core_approved_storage(self, legacy_mode_config):
+        def test_export_approved_uses_core_approved_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Approved, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalexapptre123"
 
-        def test_export_rejected_uses_workspace_rejected_storage(self, legacy_mode_config):
+        def test_export_rejected_uses_workspace_rejected_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Rejected, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalexrejwsws12"
 
-        def test_export_blocked_uses_workspace_blocked_storage(self, legacy_mode_config):
+        def test_export_blocked_uses_workspace_blocked_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12"
+                constants.EXPORT_TYPE, AirlockRequestStatus.Blocked, "tre123", "ws12", airlock_version=1
             )
             assert account == "stalexblockedwsws12"
 

@@ -164,6 +164,7 @@ module "airlock_resources" {
   airlock_servicebus_fqdn               = azurerm_servicebus_namespace.sb.endpoint
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
+  enable_legacy_airlock                 = var.enable_legacy_airlock
   arm_environment                       = var.arm_environment
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id

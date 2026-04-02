@@ -2,14 +2,10 @@ import os
 from shared_code import constants
 
 
-def use_metadata_stage_management() -> bool:
-    return os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
-
-
-def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str) -> str:
+def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str, airlock_version: int = 1) -> str:
     tre_id = os.environ.get("TRE_ID", "")
 
-    if use_metadata_stage_management():
+    if airlock_version >= 2:
         # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
             if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW,

@@ -28,7 +28,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
 
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id, review_workspace_id=review_workspace_id).__dict__,
+        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id, review_workspace_id=review_workspace_id, airlock_version=airlock_request.airlock_version).__dict__,
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )

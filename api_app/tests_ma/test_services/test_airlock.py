@@ -675,16 +675,22 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
     disable_user_resource.assert_called_once()
 
 
-def test_get_airlock_request_container_sas_token_rejects_workspace_only_stages():
-    from services.airlock import get_airlock_request_container_sas_token
-    from resources.constants import IMPORT_TYPE
+@patch("services.airlock.validate_request_status")
+@patch("services.airlock.validate_user_allowed_to_access_storage_account")
+@patch("services.airlock.get_airlock_request_container_sas_token", return_value="https://stalairlockgtest.blob.core.windows.net/container?sas")
+def test_get_airlock_container_link_v2_resolves_correct_account_for_approved_import(mock_sas, mock_validate_user, mock_validate_status):
+    from services.airlock import get_airlock_container_link
 
-    # Import Approved should be rejected (workspace-only)
+    # v2 Import Approved should resolve to workspace-global storage account
     request = sample_airlock_request(status=AirlockRequestStatus.Approved)
-    request.type = IMPORT_TYPE
+    request.type = AirlockRequestType.Import
+    request.airlock_version = 2
 
-    with pytest.raises(HTTPException) as exc_info:
-        get_airlock_request_container_sas_token(request)
+    workspace = sample_workspace()
+    result = get_airlock_container_link(request, None, workspace)
 
-    assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
-    assert "only accessible from within the workspace" in exc_info.value.detail
+    assert result == "https://stalairlockgtest.blob.core.windows.net/container?sas"
+    # Should have called SAS generation with the workspace-global account
+    mock_sas.assert_called_once()
+    account_name = mock_sas.call_args[0][1]  # second positional arg
+    assert account_name.startswith("stalairlockg")

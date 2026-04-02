@@ -9,15 +9,11 @@ terraform {
         azurerm.core
       ]
     }
-    azapi = {
-      source  = "Azure/azapi"
-      version = ">= 2.3.0"
-    }
   }
 }
 
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.7.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"
   arm_environment = var.arm_environment
 }
