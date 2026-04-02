@@ -72,7 +72,10 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     if new_status == constants.STAGE_CANCELLED:
-        storage_account_name = get_storage_account(previous_status, request_type, ws_id)
+        if use_metadata:
+            storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id, airlock_version=request_properties.airlock_version)
+        else:
+            storage_account_name = get_storage_account(previous_status, request_type, ws_id)
         container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
         set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=container_to_delete_url)
         return
