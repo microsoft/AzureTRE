@@ -71,7 +71,7 @@ AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY
 ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=bool, default=False)
 
 # Airlock storage configuration (set from Terraform outputs)
-# Airlock storage URLs are always routed through the App Gateway for public access
+# Optional App Gateway FQDN (not currently used by API at runtime)
 APP_GATEWAY_FQDN: str = config("APP_GATEWAY_FQDN", default="")
 
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
