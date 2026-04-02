@@ -71,7 +71,7 @@ variable "enable_airlock" {
 
 variable "airlock_version" {
   type        = number
-  default     = 1
+  default     = 2
   description = "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage."
 }
 
