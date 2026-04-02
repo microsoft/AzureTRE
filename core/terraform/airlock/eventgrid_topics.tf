@@ -360,10 +360,18 @@ resource "azurerm_monitor_diagnostic_setting" "eventgrid_custom_topics" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "eventgrid_system_topics" {
-  for_each = {
-    (azurerm_eventgrid_system_topic.airlock_blob_created.name)                  = azurerm_eventgrid_system_topic.airlock_blob_created.id,
-    (azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.name) = azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.id,
-  }
+  for_each = merge(
+    {
+      (azurerm_eventgrid_system_topic.airlock_blob_created.name)                  = azurerm_eventgrid_system_topic.airlock_blob_created.id,
+      (azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.name) = azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created.id,
+    },
+    var.enable_legacy_airlock ? {
+      (azurerm_eventgrid_system_topic.import_inprogress_blob_created[0].name) = azurerm_eventgrid_system_topic.import_inprogress_blob_created[0].id,
+      (azurerm_eventgrid_system_topic.import_rejected_blob_created[0].name)   = azurerm_eventgrid_system_topic.import_rejected_blob_created[0].id,
+      (azurerm_eventgrid_system_topic.import_blocked_blob_created[0].name)    = azurerm_eventgrid_system_topic.import_blocked_blob_created[0].id,
+      (azurerm_eventgrid_system_topic.export_approved_blob_created[0].name)   = azurerm_eventgrid_system_topic.export_approved_blob_created[0].id,
+    } : {}
+  )
 
   name                       = "${each.key}-diagnostics"
   target_resource_id         = each.value

@@ -73,7 +73,6 @@ ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=boo
 # Airlock storage configuration (set from Terraform outputs)
 # Airlock storage URLs are always routed through the App Gateway for public access
 APP_GATEWAY_FQDN: str = config("APP_GATEWAY_FQDN", default="")
-USE_METADATA_STAGE_MANAGEMENT: bool = config("USE_METADATA_STAGE_MANAGEMENT", cast=bool, default=False)
 
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 

@@ -2,30 +2,10 @@ import os
 from unittest.mock import patch
 
 from shared_code.airlock_storage_helper import (
-    use_metadata_stage_management,
     get_storage_account_name_for_request,
     get_stage_from_status
 )
 from shared_code import constants
-
-
-class TestUseMetadataStageManagement:
-
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "true"}, clear=True)
-    def test_returns_true_when_enabled(self):
-        assert use_metadata_stage_management() is True
-
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "TRUE"}, clear=True)
-    def test_returns_true_case_insensitive(self):
-        assert use_metadata_stage_management() is True
-
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "false"}, clear=True)
-    def test_returns_false_when_disabled(self):
-        assert use_metadata_stage_management() is False
-
-    @patch.dict(os.environ, {}, clear=True)
-    def test_returns_false_when_not_set(self):
-        assert use_metadata_stage_management() is False
 
 
 class TestGetStageFromStatus:
@@ -109,168 +89,168 @@ class TestGetStageFromStatus:
 
 class TestGetStorageAccountNameForRequestConsolidated:
 
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "true", "TRE_ID": "tre123"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestImportRequests:
 
         def test_import_draft_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_DRAFT, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_DRAFT, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_submitted_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_SUBMITTED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_SUBMITTED, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_in_review_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_IN_REVIEW, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_IN_REVIEW, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_approved_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_APPROVED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_APPROVED, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
         def test_import_approval_in_progress_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_APPROVAL_INPROGRESS, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_APPROVAL_INPROGRESS, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
         def test_import_rejected_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_REJECTED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_REJECTED, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_rejection_in_progress_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_REJECTION_INPROGRESS, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_REJECTION_INPROGRESS, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_blocked_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_import_blocking_in_progress_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_BLOCKING_INPROGRESS, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_BLOCKING_INPROGRESS, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "true", "TRE_ID": "tre123"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestExportRequests:
 
         def test_export_draft_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_DRAFT, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_DRAFT, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
         def test_export_submitted_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_SUBMITTED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_SUBMITTED, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
         def test_export_approved_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_APPROVED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_APPROVED, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_export_approval_in_progress_uses_core_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_APPROVAL_INPROGRESS, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_APPROVAL_INPROGRESS, "ws12", airlock_version=2
             )
             assert account == "stalairlocktre123"
 
         def test_export_rejected_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_REJECTED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_REJECTED, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
         def test_export_blocked_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12", airlock_version=2
             )
             assert account == "stalairlockgtre123"
 
 
 class TestGetStorageAccountNameForRequestLegacy:
 
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "false", "TRE_ID": "tre123"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestImportRequestsLegacy:
 
         def test_import_draft_uses_external_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_DRAFT, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_DRAFT, "ws12", airlock_version=1
             )
             assert account == "stalimextre123"
 
         def test_import_submitted_uses_inprogress_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_SUBMITTED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_SUBMITTED, "ws12", airlock_version=1
             )
             assert account == "stalimiptre123"
 
         def test_import_approved_uses_workspace_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_APPROVED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_APPROVED, "ws12", airlock_version=1
             )
             assert account == "stalimappwsws12"
 
         def test_import_rejected_uses_rejected_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_REJECTED, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_REJECTED, "ws12", airlock_version=1
             )
             assert account == "stalimrejtre123"
 
         def test_import_blocked_uses_blocked_storage(self):
             account = get_storage_account_name_for_request(
-                constants.IMPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12"
+                constants.IMPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12", airlock_version=1
             )
             assert account == "stalimblockedtre123"
 
-    @patch.dict(os.environ, {"USE_METADATA_STAGE_MANAGEMENT": "false", "TRE_ID": "tre123"}, clear=True)
+    @patch.dict(os.environ, {"TRE_ID": "tre123"}, clear=True)
     class TestExportRequestsLegacy:
 
         def test_export_draft_uses_internal_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_DRAFT, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_DRAFT, "ws12", airlock_version=1
             )
             assert account == "stalexintwsws12"
 
         def test_export_submitted_uses_inprogress_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_SUBMITTED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_SUBMITTED, "ws12", airlock_version=1
             )
             assert account == "stalexipwsws12"
 
         def test_export_approved_uses_approved_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_APPROVED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_APPROVED, "ws12", airlock_version=1
             )
             assert account == "stalexapptre123"
 
         def test_export_rejected_uses_rejected_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_REJECTED, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_REJECTED, "ws12", airlock_version=1
             )
             assert account == "stalexrejwsws12"
 
         def test_export_blocked_uses_blocked_storage(self):
             account = get_storage_account_name_for_request(
-                constants.EXPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12"
+                constants.EXPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN, "ws12", airlock_version=1
             )
             assert account == "stalexblockedwsws12"
 

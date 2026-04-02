@@ -7,7 +7,7 @@ resource "azurerm_public_ip" "appgwpip" {
   domain_name_label   = var.tre_id
   tags                = local.tre_core_tags
 
-  lifecycle { ignore_changes = [tags, zones] }
+  lifecycle { ignore_changes = [tags, zones, ip_tags] }
 }
 
 resource "azurerm_user_assigned_identity" "agw_id" {

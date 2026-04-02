@@ -81,19 +81,39 @@ def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
         return airlock_request.status == AirlockRequestStatus.Approved
 
 
-def get_airlock_request_container_sas_token(airlock_request: AirlockRequest):
-    # Only core storage stages are accessible via public App Gateway
-    # Workspace-only stages (import-approved, export-internal, export-in-progress, etc.)
-    # are only accessible from within the workspace via private endpoints
-    if not is_publicly_accessible_stage(airlock_request):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This airlock request stage is only accessible from within the workspace via private endpoints"
-        )
-
+def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
+    """Resolve storage account name for v1 (legacy per-stage) airlock requests."""
     tre_id = config.TRE_ID
-    account_name = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
+    short_workspace_id = workspace.id[-4:]
+    if airlock_request.type == constants.IMPORT_TYPE:
+        if airlock_request.status == AirlockRequestStatus.Draft:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
+        elif airlock_request.status == AirlockRequestStatus.Submitted:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
+        elif airlock_request.status == AirlockRequestStatus.InReview:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS.format(tre_id)
+        elif airlock_request.status == AirlockRequestStatus.Approved:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED.format(short_workspace_id)
+        elif airlock_request.status == AirlockRequestStatus.Rejected:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
+        elif airlock_request.status == AirlockRequestStatus.Blocked:
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id)
+    else:
+        if airlock_request.status == AirlockRequestStatus.Draft:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
+        elif airlock_request.status == AirlockRequestStatus.Submitted:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
+        elif airlock_request.status == AirlockRequestStatus.InReview:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS.format(short_workspace_id)
+        elif airlock_request.status == AirlockRequestStatus.Approved:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_APPROVED.format(tre_id)
+        elif airlock_request.status == AirlockRequestStatus.Rejected:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_REJECTED.format(short_workspace_id)
+        elif airlock_request.status == AirlockRequestStatus.Blocked:
+            return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id)
 
+
+def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, account_name: str):
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
                                             credential=credentials.get_credential())
 
@@ -158,7 +178,25 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
 def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace):
     validate_user_allowed_to_access_storage_account(user, airlock_request)
     validate_request_status(airlock_request)
-    return get_airlock_request_container_sas_token(airlock_request)
+
+    if airlock_request.airlock_version >= 2:
+        # v2: Resolve correct storage account (core or workspace-global) based on stage
+        # Network rules enforce public vs private access — SAS is always generated
+        from services.airlock_storage_helper import get_storage_account_name_for_request
+        tre_id = config.TRE_ID
+        short_workspace_id = workspace.id[-4:]
+        account_name = get_storage_account_name_for_request(
+            request_type=airlock_request.type.value,
+            status=airlock_request.status,
+            tre_id=tre_id,
+            short_workspace_id=short_workspace_id,
+            airlock_version=airlock_request.airlock_version
+        )
+    else:
+        # v1: Resolve per-stage storage account
+        account_name = get_account_by_request(airlock_request, workspace)
+
+    return get_airlock_request_container_sas_token(airlock_request, account_name)
 
 
 async def create_review_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,

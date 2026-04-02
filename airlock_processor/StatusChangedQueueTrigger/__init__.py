@@ -20,6 +20,7 @@ class RequestProperties(BaseModel):
     type: str
     workspace_id: str
     review_workspace_id: Optional[str] = None
+    airlock_version: int = 1
 
 
 class ContainersCopyMetadata:
@@ -56,13 +57,13 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
-    # Check if using metadata-based stage management
-    use_metadata = os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
+    # Check if using metadata-based stage management (v2) or legacy per-stage accounts (v1)
+    use_metadata = request_properties.airlock_version >= 2
 
     if new_status == constants.STAGE_DRAFT:
         if use_metadata:
             from shared_code.blob_operations_metadata import create_container_with_metadata
-            account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, ws_id)
+            account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, ws_id, airlock_version=request_properties.airlock_version)
             stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
             create_container_with_metadata(account_name, req_id, stage, workspace_id=ws_id, request_type=request_type)
         else:
@@ -90,8 +91,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                 effective_ws_id = request_properties.review_workspace_id
 
             # Get the storage account (might change from core to workspace or vice versa)
-            source_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id)
-            dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id)
+            source_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id, airlock_version=request_properties.airlock_version)
+            dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id, airlock_version=request_properties.airlock_version)
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
             # Import approval_in_progress: metadata-only update (data is already in workspace storage)
@@ -281,10 +282,11 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 
 
 def get_request_files(request_properties: RequestProperties):
-    use_metadata = os.getenv('USE_METADATA_STAGE_MANAGEMENT', 'false').lower() == 'true'
+    use_metadata = request_properties.airlock_version >= 2
     if use_metadata:
         storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(
-            request_properties.type, request_properties.previous_status, request_properties.workspace_id)
+            request_properties.type, request_properties.previous_status, request_properties.workspace_id,
+            airlock_version=request_properties.airlock_version)
     else:
         storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)
