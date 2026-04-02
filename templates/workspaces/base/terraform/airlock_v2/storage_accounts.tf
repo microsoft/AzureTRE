@@ -8,12 +8,6 @@ data "azurerm_storage_account" "sa_airlock_workspace_global" {
   resource_group_name = local.core_resource_group_name
 }
 
-# Data source to reference the global workspace EventGrid system topic
-data "azurerm_eventgrid_system_topic" "airlock_workspace_global_blob_created" {
-  name                = "evgt-airlock-blob-created-global-${var.tre_id}"
-  resource_group_name = local.core_resource_group_name
-}
-
 # Private Endpoint for this workspace to access the global storage account
 # Each workspace needs its own PE for network isolation
 # ABAC will restrict this PE to only access containers with matching workspace_id

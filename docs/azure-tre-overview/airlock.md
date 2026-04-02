@@ -154,10 +154,12 @@ For any airlock process, there is data movement either **into** a TRE workspace 
 
 **Metadata-based stage management** means most transitions are near-instantaneous metadata updates. Data is only physically copied when it crosses the core/workspace boundary:
 
-- **Import approved**: Core storage → Workspace storage (1 copy per import)
-- **Export approved**: Workspace storage → Core storage (1 copy per export)
+- **Import approved**: Core storage → Workspace storage (1 async copy per import)
+- **Export approved**: Workspace storage → Core storage (1 async copy per export)
 
 All other transitions — draft→submitted, submitted→in-review, in-review→rejected/blocked — update metadata only with no data movement.
+
+Cross-account copies are **asynchronous**: the processor initiates the copy and returns. When the blob appears at the destination, a BlobCreated event fires and the BlobCreatedTrigger reads container metadata to emit the appropriate StepResult. This matches the original airlock design where "in-progress" states represent ongoing data movement operations, supporting large data transfers gracefully.
 
 ### Import Data Flow
 
@@ -359,20 +361,21 @@ The TRE API exposes the following airlock endpoints:
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
-| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to access an Airlock Request |
+| `GET` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to access an Airlock Request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submit an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/review` | Review an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel` | Cancel an Airlock request |
 
 ## Airlock Processor
 
-The **Airlock Processor** is an Azure Function that handles the events created throughout the airlock process. It consumes events from the Service Bus queue and orchestrates:
+The **Airlock Processor** is a set of Azure Functions that handle the events created throughout the airlock process:
 
-- Container creation with appropriate metadata
-- Metadata updates for stage transitions
-- Data copy between storage accounts (on approval)
-- Step result events to advance the request state
-- Integration with Microsoft Defender for Storage scan results
+- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly. For cross-account transitions (approval), it initiates an async server-side copy and returns — the copy completion is handled by the BlobCreatedTrigger.
+- **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). For cross-account copies, this signals that the copy has completed and emits a StepResult event to advance the request to its final state (e.g., approved, rejected, blocked).
+- **ScanResultTrigger** — Consumes malware scan results from Microsoft Defender for Storage. If threats are found, emits a StepResult to block the request. If clean, emits a StepResult to advance to in-review.
+- **DataDeletionTrigger** — Cleans up source containers after data has been copied to the destination.
+
+This event-driven design ensures that long-running data copies (which may take minutes for large files) are handled asynchronously, matching the original airlock architecture's use of "in-progress" states to represent ongoing operations.
 
 ## Airlock Flow
 
@@ -399,7 +402,7 @@ sequenceDiagram
     API-->>R: OK + request details
 
     Note over R,DB: Getting Upload Link
-    R->>API: POST /requests/{id}/link
+    R->>API: GET /requests/{id}/link
     API->>CS: Generate User Delegation SAS (ABAC: import-external)
     API-->>R: SAS URL for container
 
@@ -411,50 +414,47 @@ sequenceDiagram
     API->>DB: Update status → submitted
     API->>EG: StatusChangedEvent(submitted)
     EG->>SB: Queue status change
-    SB->>AP: Consume event
+    SB->>AP: StatusChangedQueueTrigger
     AP->>CS: Update metadata → import-in-progress
 
-    Note over R,DB: Security Scan (if enabled)
-    CS-->>EG: Defender scan result
-    EG->>SB: Queue scan result
-    SB->>AP: Consume ScanResultEvent
-
-    alt Threat Found
-        AP->>CS: Update metadata → import-blocked
-        AP->>EG: StepResult(blocked)
-        AP->>DB: Update status → blocked
-    else No Threat
-        AP->>EG: StepResult(in-review)
-        AP->>DB: Update status → in-review
-        AP->>EG: NotificationEvent (to reviewer)
+    Note over R,DB: Security Scan
+    alt Malware Scanning Enabled
+        CS-->>EG: Defender scan result
+        EG->>SB: Queue scan result
+        SB->>AP: ScanResultTrigger
+        alt Threat Found
+            AP->>EG: StepResult(blocking_in_progress)
+            Note over AP,CS: StatusChangedQueueTrigger updates metadata → import-blocked
+            AP->>EG: StepResult(blocked)
+        else No Threat
+            AP->>EG: StepResult(in-review)
+        end
+    else Malware Scanning Disabled
+        AP->>EG: StepResult(submitted → in-review)
     end
+    AP->>DB: Update status → in-review
+    AP->>EG: NotificationEvent (to reviewer)
 
-    Note over R,DB: Approval
+    Note over R,DB: Approval (Async Copy)
     R->>API: POST /requests/{id}/review (approve)
     API->>DB: Update status → approval_in_progress
     API->>EG: StatusChangedEvent(approval_in_progress)
     EG->>SB: Queue status change
-    SB->>AP: Consume event
+    SB->>AP: StatusChangedQueueTrigger
     AP->>WS: Create container with metadata stage=import-approved
-    AP->>WS: Copy blob from Core → Workspace storage
+    AP->>WS: Start async copy from Core → Workspace storage
+    Note over AP,WS: Copy runs asynchronously in Azure Storage
+    WS-->>EG: BlobCreated event (copy complete)
+    EG->>SB: Queue blob created
+    SB->>AP: BlobCreatedTrigger reads container metadata
     AP->>EG: StepResult(approved)
     AP->>DB: Update status → approved
     AP->>EG: NotificationEvent (to researcher)
 ```
 
-## Upgrading from Legacy Airlock
+## Legacy Airlock
 
-If your TRE was deployed with the legacy airlock architecture (per-stage storage accounts), see [Legacy Airlock Architecture](airlock-legacy.md) for details on that architecture and migration guidance.
-
-The key differences are:
-
-| Aspect | Current Architecture | Legacy Architecture |
-|---|---|---|
-| Storage accounts | 2 (core + workspace global) | 10+ (one per stage) |
-| Stage tracking | Container metadata | Separate storage accounts |
-| Data movement | 1 copy per request (on approval) | Up to 3 copies per request |
-| Workspace isolation | ABAC + private endpoints | VNet per workspace storage |
-| Scalability | All workspaces share global storage | Per-workspace storage accounts |
+For details on the legacy airlock architecture (per-stage storage accounts) and migration guidance, see [Legacy Airlock Architecture](airlock-legacy.md).
 
 ## Configuration
 
@@ -466,33 +466,29 @@ The following settings in `config.yaml` control the airlock infrastructure at th
 # config.yaml
 tre_id: mytre
 
-# Controls whether legacy (per-stage) storage accounts are provisioned
-# at the core level. Set to true during migration when both v1 and v2
-# workspaces coexist. Set to false once all workspaces use airlock_version: 2.
-# Default: true
-enable_legacy_airlock: true
+# Set to false to remove legacy per-stage storage accounts.
+# Default: true (keeps legacy accounts for backward compatibility)
+enable_legacy_airlock: false
 ```
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
-| `enable_legacy_airlock` | bool | `true` | When `true`, deploys legacy v1 core storage accounts (`stalimex`, `stalimip`, `stalimrej`, `stalimblocked`, `stalexapp`) alongside the consolidated accounts. When `false`, only the consolidated accounts (`stalairlock`, `stalairlockg`) are deployed. |
+| `enable_legacy_airlock` | bool | `true` | When `true`, deploys legacy per-stage storage accounts alongside the consolidated accounts for backward compatibility. When `false`, only the consolidated accounts (`stalairlock`, `stalairlockg`) are deployed. See [Legacy Airlock Architecture](airlock-legacy.md) for details. |
 
 The consolidated storage accounts (`stalairlock{tre_id}` and `stalairlockg{tre_id}`) are **always** provisioned regardless of this setting.
 
 ### Workspace Settings
 
-Each workspace can independently choose which airlock architecture to use via the `airlock_version` property. This is set when deploying or updating a workspace:
+The airlock is enabled per workspace via the following properties:
 
 | Property | Type | Default | Values | Description |
 |---|---|---|---|---|
 | `enable_airlock` | bool | `false` | `true` / `false` | Enables or disables the airlock feature for the workspace |
-| `airlock_version` | int | `1` | `1` or `2` | `1` = Legacy per-stage storage accounts, `2` = Consolidated metadata-based storage |
+| `airlock_version` | int | `2` | `1` or `2` | `2` = Consolidated metadata-based storage (recommended), `1` = Legacy per-stage storage accounts |
 
-The `airlock_version` property only appears when `enable_airlock` is set to `true`. It can be changed after deployment — for example, to upgrade an existing workspace from v1 to v2.
+The `airlock_version` property only appears when `enable_airlock` is set to `true`.
 
-**Important:** The `airlock_version` is stamped on each airlock request at creation time. This means in-flight requests are safe during an upgrade: if you change a workspace from v1 to v2, any requests already in progress will continue using the v1 storage path until they complete.
-
-**Setting `airlock_version` via the API:**
+**Enabling airlock via the API:**
 
 ```json
 PATCH /api/workspaces/{workspace_id}
@@ -504,7 +500,7 @@ PATCH /api/workspaces/{workspace_id}
 }
 ```
 
-**Setting `airlock_version` via the UI:**
+**Enabling airlock via the UI:**
 
 When creating or updating a workspace, the airlock version is available as a dropdown under the airlock configuration section.
 
@@ -514,20 +510,13 @@ When creating or updating a workspace, the airlock version is available as a dro
 config.yaml                          Workspace Properties
 ┌─────────────────────────┐          ┌─────────────────────────────┐
 │ enable_legacy_airlock:  │          │ enable_airlock: true        │
-│   true  → v1 + v2 infra│          │ airlock_version: 1 → v1 TF │
 │   false → v2 infra only│          │ airlock_version: 2 → v2 TF │
 └─────────────────────────┘          └─────────────────────────────┘
         Core Terraform                     Workspace Terraform
 ```
 
-- **Core level** (`enable_legacy_airlock`): Controls whether v1 storage accounts and EventGrid topics exist
-- **Workspace level** (`airlock_version`): Controls which workspace terraform module runs — the legacy `airlock/` module (per-workspace storage) or the consolidated `airlock_v2/` module (shared global storage with ABAC)
-
-### Migration Path
-
-1. **Start**: `enable_legacy_airlock: true`, all workspaces on `airlock_version: 1`
-2. **Migrate workspace by workspace**: Update each workspace to `airlock_version: 2` and redeploy
-3. **Finish**: Once all workspaces are on v2, set `enable_legacy_airlock: false` and redeploy core to remove legacy storage accounts
+- **Core level** (`enable_legacy_airlock`): Controls whether legacy per-stage storage accounts are also deployed (for backward compatibility only)
+- **Workspace level** (`airlock_version`): Controls which workspace Terraform module runs — `airlock_v2/` for consolidated storage with ABAC
 
 ## Cross-Workspace Isolation
 

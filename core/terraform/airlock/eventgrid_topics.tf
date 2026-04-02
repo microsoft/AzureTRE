@@ -334,6 +334,28 @@ resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   ]
 }
 
+# EventGrid Event Subscription for workspace-global storage account (v2)
+# Routes BlobCreated events to the same service bus topic as core.
+# BlobCreatedTrigger reads container metadata to determine the stage and emit StepResult
+# when cross-account copies complete (e.g., import approval: core → workspace-global).
+resource "azurerm_eventgrid_event_subscription" "airlock_workspace_global_blob_created" {
+  name  = "airlock-blob-created-global-${var.tre_id}"
+  scope = azurerm_storage_account.sa_airlock_workspace_global.id
+
+  service_bus_topic_endpoint_id = azurerm_servicebus_topic.blob_created.id
+
+  delivery_identity {
+    type = "SystemAssigned"
+  }
+
+  included_event_types = ["Microsoft.Storage.BlobCreated"]
+
+  depends_on = [
+    azurerm_eventgrid_system_topic.airlock_workspace_global_blob_created,
+    azurerm_role_assignment.servicebus_sender_airlock_workspace_global_blob_created
+  ]
+}
+
 resource "azurerm_monitor_diagnostic_setting" "eventgrid_custom_topics" {
   for_each = merge({
     (azurerm_eventgrid_topic.airlock_notification.name) = azurerm_eventgrid_topic.airlock_notification.id,

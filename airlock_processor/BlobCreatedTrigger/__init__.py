@@ -11,6 +11,17 @@ from shared_code import constants, parsers
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
+# Mapping from v2 container metadata stage to (completed_step, new_status)
+V2_STAGE_COMPLETION_MAP = {
+    constants.STAGE_IMPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
+    constants.STAGE_IMPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
+    constants.STAGE_IMPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
+    constants.STAGE_EXPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
+    constants.STAGE_EXPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
+    constants.STAGE_EXPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
+}
+
+
 def main(msg: func.ServiceBusMessage,
          stepResultEvent: func.Out[func.EventGridOutputEvent],
          dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
@@ -23,6 +34,12 @@ def main(msg: func.ServiceBusMessage,
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 
+    # Check if this event is from a v2 consolidated storage account
+    if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in topic or constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL in topic:
+        _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent)
+        return
+
+    # Legacy v1 handling below
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
         try:
@@ -91,3 +108,44 @@ def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], js
             data_version=constants.DATA_DELETION_EVENT_DATA_VERSION
         )
     )
+
+
+def _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent):
+    """Handle BlobCreated events from v2 consolidated storage accounts.
+
+    In v2, cross-account copies (e.g., import approval: core → workspace-global)
+    fire BlobCreated events. Container metadata determines the stage and appropriate
+    step result, matching the v1 pattern where BlobCreatedTrigger signals copy completion.
+    """
+    storage_account_name, _, _ = get_blob_info_from_topic_and_subject(
+        topic=json_body["topic"], subject=json_body["subject"])
+
+    from shared_code.blob_operations_metadata import get_container_metadata
+    try:
+        metadata = get_container_metadata(storage_account_name, request_id)
+    except Exception:
+        logging.warning(f"Could not read container metadata for request {request_id} on {storage_account_name}, skipping")
+        return
+
+    stage = metadata.get('stage', '')
+    logging.info(f"V2 BlobCreated for request {request_id}: stage={stage}, account={storage_account_name}")
+
+    if stage in V2_STAGE_COMPLETION_MAP:
+        completed_step, new_status = V2_STAGE_COMPLETION_MAP[stage]
+        logging.info(f"V2 copy completed for request {request_id}: {completed_step} -> {new_status}")
+
+        stepResultEvent.set(
+            func.EventGridOutputEvent(
+                id=str(uuid.uuid4()),
+                data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id},
+                subject=request_id,
+                event_type="Airlock.StepResult",
+                event_time=datetime.datetime.now(datetime.UTC),
+                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+        # Send delete event for the source container (same as v1)
+        send_delete_event(dataDeletionEvent, json_body, request_id)
+    else:
+        # Non-terminal stages (e.g., import-external from user upload, export-internal)
+        # are not copy completions — ignore them
+        logging.info(f"V2 BlobCreated for non-terminal stage '{stage}' on request {request_id}, no action needed")

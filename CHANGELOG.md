@@ -2,6 +2,7 @@
 ## (Unreleased)
 
 ENHANCEMENTS:
+* Add per-workspace `airlock_version` property (1=legacy, 2=consolidated) for backwards-compatible airlock storage migration. Add core-level `enable_legacy_airlock` toggle. Remove `USE_METADATA_STAGE_MANAGEMENT` environment variable. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853), [#4358](https://github.com/microsoft/AzureTRE/issues/4358))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 
@@ -10,7 +11,6 @@ ENHANCEMENTS:
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
 
 ENHANCEMENTS:
-* Add per-workspace `airlock_version` property (1=legacy, 2=consolidated) for backwards-compatible airlock storage migration. Add core-level `enable_legacy_airlock` toggle. Remove `USE_METADATA_STAGE_MANAGEMENT` environment variable. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
 * Update terraform-azurerm-environment-configuration to v0.7.0 ([#4841](https://github.com/microsoft/AzureTRE/pull/4841))
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))

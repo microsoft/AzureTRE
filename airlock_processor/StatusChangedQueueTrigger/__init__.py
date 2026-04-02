@@ -9,7 +9,7 @@ import json
 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
-from shared_code import blob_operations, constants, airlock_storage_helper
+from shared_code import blob_operations, constants, airlock_storage_helper, parsers
 from pydantic import BaseModel, parse_obj_as
 
 
@@ -98,36 +98,40 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id, airlock_version=request_properties.airlock_version)
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
-            # Import approval_in_progress: source and dest differ (core → workspace), so copy is needed.
-            # The general logic below handles this correctly via the source_account == dest_account check.
             if source_account == dest_account:
                 # Same storage account - just update metadata
                 logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
                 update_container_stage(source_account, req_id, new_stage, changed_by='system')
+
+                # In v2, same-account transitions don't fire BlobCreated events.
+                # For SUBMITTED, v1 relies on BlobCreatedTrigger to handle the malware scanning gate
+                # (skip to in_review when scanning is disabled). We handle this inline for v2.
+                if new_status == constants.STAGE_SUBMITTED:
+                    try:
+                        enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
+                    except KeyError:
+                        logging.error("environment variable 'ENABLE_MALWARE_SCANNING' does not exist. Cannot continue.")
+                        raise
+                    if not enable_malware_scanning:
+                        logging.info(f'Request {req_id}: Malware scanning disabled, skipping to in_review')
+                        stepResultEvent.set(
+                            func.EventGridOutputEvent(
+                                id=str(uuid.uuid4()),
+                                data={"completed_step": constants.STAGE_SUBMITTED, "new_status": constants.STAGE_IN_REVIEW, "request_id": req_id},
+                                subject=req_id,
+                                event_type="Airlock.StepResult",
+                                event_time=datetime.datetime.now(datetime.UTC),
+                                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                    else:
+                        logging.info(f'Request {req_id}: Malware scanning enabled, waiting for scan result')
             else:
-                # Different storage account (e.g., core → workspace) - need to copy
+                # Different storage account (e.g., core → workspace on import approval,
+                # workspace → core on export approval) - need to copy.
+                # BlobCreatedTrigger will fire when the copy completes and emit the StepResult,
+                # matching the v1 async pattern for large data transfers.
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
                 create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
                 blob_operations.copy_data(source_account, dest_account, req_id)
-
-            # In metadata mode, there is no BlobCreatedTrigger to signal completion,
-            # so we must send the step result event directly for terminal transitions.
-            completion_status_map = {
-                constants.STAGE_APPROVAL_INPROGRESS: constants.STAGE_APPROVED,
-                constants.STAGE_REJECTION_INPROGRESS: constants.STAGE_REJECTED,
-                constants.STAGE_BLOCKING_INPROGRESS: constants.STAGE_BLOCKED_BY_SCAN,
-            }
-            if new_status in completion_status_map:
-                final_status = completion_status_map[new_status]
-                logging.info(f'Request {req_id}: Metadata mode - sending step result for {new_status} -> {final_status}')
-                stepResultEvent.set(
-                    func.EventGridOutputEvent(
-                        id=str(uuid.uuid4()),
-                        data={"completed_step": new_status, "new_status": final_status, "request_id": req_id},
-                        subject=req_id,
-                        event_type="Airlock.StepResult",
-                        event_time=datetime.datetime.now(datetime.UTC),
-                        data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
         else:
             # Legacy mode: Copy data between storage accounts
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
