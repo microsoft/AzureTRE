@@ -37,7 +37,11 @@
         "Custom Windows 10",
         "(deprecated) Server 2019 Data Science VM",
         "(deprecated) Windows 10",
-        "(deprecated) Windows 11"
+        "(deprecated) Windows 11",
+        "test 1 do not use",
+        "test 2 do not use",
+        "test 3 do not use",
+        "test 4 do not use"
       ]
     },
     "vm_size": {

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-linuxvm
-version: 1.2.10
+version: 1.2.14
 description: "An Azure TRE User Resource Template for Guacamole (Linux)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -33,20 +33,36 @@ custom:
     #   install_ui: true
     #   conda_config: false
     # For information on using custom images, see README.me in the guacamole/user-resources folder
-    "(deprecated) Custom Ubuntu 22.04 LTS":
+    "(obsolete) Custom Ubuntu 22.04 LTS":
       source_image_name: imgdef-linux-dsvm-rpython
       install_ui: true
       conda_config: true
-    "(deprecated) Custom Ubuntu 24.04 LTS":
+    "(obsolete) Custom Ubuntu 24.04 LTS":
       source_image_name: imgdef-linux24-dsvm-rpython
       install_ui: true
       conda_config: true
-    "(2025-03) Custom Ubuntu 22.04 LTS":
+    "(deprecated 2025-03) Custom Ubuntu 22.04 LTS":
       source_image_name: linux-22-2025-03
       install_ui: true
       conda_config: true
-    "(2025-03) Custom Ubuntu 24.04 LTS":
+    "(deprecated 2025-03) Custom Ubuntu 24.04 LTS":
       source_image_name: linux-24-2025-03
+      install_ui: true
+      conda_config: true
+    "(2025-12) Custom Ubuntu 22.04 LTS":
+      source_image_name: ubuntu-22-2025-12
+      install_ui: true
+      conda_config: true
+    "(2025-12) Custom Ubuntu 24.04 LTS":
+      source_image_name: ubuntu-24-2025-12
+      install_ui: true
+      conda_config: true
+    "test 1 do not use":
+      source_image_name: linux-22-2026-04
+      install_ui: true
+      conda_config: true
+    "test 2 do not use":
+      source_image_name: linux-24-2026-04
       install_ui: true
       conda_config: true
 

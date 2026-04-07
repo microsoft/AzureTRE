@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.2.12
+version: 1.2.13
 description: "An Azure TRE User Resource Template for Guacamole (Windows 10)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -65,6 +65,18 @@ custom:
       conda_config: true
     "(2025-03) Custom Windows 2019 Data Science VM":
       source_image_name: windows-19-DS-2025-03
+      conda_config: true
+    "test 1 do not use":
+      source_image_name: windows-10-2026-04
+      conda_config: true
+    "test 2 do not use":
+      source_image_name: windows-11-2026-04
+      conda_config: true
+    "test 3 do not use":
+      source_image_name: windows-19-DS-2026-04
+      conda_config: true
+    "test 4 do not use":
+      source_image_name: windows-25-DS-2026-04
       conda_config: true
 
 credentials:
