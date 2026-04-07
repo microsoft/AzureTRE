@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Add A100 (Standard_NC24ads_A100_v4) and H100 (Standard_NC40ads_H100_v5) GPU VM sizes to Linux VM user resource template ([guacamole-azure-linuxvm v1.3.0](templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm))
+* Add A100 (Standard_NC24ads_A100_v4) and H100 (Standard_NC40ads_H100_v5) GPU VM sizes to Linux and Windows VM user resource templates ([guacamole-azure-linuxvm v1.2.10](templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm), [guacamole-azure-windowsvm v1.2.12](templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm))
 
 BUG FIXES:
 
