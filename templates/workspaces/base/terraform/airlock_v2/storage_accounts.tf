@@ -34,6 +34,9 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
 }
 
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
+  # Use a deterministic name per workspace to avoid conflicts when multiple
+  # workspaces assign the same role on the same global storage account.
+  name                 = uuidv5("url", "${data.azurerm_storage_account.sa_airlock_workspace_global.id}-${var.workspace_id}-blob-data-contributor")
   scope                = data.azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
