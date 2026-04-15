@@ -16,6 +16,7 @@ resource "azurerm_subnet" "services" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
+  default_outbound_access_enabled               = false
 }
 
 resource "azurerm_subnet" "webapps" {
@@ -26,6 +27,7 @@ resource "azurerm_subnet" "webapps" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
+  default_outbound_access_enabled               = false
 
   delegation {
     name = "delegation"
@@ -126,7 +128,7 @@ resource "azurerm_subnet_route_table_association" "rt_webapps_subnet_association
 }
 
 module "terraform_azurerm_environment_configuration" {
-  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.6.0"
+  source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.7.0"
   arm_environment = var.arm_environment
 }
 
