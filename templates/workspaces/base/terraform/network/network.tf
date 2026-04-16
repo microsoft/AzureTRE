@@ -16,6 +16,7 @@ resource "azurerm_subnet" "services" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
+  default_outbound_access_enabled               = false
 }
 
 resource "azurerm_subnet" "webapps" {
@@ -26,6 +27,7 @@ resource "azurerm_subnet" "webapps" {
   # notice that private endpoints do not adhere to NSG rules
   private_endpoint_network_policies             = "Disabled"
   private_link_service_network_policies_enabled = true
+  default_outbound_access_enabled               = false
 
   delegation {
     name = "delegation"

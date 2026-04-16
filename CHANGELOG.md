@@ -5,6 +5,8 @@ ENHANCEMENTS:
 * new option to Destroy Service Bus to reduce costs when using make `tre-stop`. This also stops function apps and web apps in core rg to prevent excessive error logs due to the missing service bus. ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
 
 BUG FIXES:
+* Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
+* Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
@@ -17,6 +19,8 @@ ENHANCEMENTS:
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
 
 BUG FIXES:
+* Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
+* Fix test airlock request sample data fields and enum values. ([#4866](https://github.com/microsoft/AzureTRE/issues/4866))
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
