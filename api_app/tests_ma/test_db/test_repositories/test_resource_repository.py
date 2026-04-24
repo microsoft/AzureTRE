@@ -82,8 +82,9 @@ def sample_resource_template() -> ResourceTemplate:
                                     'title': 'Windows image',
                                     'description': 'Select Windows image to use for VM',
                                     'enum': [
-                                        'Windows 10',
-                                        'Server 2019 Data Science VM'
+                                        'Windows 11',
+                                        'Server 2019 Data Science VM',
+                                        'Server 2022 Data Science VM'
                                     ],
                                     'updateable': False
                                 },
