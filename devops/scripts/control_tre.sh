@@ -58,7 +58,7 @@ if [[ "$COMMAND" == "start" ]]; then
     echo "Starting Application Gateway"
     az network application-gateway start -g "${core_rg_name}" -n "${agw_name}" &
   else
-    echo "Application Gateway already running"
+    echo "Application Gateway does not exist or is already running"
   fi
 
   az mysql flexible-server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Stopped'].name" -o tsv |
@@ -200,6 +200,18 @@ fi
 # Report final AGW status
 AGW_STATE=$(az network application-gateway list --query "[?resourceGroup=='${core_rg_name}'&&name=='${agw_name}'].operationalState | [0]" -o tsv)
 
+# Report final Service Bus status
+if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+  SB_STATE="Deleted"
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
+    SB_STATE="Running"
+  fi
+fi
+
 echo -e "\n\e[34m»»» 🔨 \e[96mTRE Status for $TRE_ID\e[0m"
 echo -e "\e[34m»»»   • \e[96mFirewall:              \e[33m$FW_STATE\e[0m"
-echo -e "\e[34m»»»   • \e[96mApplication Gateway:   \e[33m$AGW_STATE\e[0m\n"
+echo -e "\e[34m»»»   • \e[96mApplication Gateway:   \e[33m$AGW_STATE\e[0m"
+if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+  echo -e "\e[34m»»»   • \e[96mService Bus:           \e[33m$SB_STATE\e[0m"
+fi
+echo -e ""
