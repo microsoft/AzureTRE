@@ -22,7 +22,7 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
             "address_space_size": Property(
                 type="string",
                 default="small",
-                description="This can have a value of small, medium, large or custom. If you specify custom, then you need to specify a VNet address space in 'address_space' (e.g. 10.2.1.0/24)")
+                description="This can have a value of small, medium, large, a numeric CIDR mask (e.g. 25) or custom. If you specify custom, then you need to specify a VNet address space in 'address_space' (e.g. 10.2.1.0/24)")
         },
         customActions=[
             CustomAction()
