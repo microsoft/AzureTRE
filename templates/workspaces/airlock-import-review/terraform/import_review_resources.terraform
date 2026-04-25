@@ -2,9 +2,8 @@
 # The Dockerfile includes a RUN command to change the extension from .terraform to .tf after the files from the base workspace are copied to this directory.
 
 locals {
-  core_resource_group_name = "rg-${var.tre_id}"
-  # STorage AirLock IMport InProgress
-  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+  core_resource_group_name  = "rg-${var.tre_id}"
+  airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
 }
 
 module "terraform_azurerm_environment_configuration" {
@@ -12,14 +11,14 @@ module "terraform_azurerm_environment_configuration" {
   arm_environment = var.arm_environment
 }
 
-data "azurerm_storage_account" "sa_import_inprogress" {
+data "azurerm_storage_account" "sa_airlock_core" {
   provider            = azurerm.core
-  name                = local.import_in_progress_storage_name
+  name                = local.airlock_core_storage_name
   resource_group_name = local.core_resource_group_name
 }
 
-resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
-  name                = "stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+resource "azurerm_private_endpoint" "sa_airlock_core_pe" {
+  name                = "pe-airlock-import-review-${local.workspace_resource_name_suffix}"
   location            = var.location
   resource_group_name = azurerm_resource_group.ws.name
   subnet_id           = module.network.services_subnet_id
@@ -27,8 +26,8 @@ resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
   lifecycle { ignore_changes = [tags] }
 
   private_service_connection {
-    name                           = "psc-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
-    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress.id
+    name                           = "psc-airlock-import-review-${local.workspace_resource_name_suffix}"
+    private_connection_resource_id = data.azurerm_storage_account.sa_airlock_core.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
@@ -36,33 +35,69 @@ resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
   tags = local.tre_workspace_tags
 }
 
-resource "azurerm_private_dns_zone" "stg_import_inprogress_blob" {
-  name                = "${data.azurerm_storage_account.sa_import_inprogress.name}.${module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]}"
+resource "azurerm_private_dns_zone" "stg_airlock_core_blob" {
+  name                = "${data.azurerm_storage_account.sa_airlock_core.name}.${module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]}"
   resource_group_name = azurerm_resource_group.ws.name
 
   tags = local.tre_workspace_tags
 
-  depends_on = [azurerm_private_endpoint.sa_import_inprogress_pe]
+  depends_on = [azurerm_private_endpoint.sa_airlock_core_pe]
 }
 
-resource "azurerm_private_dns_a_record" "stg_import_inprogress_blob" {
+resource "azurerm_private_dns_a_record" "stg_airlock_core_blob" {
   name                = "@" # Root record
-  zone_name           = azurerm_private_dns_zone.stg_import_inprogress_blob.name
+  zone_name           = azurerm_private_dns_zone.stg_airlock_core_blob.name
   resource_group_name = azurerm_resource_group.ws.name
   ttl                 = 300
-  records             = [azurerm_private_endpoint.sa_import_inprogress_pe.private_service_connection[0].private_ip_address]
+  records             = [azurerm_private_endpoint.sa_airlock_core_pe.private_service_connection[0].private_ip_address]
 
   tags = local.tre_workspace_tags
 
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "stg_import_inprogress_blob" {
-  name                  = "vnl-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+resource "azurerm_private_dns_zone_virtual_network_link" "stg_airlock_core_blob" {
+  name                  = "vnl-airlock-import-review-${local.workspace_resource_name_suffix}"
   resource_group_name   = azurerm_resource_group.ws.name
-  private_dns_zone_name = azurerm_private_dns_zone.stg_import_inprogress_blob.name
+  private_dns_zone_name = azurerm_private_dns_zone.stg_airlock_core_blob.name
   virtual_network_id    = module.network.vnet_id
 
   tags = local.tre_workspace_tags
 
-  depends_on = [azurerm_private_dns_a_record.stg_import_inprogress_blob]
+  depends_on = [azurerm_private_dns_a_record.stg_airlock_core_blob]
 }
+
+# Per-workspace managed identity for accessing import-in-progress blobs
+# Each workspace needs its own identity so that role assignments don't conflict
+resource "azurerm_user_assigned_identity" "import_review_id" {
+  name                = "id-airlock-import-review-${local.workspace_resource_name_suffix}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.ws.name
+
+  tags = local.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_role_assignment" "review_workspace_import_access" {
+  scope                = data.azurerm_storage_account.sa_airlock_core.id
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = azurerm_user_assigned_identity.import_review_id.principal_id
+
+  condition_version = "2.0"
+  condition         = <<-EOT
+    (
+      !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
+      OR
+      (
+        @Environment[Microsoft.Network/privateEndpoints] StringEqualsIgnoreCase
+          '${azurerm_private_endpoint.sa_airlock_core_pe.id}'
+        AND
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+          StringEquals 'import-in-progress'
+      )
+    )
+  EOT
+
+  depends_on = [azurerm_private_endpoint.sa_airlock_core_pe]
+}
+

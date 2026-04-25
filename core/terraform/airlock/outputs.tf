@@ -21,3 +21,7 @@ output "event_grid_airlock_notification_topic_resource_id" {
 output "airlock_malware_scan_result_topic_name" {
   value = local.scan_result_topic_name
 }
+
+output "airlock_core_storage_fqdn" {
+  value = azurerm_storage_account.sa_airlock_core.primary_blob_host
+}

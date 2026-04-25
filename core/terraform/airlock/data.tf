@@ -7,5 +7,5 @@ data "azurerm_monitor_diagnostic_categories" "eventgrid_custom_topics" {
 }
 
 data "azurerm_monitor_diagnostic_categories" "eventgrid_system_topics" {
-  resource_id = azurerm_eventgrid_system_topic.export_approved_blob_created.id
+  resource_id = azurerm_eventgrid_system_topic.airlock_blob_created.id
 }
