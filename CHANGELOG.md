@@ -22,6 +22,7 @@ BUG FIXES:
 * Fix Mysql template ignored storage_mb ([#4846](https://github.com/microsoft/AzureTRE/issues/4846))
 * Fix duplicate `TOPIC_SUBSCRIPTION_NAME` in `core/terraform/airlock/airlock_processor.tf` ([#4847](https://github.com/microsoft/AzureTRE/pull/4847))
 * Fix Nexus repository access blocked by unaccepted EULA in Nexus 3.77+ Community Edition ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
+* Update allowed URLs in Nexus for docker and letsencrypt ([#4899](https://github.com/microsoft/AzureTRE/pull/4899))
 
 COMPONENTS:
 
