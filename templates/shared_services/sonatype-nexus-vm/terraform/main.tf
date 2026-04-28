@@ -13,10 +13,6 @@ terraform {
       source  = "hashicorp/cloudinit"
       version = "= 2.3.5"
     }
-    template = {
-      source  = "hashicorp/template"
-      version = "= 2.2.0"
-    }
   }
 
   backend "azurerm" {}
