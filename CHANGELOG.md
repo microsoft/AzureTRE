@@ -14,6 +14,7 @@ ENHANCEMENTS:
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
+* Update `aiohttp` and `pytest` package versions. ([#4897](https://github.com/microsoft/AzureTRE/pull/4897))
 
 BUG FIXES:
 * Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
