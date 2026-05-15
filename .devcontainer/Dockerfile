@@ -21,9 +21,8 @@ ENV DEVCONTAINER=true
 
 # Add any trusted_ca files (may be needed for SSL proxying)
 COPY .devcontainer/trusted_ca/* /usr/local/share/ca-certificates/
-
-# Execute the command to update the ca certs
 RUN update-ca-certificates
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
 # Install Node.js for GH actions tests and UI
 ARG NODE_VERSION="lts/*"
