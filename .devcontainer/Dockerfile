@@ -19,6 +19,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Set env for tracking that we're running in a devcontainer
 ENV DEVCONTAINER=true
 
+# Add any trusted_ca files (may be needed for SSL proxying)
+COPY .devcontainer/trusted_ca/* /usr/local/share/ca-certificates/
+
+# Execute the command to update the ca certs
+RUN update-ca-certificates
+
 # Install Node.js for GH actions tests and UI
 ARG NODE_VERSION="lts/*"
 RUN su $USERNAME -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"
