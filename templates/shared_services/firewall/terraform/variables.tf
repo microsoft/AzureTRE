@@ -32,3 +32,15 @@ variable "firewall_force_tunnel_ip" {
   type    = string
   default = ""
 }
+
+variable "firewall_dns_proxy_enabled" {
+  type        = bool
+  default     = true
+  description = "Enable DNS proxy on the firewall policy. Required for spoke VNets that point at the firewall IP for DNS to reach Azure DNS and linked private DNS zones."
+}
+
+variable "firewall_dns_servers" {
+  type        = list(string)
+  default     = []
+  description = "Upstream DNS servers used by the firewall when proxy is enabled. Empty list = Azure-provided DNS."
+}

@@ -84,5 +84,10 @@ resource "azurerm_firewall_policy" "root" {
   sku                 = local.effective_firewall_sku
   tags                = local.tre_shared_service_tags
 
+  dns {
+    proxy_enabled = var.firewall_dns_proxy_enabled
+    servers       = var.firewall_dns_servers
+  }
+
   lifecycle { ignore_changes = [tags] }
 }
