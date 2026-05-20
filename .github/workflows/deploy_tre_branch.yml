@@ -68,6 +68,7 @@ jobs:
       checks: write
       contents: read
       pull-requests: write
+      actions: read
     with:
       ciGitRef: ${{ github.ref }}
       prHeadSha: ${{ github.sha }}

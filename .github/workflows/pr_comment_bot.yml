@@ -166,6 +166,7 @@ jobs:
       checks: write
       contents: read
       pull-requests: write
+      actions: read
     with:
       prRef: ${{ needs.pr_comment.outputs.prRef }}
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}

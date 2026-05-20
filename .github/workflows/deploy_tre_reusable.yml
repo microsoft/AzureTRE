@@ -927,8 +927,8 @@ jobs:
     permissions:
       checks: write
       contents: read
+      actions: read
     if: always()
-    environment: ${{ inputs.environmentName }}
     steps:
       - uses: im-open/workflow-conclusion@fce18569e28a9f2ed1feca1e6d4251e6a7365fdc # v2.2.4
         id: conclusion
@@ -938,7 +938,7 @@ jobs:
       # so the checks aren't automatically associated with the PR
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
-        if: inputs.prHeadSha != ''
+        if: always() && inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@dfcbcf801bff1ea7f1414824fc28f2cd697b35da # v3.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

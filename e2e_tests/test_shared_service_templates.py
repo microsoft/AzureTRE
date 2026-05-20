@@ -8,6 +8,8 @@ from helpers import assert_status, get_auth_header, get_template
 from resources import strings
 from helpers import get_admin_token
 
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
 shared_service_templates = [
     strings.FIREWALL_SHARED_SERVICE,
     strings.GITEA_SHARED_SERVICE,

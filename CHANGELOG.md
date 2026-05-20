@@ -5,6 +5,9 @@ ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 
+BUG FIXES:
+* Fix E2E tests not running during PR validation: add `actions: read` permission to summary job, remove unnecessary environment from summary job, ensure check status is always reported, and fix asyncio loop scope consistency in shared service template tests ([#4893](https://github.com/microsoft/AzureTRE/issues/4893))
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
