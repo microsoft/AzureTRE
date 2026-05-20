@@ -2,6 +2,7 @@ import asyncio
 import json
 import base64
 import logging
+import os
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
@@ -78,7 +79,7 @@ def azure_acr_login_command(config):
 
 async def build_porter_command(config, msg_body, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
-    porter_parameters = []
+    param_set_entries = []
 
     if porter_parameter_keys is None:
         logger.warning("Unknown porter parameters - explain probably failed.")
@@ -117,9 +118,28 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters.extend(["--param", f"{parameter_name}={parameter_value}"])
+                param_set_entries.append({
+                    "name": parameter_name,
+                    "source": {"value": str(parameter_value)}
+                })
 
     installation_id = msg_body['id']
+
+    # Write parameters to a temporary parameter set file to avoid ARG_MAX / MAX_ARG_STRLEN limits
+    # when many workspaces are deployed and parameter values (e.g. base64-encoded rule_collections)
+    # exceed the Linux execve limits.
+    param_set_file = None
+    if param_set_entries:
+        param_set_file = f"/tmp/tre-params-{installation_id}.json"
+        param_set = {
+            "schemaType": "ParameterSet",
+            "schemaVersion": "1.0.1",
+            "name": f"tre-params-{installation_id}",
+            "namespace": "",
+            "parameters": param_set_entries
+        }
+        with open(param_set_file, "w") as f:
+            json.dump(param_set, f)
 
     command = ["porter"]
     if custom_action:
@@ -131,7 +151,8 @@ async def build_porter_command(config, msg_body, custom_action=False):
         "--reference",
         f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
     ])
-    command.extend(porter_parameters)
+    if param_set_file:
+        command.extend(["--parameter-set", param_set_file])
     command.append("--force")
     command.extend(["--credential-set", "arm_auth"])
     command.extend(["--credential-set", "aad_auth"])
@@ -139,7 +160,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
     if msg_body['action'] == 'upgrade':
         command.append("--force-upgrade")
 
-    return [command]
+    return ([command], param_set_file)
 
 
 async def build_porter_command_for_outputs(msg_body):

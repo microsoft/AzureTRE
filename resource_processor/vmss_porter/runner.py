@@ -3,6 +3,7 @@ from typing import Optional
 from multiprocessing import Process
 import json
 import asyncio
+import os
 import sys
 from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
 from shared.config import get_config
@@ -178,11 +179,18 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, msg_body, is_custom_action)
+    porter_command, param_set_file = await build_porter_command(config, msg_body, is_custom_action)
 
     logger.debug("Starting to run porter execution command...")
     returncode, _, err = await run_porter(porter_command, config)
     logger.debug("Finished running porter execution command.")
+
+    # Clean up the temporary parameter set file now that the porter command has completed
+    if param_set_file:
+        try:
+            os.unlink(param_set_file)
+        except OSError:
+            pass
 
     action_completed_without_error = False
 
@@ -203,8 +211,14 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
         if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
             logger.warning("Upgrade failed, attempting install...")
             msg_body['action'] = "install"
-            porter_command = await build_porter_command(config, msg_body, False)
+            porter_command, param_set_file = await build_porter_command(config, msg_body, False)
             returncode, _, err = await run_porter(porter_command, config)
+            # Clean up the temporary parameter set file for the fallback install command
+            if param_set_file:
+                try:
+                    os.unlink(param_set_file)
+                except OSError:
+                    pass
             if returncode == 0:
                 action_completed_without_error = True
 
