@@ -194,7 +194,6 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     try:
         returncode, _, err = await run_porter(porter_command, config)
     finally:
-        # Clean up the temporary parameter set file and remove it from Porter's store
         if param_set_file:
             await _cleanup_param_set(param_set_name, param_set_file, config)
     logger.debug("Finished running porter execution command.")
@@ -222,7 +221,6 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             try:
                 returncode, _, err = await run_porter(porter_command, config)
             finally:
-                # Clean up the temporary parameter set file for the fallback install command
                 if param_set_file:
                     await _cleanup_param_set(param_set_name, param_set_file, config)
             if returncode == 0:

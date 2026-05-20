@@ -126,10 +126,6 @@ async def build_porter_command(config, msg_body, custom_action=False):
     installation_id = msg_body['id']
     param_set_name = f"tre-params-{installation_id}"
 
-    # Write parameters to a temporary parameter set file to avoid ARG_MAX / MAX_ARG_STRLEN limits
-    # when many workspaces are deployed and parameter values (e.g. base64-encoded rule_collections)
-    # exceed the Linux execve limits. Use tempfile for secure file creation (mode 0o600, no
-    # predictable path) then apply the set to Porter's store via `porter parameters apply`.
     param_set_file = None
     if param_set_entries:
         param_set = {
