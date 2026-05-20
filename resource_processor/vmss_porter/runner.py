@@ -167,8 +167,8 @@ async def _cleanup_param_set(param_set_name: str, param_set_file: str, config: d
     await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
     try:
         os.unlink(param_set_file)
-    except OSError:
-        pass
+    except OSError as e:
+        logger.debug(f"Best-effort cleanup: could not delete temp parameter set file '{param_set_file}': {e}")
 
 
 async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
