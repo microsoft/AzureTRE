@@ -2,7 +2,7 @@ import asyncio
 import json
 import base64
 import logging
-import os
+import tempfile
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
@@ -124,22 +124,28 @@ async def build_porter_command(config, msg_body, custom_action=False):
                 })
 
     installation_id = msg_body['id']
+    param_set_name = f"tre-params-{installation_id}"
 
     # Write parameters to a temporary parameter set file to avoid ARG_MAX / MAX_ARG_STRLEN limits
     # when many workspaces are deployed and parameter values (e.g. base64-encoded rule_collections)
-    # exceed the Linux execve limits.
+    # exceed the Linux execve limits. Use tempfile for secure file creation (mode 0o600, no
+    # predictable path) then apply the set to Porter's store via `porter parameters apply`.
     param_set_file = None
     if param_set_entries:
-        param_set_file = f"/tmp/tre-params-{installation_id}.json"
         param_set = {
             "schemaType": "ParameterSet",
             "schemaVersion": "1.0.1",
-            "name": f"tre-params-{installation_id}",
+            "name": param_set_name,
             "namespace": "",
             "parameters": param_set_entries
         }
-        with open(param_set_file, "w") as f:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump(param_set, f)
+            param_set_file = f.name
+
+    commands = []
+    if param_set_file:
+        commands.append(["porter", "parameters", "apply", param_set_file])
 
     command = ["porter"]
     if custom_action:
@@ -152,7 +158,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
         f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
     ])
     if param_set_file:
-        command.extend(["--parameter-set", param_set_file])
+        command.extend(["--parameter-set", param_set_name])
     command.append("--force")
     command.extend(["--credential-set", "arm_auth"])
     command.extend(["--credential-set", "aad_auth"])
@@ -160,7 +166,9 @@ async def build_porter_command(config, msg_body, custom_action=False):
     if msg_body['action'] == 'upgrade':
         command.append("--force-upgrade")
 
-    return ([command], param_set_file)
+    commands.append(command)
+
+    return (commands, param_set_file)
 
 
 async def build_porter_command_for_outputs(msg_body):

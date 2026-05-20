@@ -61,17 +61,21 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
 
     commands, param_set_file = await build_porter_command(config, msg_body)
     try:
-        assert commands == [[
+        assert param_set_file is not None
+        assert os.path.exists(param_set_file)
+
+        # First command applies the parameter set to Porter's store
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command is the main porter install using the parameter set by name
+        assert commands[1] == [
             "porter", "install", "guid",
             "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", param_set_file,
+            "--parameter-set", "tre-params-guid",
             "--force",
             "--credential-set", "arm_auth",
             "--credential-set", "aad_auth"
-        ]]
-
-        assert param_set_file is not None
-        assert os.path.exists(param_set_file)
+        ]
 
         with open(param_set_file) as f:
             param_set = json.load(f)
@@ -94,18 +98,22 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
 
     commands, param_set_file = await build_porter_command(config, msg_body)
     try:
-        assert commands == [[
+        assert param_set_file is not None
+        assert os.path.exists(param_set_file)
+
+        # First command applies the parameter set to Porter's store
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command is the main porter upgrade using the parameter set by name
+        assert commands[1] == [
             "porter", "upgrade", "guid",
             "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", param_set_file,
+            "--parameter-set", "tre-params-guid",
             "--force",
             "--credential-set", "arm_auth",
             "--credential-set", "aad_auth",
             "--force-upgrade"
-        ]]
-
-        assert param_set_file is not None
-        assert os.path.exists(param_set_file)
+        ]
     finally:
         if param_set_file and os.path.exists(param_set_file):
             os.unlink(param_set_file)
@@ -168,11 +176,14 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
     commands, param_set_file = await build_porter_command(config, msg_body)
 
     try:
-        command_args = commands[0]
+        # First command is the apply command
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
-        # Command should have --parameter-set instead of --param
-        assert "--parameter-set" in command_args
-        assert "--param" not in command_args
+        # Main porter command should reference the parameter set by name
+        main_command = commands[1]
+        assert "--parameter-set" in main_command
+        assert "tre-params-guid" in main_command
+        assert "--param" not in main_command
 
         # Verify the param set file contains the correct parameters
         assert param_set_file is not None

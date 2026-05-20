@@ -182,15 +182,18 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     porter_command, param_set_file = await build_porter_command(config, msg_body, is_custom_action)
 
     logger.debug("Starting to run porter execution command...")
-    returncode, _, err = await run_porter(porter_command, config)
+    try:
+        returncode, _, err = await run_porter(porter_command, config)
+    finally:
+        # Clean up the temporary parameter set file and remove it from Porter's store
+        if param_set_file:
+            param_set_name = f"tre-params-{installation_id}"
+            await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
+            try:
+                os.unlink(param_set_file)
+            except OSError:
+                pass
     logger.debug("Finished running porter execution command.")
-
-    # Clean up the temporary parameter set file now that the porter command has completed
-    if param_set_file:
-        try:
-            os.unlink(param_set_file)
-        except OSError:
-            pass
 
     action_completed_without_error = False
 
@@ -212,13 +215,17 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             logger.warning("Upgrade failed, attempting install...")
             msg_body['action'] = "install"
             porter_command, param_set_file = await build_porter_command(config, msg_body, False)
-            returncode, _, err = await run_porter(porter_command, config)
-            # Clean up the temporary parameter set file for the fallback install command
-            if param_set_file:
-                try:
-                    os.unlink(param_set_file)
-                except OSError:
-                    pass
+            try:
+                returncode, _, err = await run_porter(porter_command, config)
+            finally:
+                # Clean up the temporary parameter set file for the fallback install command
+                if param_set_file:
+                    param_set_name = f"tre-params-{installation_id}"
+                    await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
+                    try:
+                        os.unlink(param_set_file)
+                    except OSError:
+                        pass
             if returncode == 0:
                 action_completed_without_error = True
 
