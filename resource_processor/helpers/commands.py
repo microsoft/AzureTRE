@@ -168,7 +168,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
 
     commands.append(command)
 
-    return (commands, param_set_file)
+    return (commands, param_set_file, param_set_name)
 
 
 async def build_porter_command_for_outputs(msg_body):

@@ -59,9 +59,10 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    commands, param_set_file = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
+        assert param_set_name == "tre-params-guid"
         assert os.path.exists(param_set_file)
 
         # First command applies the parameter set to Porter's store
@@ -96,9 +97,10 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "upgrade", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    commands, param_set_file = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
+        assert param_set_name == "tre-params-guid"
         assert os.path.exists(param_set_file)
 
         # First command applies the parameter set to Porter's store
@@ -140,9 +142,10 @@ async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {}}
     mock_get_porter_parameter_keys.return_value = []
 
-    commands, param_set_file = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
 
     assert param_set_file is None
+    assert param_set_name == "tre-params-guid"
     assert commands == [[
         "porter", "install", "guid",
         "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
@@ -173,7 +176,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
 
     mock_get_porter_parameter_keys.return_value = ["dict_param", "list_param", "string_param"]
 
-    commands, param_set_file = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
 
     try:
         # First command is the apply command

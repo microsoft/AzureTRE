@@ -162,6 +162,15 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
     return resource_request_message
 
 
+async def _cleanup_param_set(param_set_name: str, param_set_file: str, config: dict):
+    """Remove a Porter parameter set from its local store and delete the temp file."""
+    await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
+    try:
+        os.unlink(param_set_file)
+    except OSError:
+        pass
+
+
 async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
@@ -179,7 +188,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command, param_set_file = await build_porter_command(config, msg_body, is_custom_action)
+    porter_command, param_set_file, param_set_name = await build_porter_command(config, msg_body, is_custom_action)
 
     logger.debug("Starting to run porter execution command...")
     try:
@@ -187,12 +196,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     finally:
         # Clean up the temporary parameter set file and remove it from Porter's store
         if param_set_file:
-            param_set_name = f"tre-params-{installation_id}"
-            await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
-            try:
-                os.unlink(param_set_file)
-            except OSError:
-                pass
+            await _cleanup_param_set(param_set_name, param_set_file, config)
     logger.debug("Finished running porter execution command.")
 
     action_completed_without_error = False
@@ -214,18 +218,13 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
         if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
             logger.warning("Upgrade failed, attempting install...")
             msg_body['action'] = "install"
-            porter_command, param_set_file = await build_porter_command(config, msg_body, False)
+            porter_command, param_set_file, param_set_name = await build_porter_command(config, msg_body, False)
             try:
                 returncode, _, err = await run_porter(porter_command, config)
             finally:
                 # Clean up the temporary parameter set file for the fallback install command
                 if param_set_file:
-                    param_set_name = f"tre-params-{installation_id}"
-                    await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
-                    try:
-                        os.unlink(param_set_file)
-                    except OSError:
-                        pass
+                    await _cleanup_param_set(param_set_name, param_set_file, config)
             if returncode == 0:
                 action_completed_without_error = True
 
