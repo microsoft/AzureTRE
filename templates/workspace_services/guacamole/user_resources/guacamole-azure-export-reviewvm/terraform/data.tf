@@ -2,6 +2,11 @@ data "azurerm_resource_group" "ws" {
   name = "rg-${var.tre_id}-ws-${local.short_workspace_id}"
 }
 
+data "azurerm_resource_group" "core" {
+  provider = azurerm.core
+  name     = "rg-${var.tre_id}"
+}
+
 data "azurerm_virtual_network" "ws" {
   name                = "vnet-${var.tre_id}-ws-${local.short_workspace_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
@@ -27,6 +32,12 @@ data "azurerm_key_vault" "ws" {
 data "azurerm_linux_web_app" "guacamole" {
   name                = "guacamole-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_public_ip" "app_gateway_ip" {
+  provider            = azurerm.core
+  name                = "pip-agw-${var.tre_id}"
+  resource_group_name = data.azurerm_resource_group.core.name
 }
 
 data "azurerm_private_endpoint_connection" "airlock_export_inprogress_pe" {

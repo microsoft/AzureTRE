@@ -2,8 +2,9 @@
 terraform {
   required_providers {
     azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "= 3.117.0"
+      source                = "hashicorp/azurerm"
+      version               = "= 3.117.0"
+      configuration_aliases = [azurerm.core]
     }
     random = {
       source  = "hashicorp/random"
@@ -42,4 +43,10 @@ provider "azurerm" {
     }
   }
   storage_use_azuread = true
+}
+
+provider "azurerm" {
+  alias = "core"
+  features {
+  }
 }

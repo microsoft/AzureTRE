@@ -27,6 +27,8 @@ locals {
   secure_boot_enabled        = lookup(local.selected_image, "secure_boot_enabled", false)
   vtpm_enabled               = lookup(local.selected_image, "vtpm_enabled", false)
 
+  nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
+
   cmk_name                 = "tre-encryption-${local.workspace_resource_name_suffix}"
   encryption_identity_name = "id-encryption-${var.tre_id}-${local.short_workspace_id}"
 }

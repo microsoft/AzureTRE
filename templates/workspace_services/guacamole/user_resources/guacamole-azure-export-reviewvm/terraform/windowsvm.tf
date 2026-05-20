@@ -214,6 +214,8 @@ resource "azurerm_key_vault_secret" "windowsvm_password" {
 data "template_file" "download_review_data_script" {
   template = file("${path.module}/download_review_data.ps1")
   vars = {
+    nexus_proxy_url         = local.nexus_proxy_url
+    CondaConfig             = local.selected_image.conda_config ? 1 : 0
     airlock_request_sas_url = var.airlock_request_sas_url
   }
 }
