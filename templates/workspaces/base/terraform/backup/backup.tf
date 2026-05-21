@@ -1,39 +1,52 @@
 
-resource "azurerm_recovery_services_vault" "vault" {
-  name                = local.vault_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  sku                 = "Standard"
-  soft_delete_enabled = false
-  storage_mode_type   = "ZoneRedundant" #  Possible values are "GeoRedundant", "LocallyRedundant" and "ZoneRedundant". Defaults to "GeoRedundant".
-  tags                = var.tre_workspace_tags
+resource "azapi_resource" "vault" {
+  type      = "Microsoft.RecoveryServices/vaults@2024-04-01"
+  name      = local.vault_name
+  parent_id = var.resource_group_id
+  location  = var.location
+  tags      = var.tre_workspace_tags
 
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
       type         = "UserAssigned"
-      identity_ids = [azurerm_user_assigned_identity.encryption_identity[0].id]
+      identity_ids = [var.encryption_identity_id]
     }
   }
 
-  dynamic "encryption" {
-    for_each = var.enable_cmk_encryption ? [1] : []
-    content {
-      key_id                            = azurerm_key_vault_key.encryption_key[0].versionless_id
-      infrastructure_encryption_enabled = true
-      user_assigned_identity_id         = azurerm_user_assigned_identity.encryption_identity[0].id
-      use_system_assigned_identity      = false
+  body = {
+    properties = merge(
+      {
+        redundancySettings = {
+          standardTierStorageRedundancy = "ZoneRedundant"
+        }
+      },
+      var.enable_cmk_encryption ? {
+        encryption = {
+          infrastructureEncryption = "Enabled"
+          kekIdentity = {
+            userAssignedIdentity      = var.encryption_identity_id
+            useSystemAssignedIdentity = false
+          }
+          keyVaultProperties = {
+            keyUri = var.encryption_key_versionless_id
+          }
+        }
+      } : {}
+    )
+    sku = {
+      name = "Standard"
+      tier = "Standard"
     }
   }
 
-  lifecycle { ignore_changes = [encryption, tags] }
-
+  lifecycle { ignore_changes = [body.properties.encryption, tags] }
 }
 
 resource "azurerm_backup_policy_vm" "vm_policy" {
   name                = local.vm_backup_policy_name
   resource_group_name = var.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.vault.name
+  recovery_vault_name = azapi_resource.vault.name
 
 
   timezone = "UTC"
@@ -66,7 +79,7 @@ resource "azurerm_backup_policy_vm" "vm_policy" {
   }
 
   depends_on = [
-    azurerm_recovery_services_vault.vault
+    azapi_resource.vault
   ]
 
 
@@ -75,7 +88,7 @@ resource "azurerm_backup_policy_vm" "vm_policy" {
 resource "azurerm_backup_policy_file_share" "file_share_policy" {
   name                = local.fs_backup_policy_name
   resource_group_name = var.resource_group_name
-  recovery_vault_name = azurerm_recovery_services_vault.vault.name
+  recovery_vault_name = azapi_resource.vault.name
 
   timezone = "UTC"
 
@@ -107,7 +120,7 @@ resource "azurerm_backup_policy_file_share" "file_share_policy" {
   }
 
   depends_on = [
-    azurerm_recovery_services_vault.vault
+    azapi_resource.vault
   ]
 
 }

@@ -1,9 +1,9 @@
 output "vault_name" {
-  value = azurerm_recovery_services_vault.vault.name
+  value = azapi_resource.vault.name
 }
 
 output "vault_id" {
-  value = azurerm_recovery_services_vault.vault.id
+  value = azapi_resource.vault.id
 }
 
 output "vm_backup_policy_name" {
