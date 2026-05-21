@@ -43,3 +43,12 @@ def test_workspace_service_get_resource_request_message_payload_augments_payload
     message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id
+
+
+@pytest.mark.parametrize('is_enabled', [True, False])
+def test_get_resource_request_message_payload_includes_is_enabled(is_enabled):
+    resource = Resource(templateName="", templateVersion="", isEnabled=is_enabled, etag="", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test")
+
+    message_payload = resource.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
+
+    assert message_payload["isEnabled"] == is_enabled

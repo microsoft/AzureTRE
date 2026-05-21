@@ -299,7 +299,8 @@ def test_get_special_porter_param_value():
     msg_body = {
         "workspaceId": "ws-123",
         "parentWorkspaceServiceId": "parent-123",
-        "ownerId": "owner-123"
+        "ownerId": "owner-123",
+        "isEnabled": False
     }
 
     # Test ACR name extraction
@@ -319,6 +320,9 @@ def test_get_special_porter_param_value():
 
     # Test owner ID
     assert get_special_porter_param_value(config, "owner_id", msg_body) == "owner-123"
+
+    # Test is_enabled
+    assert get_special_porter_param_value(config, "is_enabled", msg_body) is False
 
     # Test bundle params
     assert get_special_porter_param_value(config, "custom_param", msg_body) == "custom_value"

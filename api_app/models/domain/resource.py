@@ -61,7 +61,8 @@ class Resource(AzureTREModel):
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,
-            "parameters": self.properties
+            "parameters": self.properties,
+            "isEnabled": self.isEnabled
         }
 
         if self.resourceType == ResourceType.WorkspaceService:
