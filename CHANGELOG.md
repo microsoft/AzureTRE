@@ -4,7 +4,7 @@
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
-* Propagate sensitive Porter parameters into template registration schema to remove duplicate sensitivity metadata from template schemas.
+* Propagate sensitive Porter parameters into template registration schema to remove duplicate sensitivity metadata from template schemas ([#4910](https://github.com/microsoft/AzureTRE/pull/4910)).
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
