@@ -32,6 +32,7 @@ import { LoadingState } from "../../models/loadingState";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { NotFoundLayout } from "../shared/NotFoundLayout";
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -335,9 +336,10 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                           path="shared-services/:sharedServiceId/*"
                           element={<SharedServiceItem readonly={true} />}
                         />
-                        <Route path="requests/*" element={<Airlock />} />
-                      </>)}
+                         <Route path="requests/*" element={<Airlock />} />
+                       </>)}
                     <Route path="users/*" element={<WorkspaceUsers />} />
+                    <Route path="*" element={<NotFoundLayout />} />
                   </Routes>
                 </Stack.Item>
               </Stack>
