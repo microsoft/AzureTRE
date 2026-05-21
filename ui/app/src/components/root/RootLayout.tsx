@@ -22,6 +22,7 @@ import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostsContext } from "../../contexts/CostsContext";
 import config from "../../config.json";
+import { NotFoundLayout } from "../shared/NotFoundLayout";
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
@@ -190,6 +191,7 @@ export const RootLayout: React.FunctionComponent = () => {
                           />
                         }
                       />
+                      <Route path="*" element={<NotFoundLayout />} />
                     </Routes>
                   }
                 />
@@ -199,9 +201,11 @@ export const RootLayout: React.FunctionComponent = () => {
                     <Routes>
                       <Route path="/" />
                       <Route path="airlock/*" element={<RequestsList />} />
+                      <Route path="*" element={<NotFoundLayout />} />
                     </Routes>
                   }
                 />
+                <Route path="*" element={<NotFoundLayout />} />
               </Routes>
             </Stack.Item>
           </Stack>
