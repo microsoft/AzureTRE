@@ -43,9 +43,10 @@ describe("RootLayout routes", () => {
 
   it("renders root dashboard on home route", async () => {
     render(<RootLayout />, {
+      children: <></>,
       initialEntries: ["/"],
       appRolesContext: { roles: [], setAppRoles: vi.fn() },
-    } as any);
+    });
 
     await waitFor(() => {
       expect(screen.getByText("Root Dashboard")).toBeInTheDocument();
@@ -54,9 +55,10 @@ describe("RootLayout routes", () => {
 
   it("renders a 404 page for an unknown route", async () => {
     render(<RootLayout />, {
+      children: <></>,
       initialEntries: ["/does-not-exist"],
       appRolesContext: { roles: [], setAppRoles: vi.fn() },
-    } as any);
+    });
 
     await waitFor(() => {
       expect(screen.getByText("404 - Page not found")).toBeInTheDocument();
