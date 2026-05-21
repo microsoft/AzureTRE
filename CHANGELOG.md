@@ -4,6 +4,7 @@
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
+* Pass `isEnabled` in the Service Bus resource request message payload and expose it as the `is_enabled` Porter parameter, enabling bundle authors to stop or deallocate Azure resources on disable ([#4889](https://github.com/microsoft/AzureTRE/issues/4889))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
