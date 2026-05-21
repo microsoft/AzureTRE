@@ -3,6 +3,7 @@ import json
 import base64
 import logging
 import tempfile
+import uuid
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
@@ -124,7 +125,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
                 })
 
     installation_id = msg_body['id']
-    param_set_name = f"tre-params-{installation_id}"
+    param_set_name = f"tre-params-{installation_id}-{uuid.uuid4().hex[:8]}"
 
     param_set_file = None
     if param_set_entries:

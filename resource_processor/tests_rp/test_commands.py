@@ -62,7 +62,8 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
     commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
-        assert param_set_name == "tre-params-guid"
+        assert param_set_name.startswith("tre-params-guid-")
+        assert len(param_set_name) == len("tre-params-guid-") + 8
         assert os.path.exists(param_set_file)
 
         # First command applies the parameter set to Porter's store
@@ -72,7 +73,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
         assert commands[1] == [
             "porter", "install", "guid",
             "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", "tre-params-guid",
+            "--parameter-set", param_set_name,
             "--force",
             "--credential-set", "arm_auth",
             "--credential-set", "aad_auth"
@@ -82,7 +83,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
             param_set = json.load(f)
 
         assert param_set["schemaType"] == "ParameterSet"
-        assert param_set["name"] == "tre-params-guid"
+        assert param_set["name"] == param_set_name
         assert len(param_set["parameters"]) == 1
         assert param_set["parameters"][0] == {"name": "param1", "source": {"value": "value1"}}
     finally:
@@ -100,7 +101,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
-        assert param_set_name == "tre-params-guid"
+        assert param_set_name.startswith("tre-params-guid-")
         assert os.path.exists(param_set_file)
 
         # First command applies the parameter set to Porter's store
@@ -110,7 +111,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
         assert commands[1] == [
             "porter", "upgrade", "guid",
             "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", "tre-params-guid",
+            "--parameter-set", param_set_name,
             "--force",
             "--credential-set", "arm_auth",
             "--credential-set", "aad_auth",
@@ -145,7 +146,7 @@ async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys
     commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
 
     assert param_set_file is None
-    assert param_set_name == "tre-params-guid"
+    assert param_set_name.startswith("tre-params-guid-")
     assert commands == [[
         "porter", "install", "guid",
         "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
@@ -185,7 +186,8 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         # Main porter command should reference the parameter set by name
         main_command = commands[1]
         assert "--parameter-set" in main_command
-        assert "tre-params-guid" in main_command
+        assert param_set_name in main_command
+        assert param_set_name.startswith("tre-params-guid-")
         assert "--param" not in main_command
 
         # Verify the param set file contains the correct parameters
