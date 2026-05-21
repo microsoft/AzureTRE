@@ -92,6 +92,22 @@ The required actions are the main two of CNAB spec:
 * `install` - Deploys/repairs the workspace Azure resources, and must be **idempotent**
 * `uninstall` - Tears down (deletes) the Azure resources of the workspace and its services
 
+## Handling resource enable/disable
+
+When a resource is enabled or disabled via the TRE API, the framework runs the `upgrade` action on the Porter bundle and passes the current value of `isEnabled` as the `is_enabled` parameter. Bundle authors can use this parameter to stop, deallocate, or remove Azure resources when a resource is disabled, and to restore them when re-enabled.
+
+To opt in, declare the `is_enabled` parameter in your bundle's `porter.yaml`:
+
+```yaml
+parameters:
+  - name: is_enabled
+    type: boolean
+    default: true
+    description: "Indicates whether the resource is enabled. When false, cost-incurring Azure resources should be stopped or deleted."
+```
+
+Then reference it in your `upgrade` action and pass it through to Terraform (or any other provisioner) to handle lifecycle accordingly. It is up to the bundle author to decide the exact behaviour — for example, a VM bundle might delete the VM (but keep its disks) when `is_enabled` is `false`.
+
 ## Workspace service bundle manifests
 
 Workspace service bundles are generated in the same way as workspace bundles.
