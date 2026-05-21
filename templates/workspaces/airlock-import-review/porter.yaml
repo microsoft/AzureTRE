@@ -87,6 +87,7 @@ parameters:
       "The client secret of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"
     default: ""
+    sensitive: true
   - name: ui_client_id
     type: string
     default: ""

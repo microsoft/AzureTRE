@@ -81,6 +81,7 @@ parameters:
     type: string
     description: "A SAS token to access storage resource in workspace under review"
     env: airlock_request_sas_url
+    sensitive: true
   - name: enable_cmk_encryption
     type: boolean
     default: false

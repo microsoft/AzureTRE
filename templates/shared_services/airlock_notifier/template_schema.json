@@ -39,8 +39,7 @@
       "type": "string",
       "title": "SMTP Password",
       "description": "SMTP Password",
-      "updateable": false,
-      "sensitive": true
+      "updateable": false
     },
     "smtp_from_email": {
       "$id": "#/properties/smtp_from_email",

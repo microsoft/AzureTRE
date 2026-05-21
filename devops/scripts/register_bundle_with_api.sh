@@ -99,7 +99,23 @@ fi
 acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
 explain_json=$(porter explain --reference "${acr_name}${acr_domain_suffix}"/"$(yq eval '.name' porter.yaml)":v"$(yq eval '.version' porter.yaml)" -o json)
 
-payload=$(echo "${explain_json}" | jq --slurpfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '. + {"json_schema": $json_schema[0], "resourceType": $bundle_type, "current": $current}')
+payload=$(echo "${explain_json}" | jq --slurpfile json_schema template_schema.json --arg current "${current}" --arg bundle_type "${bundle_type}" '
+  . as $explain
+  | ($explain.parameters // [] | map(select(.sensitive == true) | .name) | unique) as $sensitive_parameter_names
+  | ($json_schema[0] | walk(
+      if type == "object" and has("properties") and (.properties | type) == "object"
+      then .properties |= with_entries(
+        .key as $parameter_name
+        | if ($sensitive_parameter_names | index($parameter_name)) != null
+        then .value |= (. + {"sensitive": true})
+        else .
+        end
+      )
+      else .
+      end
+    )) as $schema
+  | $explain + {"json_schema": $schema, "resourceType": $bundle_type, "current": $current}
+')
 
 if [ "${dry_run}" == "true" ]; then
     echo "--dry-run specified - automatic bundle registration disabled. Use the script output to self-register."

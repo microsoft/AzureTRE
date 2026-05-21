@@ -249,7 +249,6 @@
             "type": "string",
             "title": "Application (Client) Secret",
             "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true,
             "updateable": true
           }
         },

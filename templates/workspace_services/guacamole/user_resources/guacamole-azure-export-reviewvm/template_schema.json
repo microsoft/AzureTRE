@@ -34,8 +34,7 @@
         "type": "string",
         "title": "Airlock request SAS Token",
         "description": "SAS Token for airlock request",
-        "updateable": false,
-        "sensitive": true
+        "updateable": false
       }
     }
 }
