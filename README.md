@@ -42,7 +42,7 @@ Core features include:
 
 The aim is to bring together learnings from past customer engagements where TREs have been built into a single reference solution. This is a solution accelerator aiming to be a great starting point for a customized TRE solution. You're encouraged to download and customize the solution to meet your requirements
 
-This project does not have a dedicated team of maintainers but relies on you and the community to maintain and enhance the solution. Microsoft will on project-to-project basis continue to extend the solution in collaboration with customers and partners. No guarantees can be offered as to response times on issues, feature requests, or to the long term road map for the project.
+This project is maintained by CGI in partnership with Microsoft. Support for the project is provided on a best-effort basis through the open-source community and project maintainers. No guarantees can be made regarding response times for issues, feature requests, or long-term roadmap commitments.
 
 It is important before deployment of the solution that the [Support Policy](SUPPORT.md) is read and understood.
 

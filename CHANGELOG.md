@@ -1,9 +1,12 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+**BREAKING CHANGES**
+* Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
+* Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
@@ -14,6 +17,7 @@ ENHANCEMENTS:
 * Add interactive browser login method to TRE CLI for easier authentication ([#4856](https://github.com/microsoft/AzureTRE/issues/4856))
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
+* Update `picomatch` package to v2.3.2 and v4.0.4 to address security vulnerabilities ([#4887](https://github.com/microsoft/AzureTRE/issues/4887))
 
 BUG FIXES:
 * Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
