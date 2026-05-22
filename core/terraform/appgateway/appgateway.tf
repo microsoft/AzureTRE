@@ -69,8 +69,13 @@ resource "azurerm_application_gateway" "agw" {
 
   # SSL policy
   ssl_policy {
-    policy_type = "Predefined"
-    policy_name = "AppGwSslPolicy20220101"
+    policy_type          = "CustomV2"
+    min_protocol_version = "TLSv1_2"
+    # The cipher suites TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 are mandatory for TLSv1.3. You need NOT mention these explicitly when setting a CustomV2 policy
+    cipher_suites = [
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+    ]
   }
 
   # Backend pool with the static website in storage account.
@@ -164,17 +169,43 @@ resource "azurerm_application_gateway" "agw" {
     priority           = 10
   }
 
+  rewrite_rule_set {
+    name = "security-headers-rewrite-rule"
+
+    rewrite_rule {
+      name          = "Strict-Transport-Security"
+      rule_sequence = 100
+
+      response_header_configuration {
+        header_name  = "Strict-Transport-Security"
+        header_value = "max-age=31536000; includeSubDomains"
+      }
+    }
+
+    rewrite_rule {
+      name          = "X-Content-Type-Options"
+      rule_sequence = 110
+
+      response_header_configuration {
+        header_name  = "X-Content-Type-Options"
+        header_value = "nosniff"
+      }
+    }
+  }
+
   # Default traffic is routed to the static website. Exception is API.
   url_path_map {
     name                               = local.app_path_map_name
     default_backend_address_pool_name  = local.staticweb_backend_pool_name
     default_backend_http_settings_name = local.staticweb_http_setting_name
+    default_rewrite_rule_set_name      = "security-headers-rewrite-rule"
 
     path_rule {
       name                       = "api"
       paths                      = ["/api/*", "/openapi.json"]
       backend_address_pool_name  = local.api_backend_pool_name
       backend_http_settings_name = local.api_http_setting_name
+      rewrite_rule_set_name      = "security-headers-rewrite-rule"
     }
 
   }
