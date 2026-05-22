@@ -18,6 +18,7 @@ ENHANCEMENTS:
 * Harden security of the app gateway. ([#4863](https://github.com/microsoft/AzureTRE/pull/4863))
 * Pass OIDC vars directly to the devcontainer ([#4871](https://github.com/microsoft/AzureTRE/issues/4871))
 * Update `picomatch` package to v2.3.2 and v4.0.4 to address security vulnerabilities ([#4887](https://github.com/microsoft/AzureTRE/issues/4887))
+* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
 
 BUG FIXES:
 * Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
