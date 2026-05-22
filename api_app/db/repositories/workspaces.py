@@ -149,7 +149,7 @@ class WorkspaceRepository(ResourceRepository):
             else:
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
-        # If a numeric cidr was provided (e.g as a string like "25"), accept it
+        # If a numeric cidr was provided (e.g. as a string like "25"), accept it
         try:
             if address_space_size.isdigit():
                 cidr_netmask = int(address_space_size)
