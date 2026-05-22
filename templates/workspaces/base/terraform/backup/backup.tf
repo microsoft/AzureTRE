@@ -4,7 +4,7 @@ resource "azurerm_recovery_services_vault" "vault" {
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "Standard"
-  soft_delete_enabled = false
+  soft_delete_enabled = true
   storage_mode_type   = "ZoneRedundant" #  Possible values are "GeoRedundant", "LocallyRedundant" and "ZoneRedundant". Defaults to "GeoRedundant".
   tags                = var.tre_workspace_tags
 
