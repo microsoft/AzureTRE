@@ -1,9 +1,12 @@
 import random
 import pytest
 import asyncio
+import os
+import subprocess
 from typing import Tuple
 import config
 import logging
+from pathlib import Path
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
@@ -93,7 +96,33 @@ async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path:
     # Only delete the workspace if it wasn't pre-created
     if pre_created_workspace_id == "":
         LOGGER.info(f"Deleting workspace {pre_created_workspace_id}")
+        await clean_up_ci_backup_items(workspace_path)
         await disable_and_delete_tre_resource(workspace_path, verify)
+
+
+async def clean_up_ci_backup_items(workspace_path: str):
+    if os.getenv("CI_DELETE_BACKUP_ITEMS_ON_DESTROY", "false").lower() != "true":
+        return
+
+    workspace_id = workspace_path.rstrip("/").split("/")[-1]
+    short_workspace_id = workspace_id[-4:]
+    resource_group_name = f"rg-{config.TRE_ID}-ws-{short_workspace_id}"
+    vault_name = f"arsv-{config.TRE_ID}-ws-{short_workspace_id}"
+    script_path = Path(__file__).resolve().parents[1] / "devops" / "scripts" / "delete_recovery_services_vault_items.sh"
+
+    LOGGER.info(f"Deleting backup items in {vault_name} before workspace destroy")
+    result = subprocess.run(
+        ["bash", str(script_path), "--resource-group", resource_group_name, "--vault-name", vault_name],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+
+    if result.stdout:
+        LOGGER.info(result.stdout)
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to delete backup items in {vault_name}")
 
 
 async def clean_up_test_workspace_service(pre_created_workspace_service_id: str, workspace_service_path: str, workspace_id: str, verify: bool):
