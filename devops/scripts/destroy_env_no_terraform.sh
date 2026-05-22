@@ -67,7 +67,6 @@ then
 fi
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-backup_cleanup_script="${script_dir}/delete_recovery_services_vault_items.sh"
 
 # shellcheck disable=SC1091
 source "$script_dir/kv_add_network_exception.sh"
@@ -187,10 +186,6 @@ function purge_container_repositories() {
 az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r |
 while read -r rg_item; do
   purge_container_repositories "$rg_item"
-
-  if [[ "${rg_item}" == "${core_tre_rg}-ws-"* ]]; then
-    bash "${backup_cleanup_script}" --resource-group "${rg_item}"
-  fi
 
   echo "Deleting resource group: ${rg_item}"
   # remove any resource locks on resources inside the resource group

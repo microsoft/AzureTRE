@@ -865,7 +865,6 @@ jobs:
           TRE_ID: ${{ secrets.TRE_ID }}
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
-          CI_DELETE_BACKUP_ITEMS_ON_DESTROY: "true"
 
       - name: Upload Test Results
         if: always()
@@ -913,7 +912,6 @@ jobs:
           IS_API_SECURED: false
           WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
           E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
-          CI_DELETE_BACKUP_ITEMS_ON_DESTROY: "true"
 
       - name: Upload Test Results
         if: always()

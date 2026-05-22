@@ -33,6 +33,10 @@ provider "azurerm" {
       recover_soft_deleted_certificates = true
       recover_soft_deleted_keys         = true
     }
+    recovery_service {
+      purge_protected_items_from_vault_on_destroy          = true
+      vm_backup_stop_protection_and_retain_data_on_destroy = false
+    }
     resource_group {
       prevent_deletion_if_contains_resources = false
     }

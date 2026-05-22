@@ -98,7 +98,6 @@ then
   # if not, we can delete old workspace resource groups that were left due to errors.
   az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
   while read -r rg_name; do
-    bash devops/scripts/delete_recovery_services_vault_items.sh --resource-group "${rg_name}"
     echo "Deleting resource group: ${rg_name}"
     az group delete --yes --no-wait --name "${rg_name}"
   done
