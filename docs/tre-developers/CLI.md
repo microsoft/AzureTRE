@@ -16,11 +16,33 @@ Other shells are supported, see [the click docs](https://click.palletsprojects.c
 
 ## Login
 
-The CLI allows you to log in using either a device code flow or client credentials flow.
+The CLI allows you to log in using device code flow, interactive browser flow, or client credentials flow.
 
-### Device code flow (interactive)
+### Interactive browser flow
 
-To log in using device code flow, run:
+To log in using the interactive browser flow (recommended for developers in the devcontainer), run:
+
+```bash
+tre login interactive
+```
+
+This will open a browser window for you to complete the login. Tokens are cached in `~/.config/tre/token_cache.json` for silent refresh.
+
+The CLI automatically detects the base URL from:
+1. Previously saved configuration (`~/.config/tre/environment.json`)
+2. TRE deployment outputs (`core/tre_output.json`)
+
+If you need to specify a different TRE instance, use `--base-url`:
+
+```bash
+tre login interactive --base-url https://mytre.westeurope.cloudapp.azure.com/
+```
+
+You can specify `--no-verify` to disable SSL cert verification.
+
+### Device code flow
+
+To log in using the device code flow, run:
 
 ```bash
 tre login device-code --base-url https://mytre.westeurope.cloudapp.azure.com/ 

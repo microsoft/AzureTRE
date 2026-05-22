@@ -28,26 +28,12 @@ load_environment_config() {
 
 ensure_automation_login() {
   if [[ -n "${TF_IN_AUTOMATION:-}" ]]; then
-    az cloud set --name "${AZURE_ENVIRONMENT}"
-
-    # Use OIDC-based login for GitHub Actions
-    if [[ -f "/tmp/github_oidc_token" ]]; then
-      # Use the GitHub OIDC token from file for federated authentication
-      az login --service-principal \
-        --username "${ARM_CLIENT_ID}" \
-        --tenant "${ARM_TENANT_ID}" \
-        --allow-no-subscriptions \
-        --federated-token "$(cat /tmp/github_oidc_token)"
-    elif [[ -n "${ARM_CLIENT_SECRET:-}" ]]; then
-      # Fallback to classic service principal login (for backwards compatibility)
-      echo "Warning: Using classic service principal authentication. Consider migrating to OIDC."
+    if [[ -n "${ARM_CLIENT_SECRET:-}" ]]; then
+      echo "Warning: Using classic service principal authentication."
+      az cloud set --name "${AZURE_ENVIRONMENT}"
       az login --service-principal -u "${ARM_CLIENT_ID}" -p "${ARM_CLIENT_SECRET}" --tenant "${ARM_TENANT_ID}"
-    else
-      echo "Error: No authentication method available (OIDC token or client secret required)"
-      exit 1
+      az account set -s "${ARM_SUBSCRIPTION_ID}"
     fi
-
-    az account set -s "${ARM_SUBSCRIPTION_ID}"
   fi
 }
 
@@ -67,11 +53,6 @@ set_account_context() {
 
   export ARM_STORAGE_USE_AZUREAD=true
   export ARM_USE_AZUREAD=true
-  # Force Terraform to use Azure CLI authentication. GitHub Actions OIDC
-  # (federated) tokens are short-lived and are not reliably available inside
-  # the devcontainer after their initial lifetime, which can cause Terraform
-  # authentication to fail. Using ARM_USE_CLI=true avoids this issue.
-  export ARM_USE_CLI=true
 
   echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"
   echo -e "\e[34m»»»   • \e[96mSubscription: \e[33m${subscription_name}\e[0m"

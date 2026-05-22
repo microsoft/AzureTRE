@@ -35,6 +35,26 @@
       "description": "Deploy FHIR instance",
       "updateable": true,
       "default": false
+    },
+    "workspace_owners_group_id": {
+      "$id": "#/properties/workspace_owners_group_id",
+      "type": "string",
+      "title": "Workspace Owners Group ID",
+      "description": "Object ID of the workspace owners AAD group"
+    },
+    "workspace_researchers_group_id": {
+      "$id": "#/properties/workspace_researchers_group_id",
+      "type": "string",
+      "title": "Workspace Researchers Group ID",
+      "description": "Object ID of the workspace researchers AAD group"
+    }
+  },
+  "uiSchema": {
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
+      "classNames": "tre-hidden"
     }
   },
   "allOf": [
@@ -68,7 +88,19 @@
   "pipeline": {
     "install": [
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
+          }
+        ]
       },
       {
         "stepId": "d5504764-94cd-11ed-a1eb-0242ac120002",
