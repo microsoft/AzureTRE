@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -4124,15 +4124,26 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#device-code-flow-interactive" class="md-nav__link">
+  <a href="#interactive-browser-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Device code flow (interactive)
+        Interactive browser flow
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Device code flow (interactive)">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#device-code-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device code flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Device code flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -4703,15 +4714,26 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#device-code-flow-interactive" class="md-nav__link">
+  <a href="#interactive-browser-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Device code flow (interactive)
+        Interactive browser flow
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Device code flow (interactive)">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#device-code-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device code flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Device code flow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -4894,9 +4916,21 @@
 <p>The <code>tre</code> cli supports shell completion. To enable, run <code>source &lt;(_TRE_COMPLETE=bash_source tre)</code> (or add to your profile).</p>
 <p>Other shells are supported, see <a href="https://click.palletsprojects.com/en/8.1.x/shell-completion/#enabling-completion">the click docs</a>.</p>
 <h2 id="login">Login</h2>
-<p>The CLI allows you to log in using either a device code flow or client credentials flow.</p>
-<h3 id="device-code-flow-interactive">Device code flow (interactive)</h3>
-<p>To log in using device code flow, run:</p>
+<p>The CLI allows you to log in using device code flow, interactive browser flow, or client credentials flow.</p>
+<h3 id="interactive-browser-flow">Interactive browser flow</h3>
+<p>To log in using the interactive browser flow (recommended for developers in the devcontainer), run:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>interactive
+</code></pre></div>
+<p>This will open a browser window for you to complete the login. Tokens are cached in <code>~/.config/tre/token_cache.json</code> for silent refresh.</p>
+<p>The CLI automatically detects the base URL from:
+1. Previously saved configuration (<code>~/.config/tre/environment.json</code>)
+2. TRE deployment outputs (<code>core/tre_output.json</code>)</p>
+<p>If you need to specify a different TRE instance, use <code>--base-url</code>:</p>
+<div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>interactive<span class="w"> </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/
+</code></pre></div>
+<p>You can specify <code>--no-verify</code> to disable SSL cert verification.</p>
+<h3 id="device-code-flow">Device code flow</h3>
+<p>To log in using the device code flow, run:</p>
 <div class="highlight"><pre><span></span><code>tre<span class="w"> </span>login<span class="w"> </span>device-code<span class="w"> </span>--base-url<span class="w"> </span>https://mytre.westeurope.cloudapp.azure.com/<span class="w"> </span>
 </code></pre></div>
 <p>This will prompt you to copy a device code and nagivate to <a href="https://microsoft.com/devicelogin">https://microsoft.com/devicelogin</a> to complete the login flow interactively.</p>
