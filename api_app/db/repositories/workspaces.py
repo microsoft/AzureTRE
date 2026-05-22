@@ -140,7 +140,7 @@ class WorkspaceRepository(ResourceRepository):
 
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
-        address_space_size = workspace_properties.get("address_space_size", "small").lower()
+        address_space_size = workspace_properties.get("address_space_size", "small").strip().lower()
 
         # 773 allow custom sized networks to be requested
         if address_space_size == "custom":
