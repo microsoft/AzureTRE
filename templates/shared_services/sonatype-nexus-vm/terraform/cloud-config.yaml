@@ -2,6 +2,12 @@
 #cloud-config
 package_upgrade: true
 package_update: true
+
+# Disable snap refresh - not accessible through firewall
+snap:
+  commands:
+    - snap refresh --hold
+
 apt:
   sources:
     docker.list:
@@ -40,8 +46,8 @@ runcmd:
   - export DEBIAN_FRONTEND=noninteractive
   # Give the Nexus process write permissions on the folder mounted as persistent volume
   - chown -R 200 /etc/nexus-data
-  # Deploy Nexus by pulling and running the container
-  - bash /etc/nexus-data/scripts/deploy_nexus_container.sh
+  # Deploy Nexus container (script handles ACR login via IMDS)
+  - bash /etc/nexus-data/scripts/deploy_nexus_container.sh "${ACR_NAME}" "${NEXUS_IMAGE_TAG}" "${MSI_ID}"
   # Reset the admin password of Nexus to the one created by TF and stored in Key Vault
   - bash /etc/nexus-data/scripts/reset_nexus_password.sh "${NEXUS_ADMIN_PASSWORD}"
   # Invoke Nexus SSL configuration (which will also be ran as CRON daily to renew cert)
