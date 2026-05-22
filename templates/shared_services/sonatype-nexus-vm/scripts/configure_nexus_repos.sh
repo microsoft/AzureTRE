@@ -44,6 +44,35 @@ if ! retry_with_backoff nexus_ready; then
   exit 1
 fi
 
+# Accept Community Edition EULA (required for Nexus 3.77+)
+echo "Checking Community Edition EULA status..."
+eula_response=$(curl -s -u admin:"$1" \
+  'http://localhost/service/rest/v1/system/eula' \
+  -H 'accept: application/json' \
+  -k 2>/dev/null)
+
+if echo "$eula_response" | jq -e '.accepted == false' > /dev/null 2>&1; then
+  echo "EULA not yet accepted. Accepting now..."
+  # Extract disclaimer and build proper JSON using jq to handle escaping
+  disclaimer=$(echo "$eula_response" | jq -r '.disclaimer')
+  eula_payload=$(jq -n --arg disc "$disclaimer" '{"disclaimer": $disc, "accepted": true}')
+  eula_status_code=$(curl -s -u admin:"$1" -X POST \
+    'http://localhost/service/rest/v1/system/eula' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d "$eula_payload" \
+    -k -w "%{http_code}" -o /dev/null)
+  if [ "$eula_status_code" -eq 204 ]; then
+    echo "EULA accepted successfully."
+  else
+    echo "WARNING - Failed to accept EULA (HTTP $eula_status_code). This may cause repository access issues."
+  fi
+elif echo "$eula_response" | jq -e '.accepted == true' > /dev/null 2>&1; then
+  echo "EULA already accepted."
+else
+  echo "EULA endpoint not available (older Nexus version or Pro edition). Skipping."
+fi
+
 echo "Getting current anonymous settings in Nexus..."
 current_anon_json=$(curl -iu admin:"$1" -X GET \
   'http://localhost/service/rest/v1/security/anonymous' \

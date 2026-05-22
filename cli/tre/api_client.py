@@ -71,6 +71,15 @@ class ApiClient:
                 config["aad-tenant-id"],
                 config["api-scope"]
             )
+        elif login_method == "interactive":
+            return InteractiveApiClient(
+                base_url,
+                config["verify"],
+                config["token-cache-file"],
+                config["client-id"],
+                config["aad-tenant-id"],
+                config["api-scope"]
+            )
         else:
             raise click.ClickException(f"Unhandled login method: {login_method}")
 
@@ -119,8 +128,8 @@ class ApiClient:
         workspace_scope = workspace_json["workspace"]["properties"]["scope_id"]
         return workspace_scope
 
-    def get_auth_token() -> str:
-        pass
+    def get_auth_token(self, log, scope) -> str:
+        raise NotImplementedError()
 
 
 class ClientCredentialsApiClient(ApiClient):
@@ -204,10 +213,75 @@ class DeviceCodeApiClient(ApiClient):
                 else:
                     raise click.ClickException(f"Failed to get access_token: ${str(auth_result)}")
 
-        raise RuntimeError(f"Failed to get auth token for scope '{scope}'")
+        raise RuntimeError(f"Failed to get auth token for scope '{effective_scope}'")
 
     def get_workspace_scope(self, log, workspace_id: str) -> str:
         # device code flow wants "/user_impersonation" suffix, but client creds doesn't
+        # Override here to append
+        workspace_scope = super().get_workspace_scope(log, workspace_id)
+        return workspace_scope + "/user_impersonation"
+
+
+class InteractiveApiClient(ApiClient):
+    def __init__(self,
+                 base_url: str,
+                 verify: bool,
+                 token_cache_file: str,
+                 client_id: str,
+                 aad_tenant_id: str,
+                 scope: str):
+        super().__init__(base_url, verify)
+        self._token_cache_file = token_cache_file
+        self._client_id = client_id
+        self._aad_tenant_id = aad_tenant_id
+        self._scope = scope
+
+    def get_auth_token(self, log, scope):
+
+        effective_scope = scope or self._scope
+
+        cache = msal.SerializableTokenCache()
+        if os.path.exists(self._token_cache_file):
+            cache.deserialize(open(self._token_cache_file, "r").read())
+
+        app = get_public_client_application(self._client_id, self._aad_tenant_id, cache)
+
+        accounts = app.get_accounts()
+        if accounts:
+            try:
+                auth_result = app.acquire_token_silent(scopes=[effective_scope], account=accounts[0])
+            except Exception:
+                auth_result = None
+            if cache.has_state_changed:
+                with open(self._token_cache_file, "w") as cache_file:
+                    cache_file.write(cache.serialize())
+            if auth_result is not None:
+                if "access_token" in auth_result:
+                    token = auth_result["access_token"]
+                    return token
+
+        if sys.stdin.isatty() or sys.stdout.isatty():
+            # We have TTY - try interactive acquire
+            click.echo(f"No cached token - initiating interactive login for scope '{effective_scope}'", err=True)
+            try:
+                auth_result = app.acquire_token_interactive(scopes=[effective_scope])
+            except Exception as ex:
+                raise click.ClickException(f"Failed to complete interactive login: {ex}")
+
+            if cache.has_state_changed:
+                with open(self._token_cache_file, "w") as cache_file:
+                    cache_file.write(cache.serialize())
+            if auth_result is not None:
+                if "access_token" in auth_result:
+                    token = auth_result["access_token"]
+                    return token
+                else:
+                    raise click.ClickException(f"Failed to get access_token: {str(auth_result)}")
+
+        raise RuntimeError(f"Failed to get auth token for scope '{effective_scope}'")
+
+    def get_workspace_scope(self, log, workspace_id: str) -> str:
+        # interactive flow wants "/user_impersonation" suffix, but client creds doesn't
         # Override here to append
         workspace_scope = super().get_workspace_scope(log, workspace_id)
         return workspace_scope + "/user_impersonation"
