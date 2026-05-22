@@ -368,3 +368,16 @@ async def test_get_address_space_based_on_size_with_string_29(workspace_repo, ba
     workspace_to_create.properties["address_space_size"] = "29"
     address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
     assert address_space.endswith('/29')
+
+@pytest.mark.asyncio
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+@pytest.mark.parametrize("invalid_size", ["15", "30"])
+async def test_get_address_space_based_on_size_with_invalid_string_raises_error(workspace_repo, basic_workspace_request, invalid_size):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = invalid_size
+    with pytest.raises(InvalidInput) as ex:
+        await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert str(ex.value) == "'address_space_size' numeric value must be between 16 and 29"
