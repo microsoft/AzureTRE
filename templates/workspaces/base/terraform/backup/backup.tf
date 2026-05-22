@@ -25,7 +25,7 @@ resource "azurerm_recovery_services_vault" "vault" {
     }
   }
 
-  lifecycle { ignore_changes = [encryption, tags, ip_tags] }
+  lifecycle { ignore_changes = [encryption, tags] }
 
 }
 
