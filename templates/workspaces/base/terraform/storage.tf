@@ -219,6 +219,52 @@ EOT
   ]
 }
 
+resource "terraform_data" "wait_for_backup_container_ready" {
+  count = var.enable_backup ? 1 : 0
+
+  input = {
+    resource_group_name  = azurerm_resource_group.ws.name
+    vault_name           = module.backup[0].vault_name
+    storage_account_name = azurerm_storage_account.stg.name
+    subscription_id      = data.azurerm_client_config.current.subscription_id
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+az login --identity
+az account set --subscription "${self.input.subscription_id}"
+container_name="StorageContainer;Storage;${self.input.resource_group_name};${self.input.storage_account_name}"
+echo "Waiting for backup container to be in a ready state..."
+for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  status=$(az backup container show \
+    --name "$container_name" \
+    --resource-group "${self.input.resource_group_name}" \
+    --vault-name "${self.input.vault_name}" \
+    --backup-management-type AzureStorage \
+    --query properties.registrationStatus \
+    -o tsv 2>/dev/null || echo "NotFound")
+  echo "Attempt $attempt: Container status is '$status'"
+  if [ "$status" = "Registered" ] || [ "$status" = "NotFound" ]; then
+    echo "Container ready (status: $status), proceeding."
+    exit 0
+  fi
+  if [ "$attempt" -lt 20 ]; then
+    sleep 30
+  fi
+done
+echo "Warning: Container did not reach Registered or NotFound state after 10 minutes, proceeding anyway."
+exit 0
+EOT
+  }
+
+  depends_on = [
+    azurerm_backup_container_storage_account.storage_account
+  ]
+}
+
 resource "azurerm_backup_protected_file_share" "file_share" {
   count                     = var.enable_backup ? 1 : 0
   resource_group_name       = azurerm_resource_group.ws.name
@@ -230,6 +276,7 @@ resource "azurerm_backup_protected_file_share" "file_share" {
   depends_on = [
     azurerm_backup_container_storage_account.storage_account,
     azapi_resource.shared_storage,
-    azurerm_private_endpoint.stgfilepe
+    azurerm_private_endpoint.stgfilepe,
+    terraform_data.wait_for_backup_container_ready
   ]
 }
