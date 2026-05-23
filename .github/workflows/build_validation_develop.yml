@@ -105,6 +105,7 @@ jobs:
           TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
           TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
+
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
