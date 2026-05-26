@@ -236,7 +236,7 @@ resource "terraform_data" "wait_for_backup_container_ready" {
 set -euo pipefail
 az login --identity
 az account set --subscription "${self.input.subscription_id}"
-container_name="StorageContainer;Storage;${self.input.resource_group_name};${self.input.storage_account_name}"
+container_name="StorageContainer;storage;${self.input.resource_group_name};${self.input.storage_account_name}"
 echo "Waiting for backup container to be in a ready state..."
 for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
   status=$(az backup container show \
