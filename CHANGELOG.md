@@ -6,7 +6,7 @@ ENHANCEMENTS:
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 
 BUG FIXES:
-* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by replacing `--param` CLI arguments with a temporary Porter parameter set file ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
+* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

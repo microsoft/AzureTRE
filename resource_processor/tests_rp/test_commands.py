@@ -59,25 +59,20 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
         assert param_set_name.startswith("tre-params-guid-")
         assert len(param_set_name) == len("tre-params-guid-") + 8
         assert os.path.exists(param_set_file)
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
 
         # First command applies the parameter set to Porter's store
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
-        # Second command is the main porter install using the parameter set by name
-        assert commands[1] == [
-            "porter", "install", "guid",
-            "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", param_set_name,
-            "--force",
-            "--credential-set", "arm_auth",
-            "--credential-set", "aad_auth"
-        ]
+        # Second command is porter installation apply using the installation file
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
 
         with open(param_set_file) as f:
             param_set = json.load(f)
@@ -86,9 +81,22 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
         assert param_set["name"] == param_set_name
         assert len(param_set["parameters"]) == 1
         assert param_set["parameters"][0] == {"name": "param1", "source": {"value": "value1"}}
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["schemaType"] == "Installation"
+        assert installation["name"] == "guid"
+        assert installation["parameters"] == []
+        assert installation["parameterSets"] == [param_set_name]
+        assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
+        assert installation["bundle"]["repository"] == "myregistry.azurecr.io/mybundle"
+        assert installation["bundle"]["version"] == "1.0.0"
     finally:
         if param_set_file and os.path.exists(param_set_file):
             os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -98,28 +106,30 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "upgrade", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
     try:
         assert param_set_file is not None
         assert param_set_name.startswith("tre-params-guid-")
         assert os.path.exists(param_set_file)
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
 
         # First command applies the parameter set to Porter's store
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
-        # Second command is the main porter upgrade using the parameter set by name
-        assert commands[1] == [
-            "porter", "upgrade", "guid",
-            "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-            "--parameter-set", param_set_name,
-            "--force",
-            "--credential-set", "arm_auth",
-            "--credential-set", "aad_auth",
-            "--force-upgrade"
-        ]
+        # Second command is porter installation apply (not porter upgrade)
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == []
+        assert installation["parameterSets"] == [param_set_name]
     finally:
         if param_set_file and os.path.exists(param_set_file):
             os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -138,22 +148,30 @@ async def test_build_porter_command_for_outputs():
 
 @pytest.mark.asyncio
 async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys):
-    """Test build_porter_command returns no --parameter-set when there are no parameters."""
+    """Test build_porter_command with no parameters: no param set file, but installation file with empty parameterSets."""
     config = {"registry_server": "myregistry.azurecr.io"}
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {}}
     mock_get_porter_parameter_keys.return_value = []
 
-    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
 
-    assert param_set_file is None
-    assert param_set_name.startswith("tre-params-guid-")
-    assert commands == [[
-        "porter", "install", "guid",
-        "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-        "--force",
-        "--credential-set", "arm_auth",
-        "--credential-set", "aad_auth"
-    ]]
+    try:
+        assert param_set_file is None
+        assert param_set_name.startswith("tre-params-guid-")
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
+
+        assert commands == [["porter", "installation", "apply", installation_file, "--force"]]
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == []
+        assert installation["parameterSets"] == []
+        assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
+    finally:
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -177,18 +195,16 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
 
     mock_get_porter_parameter_keys.return_value = ["dict_param", "list_param", "string_param"]
 
-    commands, param_set_file, param_set_name = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
 
     try:
         # First command is the apply command
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
-        # Main porter command should reference the parameter set by name
-        main_command = commands[1]
-        assert "--parameter-set" in main_command
-        assert param_set_name in main_command
+        # Second command is porter installation apply
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
+
         assert param_set_name.startswith("tre-params-guid-")
-        assert "--param" not in main_command
 
         # Verify the param set file contains the correct parameters
         assert param_set_file is not None
@@ -210,6 +226,44 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
 
         assert params_by_name["dict_param"] == dict_encoded
         assert params_by_name["list_param"] == list_encoded
+
+        # Verify the installation file references the parameter set
+        assert installation_file is not None
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == []
+        assert installation["parameterSets"] == [param_set_name]
+    finally:
+        if param_set_file and os.path.exists(param_set_file):
+            os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
+
+
+@pytest.mark.asyncio
+async def test_build_porter_command_custom_action(mock_get_porter_parameter_keys):
+    """Test that custom actions use porter invoke --action (regression guard)."""
+    config = {"registry_server": "myregistry.azurecr.io"}
+    msg_body = {"id": "guid", "action": "start", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
+    mock_get_porter_parameter_keys.return_value = ["param1"]
+
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body, custom_action=True)
+    try:
+        assert installation_file is None
+
+        # First command applies the parameter set
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command uses porter invoke --action (not installation apply)
+        assert commands[1] == [
+            "porter", "invoke", "--action", "start", "guid",
+            "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
+            "--parameter-set", param_set_name,
+            "--force",
+            "--credential-set", "arm_auth",
+            "--credential-set", "aad_auth"
+        ]
     finally:
         if param_set_file and os.path.exists(param_set_file):
             os.unlink(param_set_file)

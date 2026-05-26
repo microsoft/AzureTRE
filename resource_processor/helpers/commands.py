@@ -140,32 +140,56 @@ async def build_porter_command(config, msg_body, custom_action=False):
             json.dump(param_set, f)
             param_set_file = f.name
 
+    installation_file = None
+    if not custom_action and msg_body['action'] in ("install", "upgrade"):
+        installation = {
+            "schemaType": "Installation",
+            "schemaVersion": "1.0.2",
+            "name": installation_id,
+            "bundle": {
+                "repository": f"{config['registry_server']}/{msg_body['name']}",
+                "version": msg_body['version']
+            },
+            "parameters": [],
+            "parameterSets": [param_set_name] if param_set_entries else [],
+            "credentialSets": ["arm_auth", "aad_auth"]
+        }
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(installation, f)
+            installation_file = f.name
+
     commands = []
     if param_set_file:
         commands.append(["porter", "parameters", "apply", param_set_file])
 
-    command = ["porter"]
     if custom_action:
-        command.extend(["invoke", "--action"])
+        command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
+        command.extend([
+            "--reference",
+            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+        ])
+        if param_set_file:
+            command.extend(["--parameter-set", param_set_name])
+        command.append("--force")
+        command.extend(["--credential-set", "arm_auth"])
+        command.extend(["--credential-set", "aad_auth"])
+        commands.append(command)
+    elif installation_file:
+        commands.append(["porter", "installation", "apply", installation_file, "--force"])
+    else:
+        command = ["porter", msg_body['action'], installation_id]
+        command.extend([
+            "--reference",
+            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+        ])
+        if param_set_file:
+            command.extend(["--parameter-set", param_set_name])
+        command.append("--force")
+        command.extend(["--credential-set", "arm_auth"])
+        command.extend(["--credential-set", "aad_auth"])
+        commands.append(command)
 
-    command.append(msg_body['action'])
-    command.append(installation_id)
-    command.extend([
-        "--reference",
-        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-    ])
-    if param_set_file:
-        command.extend(["--parameter-set", param_set_name])
-    command.append("--force")
-    command.extend(["--credential-set", "arm_auth"])
-    command.extend(["--credential-set", "aad_auth"])
-
-    if msg_body['action'] == 'upgrade':
-        command.append("--force-upgrade")
-
-    commands.append(command)
-
-    return (commands, param_set_file, param_set_name)
+    return (commands, param_set_file, param_set_name, installation_file)
 
 
 async def build_porter_command_for_outputs(msg_body):
