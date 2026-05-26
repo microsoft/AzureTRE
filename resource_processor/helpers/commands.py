@@ -150,7 +150,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
                 "repository": f"{config['registry_server']}/{msg_body['name']}",
                 "version": msg_body['version']
             },
-            "parameters": [],
+            "parameters": {},
             "parameterSets": [param_set_name] if param_set_entries else [],
             "credentialSets": ["arm_auth", "aad_auth"]
         }

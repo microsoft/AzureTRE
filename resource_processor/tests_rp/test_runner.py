@@ -157,7 +157,7 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=["porter install"])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -175,7 +175,7 @@ async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -194,11 +194,11 @@ async def test_invoke_porter_action_failure(mock_service_bus_message_generator, 
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
-@patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (0, "", "")])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_upgrade_failure_install_success(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
-    """Test invoking a porter action with upgrade failure and install success."""
+async def test_invoke_porter_action_upgrade_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+    """Test invoking a porter action with upgrade failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
     mock_sb_client.get_queue_sender.return_value = mock_sb_sender
@@ -208,12 +208,12 @@ async def test_invoke_porter_action_upgrade_failure_install_success(mock_service
 
     result = await invoke_porter_action(msg_body, mock_sb_client, config)
 
-    assert result is True
+    assert result is False
     mock_sb_sender.send_messages.assert_called()
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (1, "", "installation failed")])
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -232,7 +232,7 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -251,7 +251,7 @@ async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_g
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "custom-action"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "custom-action"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_custom_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):

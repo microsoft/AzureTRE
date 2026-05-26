@@ -87,7 +87,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
 
         assert installation["schemaType"] == "Installation"
         assert installation["name"] == "guid"
-        assert installation["parameters"] == []
+        assert installation["parameters"] == {}
         assert installation["parameterSets"] == [param_set_name]
         assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
         assert installation["bundle"]["repository"] == "myregistry.azurecr.io/mybundle"
@@ -123,7 +123,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
         with open(installation_file) as f:
             installation = json.load(f)
 
-        assert installation["parameters"] == []
+        assert installation["parameters"] == {}
         assert installation["parameterSets"] == [param_set_name]
     finally:
         if param_set_file and os.path.exists(param_set_file):
@@ -166,7 +166,7 @@ async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys
         with open(installation_file) as f:
             installation = json.load(f)
 
-        assert installation["parameters"] == []
+        assert installation["parameters"] == {}
         assert installation["parameterSets"] == []
         assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
     finally:
@@ -232,7 +232,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         with open(installation_file) as f:
             installation = json.load(f)
 
-        assert installation["parameters"] == []
+        assert installation["parameters"] == {}
         assert installation["parameterSets"] == [param_set_name]
     finally:
         if param_set_file and os.path.exists(param_set_file):
@@ -297,7 +297,8 @@ async def test_get_porter_parameter_keys(mock_run_command_helper):
     assert command_args[0] == "porter"
     assert command_args[1] == "explain"
     assert "--reference" in command_args
-    assert f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}" == command_args[3]
+    expected_reference = "{}/{}:v{}".format(config['registry_server'], msg_body['name'], msg_body['version'])
+    assert expected_reference == command_args[3]
 
 
 @pytest.mark.asyncio
