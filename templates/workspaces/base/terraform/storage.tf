@@ -261,7 +261,8 @@ EOT
   }
 
   depends_on = [
-    azurerm_backup_container_storage_account.storage_account
+    azurerm_backup_container_storage_account.storage_account,
+    azurerm_backup_protected_file_share.file_share,
   ]
 }
 
@@ -277,6 +278,5 @@ resource "azurerm_backup_protected_file_share" "file_share" {
     azurerm_backup_container_storage_account.storage_account,
     azapi_resource.shared_storage,
     azurerm_private_endpoint.stgfilepe,
-    terraform_data.wait_for_backup_container_ready
   ]
 }
