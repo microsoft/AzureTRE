@@ -11,6 +11,19 @@ if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
   source_image=$(yq eval ".custom.runtime_image.import.source" porter.yaml)
   version=$(yq eval ".custom.runtime_image.import.tag" porter.yaml)
 
+  # Skip import if the image already exists in ACR (avoids Docker Hub rate limits).
+  # Errors from show-tags (e.g. repository not yet created) are suppressed intentionally:
+  # any failure means we cannot confirm the image is cached and we fall through to the
+  # import step, which will surface real auth or network problems with a clear error.
+  if az acr repository show-tags \
+    --name "${ACR_NAME}" \
+    --repository "${image_name}" \
+    --query "[?@=='${version}'] | [0]" \
+    --output tsv 2>/dev/null | grep -qx "${version}"; then
+    echo "Image ${image_name}:${version} already exists in ACR ${ACR_NAME}; skipping import"
+    exit 0
+  fi
+
   echo "Importing ${source_image}:${version} to ACR as ${image_name}:${version}..."
   az acr import --name "${ACR_NAME}" \
     --source "${source_image}:${version}" \
