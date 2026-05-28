@@ -8,7 +8,7 @@ import logging
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
-from helpers import get_admin_token
+from helpers import get_admin_token, get_auth_header, get_token
 
 
 LOGGER = logging.getLogger(__name__)
@@ -155,13 +155,17 @@ async def get_workspace_owner_token(workspace_id, verify):
 
 
 async def disable_and_delete_ws_resource(resource_path, workspace_id, verify):
-    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
-    await disable_and_delete_resource(f'/api{resource_path}', workspace_owner_token, verify)
+    admin_token = await get_admin_token(verify=verify)
+    workspace_owner_token, scope_uri = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)
+    token_fn = lambda: get_auth_header(get_token(scope_uri, verify))  # noqa: E731
+    await disable_and_delete_resource(f'/api{resource_path}', workspace_owner_token, verify, token_fn=token_fn)
 
 
 async def disable_and_delete_tre_resource(resource_path, verify):
     admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(f'/api{resource_path}', admin_token, verify)
+    scope_uri = f"api://{config.API_CLIENT_ID}"
+    token_fn = lambda: get_auth_header(get_token(scope_uri, verify))  # noqa: E731
+    await disable_and_delete_resource(f'/api{resource_path}', admin_token, verify, token_fn=token_fn)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
