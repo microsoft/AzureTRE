@@ -219,7 +219,7 @@ EOT
   ]
 }
 
-resource "terraform_data" "wait_for_backup_container_ready" {
+resource "terraform_data" "prepare_backup_for_destroy" {
   count = var.enable_backup ? 1 : 0
 
   input = {
@@ -236,27 +236,50 @@ resource "terraform_data" "wait_for_backup_container_ready" {
 set -euo pipefail
 az login --identity
 az account set --subscription "${self.input.subscription_id}"
+
+vault="${self.input.vault_name}"
+rg="${self.input.resource_group_name}"
 container_name="StorageContainer;storage;${self.input.resource_group_name};${self.input.storage_account_name}"
-echo "Waiting for backup container to be in a ready state..."
-for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-  status=$(az backup container show \
-    --name "$container_name" \
-    --resource-group "${self.input.resource_group_name}" \
-    --vault-name "${self.input.vault_name}" \
-    --backup-management-type AzureStorage \
-    --query properties.registrationStatus \
-    -o tsv 2>/dev/null || echo "NotFound")
-  echo "Attempt $attempt: Container status is '$status'"
-  if [ "$status" = "Registered" ] || [ "$status" = "NotFound" ]; then
-    echo "Container ready (status: $status), proceeding."
-    exit 0
-  fi
-  if [ "$attempt" -lt 20 ]; then
-    sleep 30
-  fi
+
+echo "Disabling soft delete on Recovery Services vault '$vault' so destroy can hard-delete protected items..."
+az backup vault backup-properties set \
+  --name "$vault" --resource-group "$rg" \
+  --soft-delete-feature-state Disable --output none
+
+for attempt in 1 2 3 4 5 6; do
+  state=$(az backup vault backup-properties show \
+    --name "$vault" --resource-group "$rg" \
+    --query softDeleteFeatureState -o tsv || echo "")
+  echo "Attempt $attempt: softDeleteFeatureState='$state'"
+  [ "$state" = "Disabled" ] && break
+  sleep 10
 done
-echo "Warning: Container did not reach Registered or NotFound state after 10 minutes, proceeding anyway."
-exit 0
+
+status=$(az backup container show \
+  --name "$container_name" --resource-group "$rg" --vault-name "$vault" \
+  --backup-management-type AzureStorage \
+  --query properties.registrationStatus -o tsv 2>/dev/null || echo "NotFound")
+echo "Container status before destroy: '$status'"
+
+if [ "$status" = "SoftDeleted" ]; then
+  echo "Container is soft-deleted; re-registering before AzureRM destroy."
+  az backup container re-register \
+    --resource-group "$rg" --vault-name "$vault" \
+    --backup-management-type AzureStorage --workload-type AzureFileShare \
+    --container-name "$container_name" --yes --output none || echo "re-register failed, continuing"
+
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    status=$(az backup container show \
+      --name "$container_name" --resource-group "$rg" --vault-name "$vault" \
+      --backup-management-type AzureStorage \
+      --query properties.registrationStatus -o tsv 2>/dev/null || echo "NotFound")
+    echo "Attempt $attempt: container status='$status'"
+    { [ "$status" = "Registered" ] || [ "$status" = "NotFound" ]; } && break
+    sleep 30
+  done
+fi
+
+echo "Backup vault prepared for destroy."
 EOT
   }
 
