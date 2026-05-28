@@ -22,7 +22,7 @@ async def get_resource(endpoint, access_token, verify):
         return response.json()
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None):
+async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None, token_fn=None):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
@@ -44,12 +44,12 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
 
         if wait:
             wait_auth_headers = get_auth_header(access_token_for_wait) if access_token_for_wait else auth_headers
-            await wait_for(check_method, client, operation_endpoint, wait_auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
+            await wait_for(check_method, client, operation_endpoint, wait_auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED], token_fn=token_fn)
 
         return resource_path, resource_id
 
 
-async def disable_and_delete_resource(endpoint, access_token, verify):
+async def disable_and_delete_resource(endpoint, access_token, verify, token_fn=None):
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
 
         full_endpoint = get_full_endpoint(endpoint)
@@ -61,7 +61,7 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be disabled")
         operation_endpoint = response.headers["Location"]
-        await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
+        await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED], token_fn=token_fn)
 
         # delete
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
@@ -70,16 +70,18 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        await wait_for(delete_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_DELETING_FAILED])
+        await wait_for(delete_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_DELETING_FAILED], token_fn=token_fn)
         return resource_id
 
 
-async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
+async def wait_for(func, client, operation_endpoint, headers, failure_states: list, token_fn=None):
     done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
     LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
         await asyncio.sleep(30)
 
+        if token_fn is not None:
+            headers = token_fn()
         done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:

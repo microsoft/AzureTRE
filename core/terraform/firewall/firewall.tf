@@ -7,7 +7,7 @@ resource "azurerm_public_ip" "fwtransit" {
   sku                 = "Standard"
   tags                = var.tre_core_tags
 
-  lifecycle { ignore_changes = [tags, zones] }
+  lifecycle { ignore_changes = [tags, zones, ip_tags] }
 }
 
 moved {

@@ -42,22 +42,26 @@ provider "registry.terraform.io/hashicorp/azuread" {
 }
 
 provider "registry.terraform.io/hashicorp/azurerm" {
-  version     = "4.57.0"
-  constraints = ">= 4.27.0, 4.57.0"
+  version     = "4.73.0"
+  constraints = ">= 4.27.0, 4.73.0"
   hashes = [
-    "h1:NhgHn/RyZRDXMa7pEQlGv/9B+wjk48E+lvgq4asFKHs=",
-    "zh:05e1cc7fee7829919b772ca6ce893d9c2abb3535ebff172df38f7358cdaf8f9e",
-    "zh:30122203abc381660582f989c9e53874bd9ff93e25476a5536ea0ae37dd51f4b",
-    "zh:4a90f008f7707d95f8f9aca90f140a9ca0e9506b0a6d436fe516de4026cacd86",
-    "zh:6d9e114b8aed06454b71fe91a0591cc6a16cd7acde3cb36a96e4aeaec06a315a",
-    "zh:7145c50facd9d40615fc63561ec21962feae3fa262239f9f1f1339581226104b",
+    "h1:DIjYg/qDXFi6Tmm4eWY8rbfynwc8PH5a93EjFcr3bcY=",
+    "h1:LLRGDDS4yuuxi1UmE/1ceGXWYiDGKJFQgcFxQAlPKv8=",
+    "h1:aYhPgbklieEOVFXRVfD+M80/vuG9wGHGo+n1dyyTw14=",
+    "h1:bOt0T0oW3ANoIVaSJ+zsHI8VCDEhic6x3jkyM2Bodrk=",
+    "h1:nV8ptXpP/Q5dFNloEYS2vIwtAk6IwfaMVPF4W91KpDY=",
+    "zh:033cfb755fcb4b6d448c1f77aa815a8451ab81398f9b4408edd6fdcab45fdc4b",
+    "zh:1025fedc231d37eed6b53f09b26dc74487b08da0b0e9fd0410b282721b8fd4e4",
+    "zh:136f9d79a5dc08e9b9b190085e29d7d116d2a5c242d997d066f24f23bf4e4b8a",
+    "zh:39199a667a66c06f74cf175f36a52dab5362daefb4bd27fd9229f7c07a65f364",
+    "zh:4c4602b7af77a8d79b85f410f0f1d0399fe7df6dbb4a980799d84f8edb5df9c3",
+    "zh:717229a96a3a14939e577342550504da75637d405b6ee9b828891fdfa6221d85",
     "zh:78d5eefdd9e494defcb3c68d282b8f96630502cac21d1ea161f53cfe9bb483b3",
-    "zh:95f60557f1bc4210ecc3c11e2f86fe983ed7e4af19036616b605887c1195f2ac",
-    "zh:9722b3ab879a3457588af5f0dcd65e997263affe4b829e60ecd59dbef6239e70",
-    "zh:b891f295b018d058e8c6f841d923d5b30ba13b8208f2c20aacc70ba48c5cc0da",
-    "zh:cb7ff113ca0bd91ab76f9f7a492d6ce9c911d6c4deb8c8e263e38322b5ff861e",
-    "zh:ec2950bf003d29bee3fa87ab073d57fe14a4da52e9fc646fec27798b700cc8af",
-    "zh:f69899d9e1d570a560cfa97aebec3edc2b106f2ebc15dfdee473294dd8756deb",
+    "zh:7c95baea41fbb2c98c7c1bf90b919cdd2e2ab9f26a1f218106fe8462f900d957",
+    "zh:82fd02732a5f1969e6499e49b49801a5e43f6e8184f245ed5c7b0799c50e200f",
+    "zh:91aa41a45f87bd5f32a632f7f61f2a3f7d1b5445776263c62a21ed9389ac6d41",
+    "zh:b6444008270cdeaf80bc4f575d19f2fe14f802fb2ab550bdad9889e06a637bb9",
+    "zh:f5e89c877cf7d10360f7d4fa87a060c6f27cd2bf6acdb454b4f9d837c362040f",
   ]
 }
 

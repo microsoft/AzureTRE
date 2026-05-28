@@ -20,6 +20,8 @@ ENHANCEMENTS:
 * Update `picomatch` package to v2.3.2 and v4.0.4 to address security vulnerabilities ([#4887](https://github.com/microsoft/AzureTRE/issues/4887))
 
 BUG FIXES:
+* Enable soft delete on workspace backup Recovery Services vaults and purge protected items on destroy to avoid deployment failures and preserve delete behavior ([#4907](https://github.com/microsoft/AzureTRE/pull/4907))
+* Poll backup container registration status before destroy to prevent `BMSUserErrorContainerNotUndeleted` failures on workspace deletion ([#4907](https://github.com/microsoft/AzureTRE/pull/4907))
 * Fix OpenAPI/schema sample generation for `get_sample_operation` step parameters. ([#4864](https://github.com/microsoft/AzureTRE/issues/4864))
 * Fix test airlock request sample data fields and enum values. ([#4866](https://github.com/microsoft/AzureTRE/issues/4866))
 * Fix property substitution not occuring where there is only a main step in the pipeline ([#4824](https://github.com/microsoft/AzureTRE/issues/4824))
@@ -1703,4 +1705,3 @@ FEATURES:
 * Centrally manage the firewall share service state to enable other services to ask for rule changes
 
 Many more enhancements are listed on the [release page](https://github.com/microsoft/AzureTRE/releases/tag/v0.4)
-

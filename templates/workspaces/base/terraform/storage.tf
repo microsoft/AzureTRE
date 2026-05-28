@@ -219,6 +219,76 @@ EOT
   ]
 }
 
+resource "terraform_data" "prepare_backup_for_destroy" {
+  count = var.enable_backup ? 1 : 0
+
+  input = {
+    resource_group_name  = azurerm_resource_group.ws.name
+    vault_name           = module.backup[0].vault_name
+    storage_account_name = azurerm_storage_account.stg.name
+    subscription_id      = data.azurerm_client_config.current.subscription_id
+  }
+
+  provisioner "local-exec" {
+    when        = destroy
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+az login --identity
+az account set --subscription "${self.input.subscription_id}"
+
+vault="${self.input.vault_name}"
+rg="${self.input.resource_group_name}"
+container_name="StorageContainer;storage;${self.input.resource_group_name};${self.input.storage_account_name}"
+
+echo "Disabling soft delete on Recovery Services vault '$vault' so destroy can hard-delete protected items..."
+az backup vault backup-properties set \
+  --name "$vault" --resource-group "$rg" \
+  --soft-delete-feature-state Disable --output none
+
+for attempt in 1 2 3 4 5 6; do
+  state=$(az backup vault backup-properties show \
+    --name "$vault" --resource-group "$rg" \
+    --query softDeleteFeatureState -o tsv || echo "")
+  echo "Attempt $attempt: softDeleteFeatureState='$state'"
+  [ "$state" = "Disabled" ] && break
+  sleep 10
+done
+
+status=$(az backup container show \
+  --name "$container_name" --resource-group "$rg" --vault-name "$vault" \
+  --backup-management-type AzureStorage \
+  --query properties.registrationStatus -o tsv 2>/dev/null || echo "NotFound")
+echo "Container status before destroy: '$status'"
+
+if [ "$status" = "SoftDeleted" ]; then
+  echo "Container is soft-deleted; re-registering before AzureRM destroy."
+  az backup container re-register \
+    --resource-group "$rg" --vault-name "$vault" \
+    --backup-management-type AzureStorage --workload-type AzureFileShare \
+    --container-name "$container_name" --yes --output none || echo "re-register failed, continuing"
+
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    status=$(az backup container show \
+      --name "$container_name" --resource-group "$rg" --vault-name "$vault" \
+      --backup-management-type AzureStorage \
+      --query properties.registrationStatus -o tsv 2>/dev/null || echo "NotFound")
+    echo "Attempt $attempt: container status='$status'"
+    { [ "$status" = "Registered" ] || [ "$status" = "NotFound" ]; } && break
+    sleep 30
+  done
+fi
+
+echo "Backup vault prepared for destroy."
+EOT
+  }
+
+  depends_on = [
+    azurerm_backup_container_storage_account.storage_account,
+    azurerm_backup_protected_file_share.file_share,
+  ]
+}
+
 resource "azurerm_backup_protected_file_share" "file_share" {
   count                     = var.enable_backup ? 1 : 0
   resource_group_name       = azurerm_resource_group.ws.name
@@ -230,6 +300,6 @@ resource "azurerm_backup_protected_file_share" "file_share" {
   depends_on = [
     azurerm_backup_container_storage_account.storage_account,
     azapi_resource.shared_storage,
-    azurerm_private_endpoint.stgfilepe
+    azurerm_private_endpoint.stgfilepe,
   ]
 }
