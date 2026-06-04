@@ -47,7 +47,7 @@ async def create_or_get_test_workspace(
             "description": f"{template_name} test workspace for E2E tests",
             "auth_type": auth_type,
             "address_space_size": "small",
-            "enable_backup": "false"
+            "enable_backup": False
         }
     }
     if config.TEST_WORKSPACE_APP_PLAN != "":
