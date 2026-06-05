@@ -37,8 +37,24 @@ async def lifespan(app: FastAPI):
     await airlockStatusUpdater.init_repos()
 
     def track(task):
+        def _done_callback(task):
+            app.state.background_tasks.discard(task)
+            if task.cancelled():
+                return
+
+            try:
+                exception = task.exception()
+            except asyncio.CancelledError:
+                return
+
+            if exception is not None:
+                logger.error(
+                    f"Background task {task.get_name()} failed",
+                    exc_info=(type(exception), exception, exception.__traceback__)
+                )
+
         app.state.background_tasks.add(task)
-        task.add_done_callback(app.state.background_tasks.discard)
+        task.add_done_callback(_done_callback)
 
     track(asyncio.create_task(
         deploymentStatusUpdater.receive_messages(),
@@ -59,11 +75,7 @@ async def lifespan(app: FastAPI):
             logger.debug(f"Cancelling task {task.get_name()}")
             task.cancel()
 
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for task, result in zip(tasks, results):
-            if isinstance(result, Exception) and not isinstance(result, asyncio.CancelledError):
-                logger.error(f"Task {task.get_name()} failed", exc_info=(type(result), result, result.__traceback__))
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def get_application() -> FastAPI:
