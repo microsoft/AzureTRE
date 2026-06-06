@@ -72,6 +72,8 @@ script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "$script_dir/kv_add_network_exception.sh"
 
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
+# We resolve matching groups up front so we can skip early when none exist,
+# and then reuse the same list for deletion at the end of the script.
 matching_resource_groups=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r)
 if [[ -z "${matching_resource_groups}" ]]; then
   echo "No resource groups found with prefix ${core_tre_rg} - skipping destroy"
@@ -158,7 +160,7 @@ if [[ "$group_show_result" == "0" ]]; then
     | xargs -P 10 -I {} az rest --method delete --uri "{}?api-version=2020-08-01"
   fi
 else
-  echo "Skipping core-specific cleanup because ${core_tre_rg} was not found."
+  echo "Skipping core resource group cleanup (locks, diagnostics, keyvault and log analytics linked storage) because ${core_tre_rg} was not found."
 fi
 
 # delete container repositories individually otherwise defender doesn't purge image scans
