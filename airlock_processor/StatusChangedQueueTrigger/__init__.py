@@ -184,8 +184,11 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
 def set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason, request_files):
     if request_properties is None:
-        logging.exception(f"Failed processing Airlock request: unable to extract request properties. Error: {failure_reason}")
-        return
+        logging.exception(
+            "Failed processing Airlock request: unable to extract request properties. Failure reason: %s",
+            failure_reason,
+        )
+        raise
 
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
     stepResultEvent.set(
