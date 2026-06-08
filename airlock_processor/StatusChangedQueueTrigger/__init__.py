@@ -31,6 +31,9 @@ class ContainersCopyMetadata:
 
 
 def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent]):
+    request_properties = None
+    request_files = None
+
     try:
         request_properties = extract_properties(msg)
         request_files = get_request_files(request_properties) if request_properties.new_status == constants.STAGE_SUBMITTED else None
@@ -180,6 +183,10 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
 
 def set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason, request_files):
+    if request_properties is None:
+        logging.exception(f"Failed processing Airlock request: unable to extract request properties. Error: {failure_reason}")
+        return
+
     logging.exception(f"Failed processing Airlock request with ID: '{request_properties.request_id}', changing request status to '{constants.STAGE_FAILED}'.")
     stepResultEvent.set(
         func.EventGridOutputEvent(
