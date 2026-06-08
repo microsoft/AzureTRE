@@ -9,7 +9,7 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 BUG FIXES:
-* Health check can falsely return OK even if Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
+* Fix Health check can falsely return OK even if Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
