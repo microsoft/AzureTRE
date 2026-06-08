@@ -278,8 +278,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 async def runner(process_number: int, config: dict):
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
-            service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-            await receive_message(service_bus_client, config)
+            async with ServiceBusClient(config["service_bus_namespace"], credential) as service_bus_client:
+                await receive_message(service_bus_client, config)
 
 
 async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):
