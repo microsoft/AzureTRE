@@ -62,8 +62,8 @@ class AirlockStatusUpdater():
                                 await asyncio.sleep(10)
 
                 except OperationTimeoutError:
-                    # Timeout occurred whilst connecting - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                    # Timeout occurred whilst connecting - this is expected and indicates no messages are available
+                    logger.debug("No messages for this process. Will look again...")
 
                 except ServiceBusConnectionError:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
