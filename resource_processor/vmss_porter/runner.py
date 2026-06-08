@@ -100,11 +100,12 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
         except ServiceBusConnectionError:
             # Occasionally there will be a transient / network-level error in connecting to SB.
             logger.info("Unknown Service Bus connection error. Will retry...")
+            await asyncio.sleep(10)
 
         except Exception:
             # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
-
             logger.exception("Unknown exception. Will retry...")
+            await asyncio.sleep(10)
 
 
 async def run_porter(command_parts_list: list, config: dict):
