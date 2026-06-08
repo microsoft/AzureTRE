@@ -12,8 +12,11 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-@patch("azure.cosmos.aio.ContainerProxy.query_items", return_value=AsyncMock())
-async def test_get_state_store_status_responding(_) -> None:
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_responding(get_container_proxy_mock) -> None:
+    container_mock = MagicMock()
+    container_mock.query_items.return_value = AsyncIterator([{"id": "item"}])
+    get_container_proxy_mock.return_value = container_mock
     status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.ok
