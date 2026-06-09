@@ -49,6 +49,99 @@ const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   return keys;
 };
 
+// Utility to get a nested value from an object using a dotted path (e.g. "parent.child")
+const getNestedValue = (obj: any, path: string): any => {
+  const parts = path.split('.');
+  let current = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    current = current[part];
+  }
+  return current;
+};
+
+// Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
+const setNestedValue = (obj: any, path: string, value: any): void => {
+  const parts = path.split('.');
+  let current = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
+      current[part] = {};
+    }
+    current = current[part];
+  }
+  current[parts[parts.length - 1]] = value;
+};
+
+// Utility to get schema property from properties object using a dotted path
+const getSchemaProperty = (properties: any, path: string): any => {
+  const parts = path.split('.');
+  let current = properties;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (!current || !current[part]) return null;
+    if (i === parts.length - 1) {
+      return current[part];
+    }
+    current = current[part].properties;
+  }
+  return null;
+};
+
+// Utility to get nested uiSchema object using a dotted path
+const getNestedUiSchema = (uiSchema: any, path: string): any => {
+  const parts = path.split('.');
+  let current = uiSchema;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    current = current[part];
+  }
+  return current;
+};
+
+// Utility to check if a nested property (dotted path) is required in the schema given the current form state
+const isPropertyRequiredInState = (
+  propertiesSchema: any,
+  rootRequired: string[] | undefined,
+  path: string,
+  state: any
+): boolean => {
+  const parts = path.split('.');
+  let currentSchema = propertiesSchema;
+  let currentRequired = rootRequired;
+  let currentState = state;
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+
+    // Is the current part required at this level?
+    const isPartRequired = currentRequired && currentRequired.includes(part);
+    // Is the current part present in the state?
+    const isPartPresent = currentState && currentState[part] !== undefined && currentState[part] !== null;
+
+    // A property is only required to be filled if its path of parent objects is required or present.
+    // For the final property (the leaf), it must be explicitly required by its parent.
+    if (i === parts.length - 1) {
+      return !!isPartRequired;
+    }
+
+    // For intermediate parents, if it's neither required nor present, then the nested child is not required.
+    if (!isPartRequired && !isPartPresent) {
+      return false;
+    }
+
+    if (!currentSchema || !currentSchema[part] || !currentSchema[part].properties) {
+      return false;
+    }
+
+    currentRequired = currentSchema[part].required;
+    currentSchema = currentSchema[part].properties;
+    currentState = currentState ? currentState[part] : undefined;
+  }
+  return false;
+};
+
 // Utility to build a reduced schema with only given keys and their nested schema (depth 1), including required
 const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
   if (!fullSchema || !fullSchema.properties) return null;
@@ -247,7 +340,17 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
         const newKeys = getAllPropertyKeys(newSchemaProps);
         const currentKeys = getAllPropertyKeys(currentProps);
-        const newPropKeys = newKeys.filter((k) => !currentKeys.includes(k));
+        const newPropKeys = newKeys.filter((key) => {
+          if (!currentKeys.includes(key)) {
+            return true;
+          }
+          const propSchema = getSchemaProperty(newSchemaProps, key);
+          const currentValue = getNestedValue(props.resource.properties, key);
+          if (propSchema && propSchema.enum && currentValue !== undefined && !propSchema.enum.includes(currentValue)) {
+            return true;
+          }
+          return false;
+        });
         const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
 
         // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
@@ -271,11 +374,18 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         // Filter out properties that are hidden (tre-hidden) - they don't need user input
         const uiSchema = newTemplate?.uiSchema || {};
         const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
-          const topKey = key.split('.')[0];
-          const propertyUiSchema = uiSchema[topKey];
-          // Check if property has "tre-hidden" in its classNames (support both old and new format)
-          const classNames = propertyUiSchema?.classNames || propertyUiSchema?.['ui:classNames'];
-          const isHidden = classNames?.includes('tre-hidden');
+          const parts = key.split('.');
+          let isHidden = false;
+          let currentPath = '';
+          for (const part of parts) {
+            currentPath = currentPath ? `${currentPath}.${part}` : part;
+            const propertyUiSchema = getNestedUiSchema(uiSchema, currentPath);
+            const classNames = propertyUiSchema?.classNames || propertyUiSchema?.['ui:classNames'];
+            if (classNames?.includes('tre-hidden')) {
+              isHidden = true;
+              break;
+            }
+          }
           return !isHidden;
         });
 
@@ -289,16 +399,25 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         // Set allNewProperties to the filtered list (for schema building)
         setAllNewProperties(newPropKeysToSend);
 
-        // prefill newPropertyValues with schema defaults or empty string (excluding pipeline properties)
-        setNewPropertyValues(
-          newPropKeysToSend.reduce((acc, key) => {
-            // Get top-level portion of the key
-            const topKey = key.split('.')[0];
-            const defaultValue = newTemplate?.properties?.[topKey]?.default;
-            acc[key] = defaultValue !== undefined ? defaultValue : '';
-            return acc;
-          }, {} as any),
-        );
+        // prefill newPropertyValues with schema defaults (excluding pipeline properties)
+        const initialValues: any = {};
+        newPropKeysToSend.forEach((key) => {
+          const topKey = key.split('.')[0];
+          // If the top-level property already exists in the resource, copy it to avoid losing other sub-properties
+          if (props.resource.properties && props.resource.properties[topKey] !== undefined) {
+            if (!initialValues[topKey]) {
+              initialValues[topKey] = JSON.parse(JSON.stringify(props.resource.properties[topKey]));
+            }
+          }
+
+          const propSchema = getSchemaProperty(newTemplate?.properties, key);
+          
+          // Only set if a default value is defined in the schema
+          if (propSchema && propSchema.default !== undefined) {
+            setNestedValue(initialValues, key, propSchema.default);
+          }
+        });
+        setNewPropertyValues(initialValues);
       } catch (err: any) {
         if (!err.userMessage) {
           err.userMessage = "Failed to fetch new template schema";
@@ -454,9 +573,21 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                 primaryDisabled={
                   !selectedVersion ||
                   (newPropertiesToFill.length > 0 &&
-                    newPropertiesToFill.some(
-                      (key) => newPropertyValues[key] === "" || newPropertyValues[key] === undefined,
-                    ))
+                    newPropertiesToFill.some((key) => {
+                      const val = getNestedValue(newPropertyValues, key);
+
+                      // Check if value is invalid enum (for both required and optional fields)
+                      const propSchema = getSchemaProperty(newTemplateSchema?.properties, key);
+                      if (propSchema && propSchema.enum && val !== undefined && val !== "" && !propSchema.enum.includes(val)) {
+                        return true;
+                      }
+
+                      // Check if required field is empty
+                      if (isPropertyRequiredInState(newTemplateSchema?.properties, newTemplateSchema?.required, key, newPropertyValues)) {
+                        return val === "" || val === undefined;
+                      }
+                      return false;
+                    }))
                 }
                 text="Upgrade"
                 onClick={() => upgradeCall()}

@@ -113,7 +113,7 @@ class ResourceRepository(BaseRepository):
 
     def _get_all_property_keys_from_template(self, resource_template: ResourceTemplate) -> set:
         properties = set(resource_template.properties.keys())
-        if "allOf" in resource_template:
+        if resource_template.allOf is not None:
             for condition in resource_template.allOf:
                 if "then" in condition and "properties" in condition["then"]:
                     properties.update(condition["then"]["properties"].keys())
@@ -133,7 +133,17 @@ class ResourceRepository(BaseRepository):
 
         if resource_patch.templateVersion is not None:
             await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
-            new_template = await resource_template_repo.get_template_by_name_and_version(resource.templateName, resource_patch.templateVersion, resource.resourceType)
+
+            parent_service_name = None
+            if resource.resourceType == ResourceType.UserResource:
+                parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
+
+            new_template = await resource_template_repo.get_template_by_name_and_version(
+                resource.templateName,
+                resource_patch.templateVersion,
+                resource.resourceType,
+                parent_service_name=parent_service_name
+            )
 
             old_properties = self._get_all_property_keys_from_template(resource_template)
             new_properties = self._get_all_property_keys_from_template(new_template)
@@ -225,7 +235,16 @@ class ResourceRepository(BaseRepository):
         # get the schema for the target version if upgrade is happening
         if resource_patch.templateVersion is not None:
             # fetch the template for the target version
-            target_template = await resource_template_repo.get_template_by_name_and_version(resource_template.name, resource_patch.templateVersion, resource_template.resourceType)
+            parent_service_name = None
+            if resource_template.resourceType == ResourceType.UserResource:
+                parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
+
+            target_template = await resource_template_repo.get_template_by_name_and_version(
+                resource_template.name,
+                resource_patch.templateVersion,
+                resource_template.resourceType,
+                parent_service_name=parent_service_name
+            )
             enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
 
         # validate the PATCH data against the target schema.

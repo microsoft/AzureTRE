@@ -27,7 +27,7 @@ const mockNewTemplateSchema = {
     resource_key: { type: "string" },
     new_property: { type: "string", default: "default_value" },
   },
-  required: ["display_name"],
+  required: ["display_name", "new_property"],
   uiSchema: {},
 };
 
@@ -679,10 +679,8 @@ describe("ConfirmUpgradeResource Component", () => {
     fireEvent.change(inputField, { target: { value: "custom_value" } });
 
     // Click upgrade
-    await waitFor(() => {
-      const upgradeButton = screen.getByTestId("primary-button");
-      fireEvent.click(upgradeButton);
-    });
+    const upgradeButton = screen.getByTestId("primary-button");
+    fireEvent.click(upgradeButton);
 
     // Verify the API call includes the new property value
     await waitFor(() => {
@@ -805,7 +803,7 @@ describe("ConfirmUpgradeResource Component", () => {
         visible_property: { type: "string" },
         hidden_property: { type: "string", default: "hidden_value" },
       },
-      required: ["display_name"],
+      required: ["display_name", "visible_property"],
       uiSchema: {
         hidden_property: {
           classNames: "tre-hidden",
@@ -846,6 +844,173 @@ describe("ConfirmUpgradeResource Component", () => {
     expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
 
     // Button should be disabled because visible_property is empty
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).toBeDisabled();
+  });
+
+  it("correctly handles nested object properties and default values on upgrade", async () => {
+    const mockCurrentTemplateNestedSchema = {
+      properties: {
+        display_name: { type: "string" },
+        parent_object: {
+          type: "object",
+          properties: {
+            existing_child: { type: "string" },
+          },
+        },
+      },
+      required: ["display_name"],
+    };
+
+    const mockNewTemplateNestedSchema = {
+      properties: {
+        display_name: { type: "string" },
+        parent_object: {
+          type: "object",
+          properties: {
+            existing_child: { type: "string" },
+            new_nested_child: { type: "string", default: "default_nested_value" },
+            optional_nested_no_default: { type: "string" },
+          },
+          required: ["existing_child"],
+        },
+      },
+      required: ["display_name"],
+      uiSchema: {},
+    };
+
+    const mockResourceWithNested: Resource = {
+      ...mockResource,
+      properties: {
+        display_name: "Test Resource",
+        parent_object: {
+          existing_child: "existing_child_value",
+        },
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateNestedSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateNestedSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={mockResourceWithNested}
+        onDismiss={mockOnDismiss}
+      />
+    );
+
+    // Select a version
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Wait for schema to load
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    // The form inputs should be prefilled (including the existing child value in the nested parent_object)
+    expect(screen.getByDisplayValue("existing_child_value")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("default_nested_value")).toBeInTheDocument();
+
+    // Click upgrade
+    const upgradeButton = screen.getByTestId("primary-button");
+    fireEvent.click(upgradeButton);
+
+    // Verify the PATCH API call includes the nested properties correctly, omitting the optional nested field with no default
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        mockResourceWithNested.resourcePath,
+        "PATCH",
+        mockWorkspaceContext.workspaceApplicationIdURI,
+        expect.objectContaining({
+          templateVersion: "1.1.0",
+          properties: expect.objectContaining({
+            parent_object: {
+              existing_child: "existing_child_value",
+              new_nested_child: "default_nested_value",
+              // optional_nested_no_default should be undefined/omitted
+            },
+          }),
+        }),
+        "JSON",
+        undefined,
+        undefined,
+        mockResourceWithNested._etag
+      );
+    });
+  });
+
+  it("detects when an enum value is removed and prompts the user to select a valid one", async () => {
+    const mockCurrentTemplateEnumSchema = {
+      properties: {
+        display_name: { type: "string" },
+        vm_size: {
+          type: "string",
+          enum: ["small", "medium", "large"],
+        },
+      },
+      required: ["display_name"],
+    };
+
+    const mockNewTemplateEnumSchema = {
+      properties: {
+        display_name: { type: "string" },
+        vm_size: {
+          type: "string",
+          enum: ["small", "large"],
+        },
+      },
+      required: ["display_name", "vm_size"],
+      uiSchema: {},
+    };
+
+    const mockResourceWithEnum: Resource = {
+      ...mockResource,
+      properties: {
+        display_name: "Test Resource",
+        vm_size: "medium", // 'medium' is removed in the new template version
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateEnumSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateEnumSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={mockResourceWithEnum}
+        onDismiss={mockOnDismiss}
+      />
+    );
+
+    // Select a version
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Wait for schema to load
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    // The form should display the message because 'vm_size' is treated as a property to fill since its current value is invalid
+    expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+
+    // The button should be disabled because the required 'vm_size' has an invalid value ('medium' which is not in ['small', 'large'])
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
   });

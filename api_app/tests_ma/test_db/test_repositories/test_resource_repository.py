@@ -640,3 +640,123 @@ async def test_validate_patch_allows_upgrade_pipeline_property(template_repo, re
 
     # This should pass validation because my_inherited_property is in the upgrade pipeline
     await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+def test_get_all_property_keys_from_template_includes_allOf_conditional_properties(resource_repo):
+    """
+    Test that _get_all_property_keys_from_template correctly collects properties defined
+    in conditional allOf blocks (both then and else clauses).
+    """
+    template_dict = sample_resource_template()
+    template_dict['allOf'] = [
+        {
+            "if": {
+                "properties": {
+                    "vm_size": {"const": "small"}
+                }
+            },
+            "then": {
+                "properties": {
+                    "conditional_then_property": {"type": "string"}
+                }
+            },
+            "else": {
+                "properties": {
+                    "conditional_else_property": {"type": "string"}
+                }
+            }
+        }
+    ]
+    template = parse_obj_as(ResourceTemplate, template_dict)
+
+    properties = resource_repo._get_all_property_keys_from_template(template)
+
+    assert "conditional_then_property" in properties
+    assert "conditional_else_property" in properties
+    assert "vm_size" in properties
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during a template upgrade for a UserResource, parent_service_name is passed
+    to get_template_by_name_and_version.
+    """
+    old_template_dict = sample_resource_template()
+    old_template_dict['resourceType'] = ResourceType.UserResource
+    old_template_dict['parentWorkspaceService'] = 'parent-service-name'
+    old_template = parse_obj_as(UserResourceTemplate, old_template_dict)
+
+    new_template = copy.deepcopy(old_template)
+    new_template.version = '0.2.0'
+    get_template_mock.return_value = new_template
+    enrich_template_mock.return_value = old_template_dict
+
+    # Mock template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = enrich_template_mock
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={})
+    await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE)
+
+    get_template_mock.assert_called_once_with(
+        old_template.name,
+        '0.2.0',
+        ResourceType.UserResource,
+        parent_service_name='parent-service-name'
+    )
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_patch_resource_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo, resource_history_repo):
+    """
+    Test that patch_resource passes parent_service_name to get_template_by_name_and_version
+    when upgrading a UserResource.
+    """
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_repo.validate_template_version_patch = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+
+    old_template_dict = sample_resource_template()
+    old_template_dict['resourceType'] = ResourceType.UserResource
+    old_template_dict['parentWorkspaceService'] = 'parent-service-name'
+    old_template = parse_obj_as(UserResourceTemplate, old_template_dict)
+
+    new_template = copy.deepcopy(old_template)
+    new_template.version = '0.2.0'
+    get_template_mock.return_value = new_template
+    enrich_template_mock.return_value = old_template_dict
+
+    # Mock template repository
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = enrich_template_mock
+
+    user = create_test_user()
+    resource = sample_resource()
+    resource.resourceType = ResourceType.UserResource
+
+    resource_patch = ResourcePatch(templateVersion='0.2.0', properties={})
+
+    await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        old_template,
+        "some-etag",
+        template_repo,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE
+    )
+
+    get_template_mock.assert_called_once_with(
+        resource.templateName,
+        '0.2.0',
+        ResourceType.UserResource,
+        parent_service_name='parent-service-name'
+    )
