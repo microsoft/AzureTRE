@@ -132,7 +132,7 @@ if [[ "$group_show_result" == "0" ]]; then
       az keyvault certificate delete --id "${certificate_id}"
     done
 
-    echo "Removing access policies so if the vault is recovered there are not there"
+    echo "Removing access policies so if the vault is recovered they are not restored"
     access_policies=$(echo "$keyvault" | jq -r '.properties.accessPolicies[].objectId' )
     for access_policy_id in ${access_policies}; do
       echo "Attempting to delete access policy ${access_policy_id}"
