@@ -123,6 +123,7 @@ async def test_backoff_increases_on_consecutive_failures():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except asyncio.CancelledError:
+            # Expected: mock_sleep triggers cancellation to stop the supervisor loop.
             pass
 
     # The backoff delays should increase exponentially: 5, 10, 20, ...
@@ -172,6 +173,7 @@ async def test_backoff_caps_at_maximum():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except asyncio.CancelledError:
+            # Expected: mock_sleep triggers cancellation to stop the supervisor loop.
             pass
 
     backoff_sleeps = [d for d in sleep_calls if d != HEARTBEAT_CHECK_INTERVAL_SECONDS]
@@ -229,6 +231,7 @@ async def test_supervisor_restarts_failed_task():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     assert task_create_calls >= 2
@@ -285,6 +288,7 @@ async def test_supervisor_restarts_on_stale_heartbeat():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     assert heartbeat_calls >= 2
@@ -342,6 +346,7 @@ async def test_supervisor_cleanup_on_shutdown():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     assert task_created, "Task should have been created"
@@ -389,6 +394,7 @@ async def test_supervisor_backoff_resets_after_healthy_cycle():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     # Backoff resets after a task has been running continuously through a healthy heartbeat cycle

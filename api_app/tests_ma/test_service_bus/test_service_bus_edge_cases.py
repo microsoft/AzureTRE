@@ -1,15 +1,7 @@
 import asyncio
-import time
 import pytest
 from unittest.mock import patch
-from service_bus.service_bus_consumer import (
-    ServiceBusConsumer,
-    RESTART_DELAY_SECONDS,
-    HEARTBEAT_CHECK_INTERVAL_SECONDS,
-    HEARTBEAT_STALENESS_THRESHOLD_SECONDS,
-    MAX_RESTART_DELAY_SECONDS,
-    SUPERVISOR_ERROR_DELAY_SECONDS,
-)
+from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
 # Create a concrete implementation for testing edge cases
@@ -62,6 +54,7 @@ async def test_supervisor_error_recovery():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     assert error_triggered, "Supervisor should have encountered and recovered from the error"
@@ -109,6 +102,7 @@ async def test_supervisor_backoff_not_reset_on_stale_heartbeat():
         try:
             await consumer.supervisor_with_heartbeat_check()
         except KeyboardInterrupt:
+            # Expected sentinel to stop the test loop
             pass
 
     # Backoff is preserved after stale heartbeat restart (not reset until a healthy cycle)

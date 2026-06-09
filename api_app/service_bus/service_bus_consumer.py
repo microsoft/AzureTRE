@@ -57,6 +57,8 @@ class ServiceBusConsumer:
                         try:
                             await task
                         except asyncio.CancelledError:
+                            # Task was cancelled intentionally as part of heartbeat-based restart.
+                            # Swallow the exception to avoid noisy tracebacks.
                             pass
                         task = None
                     elif not task_just_started:
@@ -71,6 +73,8 @@ class ServiceBusConsumer:
                 try:
                     await task
                 except asyncio.CancelledError:
+                    # Task was cancelled intentionally during cleanup.
+                    # Swallow the exception to avoid noisy tracebacks.
                     pass
 
     async def receive_messages(self):
