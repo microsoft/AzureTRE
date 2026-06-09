@@ -203,17 +203,23 @@ class DeploymentStatusUpdater():
                         if address_to_free and parent_workspace_id:
                             try:
                                 workspace_repo = await WorkspaceRepository.create()
-                                workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
-                                workspace_address_spaces = workspace.properties.get("address_spaces", [])
-                                if address_to_free in workspace_address_spaces:
+                                max_retries = 3
+                                for attempt in range(max_retries):
+                                    workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
+                                    workspace_address_spaces = workspace.properties.get("address_spaces", [])
+                                    if address_to_free not in workspace_address_spaces:
+                                        break
                                     new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
                                     workspace_patch = ResourcePatch()
                                     workspace_patch.properties = {"address_spaces": new_address_spaces}
                                     try:
                                         await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, self.resource_template_repo, self.resource_history_repo, operation.user, False)
                                         logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
+                                        break
                                     except CosmosAccessConditionFailedError:
-                                        logger.exception("ETag conflict when freeing workspace address space after successful uninstall")
+                                        if attempt == max_retries - 1:
+                                            raise
+                                        logger.warning(f"ETag conflict when freeing workspace address space after successful uninstall. Retrying (attempt {attempt + 1}/{max_retries})...")
                             except Exception:
                                 logger.exception("Failed to free workspace address space after successful uninstall")
             except Exception:
