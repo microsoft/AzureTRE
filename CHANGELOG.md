@@ -9,7 +9,7 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 BUG FIXES:
-* Fix to enhance service bus handling of invalid JSON in receive_message function
+* Fix to enhance service bus handling of invalid JSON in receive_message function ([#4932](https://github.com/microsoft/AzureTRE/pull/4932))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

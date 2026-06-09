@@ -124,7 +124,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     config = {"resource_request_queue": "test_queue"}
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
-    mock_receiver.complete_message.assert_called_once()
+    mock_receiver.complete_message.assert_awaited_once()
     mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE)
 
 
@@ -150,8 +150,12 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
     config = {"resource_request_queue": "test_queue"}
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
-    mock_receiver.dead_letter_message.assert_called_once_with("invalid_json_string", reason="InvalidJSON")
-    mock_receiver.complete_message.assert_not_called()
+    mock_receiver.dead_letter_message.assert_awaited_once_with(
+        "invalid_json_string",
+        reason="InvalidJSON",
+        error_description="Expecting value: line 1 column 1 (char 0)"
+    )
+    mock_receiver.complete_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio
