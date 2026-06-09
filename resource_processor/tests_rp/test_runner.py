@@ -50,6 +50,7 @@ async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_
     mock_credential = AsyncMock()
     mock_default_credential.return_value.__aenter__.return_value = mock_credential
     mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_service_bus_client.return_value.__aenter__.return_value = mock_service_bus_client_instance
     return mock_service_bus_client_instance, mock_credential
 
 
