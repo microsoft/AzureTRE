@@ -64,6 +64,9 @@
     }
   },
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "ui:order": ["accept_nexus_eula", "display_name", "description", "overview", "ssl_cert_name", "vm_size", "*"],
     "accept_nexus_eula": {
       "ui:widget": "checkbox",

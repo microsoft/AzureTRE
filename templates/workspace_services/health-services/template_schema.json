@@ -250,5 +250,10 @@
         "stepId": "main"
       }
     ]
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }
