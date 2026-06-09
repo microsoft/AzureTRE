@@ -695,5 +695,3 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     assert workspace_repo.patch_workspace.call_count == 3
     # Assert we logged the final failure
     logging_mock.assert_called_once_with("Failed to free workspace address space after successful uninstall")
-
-
