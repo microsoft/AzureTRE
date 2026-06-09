@@ -49,12 +49,15 @@ const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   return keys;
 };
 
+// Utility to check if a path part name is a prototype property
+const partGuard = (part: string) => part === '__proto__' || part === 'constructor' || part === 'prototype';
+
 // Utility to get a nested value from an object using a dotted path (e.g. "parent.child")
 const getNestedValue = (obj: any, path: string): any => {
   const parts = path.split('.');
   let current = obj;
   for (const part of parts) {
-    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+    if (partGuard(part)) {
       return undefined;
     }
     if (current === null || current === undefined) return undefined;
@@ -69,7 +72,7 @@ const setNestedValue = (obj: any, path: string, value: any): void => {
   let current = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
-    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+    if (partGuard(part)) {
       return;
     }
     if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
@@ -78,18 +81,18 @@ const setNestedValue = (obj: any, path: string, value: any): void => {
     current = current[part];
   }
   const lastPart = parts[parts.length - 1];
-  if (lastPart !== '__proto__' && lastPart !== 'constructor' && lastPart !== 'prototype') {
+  if (!partGuard(lastPart)) {
     current[lastPart] = value;
   }
 };
 
 // Utility to get schema property from properties object using a dotted path
-const getSchemaProperty = (properties: any, path: string): any => {
+const getSchemaPropertyFromProperties = (properties: any, path: string): any => {
   const parts = path.split('.');
   let current = properties;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
-    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+    if (partGuard(part)) {
       return null;
     }
     if (!current || !current[part]) return null;
@@ -101,12 +104,34 @@ const getSchemaProperty = (properties: any, path: string): any => {
   return null;
 };
 
+// Utility to get schema property from template (both properties and allOf) using a dotted path
+const getSchemaProperty = (template: any, path: string): any => {
+  if (!template) return null;
+  
+  let prop = getSchemaPropertyFromProperties(template.properties, path);
+  if (prop) return prop;
+  
+  if (template.allOf) {
+    for (const condition of template.allOf) {
+      if (condition.then && condition.then.properties) {
+        prop = getSchemaPropertyFromProperties(condition.then.properties, path);
+        if (prop) return prop;
+      }
+      if (condition.else && condition.else.properties) {
+        prop = getSchemaPropertyFromProperties(condition.else.properties, path);
+        if (prop) return prop;
+      }
+    }
+  }
+  return null;
+};
+
 // Utility to get nested uiSchema object using a dotted path
 const getNestedUiSchema = (uiSchema: any, path: string): any => {
   const parts = path.split('.');
   let current = uiSchema;
   for (const part of parts) {
-    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+    if (partGuard(part)) {
       return undefined;
     }
     if (current === null || current === undefined) return undefined;
@@ -115,46 +140,78 @@ const getNestedUiSchema = (uiSchema: any, path: string): any => {
   return current;
 };
 
+// Utility to check if a simple JSON Schema condition matches the current state
+const matchesIfCondition = (ifSchema: any, state: any): boolean => {
+  if (!ifSchema || !ifSchema.properties) return false;
+  for (const [key, cond] of Object.entries(ifSchema.properties)) {
+    const val = getNestedValue(state, key);
+    if (cond && typeof cond === 'object' && 'const' in cond) {
+      if (val !== cond.const) return false;
+    } else {
+      if (!val) return false;
+    }
+  }
+  return true;
+};
+
 // Utility to check if a nested property (dotted path) is required in the schema given the current form state
 const isPropertyRequiredInState = (
-  propertiesSchema: any,
-  rootRequired: string[] | undefined,
+  templateSchema: any,
   path: string,
   state: any
 ): boolean => {
-  const parts = path.split('.');
-  let currentSchema = propertiesSchema;
-  let currentRequired = rootRequired;
-  let currentState = state;
+  if (!templateSchema) return false;
 
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i];
+  const checkRequired = (schema: any, currentPath: string, currentState: any): boolean => {
+    const parts = currentPath.split('.');
+    let currentSchema = schema.properties;
+    let currentRequired = schema.required;
+    let currState = currentState;
 
-    // Is the current part required at this level?
-    const isPartRequired = currentRequired && currentRequired.includes(part);
-    // Is the current part present in the state?
-    const isPartPresent = currentState && currentState[part] !== undefined && currentState[part] !== null;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      
+      // Check if required at current level
+      let isPartRequired = currentRequired && currentRequired.includes(part);
+      
+      // Also check if required by any allOf condition at this level
+      if (schema.allOf) {
+        for (const condition of schema.allOf) {
+          if (matchesIfCondition(condition.if, currState)) {
+            if (condition.then && condition.then.required && condition.then.required.includes(part)) {
+              isPartRequired = true;
+            }
+          } else {
+            if (condition.else && condition.else.required && condition.else.required.includes(part)) {
+              isPartRequired = true;
+            }
+          }
+        }
+      }
 
-    // A property is only required to be filled if its path of parent objects is required or present.
-    // For the final property (the leaf), it must be explicitly required by its parent.
-    if (i === parts.length - 1) {
-      return !!isPartRequired;
+      const isPartPresent = currState && currState[part] !== undefined && currState[part] !== null;
+
+      if (i === parts.length - 1) {
+        return !!isPartRequired;
+      }
+
+      if (!isPartRequired && !isPartPresent) {
+        return false;
+      }
+
+      if (!currentSchema || !currentSchema[part]) {
+        return false;
+      }
+
+      currentRequired = currentSchema[part].required;
+      schema = currentSchema[part]; // Update schema for nested checks
+      currentSchema = currentSchema[part].properties;
+      currState = currState ? currState[part] : undefined;
     }
+    return false;
+  };
 
-    // For intermediate parents, if it's neither required nor present, then the nested child is not required.
-    if (!isPartRequired && !isPartPresent) {
-      return false;
-    }
-
-    if (!currentSchema || !currentSchema[part] || !currentSchema[part].properties) {
-      return false;
-    }
-
-    currentRequired = currentSchema[part].required;
-    currentSchema = currentSchema[part].properties;
-    currentState = currentState ? currentState[part] : undefined;
-  }
-  return false;
+  return checkRequired(templateSchema, path, state);
 };
 
 // Utility to build a reduced schema with only given keys and their nested schema (depth 1), including required
@@ -350,23 +407,59 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         // Use full fetched schema from API
         setNewTemplateSchema(newTemplate);
 
-        const newSchemaProps = newTemplate?.properties || {};
-        const currentProps = currentTemplate?.properties || {};
+        // Helper to extract keys from template properties and allOf conditionals
+        const getAllPropertyKeysFromTemplate = (template: any): string[] => {
+          if (!template) return [];
+          let keys = getAllPropertyKeys(template.properties);
+          
+          if (template.allOf) {
+            template.allOf.forEach((condition: any) => {
+              if (condition.then && condition.then.properties) {
+                keys = keys.concat(getAllPropertyKeys(condition.then.properties));
+              }
+              if (condition.else && condition.else.properties) {
+                keys = keys.concat(getAllPropertyKeys(condition.else.properties));
+              }
+            });
+          }
+          return [...new Set(keys)];
+        };
 
-        const newKeys = getAllPropertyKeys(newSchemaProps);
-        const currentKeys = getAllPropertyKeys(currentProps);
+        // Helper to extract top-level keys (matching backend removal checks)
+        const getTopLevelKeysFromTemplate = (template: any): string[] => {
+          if (!template) return [];
+          let keys = Object.keys(template.properties || {});
+          if (template.allOf) {
+            template.allOf.forEach((condition: any) => {
+              if (condition.then && condition.then.properties) {
+                keys = keys.concat(Object.keys(condition.then.properties));
+              }
+              if (condition.else && condition.else.properties) {
+                keys = keys.concat(Object.keys(condition.else.properties));
+              }
+            });
+          }
+          return [...new Set(keys)];
+        };
+
+        const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
+        const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);
         const newPropKeys = newKeys.filter((key) => {
           if (!currentKeys.includes(key)) {
             return true;
           }
-          const propSchema = getSchemaProperty(newSchemaProps, key);
+          const propSchema = getSchemaProperty(newTemplate, key);
           const currentValue = getNestedValue(props.resource.properties, key);
           if (propSchema && propSchema.enum && currentValue !== undefined && !propSchema.enum.includes(currentValue)) {
             return true;
           }
           return false;
         });
-        const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
+
+        // Compute removedPropsArray based only on top-level keys
+        const currentTopKeys = getTopLevelKeysFromTemplate(currentTemplate);
+        const newTopKeys = getTopLevelKeysFromTemplate(newTemplate);
+        const removedPropsArray = currentTopKeys.filter((k) => !newTopKeys.includes(k));
 
         // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
         const pipelineProps = new Set<string>();
@@ -425,7 +518,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             }
           }
 
-          const propSchema = getSchemaProperty(newTemplate?.properties, key);
+          const propSchema = getSchemaProperty(newTemplate, key);
           
           // Only set if a default value is defined in the schema
           if (propSchema && propSchema.default !== undefined) {
@@ -592,13 +685,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                       const val = getNestedValue(newPropertyValues, key);
 
                       // Check if value is invalid enum (for both required and optional fields)
-                      const propSchema = getSchemaProperty(newTemplateSchema?.properties, key);
+                      const propSchema = getSchemaProperty(newTemplateSchema, key);
                       if (propSchema && propSchema.enum && val !== undefined && val !== "" && !propSchema.enum.includes(val)) {
                         return true;
                       }
 
                       // Check if required field is empty
-                      if (isPropertyRequiredInState(newTemplateSchema?.properties, newTemplateSchema?.required, key, newPropertyValues)) {
+                      if (isPropertyRequiredInState(newTemplateSchema, key, newPropertyValues)) {
                         return val === "" || val === undefined;
                       }
                       return false;
