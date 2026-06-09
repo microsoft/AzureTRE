@@ -24,6 +24,8 @@ from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.background_tasks = set()
+
     while not await bootstrap_database():
         await asyncio.sleep(5)
         logger.warning("Database connection could not be established")
@@ -34,9 +36,46 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
-    asyncio.create_task(deploymentStatusUpdater.receive_messages())
-    asyncio.create_task(airlockStatusUpdater.receive_messages())
-    yield
+    def track(task):
+        def _done_callback(task):
+            app.state.background_tasks.discard(task)
+            if task.cancelled():
+                return
+
+            try:
+                exception = task.exception()
+            except asyncio.CancelledError:
+                return
+
+            if exception is not None:
+                logger.error(
+                    f"Background task {task.get_name()} failed",
+                    exc_info=(type(exception), exception, exception.__traceback__)
+                )
+
+        app.state.background_tasks.add(task)
+        task.add_done_callback(_done_callback)
+
+    track(asyncio.create_task(
+        deploymentStatusUpdater.receive_messages(),
+        name="deployment-status-updater"
+    ))
+    track(asyncio.create_task(
+        airlockStatusUpdater.receive_messages(),
+        name="airlock-status-updater"
+    ))
+
+    try:
+        yield
+    finally:
+        tasks = list(app.state.background_tasks)
+        logger.info(f"Cancelling {len(tasks)} background tasks")
+
+        for task in tasks:
+            logger.debug(f"Cancelling task {task.get_name()}")
+            task.cancel()
+
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def get_application() -> FastAPI:
