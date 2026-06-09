@@ -8,6 +8,9 @@ ENHANCEMENTS:
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
+BUG FIXES:
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
