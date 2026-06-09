@@ -113,7 +113,7 @@ class ResourceRepository(BaseRepository):
 
     def _get_all_property_keys_from_template(self, resource_template: ResourceTemplate) -> set:
         properties = set(resource_template.properties.keys())
-        if resource_template.allOf is not None:
+        if hasattr(resource_template, "allOf") and resource_template.allOf is not None:
             for condition in resource_template.allOf:
                 if "then" in condition and "properties" in condition["then"]:
                     properties.update(condition["then"]["properties"].keys())
