@@ -54,6 +54,9 @@ const getNestedValue = (obj: any, path: string): any => {
   const parts = path.split('.');
   let current = obj;
   for (const part of parts) {
+    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+      return undefined;
+    }
     if (current === null || current === undefined) return undefined;
     current = current[part];
   }
@@ -66,12 +69,18 @@ const setNestedValue = (obj: any, path: string, value: any): void => {
   let current = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
+    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+      return;
+    }
     if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
       current[part] = {};
     }
     current = current[part];
   }
-  current[parts[parts.length - 1]] = value;
+  const lastPart = parts[parts.length - 1];
+  if (lastPart !== '__proto__' && lastPart !== 'constructor' && lastPart !== 'prototype') {
+    current[lastPart] = value;
+  }
 };
 
 // Utility to get schema property from properties object using a dotted path
@@ -80,6 +89,9 @@ const getSchemaProperty = (properties: any, path: string): any => {
   let current = properties;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
+    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+      return null;
+    }
     if (!current || !current[part]) return null;
     if (i === parts.length - 1) {
       return current[part];
@@ -94,6 +106,9 @@ const getNestedUiSchema = (uiSchema: any, path: string): any => {
   const parts = path.split('.');
   let current = uiSchema;
   for (const part of parts) {
+    if (part === '__proto__' || part === 'constructor' || part === 'prototype') {
+      return undefined;
+    }
     if (current === null || current === undefined) return undefined;
     current = current[part];
   }
