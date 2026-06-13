@@ -120,7 +120,7 @@ variable "resource_processor_type" {
 
 variable "resource_processor_vmss_sku" {
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2as_v5"
   description = "The SKU of the resource processor VMSS."
 }
 
