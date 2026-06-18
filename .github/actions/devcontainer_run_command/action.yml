@@ -307,7 +307,7 @@ runs:
           -e UI_SITE_NAME="${{ inputs.UI_SITE_NAME }}" \
           -e UI_FOOTER_TEXT="${{ inputs.UI_FOOTER_TEXT }}" \
           -e TF_VAR_resource_processor_vmss_sku="${{ (inputs.RESOURCE_PROCESSOR_VMSS_SKU != ''
-            && inputs.RESOURCE_PROCESSOR_VMSS_SKU) || "Standard_B2s" }}" \
+            && inputs.RESOURCE_PROCESSOR_VMSS_SKU) || 'Standard_B2s' }}" \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
           -e FIREWALL_SKU=${{ inputs.FIREWALL_SKU != '' && inputs.FIREWALL_SKU || 'Standard' }} \
