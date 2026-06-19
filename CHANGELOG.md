@@ -9,6 +9,10 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 
+BUG FIXES:
+* Add `enable_backup` parameter to `tre-workspace-airlock-import-review` template to fix E2E test failures ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
+* Disable backup in E2E tests to prevent Recovery Service Vault creation failures ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))

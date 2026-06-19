@@ -125,6 +125,12 @@
       }
     },
     {
+      "name": "enable_backup",
+      "source": {
+        "env": "WORKSPACE_ENABLE_BACKUP"
+      }
+    },
+    {
       "name": "arm_environment",
       "source": {
         "env": "ARM_ENVIRONMENT"
