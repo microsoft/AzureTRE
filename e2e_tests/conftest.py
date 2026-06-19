@@ -8,7 +8,7 @@ import logging
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
-from helpers import get_admin_token
+from helpers import get_admin_token, get_template
 
 
 LOGGER = logging.getLogger(__name__)
@@ -46,10 +46,16 @@ async def create_or_get_test_workspace(
             "display_name": f"E2E {description} workspace ({auth_type} AAD)",
             "description": f"{template_name} test workspace for E2E tests",
             "auth_type": auth_type,
-            "address_space_size": "small",
-            "enable_backup": False
+            "address_space_size": "small"
         }
     }
+
+    admin_token = await get_admin_token(verify=verify)
+    async with get_template(template_name, resource_strings.API_WORKSPACE_TEMPLATES, admin_token, verify) as response:
+        template_properties = response.json().get("properties", {})
+        if "enable_backup" in template_properties:
+            payload["properties"]["enable_backup"] = False
+
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
@@ -57,7 +63,6 @@ async def create_or_get_test_workspace(
         payload["properties"]["client_id"] = client_id
         payload["properties"]["client_secret"] = client_secret
 
-    admin_token = await get_admin_token(verify=verify)
     # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
     await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
