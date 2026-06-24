@@ -52,6 +52,9 @@ async def create_or_get_test_workspace(
 
     admin_token = await get_admin_token(verify=verify)
     async with get_template(template_name, resource_strings.API_WORKSPACE_TEMPLATES, admin_token, verify) as response:
+        assert response.status_code == 200, (
+            f"Failed to GET workspace template '{template_name}': {response.status_code}. Response text: {response.text}"
+        )
         template_properties = response.json().get("properties", {})
         if "enable_backup" in template_properties:
             payload["properties"]["enable_backup"] = False

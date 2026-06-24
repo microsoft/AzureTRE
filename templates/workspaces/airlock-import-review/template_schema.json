@@ -25,7 +25,7 @@
     },
     "enable_backup": {
       "type": "boolean",
-      "title": "Enable backup",
+      "title": "Enable Backup",
       "description": "Enable backups for the workspace, including VMs and shared storage.",
       "default": true,
       "updateable": true
