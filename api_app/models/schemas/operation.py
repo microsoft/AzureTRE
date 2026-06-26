@@ -16,7 +16,8 @@ def get_sample_operation(operation_id: str) -> dict:
         "updatedWhen": 1642611942.423857,
         "steps": [
             {
-                "stepId": "main",
+                "id": "7d96130f-b323-4b95-8351-a05e943d51a2",
+                "templateStepId": "main",
                 "stepTitle": "deployment for main",
                 "resourceId": "933ad738-7265-4b5f-9eae-a1a62928772e",
                 "resourceTemplateName": "tre-workspace-base",

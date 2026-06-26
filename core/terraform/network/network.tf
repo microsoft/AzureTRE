@@ -7,15 +7,17 @@ resource "azurerm_virtual_network" "core" {
   lifecycle { ignore_changes = [tags] }
 
   subnet {
-    name             = "AzureBastionSubnet"
-    address_prefixes = [local.bastion_subnet_address_prefix]
-    security_group   = azurerm_network_security_group.bastion.id
+    name                            = "AzureBastionSubnet"
+    address_prefixes                = [local.bastion_subnet_address_prefix]
+    security_group                  = azurerm_network_security_group.bastion.id
+    default_outbound_access_enabled = false
   }
 
   subnet {
-    name             = "AzureFirewallSubnet"
-    address_prefixes = [local.firewall_subnet_address_space]
-    route_table_id   = var.firewall_force_tunnel_ip != "" ? azurerm_route_table.fw_tunnel_rt[0].id : null
+    name                            = "AzureFirewallSubnet"
+    address_prefixes                = [local.firewall_subnet_address_space]
+    route_table_id                  = var.firewall_force_tunnel_ip != "" ? azurerm_route_table.fw_tunnel_rt[0].id : null
+    default_outbound_access_enabled = false
   }
 
   subnet {
@@ -24,6 +26,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies             = "Disabled"
     private_link_service_network_policies_enabled = true
     security_group                                = azurerm_network_security_group.app_gw.id
+    default_outbound_access_enabled               = false
   }
 
   subnet {
@@ -33,6 +36,7 @@ resource "azurerm_virtual_network" "core" {
     private_link_service_network_policies_enabled = true
     security_group                                = azurerm_network_security_group.default_rules.id
     route_table_id                                = azurerm_route_table.rt.id
+    default_outbound_access_enabled               = false
 
     delegation {
       name = "delegation"
@@ -50,6 +54,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
     route_table_id                    = azurerm_route_table.rt.id
+    default_outbound_access_enabled   = false
   }
 
   subnet {
@@ -58,6 +63,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
     route_table_id                    = azurerm_route_table.rt.id
+    default_outbound_access_enabled   = false
   }
 
   subnet {
@@ -66,6 +72,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
     route_table_id                    = azurerm_route_table.rt.id
+    default_outbound_access_enabled   = false
 
     delegation {
       name = "delegation"
@@ -84,7 +91,7 @@ resource "azurerm_virtual_network" "core" {
     address_prefixes                  = [local.airlock_notifications_subnet_address_prefix]
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
-
+    default_outbound_access_enabled   = false
     delegation {
       name = "delegation"
 
@@ -102,6 +109,7 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
     route_table_id                    = azurerm_route_table.rt.id
+    default_outbound_access_enabled   = false
   }
 
   subnet {
@@ -110,13 +118,15 @@ resource "azurerm_virtual_network" "core" {
     private_endpoint_network_policies = "Disabled"
     security_group                    = azurerm_network_security_group.default_rules.id
     route_table_id                    = azurerm_route_table.rt.id
+    default_outbound_access_enabled   = false
 
     service_endpoints = ["Microsoft.ServiceBus"]
   }
 
   subnet {
-    name             = "AzureFirewallManagementSubnet"
-    address_prefixes = [local.firewall_management_subnet_address_prefix]
+    name                            = "AzureFirewallManagementSubnet"
+    address_prefixes                = [local.firewall_management_subnet_address_prefix]
+    default_outbound_access_enabled = false
   }
 }
 

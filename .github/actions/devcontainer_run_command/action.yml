@@ -116,6 +116,9 @@ inputs:
     description: "The AppService plan sku used by tests"
     required: false
     default: ""
+  RESOURCE_PROCESSOR_VMSS_SKU:
+    description: "The SKU of the resource processor VMSS."
+    required: false
   RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE:
     description: "The number of resource processor processes to create for parallel operations"
     required: false
@@ -190,7 +193,7 @@ runs:
         echo "AZURE_ENVIRONMENT=$azure_env" >> $GITHUB_ENV
 
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
       if: contains(inputs.COMMAND, 'make bootstrap') != true
       with:
         client-id: ${{ inputs.AZURE_CLIENT_ID }}
@@ -303,6 +306,8 @@ runs:
             && inputs.RP_BUNDLE_VALUES) || '{}' }}' \
           -e UI_SITE_NAME="${{ inputs.UI_SITE_NAME }}" \
           -e UI_FOOTER_TEXT="${{ inputs.UI_FOOTER_TEXT }}" \
+          -e TF_VAR_resource_processor_vmss_sku="${{ (inputs.RESOURCE_PROCESSOR_VMSS_SKU != ''
+            && inputs.RESOURCE_PROCESSOR_VMSS_SKU) || 'Standard_B2s' }}" \
           -e TF_VAR_resource_processor_number_processes_per_instance="${{ (inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE != ''
             && inputs.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE) || 5 }}" \
           -e FIREWALL_SKU=${{ inputs.FIREWALL_SKU != '' && inputs.FIREWALL_SKU || 'Standard' }} \
