@@ -8,9 +8,12 @@ import {
   MessageBar,
   MessageBarType,
   Icon,
+  Stack,
 } from "@fluentui/react";
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
+import { ApiEndpoint } from "../../models/apiEndpoints";
+import { WorkspaceService } from "../../models/workspaceService";
 import {
   HttpMethod,
   ResultType,
@@ -23,23 +26,278 @@ import { LoadingState } from "../../models/loadingState";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { useAppDispatch } from "../../hooks/customReduxHooks";
 import { addUpdateOperation } from "../shared/notifications/operationsSlice";
+import Form from "@rjsf/fluent-ui";
+import validator from "@rjsf/validator-ajv8";
 
 interface ConfirmUpgradeProps {
   resource: Resource;
   onDismiss: () => void;
 }
 
+// Utility to get all property keys from template schema's properties object recursively, flattening nested if needed
+const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
+  if (!properties) return [];
+  let keys: string[] = [];
+  for (const [key, value] of Object.entries(properties)) {
+    if (value && typeof value === "object" && 'properties' in value) {
+      // recur for nested properties
+      keys = keys.concat(getAllPropertyKeys(value["properties"], prefix + key + "."));
+    } else {
+      keys.push(prefix + key);
+    }
+  }
+  return keys;
+};
+
+// Utility to check if a path part name is a prototype property
+const partGuard = (part: string) => part === '__proto__' || part === 'constructor' || part === 'prototype';
+
+// Utility to get a nested value from an object using a dotted path (e.g. "parent.child")
+const getNestedValue = (obj: any, path: string): any => {
+  const parts = path.split('.');
+  let current = obj;
+  for (const part of parts) {
+    if (partGuard(part)) {
+      return undefined;
+    }
+    if (current === null || current === undefined) return undefined;
+    current = current[part];
+  }
+  return current;
+};
+
+// Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
+const setNestedValue = (obj: any, path: string, value: any): void => {
+  const parts = path.split('.');
+  let current = obj;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const part = parts[i];
+    if (partGuard(part)) {
+      return;
+    }
+    if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
+      current[part] = {};
+    }
+    current = current[part];
+  }
+  const lastPart = parts[parts.length - 1];
+  if (!partGuard(lastPart)) {
+    current[lastPart] = value;
+  }
+};
+
+// Utility to get schema property from properties object using a dotted path
+const getSchemaPropertyFromProperties = (properties: any, path: string): any => {
+  const parts = path.split('.');
+  let current = properties;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (partGuard(part)) {
+      return null;
+    }
+    if (!current || !current[part]) return null;
+    if (i === parts.length - 1) {
+      return current[part];
+    }
+    current = current[part].properties;
+  }
+  return null;
+};
+
+// Utility to get schema property from template (both properties and allOf) using a dotted path
+const getSchemaProperty = (template: any, path: string): any => {
+  if (!template) return null;
+  
+  let prop = getSchemaPropertyFromProperties(template.properties, path);
+  if (prop) return prop;
+  
+  if (template.allOf) {
+    for (const condition of template.allOf) {
+      if (condition.then && condition.then.properties) {
+        prop = getSchemaPropertyFromProperties(condition.then.properties, path);
+        if (prop) return prop;
+      }
+      if (condition.else && condition.else.properties) {
+        prop = getSchemaPropertyFromProperties(condition.else.properties, path);
+        if (prop) return prop;
+      }
+    }
+  }
+  return null;
+};
+
+// Utility to get nested uiSchema object using a dotted path
+const getNestedUiSchema = (uiSchema: any, path: string): any => {
+  const parts = path.split('.');
+  let current = uiSchema;
+  for (const part of parts) {
+    if (partGuard(part)) {
+      return undefined;
+    }
+    if (current === null || current === undefined) return undefined;
+    current = current[part];
+  }
+  return current;
+};
+
+// Utility to check if a simple JSON Schema condition matches the current state
+const matchesIfCondition = (ifSchema: any, state: any): boolean => {
+  if (!ifSchema || !ifSchema.properties) return false;
+  for (const [key, cond] of Object.entries(ifSchema.properties)) {
+    const val = getNestedValue(state, key);
+    if (cond && typeof cond === 'object' && 'const' in cond) {
+      if (val !== cond.const) return false;
+    } else {
+      if (!val) return false;
+    }
+  }
+  return true;
+};
+
+// Utility to check if a nested property (dotted path) is required in the schema given the current form state
+const isPropertyRequiredInState = (
+  templateSchema: any,
+  path: string,
+  state: any
+): boolean => {
+  if (!templateSchema) return false;
+
+  const checkRequired = (schema: any, currentPath: string, currentState: any): boolean => {
+    const parts = currentPath.split('.');
+    let currentSchema = schema.properties;
+    let currentRequired = schema.required;
+    let currState = currentState;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      
+      // Check if required at current level
+      let isPartRequired = currentRequired && currentRequired.includes(part);
+      
+      // Also check if required by any allOf condition at this level
+      if (schema.allOf) {
+        for (const condition of schema.allOf) {
+          if (matchesIfCondition(condition.if, currState)) {
+            if (condition.then && condition.then.required && condition.then.required.includes(part)) {
+              isPartRequired = true;
+            }
+          } else {
+            if (condition.else && condition.else.required && condition.else.required.includes(part)) {
+              isPartRequired = true;
+            }
+          }
+        }
+      }
+
+      const isPartPresent = currState && currState[part] !== undefined && currState[part] !== null;
+
+      if (i === parts.length - 1) {
+        return !!isPartRequired;
+      }
+
+      if (!isPartRequired && !isPartPresent) {
+        return false;
+      }
+
+      if (!currentSchema || !currentSchema[part]) {
+        return false;
+      }
+
+      currentRequired = currentSchema[part].required;
+      schema = currentSchema[part]; // Update schema for nested checks
+      currentSchema = currentSchema[part].properties;
+      currState = currState ? currState[part] : undefined;
+    }
+    return false;
+  };
+
+  return checkRequired(templateSchema, path, state);
+};
+
+// Utility to build a reduced schema with only given keys and their nested schema (depth 1), including required
+const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
+  if (!fullSchema || !fullSchema.properties) return null;
+  const reducedProperties: any = {};
+  const required: string[] = [];
+
+  keys.forEach((key) => {
+    // Only allow top-level property keys (no nested with dots) for simplicity here
+    const topKey = key.split('.')[0];
+    if (fullSchema.properties[topKey]) {
+      if (!reducedProperties[topKey]) {
+        reducedProperties[topKey] = fullSchema.properties[topKey];
+        if (fullSchema.required && fullSchema.required.includes(topKey)) {
+          required.push(topKey);
+        }
+      }
+    }
+  });
+
+  return {
+    type: "object",
+    properties: reducedProperties,
+    required: required.length > 0 ? required : undefined,
+  };
+};
+
+// Utility to collect direct property keys referenced inside conditional schemas
+const collectConditionalKeys = (entry: any): string[] => {
+  const keys: string[] = [];
+  if (!entry) return keys;
+  const collect = (schemaPart: any) => {
+    if (schemaPart && schemaPart.properties) {
+      keys.push(...Object.keys(schemaPart.properties));
+    }
+  };
+  collect(entry.if);
+  collect(entry.then);
+  collect(entry.else);
+  return [...new Set(keys)];
+};
+
+// Extract conditional blocks that reference any of the new properties.
+const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
+  const conditionalEntries: any[] = [];
+  if (!schema) return { allOf: [] };
+  const allOf = schema.allOf || [];
+  allOf.forEach((entry: any) => {
+    if (entry && entry.if) {
+      const conditionalKeys = collectConditionalKeys(entry);
+      // include entry if any conditionalKey matches a new key (top-level match)
+      if (conditionalKeys.some((k) => newKeys.some((nk) => nk.split('.')[0] === k))) {
+        conditionalEntries.push(entry);
+      }
+    }
+  });
+  return { allOf: conditionalEntries };
+};
+
 export const ConfirmUpgradeResource: React.FunctionComponent<
   ConfirmUpgradeProps
 > = (props: ConfirmUpgradeProps) => {
   const apiCall = useAuthApiCall();
   const [selectedVersion, setSelectedVersion] = useState("");
-  const [apiError, setApiError] = useState({} as APIError);
+  const [apiError, setApiError] = useState<APIError | null>(null);
   const [requestLoadingState, setRequestLoadingState] = useState(
     LoadingState.Ok,
   );
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
+
+  const [allNewProperties, setAllNewProperties] = useState<string[]>([]); // All new properties including hidden ones
+  const [newPropertiesToFill, setNewPropertiesToFill] = useState<string[]>([]); // Only visible properties
+  const [newPropertyValues, setNewPropertyValues] = useState<any>({});
+  const [loadingSchema, setLoadingSchema] = useState(false);
+  const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
+  const [removedProperties, setRemovedProperties] = useState<string[]>([]);
+
+  // Cache for current template to avoid refetching the same template repeatedly while selecting versions
+  const currentTemplateRef = useRef<any | null>(null);
+
+  // Invalidate cache if the resource's template name or current template version changes
+  useEffect(() => {
+    currentTemplateRef.current = null;
+  }, [props.resource.templateName, props.resource.templateVersion]);
 
   const upgradeProps = {
     type: DialogType.normal,
@@ -56,18 +314,242 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
     styles: dialogStyles,
   };
 
-  const wsAuth =
+  // Template GET endpoints (templateGetPath) always use TRE API authentication,
+  // even for UserResource templates, because they use paths like:
+  // /workspace-service-templates/{name} (not /workspaces/{id}/...)
+  const templateUsesWsAuth = false;
+
+  // However, the actual resource instance upgrade operation (PATCH) uses workspace auth
+  // for WorkspaceService and UserResource instances
+  const instanceUsesWsAuth =
     props.resource.resourceType === ResourceType.WorkspaceService ||
     props.resource.resourceType === ResourceType.UserResource;
+
+  // Fetch new template schema and identify new properties missing in current resource
+  useEffect(() => {
+    if (!selectedVersion) {
+      setAllNewProperties([]);
+      setNewPropertiesToFill([]);
+      setNewPropertyValues({});
+      setNewTemplateSchema(null);
+      setRemovedProperties([]);
+      return;
+    }
+
+    // Construct API paths for templates of specified resourceType
+    let templateListPath;
+    // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
+    let templateGetPath;
+
+    // let workspaceApplicationIdURI = undefined;
+    switch (props.resource.resourceType) {
+      case ResourceType.Workspace:
+        templateListPath = ApiEndpoint.WorkspaceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.WorkspaceService:
+        templateListPath = ApiEndpoint.WorkspaceServiceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.SharedService:
+        templateListPath = ApiEndpoint.SharedServiceTemplates;
+        templateGetPath = templateListPath;
+        break;
+      case ResourceType.UserResource:
+        if (props.resource.properties.parentWorkspaceService) {
+          // If we are upgrading a user resource, parent resource must have a workspaceId
+          const workspaceId = (props.resource.properties.parentWorkspaceService as WorkspaceService)
+            .workspaceId;
+          templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+          templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
+          // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
+          break;
+        } else {
+          throw Error(
+            "Parent workspace service must be passed as prop when creating user resource.",
+          );
+        }
+      default:
+        throw Error("Unsupported resource type.");
+    }
+
+    const fetchNewTemplateSchema = async () => {
+      setLoadingSchema(true);
+      setApiError(null);
+      try {
+        let fetchUrl = "";
+
+        fetchUrl = `${templateGetPath}/${props.resource.templateName}?version=${selectedVersion}`;
+
+        const newTemplate = await apiCall(
+          fetchUrl,
+          HttpMethod.Get,
+          templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+          undefined,
+          ResultType.JSON,
+        );
+
+        // Reuse cached current template if available to avoid redundant network calls
+        let currentTemplate;
+        if (currentTemplateRef.current) {
+          currentTemplate = currentTemplateRef.current;
+        } else {
+          currentTemplate = await apiCall(
+            `${templateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
+            HttpMethod.Get,
+            templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+            undefined,
+            ResultType.JSON,
+          );
+          currentTemplateRef.current = currentTemplate;
+        }
+
+        // Use full fetched schema from API
+        setNewTemplateSchema(newTemplate);
+
+        // Helper to extract keys from template properties and allOf conditionals
+        const getAllPropertyKeysFromTemplate = (template: any): string[] => {
+          if (!template) return [];
+          let keys = getAllPropertyKeys(template.properties);
+          
+          if (template.allOf) {
+            template.allOf.forEach((condition: any) => {
+              if (condition.then && condition.then.properties) {
+                keys = keys.concat(getAllPropertyKeys(condition.then.properties));
+              }
+              if (condition.else && condition.else.properties) {
+                keys = keys.concat(getAllPropertyKeys(condition.else.properties));
+              }
+            });
+          }
+          return [...new Set(keys)];
+        };
+
+        // Helper to extract top-level keys (matching backend removal checks)
+        const getTopLevelKeysFromTemplate = (template: any): string[] => {
+          if (!template) return [];
+          let keys = Object.keys(template.properties || {});
+          if (template.allOf) {
+            template.allOf.forEach((condition: any) => {
+              if (condition.then && condition.then.properties) {
+                keys = keys.concat(Object.keys(condition.then.properties));
+              }
+              if (condition.else && condition.else.properties) {
+                keys = keys.concat(Object.keys(condition.else.properties));
+              }
+            });
+          }
+          return [...new Set(keys)];
+        };
+
+        const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
+        const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);
+        const newPropKeys = newKeys.filter((key) => {
+          if (!currentKeys.includes(key)) {
+            return true;
+          }
+          const propSchema = getSchemaProperty(newTemplate, key);
+          const currentValue = getNestedValue(props.resource.properties, key);
+          if (propSchema && propSchema.enum && currentValue !== undefined && !propSchema.enum.includes(currentValue)) {
+            return true;
+          }
+          return false;
+        });
+
+        // Compute removedPropsArray based only on top-level keys
+        const currentTopKeys = getTopLevelKeysFromTemplate(currentTemplate);
+        const newTopKeys = getTopLevelKeysFromTemplate(newTemplate);
+        const removedPropsArray = currentTopKeys.filter((k) => !newTopKeys.includes(k));
+
+        // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
+        const pipelineProps = new Set<string>();
+        if (newTemplate?.pipeline?.upgrade) {
+          newTemplate.pipeline.upgrade.forEach((step: any) => {
+            if (step.properties) {
+              step.properties.forEach((prop: any) => {
+                pipelineProps.add(prop.name);
+              });
+            }
+          });
+        }
+
+        // Filter out properties that are in the pipeline - they will be substituted by the backend
+        const newPropKeysWithoutPipeline = newPropKeys.filter((key) => {
+          const topKey = key.split('.')[0];
+          return !pipelineProps.has(topKey);
+        });
+
+        // Filter out properties that are hidden (tre-hidden) - they don't need user input
+        const uiSchema = newTemplate?.uiSchema || {};
+        const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
+          const parts = key.split('.');
+          let isHidden = false;
+          let currentPath = '';
+          for (const part of parts) {
+            currentPath = currentPath ? `${currentPath}.${part}` : part;
+            const propertyUiSchema = getNestedUiSchema(uiSchema, currentPath);
+            const classNames = propertyUiSchema?.classNames || propertyUiSchema?.['ui:classNames'];
+            if (classNames?.includes('tre-hidden')) {
+              isHidden = true;
+              break;
+            }
+          }
+          return !isHidden;
+        });
+
+        setNewPropertiesToFill(visibleNewPropKeys);
+        setRemovedProperties(removedPropsArray);
+
+        // Include ALL new properties not in pipeline to be sent to API
+        // This ensures hidden properties with defaults are correctly passed
+        const newPropKeysToSend = newPropKeysWithoutPipeline;
+
+        // Set allNewProperties to the filtered list (for schema building)
+        setAllNewProperties(newPropKeysToSend);
+
+        // prefill newPropertyValues with schema defaults (excluding pipeline properties)
+        const initialValues: any = {};
+        newPropKeysToSend.forEach((key) => {
+          const topKey = key.split('.')[0];
+          // If the top-level property already exists in the resource, copy it to avoid losing other sub-properties
+          if (props.resource.properties && props.resource.properties[topKey] !== undefined) {
+            if (!initialValues[topKey]) {
+              initialValues[topKey] = JSON.parse(JSON.stringify(props.resource.properties[topKey]));
+            }
+          }
+
+          const propSchema = getSchemaProperty(newTemplate, key);
+          
+          // Only set if a default value is defined in the schema
+          if (propSchema && propSchema.default !== undefined) {
+            setNestedValue(initialValues, key, propSchema.default);
+          }
+        });
+        setNewPropertyValues(initialValues);
+      } catch (err: any) {
+        if (!err.userMessage) {
+          err.userMessage = "Failed to fetch new template schema";
+        }
+        setApiError(err);
+      } finally {
+        setLoadingSchema(false);
+      }
+    };
+
+    fetchNewTemplateSchema();
+  }, [selectedVersion]);
 
   const upgradeCall = async () => {
     setRequestLoadingState(LoadingState.Loading);
     try {
-      let body = { templateVersion: selectedVersion };
+      let body: any = { templateVersion: selectedVersion };
+
+      body.properties = newPropertyValues;
+
       let op = await apiCall(
         props.resource.resourcePath,
         HttpMethod.Patch,
-        wsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+        instanceUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
         body,
         ResultType.JSON,
         undefined,
@@ -77,10 +559,36 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
       dispatch(addUpdateOperation(op.operation));
       props.onDismiss();
     } catch (err: any) {
-      err.userMessage = "Failed to upgrade resource";
+      if (!err.userMessage) {
+        err.userMessage = "Failed to upgrade resource";
+      }
       setApiError(err);
       setRequestLoadingState(LoadingState.Error);
     }
+  };
+
+  // Use buildReducedSchema to include all new properties (including hidden ones)
+  // Hidden properties will be rendered but not shown due to tre-hidden CSS class
+  const reducedSchemaProperties = newTemplateSchema
+    ? buildReducedSchema(newTemplateSchema, allNewProperties)
+    : null;
+
+  // Extract any conditional blocks from full schema, filtered by all new properties
+  const conditionalBlocks = newTemplateSchema ? extractConditionalBlocks(newTemplateSchema, allNewProperties) : {};
+
+  // Compose final schema combining reduced properties with conditional blocks
+  const finalSchema = reducedSchemaProperties
+    ? { ...reducedSchemaProperties, ...conditionalBlocks }
+    : null;
+
+  // UI schema override: hide the form's submit button because we use external Upgrade button
+  // start with existing UI order and classNames from full schema uiSchema
+  const baseUiSchema = newTemplateSchema?.uiSchema || {};
+
+  // Compose final uiSchema merging baseUiSchema with our overrides
+  const uiSchema = {
+    ...baseUiSchema,
+    "ui:submitButtonOptions": { norender: true },
   };
 
   const onRenderOption = (option: any): JSX.Element => {
@@ -129,6 +637,35 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             <MessageBar messageBarType={MessageBarType.warning}>
               Upgrading the template version is irreversible.
             </MessageBar>
+
+            {loadingSchema && <Spinner label="Loading new template schema..." />}
+            {!loadingSchema && removedProperties.length > 0 && (
+              <MessageBar messageBarType={MessageBarType.warning}>
+                Warning: The following properties are no longer present in the template and will be removed: {removedProperties.join(', ')}
+              </MessageBar>
+            )}
+            {!loadingSchema && allNewProperties.length > 0 && (
+              <Stack tokens={{ childrenGap: 15 }}>
+                {newPropertiesToFill.length > 0 && (
+                  <MessageBar messageBarType={MessageBarType.info} styles={{ root: { marginBottom: 25 } }}>
+                    You must specify values for new properties:
+                  </MessageBar>
+                )}
+
+                {finalSchema && (
+                  <Form
+                    liveOmit={true}
+                    omitExtraData={true}
+                    schema={finalSchema}
+                    formData={newPropertyValues}
+                    uiSchema={uiSchema}
+                    validator={validator}
+                    onChange={(e) => setNewPropertyValues(e.formData)}
+                  />
+                )}
+              </Stack>
+            )}
+
             <DialogFooter>
               <Dropdown
                 placeholder="Select Version"
@@ -141,7 +678,25 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                 selectedKey={selectedVersion}
               />
               <PrimaryButton
-                primaryDisabled={!selectedVersion}
+                primaryDisabled={
+                  !selectedVersion ||
+                  (newPropertiesToFill.length > 0 &&
+                    newPropertiesToFill.some((key) => {
+                      const val = getNestedValue(newPropertyValues, key);
+
+                      // Check if value is invalid enum (for both required and optional fields)
+                      const propSchema = getSchemaProperty(newTemplateSchema, key);
+                      if (propSchema && propSchema.enum && val !== undefined && val !== "" && !propSchema.enum.includes(val)) {
+                        return true;
+                      }
+
+                      // Check if required field is empty
+                      if (isPropertyRequiredInState(newTemplateSchema, key, newPropertyValues)) {
+                        return val === "" || val === undefined;
+                      }
+                      return false;
+                    }))
+                }
                 text="Upgrade"
                 onClick={() => upgradeCall()}
               />
@@ -156,7 +711,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           />
         )}
         {requestLoadingState === LoadingState.Error && (
-          <ExceptionLayout e={apiError} />
+          <ExceptionLayout e={apiError ?? ({} as APIError)} />
         )}
       </Dialog>
     </>
