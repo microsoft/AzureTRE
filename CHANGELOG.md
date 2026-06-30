@@ -13,6 +13,9 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
+BUG FIXES:
+* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
