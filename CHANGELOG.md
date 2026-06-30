@@ -12,6 +12,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix to enhance service bus handling of invalid JSON in receive_message function ([#4932](https://github.com/microsoft/AzureTRE/pull/4932))
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
