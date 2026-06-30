@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
+* Remove duplicate auth dependencies in API ([#4796](https://github.com/microsoft/AzureTRE/pull/4796))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
