@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
+* Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
