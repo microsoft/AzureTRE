@@ -213,6 +213,9 @@
   "actions": [],
   "customActions": [],
   "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    },
     "aad_redirect_uris": {
       "classNames": "tre-hidden"
     },

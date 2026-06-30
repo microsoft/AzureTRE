@@ -28,6 +28,11 @@
       "updateable": true
     }
   },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
+  },
   "pipeline": {
     "install": [
       {

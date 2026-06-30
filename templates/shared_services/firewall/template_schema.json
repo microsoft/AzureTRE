@@ -359,5 +359,10 @@
         }
       }
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }

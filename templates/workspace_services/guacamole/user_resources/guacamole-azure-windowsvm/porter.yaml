@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 1.4.5
+version: 1.4.6
 description: "An Azure TRE User Resource Template for Guacamole (Windows 11 or Windows Server Data Science VM)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
