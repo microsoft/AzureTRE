@@ -13,6 +13,9 @@ BUG FIXES:
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
+BUG FIXES:
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
+
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
 * Sonatype Nexus shared service now requires explicit EULA acceptance (`accept_nexus_eula: true`) when deploying. This ensures compliance with Sonatype Nexus Community Edition licensing. ([#4842](https://github.com/microsoft/AzureTRE/issues/4842))
