@@ -12,6 +12,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix Health check can falsely return OK even if Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
