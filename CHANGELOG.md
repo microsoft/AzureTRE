@@ -12,6 +12,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix intermittent workspace deletion failure caused by `AnotherOperationInProgress` 409 errors on the Azure Monitor (AMPLS) private DNS zone group, by adding an azapi delete retry. ([#3194](https://github.com/microsoft/AzureTRE/issues/3194))
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
+
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
