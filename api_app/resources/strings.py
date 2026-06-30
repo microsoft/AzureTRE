@@ -106,6 +106,12 @@ RESOURCE_PROCESSOR = "Resource Processor"
 RESOURCE_PROCESSOR_GENERAL_ERROR_MESSAGE = "Resource Processor is not responding"
 RESOURCE_PROCESSOR_HEALTHY_MESSAGE = "HealthState/healthy"
 
+# Service bus consumer status
+DEPLOYMENT_STATUS_CONSUMER = "Deployment Status Consumer"
+AIRLOCK_STATUS_CONSUMER = "Airlock Status Consumer"
+CONSUMER_HEARTBEAT_STALE = "{} heartbeat is stale or missing"
+CONSUMER_NOT_INITIALIZED = "{} has not been initialized"
+
 # Error strings
 ACCESS_APP_IS_MISSING_ROLE = "The App is missing role"
 ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD application"

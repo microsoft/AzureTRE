@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Optional, Tuple
 from azure.core import exceptions
 from azure.servicebus.aio import ServiceBusClient
 from azure.mgmt.compute.aio import ComputeManagementClient
@@ -11,6 +11,7 @@ from core.config import STATE_STORE_RESOURCES_CONTAINER
 from core import config
 from models.schemas.status import StatusEnum
 from resources import strings
+from service_bus.service_bus_consumer import ServiceBusConsumer
 from services.logging import logger
 
 
@@ -53,6 +54,22 @@ async def create_service_bus_status(credential) -> Tuple[StatusEnum, str]:
         status = StatusEnum.not_ok
         message = strings.UNSPECIFIED_ERROR
     return status, message
+
+
+def create_consumer_status(consumer: Optional[ServiceBusConsumer], name: str) -> Tuple[StatusEnum, str]:
+    if consumer is None:
+        return StatusEnum.not_ok, strings.CONSUMER_NOT_INITIALIZED.format(name)
+    if consumer.check_heartbeat():
+        return StatusEnum.ok, ""
+    return StatusEnum.not_ok, strings.CONSUMER_HEARTBEAT_STALE.format(name)
+
+
+async def create_deployment_consumer_status(consumer: Optional[ServiceBusConsumer]) -> Tuple[StatusEnum, str]:
+    return create_consumer_status(consumer, strings.DEPLOYMENT_STATUS_CONSUMER)
+
+
+async def create_airlock_consumer_status(consumer: Optional[ServiceBusConsumer]) -> Tuple[StatusEnum, str]:
+    return create_consumer_status(consumer, strings.AIRLOCK_STATUS_CONSUMER)
 
 
 async def create_resource_processor_status(credential) -> Tuple[StatusEnum, str]:
