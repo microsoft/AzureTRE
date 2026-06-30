@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 from azure.core.exceptions import ServiceRequestError
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError
 from mock import patch
 from models.schemas.status import StatusEnum
@@ -11,8 +12,11 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-@patch("azure.cosmos.aio.ContainerProxy.query_items", return_value=AsyncMock())
-async def test_get_state_store_status_responding(_) -> None:
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_responding(get_container_proxy_mock) -> None:
+    container_mock = MagicMock()
+    container_mock.query_items.return_value = AsyncIterator([{"id": "item"}])
+    get_container_proxy_mock.return_value = container_mock
     status, message = await health_checker.create_state_store_status()
 
     assert status == StatusEnum.ok
@@ -37,6 +41,39 @@ async def test_get_state_store_status_other_exception(container_proxy_mock) -> N
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
+
+
+class AsyncIteratorWithError:
+    def __init__(self, exception):
+        self.exception = exception
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        raise self.exception
+
+
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_cosmos_http_error(get_container_proxy_mock) -> None:
+    container_mock = MagicMock()
+    container_mock.query_items.return_value = AsyncIteratorWithError(CosmosHttpResponseError(message="some message"))
+    get_container_proxy_mock.return_value = container_mock
+    status, message = await health_checker.create_state_store_status()
+
+    assert status == StatusEnum.not_ok
+    assert message == strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
+
+
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_service_request_error(get_container_proxy_mock) -> None:
+    container_mock = MagicMock()
+    container_mock.query_items.return_value = AsyncIteratorWithError(ServiceRequestError(message="some message"))
+    get_container_proxy_mock.return_value = container_mock
+    status, message = await health_checker.create_state_store_status()
+
+    assert status == StatusEnum.not_ok
+    assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
 
 
 @patch("core.credentials.get_credential_async_context")
