@@ -119,6 +119,23 @@ class TestFilesDeletion():
         assert mock_set_output_event_to_trigger_container_deletion.called
 
 
+class TestMainFailurePaths():
+    def test_main_raises_json_decode_error_when_invalid_json(self):
+        message = _mock_service_bus_message(body="invalid json")
+        with pytest.raises(JSONDecodeError):
+            main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+
+    def test_main_raises_key_error_when_missing_data_field(self):
+        message = _mock_service_bus_message(body="{}")
+        with pytest.raises(KeyError):
+            main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+
+    def test_main_raises_validation_error_when_missing_properties(self):
+        message = _mock_service_bus_message(body="{ \"data\": {} }")
+        with pytest.raises(ValidationError):
+            main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+
+
 def _mock_service_bus_message(body: str):
     encoded_body = str.encode(body, "utf-8")
     message = ServiceBusMessage(body=encoded_body, message_id="123", user_properties={}, application_properties={})
