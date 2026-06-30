@@ -12,6 +12,31 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
+class AsyncIterator:
+    def __init__(self, seq):
+        self.iter = iter(seq)
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return next(self.iter)
+        except StopIteration:
+            raise StopAsyncIteration
+
+
+class AsyncIteratorWithError:
+    def __init__(self, exception):
+        self.exception = exception
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        raise self.exception
+
+
 @patch("api.dependencies.database.Database.get_container_proxy")
 async def test_get_state_store_status_responding(get_container_proxy_mock) -> None:
     container_mock = MagicMock()
@@ -41,17 +66,6 @@ async def test_get_state_store_status_other_exception(container_proxy_mock) -> N
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
-
-
-class AsyncIteratorWithError:
-    def __init__(self, exception):
-        self.exception = exception
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        raise self.exception
 
 
 @patch("api.dependencies.database.Database.get_container_proxy")
@@ -164,17 +178,3 @@ async def test_get_resource_processor_status_other_exception(resource_processor_
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
-
-
-class AsyncIterator:
-    def __init__(self, seq):
-        self.iter = iter(seq)
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            return next(self.iter)
-        except StopIteration:
-            raise StopAsyncIteration
