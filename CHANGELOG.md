@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
+* `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
