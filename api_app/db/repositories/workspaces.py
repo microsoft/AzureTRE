@@ -118,7 +118,12 @@ class WorkspaceRepository(ResourceRepository):
         attempts = 0
         max_attempts = 5
         async with credentials.get_credential_async_context() as credential:
-            async with StorageManagementClient(credential, config.SUBSCRIPTION_ID) as storage_client:
+            async with StorageManagementClient(
+                credential,
+                config.SUBSCRIPTION_ID,
+                base_url=config.RESOURCE_MANAGER_ENDPOINT,
+                credential_scopes=config.CREDENTIAL_SCOPES
+            ) as storage_client:
                 while not await self.is_workspace_storage_account_available(storage_client, full_workspace_id):
                     attempts += 1
                     if attempts >= max_attempts:
