@@ -327,9 +327,8 @@ async def test_is_workspace_storage_account_available_when_name_available():
 
     assert result is True
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 6
-    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stgws{suffix}"})
-    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stalimappws{suffix}"})
-    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stalexintws{suffix}"})
+    for prefix in ["stgws", "stalimappws", "stalexintws", "stalexipws", "stalexrejws", "stalexblockedws"]:
+        mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"{prefix}{suffix}"})
 
 
 @pytest.mark.asyncio
@@ -348,6 +347,19 @@ async def test_is_workspace_storage_account_available_when_name_not_available():
         mock_result_available,
         mock_result_available
     ]
+    workspace_repo = WorkspaceRepository()
+
+    result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
+
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_is_workspace_storage_account_available_when_check_raises_exception():
+    workspace_id = "workspace1234"
+    mock_storage_client_instance = MagicMock()
+    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = Exception("ARM error")
     workspace_repo = WorkspaceRepository()
 
     result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)

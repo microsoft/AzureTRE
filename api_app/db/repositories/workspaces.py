@@ -100,8 +100,16 @@ class WorkspaceRepository(ResourceRepository):
         ]
         try:
             # Enforce a 10-second timeout on the parallel Azure SDK calls to prevent hanging
-            results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=10.0)
+            results = await asyncio.wait_for(
+                asyncio.gather(*tasks, return_exceptions=True),
+                timeout=10.0
+            )
             for result in results:
+                if isinstance(result, asyncio.CancelledError):
+                    raise result
+                if isinstance(result, BaseException):
+                    logger.warning("Storage name availability check failed: %s", result)
+                    return False
                 if not result.name_available:
                     return False
             return True
