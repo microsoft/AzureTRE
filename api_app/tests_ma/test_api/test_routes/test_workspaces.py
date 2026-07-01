@@ -497,6 +497,13 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", side_effect=TimeoutError("Storage availability check timed out"))
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_503_if_storage_check_times_out(self, _, __, app, client, workspace_input):
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "Storage name availability check timed out persistently" in response.text
+
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
