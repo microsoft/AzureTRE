@@ -318,27 +318,42 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
 @patch('db.repositories.workspaces.StorageManagementClient')
 async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
     workspace_id = "workspace1234"
-    mock_storage_client.return_value = MagicMock()
-    mock_storage_client.return_value.storage_accounts.check_name_availability.return_value = AsyncMock()
-    mock_storage_client.return_value.storage_accounts.check_name_availability.return_value.name_available = True
+    suffix = workspace_id[-4:]
+    mock_storage_client_instance = MagicMock()
+    mock_storage_client.return_value.__aenter__.return_value = mock_storage_client_instance
+    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
+    mock_storage_client_instance.storage_accounts.check_name_availability.return_value.name_available = True
     workspace_repo = WorkspaceRepository()
 
     result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
 
-    mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
     assert result is True
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 6
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stgws{suffix}"})
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stalimappws{suffix}"})
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stalexintws{suffix}"})
 
 
 @pytest.mark.asyncio
 @patch('db.repositories.workspaces.StorageManagementClient')
 async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
     workspace_id = "workspace1234"
-    mock_storage_client.return_value = MagicMock()
-    mock_storage_client.return_value.storage_accounts.check_name_availability.return_value = AsyncMock()
-    mock_storage_client.return_value.storage_accounts.check_name_availability.return_value.name_available = False
+    mock_storage_client_instance = MagicMock()
+    mock_storage_client.return_value.__aenter__.return_value = mock_storage_client_instance
+    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
+    
+    mock_result_available = MagicMock(name_available=True)
+    mock_result_unavailable = MagicMock(name_available=False)
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
+        mock_result_available,
+        mock_result_unavailable,
+        mock_result_available,
+        mock_result_available,
+        mock_result_available,
+        mock_result_available
+    ]
     workspace_repo = WorkspaceRepository()
 
     result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
 
-    mock_storage_client.return_value.storage_accounts.check_name_availability.assert_called_once_with({"name": f"stgws{workspace_id[-4:]}"})
     assert result is False

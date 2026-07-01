@@ -1,6 +1,7 @@
 import uuid
 from typing import List, Tuple
-from azure.mgmt.storage import StorageManagementClient
+import asyncio
+from azure.mgmt.storage.aio import StorageManagementClient
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -81,14 +82,27 @@ class WorkspaceRepository(ResourceRepository):
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:
-        storage_client = StorageManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
-        # check for storage account with last 4 digits of workspace_id
-        availability_result = storage_client.storage_accounts.check_name_availability(
-            {
-                "name": f"stgws{workspace_id[-4:]}"
-            }
-        )
-        return availability_result.name_available
+        suffix = workspace_id[-4:]
+        names_to_check = [
+            f"stgws{suffix}",
+            f"stalimappws{suffix}",
+            f"stalexintws{suffix}",
+            f"stalexipws{suffix}",
+            f"stalexrejws{suffix}",
+            f"stalexblockedws{suffix}"
+        ]
+
+        async with credentials.get_credential_async_context() as credential:
+            async with StorageManagementClient(credential, config.SUBSCRIPTION_ID) as storage_client:
+                tasks = [
+                    storage_client.storage_accounts.check_name_availability({"name": name})
+                    for name in names_to_check
+                ]
+                results = await asyncio.gather(*tasks)
+                for result in results:
+                    if not result.name_available:
+                        return False
+                return True
 
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
