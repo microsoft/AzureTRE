@@ -1,7 +1,6 @@
 import uuid
 from typing import List, Tuple
 import asyncio
-import logging
 from azure.mgmt.storage.aio import StorageManagementClient
 
 from pydantic import parse_obj_as
@@ -21,8 +20,7 @@ from models.domain.workspace import Workspace
 from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
 from services.cidr_service import generate_new_cidr, is_network_available
-
-logger = logging.getLogger(__name__)
+from services.logging import logger
 
 
 class WorkspaceRepository(ResourceRepository):
