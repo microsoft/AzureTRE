@@ -105,6 +105,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except TimeoutError as e:
+        logger.exception("Storage name availability check timed out persistently")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check timed out persistently. Please try again.")
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
