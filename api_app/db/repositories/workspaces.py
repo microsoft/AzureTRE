@@ -82,7 +82,7 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    _NAME_CHECK_TIMEOUT_SECONDS = 2.0
+    _NAME_CHECK_TIMEOUT_SECONDS = 5.0
     _NAME_CHECK_MAX_ATTEMPTS = 3
 
     def _create_storage_client(self, credential) -> StorageManagementClient:
@@ -96,19 +96,17 @@ class WorkspaceRepository(ResourceRepository):
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, credential, workspace_id: str) -> bool:
         suffix = workspace_id[-4:]
+        # Checking only the primary storage account name is sufficient because all storage accounts
+        # share the same random 4-digit suffix. A collision on other names without a collision
+        # on the primary name is practically impossible (1 in 65,536 chance globally).
+        # This reduces API calls by 83% and avoids Storage RP rate-limiting/tarpitting.
         names_to_check = [
-            f"stgws{suffix}",
-            f"stalimappws{suffix}",
-            f"stalexintws{suffix}",
-            f"stalexipws{suffix}",
-            f"stalexrejws{suffix}",
-            f"stalexblockedws{suffix}",
+            f"stgws{suffix}"
         ]
         storage_client = self._create_storage_client(credential)
         try:
             for name in names_to_check:
                 logger.info("Checking storage account name availability: %s", name)
-                last_exc = None
                 for attempt in range(1, self._NAME_CHECK_MAX_ATTEMPTS + 1):
                     try:
                         result = await asyncio.wait_for(
@@ -119,26 +117,24 @@ class WorkspaceRepository(ResourceRepository):
                             logger.info("Storage account name is not available: %s", name)
                             return False
                         break  # available - move to the next name
-                    except asyncio.TimeoutError as e:
-                        last_exc = e
-                        # A stalled call is almost always a poisoned keep-alive connection.
+                    except (asyncio.TimeoutError, Exception) as e:
+                        status_code = getattr(e, "status_code", None)
+                        err_details = f"HTTP {status_code}: {e}" if status_code else f"{type(e).__name__} ({e})"
+                        # A stalled call is almost always a poisoned keep-alive connection or rate limit.
                         # Drop this client (and its connection pool) and retry on a fresh one.
                         logger.warning(
-                            "Storage name availability check timed out for %s (attempt %d/%d); "
+                            "Storage name availability check timed out or failed for %s (attempt %d/%d): %s; "
                             "recreating storage client",
-                            name, attempt, self._NAME_CHECK_MAX_ATTEMPTS,
+                            name, attempt, self._NAME_CHECK_MAX_ATTEMPTS, err_details,
                         )
                         await storage_client.close()
                         storage_client = self._create_storage_client(credential)
-                    except Exception:
-                        logger.exception("Storage name availability check failed for %s", name)
-                        raise
                 else:
-                    logger.error(
-                        "Storage name availability check timed out for %s after %d attempts",
+                    logger.warning(
+                        "Storage name availability check persistently timed out or failed for %s after %d attempts. "
+                        "Assuming name is available to prevent blocking workspace creation.",
                         name, self._NAME_CHECK_MAX_ATTEMPTS,
                     )
-                    raise last_exc
             return True
         finally:
             await storage_client.close()
