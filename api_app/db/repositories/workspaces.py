@@ -94,28 +94,19 @@ class WorkspaceRepository(ResourceRepository):
             f"stalexblockedws{suffix}"
         ]
 
-        tasks = [
-            storage_client.storage_accounts.check_name_availability({"name": name})
-            for name in names_to_check
-        ]
-        try:
-            # Enforce a 10-second timeout on the parallel Azure SDK calls to prevent hanging
-            results = await asyncio.wait_for(
-                asyncio.gather(*tasks, return_exceptions=True),
-                timeout=10.0
-            )
-            for result in results:
-                if isinstance(result, asyncio.CancelledError):
-                    raise result
-                if isinstance(result, BaseException):
-                    logger.warning("Storage name availability check failed: %s", result)
-                    return False
+        for name in names_to_check:
+            try:
+                # Use a 2-second timeout per call to prevent hanging
+                result = await asyncio.wait_for(
+                    storage_client.storage_accounts.check_name_availability({"name": name}),
+                    timeout=2.0
+                )
                 if not result.name_available:
                     return False
-            return True
-        except asyncio.TimeoutError:
-            logger.warning("Storage name availability check timed out.")
-            return False
+            except Exception as e:
+                logger.error("Storage name availability check failed for %s: %s", name, e)
+                raise
+        return True
 
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 

@@ -353,9 +353,9 @@ async def test_is_workspace_storage_account_available_when_name_not_available():
     result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
 
     assert result is False
-    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 6
-    for prefix in ["stgws", "stalimappws", "stalexintws", "stalexipws", "stalexrejws", "stalexblockedws"]:
-        mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"{prefix}{suffix}"})
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 2
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stgws{suffix}"})
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stalimappws{suffix}"})
 
 
 @pytest.mark.asyncio
@@ -366,9 +366,10 @@ async def test_is_workspace_storage_account_available_when_check_raises_exceptio
     mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = Exception("ARM error")
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
+    with pytest.raises(Exception) as exc_info:
+        await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
 
-    assert result is False
+    assert "ARM error" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
