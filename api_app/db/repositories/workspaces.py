@@ -96,7 +96,7 @@ class WorkspaceRepository(ResourceRepository):
 
         for name in names_to_check:
             try:
-                # Use a 2-second timeout per call to prevent hanging
+                # Use a 10-second timeout per call to prevent hanging
                 logger.info("Checking storage account name availability: %s", name)
                 result = await asyncio.wait_for(
                     storage_client.storage_accounts.check_name_availability({"name": name}),
