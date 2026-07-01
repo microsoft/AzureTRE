@@ -315,17 +315,15 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
-async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
+async def test_is_workspace_storage_account_available_when_name_available():
     workspace_id = "workspace1234"
     suffix = workspace_id[-4:]
     mock_storage_client_instance = MagicMock()
-    mock_storage_client.return_value.__aenter__.return_value = mock_storage_client_instance
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.storage_accounts.check_name_availability.return_value.name_available = True
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
 
     assert result is True
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 6
@@ -335,11 +333,9 @@ async def test_is_workspace_storage_account_available_when_name_available(mock_s
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
-async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
+async def test_is_workspace_storage_account_available_when_name_not_available():
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
-    mock_storage_client.return_value.__aenter__.return_value = mock_storage_client_instance
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     
     mock_result_available = MagicMock(name_available=True)
@@ -354,6 +350,23 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
     ]
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_storage_account_available(workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
 
     assert result is False
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.generate_new_cidr')
+@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
+async def test_create_workspace_item_raises_value_error_after_max_attempts(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+    workspace_to_create = basic_workspace_request
+    mock_is_workspace_storage_account_available.return_value = False
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    with pytest.raises(ValueError) as exc_info:
+        await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert "Unable to generate a unique storage account name after multiple attempts." in str(exc_info.value)
+    assert mock_is_workspace_storage_account_available.call_count == 5

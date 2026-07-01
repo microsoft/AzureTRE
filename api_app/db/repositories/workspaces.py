@@ -1,7 +1,10 @@
 import uuid
 from typing import List, Tuple
 import asyncio
+import logging
 from azure.mgmt.storage.aio import StorageManagementClient
+
+logger = logging.getLogger(__name__)
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -81,7 +84,7 @@ class WorkspaceRepository(ResourceRepository):
         return parse_obj_as(Workspace, workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
-    async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:
+    async def is_workspace_storage_account_available(self, storage_client: StorageManagementClient, workspace_id: str) -> bool:
         suffix = workspace_id[-4:]
         names_to_check = [
             f"stgws{suffix}",
@@ -92,25 +95,36 @@ class WorkspaceRepository(ResourceRepository):
             f"stalexblockedws{suffix}"
         ]
 
-        async with credentials.get_credential_async_context() as credential:
-            async with StorageManagementClient(credential, config.SUBSCRIPTION_ID) as storage_client:
-                tasks = [
-                    storage_client.storage_accounts.check_name_availability({"name": name})
-                    for name in names_to_check
-                ]
-                results = await asyncio.gather(*tasks)
-                for result in results:
-                    if not result.name_available:
-                        return False
-                return True
+        tasks = [
+            storage_client.storage_accounts.check_name_availability({"name": name})
+            for name in names_to_check
+        ]
+        try:
+            # Enforce a 10-second timeout on the parallel Azure SDK calls to prevent hanging
+            results = await asyncio.wait_for(asyncio.gather(*tasks), timeout=10.0)
+            for result in results:
+                if not result.name_available:
+                    return False
+            return True
+        except asyncio.TimeoutError:
+            logger.warning("Storage name availability check timed out.")
+            return False
 
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
 
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
-        while not await self.is_workspace_storage_account_available(full_workspace_id):
-            full_workspace_id = str(uuid.uuid4())
+        attempts = 0
+        max_attempts = 5
+        async with credentials.get_credential_async_context() as credential:
+            async with StorageManagementClient(credential, config.SUBSCRIPTION_ID) as storage_client:
+                while not await self.is_workspace_storage_account_available(storage_client, full_workspace_id):
+                    attempts += 1
+                    if attempts >= max_attempts:
+                        # If we exceed the maximum attempts, raise a ValueError to prevent hitting App Gateway timeout
+                        raise ValueError("Unable to generate a unique storage account name after multiple attempts.")
+                    full_workspace_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
