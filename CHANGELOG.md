@@ -11,7 +11,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Fix API timeout and name collision failures on workspace creation by parallelizing async storage account check-name-availability calls. ([#49XX](https://github.com/microsoft/AzureTRE/pull/XXXX))
+* Fix API timeout and name collision failures on workspace creation by parallelizing async storage account check-name-availability calls. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
