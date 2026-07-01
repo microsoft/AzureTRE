@@ -4,6 +4,7 @@ import pytest
 import pytest_asyncio
 from mock import patch, MagicMock
 import uuid
+import asyncio
 
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
 from db.repositories.operations import OperationRepository
@@ -387,3 +388,47 @@ async def test_create_workspace_item_raises_value_error_after_max_attempts(mock_
 
     assert "Unable to generate a unique storage account name after multiple attempts." in str(exc_info.value)
     assert mock_is_workspace_storage_account_available.call_count == 5
+
+
+@pytest.mark.asyncio
+async def test_is_workspace_storage_account_available_when_check_times_out_and_retries_succeed():
+    workspace_id = "workspace1234"
+    mock_storage_client_instance = MagicMock()
+    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
+
+    mock_result_available = MagicMock(name_available=True)
+    # Fail first with a TimeoutError, then succeed on second attempt
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
+        asyncio.TimeoutError("Stall"),
+        mock_result_available,
+        mock_result_available,
+        mock_result_available,
+        mock_result_available,
+        mock_result_available,
+        mock_result_available
+    ]
+    workspace_repo = WorkspaceRepository()
+
+    result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
+
+    assert result is True
+    # The first name check (stgws1234) called it twice (one timeout, one success).
+    # The other 5 name checks succeeded on their first attempts.
+    # Total calls: 2 + 5 = 7.
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 7
+
+
+@pytest.mark.asyncio
+async def test_is_workspace_storage_account_available_when_check_times_out_completely():
+    workspace_id = "workspace1234"
+    mock_storage_client_instance = MagicMock()
+    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
+    # Timeout persistently on all attempts
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = asyncio.TimeoutError("Persistent stall")
+    workspace_repo = WorkspaceRepository()
+
+    with pytest.raises(asyncio.TimeoutError):
+        await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
+
+    # stgws1234 should be tried 3 times before giving up
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 3

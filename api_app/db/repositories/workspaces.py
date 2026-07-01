@@ -82,6 +82,39 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
+    _NAME_CHECK_TIMEOUT_SECONDS = 2.0
+    _NAME_CHECK_MAX_ATTEMPTS = 3
+
+    async def _check_name_availability_with_retry(self, storage_client: StorageManagementClient, name: str) -> bool:
+        """Return True if the storage account name is available.
+
+        Retries on TimeoutError only, since observed stalls are transient
+        connection glitches that succeed immediately on a fresh attempt.
+        """
+        last_exc: Exception | None = None
+        for attempt in range(1, self._NAME_CHECK_MAX_ATTEMPTS + 1):
+            try:
+                result = await asyncio.wait_for(
+                    storage_client.storage_accounts.check_name_availability({"name": name}),
+                    timeout=self._NAME_CHECK_TIMEOUT_SECONDS,
+                )
+                return result.name_available
+            except asyncio.TimeoutError as e:
+                last_exc = e
+                logger.warning(
+                    "Storage name availability check timed out for %s (attempt %d/%d)",
+                    name, attempt, self._NAME_CHECK_MAX_ATTEMPTS,
+                )
+            except Exception:
+                # Log the exception TYPE and traceback (str(TimeoutError) is empty,
+                # which previously produced blank log lines).
+                logger.exception("Storage name availability check failed for %s", name)
+                raise
+        # All attempts timed out
+        logger.error("Storage name availability check timed out for %s after %d attempts",
+                     name, self._NAME_CHECK_MAX_ATTEMPTS)
+        raise last_exc
+
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, storage_client: StorageManagementClient, workspace_id: str) -> bool:
         suffix = workspace_id[-4:]
@@ -95,19 +128,10 @@ class WorkspaceRepository(ResourceRepository):
         ]
 
         for name in names_to_check:
-            try:
-                # Use a 10-second timeout per call to prevent hanging
-                logger.info("Checking storage account name availability: %s", name)
-                result = await asyncio.wait_for(
-                    storage_client.storage_accounts.check_name_availability({"name": name}),
-                    timeout=10.0
-                )
-                if not result.name_available:
-                    logger.info("Storage account name is not available: %s", name)
-                    return False
-            except Exception as e:
-                logger.error("Storage name availability check failed for %s: %s", name, e)
-                raise
+            logger.info("Checking storage account name availability: %s", name)
+            if not await self._check_name_availability_with_retry(storage_client, name):
+                logger.info("Storage account name is not available: %s", name)
+                return False
         return True
 
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
