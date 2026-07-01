@@ -1,7 +1,8 @@
 import uuid
 from typing import List, Tuple
 import asyncio
-from azure.mgmt.storage.aio import StorageManagementClient
+from azure.mgmt.storage import StorageManagementClient
+from azure.core.exceptions import ServiceRequestError, HttpResponseError
 
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -82,36 +83,50 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    _NAME_CHECK_TIMEOUT_SECONDS = 2.0
+    _NAME_CHECK_TIMEOUT_SECONDS = 5.0
     _NAME_CHECK_MAX_ATTEMPTS = 3
+
+    def _check_name_availability_sync(self, storage_client: StorageManagementClient, name: str) -> bool:
+        result = storage_client.storage_accounts.check_name_availability({"name": name})
+        return result.name_available
 
     async def _check_name_availability_with_retry(self, storage_client: StorageManagementClient, name: str) -> bool:
         """Return True if the storage account name is available.
 
-        Retries on TimeoutError only, since observed stalls are transient
-        connection glitches that succeed immediately on a fresh attempt.
+        Retries on TimeoutError, ServiceRequestError, and transient Server Errors (5xx),
+        since observed stalls are transient connection glitches that succeed on a fresh attempt.
         """
         last_exc: Exception | None = None
         for attempt in range(1, self._NAME_CHECK_MAX_ATTEMPTS + 1):
             try:
+                # Use asyncio.to_thread to run the synchronous call in a separate thread,
+                # with a timeout wrapper.
                 result = await asyncio.wait_for(
-                    storage_client.storage_accounts.check_name_availability({"name": name}),
+                    asyncio.to_thread(self._check_name_availability_sync, storage_client, name),
                     timeout=self._NAME_CHECK_TIMEOUT_SECONDS,
                 )
-                return result.name_available
-            except asyncio.TimeoutError as e:
+                return result
+            except (asyncio.TimeoutError, ServiceRequestError) as e:
                 last_exc = e
                 logger.warning(
-                    "Storage name availability check timed out for %s (attempt %d/%d)",
-                    name, attempt, self._NAME_CHECK_MAX_ATTEMPTS,
+                    "Storage name availability check timed out or failed transiently for %s (attempt %d/%d): %s",
+                    name, attempt, self._NAME_CHECK_MAX_ATTEMPTS, type(e).__name__,
                 )
+            except HttpResponseError as e:
+                last_exc = e
+                if e.status_code in [500, 502, 503, 504]:
+                    logger.warning(
+                        "Storage name availability check received server error for %s (attempt %d/%d): %s",
+                        name, attempt, self._NAME_CHECK_MAX_ATTEMPTS, e,
+                    )
+                else:
+                    logger.exception("Storage name availability check failed for %s", name)
+                    raise
             except Exception:
-                # Log the exception TYPE and traceback (str(TimeoutError) is empty,
-                # which previously produced blank log lines).
                 logger.exception("Storage name availability check failed for %s", name)
                 raise
-        # All attempts timed out
-        logger.error("Storage name availability check timed out for %s after %d attempts",
+        # All attempts failed/timed out
+        logger.error("Storage name availability check persistently failed for %s after %d attempts",
                      name, self._NAME_CHECK_MAX_ATTEMPTS)
         raise last_exc
 
@@ -141,19 +156,18 @@ class WorkspaceRepository(ResourceRepository):
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
         attempts = 0
         max_attempts = 5
-        async with credentials.get_credential_async_context() as credential:
-            async with StorageManagementClient(
-                credential,
-                config.SUBSCRIPTION_ID,
-                base_url=config.RESOURCE_MANAGER_ENDPOINT,
-                credential_scopes=config.CREDENTIAL_SCOPES
-            ) as storage_client:
-                while not await self.is_workspace_storage_account_available(storage_client, full_workspace_id):
-                    attempts += 1
-                    if attempts >= max_attempts:
-                        # If we exceed the maximum attempts, raise a ValueError to prevent hitting App Gateway timeout
-                        raise ValueError("Unable to generate a unique storage account name after multiple attempts.")
-                    full_workspace_id = str(uuid.uuid4())
+        storage_client = StorageManagementClient(
+            credentials.get_credential(),
+            config.SUBSCRIPTION_ID,
+            base_url=config.RESOURCE_MANAGER_ENDPOINT,
+            credential_scopes=config.CREDENTIAL_SCOPES
+        )
+        while not await self.is_workspace_storage_account_available(storage_client, full_workspace_id):
+            attempts += 1
+            if attempts >= max_attempts:
+                # If we exceed the maximum attempts, raise a ValueError to prevent hitting App Gateway timeout
+                raise ValueError("Unable to generate a unique storage account name after multiple attempts.")
+            full_workspace_id = str(uuid.uuid4())
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
