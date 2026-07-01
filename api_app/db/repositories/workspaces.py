@@ -4,7 +4,6 @@ import asyncio
 import logging
 from azure.mgmt.storage.aio import StorageManagementClient
 
-logger = logging.getLogger(__name__)
 from pydantic import parse_obj_as
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
@@ -22,6 +21,8 @@ from models.domain.workspace import Workspace
 from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
 from services.cidr_service import generate_new_cidr, is_network_available
+
+logger = logging.getLogger(__name__)
 
 
 class WorkspaceRepository(ResourceRepository):

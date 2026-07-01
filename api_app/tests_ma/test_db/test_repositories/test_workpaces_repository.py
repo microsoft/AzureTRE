@@ -337,7 +337,7 @@ async def test_is_workspace_storage_account_available_when_name_not_available():
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
-    
+
     mock_result_available = MagicMock(name_available=True)
     mock_result_unavailable = MagicMock(name_available=False)
     mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
