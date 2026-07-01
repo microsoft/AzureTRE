@@ -334,6 +334,7 @@ async def test_is_workspace_storage_account_available_when_name_available():
 @pytest.mark.asyncio
 async def test_is_workspace_storage_account_available_when_name_not_available():
     workspace_id = "workspace1234"
+    suffix = workspace_id[-4:]
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
 
@@ -352,6 +353,9 @@ async def test_is_workspace_storage_account_available_when_name_not_available():
     result = await workspace_repo.is_workspace_storage_account_available(mock_storage_client_instance, workspace_id)
 
     assert result is False
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 6
+    for prefix in ["stgws", "stalimappws", "stalexintws", "stalexipws", "stalexrejws", "stalexblockedws"]:
+        mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"{prefix}{suffix}"})
 
 
 @pytest.mark.asyncio
