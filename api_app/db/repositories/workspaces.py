@@ -115,7 +115,6 @@ class WorkspaceRepository(ResourceRepository):
             except asyncio.TimeoutError:
                 raise TimeoutError("Unable to generate a unique storage account name after multiple attempts.")
 
-
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
         # allow for workspace template taking a single address_space or multiple address_spaces
