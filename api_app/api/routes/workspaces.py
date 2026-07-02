@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 
 from api.helpers import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
-from db.errors import InvalidInput, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied, StorageAccountNameGenerationTimeout
+from db.errors import InvalidInput, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -33,7 +33,7 @@ from services.authentication import get_current_admin_user, \
 from services.authentication import extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
-from azure.core.exceptions import HttpResponseError
+
 from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
@@ -109,7 +109,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     except StorageAccountNameGenerationTimeout:
         logger.exception("Storage name availability check timed out")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check timed out. Please try again.")
-    except HttpResponseError as e:
+    except StorageAccountNameCheckFailed as e:
         logger.exception("Storage name availability check failed")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check failed. Please try again.")
     except UserNotAuthorizedToUseTemplate as e:

@@ -12,7 +12,7 @@ from tests_ma.test_api.conftest import create_admin_user, create_test_user, crea
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
-from db.errors import EntityDoesNotExist, StorageAccountNameGenerationTimeout
+from db.errors import EntityDoesNotExist, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
@@ -507,8 +507,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
     @patch("api.routes.workspaces.extract_auth_information")
     async def test_post_workspaces_returns_503_if_storage_check_fails_with_http_error(self, _, mock_create_workspace_item, app, client, workspace_input):
-        from azure.core.exceptions import HttpResponseError
-        mock_create_workspace_item.side_effect = HttpResponseError("Some Azure API error message")
+        mock_create_workspace_item.side_effect = StorageAccountNameCheckFailed("Some Azure API error message")
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Storage name availability check failed. Please try again." in response.text
