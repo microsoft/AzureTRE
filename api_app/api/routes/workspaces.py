@@ -109,7 +109,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     except StorageAccountNameGenerationTimeout:
         logger.exception("Storage name availability check timed out")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check timed out. Please try again.")
-    except StorageAccountNameCheckFailed as e:
+    except StorageAccountNameCheckFailed:
         logger.exception("Storage name availability check failed")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check failed. Please try again.")
     except UserNotAuthorizedToUseTemplate as e:
