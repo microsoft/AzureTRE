@@ -502,7 +502,16 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     async def test_post_workspaces_returns_503_if_storage_check_times_out(self, _, __, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        assert "Storage name availability check timed out persistently" in response.text
+        assert "Storage name availability check timed out" in response.text
+
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_503_if_storage_check_fails_with_http_error(self, _, mock_create_workspace_item, app, client, workspace_input):
+        from azure.core.exceptions import HttpResponseError
+        mock_create_workspace_item.side_effect = HttpResponseError("Some Azure API error message")
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "Storage name availability check failed: Some Azure API error message" in response.text
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")

@@ -316,25 +316,29 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
 
 
 @pytest.mark.asyncio
-async def test_is_workspace_storage_account_available_when_name_available():
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
     workspace_id = "workspace1234"
     suffix = workspace_id[-4:]
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.storage_accounts.check_name_availability.return_value.name_available = True
     mock_storage_client_instance.close = AsyncMock()
+    mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
-    workspace_repo._create_storage_client = MagicMock(return_value=mock_storage_client_instance)
 
     result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
     assert result is True
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
-    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stgws{suffix}"})
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call(
+        {"name": f"stgws{suffix}", "type": "Microsoft.Storage/storageAccounts"}
+    )
 
 
 @pytest.mark.asyncio
-async def test_is_workspace_storage_account_available_when_name_not_available():
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
     workspace_id = "workspace1234"
     suffix = workspace_id[-4:]
     mock_storage_client_instance = MagicMock()
@@ -345,29 +349,31 @@ async def test_is_workspace_storage_account_available_when_name_not_available():
     mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
         mock_result_unavailable
     ]
+    mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
-    workspace_repo._create_storage_client = MagicMock(return_value=mock_storage_client_instance)
 
     result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
     assert result is False
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
-    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call({"name": f"stgws{suffix}"})
+    mock_storage_client_instance.storage_accounts.check_name_availability.assert_any_call(
+        {"name": f"stgws{suffix}", "type": "Microsoft.Storage/storageAccounts"}
+    )
 
 
 @pytest.mark.asyncio
-async def test_is_workspace_storage_account_available_when_check_raises_exception():
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_check_raises_exception(mock_storage_client):
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = Exception("ARM error")
     mock_storage_client_instance.close = AsyncMock()
+    mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
-    workspace_repo._create_storage_client = MagicMock(return_value=mock_storage_client_instance)
 
-    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
-
-    assert result is True
+    with pytest.raises(Exception):
+        await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
 
 @pytest.mark.asyncio
@@ -388,42 +394,17 @@ async def test_create_workspace_item_raises_value_error_after_max_attempts(mock_
 
 
 @pytest.mark.asyncio
-async def test_is_workspace_storage_account_available_when_check_times_out_and_retries_succeed():
+@patch('db.repositories.workspaces.StorageManagementClient')
+async def test_is_workspace_storage_account_available_when_check_times_out(mock_storage_client):
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.close = AsyncMock()
-
-    mock_result_available = MagicMock(name_available=True)
-    # Fail first with a TimeoutError, then succeed on second attempt
-    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
-        asyncio.TimeoutError("Stall"),
-        mock_result_available
-    ]
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = asyncio.TimeoutError("Stall")
+    mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
-    workspace_repo._create_storage_client = MagicMock(return_value=mock_storage_client_instance)
 
-    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
+    with pytest.raises(asyncio.TimeoutError):
+        await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
-    assert result is True
-    # The first name check (stgws1234) called it twice (one timeout, one success).
-    # Total calls: 2.
-    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 2
-
-
-@pytest.mark.asyncio
-async def test_is_workspace_storage_account_available_when_check_times_out_completely():
-    workspace_id = "workspace1234"
-    mock_storage_client_instance = MagicMock()
-    mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
-    mock_storage_client_instance.close = AsyncMock()
-    # Timeout persistently on all attempts
-    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = asyncio.TimeoutError("Persistent stall")
-    workspace_repo = WorkspaceRepository()
-    workspace_repo._create_storage_client = MagicMock(return_value=mock_storage_client_instance)
-
-    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
-
-    assert result is True
-    # stgws1234 should be tried 3 times before giving up
-    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 3
+    assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
