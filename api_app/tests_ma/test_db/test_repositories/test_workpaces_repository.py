@@ -395,7 +395,7 @@ async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_
     with pytest.raises(StorageAccountNameGenerationTimeout) as exc_info:
         await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
-    assert "Unable to generate a unique storage account name after multiple attempts." in str(exc_info.value)
+    assert "Unable to generate a unique storage account name within the timeout limit." in str(exc_info.value)
     mock_wait_for.assert_called_once()
 
 
