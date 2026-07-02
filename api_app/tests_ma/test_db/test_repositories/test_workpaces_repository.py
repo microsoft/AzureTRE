@@ -377,20 +377,26 @@ async def test_is_workspace_storage_account_available_when_check_raises_exceptio
 
 
 @pytest.mark.asyncio
+@patch('db.repositories.workspaces.asyncio.wait_for')
 @patch('db.repositories.workspaces.generate_new_cidr')
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-async def test_create_workspace_item_raises_value_error_after_max_attempts(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, mock_wait_for, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     mock_is_workspace_storage_account_available.return_value = False
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
-    with pytest.raises(ValueError) as exc_info:
+    async def mock_wait_for_se(coro, timeout=None):
+        coro.close()
+        raise asyncio.TimeoutError
+    mock_wait_for.side_effect = mock_wait_for_se
+
+    with pytest.raises(TimeoutError) as exc_info:
         await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
     assert "Unable to generate a unique storage account name after multiple attempts." in str(exc_info.value)
-    assert mock_is_workspace_storage_account_available.call_count == 5
+    mock_wait_for.assert_called_once()
 
 
 @pytest.mark.asyncio

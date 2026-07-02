@@ -82,8 +82,6 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return parse_obj_as(Workspace, workspaces[0])
 
-    _NAME_CHECK_TIMEOUT_SECONDS = 60.0
-
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, credential, workspace_id: str) -> bool:
         name = f"stgws{workspace_id[-4:]}"
@@ -95,11 +93,8 @@ class WorkspaceRepository(ResourceRepository):
         )
         try:
             logger.info("Checking storage account name availability: %s", name)
-            result = await asyncio.wait_for(
-                storage_client.storage_accounts.check_name_availability(
-                    {"name": name, "type": "Microsoft.Storage/storageAccounts"}
-                ),
-                timeout=self._NAME_CHECK_TIMEOUT_SECONDS,
+            result = await storage_client.storage_accounts.check_name_availability(
+                {"name": name, "type": "Microsoft.Storage/storageAccounts"}
             )
             return result.name_available
         finally:
@@ -110,15 +105,16 @@ class WorkspaceRepository(ResourceRepository):
         full_workspace_id = str(uuid.uuid4())
 
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
-        attempts = 0
-        max_attempts = 5
         async with credentials.get_credential_async_context() as credential:
-            while not await self.is_workspace_storage_account_available(credential, full_workspace_id):
-                attempts += 1
-                if attempts >= max_attempts:
-                    # If we exceed the maximum attempts, raise a ValueError to prevent hitting App Gateway timeout
-                    raise ValueError("Unable to generate a unique storage account name after multiple attempts.")
-                full_workspace_id = str(uuid.uuid4())
+            async def name_check():
+                nonlocal full_workspace_id
+                while not await self.is_workspace_storage_account_available(credential, full_workspace_id):
+                    full_workspace_id = str(uuid.uuid4())
+            try:
+                await asyncio.wait_for(name_check(), timeout=45.0)
+            except asyncio.TimeoutError:
+                raise TimeoutError("Unable to generate a unique storage account name after multiple attempts.")
+
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
