@@ -12,7 +12,7 @@ from tests_ma.test_api.conftest import create_admin_user, create_test_user, crea
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, StorageAccountNameGenerationTimeout
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
@@ -497,7 +497,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", side_effect=TimeoutError("Storage availability check timed out"))
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", side_effect=StorageAccountNameGenerationTimeout("Storage availability check timed out"))
     @patch("api.routes.workspaces.extract_auth_information")
     async def test_post_workspaces_returns_503_if_storage_check_times_out(self, _, __, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)

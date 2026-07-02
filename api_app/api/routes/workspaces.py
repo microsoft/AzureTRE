@@ -7,7 +7,7 @@ from jsonschema.exceptions import ValidationError
 
 from api.helpers import get_repository
 from api.dependencies.workspaces import get_operation_by_id_from_path, get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path, get_deployed_workspace_service_by_id_from_path, get_workspace_service_by_id_from_path, get_user_resource_by_id_from_path
-from db.errors import InvalidInput, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied
+from db.errors import InvalidInput, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, UserNotAuthorizedToUseTemplate, VersionDowngradeDenied, StorageAccountNameGenerationTimeout
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -106,7 +106,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except TimeoutError:
+    except StorageAccountNameGenerationTimeout:
         logger.exception("Storage name availability check timed out")
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check timed out. Please try again.")
     except HttpResponseError as e:

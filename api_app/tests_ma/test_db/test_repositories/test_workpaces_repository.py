@@ -6,7 +6,7 @@ from mock import patch, MagicMock
 import uuid
 import asyncio
 
-from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
+from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout
 from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.operation import Status
@@ -372,7 +372,7 @@ async def test_is_workspace_storage_account_available_when_check_raises_exceptio
     mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
 
-    with pytest.raises(Exception):
+    with pytest.raises(Exception, match="ARM error"):
         await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
 
@@ -392,7 +392,7 @@ async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_
         raise asyncio.TimeoutError
     mock_wait_for.side_effect = mock_wait_for_se
 
-    with pytest.raises(TimeoutError) as exc_info:
+    with pytest.raises(StorageAccountNameGenerationTimeout) as exc_info:
         await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
     assert "Unable to generate a unique storage account name after multiple attempts." in str(exc_info.value)

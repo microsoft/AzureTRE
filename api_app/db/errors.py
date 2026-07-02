@@ -36,3 +36,7 @@ class TargetTemplateVersionDoesNotExist(Exception):
 
 class VersionDowngradeDenied(Exception):
     """Raised when user attempts to downgrade a resource to a lower version."""
+
+
+class StorageAccountNameGenerationTimeout(Exception):
+    """Raised when we cannot generate a unique storage account name within the timeout limit."""

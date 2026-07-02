@@ -10,7 +10,7 @@ from models.domain.authentication import User
 
 import resources.strings as strings
 from core import config, credentials
-from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
+from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import Status
@@ -113,7 +113,7 @@ class WorkspaceRepository(ResourceRepository):
             try:
                 await asyncio.wait_for(name_check(), timeout=45.0)
             except asyncio.TimeoutError:
-                raise TimeoutError("Unable to generate a unique storage account name after multiple attempts.")
+                raise StorageAccountNameGenerationTimeout("Unable to generate a unique storage account name after multiple attempts.")
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
