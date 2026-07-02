@@ -116,7 +116,7 @@ class WorkspaceRepository(ResourceRepository):
             except asyncio.TimeoutError:
                 raise StorageAccountNameGenerationTimeout("Unable to generate a unique storage account name after multiple attempts.")
             except HttpResponseError as e:
-                raise StorageAccountNameCheckFailed(f"Storage name availability check failed: {e}")
+                raise StorageAccountNameCheckFailed("Storage name availability check failed.") from e
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 
