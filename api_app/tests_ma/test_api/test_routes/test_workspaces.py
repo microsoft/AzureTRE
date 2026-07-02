@@ -511,7 +511,7 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         mock_create_workspace_item.side_effect = HttpResponseError("Some Azure API error message")
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        assert "Storage name availability check failed: Some Azure API error message" in response.text
+        assert "Storage name availability check failed. Please try again." in response.text
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
