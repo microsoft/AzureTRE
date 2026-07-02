@@ -31,6 +31,13 @@ if [ -n "$ACR_NAME" ]; then
       exit 1
     fi
     echo "Successfully logged in to ACR"
+    # Verify the image is present in ACR before attempting docker pull
+    echo "Verifying image $NEXUS_IMAGE is present in ACR..."
+    if ! docker manifest inspect "$NEXUS_IMAGE" > /dev/null 2>&1; then
+      echo "ERROR - Image $NEXUS_IMAGE is missing from ACR ${ACR_NAME}. Ensure the bundle was published with the correct image tag."
+      exit 1
+    fi
+    echo "Image $NEXUS_IMAGE verified in ACR"
   fi
 else
   NEXUS_IMAGE="sonatype/nexus3:${NEXUS_IMAGE_TAG}"
