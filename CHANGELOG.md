@@ -1,9 +1,20 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+**BREAKING CHANGES**
+* Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ENHANCEMENTS:
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
+* Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
+* Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
+* Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
+* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
+
+BUG FIXES:
+* Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
+* Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
 
 BUG FIXES:
 * Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))

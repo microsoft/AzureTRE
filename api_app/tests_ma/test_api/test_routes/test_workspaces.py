@@ -12,7 +12,7 @@ from tests_ma.test_api.conftest import create_admin_user, create_test_user, crea
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
-from db.errors import EntityDoesNotExist
+from db.errors import EntityDoesNotExist, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
@@ -218,8 +218,9 @@ def sample_resource_template() -> ResourceTemplate:
                                     'title': 'Windows image',
                                     'description': 'Select Windows image to use for VM',
                                     'enum': [
-                                        'Windows 10',
-                                        'Server 2019 Data Science VM'
+                                        'Windows 11',
+                                        'Server 2019 Data Science VM',
+                                        'Server 2022 Data Science VM'
                                     ],
                                     'updateable': False
                                 },
@@ -495,6 +496,21 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     async def test_post_workspaces_returns_400_if_template_does_not_exist(self, _, app, client, workspace_input):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item", side_effect=StorageAccountNameGenerationTimeout("Storage availability check timed out"))
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_503_if_storage_check_times_out(self, _, __, app, client, workspace_input):
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "Storage name availability check timed out" in response.text
+
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_503_if_storage_check_fails_with_http_error(self, _, mock_create_workspace_item, app, client, workspace_input):
+        mock_create_workspace_item.side_effect = StorageAccountNameCheckFailed("Some Azure API error message")
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert "Storage name availability check failed. Please try again." in response.text
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
