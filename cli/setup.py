@@ -46,7 +46,7 @@ setup(
         "jmespath==1.0.1",
         "tabulate==0.9.0",
         "pygments==2.19.2",
-        "PyJWT==2.10.1",
+        "PyJWT==2.12.0",
         "azure-cli-core==2.68.0",
         "azure-identity==1.25.1",
         "aiohttp==3.13.3"
