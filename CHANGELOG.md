@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* Users with custom templates should update their `template_schema.json` to set `uiSchema.overview` widget to `textarea` to ensure a consistent UI experience as per ([#4860](https://github.com/microsoft/AzureTRE/pull/4860)).
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ENHANCEMENTS:
@@ -11,6 +12,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
+* Fix uiSchema.overview params overwritten by ui ([#4861](https://github.com/microsoft/AzureTRE/issues/4861))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 

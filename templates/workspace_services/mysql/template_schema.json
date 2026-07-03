@@ -35,5 +35,10 @@
       "description": "Database name",
       "default": "tredb"
     }
+  },
+  "uiSchema": {
+    "overview": {
+      "ui:widget": "textarea"
+    }
   }
 }
