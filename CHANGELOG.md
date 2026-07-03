@@ -13,6 +13,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Fix uiSchema.overview params overwritten by ui ([#4861](https://github.com/microsoft/AzureTRE/issues/4861))
+* Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 
 ## (0.28.0) (March 2, 2026)
