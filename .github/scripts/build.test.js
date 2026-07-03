@@ -125,6 +125,27 @@ describe('getCommandFromComment', () => {
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
         });
 
+        test(`should set skipDeployment to 'true' when skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test skip_deployment',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
+        });
+
+        test(`should set skipDeployment to 'false' by default`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('false');
+        });
+
         test(`should set nonDocsChanges to 'true'`, async () => {
           const context = createCommentContext({
             username: 'admin',
@@ -331,6 +352,20 @@ describe('getCommandFromComment', () => {
         });
       })
 
+      describe(`for '/test 2345678 skip_deployment' for external PR`, () => {
+        test(`should set command to 'run-tests' and skipDeployment to 'true'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test 2345678 skip_deployment',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
+        });
+      })
+
       describe(`for '/test  2345678' for external PR (i.e. with latest commit SHA specified but extra space after test)`, () => {
         test(`should set command to 'run-tests'`, async () => {
           const context = createCommentContext({
@@ -368,6 +403,16 @@ describe('getCommandFromComment', () => {
           });
           await getCommandFromComment({ core, context, github });
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+        });
+
+        test(`should set skipDeployment to 'true' when skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
         });
 
         test(`should add comment with run link`, async () => {
