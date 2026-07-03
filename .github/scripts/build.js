@@ -175,7 +175,7 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
       return false;
     }
     if (!pr.headSha.startsWith(commentSha)) {
-      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
+      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`${command}\``;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }

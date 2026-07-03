@@ -536,7 +536,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /The specified SHA `00000000` is not the latest commit on the PR. Please validate the latest commit and re-run `\/test`/,
+            bodyMatcher: /The specified SHA `00000000` is not the latest commit on the PR. Please validate the latest commit and re-run `\/test-extended`/,
           });
         });
       })

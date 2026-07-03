@@ -30,7 +30,7 @@ jobs:
       prRef: ${{ steps.check_command.outputs.prRef }}
       prHeadSha: ${{ steps.check_command.outputs.prHeadSha }}
       prRefId: ${{ steps.check_command.outputs.prRefId }}
-      branchRefId: ${{ steps.check_command.outputs.branchRefid }}
+      branchRefId: ${{ steps.check_command.outputs.branchRefId }}
       ciGitRef: ${{ steps.check_command.outputs.ciGitRef }}
       skipDeployment: ${{ steps.check_command.outputs.skipDeployment }}
     steps:
@@ -57,7 +57,7 @@ jobs:
           echo "prHeadSha   : ${{ steps.check_command.outputs.prHeadSha }}"
           echo "prRefId     : ${{ steps.check_command.outputs.prRefId }}"
           echo "ciGitRef    : ${{ steps.check_command.outputs.ciGitRef }}"
-          echo "branchRefId : ${{ steps.check_command.outputs.prRefId }}"
+          echo "branchRefId : ${{ steps.check_command.outputs.branchRefId }}"
           echo "skipDeploy  : ${{ steps.check_command.outputs.skipDeployment }}"
 
       # If we don't run the actual deploy (see the run_test job below) we won't receive a check-run status,
