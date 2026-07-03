@@ -23,6 +23,13 @@
         "S1"
       ]
     },
+    "enable_backup": {
+      "type": "boolean",
+      "title": "Enable Backup",
+      "description": "Enable backups for the workspace, including VMs and shared storage.",
+      "default": true,
+      "updateable": true
+    },
     "address_space_size": {
       "type": "string",
       "title": "Address space size",
@@ -172,6 +179,7 @@
       "description",
       "overview",
       "app_service_plan_sku",
+      "enable_backup",
       "address_space_size",
       "address_spaces",
       "auth_type",
