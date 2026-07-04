@@ -30,7 +30,8 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
 
     if stderr:
         stderr_text = stderr.decode()
-        shell_output_logger(stderr_text, '[stderr]', logging.WARN)
+        stderr_log_level = logging.WARN if log_error else logging.DEBUG
+        shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
 
     if proc.returncode != 0:
         if log_error:

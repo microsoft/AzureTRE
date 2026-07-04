@@ -194,6 +194,33 @@ async def test_invoke_porter_action_failure(mock_service_bus_message_generator, 
 
 
 @pytest.mark.asyncio
+@patch("vmss_porter.runner._cleanup_param_set", side_effect=RuntimeError("cleanup failed"))
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], "/tmp/params.json", "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
+@patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
+async def test_invoke_porter_action_cleanup_error_is_non_blocking(
+    mock_service_bus_message_generator,
+    mock_run_porter,
+    mock_build_porter_command,
+    mock_cleanup_param_set,
+    mock_service_bus_client
+):
+    """Cleanup exceptions should not mask porter command failure handling."""
+    mock_sb_client = AsyncMock(spec=ServiceBusClient)
+    mock_sb_sender = AsyncMock()
+    mock_sb_client.get_queue_sender.return_value = mock_sb_sender
+
+    config = {"deployment_status_queue": "test_queue"}
+    msg_body = {"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"}
+
+    result = await invoke_porter_action(msg_body, mock_sb_client, config)
+
+    assert result is False
+    mock_cleanup_param_set.assert_awaited_once()
+    mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")

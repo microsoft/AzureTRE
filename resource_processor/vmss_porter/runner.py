@@ -205,7 +205,10 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
         returncode, _, err = await run_porter(porter_command, config)
     finally:
         if param_set_file or installation_file:
-            await _cleanup_param_set(param_set_name, param_set_file, installation_file, config)
+            try:
+                await _cleanup_param_set(param_set_name, param_set_file, installation_file, config)
+            except Exception as e:
+                logger.debug(f"Best-effort cleanup failed for '{installation_id}': {e}")
     logger.debug("Finished running porter execution command.")
 
     action_completed_without_error = False

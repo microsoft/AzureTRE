@@ -1,6 +1,7 @@
 import json
 import asyncio
 import os
+import logging
 import pytest
 from unittest.mock import patch, AsyncMock
 from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value
@@ -343,6 +344,27 @@ async def test_run_command_helper_error():
         assert returncode == 1
         assert stdout is None
         assert stderr == "error output"
+
+
+@pytest.mark.asyncio
+@patch("helpers.commands.shell_output_logger")
+async def test_run_command_helper_error_best_effort_logs_debug(mock_shell_output_logger):
+    """Best-effort failures should reduce stderr logging severity to debug."""
+    config = {"porter_env": {}}
+    cmd_parts = ["command_that_fails"]
+
+    with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_subprocess:
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"", b"error output")
+        mock_proc.returncode = 1
+        mock_subprocess.return_value = mock_proc
+
+        returncode, stdout, stderr = await run_command_helper(cmd_parts, config, "Best-effort command", log_error=False)
+
+        assert returncode == 1
+        assert stdout is None
+        assert stderr == "error output"
+        mock_shell_output_logger.assert_called_once_with("error output", "[stderr]", logging.DEBUG)
 
 
 @pytest.mark.asyncio

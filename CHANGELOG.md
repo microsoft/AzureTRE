@@ -15,7 +15,7 @@ BUG FIXES:
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
-* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides. Parameter set cleanup is best-effort and no longer logs errors when the set was never applied ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
+* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides. Parameter set cleanup is best-effort, no longer logs warnings/errors when the set was never applied, and cleanup failures no longer mask deployment status handling ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
@@ -1712,4 +1712,3 @@ FEATURES:
 * Centrally manage the firewall share service state to enable other services to ask for rule changes
 
 Many more enhancements are listed on the [release page](https://github.com/microsoft/AzureTRE/releases/tag/v0.4)
-
