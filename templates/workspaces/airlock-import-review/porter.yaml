@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 1.5.0
+version: 1.6.0
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -123,6 +123,10 @@ parameters:
     type: boolean
     default: true
     description: "Enable backups for the workspace, including VMs and shared storage."
+  - name: enable_legacy_airlock
+    type: boolean
+    default: true
+    description: "Provision connectivity to the legacy (v1) stalimip import-in-progress storage account. Should match the core enable_legacy_airlock setting."
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -215,6 +219,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_legacy_airlock: ${ bundle.parameters.enable_legacy_airlock }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
@@ -265,6 +270,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_legacy_airlock: ${ bundle.parameters.enable_legacy_airlock }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
@@ -338,6 +344,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_backup: ${ bundle.parameters.enable_backup }
+        enable_legacy_airlock: ${ bundle.parameters.enable_legacy_airlock }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }

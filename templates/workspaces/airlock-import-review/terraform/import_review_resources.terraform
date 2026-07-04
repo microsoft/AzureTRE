@@ -4,6 +4,14 @@
 locals {
   core_resource_group_name  = "rg-${var.tre_id}"
   airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
+  # Legacy (v1) STorage AirLock IMport InProgress account
+  import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
+}
+
+variable "enable_legacy_airlock" {
+  type        = bool
+  default     = true
+  description = "Provision connectivity to the legacy (v1) stalimip import-in-progress storage account so reviewers can access data for airlock_version=1 requests. Should match the core enable_legacy_airlock setting."
 }
 
 module "terraform_azurerm_environment_configuration" {
@@ -101,3 +109,70 @@ resource "azurerm_role_assignment" "review_workspace_import_access" {
   depends_on = [azurerm_private_endpoint.sa_airlock_core_pe]
 }
 
+
+# ---------------------------------------------------------------------------------------------
+# Legacy (v1) airlock support.
+# When enable_legacy_airlock is true, in-review data for airlock_version=1 import requests
+# still lives in the per-stage stalimip{tre_id} account. Provision the network connectivity
+# (private endpoint + private DNS) so review VMs can reach it, mirroring the pre-consolidation
+# behaviour. Reviewers access the data via per-request SAS tokens.
+# ---------------------------------------------------------------------------------------------
+
+data "azurerm_storage_account" "sa_import_inprogress" {
+  count               = var.enable_legacy_airlock ? 1 : 0
+  provider            = azurerm.core
+  name                = local.import_in_progress_storage_name
+  resource_group_name = local.core_resource_group_name
+}
+
+resource "azurerm_private_endpoint" "sa_import_inprogress_pe" {
+  count               = var.enable_legacy_airlock ? 1 : 0
+  name                = "stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.ws.name
+  subnet_id           = module.network.services_subnet_id
+
+  lifecycle { ignore_changes = [tags] }
+
+  private_service_connection {
+    name                           = "psc-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+    private_connection_resource_id = data.azurerm_storage_account.sa_import_inprogress[0].id
+    is_manual_connection           = false
+    subresource_names              = ["Blob"]
+  }
+
+  tags = local.tre_workspace_tags
+}
+
+resource "azurerm_private_dns_zone" "stg_import_inprogress_blob" {
+  count               = var.enable_legacy_airlock ? 1 : 0
+  name                = "${data.azurerm_storage_account.sa_import_inprogress[0].name}.${module.terraform_azurerm_environment_configuration.private_links["privatelink.blob.core.windows.net"]}"
+  resource_group_name = azurerm_resource_group.ws.name
+
+  tags = local.tre_workspace_tags
+
+  depends_on = [azurerm_private_endpoint.sa_import_inprogress_pe]
+}
+
+resource "azurerm_private_dns_a_record" "stg_import_inprogress_blob" {
+  count               = var.enable_legacy_airlock ? 1 : 0
+  name                = "@" # Root record
+  zone_name           = azurerm_private_dns_zone.stg_import_inprogress_blob[0].name
+  resource_group_name = azurerm_resource_group.ws.name
+  ttl                 = 300
+  records             = [azurerm_private_endpoint.sa_import_inprogress_pe[0].private_service_connection[0].private_ip_address]
+
+  tags = local.tre_workspace_tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "stg_import_inprogress_blob" {
+  count                 = var.enable_legacy_airlock ? 1 : 0
+  name                  = "vnl-stg-ip-import-blob-${local.workspace_resource_name_suffix}"
+  resource_group_name   = azurerm_resource_group.ws.name
+  private_dns_zone_name = azurerm_private_dns_zone.stg_import_inprogress_blob[0].name
+  virtual_network_id    = module.network.vnet_id
+
+  tags = local.tre_workspace_tags
+
+  depends_on = [azurerm_private_dns_a_record.stg_import_inprogress_blob]
+}

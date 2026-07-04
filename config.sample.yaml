@@ -38,6 +38,8 @@ tre:
   enable_swagger: true
   enable_airlock_malware_scanning: true
   # Set to true to deploy v1 legacy per-stage airlock storage accounts (required for workspaces using airlock_version=1)
+  # WARNING: setting this to false deletes the legacy storage accounts. Only disable once no workspaces are on
+  # airlock_version=1 and no v1 requests are in-flight. See docs/azure-tre-overview/airlock-legacy.md.
   enable_legacy_airlock: true
 
   # Set to true if want to ensure users have an email address before airlock request is created

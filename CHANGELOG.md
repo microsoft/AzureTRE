@@ -16,6 +16,10 @@ BUG FIXES:
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
+* Fix legacy (v1) airlock import submit copying to the wrong in-progress storage account; it now always targets `stalimip{tre_id}`. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
+* Make v2 airlock cross-account copies emit their own completion signal (synchronous copy) instead of relying on the racy `BlobCreatedTrigger` event, preventing approvals from hanging in `approval_in_progress`. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
+* Restore review VM access to legacy (v1) import-in-progress data (`stalimip{tre_id}`) in the airlock-import-review workspace when `enable_legacy_airlock` is enabled. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
+* Document an operational guardrail against disabling `enable_legacy_airlock` while `airlock_version=1` workspaces or in-flight v1 requests still exist. ([#4853](https://github.com/microsoft/AzureTRE/pull/4853))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

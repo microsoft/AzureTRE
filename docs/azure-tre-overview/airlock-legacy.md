@@ -115,5 +115,15 @@ To upgrade a workspace from the legacy architecture:
 4. New airlock requests will use the consolidated storage accounts. In-flight requests on the legacy path will continue to completion on the legacy accounts (the version is stamped on each request at creation time).
 5. Once all workspaces are migrated and no legacy requests are in-flight, set `enable_legacy_airlock: false` in `config.yaml` and redeploy core to remove the legacy storage accounts.
 
+!!! warning "Guardrail: do not disable `enable_legacy_airlock` prematurely"
+    Setting `enable_legacy_airlock: false` **permanently deletes** the legacy per-stage storage accounts (`stalimex`, `stalimip`, `stalimrej`, `stalimblocked`, `stalexapp`). Any workspace still on `airlock_version=1`, and any in-flight `airlock_version=1` request, depends on these accounts. Disabling the toggle while they exist causes those requests to fail and their data to be lost.
+
+    Before disabling, verify that it is safe:
+
+    1. **No workspaces remain on v1.** Confirm every workspace reports `airlock_version=2` (check the workspace properties via the API/UI). Any workspace without an explicit `airlock_version=2` defaults to `1`.
+    2. **No in-flight v1 requests remain.** Confirm there are no airlock requests with `airlock_version=1` in a non-terminal state (`draft`, `submitted`, `in_review`, `approval_in_progress`, `rejection_in_progress`, `blocking_in_progress`). Only requests in a terminal state (`approved`, `rejected`, `cancelled`, `blocked_by_scan`, `failed`) are safe.
+
+    Only proceed with `enable_legacy_airlock: false` once both checks pass. If in doubt, leave it enabled — the legacy accounts are empty and inexpensive once all traffic has moved to v2.
+
 !!! note
     In-flight airlock requests are safe during upgrade. Each request has `airlock_version` stamped at creation time, so upgrading a workspace does not affect requests that are already in progress.

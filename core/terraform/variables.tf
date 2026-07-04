@@ -177,7 +177,7 @@ variable "enable_airlock_malware_scanning" {
 variable "enable_legacy_airlock" {
   type        = bool
   default     = true
-  description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1."
+  description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1. WARNING: setting this to false deletes the legacy storage accounts - only disable once no workspaces are on airlock_version=1 and no v1 requests are in-flight (see docs/azure-tre-overview/airlock-legacy.md)."
 }
 
 variable "enable_airlock_email_check" {
