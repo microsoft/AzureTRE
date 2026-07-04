@@ -102,7 +102,7 @@ class AirlockRequestRepository(BaseRepository):
         allowed_transitions = valid_transitions.get(current_status, set())
         return new_status in allowed_transitions
 
-    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user) -> AirlockRequest:
+    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user, airlock_version: int = 1) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
@@ -118,7 +118,8 @@ class AirlockRequestRepository(BaseRepository):
             updatedBy=user,
             updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
-            reviews=[]
+            reviews=[],
+            airlock_version=airlock_version
         )
 
         return airlock_request

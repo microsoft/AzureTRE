@@ -6,6 +6,12 @@ locals {
   app_path_map_name           = "upm-application"
   redirect_path_map_name      = "upm-redirect"
 
+  # Airlock core storage backend (only core storage needs public App Gateway access)
+  # Workspace storage is accessed internally via private endpoints
+  airlock_core_backend_pool_name = "beap-airlock-core"
+  airlock_core_http_setting_name = "be-htst-airlock-core"
+  airlock_core_probe_name        = "hp-airlock-core"
+
   insecure_frontend_port_name = "feport-insecure"
   secure_frontend_port_name   = "feport-secure"
 
