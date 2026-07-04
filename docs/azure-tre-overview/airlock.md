@@ -158,12 +158,12 @@ For any airlock process, there is data movement either **into** a TRE workspace 
 
 **Metadata-based stage management** means most transitions are near-instantaneous metadata updates. Data is only physically copied when it crosses the core/workspace boundary:
 
-- **Import approved**: Core storage → Workspace storage (1 async copy per import)
-- **Export approved**: Workspace storage → Core storage (1 async copy per export)
+- **Import approved**: Core storage → Workspace storage (1 server-side copy per import)
+- **Export approved**: Workspace storage → Core storage (1 server-side copy per export)
 
 All other transitions — draft→submitted, submitted→in-review, in-review→rejected/blocked — update metadata only with no data movement.
 
-Cross-account copies are **asynchronous**: the processor initiates the copy and returns. When the blob appears at the destination, a BlobCreated event fires and the BlobCreatedTrigger reads container metadata to emit the appropriate StepResult. This matches the original airlock design where "in-progress" states represent ongoing data movement operations, supporting large data transfers gracefully.
+Cross-account copies are performed **synchronously** by the `StatusChangedQueueTrigger`: it initiates the server-side copy, waits (polls) for it to complete, then emits the `StepResult` (and a data-deletion event for the source container) directly. This avoids relying on a `BlobCreated` EventGrid event to signal completion — such events can fire on empty-container/metadata writes before the copy finishes, and the default-deny workspace-global account can block the metadata reads needed to interpret them, which could otherwise leave requests stuck in `approval_in_progress`.
 
 ### Import Data Flow
 
@@ -374,12 +374,12 @@ The TRE API exposes the following airlock endpoints:
 
 The **Airlock Processor** is a set of Azure Functions that handle the events created throughout the airlock process:
 
-- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly. For cross-account transitions (approval), it initiates an async server-side copy and returns — the copy completion is handled by the BlobCreatedTrigger.
-- **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). For cross-account copies, this signals that the copy has completed and emits a StepResult event to advance the request to its final state (e.g., approved, rejected, blocked).
+- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly. For cross-account transitions (approval), it performs a synchronous server-side copy (waiting for completion) and then emits the StepResult and source data-deletion events itself.
+- **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). It handles the legacy (v1) per-stage flow. For v2 consolidated accounts these events are ignored, because completion is signalled synchronously by the StatusChangedQueueTrigger.
 - **ScanResultTrigger** — Consumes malware scan results from Microsoft Defender for Storage. If threats are found, emits a StepResult to block the request. If clean, emits a StepResult to advance to in-review.
 - **DataDeletionTrigger** — Cleans up source containers after data has been copied to the destination.
 
-This event-driven design ensures that long-running data copies (which may take minutes for large files) are handled asynchronously, matching the original airlock architecture's use of "in-progress" states to represent ongoing operations.
+This event-driven design keeps stage transitions responsive: same-account transitions are metadata-only, while the less frequent cross-account approval copies are performed and confirmed synchronously by the StatusChangedQueueTrigger before the request advances to its final state.
 
 ## Airlock Flow
 
@@ -439,20 +439,18 @@ sequenceDiagram
     AP->>DB: Update status → in-review
     AP->>EG: NotificationEvent (to reviewer)
 
-    Note over R,DB: Approval (Async Copy)
+    Note over R,DB: Approval (Synchronous Copy)
     R->>API: POST /requests/{id}/review (approve)
     API->>DB: Update status → approval_in_progress
     API->>EG: StatusChangedEvent(approval_in_progress)
     EG->>SB: Queue status change
     SB->>AP: StatusChangedQueueTrigger
     AP->>WS: Create container with metadata stage=import-approved
-    AP->>WS: Start async copy from Core → Workspace storage
-    Note over AP,WS: Copy runs asynchronously in Azure Storage
-    WS-->>EG: BlobCreated event (copy complete)
-    EG->>SB: Queue blob created
-    SB->>AP: BlobCreatedTrigger reads container metadata
+    AP->>WS: Server-side copy from Core → Workspace storage
+    Note over AP,WS: Trigger waits (polls) for copy to complete
     AP->>EG: StepResult(approved)
     AP->>DB: Update status → approved
+    AP->>EG: DataDeletion event (source container)
     AP->>EG: NotificationEvent (to researcher)
 ```
 
