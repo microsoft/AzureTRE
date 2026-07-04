@@ -139,16 +139,42 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             else:
                 # Different storage account (e.g., core → workspace on import approval,
                 # workspace → core on export approval) - need to copy.
-                # BlobCreatedTrigger will fire when the copy completes and emit the StepResult,
-                # matching the v1 async pattern for large data transfers.
+                # Unlike v1, we do NOT rely on a BlobCreated EventGrid event to signal completion:
+                # the destination container is created empty first (which could raise its own event),
+                # the workspace-global account is default-deny (so metadata reads from EventGrid
+                # handling may be blocked), and start_copy_from_url is asynchronous. Instead we wait
+                # for the copy to finish here and emit the StepResult (and source deletion) directly.
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
                 create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
-                blob_operations.copy_data(source_account, dest_account, req_id)
+                copied_from_url = blob_operations.copy_data(source_account, dest_account, req_id, wait_for_completion=True)
+
+                step_result = airlock_storage_helper.get_step_result_for_stage(new_stage)
+                if step_result is None:
+                    raise Exception(f"Request {req_id}: no StepResult mapping for stage '{new_stage}'")
+                completed_step, final_status = step_result
+                logging.info(f'Request {req_id}: Copy completed, emitting StepResult {completed_step} -> {final_status}')
+                stepResultEvent.set(
+                    func.EventGridOutputEvent(
+                        id=str(uuid.uuid4()),
+                        data={"completed_step": completed_step, "new_status": final_status, "request_id": req_id},
+                        subject=req_id,
+                        event_type="Airlock.StepResult",
+                        event_time=datetime.datetime.now(datetime.UTC),
+                        data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+
+                # Signal that the source container can now be deleted.
+                dataDeletionEvent.set(
+                    func.EventGridOutputEvent(
+                        id=str(uuid.uuid4()),
+                        data={"blob_to_delete": copied_from_url},
+                        subject=req_id,
+                        event_type="Airlock.DataDeletion",
+                        event_time=datetime.datetime.now(datetime.UTC),
+                        data_version=constants.DATA_DELETION_EVENT_DATA_VERSION))
         else:
             # Legacy mode: Copy data between storage accounts
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
-            review_ws_id = request_properties.review_workspace_id
-            containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, short_workspace_id=ws_id, review_workspace_id=review_ws_id)
+            containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, short_workspace_id=ws_id)
             blob_operations.create_container(containers_metadata.dest_account_name, req_id)
             blob_operations.copy_data(containers_metadata.source_account_name,
                                       containers_metadata.dest_account_name, req_id)
@@ -181,7 +207,7 @@ def is_require_data_copy(new_status: str):
     return False
 
 
-def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None) -> ContainersCopyMetadata:
+def get_source_dest_for_copy(new_status: str, previous_status: str, request_type: str, short_workspace_id: str) -> ContainersCopyMetadata:
     # sanity
     if is_require_data_copy(new_status) is False:
         raise Exception("Given new status is not supported")
@@ -194,7 +220,7 @@ def get_source_dest_for_copy(new_status: str, previous_status: str, request_type
         raise Exception(msg)
 
     source_account_name = get_storage_account(previous_status, request_type, short_workspace_id)
-    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, short_workspace_id, review_workspace_id=review_workspace_id)
+    dest_account_name = get_storage_account_destination_for_copy(new_status, request_type, short_workspace_id)
     return ContainersCopyMetadata(source_account_name, dest_account_name)
 
 
@@ -230,14 +256,14 @@ def get_storage_account(status: str, request_type: str, short_workspace_id: str)
     raise Exception(error_message)
 
 
-def get_storage_account_destination_for_copy(new_status: str, request_type: str, short_workspace_id: str, review_workspace_id: str = None) -> str:
+def get_storage_account_destination_for_copy(new_status: str, request_type: str, short_workspace_id: str) -> str:
     tre_id = _get_tre_id()
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            # Import submit: copy to review workspace storage, or tre_id for legacy compatibility
-            dest_id = review_workspace_id if review_workspace_id else tre_id
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + dest_id
+            # Legacy (v1) import submit always copies to the single in-progress account (stalimip{tre_id}).
+            # This is the only in-progress import account provisioned by core Terraform for v1.
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:

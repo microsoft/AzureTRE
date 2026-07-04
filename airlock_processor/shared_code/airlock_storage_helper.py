@@ -2,6 +2,23 @@ import os
 from shared_code import constants
 
 
+# Mapping from v2 container metadata stage to (completed_step, new_status).
+# Used to emit the correct Airlock.StepResult once a cross-account copy completes.
+V2_STAGE_COMPLETION_MAP = {
+    constants.STAGE_IMPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
+    constants.STAGE_IMPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
+    constants.STAGE_IMPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
+    constants.STAGE_EXPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
+    constants.STAGE_EXPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
+    constants.STAGE_EXPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
+}
+
+
+def get_step_result_for_stage(stage: str):
+    """Return (completed_step, new_status) for a v2 stage, or None if it is not a copy-completion stage."""
+    return V2_STAGE_COMPLETION_MAP.get(stage)
+
+
 def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str, airlock_version: int = 1) -> str:
     tre_id = os.environ.get("TRE_ID", "")
 

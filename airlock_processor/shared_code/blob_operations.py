@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import re
+import time
 from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
@@ -45,7 +46,7 @@ def get_request_files(account_name: str, request_id: str) -> list:
     return files
 
 
-def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
+def copy_data(source_account_name: str, destination_account_name: str, request_id: str, wait_for_completion: bool = False) -> str:
     credential = get_credential()
     container_name = request_id
 
@@ -101,6 +102,39 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                      copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
+
+    # When wait_for_completion is requested, poll until the server-side copy finishes.
+    # This lets the caller emit its own completion signal instead of relying on a
+    # BlobCreated EventGrid event, which can fire before the copy has actually completed.
+    if wait_for_completion:
+        _wait_for_blob_copy_completion(copied_blob, request_id)
+
+    # Return the URL the data was copied from so callers can trigger deletion of the source container.
+    return source_blob.url
+
+
+def _wait_for_blob_copy_completion(blob_client, request_id: str, timeout_seconds: int = 3600, poll_interval_seconds: int = 5):
+    """Poll the destination blob until the server-side copy reaches a terminal state.
+
+    Raises an exception if the copy fails, is aborted, or does not complete within the timeout.
+    """
+    deadline = datetime.now(UTC) + timedelta(seconds=timeout_seconds)
+    while True:
+        copy_props = blob_client.get_blob_properties().copy
+        status = copy_props.status
+        if status == "success":
+            logging.info("Copy for request %s completed successfully", request_id)
+            return
+        if status in ("failed", "aborted"):
+            msg = f"Copy for request {request_id} did not succeed. status='{status}', description='{copy_props.status_description}'"
+            logging.error(msg)
+            raise Exception(msg)
+        if datetime.now(UTC) > deadline:
+            msg = f"Timed out waiting for copy of request {request_id} to complete. last status='{status}'"
+            logging.error(msg)
+            raise Exception(msg)
+        logging.info("Copy for request %s still in progress (status='%s'), waiting...", request_id, status)
+        time.sleep(poll_interval_seconds)
 
 
 def get_credential() -> DefaultAzureCredential:

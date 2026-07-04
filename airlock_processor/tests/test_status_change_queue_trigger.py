@@ -148,34 +148,24 @@ class TestMainFailurePaths():
             main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
 
 
-class TestImportSubmitUsesReviewWorkspaceId():
+class TestImportSubmitLegacyDestination():
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_import_submit_destination_uses_review_workspace_id(self):
+    def test_import_submit_destination_ignores_review_workspace_id(self):
+        # Legacy (v1) import submit must always target stalimip{tre_id}, the only
+        # in-progress import account provisioned by core Terraform for v1.
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
-            short_workspace_id="ws01",
-            review_workspace_id="rw01"
-        )
-        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "rw01"
-
-    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_import_submit_destination_falls_back_to_tre_id_when_no_review_workspace_id(self):
-        dest = get_storage_account_destination_for_copy(
-            new_status=constants.STAGE_SUBMITTED,
-            request_type=constants.IMPORT_TYPE,
-            short_workspace_id="ws01",
-            review_workspace_id=None
+            short_workspace_id="ws01"
         )
         assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
 
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_export_submit_destination_ignores_review_workspace_id(self):
+    def test_export_submit_destination_uses_workspace_id(self):
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.EXPORT_TYPE,
-            short_workspace_id="ws01",
-            review_workspace_id="rw01"
+            short_workspace_id="ws01"
         )
         assert dest == constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + "ws01"
 
@@ -200,31 +190,45 @@ def _mock_service_bus_message(body: str):
 
 class TestV2MetadataMode():
 
-    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data", return_value="https://source/url")
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_import_approval_copies_data_without_step_result(self, mock_blob_svc, mock_copy_data):
-        """V2 import approval triggers cross-account copy but does NOT emit StepResult directly.
-        BlobCreatedTrigger handles completion signaling asynchronously."""
+    def test_v2_import_approval_copies_data_and_emits_step_result(self, mock_blob_svc, mock_copy_data):
+        """V2 import approval performs a synchronous cross-account copy and emits the StepResult
+        itself (it does not rely on the racy BlobCreatedTrigger event)."""
         message_body = '{ "data": { "request_id":"123","new_status":"approval_in_progress","previous_status":"in_review","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
-        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+        deletion_event = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=deletion_event)
+        # Copy must be performed synchronously (wait_for_completion=True)
         mock_copy_data.assert_called_once()
-        # StepResult should NOT be emitted — BlobCreatedTrigger handles this
-        step_result.set.assert_not_called()
+        assert mock_copy_data.call_args.kwargs.get("wait_for_completion") is True
+        # StepResult emitted directly by this trigger
+        step_result.set.assert_called_once()
+        event_data = step_result.set.call_args[0][0]
+        assert event_data.get_json()["completed_step"] == constants.STAGE_APPROVAL_INPROGRESS
+        assert event_data.get_json()["new_status"] == constants.STAGE_APPROVED
+        # Source container deletion signalled
+        deletion_event.set.assert_called_once()
 
-    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data", return_value="https://source/url")
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_export_approval_copies_data_without_step_result(self, mock_blob_svc, mock_copy_data):
-        """V2 export approval triggers cross-account copy but does NOT emit StepResult directly."""
+    def test_v2_export_approval_copies_data_and_emits_step_result(self, mock_blob_svc, mock_copy_data):
+        """V2 export approval performs a synchronous cross-account copy and emits the StepResult itself."""
         message_body = '{ "data": { "request_id":"123","new_status":"approval_in_progress","previous_status":"in_review","type":"export","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
-        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+        deletion_event = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=deletion_event)
         mock_copy_data.assert_called_once()
-        step_result.set.assert_not_called()
+        assert mock_copy_data.call_args.kwargs.get("wait_for_completion") is True
+        step_result.set.assert_called_once()
+        event_data = step_result.set.call_args[0][0]
+        assert event_data.get_json()["completed_step"] == constants.STAGE_APPROVAL_INPROGRESS
+        assert event_data.get_json()["new_status"] == constants.STAGE_APPROVED
+        deletion_event.set.assert_called_once()
 
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
