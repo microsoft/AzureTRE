@@ -163,9 +163,13 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
 
 
 async def _cleanup_param_set(param_set_name: str, param_set_file: str, installation_file: str, config: dict):
-    """Remove a Porter parameter set from its local store and delete the temp files."""
+    """Remove a Porter parameter set from its local store and delete the temp files.
+
+    The parameter set may never have been applied (e.g. run_porter returned early on an
+    Azure/ACR/credential failure), so the delete is best-effort and does not log at error level.
+    """
     if param_set_file:
-        await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set")
+        await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set", log_error=False)
         try:
             os.unlink(param_set_file)
         except OSError as e:

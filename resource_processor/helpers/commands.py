@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from shared.logging import logger, shell_output_logger
 
 
-async def run_command_helper(cmd_parts: list, config: dict, description: str):
+async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
@@ -33,7 +33,10 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str):
         shell_output_logger(stderr_text, '[stderr]', logging.WARN)
 
     if proc.returncode != 0:
-        logger.error(f"{description} failed with return code {proc.returncode}")
+        if log_error:
+            logger.error(f"{description} failed with return code {proc.returncode}")
+        else:
+            logger.debug(f"{description} failed with return code {proc.returncode}")
     else:
         logger.debug(f"{description} completed successfully")
 
@@ -175,6 +178,9 @@ async def build_porter_command(config, msg_body, custom_action=False):
         command.extend(["--credential-set", "aad_auth"])
         commands.append(command)
     elif installation_file:
+        # porter installation apply is declarative: it creates the installation if it
+        # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
+        # replaces the previous explicit upgrade->install fallback for built-in actions.
         commands.append(["porter", "installation", "apply", installation_file, "--force"])
     else:
         command = ["porter", msg_body['action'], installation_id]

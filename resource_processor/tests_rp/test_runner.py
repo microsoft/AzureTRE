@@ -1,7 +1,7 @@
 from azure.servicebus import ServiceBusSessionFilter
 from azure.servicebus.aio import ServiceBusClient
 from vmss_porter.runner import (
-    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter
+    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter, _cleanup_param_set
 )
 import json
 from unittest.mock import patch, AsyncMock, Mock
@@ -267,6 +267,38 @@ async def test_invoke_porter_action_custom_action(mock_service_bus_message_gener
 
     assert result is True
     mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_is_best_effort(mock_run_command_helper, mock_unlink):
+    """Cleanup deletes the parameter set without logging errors and unlinks temp files."""
+    mock_run_command_helper.return_value = (1, None, "not found")
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", "/tmp/params.json", "/tmp/installation.json", config)
+
+    # The parameter set delete must be best-effort (log_error=False) since it may never have been applied
+    mock_run_command_helper.assert_awaited_once_with(
+        ["porter", "parameters", "delete", "tre-params-test"], config, "Delete parameter set", log_error=False
+    )
+    # Both temp files should be removed
+    mock_unlink.assert_any_call("/tmp/params.json")
+    mock_unlink.assert_any_call("/tmp/installation.json")
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_no_param_file(mock_run_command_helper, mock_unlink):
+    """When no parameter set file exists, no delete command runs but the installation file is still removed."""
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", None, "/tmp/installation.json", config)
+
+    mock_run_command_helper.assert_not_awaited()
+    mock_unlink.assert_called_once_with("/tmp/installation.json")
 
 
 @pytest.mark.asyncio
