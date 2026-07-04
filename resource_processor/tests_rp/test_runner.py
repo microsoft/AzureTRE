@@ -1,7 +1,7 @@
 from azure.servicebus import ServiceBusSessionFilter
 from azure.servicebus.aio import ServiceBusClient
 from vmss_porter.runner import (
-    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter
+    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter, _cleanup_param_set
 )
 import json
 from unittest.mock import patch, AsyncMock, Mock
@@ -157,7 +157,7 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=["porter install"])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -175,7 +175,7 @@ async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -194,11 +194,38 @@ async def test_invoke_porter_action_failure(mock_service_bus_message_generator, 
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
-@patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (0, "", "")])
+@patch("vmss_porter.runner._cleanup_param_set", side_effect=RuntimeError("cleanup failed"))
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], "/tmp/params.json", "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_upgrade_failure_install_success(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
-    """Test invoking a porter action with upgrade failure and install success."""
+async def test_invoke_porter_action_cleanup_error_is_non_blocking(
+    mock_service_bus_message_generator,
+    mock_run_porter,
+    mock_build_porter_command,
+    mock_cleanup_param_set,
+    mock_service_bus_client
+):
+    """Cleanup exceptions should not mask porter command failure handling."""
+    mock_sb_client = AsyncMock(spec=ServiceBusClient)
+    mock_sb_sender = AsyncMock()
+    mock_sb_client.get_queue_sender.return_value = mock_sb_sender
+
+    config = {"deployment_status_queue": "test_queue"}
+    msg_body = {"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"}
+
+    result = await invoke_porter_action(msg_body, mock_sb_client, config)
+
+    assert result is False
+    mock_cleanup_param_set.assert_awaited_once()
+    mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
+@patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
+async def test_invoke_porter_action_upgrade_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+    """Test invoking a porter action with upgrade failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
     mock_sb_client.get_queue_sender.return_value = mock_sb_sender
@@ -208,12 +235,12 @@ async def test_invoke_porter_action_upgrade_failure_install_success(mock_service
 
     result = await invoke_porter_action(msg_body, mock_sb_client, config)
 
-    assert result is True
+    assert result is False
     mock_sb_sender.send_messages.assert_called()
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (1, "", "installation failed")])
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -232,7 +259,7 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -251,7 +278,7 @@ async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_g
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "custom-action"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "custom-action"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_custom_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -267,6 +294,38 @@ async def test_invoke_porter_action_custom_action(mock_service_bus_message_gener
 
     assert result is True
     mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_is_best_effort(mock_run_command_helper, mock_unlink):
+    """Cleanup deletes the parameter set without logging errors and unlinks temp files."""
+    mock_run_command_helper.return_value = (1, None, "not found")
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", "/tmp/params.json", "/tmp/installation.json", config)
+
+    # The parameter set delete must be best-effort (log_error=False) since it may never have been applied
+    mock_run_command_helper.assert_awaited_once_with(
+        ["porter", "parameters", "delete", "tre-params-test"], config, "Delete parameter set", log_error=False
+    )
+    # Both temp files should be removed
+    mock_unlink.assert_any_call("/tmp/params.json")
+    mock_unlink.assert_any_call("/tmp/installation.json")
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_no_param_file(mock_run_command_helper, mock_unlink):
+    """When no parameter set file exists, no delete command runs but the installation file is still removed."""
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", None, "/tmp/installation.json", config)
+
+    mock_run_command_helper.assert_not_awaited()
+    mock_unlink.assert_called_once_with("/tmp/installation.json")
 
 
 @pytest.mark.asyncio
