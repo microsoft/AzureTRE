@@ -44,9 +44,20 @@ class DeploymentStatusUpdater():
             while True:
                 try:
                     async with credentials.get_credential_async_context() as credential:
+                        # We keep a single ServiceBusClient alive across the inner loop to avoid excessive connection
+                        # and reconnection churn, as get_queue_receiver with NEXT_AVAILABLE_SESSION is polled frequently.
+                        # Any fatal connection-related errors or other exceptions (other than OperationTimeoutError)
+                        # will propagate out of the inner loop, closing this context manager and recreating the client.
                         async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
+                            client_created_time = time.time()
                             while True:
                                 try:
+                                    # Recreate the client periodically (every hour) to ensure connection freshness
+                                    # and avoid holding a potentially stale client open indefinitely.
+                                    if time.time() - client_created_time > 3600:
+                                        logger.info("ServiceBusClient has been active for 1 hour. Recreating for freshness...")
+                                        break
+
                                     current_time = time.time()
                                     polling_count += 1
                                     # Log a heartbeat message every 60 seconds to show the service is still working
