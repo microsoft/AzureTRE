@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 import uvicorn
 
 from fastapi import FastAPI
@@ -22,9 +23,24 @@ from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
 
+class BackgroundTaskManager:
+    def __init__(self) -> None:
+        self._tasks: set[asyncio.Task[Any]] = set()
+        self.is_shutting_down: bool = False
+
+    def add(self, task: asyncio.Task[Any]) -> None:
+        self._tasks.add(task)
+
+    def discard(self, task: asyncio.Task[Any]) -> None:
+        self._tasks.discard(task)
+
+    def get_tasks(self) -> list[asyncio.Task[Any]]:
+        return list(self._tasks)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.background_tasks = set()
+    app.state.background_tasks = BackgroundTaskManager()
 
     while not await bootstrap_database():
         await asyncio.sleep(5)
@@ -36,9 +52,12 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
-    def track(task):
-        def _done_callback(task):
+    def track(task: asyncio.Task[Any]) -> None:
+        def _done_callback(task: asyncio.Task[Any]) -> None:
             app.state.background_tasks.discard(task)
+            if app.state.background_tasks.is_shutting_down:
+                return
+
             if task.cancelled():
                 return
 
@@ -68,14 +87,31 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        tasks = list(app.state.background_tasks)
+        app.state.background_tasks.is_shutting_down = True
+        tasks = app.state.background_tasks.get_tasks()
         logger.info(f"Cancelling {len(tasks)} background tasks")
 
         for task in tasks:
             logger.debug(f"Cancelling task {task.get_name()}")
             task.cancel()
 
-        await asyncio.gather(*tasks, return_exceptions=True)
+        if tasks:
+            try:
+                results = await asyncio.wait_for(
+                    asyncio.gather(*tasks, return_exceptions=True),
+                    timeout=10.0
+                )
+                for task, result in zip(tasks, results):
+                    if isinstance(result, BaseException) and not isinstance(result, asyncio.CancelledError):
+                        logger.warning(
+                            f"Background task {task.get_name()} raised exception during shutdown: {result}",
+                            exc_info=(type(result), result, result.__traceback__)
+                        )
+            except asyncio.TimeoutError:
+                logger.error("Timeout waiting for background tasks to shutdown")
+                pending = [t for t in tasks if not t.done()]
+                for t in pending:
+                    logger.warning(f"Task {t.get_name()} did not terminate in time during shutdown")
 
 
 def get_application() -> FastAPI:
