@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional, Union
 
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import ResourceType
@@ -67,7 +67,7 @@ class ResourceTemplate(AzureTREModel):
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
     authorizedRoles: Optional[List[str]] = Field(default=[], title="If not empty, the user is required to have one of these roles to install the template")
-    properties: Dict[str, Property] = Field(title="Template properties")
+    properties: Dict[str, Any] = Field(title="Template properties")
     allOf: Optional[List[dict]] = Field(default=None, title="All Of", description="Used for conditionally showing and validating fields")
     actions: List[CustomAction] = Field(default=[], title="Template actions")
     customActions: List[CustomAction] = Field(default=[], title="Template custom actions")
@@ -77,18 +77,3 @@ class ResourceTemplate(AzureTREModel):
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     unevaluatedProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")
 
-    @field_validator('properties', mode='before')
-    @classmethod
-    def convert_properties_to_property_objects(cls, v):
-        """Convert plain dictionaries to Property objects for properties field."""
-        if isinstance(v, dict):
-            result = {}
-            for key, value in v.items():
-                if isinstance(value, dict):
-                    # Convert dict to Property object
-                    result[key] = Property(**value)
-                else:
-                    # Already a Property object
-                    result[key] = value
-            return result
-        return v

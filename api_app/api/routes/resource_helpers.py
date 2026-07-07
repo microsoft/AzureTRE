@@ -65,7 +65,7 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        resource.user = user
+        resource.user = user.model_dump()
         resource.updatedWhen = get_timestamp()
 
         # Making a copy to save with secrets masked
