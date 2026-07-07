@@ -1,5 +1,5 @@
-from typing import Optional, List, Dict, Any
-from pydantic import Field, field_validator
+from typing import Optional, List
+from pydantic import Field
 from models.domain.resource import AvailableUpgrade, ResourceType
 from models.domain.azuretremodel import AzureTREModel
 
@@ -19,30 +19,14 @@ class RestrictedResource(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the resource request")
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    properties: Dict[str, Any] = Field(default_factory=dict, title="Restricted Properties", description="Resource properties safe to share with non-admins")
-    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(title="Available template upgrades", description="Versions of the template that are available for upgrade")
+    properties: RestrictedProperties = Field(None, title="Restricted Properties", description="Resource properties safe to share with non-admins")
+    availableUpgrades: Optional[List[AvailableUpgrade]] = Field(None, title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
-    deploymentStatus: Optional[str] = Field(title="Deployment Status", description="Overall deployment status of the resource")
+    deploymentStatus: Optional[str] = Field(None, title="Deployment Status", description="Overall deployment status of the resource")
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
 
-    @field_validator('properties', mode='before')
-    @classmethod
-    def convert_properties_to_restricted(cls, v):
-        """Convert properties dict to filtered dict containing only safe fields."""
-        if v is None:
-            v = {}
-        if isinstance(v, dict):
-            # Extract only the fields that RestrictedProperties supports
-            return {
-                "display_name": v.get("display_name", ""),
-                "description": v.get("description", ""),
-                "overview": v.get("overview", ""),
-                "connection_uri": v.get("connection_uri", ""),
-                "is_exposed_externally": v.get("is_exposed_externally", True)
-            }
-        return v

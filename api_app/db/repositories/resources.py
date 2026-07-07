@@ -150,7 +150,7 @@ class ResourceRepository(BaseRepository):
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user
+        resource.user = user.model_dump()
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:

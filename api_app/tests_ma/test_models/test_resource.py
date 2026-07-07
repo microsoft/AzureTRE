@@ -1,6 +1,9 @@
 import pytest
 
 from models.domain.request_action import RequestAction
+from models.domain.airlock_request import AirlockRequest, AirlockRequestType
+from models.domain.operation import Operation, Status
+from models.domain.restricted_resource import RestrictedResource
 from models.domain.resource import Resource, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
@@ -43,3 +46,49 @@ def test_workspace_service_get_resource_request_message_payload_augments_payload
     message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id
+
+
+def test_legacy_actor_dicts_validate_without_user_required_fields():
+    resource = Resource.model_validate({
+        "id": "resource-id",
+        "templateName": "workspace",
+        "templateVersion": "1.0",
+        "properties": {},
+        "resourceType": ResourceType.Workspace,
+        "_etag": "etag",
+        "user": {"id": "legacy-user"},
+    })
+    operation = Operation.model_validate({
+        "id": "operation-id",
+        "resourceId": "resource-id",
+        "resourcePath": "/workspaces/resource-id",
+        "status": Status.AwaitingDeployment,
+        "action": "install",
+        "user": {},
+    })
+    airlock_request = AirlockRequest.model_validate({
+        "id": "airlock-id",
+        "workspaceId": "workspace-id",
+        "type": AirlockRequestType.Import,
+        "createdBy": {},
+        "updatedBy": {"name": "Legacy User"},
+    })
+
+    assert resource.user == {"id": "legacy-user"}
+    assert operation.user == {}
+    assert airlock_request.createdBy == {}
+    assert airlock_request.updatedBy == {"name": "Legacy User"}
+
+
+def test_restricted_resource_optional_fields_default_to_none():
+    restricted_resource = RestrictedResource(
+        id="resource-id",
+        templateName="workspace",
+        templateVersion="1.0",
+        properties={},
+        resourceType=ResourceType.Workspace,
+        _etag="etag",
+    )
+
+    assert restricted_resource.availableUpgrades is None
+    assert restricted_resource.deploymentStatus is None

@@ -6,7 +6,7 @@ from models.domain.airlock_request import AirlockFile, AirlockRequestStatus, Air
 
 class AirlockNotificationUserData(AzureTREModel):
     name: str
-    email: str
+    email: Optional[str] = None
 
 
 class AirlockNotificationRequestData(AzureTREModel):
