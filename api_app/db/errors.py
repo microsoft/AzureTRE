@@ -36,3 +36,11 @@ class TargetTemplateVersionDoesNotExist(Exception):
 
 class VersionDowngradeDenied(Exception):
     """Raised when user attempts to downgrade a resource to a lower version."""
+
+
+class StorageAccountNameGenerationTimeout(Exception):
+    """Raised when we cannot generate a unique storage account name within the timeout limit."""
+
+
+class StorageAccountNameCheckFailed(Exception):
+    """Raised when the storage account name availability check fails due to an Azure SDK error."""
