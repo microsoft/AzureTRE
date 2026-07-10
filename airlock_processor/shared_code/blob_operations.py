@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import re
+import time
 from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
@@ -101,6 +102,52 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                      copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
+
+    return {
+        "source_blob": source_blob,
+        "destination_blob": copied_blob,
+        "copy": copy,
+    }
+
+
+def wait_for_blob_copy_completion(destination_blob_client, timeout_seconds: int = 300, poll_interval_seconds: int = 5) -> bool:
+    start_time = time.monotonic()
+    blob_name = getattr(destination_blob_client, "blob_name", "<unknown>")
+
+    while True:
+        blob_properties = destination_blob_client.get_blob_properties()
+        copy_status = _get_copy_status(blob_properties)
+        logging.info("Polling blob copy for '%s': status='%s'", blob_name, copy_status)
+
+        if copy_status == "success":
+            return True
+
+        if copy_status in {"failed", "aborted"}:
+            raise Exception(f"Blob copy for '{blob_name}' completed with status '{copy_status}'")
+
+        elapsed_seconds = time.monotonic() - start_time
+        if elapsed_seconds >= timeout_seconds:
+            raise TimeoutError(f"Timed out after {timeout_seconds} seconds waiting for blob copy '{blob_name}'")
+
+        time.sleep(poll_interval_seconds)
+
+
+def _get_copy_status(blob_properties):
+    copy_details = _get_property_value(blob_properties, "copy")
+    if copy_details is not None:
+        copy_status = _get_property_value(copy_details, "status")
+        if copy_status is None:
+            copy_status = _get_property_value(copy_details, "copy_status")
+        if copy_status is not None:
+            return copy_status
+
+    return _get_property_value(blob_properties, "copy_status")
+
+
+def _get_property_value(source, property_name: str):
+    if isinstance(source, dict):
+        return source.get(property_name)
+    return getattr(source, property_name, None)
 
 
 def get_credential() -> DefaultAzureCredential:

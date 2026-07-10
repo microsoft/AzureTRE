@@ -139,11 +139,58 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             else:
                 # Different storage account (e.g., core → workspace on import approval,
                 # workspace → core on export approval) - need to copy.
-                # BlobCreatedTrigger will fire when the copy completes and emit the StepResult,
-                # matching the v1 async pattern for large data transfers.
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
-                create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
-                blob_operations.copy_data(source_account, dest_account, req_id)
+                completion_stage_map = {
+                    constants.STAGE_APPROVAL_INPROGRESS: constants.STAGE_APPROVED,
+                    constants.STAGE_REJECTION_INPROGRESS: constants.STAGE_REJECTED,
+                    constants.STAGE_BLOCKING_INPROGRESS: constants.STAGE_BLOCKED_BY_SCAN,
+                }
+                copy_in_progress_stage = airlock_storage_helper.get_stage_from_status(request_type, constants.STAGE_IN_REVIEW)
+                destination_stage = copy_in_progress_stage if new_status in completion_stage_map else new_stage
+
+                create_container_with_metadata(dest_account, req_id, destination_stage, workspace_id=effective_ws_id, request_type=request_type)
+                copy_result = blob_operations.copy_data(source_account, dest_account, req_id)
+
+                if new_status in completion_stage_map:
+                    from shared_code.blob_operations_metadata import update_container_stage
+                    final_status = completion_stage_map[new_status]
+
+                    try:
+                        blob_operations.wait_for_blob_copy_completion(copy_result["destination_blob"], timeout_seconds=300)
+                    except TimeoutError:
+                        logging.warning(f'Request {req_id}: blob copy timed out while waiting for completion')
+                        stepResultEvent.set(
+                            func.EventGridOutputEvent(
+                                id=str(uuid.uuid4()),
+                                data={"completed_step": constants.STAGE_BLOCKING_INPROGRESS, "new_status": constants.STAGE_BLOCKED_BY_SCAN, "request_id": req_id, "status_message": "Blob copy timed out after 300 seconds"},
+                                subject=req_id,
+                                event_type="Airlock.StepResult",
+                                event_time=datetime.datetime.now(datetime.UTC),
+                                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                        return
+                    except Exception as e:
+                        logging.exception(f'Request {req_id}: blob copy failed while waiting for completion: {e}')
+                        stepResultEvent.set(
+                            func.EventGridOutputEvent(
+                                id=str(uuid.uuid4()),
+                                data={"completed_step": constants.STAGE_REJECTION_INPROGRESS, "new_status": constants.STAGE_REJECTED, "request_id": req_id, "status_message": f"Blob copy failed: {e}"},
+                                subject=req_id,
+                                event_type="Airlock.StepResult",
+                                event_time=datetime.datetime.now(datetime.UTC),
+                                data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                        return
+
+                    update_container_stage(dest_account, req_id, new_stage, changed_by='system')
+                    logging.info(f'Request {req_id}: blob copy completed successfully, emitting StepResult {new_status} -> {final_status}')
+                    stepResultEvent.set(
+                        func.EventGridOutputEvent(
+                            id=str(uuid.uuid4()),
+                            data={"completed_step": new_status, "new_status": final_status, "request_id": req_id},
+                            subject=req_id,
+                            event_type="Airlock.StepResult",
+                            event_time=datetime.datetime.now(datetime.UTC),
+                            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+                    set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=copy_result["source_blob"].url)
         else:
             # Legacy mode: Copy data between storage accounts
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
