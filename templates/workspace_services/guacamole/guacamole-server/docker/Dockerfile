@@ -1,4 +1,6 @@
-FROM maven:3.9-eclipse-temurin-17-alpine AS client_build
+ARG MAVEN_BASE_IMAGE=maven:3.9-eclipse-temurin-17-alpine
+ARG GUACD_BASE_IMAGE=guacamole/guacd:1.6.0
+FROM ${MAVEN_BASE_IMAGE} AS client_build
 
 COPY ./guacamole-auth-azure/pom.xml /pom.xml
 # cache dependencies in a separate layer
@@ -11,7 +13,7 @@ RUN bash /tmp/maven_package_and_exit_succesfully.sh
 FROM scratch AS test-results
 COPY --from=client_build /target/surefire-reports/* /
 
-FROM guacamole/guacd:1.6.0
+FROM ${GUACD_BASE_IMAGE}
 
 ARG GUACAMOLE_AZURE_VERSION=0.5.0
 

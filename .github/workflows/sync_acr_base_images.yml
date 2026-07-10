@@ -1,0 +1,107 @@
+name: Sync ACR Base Images
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sync:
+    name: Import newer upstream base images into ACR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ "${{ secrets.ACR_NAME }}" = '' ]; then
+            echo "Missing secret: ACR_NAME" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_CLIENT_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_TENANT_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_TENANT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_SUBSCRIPTION_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_SUBSCRIPTION_ID" && exit 1
+          fi
+
+      - name: Azure Login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Login to ACR
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
+
+      - name: Sync image mirrors
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
+          set -euo pipefail
+
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          ACR_LOGIN_SERVER="${ACR_NAME}${acr_domain_suffix}"
+
+          # source_repo|target_repo|tag
+          IMAGES=(
+            "docker.io/library/python|mirror/library/python|3.12-slim-bookworm"
+            "docker.io/library/maven|mirror/library/maven|3.9-eclipse-temurin-17-alpine"
+            "docker.io/guacamole/guacd|mirror/guacamole/guacd|1.6.0"
+            "docker.io/gitea/gitea|mirror/gitea/gitea|1.15"
+            "docker.io/gitea/gitea|mirror/gitea/gitea|1.17.3"
+            "docker.io/library/debian|mirror/library/debian|bookworm-slim"
+            "docker.io/library/debian|mirror/library/debian|bullseye-slim"
+          )
+
+          sync_image() {
+            local source_repo="$1"
+            local target_repo="$2"
+            local tag="$3"
+            local source_ref="${source_repo}:${tag}"
+            local target_ref="${ACR_LOGIN_SERVER}/${target_repo}:${tag}"
+
+            local source_digest
+            local target_digest
+
+            source_digest=$(docker buildx imagetools inspect "${source_ref}" --format '{{json .Manifest.Digest}}' 2>/dev/null | tr -d '"' || true)
+            target_digest=$(docker buildx imagetools inspect "${target_ref}" --format '{{json .Manifest.Digest}}' 2>/dev/null | tr -d '"' || true)
+
+            if [[ -n "${source_digest}" && -n "${target_digest}" && "${source_digest}" == "${target_digest}" ]]; then
+              echo "Up-to-date: ${target_repo}:${tag} (${source_digest})"
+              return 0
+            fi
+
+            echo "Importing ${source_ref} -> ${target_repo}:${tag}"
+            az acr import \
+              --name "${ACR_NAME}" \
+              --source "${source_ref}" \
+              --image "${target_repo}:${tag}" \
+              --force
+          }
+
+          for image in "${IMAGES[@]}"; do
+            IFS='|' read -r source_repo target_repo tag <<< "${image}"
+            sync_image "${source_repo}" "${target_repo}" "${tag}"
+          done
+
+      - name: Emit repository variable hint
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          echo "Set repository variable ACR_BASE_IMAGE_PREFIX to: ${ACR_NAME}${acr_domain_suffix}"
