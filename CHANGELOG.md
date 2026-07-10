@@ -16,7 +16,7 @@ BUG FIXES:
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
 * Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
-* Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4913](https://github.com/microsoft/AzureTRE/issues/4913))
+* Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
