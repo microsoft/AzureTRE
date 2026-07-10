@@ -124,7 +124,7 @@ class TestUserResourceTemplatesNotRequiringAdminRights:
         actual_templates = response.json()["templates"]
         assert len(actual_templates) == len(expected_templates)
         for template in expected_templates:
-            assert template in actual_templates
+            assert template.model_dump() in actual_templates
 
     # GET /workspace-service-templates/{service_template_name}/user-resource-templates/{user_resource_template_name}
     @patch("api.routes.workspace_templates.ResourceTemplateRepository.get_current_template")

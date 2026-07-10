@@ -7,10 +7,10 @@ from models.domain.airlock_request import AirlockFile
 
 class EventGridMessageData(AzureTREModel):
     completed_step: str = Field(title="", description="")
-    new_status: Optional[str] = Field(title="", description="")
+    new_status: Optional[str] = Field(default=None, title="", description="")
     request_id: str = Field(title="", description="")
-    request_files: Optional[List[AirlockFile]] = Field(title="", description="")
-    status_message: Optional[str] = Field(title="", description="")
+    request_files: Optional[List[AirlockFile]] = Field(default=None, title="", description="")
+    status_message: Optional[str] = Field(default=None, title="", description="")
 
 
 class StepResultStatusUpdateMessage(AzureTREModel):

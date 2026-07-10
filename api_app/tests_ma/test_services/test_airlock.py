@@ -85,7 +85,7 @@ def sample_airlock_user_resource_object():
 def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -122,7 +122,7 @@ def sample_airlock_notification_event(status="draft"):
                 id=WORKSPACE_ID,
                 display_name="my research workspace",
                 description="for science!"
-            )),
+            )).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="4.0"
     )
@@ -255,7 +255,7 @@ async def test_save_and_publish_event_airlock_request_saves_item(_, __, event_gr
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         workspace=sample_workspace())
 
     airlock_request_repo_mock.save_item.assert_called_once_with(airlock_request_mock)
@@ -278,7 +278,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_save_to_db_f
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -299,7 +299,7 @@ async def test_save_and_publish_event_airlock_request_raises_503_if_publish_even
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=airlock_request_repo_mock,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
@@ -345,7 +345,7 @@ async def test_save_and_publish_event_airlock_request_raises_417_if_email_not_pr
         await save_and_publish_event_airlock_request(
             airlock_request=airlock_request_mock,
             airlock_request_repo=None,
-            user=create_test_user().model_dump(),
+            user=create_test_user(),
             workspace=sample_workspace())
     assert ex.value.status_code == status.HTTP_417_EXPECTATION_FAILED
 
@@ -364,7 +364,7 @@ async def test_save_and_publish_event_airlock_notification_if_email_not_present(
     await save_and_publish_event_airlock_request(
         airlock_request=airlock_request_mock,
         airlock_request_repo=airlock_request_repo_mock,
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         workspace=sample_workspace())
 
     assert publish_event_mock.call_count == 2
@@ -561,7 +561,7 @@ async def test_revoke_request_calls_update_with_revoked_status(update_mock, airl
 async def test_cancel_request_deletes_review_resource(_, delete_review_user_resource, airlock_request_repo_mock):
     await cancel_request(
         airlock_request=sample_airlock_request(),
-        user=create_test_user().model_dump(),
+        user=create_test_user(),
         airlock_request_repo=airlock_request_repo_mock,
         workspace=sample_workspace(),
         user_resource_repo=AsyncMock(),
@@ -584,5 +584,5 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
                                       resource_template_repo=AsyncMock(),
                                       operations_repo=AsyncMock(),
                                       resource_history_repo=AsyncMock(),
-                                      user=create_test_user().model_dump())
+                                      user=create_test_user())
     disable_user_resource.assert_called_once()

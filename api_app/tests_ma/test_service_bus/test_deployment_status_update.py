@@ -259,7 +259,7 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource)
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')

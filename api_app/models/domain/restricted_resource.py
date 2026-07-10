@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import Field
+from pydantic import Field, field_validator
 from models.domain.resource import AvailableUpgrade, ResourceType
 from models.domain.azuretremodel import AzureTREModel
 
@@ -29,4 +29,11 @@ class RestrictedResource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
+
+    @field_validator("user", mode="before")
+    @classmethod
+    def convert_user_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 

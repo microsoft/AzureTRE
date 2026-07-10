@@ -39,7 +39,7 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
     if user_is_tre_admin(user):
         return SharedServicesInList(sharedServices=shared_services)
     else:
-        return RestrictedSharedServicesInList(sharedServices=shared_services)
+        return RestrictedSharedServicesInList(sharedServices=[service.model_dump() for service in shared_services])
 
 
 @shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
@@ -48,7 +48,7 @@ async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_servic
     if user_is_tre_admin(user):
         return SharedServiceInResponse(sharedService=shared_service)
     else:
-        return RestrictedSharedServiceInResponse(sharedService=shared_service)
+        return RestrictedSharedServiceInResponse(sharedService=shared_service.model_dump())
 
 
 @shared_services_router.post("/shared-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_SHARED_SERVICE, dependencies=[Depends(get_current_admin_user)])

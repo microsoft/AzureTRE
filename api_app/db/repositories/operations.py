@@ -64,7 +64,7 @@ class OperationRepository(BaseRepository):
                 primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
                 primary_parent_service_name = primary_parent_workspace_service.templateName
             resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
-            resource_template_dict = resource_template.dict(exclude_none=True)
+            resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
                 steps=[],
