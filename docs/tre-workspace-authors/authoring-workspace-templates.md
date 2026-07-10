@@ -145,7 +145,7 @@ The mandatory parameters for User Resources are:
 ## Azure Resources Tagging
 
 TRE Cost Reporting is based on Azure tagging to be able to generate cost report for core services, shared services, workspace, workspace services and user resources.
-Templates authors need to make sure that underling Azure resources are tagged with the relevent tags, for more information see [cost reporting](../azure-tre-overview/cost-reporting.md#azure-resources-tagging):
+Templates authors need to make sure that underling Azure resources are tagged with the relevant tags, for more information see [cost reporting](../azure-tre-overview/cost-reporting.md#azure-resources-tagging):
 
 ## Versioning
 

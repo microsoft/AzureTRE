@@ -1,6 +1,6 @@
 # Registering Templates
 
-To enable users to deploy Workspaces, Workspace Services or User Resources, we need to register their Templates. This can be done wither by running `make` commands; using the API or devops scripts. In this article both approaches are described.
+To enable users to deploy Workspaces, Workspace Services or User Resources, we need to register their Templates. This can be done either by running `make` commands; using the API or devops scripts. In this article both approaches are described.
 
 !!! info
     Templates are encapsulated in [Porter](https://porter.sh) bundles.
@@ -15,7 +15,7 @@ make bundle-publish DIR=templates/workspace_services/azureml
 make bundle-register DIR=templates/workspace_services/azureml BUNDLE_TYPE=workspace_service
 ```
 
-If you're building, publishing and registering a lot of bundles, using three separate commands can be cumbersome, so there is a unifed command for each bundle type to make this easier:
+If you're building, publishing and registering a lot of bundles, using three separate commands can be cumbersome, so there is a unified command for each bundle type to make this easier:
 
 ```cmd
 make workspace_service_bundle BUNDLE=azureml

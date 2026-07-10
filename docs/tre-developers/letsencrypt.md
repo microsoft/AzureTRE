@@ -1,8 +1,8 @@
 # Letsencrypt
 
-Certain components of the TRE require the aquisition of a certificate via Letsencrypt to ensure secure HTTPS connections.
+Certain components of the TRE require the acquisition of a certificate via Letsencrypt to ensure secure HTTPS connections.
 
-In order to aquire these certificates, there must be a public facing endpoint which can be reached by Letsencrypt.
+In order to acquire these certificates, there must be a public facing endpoint which can be reached by Letsencrypt.
 
 As TREs are secured environments with very few publicly facing points, additional resources are required to ensure the certificate can be provisioned for the correct domain.
 
