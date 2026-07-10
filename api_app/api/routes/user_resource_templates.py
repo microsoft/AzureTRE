@@ -1,13 +1,15 @@
 
 from typing import Optional
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import TypeAdapter
 
+from api.dependencies.workspace_service_templates import get_workspace_service_template_by_name_from_path
 from api.routes.resource_helpers import get_template
 from api.helpers import get_repository
+from db.errors import EntityVersionExist, InvalidInput
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.resource import ResourceType
-from models.schemas.user_resource_template import UserResourceTemplateInResponse
+from models.schemas.user_resource_template import UserResourceTemplateInCreate, UserResourceTemplateInResponse
 from models.schemas.resource_template import ResourceTemplateInformationInList
 from resources import strings
 from auth.rbac import require_tre_admin, require_tre_user_or_admin

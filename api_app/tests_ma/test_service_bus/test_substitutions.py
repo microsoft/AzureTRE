@@ -425,7 +425,7 @@ def test_substitution_array_replace_not_found(
 
 
 def test_substitution_boolean_preservation(primary_resource):
-    resource_dict = primary_resource.dict()
+    resource_dict = primary_resource.model_dump()
     # Mock a boolean property in the resource dict
     resource_dict["properties"]["isEnabled"] = True
     resource_dict["properties"]["count"] = 42

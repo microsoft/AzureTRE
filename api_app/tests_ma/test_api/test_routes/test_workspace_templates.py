@@ -11,6 +11,7 @@ from resources import strings
 from db.errors import DuplicateEntity, EntityDoesNotExist, InvalidInput, UnableToAccessDatabase
 from models.domain.resource_template import ResourceTemplate, CustomAction
 from models.schemas.resource_template import ResourceTemplateInformation
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
 from models.schemas.workspace_template import WorkspaceTemplateInResponse
 from services.schema_service import enrich_workspace_template
 
@@ -60,7 +61,7 @@ class TestWorkspaceTemplate:
         actual_template_infos = response.json()["templates"]
         assert len(actual_template_infos) == len(expected_template_infos)
         for name in expected_template_infos:
-            assert name in actual_template_infos
+            assert name.model_dump() in actual_template_infos
 
     # POST /workspace-templates
     async def test_post_does_not_create_a_template_with_bad_payload(self, app, client):
@@ -97,7 +98,7 @@ class TestWorkspaceTemplate:
 
         updated_current_workspace_template = basic_resource_template
         updated_current_workspace_template.current = False
-        update_item_mock.assert_called_once_with(updated_current_workspace_template.model_dump())
+        update_item_mock.assert_called_once_with(updated_current_workspace_template)
         assert response.status_code == status.HTTP_201_CREATED
 
     # POST /workspace-templates
@@ -221,4 +222,4 @@ class TestWorkspaceTemplate:
 
         await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE_TEMPLATES), json=input_workspace_template.model_dump())
 
-        create_template_mock.assert_called_once_with(input_workspace_template, ResourceType.WorkspaceService, '')
+        create_template_mock.assert_called_once_with(WorkspaceServiceTemplateInCreate.model_validate(input_workspace_template.model_dump()), ResourceType.WorkspaceService, "")

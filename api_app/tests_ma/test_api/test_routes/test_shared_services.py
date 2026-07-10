@@ -209,7 +209,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = False
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
         update_item_mock.assert_called_once_with(modified_shared_service, ETAG)
@@ -230,7 +230,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
         modified_shared_service.templateVersion = "0.2.0"
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
@@ -252,7 +252,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
         modified_shared_service.templateVersion = "2.0.0"
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": ETAG})
@@ -274,7 +274,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
@@ -295,7 +295,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
@@ -345,4 +345,4 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         # Check that the error message contains the key information about the validation error
         assert "fakeField" in response.text
-        assert "extra fields not permitted" in response.text
+        assert "extra inputs are not permitted" in response.text.lower()

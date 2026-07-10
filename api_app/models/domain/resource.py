@@ -27,6 +27,14 @@ class ResourceHistoryItem(AzureTREModel):
     resourceVersion: int = 0
     updatedWhen: float = 0
     user: dict = {}
+
+    @field_validator("user", mode="before")
+    @classmethod
+    def convert_user_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
+
     templateVersion: Optional[str] = Field(None, title="Resource template version", description="The version of the resource template (bundle) to deploy")
 
 
@@ -52,6 +60,24 @@ class Resource(AzureTREModel):
     resourceVersion: int = 0
     user: dict = {}
     updatedWhen: float = 0
+
+    @field_validator("properties", mode="before")
+    @classmethod
+    def convert_properties_to_dict(cls, value):
+        if value is None:
+            return {}
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
+
+    @field_validator("user", mode="before")
+    @classmethod
+    def convert_user_to_dict(cls, value):
+        if value is None:
+            return {}
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
         payload = {
