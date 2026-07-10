@@ -1,10 +1,10 @@
 ---
 repos:
   - repo: https://github.com/pycqa/flake8
-    rev: '6.0.0'
+    rev: "7.3.0"
     hooks:
       - id: flake8
-  - repo: https://github.com/hcodes/yaspeller
-    rev: v8.0.1
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
     hooks:
-      - id: yaspeller
+      - id: codespell

@@ -1,0 +1,6 @@
+[tool.bandit]
+exclude_dirs = ['api_app/tests_ma','airlock_processor/tests', 'airlock_processor/.venv','resource_processor/tests_rp', 'e2e_tests', 'docs','.venv']
+
+[tool.codespell]
+skip = "*.json,*.js,*.ts,*.tsx,*.map,package-lock.json,node_modules,.venv,.git"
+ignore-words-list = "tre,aci,requestor,cant"
