@@ -12,12 +12,12 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
     In some of the steps below, you are asked to configure repository secrets. Follow the [GitHub guide](https://docs.github.com/en/actions/security-guides/encrypted-secrets) on creating repository secrets if you are unfamiliar with this step.
 
 1. Create a service principal for the subscription so that the workflow can provision Azure resources.
-1. Decide on a TRE ID and the location for the Azure resources
-1. Create app registrations for API authentication
-1. Create app registrations and a user for the E2E tests
-1. Create a workspace app registration for setting up workspaces (for the E2E tests)
-1. Configure repository secrets
-1. Deploy the TRE using the workflow
+2. Decide on a TRE ID and the location for the Azure resources
+3. Create app registrations for API authentication
+4. Create app registrations and a user for the E2E tests
+5. Create a workspace app registration for setting up workspaces (for the E2E tests)
+6. Configure repository secrets
+7. Deploy the TRE using the workflow
 
 ### Create a service principal and configure OIDC authentication
 
@@ -33,7 +33,7 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
   See [Sign in with Azure CLI](https://docs.microsoft.com/cli/azure/authenticate-azure-cli) for more details.
 
-1. Create a service principal
+2. Create a service principal
 
   A service principal needs to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.
 
@@ -46,7 +46,7 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
   !!! caution
       Save the output (especially the `appId` and `tenant`) - you will need it for the next steps
 
-1. Configure federated identity credentials for GitHub Actions OIDC
+3. Configure federated identity credentials for GitHub Actions OIDC
 
   Configure the service principal to trust GitHub Actions OIDC tokens from your repository:
 
@@ -72,7 +72,7 @@ Before you can run the `deploy_tre.yml` workflow there are some one-time configu
 
   See [Configure a federated identity credential on an app](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azcli) for more details.
 
-1. Configure repository secrets for OIDC authentication
+4. Configure repository secrets for OIDC authentication
 
   Configure the following **secrets** (not variables) in your repository or environment:
 
@@ -165,12 +165,12 @@ Configure variables used in the deployment workflow:
 To reduce Docker Hub rate-limit exposure in CI, Azure TRE includes a dedicated workflow to mirror selected upstream base images into your ACR and use those mirrors during image builds.
 
 1. Set repository/environment variable `ACR_BASE_IMAGE_PREFIX` to your ACR login server (for example, `myacr.azurecr.io`).
-1. Ensure the following secrets are configured for the mirror workflow:
-  - `ACR_NAME`
-  - `AZURE_CLIENT_ID`
-  - `AZURE_TENANT_ID`
-  - `AZURE_SUBSCRIPTION_ID`
-1. Run `/.github/workflows/sync_acr_base_images.yml` manually once to seed mirrored images, then allow the scheduled run to keep them up to date.
+2. Ensure the following secrets are configured for the mirror workflow:
+- `ACR_NAME`
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+3. Run `/.github/workflows/sync_acr_base_images.yml` manually once to seed mirrored images, then allow the scheduled run to keep them up to date.
 
 The Docker image build workflow (`/.github/workflows/build_docker_images.yml`) automatically uses mirrored base images when `ACR_BASE_IMAGE_PREFIX` is set, and falls back to upstream image sources when it is not set.
 

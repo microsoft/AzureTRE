@@ -1,3 +1,4 @@
+---
 name: Sync ACR Base Images
 
 on: # yamllint disable-line rule:truthy
@@ -74,12 +75,15 @@ jobs:
             local tag="$3"
             local source_ref="${source_repo}:${tag}"
             local target_ref="${ACR_LOGIN_SERVER}/${target_repo}:${tag}"
+            local digest_format='{{json .Manifest.Digest}}'
 
             local source_digest
             local target_digest
 
-            source_digest=$(docker buildx imagetools inspect "${source_ref}" --format '{{json .Manifest.Digest}}' 2>/dev/null | tr -d '"' || true)
-            target_digest=$(docker buildx imagetools inspect "${target_ref}" --format '{{json .Manifest.Digest}}' 2>/dev/null | tr -d '"' || true)
+            source_digest=$(docker buildx imagetools inspect "${source_ref}" \
+              --format "${digest_format}" 2>/dev/null | tr -d '"' || true)
+            target_digest=$(docker buildx imagetools inspect "${target_ref}" \
+              --format "${digest_format}" 2>/dev/null | tr -d '"' || true)
 
             if [[ -n "${source_digest}" && -n "${target_digest}" && "${source_digest}" == "${target_digest}" ]]; then
               echo "Up-to-date: ${target_repo}:${tag} (${source_digest})"

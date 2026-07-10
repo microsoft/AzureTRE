@@ -21,6 +21,23 @@ jobs:
   docker_build:
     name: Build images
     runs-on: ubuntu-latest
+    env:
+      PYTHON_BASE_IMAGE: >-
+        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
+        format('{0}/mirror/library/python:3.12-slim-bookworm', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'python:3.12-slim-bookworm' }}
+      MAVEN_BASE_IMAGE: >-
+        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
+        format('{0}/mirror/library/maven:3.9-eclipse-temurin-17-alpine', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'maven:3.9-eclipse-temurin-17-alpine' }}
+      GUACD_BASE_IMAGE: >-
+        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
+        format('{0}/mirror/guacamole/guacd:1.6.0', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'guacamole/guacd:1.6.0' }}
+      GITEA_BASE_IMAGE_REPO: >-
+        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
+        format('{0}/mirror/gitea/gitea', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'gitea/gitea' }}
     permissions:
       contents: read
       actions: write # For uploading artifacts
@@ -138,7 +155,7 @@ jobs:
           context: ./api_app/
           file: ./api_app/Dockerfile
           build-args: |
-            PYTHON_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/library/python:3.12-slim-bookworm', vars.ACR_BASE_IMAGE_PREFIX) || 'python:3.12-slim-bookworm' }}
+            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -160,7 +177,7 @@ jobs:
           context: ./api_app/
           file: ./api_app/Dockerfile
           build-args: |
-            PYTHON_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/library/python:3.12-slim-bookworm', vars.ACR_BASE_IMAGE_PREFIX) || 'python:3.12-slim-bookworm' }}
+            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -173,7 +190,7 @@ jobs:
           context: ./resource_processor
           file: ./resource_processor/vmss_porter/Dockerfile
           build-args: |
-            PYTHON_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/library/python:3.12-slim-bookworm', vars.ACR_BASE_IMAGE_PREFIX) || 'python:3.12-slim-bookworm' }}
+            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -186,8 +203,8 @@ jobs:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
           build-args: |
-            MAVEN_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/library/maven:3.9-eclipse-temurin-17-alpine', vars.ACR_BASE_IMAGE_PREFIX) || 'maven:3.9-eclipse-temurin-17-alpine' }}
-            GUACD_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/guacamole/guacd:1.6.0', vars.ACR_BASE_IMAGE_PREFIX) || 'guacamole/guacd:1.6.0' }}
+            MAVEN_BASE_IMAGE=${{ env.MAVEN_BASE_IMAGE }}
+            GUACD_BASE_IMAGE=${{ env.GUACD_BASE_IMAGE }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -209,8 +226,8 @@ jobs:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
           build-args: |
-            MAVEN_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/library/maven:3.9-eclipse-temurin-17-alpine', vars.ACR_BASE_IMAGE_PREFIX) || 'maven:3.9-eclipse-temurin-17-alpine' }}
-            GUACD_BASE_IMAGE=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/guacamole/guacd:1.6.0', vars.ACR_BASE_IMAGE_PREFIX) || 'guacamole/guacd:1.6.0' }}
+            MAVEN_BASE_IMAGE=${{ env.MAVEN_BASE_IMAGE }}
+            GUACD_BASE_IMAGE=${{ env.GUACD_BASE_IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -223,7 +240,7 @@ jobs:
           context: ./templates/shared_services/gitea/docker
           file: ./templates/shared_services/gitea/docker/Dockerfile
           build-args: |
-            GITEA_BASE_IMAGE_REPO=${{ vars.ACR_BASE_IMAGE_PREFIX != '' && format('{0}/mirror/gitea/gitea', vars.ACR_BASE_IMAGE_PREFIX) || 'gitea/gitea' }}
+            GITEA_BASE_IMAGE_REPO=${{ env.GITEA_BASE_IMAGE_REPO }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

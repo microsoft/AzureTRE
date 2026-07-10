@@ -114,12 +114,12 @@ Configure the following **variables** in your github environment:
 To reduce Docker Hub rate-limit exposure in CI, Azure TRE includes a dedicated workflow to mirror selected upstream base images into your ACR and use those mirrors during image builds.
 
 1. Set repository/environment variable `ACR_BASE_IMAGE_PREFIX` to your ACR login server (for example, `myacr.azurecr.io`).
-1. Ensure the following secrets are configured for the mirror workflow:
-  - `ACR_NAME`
-  - `AZURE_CLIENT_ID`
-  - `AZURE_TENANT_ID`
-  - `AZURE_SUBSCRIPTION_ID`
-1. Run `/.github/workflows/sync_acr_base_images.yml` manually once to seed mirrored images, then allow the scheduled run to keep them up to date.
+2. Ensure the following secrets are configured for the mirror workflow:
+- `ACR_NAME`
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+3. Run `/.github/workflows/sync_acr_base_images.yml` manually once to seed mirrored images, then allow the scheduled run to keep them up to date.
 
 The Docker image build workflow (`/.github/workflows/build_docker_images.yml`) automatically uses mirrored base images when `ACR_BASE_IMAGE_PREFIX` is set, and falls back to upstream image sources when it is not set.
 
