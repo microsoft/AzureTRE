@@ -13,6 +13,7 @@ ENHANCEMENTS:
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
 
 BUG FIXES:
+* Fix airlock import-review workspace template to restore v1 storage account (`stalimip{tre_id}`) access for legacy workspaces when `airlock_version=1`, while preserving ABAC-conditional v2 (`stalairlock{tre_id}`) access. Bumps `tre-workspace-airlock-import-review` to v1.6.0.
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT

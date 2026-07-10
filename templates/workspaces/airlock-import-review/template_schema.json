@@ -58,6 +58,13 @@
         "Manual"
       ],
       "updateable": true
+    },
+    "airlock_version": {
+      "type": "integer",
+      "title": "Airlock Storage Version",
+      "description": "Airlock storage version: 1 = legacy per-stage storage accounts (stalimip{tre_id}), 2 = consolidated metadata-based storage (stalairlock{tre_id}).",
+      "default": 2,
+      "enum": [1, 2]
     }
   },
   "allOf": [
