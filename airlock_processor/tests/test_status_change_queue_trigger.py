@@ -149,14 +149,14 @@ class TestMainFailurePaths():
 
 class TestImportSubmitUsesReviewWorkspaceId():
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_import_submit_destination_uses_review_workspace_id(self):
+    def test_import_submit_destination_uses_tre_id_regardless_of_review_workspace_id(self):
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
             short_workspace_id="ws01",
             review_workspace_id="rw01"
         )
-        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "rw01"
+        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
 
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_submit_destination_falls_back_to_tre_id_when_no_review_workspace_id(self):

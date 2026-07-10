@@ -235,9 +235,9 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            # Import submit: copy to review workspace storage, or tre_id for legacy compatibility
-            dest_id = review_workspace_id if review_workspace_id else tre_id
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + dest_id
+            # Import submit: in v1 the in-progress storage account is always TRE-scoped (stalimip{tre_id}).
+            # The review workspace accesses it via private endpoints, not its own storage account.
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:
