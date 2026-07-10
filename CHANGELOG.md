@@ -5,7 +5,6 @@
 * <!-- markdownlint-disable-next-line MD013 -->
 * Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
-<<<<<<< HEAD
 ENHANCEMENTS:
 * Enable graceful upgrading of the Nexus shared service: modified or added repository configs and the container image (now `3.94.0`) are applied to the existing VM on upgrade without recreating it. Removed the non-functional `snapcraft` proxy (dead remote URL) and skip repositories left in a failed state so they don't block upgrades. (`sonatype-nexus` 3.10.0) ([#2721](https://github.com/microsoft/AzureTRE/issues/2721))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
