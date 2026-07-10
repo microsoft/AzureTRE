@@ -72,7 +72,7 @@ If the Security Scanning does not identify any security flaws, the request state
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, though a TRE API call.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, through a TRE API call.
 At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - export approved  or `stalimapp` - import approved.
 With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.
 
@@ -91,7 +91,7 @@ Considering that the Airlock requests may require large data movements, the oper
 
 ## Security Scan
 
-The identified data in a airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
+The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
 
 > * The Security scan will be optional, behind a feature flag enabled by a script
 > * The outcome of the security scan will be either the in-progress (`stalexip`) storage or blocked (`stalexblocked`)

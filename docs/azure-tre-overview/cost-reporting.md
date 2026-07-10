@@ -142,7 +142,7 @@ Azure TRE will not display costs for unsupported Azure subscriptions.
 ## Azure Resources Tagging
 
 TRE Cost Reporting is based on Azure tagging to be able to generate cost report for core services, shared services, workspace, workspace services and user resources.
-Templates authors need to make sure that underling Azure resources are tagged with the following tags:
+Templates authors need to make sure that underlying Azure resources are tagged with the following tags:
 
 
 | <div style="width:160px">Tag</div> | Value | Applies to |
@@ -167,7 +167,7 @@ Cost management query API, which Azure TRE Cost APIs are based upon, returns a f
 if filtered resources have more tags, those tags will appear in the result.
 
 To rollup untagged resources into workspace costs Azure TRE cost API first calls Azure Resource Manager to get all resource group names which are tagged with the workspace_id and passes those names into Azure Cost Management Query API as a filter and group by resource group along with the tag name.
-untagged costs results will appear in with an empty tag name and get aggregated using the resource group and relevant the workspace id.
+untagged costs results will appear with an empty tag name and get aggregated using the resource group and relevant the workspace id.
 
 Azure TRE Cost API joins this response with the hierarchical structure of the requested report.
 
