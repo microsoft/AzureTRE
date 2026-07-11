@@ -76,4 +76,3 @@ class ResourceTemplate(AzureTREModel):
 
     # setting this to false means if extra, unexpected fields are supplied, the request is invalidated
     unevaluatedProperties: bool = Field(default=False, title="Prevent unspecified properties being applied")
-
