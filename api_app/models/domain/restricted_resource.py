@@ -36,4 +36,3 @@ class RestrictedResource(AzureTREModel):
         if hasattr(value, "model_dump"):
             return value.model_dump()
         return value
-
