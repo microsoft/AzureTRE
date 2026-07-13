@@ -133,7 +133,7 @@ GET /api/workspaces/{workspace_id}/costs
 
 * Once cost data becomes available in Cost Management, it will be retained for at least seven years. Only the last 13 months is available from the TRE Cost API and Azure Portal. For historical data before 13 months, please use [Exports](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/tutorial-export-acm-data?tabs=azure-portal) or the [UsageDetails API](https://docs.microsoft.com/en-us/rest/api/consumption/usage-details/list?tabs=HTTP).
 
-* There are several Azure Offers that currently are not supported yet, Azure Offers are types of Azure subscriptions, for full list of supported and unspported Azure Offers please refer to [Supported Microsoft Azure offers](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data#supported-microsoft-azure-offers),
+* There are several Azure Offers that currently are not supported yet, Azure Offers are types of Azure subscriptions, for full list of supported and unsupported Azure Offers please refer to [Supported Microsoft Azure offers](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data#supported-microsoft-azure-offers),
 Azure TRE will not display costs for unsupported Azure subscriptions.
 
 * For more information please refer to [Understand Cost Management data](https://docs.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data) and Cost API swagger docs.
@@ -142,7 +142,7 @@ Azure TRE will not display costs for unsupported Azure subscriptions.
 ## Azure Resources Tagging
 
 TRE Cost Reporting is based on Azure tagging to be able to generate cost report for core services, shared services, workspace, workspace services and user resources.
-Templates authors need to make sure that underling Azure resources are tagged with the following tags:
+Templates authors need to make sure that underlying Azure resources are tagged with the following tags:
 
 
 | <div style="width:160px">Tag</div> | Value | Applies to |
@@ -152,7 +152,7 @@ Templates authors need to make sure that underling Azure resources are tagged wi
 | `shared_service_id` | The shared service unique ID | Shared Services |
 | `workspace_id` | The workspace unique ID | Workspaces, Workspace Services and User Resources |
 | `workspace_service_id` | The workspace service unique ID | Workspace Services and User Resources |
-| `user_resource_id` | The user resoruce unique ID | User Resources |
+| `user_resource_id` | The user resource unique ID | User Resources |
 
 !!! Notes
     - Main Azure Container Registry and Storage Account are not be tagged as those resources are used to spin up more than one Azure TRE Instance.
@@ -167,7 +167,7 @@ Cost management query API, which Azure TRE Cost APIs are based upon, returns a f
 if filtered resources have more tags, those tags will appear in the result.
 
 To rollup untagged resources into workspace costs Azure TRE cost API first calls Azure Resource Manager to get all resource group names which are tagged with the workspace_id and passes those names into Azure Cost Management Query API as a filter and group by resource group along with the tag name.
-untagged costs results will apear in with an empty tag name and get aggregated using the resource group and relevent the workspace id.
+untagged costs results will appear with an empty tag name and get aggregated using the resource group and relevant the workspace id.
 
 Azure TRE Cost API joins this response with the hierarchical structure of the requested report.
 
