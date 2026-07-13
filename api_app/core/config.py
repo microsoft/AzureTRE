@@ -72,10 +72,6 @@ ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=boo
 ENABLE_LEGACY_AIRLOCK: bool = config("ENABLE_LEGACY_AIRLOCK", cast=bool, default=True)
 BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS: bool = config("BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS", cast=bool, default=False)
 
-# Airlock storage configuration (set from Terraform outputs)
-# Optional App Gateway FQDN (not currently used by API at runtime)
-APP_GATEWAY_FQDN: str = config("APP_GATEWAY_FQDN", default="")
-
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 
 # User Management
