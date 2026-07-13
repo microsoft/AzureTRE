@@ -11,6 +11,7 @@ ENHANCEMENTS:
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
+* Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 
 BUG FIXES:
 * Fix airlock import-review workspace template to restore v1 storage account (`stalimip{tre_id}`) access for legacy workspaces when `airlock_version=1`, while preserving ABAC-conditional v2 (`stalairlock{tre_id}`) access. Bumps `tre-workspace-airlock-import-review` to v1.6.0.
