@@ -1,6 +1,9 @@
 import pytest
 import asyncio
 import logging
+import os
+
+from azure.core.exceptions import ResourceNotFoundError
 
 from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
 from resources.resource import get_resource, post_resource

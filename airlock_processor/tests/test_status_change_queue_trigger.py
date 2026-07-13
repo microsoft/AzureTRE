@@ -130,6 +130,7 @@ class TestFilesDeletion():
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert mock_set_output_event_to_trigger_container_deletion.called
 
+
 class TestMainFailurePaths():
     def test_main_raises_json_decode_error_when_invalid_json(self):
         message = _mock_service_bus_message(body="invalid json")
