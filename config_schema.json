@@ -89,6 +89,14 @@
           "description": "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1.",
           "type": "boolean"
         },
+        "acknowledge_legacy_airlock_disable_prerequisites": {
+          "description": "Operator acknowledgement required when disabling legacy airlock support.",
+          "type": "boolean"
+        },
+        "block_disable_legacy_airlock_if_v1_exists": {
+          "description": "If true, API startup fails when legacy airlock is disabled and active v1 dependencies are detected.",
+          "type": "boolean"
+        },
         "core_address_space": {
           "description": "TRE core address spaces.",
           "type": "string"

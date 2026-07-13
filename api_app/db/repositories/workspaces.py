@@ -65,6 +65,13 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         return parse_obj_as(List[Workspace], workspaces)
 
+    async def get_active_v1_workspace_ids(self) -> List[str]:
+        query, parameters = WorkspaceRepository.active_workspaces_query_string()
+        query += " AND (NOT IS_DEFINED(c.properties.airlock_version) OR c.properties.airlock_version = @airlockVersion)"
+        parameters.append({'name': '@airlockVersion', 'value': 1})
+        workspaces = await self.query(query=query, parameters=parameters)
+        return [workspace["id"] for workspace in workspaces]
+
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
 

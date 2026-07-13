@@ -177,7 +177,24 @@ variable "enable_airlock_malware_scanning" {
 variable "enable_legacy_airlock" {
   type        = bool
   default     = true
-  description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1."
+  description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1. Do not set to false until all workspaces and in-flight requests are migrated to airlock_version=2."
+
+  validation {
+    condition     = var.enable_legacy_airlock || var.acknowledge_legacy_airlock_disable_prerequisites
+    error_message = "Setting enable_legacy_airlock=false requires acknowledge_legacy_airlock_disable_prerequisites=true after confirming no active v1 workspaces or in-flight v1 airlock requests remain."
+  }
+}
+
+variable "acknowledge_legacy_airlock_disable_prerequisites" {
+  type        = bool
+  default     = false
+  description = "Operator acknowledgement for disabling legacy airlock after confirming all workspaces and in-flight requests are migrated to airlock_version=2"
+}
+
+variable "block_disable_legacy_airlock_if_v1_exists" {
+  type        = bool
+  default     = false
+  description = "If true, API startup fails when enable_legacy_airlock=false and active v1 workspaces or in-flight v1 airlock requests are detected"
 }
 
 variable "enable_airlock_email_check" {

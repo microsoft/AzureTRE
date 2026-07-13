@@ -38,7 +38,12 @@ tre:
   enable_swagger: true
   enable_airlock_malware_scanning: true
   # Set to true to deploy v1 legacy per-stage airlock storage accounts (required for workspaces using airlock_version=1)
+  # Before setting this to false, ensure all workspaces are airlock_version=2 and no v1 requests are still in-flight.
+  # When disabling legacy airlock, this acknowledgement must be set to true.
+  # acknowledge_legacy_airlock_disable_prerequisites: true
   enable_legacy_airlock: true
+  # If true, API startup fails when enable_legacy_airlock=false and v1 dependencies still exist.
+  block_disable_legacy_airlock_if_v1_exists: false
 
   # Set to true if want to ensure users have an email address before airlock request is created
   # Used if rely on email notifications for governance purposes

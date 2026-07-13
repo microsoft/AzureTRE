@@ -69,6 +69,8 @@ API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=bool, default=False)
+ENABLE_LEGACY_AIRLOCK: bool = config("ENABLE_LEGACY_AIRLOCK", cast=bool, default=True)
+BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS: bool = config("BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS", cast=bool, default=False)
 
 # Airlock storage configuration (set from Terraform outputs)
 # Optional App Gateway FQDN (not currently used by API at runtime)

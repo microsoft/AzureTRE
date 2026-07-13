@@ -111,5 +111,5 @@ variable "encryption_key_versionless_id" {
 variable "enable_legacy_airlock" {
   type        = bool
   default     = true
-  description = "Deploy v1 legacy per-stage airlock storage accounts. Required for workspaces using airlock_version=1."
+  description = "Deploy v1 legacy per-stage airlock storage accounts. Required for workspaces using airlock_version=1. Do not set to false until all workspaces and in-flight requests are migrated to airlock_version=2."
 }

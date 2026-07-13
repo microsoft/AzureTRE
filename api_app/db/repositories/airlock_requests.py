@@ -21,6 +21,15 @@ from services.logging import logger
 
 
 class AirlockRequestRepository(BaseRepository):
+    FINAL_AIRLOCK_STATUSES = [
+        AirlockRequestStatus.Approved,
+        AirlockRequestStatus.Rejected,
+        AirlockRequestStatus.Blocked,
+        AirlockRequestStatus.Cancelled,
+        AirlockRequestStatus.Failed,
+        AirlockRequestStatus.Revoked
+    ]
+
     @classmethod
     async def create(cls):
         cls = AirlockRequestRepository()
@@ -160,6 +169,19 @@ class AirlockRequestRepository(BaseRepository):
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
         return parse_obj_as(AirlockRequest, airlock_requests)
+
+    async def get_in_flight_v1_airlock_request_ids(self) -> List[str]:
+        query = (
+            "SELECT c.id FROM c WHERE "
+            "(NOT IS_DEFINED(c.airlock_version) OR c.airlock_version = @airlockVersion) "
+            "AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        )
+        parameters = [
+            {"name": "@airlockVersion", "value": 1},
+            {"name": "@finalStatuses", "value": self.FINAL_AIRLOCK_STATUSES}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
 
     async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
