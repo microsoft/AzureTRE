@@ -111,7 +111,7 @@ end
 
 _: Event == BlobCreatedEvent
 
-Servicebus -> Airlock processor: Consume BlobCreatedEvent(<storage acccount>)
+Servicebus -> Airlock processor: Consume BlobCreatedEvent(<storage account>)
 
 if:storageacccount == Approved || Rejected || Blocked
 Airlock processor -> Event grid: UpdateStatusEvent(approved/rejected/blocked)
