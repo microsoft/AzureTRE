@@ -108,8 +108,8 @@ The Airlock allows a TRE user to start the `import` or `export` process to a giv
 4. **Approval In-progress**: The Airlock request has been approved, however data movement is still ongoing.
 5. **Approved**: The Airlock request has been approved. Data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is available in the TRE workspace and can be accessed by the requestor from within the workspace.
 6. **Rejection In-progress**: The Airlock request has been rejected, however data movement is still ongoing.
-7. **Rejected**: The Airlock request has been rejected. The data was rejected manually by the Airlock Manager.
-8. **Cancelled**: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
+7. **Rejected**: The Airlock request has been rejected. The data in the process was rejected manually by the Airlock Manager.
+8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancellation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.
 
@@ -150,7 +150,9 @@ A notification is sent to the Airlock Manager.
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager manually reviews the data using tools available in the TRE workspace. Once review is completed, the Airlock Manager approves or rejects the request through a TRE API call. For approval, data is copied to the final destination. For rejection, only metadata is updated.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, through a TRE API call.
+At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - export approved  or `stalimapp` - import approved.
+With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.
 
 ## Data Movement
 
@@ -245,60 +247,7 @@ graph LR
 
 ## Security Scan
 
-Data in an airlock process is submitted to a security scan. If the scan identifies issues, the container metadata is updated to blocked status and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, data remains accessible to the Workspace Owner for review.
-
-> * The security scan is optional, behind a feature flag enabled by a script.
-> * The outcome of the security scan will be either the in-progress metadata status or blocked metadata status.
-> * An airlock process guarantees that the content being imported/exported is secure.
-
-## Access Control
-
-The airlock uses Azure Attribute-Based Access Control (ABAC) to restrict access at the storage account level. This ensures that identities can only access containers matching specific stage metadata values.
-
-```mermaid
-graph LR
-    api["fa:fa-key TRE API"]
-    proc["fa:fa-cog Airlock Processor"]
-    wspe["fa:fa-lock Workspace PE"]
-
-    subgraph CoreStorage["Core: stalairlock"]
-        cs_ie{{"stage: import-external"}}
-        cs_eapp{{"stage: export-approved"}}
-        cs_iip{{"stage: import-in-progress"}}
-        cs_irej{{"stage: import-rejected"}}
-        cs_iblk{{"stage: import-blocked"}}
-    end
-
-    subgraph WorkspaceStorage["Workspace: stalairlockg"]
-        ws_iapp{{"stage: import-approved"}}
-        ws_eint{{"stage: export-internal"}}
-        ws_eip{{"stage: export-in-progress"}}
-        ws_erej{{"stage: export-rejected"}}
-        ws_eblk{{"stage: export-blocked"}}
-    end
-
-    api -- "ABAC: import-external OR export-approved" --> CoreStorage
-    proc == "Unrestricted access" ==> CoreStorage
-    proc == "Unrestricted access" ==> WorkspaceStorage
-    wspe -- "ABAC: workspace_id + stage" --> WorkspaceStorage
-
-    style api fill:#b85450,stroke:#8b3e3b,color:#fff
-    style proc fill:#cc7000,stroke:#995300,color:#fff
-    style wspe fill:#6a3d9a,stroke:#4a2b6d,color:#fff
-    style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
-    style WorkspaceStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
-    style cs_ie fill:#2d8a2d,stroke:#1a5c1a,color:#fff
-    style cs_eapp fill:#2d8a2d,stroke:#1a5c1a,color:#fff
-    style cs_iip fill:#4a6fa5,stroke:#2c5f9e,color:#fff
-    style cs_irej fill:#8b3e3b,stroke:#6b2e2b,color:#fff
-    style cs_iblk fill:#8b3e3b,stroke:#6b2e2b,color:#fff
-    style ws_iapp fill:#2d8a2d,stroke:#1a5c1a,color:#fff
-    style ws_eint fill:#2d8a2d,stroke:#1a5c1a,color:#fff
-    style ws_eip fill:#4a6fa5,stroke:#2c5f9e,color:#fff
-    style ws_erej fill:#8b3e3b,stroke:#6b2e2b,color:#fff
-    style ws_eblk fill:#8b3e3b,stroke:#6b2e2b,color:#fff
-```
-> ABAC access control. The API can only access public stages (green). The Processor has full access. Workspace PEs are scoped by workspace_id.
+The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
 
 **Identity access summary:**
 
