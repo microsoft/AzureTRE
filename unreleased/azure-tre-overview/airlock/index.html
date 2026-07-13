@@ -4679,7 +4679,7 @@ The airlock feature brings several actions: ingress/egress Mechanism; Data movem
 <li><strong>Approved</strong>: The Airlock request has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace, it can be accessed by the requestor from within the workspace.</li>
 <li><strong>Rejection In-progress</strong>: The Airlock request has been rejected, however data movement is still ongoing.</li>
 <li><strong>Rejected</strong>: The Airlock request has been rejected. The data in the process was rejected manually by the Airlock Manager.</li>
-<li><strong>Cancelled</strong>: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancelation is only allowed when the request is not actively changing (i.e. <strong>Draft</strong> or <strong>In-Review</strong> state).</li>
+<li><strong>Cancelled</strong>: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancellation is only allowed when the request is not actively changing (i.e. <strong>Draft</strong> or <strong>In-Review</strong> state).</li>
 <li><strong>Blocking In-progress</strong>: The Airlock request has been blocked, however data movement is still ongoing.</li>
 <li><strong>Blocked By Scan</strong>: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.</li>
 </ol>
@@ -4713,7 +4713,7 @@ If the Security Scanning does not identify any security flaws, the request state
 <blockquote>
 <p>The Security Scanning can be disabled, changing the request state from <strong>Submitted</strong> straight to <strong>In-Review</strong>.</p>
 </blockquote>
-<p>The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to <em>Approve</em> or <em>Reject</em> the airlock proces, though a TRE API call.
+<p>The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to <em>Approve</em> or <em>Reject</em> the airlock process, through a TRE API call.
 At this point, the request will change state to either <strong>Approval In-progress</strong> or <strong>Rejection In-progress</strong>, while the data movement occurs moving afterwards to <strong>Approved</strong> or <strong>Rejected</strong> accordingly. The data will now be in the final storage destination: <code>stalexapp</code> - export approved  or <code>stalimapp</code> - import approved.
 With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.</p>
 <h2 id="data-movement">Data movement</h2>
@@ -4726,7 +4726,7 @@ Also, the process guarantees that data is not tampered with throughout the proce
 <p>The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between</p>
 </blockquote>
 <h2 id="security-scan">Security Scan</h2>
-<p>The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state <strong>In-progress</strong>, and accessible to the Workspace Owner.</p>
+<p>The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state <strong>In-progress</strong>, and accessible to the Workspace Owner.</p>
 <blockquote>
 <ul>
 <li>The Security scan will be optional, behind a feature flag enabled by a script</li>

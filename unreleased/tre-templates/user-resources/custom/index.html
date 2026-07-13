@@ -4539,7 +4539,7 @@ To update one of these templates (or to create a new template based on these fol
 </tbody>
 </table>
 <p>When specifying images using <code>source_image_name</code>, the image must be stored in an <a href="https://learn.microsoft.com/en-us/azure/virtual-machines/azure-compute-gallery">image gallery</a>.
-To enable re-using built user resource templates across environments where the image may vary, the image gallery is configured via the <code>RP_BUNDLE_VALUES</code> environment variable when deploying the TRE.
+To enable reusing built user resource templates across environments where the image may vary, the image gallery is configured via the <code>RP_BUNDLE_VALUES</code> environment variable when deploying the TRE.
 The <code>RP_BUNDLE_VALUES</code> variable is a JSON object, and the <code>image_gallery_id</code> property within it identifies the image gallery that contains the images specified by <code>source_image_name</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">RP_BUNDLE_VALUES</span><span class="o">=</span><span class="err">&#39;</span><span class="o">{</span><span class="s2">&quot;image_gallery_id&quot;</span>:<span class="w"> </span><span class="s2">&quot;/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/&lt;your-rg&gt;/providers/Microsoft.Compute/galleries/&lt;your-gallery-name&gt;&quot;</span><span class="o">}</span>
 </code></pre></div>
