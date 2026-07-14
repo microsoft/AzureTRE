@@ -22,38 +22,22 @@ if [[ $(az group list --output json --query "[?name=='${core_rg_name}'] | length
   exit 0
 fi
 
-az config set extension.use_dynamic_install=yes_without_prompt
+export AZURE_EXTENSION_USE_DYNAMIC_INSTALL=yes_without_prompt
+az extension add --name azure-firewall --allow-preview true --upgrade
 az --version
 
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-FW_API_URL="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${core_rg_name}/providers/Microsoft.Network/azureFirewalls/${fw_name}?api-version=2024-05-01"
-
 if [[ "$1" == *"start"* ]]; then
-  if FW_JSON=$(az rest --method get --url "${FW_API_URL}" --output json 2>/dev/null); then
-    CURRENT_PUBLIC_IP=$(echo "${FW_JSON}" | jq -r '.properties.ipConfigurations[0].properties.publicIPAddress.id // empty')
-    if [ -z "${CURRENT_PUBLIC_IP}" ]; then
-      FW_SKU_TIER=$(echo "${FW_JSON}" | jq -r '.properties.sku.tier')
-      VNET_SUBNET_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${core_rg_name}/providers/Microsoft.Network/virtualNetworks/${vnet_name}/subnets/AzureFirewallSubnet"
-      FW_PIP_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${core_rg_name}/providers/Microsoft.Network/publicIPAddresses/${fw_pip_name}"
+  if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
+    CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
+    if [ -z "$CURRENT_PUBLIC_IP" ]; then
+      FW_SKU_TIER=$(az network firewall show --n "${fw_name}" -g "${core_rg_name}" --query "sku.tier" -o tsv)
       if [ "$FW_SKU_TIER" == "Basic" ]; then
         echo "Starting Firewall (Basic SKU) - creating ip-config and management-ip-config"
-        MGMT_PIP_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${core_rg_name}/providers/Microsoft.Network/publicIPAddresses/pip-fw-management-${TRE_ID}"
-        MGMT_SUBNET_ID="/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${core_rg_name}/providers/Microsoft.Network/virtualNetworks/${vnet_name}/subnets/AzureFirewallManagementSubnet"
-        UPDATED_FW=$(echo "${FW_JSON}" | jq -c \
-          --arg pip_id "${FW_PIP_ID}" \
-          --arg subnet_id "${VNET_SUBNET_ID}" \
-          --arg mgmt_pip_id "${MGMT_PIP_ID}" \
-          --arg mgmt_subnet_id "${MGMT_SUBNET_ID}" \
-          '.properties.ipConfigurations = [{"name": "fw-ip-configuration", "properties": {"publicIPAddress": {"id": $pip_id}, "subnet": {"id": $subnet_id}}}] |
-           .properties.managementIpConfiguration = {"name": "fw-management-ip-configuration", "properties": {"publicIPAddress": {"id": $mgmt_pip_id}, "subnet": {"id": $mgmt_subnet_id}}}')
+        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" --m-name "fw-management-ip-configuration" --m-public-ip-address "pip-fw-management-$TRE_ID" --m-vnet-name "${vnet_name}"> /dev/null &
       else
         echo "Starting Firewall - creating ip-config"
-        UPDATED_FW=$(echo "${FW_JSON}" | jq -c \
-          --arg pip_id "${FW_PIP_ID}" \
-          --arg subnet_id "${VNET_SUBNET_ID}" \
-          '.properties.ipConfigurations = [{"name": "fw-ip-configuration", "properties": {"publicIPAddress": {"id": $pip_id}, "subnet": {"id": $subnet_id}}}]')
+        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" > /dev/null &
       fi
-      az rest --method put --url "${FW_API_URL}" --body "${UPDATED_FW}" > /dev/null &
     else
       echo "Firewall ip-config already exists"
     fi
@@ -90,12 +74,12 @@ if [[ "$1" == *"start"* ]]; then
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
 elif [[ "$1" == *"stop"* ]]; then
-  if FW_JSON=$(az rest --method get --url "${FW_API_URL}" --output json 2>/dev/null); then
-    FW_IPCONFIG=$(echo "${FW_JSON}" | jq -r '.properties.ipConfigurations[0].name // empty')
-    if [ -n "${FW_IPCONFIG}" ]; then
+  if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
+    IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
+
+    if [ -n "$IPCONFIG_NAME" ]; then
       echo "Deleting Firewall ip-config"
-      UPDATED_FW=$(echo "${FW_JSON}" | jq -c '.properties.ipConfigurations = [] | del(.properties.managementIpConfiguration)')
-      az rest --method put --url "${FW_API_URL}" --body "${UPDATED_FW}" > /dev/null &
+      az network firewall update --name "${fw_name}" --resource-group "${core_rg_name}" --remove ipConfigurations --remove managementIpConfiguration &
     else
       echo "No Firewall ip-config found"
     fi
@@ -146,9 +130,9 @@ wait
 
 # Report final FW status
 FW_STATE="Stopped"
-if FW_JSON=$(az rest --method get --url "${FW_API_URL}" --output json 2>/dev/null); then
-  PUBLIC_IP=$(echo "${FW_JSON}" | jq -r '.properties.ipConfigurations[0].properties.publicIPAddress.id // empty')
-  if [ -n "${PUBLIC_IP}" ]; then
+if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
+  PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
+  if [ -n "$PUBLIC_IP" ]; then
     FW_STATE="Running"
   fi
 fi
