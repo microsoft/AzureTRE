@@ -19,6 +19,7 @@ BUG FIXES:
 * Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
+* Fix `make tre-start/stop` to manage Azure Firewall IP configurations without relying on the dynamically installed Azure CLI firewall extension. ([#4965](https://github.com/microsoft/AzureTRE/pull/4965))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

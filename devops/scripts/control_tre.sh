@@ -14,6 +14,58 @@ fw_name="fw-${TRE_ID}"
 agw_name="agw-$TRE_ID"
 fw_pip_name="pip-${fw_name}"
 vnet_name="vnet-${TRE_ID}"
+firewall_resource_type="Microsoft.Network/azureFirewalls"
+
+firewall_exists() {
+  [[ $(az resource list --resource-group "${core_rg_name}" --resource-type "${firewall_resource_type}" --query "[?name=='${fw_name}'] | length(@)" -o tsv) != 0 ]]
+}
+
+get_firewall_json() {
+  az resource show --resource-group "${core_rg_name}" --resource-type "${firewall_resource_type}" --name "${fw_name}" -o json
+}
+
+get_firewall_public_ip_id() {
+  jq -r '.properties.ipConfigurations[0].properties.publicIPAddress.id // empty'
+}
+
+get_firewall_sku_tier() {
+  jq -r '.properties.sku.tier // empty'
+}
+
+start_firewall_ip_config() {
+  local fw_sku_tier="$1"
+  local subnet_id
+  local public_ip_id
+  local ip_config_json
+
+  subnet_id=$(az network vnet subnet show --resource-group "${core_rg_name}" --vnet-name "${vnet_name}" --name "AzureFirewallSubnet" --query id -o tsv)
+  public_ip_id=$(az network public-ip show --resource-group "${core_rg_name}" --name "${fw_pip_name}" --query id -o tsv)
+  ip_config_json=$(jq -cn \
+    --arg name "fw-ip-configuration" \
+    --arg subnet_id "${subnet_id}" \
+    --arg public_ip_id "${public_ip_id}" \
+    '[{name:$name,properties:{subnet:{id:$subnet_id},publicIPAddress:{id:$public_ip_id}}}]')
+
+  if [ "${fw_sku_tier}" == "Basic" ]; then
+    local management_subnet_id
+    local management_public_ip_id
+    local management_ip_config_json
+
+    management_subnet_id=$(az network vnet subnet show --resource-group "${core_rg_name}" --vnet-name "${vnet_name}" --name "AzureFirewallManagementSubnet" --query id -o tsv)
+    management_public_ip_id=$(az network public-ip show --resource-group "${core_rg_name}" --name "pip-fw-management-${TRE_ID}" --query id -o tsv)
+    management_ip_config_json=$(jq -cn \
+      --arg name "fw-management-ip-configuration" \
+      --arg subnet_id "${management_subnet_id}" \
+      --arg public_ip_id "${management_public_ip_id}" \
+      '{name:$name,properties:{subnet:{id:$subnet_id},publicIPAddress:{id:$public_ip_id}}}')
+
+    az resource update --resource-group "${core_rg_name}" --resource-type "${firewall_resource_type}" --name "${fw_name}" \
+      --set properties.ipConfigurations="${ip_config_json}" properties.managementIpConfiguration="${management_ip_config_json}" > /dev/null &
+  else
+    az resource update --resource-group "${core_rg_name}" --resource-type "${firewall_resource_type}" --name "${fw_name}" \
+      --set properties.ipConfigurations="${ip_config_json}" > /dev/null &
+  fi
+}
 
 # if the resource group doesn't exist, no need to continue this script.
 # most likely this is an automated execution before calling make tre-deploy.
@@ -22,21 +74,20 @@ if [[ $(az group list --output json --query "[?name=='${core_rg_name}'] | length
   exit 0
 fi
 
-az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
 if [[ "$1" == *"start"* ]]; then
-  if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
-    CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
+  if firewall_exists; then
+    FIREWALL_JSON=$(get_firewall_json)
+    CURRENT_PUBLIC_IP=$(echo "${FIREWALL_JSON}" | get_firewall_public_ip_id)
     if [ -z "$CURRENT_PUBLIC_IP" ]; then
-      FW_SKU_TIER=$(az network firewall show --n "${fw_name}" -g "${core_rg_name}" --query "sku.tier" -o tsv)
+      FW_SKU_TIER=$(echo "${FIREWALL_JSON}" | get_firewall_sku_tier)
       if [ "$FW_SKU_TIER" == "Basic" ]; then
-        echo "Starting Firewall (Basic SKU) - creating ip-config and management-ip-config"
-        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" --m-name "fw-management-ip-configuration" --m-public-ip-address "pip-fw-management-$TRE_ID" --m-vnet-name "${vnet_name}"> /dev/null &
+        echo "Starting Firewall (Basic SKU) - restoring ip-config and management-ip-config"
       else
-        echo "Starting Firewall - creating ip-config"
-        az network firewall ip-config create -f "${fw_name}" -g "${core_rg_name}" -n "fw-ip-configuration" --public-ip-address "${fw_pip_name}" --vnet-name "${vnet_name}" > /dev/null &
+        echo "Starting Firewall - restoring ip-config"
       fi
+      start_firewall_ip_config "${FW_SKU_TIER}"
     else
       echo "Firewall ip-config already exists"
     fi
@@ -73,12 +124,14 @@ if [[ "$1" == *"start"* ]]; then
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
 elif [[ "$1" == *"stop"* ]]; then
-  if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
-    IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
+  if firewall_exists; then
+    FIREWALL_JSON=$(get_firewall_json)
+    IPCONFIG_NAME=$(echo "${FIREWALL_JSON}" | jq -r '.properties.ipConfigurations[0].name // empty')
 
     if [ -n "$IPCONFIG_NAME" ]; then
       echo "Deleting Firewall ip-config"
-      az network firewall update --name "${fw_name}" --resource-group "${core_rg_name}" --remove ipConfigurations --remove managementIpConfiguration &
+      az resource update --resource-group "${core_rg_name}" --resource-type "${firewall_resource_type}" --name "${fw_name}" \
+        --remove properties.ipConfigurations --remove properties.managementIpConfiguration &
     else
       echo "No Firewall ip-config found"
     fi
@@ -129,8 +182,8 @@ wait
 
 # Report final FW status
 FW_STATE="Stopped"
-if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
-  PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
+if firewall_exists; then
+  PUBLIC_IP=$(get_firewall_json | get_firewall_public_ip_id)
   if [ -n "$PUBLIC_IP" ]; then
     FW_STATE="Running"
   fi
