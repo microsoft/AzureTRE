@@ -23,6 +23,8 @@ if [[ $(az group list --output json --query "[?name=='${core_rg_name}'] | length
 fi
 
 az config set extension.use_dynamic_install=yes_without_prompt
+az config set extension.dynamic_install_allow_preview=true
+az extension add --name azure-firewall --allow-preview true --upgrade
 az --version
 
 if [[ "$1" == *"start"* ]]; then
