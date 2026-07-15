@@ -23,6 +23,7 @@ BUG FIXES:
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
+* Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
