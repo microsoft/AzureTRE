@@ -1215,8 +1215,8 @@ COMPONENTS:
 
       If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarily activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
-
-
+  
+  
   :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
