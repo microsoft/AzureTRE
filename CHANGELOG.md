@@ -19,7 +19,7 @@ BUG FIXES:
 * Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
-* Fix clean validation workflow by pinning the Azure CLI version to avoid transient checksum errors from unpinned Azure CLI packages ([#4971](https://github.com/microsoft/AzureTRE/issues/4971))
+* Fix Clean Validation workflow by pinning the Azure CLI version to avoid transient checksum errors from unpinned Azure CLI packages ([#4971](https://github.com/microsoft/AzureTRE/issues/4971))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
