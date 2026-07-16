@@ -39,7 +39,7 @@ Once an Azure TRE has been [provisioned](../../tre-admins/setup-instructions/man
 | id-agw-{TRE_ID} | Managed Identity | User-managed identity for TRE Application Gateway | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) |
 | id-api-{TRE_ID} | Managed Identity | User-managed identity for TRE API App Service | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) |
 | id-gitea-{TRE_ID} | Managed Identity | User-managed identity for TRE Gitea App Service | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) |
-| id-vmss-{TRE_ID} | Managed Identity | User-managed identity for TRE Resource Processer (VMSS) | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) |
+| id-vmss-{TRE_ID} | Managed Identity | User-managed identity for TRE Resource Processor (VMSS) | [Managed Identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview) |
 | sb-{TRE_ID} | Service Bus Namespace | Messaging for TRE API | [Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) |
 | stappinsights{TRE_ID} | Storage Account | Storage for TRE Application Insights telemetry logs | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) |
 | stg{TRE_ID} | Storage Account | Files shares for TRE services such as Gitea, Nexus | [Storage Files](https://docs.microsoft.com/en-us/azure/storage/files/storage-files-introduction) |

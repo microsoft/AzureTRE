@@ -13,15 +13,17 @@ const mockAccount = {
   tenantId: "test-tenant-id",
   localAccountId: "test-local-account-id",
 };
+let mockAccounts = [mockAccount];
+let mockCurrentAccount: typeof mockAccount | null = mockAccount;
 
 vi.mock("@azure/msal-react", () => ({
   useMsal: () => ({
     instance: {
       logout: mockLogout,
     },
-    accounts: [mockAccount],
+    accounts: mockAccounts,
   }),
-  useAccount: () => mockAccount,
+  useAccount: () => mockCurrentAccount,
 }));
 
 // Mock FluentUI components
@@ -72,6 +74,8 @@ vi.mock("@fluentui/react", () => {
 describe("UserMenu Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAccounts = [mockAccount];
+    mockCurrentAccount = mockAccount;
   });
 
   it("renders user menu with persona", () => {
@@ -140,19 +144,8 @@ describe("UserMenu Component", () => {
   });
 
   it("handles no account gracefully", () => {
-    // For this specific test, we need to manually restore and re-mock MSAL
-    vi.restoreAllMocks();
-
-    // Create new mock for no account scenario
-    vi.mock("@azure/msal-react", () => ({
-      useMsal: () => ({
-        instance: {
-          logout: mockLogout,
-        },
-        accounts: [],
-      }),
-      useAccount: () => null,
-    }));
+    mockAccounts = [];
+    mockCurrentAccount = null;
 
     render(<UserMenu />);
 
