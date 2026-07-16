@@ -28,6 +28,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Install specific Azure CLI version
+        run: |
+          AZ_DIST=$(lsb_release -cs)
+          AZ_VER=2.81.0
+
+          apt-cache policy azure-cli
+          sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
+          az version
+
       - name: Azure Login
         uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
