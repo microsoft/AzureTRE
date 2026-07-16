@@ -32,8 +32,7 @@
       "default": "Windows 11",
       "enum": [
         "Windows 11",
-        "Server 2019 Data Science VM",
-        "Server 2022 Data Science VM"
+        "Windows Server 2025"
       ]
     },
     "admin_username": {
