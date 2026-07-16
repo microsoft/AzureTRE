@@ -25,7 +25,19 @@ fi
 az config set extension.use_dynamic_install=yes_without_prompt
 az --version
 
-if [[ "$1" == *"start"* ]]; then
+# shellcheck disable=SC1091
+# source "${SCRIPT_DIR}/kv_add_network_exception.sh"
+
+COMMAND="${1:-}"
+DELETE_SERVICE_BUS="${DELETE_SERVICE_BUS:-false}"
+
+if [[ "$COMMAND" == "start" ]]; then
+  # Check if Service Bus exists
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") == 0 ]]; then
+    echo -e "\e[33mService Bus namespace 'sb-${TRE_ID}' does not exist.\e[0m"
+    echo -e "\e[33mIf you ran 'make tre-start' you will also need to run 'make deploy-core' to reprovision the Service Bus.\e[0m"
+  fi
+
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     CURRENT_PUBLIC_IP=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].publicIpAddress" -o tsv)
     if [ -z "$CURRENT_PUBLIC_IP" ]; then
@@ -46,7 +58,7 @@ if [[ "$1" == *"start"* ]]; then
     echo "Starting Application Gateway"
     az network application-gateway start -g "${core_rg_name}" -n "${agw_name}" &
   else
-    echo "Application Gateway already running"
+    echo "Application Gateway does not exist or is already running"
   fi
 
   az mysql flexible-server list --resource-group "${core_rg_name}" --query "[?userVisibleState=='Stopped'].name" -o tsv |
@@ -70,9 +82,58 @@ if [[ "$1" == *"start"* ]]; then
     az vm start --resource-group "${core_rg_name}" --name "${vm_name}" &
   done
 
+  echo "Starting Function Apps"
+  az functionapp list --resource-group "${core_rg_name}" --query "[?state=='Stopped'].name" -o tsv |
+  while read -r name; do
+    echo "Starting Function App ${name}"
+    az functionapp start --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+  echo "Starting Web Apps"
+  az webapp list --resource-group "${core_rg_name}" --query "[?state=='Stopped'].name" -o tsv |
+  while read -r name; do
+    echo "Starting Web App ${name}"
+    az webapp start --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
   # We don't start workspace VMs despite maybe stopping them because we don't know if they need to be on.
 
-elif [[ "$1" == *"stop"* ]]; then
+elif [[ "$COMMAND" == "stop" ]]; then
+
+  echo "Stopping Function Apps"
+  az functionapp list --resource-group "${core_rg_name}" --query "[?state=='Running'].name" -o tsv |
+  while read -r name; do
+    echo "Stopping Function App ${name}"
+    az functionapp stop --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+  echo "Stopping Web Apps"
+  az webapp list --resource-group "${core_rg_name}" --query "[?state=='Running'].name" -o tsv |
+  while read -r name; do
+    echo "Stopping Web App ${name}"
+    az webapp stop --resource-group "${core_rg_name}" --name "${name}" &
+  done
+
+    # Destroy Service Bus
+  if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+    sb_id=$(az servicebus namespace show --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" --query id -o tsv 2>/dev/null || true)
+    if [[ -n "${sb_id}" ]]; then
+      echo "Deleting diagnostic settings for Service Bus"
+      # shellcheck disable=SC2015
+      { az monitor diagnostic-settings list --resource "${sb_id}" --query "value[].name" -o tsv 2>/dev/null \
+        && az monitor diagnostic-settings list --resource "${sb_id}" --query "[].name" -o tsv 2>/dev/null ; } |
+      while read -r diag_name; do
+        if [[ -n "${diag_name}" ]]; then
+          echo "Deleting diagnostic setting ${diag_name}"
+          az monitor diagnostic-settings delete --resource "${sb_id}" --name "${diag_name}" --output none || true
+        fi
+      done
+
+      echo "Destroying Service Bus"
+      az servicebus namespace delete --name "sb-${TRE_ID}" --resource-group "${core_rg_name}" &
+    fi
+  fi
+
   if [[ $(az network firewall list --output json --query "[?resourceGroup=='${core_rg_name}'&&name=='${fw_name}'] | length(@)") != 0 ]]; then
     IPCONFIG_NAME=$(az network firewall ip-config list -f "${fw_name}" -g "${core_rg_name}" --query "[0].name" -o tsv)
 
@@ -139,6 +200,18 @@ fi
 # Report final AGW status
 AGW_STATE=$(az network application-gateway list --query "[?resourceGroup=='${core_rg_name}'&&name=='${agw_name}'].operationalState | [0]" -o tsv)
 
+# Report final Service Bus status
+if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+  SB_STATE="Deleted"
+  if [[ $(az servicebus namespace list --resource-group "${core_rg_name}" --query "[?name=='sb-${TRE_ID}'] | length(@)") != 0 ]]; then
+    SB_STATE="Running"
+  fi
+fi
+
 echo -e "\n\e[34m»»» 🔨 \e[96mTRE Status for $TRE_ID\e[0m"
 echo -e "\e[34m»»»   • \e[96mFirewall:              \e[33m$FW_STATE\e[0m"
-echo -e "\e[34m»»»   • \e[96mApplication Gateway:   \e[33m$AGW_STATE\e[0m\n"
+echo -e "\e[34m»»»   • \e[96mApplication Gateway:   \e[33m$AGW_STATE\e[0m"
+if [[ "${DELETE_SERVICE_BUS}" == "true" ]]; then
+  echo -e "\e[34m»»»   • \e[96mService Bus:           \e[33m$SB_STATE\e[0m"
+fi
+echo -e ""
