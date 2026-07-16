@@ -1,6 +1,6 @@
 # Troubleshooting cloud-init
 
-Cloud-init is used to configure a number of virtual machines within the Azure TRE project at first boot. This methood is used as we are unable to distribute pre built images with third part dependancies. In a production environment you may choose to create your own VM images to avoid the need for cloud-init scripts to run.
+Cloud-init is used to configure a number of virtual machines within the Azure TRE project at first boot. This method is used as we are unable to distribute pre-built images with third-party dependencies. In a production environment you may choose to create your own VM images to avoid the need for cloud-init scripts to run.
 
 Examples of virtual machines using cloud-init are:
 - Resource Processor
