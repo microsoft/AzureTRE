@@ -258,6 +258,8 @@ jobs:
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
+          build-args: |
+            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -278,6 +280,8 @@ jobs:
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
+          build-args: |
+            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
