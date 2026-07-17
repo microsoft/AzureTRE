@@ -78,16 +78,18 @@ porter_devcontainer_ca_patch() {
     if ! awk '
         /^# PORTER_INIT$/ {
             print "COPY --from=devcontainer-trusted-ca . /tmp/devcontainer-trusted-ca/"
-            print "RUN mkdir -p /usr/local/share/ca-certificates && for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$(basename \"$cert\"); cp \"$cert\" \"/usr/local/share/ca-certificates/azuretre-devcontainer-${cert_name}.crt\"; done && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi"
-            print "ARG SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
-            print "ARG CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"
-            print "ARG NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt"
+            print "RUN { if [ -f /etc/ssl/certs/ca-certificates.crt ]; then cat /etc/ssl/certs/ca-certificates.crt; fi; for cert in /tmp/devcontainer-trusted-ca/*; do cat \"$cert\"; echo; done; } > /tmp/devcontainer-ca-certificates.crt && mkdir -p /usr/local/share/ca-certificates && for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$(basename \"$cert\"); cp \"$cert\" \"/usr/local/share/ca-certificates/azuretre-devcontainer-${cert_name}.crt\"; done && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi"
+            print "RUN if command -v keytool >/dev/null 2>&1; then if [ -n \"${JAVA_HOME:-}\" ] && [ -f \"${JAVA_HOME}/lib/security/cacerts\" ]; then cp \"${JAVA_HOME}/lib/security/cacerts\" /tmp/devcontainer-java-cacerts; fi; for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$(basename \"$cert\"); keytool -importcert -noprompt -alias \"azuretre-devcontainer-${cert_name}\" -file \"$cert\" -keystore /tmp/devcontainer-java-cacerts -storepass changeit; done; fi"
+            print "ARG SSL_CERT_FILE=/tmp/devcontainer-ca-certificates.crt"
+            print "ARG CURL_CA_BUNDLE=/tmp/devcontainer-ca-certificates.crt"
+            print "ARG MAVEN_OPTS=\"-Djavax.net.ssl.trustStore=/tmp/devcontainer-java-cacerts -Djavax.net.ssl.trustStorePassword=changeit\""
+            print "ARG NODE_EXTRA_CA_CERTS=/tmp/devcontainer-ca-certificates.crt"
             print ""
         }
         { print }
         END {
             print ""
-            print "RUN for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$(basename \"$cert\"); rm -f \"/usr/local/share/ca-certificates/azuretre-devcontainer-${cert_name}.crt\"; done && rm -rf /tmp/devcontainer-trusted-ca && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi"
+            print "RUN for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$(basename \"$cert\"); rm -f \"/usr/local/share/ca-certificates/azuretre-devcontainer-${cert_name}.crt\"; done && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi && rm -rf /tmp/devcontainer-trusted-ca /tmp/devcontainer-ca-certificates.crt /tmp/devcontainer-java-cacerts"
         }
     ' "${porter_devcontainer_ca_dockerfile_backup}" > "${porter_devcontainer_ca_dockerfile}"; then
         porter_devcontainer_ca_restore
