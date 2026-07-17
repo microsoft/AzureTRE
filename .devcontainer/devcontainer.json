@@ -35,7 +35,7 @@
     // Mounts the vscode config folder from the host machine
     "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config",
     // Mount the codex folder from the host machine
-    "type=bind,source=${env:HOME}${env:USERPROFILE}/.codex,target=/home/vscode/.codex",
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.codex,target=/home/vscode/.codex"
   ],
   "remoteUser": "vscode",
   "containerEnv": {
