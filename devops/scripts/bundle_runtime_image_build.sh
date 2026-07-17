@@ -5,6 +5,10 @@ set -o nounset
 # Uncomment this line to see each command for debugging (careful: this will show secrets!)
 # set -o xtrace
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=docker_devcontainer_ca.sh
+source "${script_dir}/docker_devcontainer_ca.sh"
+
 # Check for import section (import image from external registry to ACR)
 if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
   image_name=$(yq eval ".custom.runtime_image.name" porter.yaml)
@@ -47,6 +51,8 @@ if [ -n "${CI_CACHE_ACR_NAME:-}" ]; then
 	docker_cache+=("--cache-from" "${CI_CACHE_ACR_NAME}${acr_domain_suffix}/${IMAGE_NAME_PREFIX}/${image_name}:${version}")
 fi
 
+docker_devcontainer_ca_patch "${docker_file}"
+
 ARCHITECTURE=$(docker info --format "{{ .Architecture }}" )
 
 if [ "${ARCHITECTURE}" == "aarch64" ]; then
@@ -57,5 +63,5 @@ fi
 
 ${DOCKER_BUILD_COMMAND} --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}" \
-  "${docker_cache[@]}" -f "${docker_file}" "${docker_context}"
+  "${docker_cache[@]}" "${DOCKER_DEVCONTAINER_BUILD_CONTEXT_ARGS[@]}" -f "${docker_file}" "${docker_context}"
 
