@@ -24,20 +24,29 @@ jobs:
     env:
       PYTHON_BASE_IMAGE: >-
         ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/library/python:3.12-slim-bookworm', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'python:3.12-slim-bookworm' }}
+        format('{0}/mirror/library/python', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'python' }}
+      PYTHON_TAG: 3.12-slim-bookworm
+      AIRLOCK_PYTHON_BASE_IMAGE: >-
+        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
+        format('{0}/mirror/mcr/azure-functions/python', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'mcr.microsoft.com/azure-functions/python' }}
+      AIRLOCK_PYTHON_TAG: 4-python3.12
       MAVEN_BASE_IMAGE: >-
         ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/library/maven:3.9-eclipse-temurin-17-alpine', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'maven:3.9-eclipse-temurin-17-alpine' }}
+        format('{0}/mirror/library/maven', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'maven' }}
+      MAVEN_TAG: 3.9-eclipse-temurin-17-alpine
       GUACD_BASE_IMAGE: >-
         ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/guacamole/guacd:1.6.0', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'guacamole/guacd:1.6.0' }}
+        format('{0}/mirror/guacamole/guacd', vars.ACR_BASE_IMAGE_PREFIX)
+        || 'guacamole/guacd' }}
+      GUACD_TAG: 1.6.0
       GITEA_BASE_IMAGE_REPO: >-
         ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
         format('{0}/mirror/gitea/gitea', vars.ACR_BASE_IMAGE_PREFIX)
         || 'gitea/gitea' }}
+      GITEA_TAG: 1.15
     permissions:
       contents: read
       actions: write # For uploading artifacts
@@ -156,6 +165,7 @@ jobs:
           file: ./api_app/Dockerfile
           build-args: |
             PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
+            PYTHON_TAG=${{ env.PYTHON_TAG }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -178,6 +188,7 @@ jobs:
           file: ./api_app/Dockerfile
           build-args: |
             PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
+            PYTHON_TAG=${{ env.PYTHON_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -191,6 +202,7 @@ jobs:
           file: ./resource_processor/vmss_porter/Dockerfile
           build-args: |
             PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
+            PYTHON_TAG=${{ env.PYTHON_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -204,7 +216,9 @@ jobs:
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
           build-args: |
             MAVEN_BASE_IMAGE=${{ env.MAVEN_BASE_IMAGE }}
+            MAVEN_TAG=${{ env.MAVEN_TAG }}
             GUACD_BASE_IMAGE=${{ env.GUACD_BASE_IMAGE }}
+            GUACD_TAG=${{ env.GUACD_TAG }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -227,7 +241,9 @@ jobs:
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
           build-args: |
             MAVEN_BASE_IMAGE=${{ env.MAVEN_BASE_IMAGE }}
+            MAVEN_TAG=${{ env.MAVEN_TAG }}
             GUACD_BASE_IMAGE=${{ env.GUACD_BASE_IMAGE }}
+            GUACD_TAG=${{ env.GUACD_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -241,6 +257,7 @@ jobs:
           file: ./templates/shared_services/gitea/docker/Dockerfile
           build-args: |
             GITEA_BASE_IMAGE_REPO=${{ env.GITEA_BASE_IMAGE_REPO }}
+            GITEA_TAG=${{ env.GITEA_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -259,7 +276,8 @@ jobs:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
           build-args: |
-            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
+            PYTHON_BASE_IMAGE=${{ env.AIRLOCK_PYTHON_BASE_IMAGE }}
+            PYTHON_TAG=${{ env.AIRLOCK_PYTHON_TAG }}
           outputs: type=local,dest=test-results
           target: test-results
           cache-from: type=gha
@@ -281,7 +299,8 @@ jobs:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
           build-args: |
-            PYTHON_BASE_IMAGE=${{ env.PYTHON_BASE_IMAGE }}
+            PYTHON_BASE_IMAGE=${{ env.AIRLOCK_PYTHON_BASE_IMAGE }}
+            PYTHON_TAG=${{ env.AIRLOCK_PYTHON_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

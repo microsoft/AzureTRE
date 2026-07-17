@@ -65,6 +65,7 @@ jobs:
             "docker.io/guacamole/guacd|mirror/guacamole/guacd|1.6.0"
             "docker.io/gitea/gitea|mirror/gitea/gitea|1.15"
             "docker.io/gitea/gitea|mirror/gitea/gitea|1.17.3"
+            "mcr.microsoft.com/azure-functions/python|mirror/mcr/azure-functions/python|4-python3.12"
             "docker.io/library/debian|mirror/library/debian|bookworm-slim"
             "docker.io/library/debian|mirror/library/debian|bullseye-slim"
           )
