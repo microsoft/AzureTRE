@@ -1,6 +1,8 @@
 # To enable ssh & remote debugging on app service change the base image to the one below
 # FROM mcr.microsoft.com/azure-functions/python:4-python3.8-appservice as base
-FROM mcr.microsoft.com/azure-functions/python:4-python3.12 AS base
+ARG PYTHON_TAG=4-python3.12
+ARG PYTHON_BASE_IMAGE=mcr.microsoft.com/azure-functions/python
+FROM ${PYTHON_BASE_IMAGE}:${PYTHON_TAG} AS base
 
 COPY requirements.txt /
 RUN pip install --no-cache-dir -r /requirements.txt

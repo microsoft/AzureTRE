@@ -2,8 +2,10 @@
 
 # [Choice] Python version: 3.11 3.12, 3.13
 ARG VARIANT="3.12"
+ARG DEVCONTAINER_TAG=dev-${VARIANT}-bookworm
+ARG DEVCONTAINER_BASE_IMAGE=mcr.microsoft.com/vscode/devcontainers/python
 ARG TARGETPLATFORM="linux/amd64"
-FROM --platform="${TARGETPLATFORM}" mcr.microsoft.com/vscode/devcontainers/python:dev-${VARIANT}-bookworm
+FROM --platform="${TARGETPLATFORM}" ${DEVCONTAINER_BASE_IMAGE}:${DEVCONTAINER_TAG}
 
 # This will be set to true when running in VSCode
 ARG INTERACTIVE="false"

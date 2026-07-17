@@ -80,10 +80,26 @@ jobs:
             local source_digest
             local target_digest
 
-            source_digest=$(docker buildx imagetools inspect "${source_ref}" \
-              --format "${digest_format}" 2>/dev/null | tr -d '"' || true)
-            target_digest=$(docker buildx imagetools inspect "${target_ref}" \
-              --format "${digest_format}" 2>/dev/null | tr -d '"' || true)
+            if ! source_digest=$(docker buildx imagetools inspect "${source_ref}" \
+              --format "${digest_format}" | tr -d '"'); then
+              echo "::error::Failed to inspect source image ${source_ref}. Aborting to avoid unintended forced import."
+              return 1
+            fi
+
+            if ! target_digest=$(docker buildx imagetools inspect "${target_ref}" \
+              --format "${digest_format}" | tr -d '"'); then
+              echo "::warning::Failed to inspect target image ${target_ref}. Proceeding with import."
+              target_digest=""
+            fi
+
+            if [[ -z "${source_digest}" ]]; then
+              echo "::error::Source digest for ${source_ref} is empty. Aborting to avoid unintended forced import."
+              return 1
+            fi
+
+            if [[ -z "${target_digest}" ]]; then
+              echo "::warning::Target digest for ${target_ref} is empty. Import will proceed."
+            fi
 
             if [[ -n "${source_digest}" && -n "${target_digest}" && "${source_digest}" == "${target_digest}" ]]; then
               echo "Up-to-date: ${target_repo}:${tag} (${source_digest})"
@@ -103,9 +119,42 @@ jobs:
             sync_image "${source_repo}" "${target_repo}" "${tag}"
           done
 
-      - name: Emit repository variable hint
+      - name: Publish sync summary
         env:
           ACR_NAME: ${{ secrets.ACR_NAME }}
+          CURRENT_ACR_BASE_IMAGE_PREFIX: ${{ vars.ACR_BASE_IMAGE_PREFIX }}
         run: |
+          set -euo pipefail
+
           acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
-          echo "Set repository variable ACR_BASE_IMAGE_PREFIX to: ${ACR_NAME}${acr_domain_suffix}"
+          expected_prefix="${ACR_NAME}${acr_domain_suffix}"
+
+          {
+            echo "## ACR base image sync summary"
+            echo
+            echo "- Expected ACR_BASE_IMAGE_PREFIX: ${expected_prefix}"
+
+            if [[ -n "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+              echo "- Current ACR_BASE_IMAGE_PREFIX: ${CURRENT_ACR_BASE_IMAGE_PREFIX}"
+            else
+              echo "- Current ACR_BASE_IMAGE_PREFIX: (not set)"
+            fi
+
+            echo
+            if [[ -z "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX is not set."
+              echo "Please set it to ${expected_prefix}."
+              echo "See: Repository Settings > Secrets and variables > Actions > Variables"
+            elif [[ "${CURRENT_ACR_BASE_IMAGE_PREFIX}" != "${expected_prefix}" ]]; then
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX does not match the expected value."
+              echo "Please update it to ${expected_prefix}."
+            else
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX is correctly configured."
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ -z "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+            echo "::warning::Repository variable ACR_BASE_IMAGE_PREFIX is not set. Expected: ${expected_prefix}"
+          elif [[ "${CURRENT_ACR_BASE_IMAGE_PREFIX}" != "${expected_prefix}" ]]; then
+            echo "::warning::Repository variable ACR_BASE_IMAGE_PREFIX mismatch. Current: ${CURRENT_ACR_BASE_IMAGE_PREFIX}, Expected: ${expected_prefix}"
+          fi
