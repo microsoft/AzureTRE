@@ -9,6 +9,9 @@
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile",
+    "options": [
+      "--platform=linux/amd64"
+    ],
     "args": {
       // To ensure that the group ID for the docker group in the container
       // matches the group ID on the host, add this to your .bash_profile on the host
@@ -18,6 +21,7 @@
     }
   },
   "runArgs": [
+    "--platform=linux/amd64",
     "--network",
     "host"
   ],
@@ -28,8 +32,10 @@
     "type=bind,source=${env:HOME}${env:USERPROFILE}/.azure,target=/home/vscode/.azure",
     // Mount docker socket for docker builds
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock",
-    // Mounts the github cli login details from the host machine to the container (~/.config/gh/hosts.yml)
-    "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config"
+    // Mounts the vscode config folder from the host machine
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.config,target=/home/vscode/.config",
+    // Mount the codex folder from the host machine
+    "type=bind,source=${env:HOME}${env:USERPROFILE}/.codex,target=/home/vscode/.codex"
   ],
   "remoteUser": "vscode",
   "containerEnv": {

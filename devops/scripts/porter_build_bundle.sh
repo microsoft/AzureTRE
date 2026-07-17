@@ -1,12 +1,17 @@
 #!/bin/bash
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=porter_devcontainer_ca.sh
+source "${script_dir}/porter_devcontainer_ca.sh"
+porter_devcontainer_ca_patch
+
 if [ -f "porter-build-context.env" ]; then
 
     # shellcheck disable=SC1091
     source "porter-build-context.env"
 
     echo "Found additional porter build context PORTER_BUILD_CONTEXT of $PORTER_BUILD_CONTEXT"
-    porter build --build-context "$PORTER_BUILD_CONTEXT"
+    porter build "${PORTER_DEVCONTAINER_BUILD_CONTEXT_ARGS[@]}" --build-context "$PORTER_BUILD_CONTEXT"
 
 else
     if [ -n "${CI_CACHE_ACR_FQDN}" ]; then
@@ -23,5 +28,5 @@ else
         cache=(--cache-to "type=registry,ref=${ref},mode=max" --cache-from "type=registry,ref=${ref}")
     fi
 
-    porter build "${cache[@]}"
+    porter build "${PORTER_DEVCONTAINER_BUILD_CONTEXT_ARGS[@]}" "${cache[@]}"
 fi
