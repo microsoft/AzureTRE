@@ -78,6 +78,54 @@ mgmt-destroy:
 # The CI_CACHE_ACR_NAME is an optional container registry used for caching in addition to what's in ACR_NAME
 define build_image
 $(call target_title, "Building $(1) Image") \
+&& dockerfile="" dockerfile_backup="" dockerfile_backup_ready=false certificate_context_dir="" \
+&& certificate_build_context_args=() \
+&& cleanup_build_image() { \
+	if [ -n "$${dockerfile_backup}" ] && [ -f "$${dockerfile_backup}" ]; then \
+		if [ "$${dockerfile_backup_ready}" = "true" ]; then cp -p -- "$${dockerfile_backup}" "$${dockerfile}"; fi; \
+		rm -f -- "$${dockerfile_backup}"; \
+	fi; \
+	if [ -n "$${certificate_context_dir}" ] && [ -d "$${certificate_context_dir}" ]; then \
+		rm -rf -- "$${certificate_context_dir}"; \
+	fi; \
+} \
+&& if [ "$${DEVCONTAINER:-}" = "true" ]; then \
+	trusted_ca_source="${MAKEFILE_DIR}/.devcontainer/trusted_ca"; \
+	dockerfile=$(3); \
+	if [ ! -f "$${dockerfile}" ]; then echo "Unable to find Dockerfile $${dockerfile}" >&2; exit 1; fi; \
+	if [ ! -d "$${trusted_ca_source}" ]; then echo "Unable to find trusted CA directory $${trusted_ca_source}" >&2; exit 1; fi; \
+	if ! find "$${trusted_ca_source}" -maxdepth 1 -type f \( -name '*.crt' -o -name '*.pem' -o -name '*.cer' \) -print -quit | grep -q .; then echo "No .crt, .pem, or .cer files found in $${trusted_ca_source}" >&2; exit 1; fi; \
+	certificate_context_dir=$$(mktemp -d) \
+	&& dockerfile_backup=$$(mktemp) \
+	&& trap cleanup_build_image EXIT HUP INT TERM \
+	&& cp -p -- "$${dockerfile}" "$${dockerfile_backup}" \
+	&& dockerfile_backup_ready=true \
+	&& find "$${trusted_ca_source}" -maxdepth 1 -type f \( -name '*.crt' -o -name '*.pem' -o -name '*.cer' \) -exec cp -- {} "$${certificate_context_dir}" \; \
+	&& certificate_build_context_args=(--build-context "devcontainer-trusted-ca=$${certificate_context_dir}") \
+	&& awk ' \
+		!inserted && /^FROM([[:space:]]|$$)/ { \
+			print; \
+			print ""; \
+			print "COPY --from=devcontainer-trusted-ca . /tmp/devcontainer-trusted-ca/"; \
+			print "RUN mkdir -p /usr/local/share/ca-certificates && for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$$(basename \"$$cert\"); cp \"$$cert\" \"/usr/local/share/ca-certificates/azuretre-devcontainer-$${cert_name}.crt\"; done && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi"; \
+			print "ARG SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"; \
+			print "ARG CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt"; \
+			print "ARG NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt"; \
+			inserted=1; \
+			next; \
+		} \
+		/^FROM([[:space:]]|$$)/ { final_user="" } \
+		/^USER([[:space:]]|$$)/ { final_user=$$0 } \
+		{ print } \
+		END { \
+			if (!inserted) exit 1; \
+			print ""; \
+			if (final_user != "") print "USER root"; \
+			print "RUN for cert in /tmp/devcontainer-trusted-ca/*; do cert_name=$$(basename \"$$cert\"); rm -f \"/usr/local/share/ca-certificates/azuretre-devcontainer-$${cert_name}.crt\"; done && rm -rf /tmp/devcontainer-trusted-ca && if command -v update-ca-certificates >/dev/null 2>&1; then update-ca-certificates; fi"; \
+			if (final_user != "") print final_user; \
+		} \
+	' "$${dockerfile_backup}" > "$${dockerfile}"; \
+fi \
 && . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 && . ${MAKEFILE_DIR}/devops/scripts/set_docker_sock_permission.sh \
 && if [ "$${DISABLE_ACR_PUBLIC_ACCESS}" = "true" ]; then source ${MAKEFILE_DIR}/devops/scripts/mgmtacr_enable_public_access.sh; fi \
@@ -87,7 +135,7 @@ $(call target_title, "Building $(1) Image") \
 	az acr login -n $${CI_CACHE_ACR_NAME}; \
 	ci_cache="--cache-from $${CI_CACHE_ACR_NAME}${ACR_DOMAIN_SUFFIX}/${IMAGE_NAME_PREFIX}/$(1):$${__version__}"; fi \
 && docker build -t ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} --build-arg BUILDKIT_INLINE_CACHE=1 \
-	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache:-} -f $(3) $(4)
+	--cache-from ${FULL_IMAGE_NAME_PREFIX}/$(1):$${__version__} $${ci_cache:-} "$${certificate_build_context_args[@]}" -f $(3) $(4)
 endef
 
 # Description: Build API image using the build_image method.
@@ -378,6 +426,8 @@ bundle-publish:
 	&& cd ${DIR} \
 	&& FULL_IMAGE_NAME_PREFIX=${FULL_IMAGE_NAME_PREFIX} \
 		${MAKEFILE_DIR}/devops/scripts/bundle_runtime_image_push.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/porter_devcontainer_ca.sh \
+	&& porter_devcontainer_ca_patch \
 	&& porter publish --registry "${ACR_FQDN}" --force
 
 # Description: Register the bundle with the TRE API.
