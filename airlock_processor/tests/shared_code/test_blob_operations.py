@@ -3,7 +3,7 @@ import json
 import pytest
 from mock import MagicMock, patch
 
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix
+from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix, wait_for_blob_copy_completion
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 
 
@@ -92,3 +92,33 @@ class TestBlobOperations():
 
         blob_url = get_blob_url(account_name, container_name)
         assert blob_url == f"https://{account_name}.blob.{get_storage_endpoint_suffix()}/{container_name}/"
+
+    @patch("shared_code.blob_operations.time.sleep")
+    @patch("shared_code.blob_operations.time.monotonic", side_effect=[0, 1])
+    def test_wait_for_blob_copy_completion_returns_true_on_success(self, _, mock_sleep):
+        destination_blob_client = MagicMock()
+        destination_blob_client.blob_name = "blob.txt"
+        destination_blob_client.get_blob_properties.side_effect = [
+            {"copy": {"status": "pending"}},
+            {"copy": {"status": "success"}},
+        ]
+
+        assert wait_for_blob_copy_completion(destination_blob_client, timeout_seconds=10, poll_interval_seconds=1) is True
+        mock_sleep.assert_called_once_with(1)
+        assert destination_blob_client.get_blob_properties.call_count == 2
+
+    def test_wait_for_blob_copy_completion_raises_timeout_error(self):
+        destination_blob_client = MagicMock()
+        destination_blob_client.blob_name = "blob.txt"
+        destination_blob_client.get_blob_properties.return_value = {"copy": {"status": "pending"}}
+
+        with pytest.raises(TimeoutError):
+            wait_for_blob_copy_completion(destination_blob_client, timeout_seconds=0, poll_interval_seconds=1)
+
+    def test_wait_for_blob_copy_completion_raises_on_failed_copy(self):
+        destination_blob_client = MagicMock()
+        destination_blob_client.blob_name = "blob.txt"
+        destination_blob_client.get_blob_properties.return_value = {"copy": {"status": "failed"}}
+
+        with pytest.raises(Exception):
+            wait_for_blob_copy_completion(destination_blob_client, timeout_seconds=10, poll_interval_seconds=1)
