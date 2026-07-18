@@ -7,3 +7,13 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 
 - [A base workspace bundle installed](../workspaces/base.md)
 - [A guacamole workspace service bundle installed](../workspace-services/guacamole.md)
+- [A Nexus shared service has been deployed](../shared-services/nexus.md)
+
+## Notes
+
+- Nexus is a prerequisite of installing the Windows VMs given the bootstrap scripts that install data science and Azure tooling.
+- In production we recommend using VM images to avoid transient issues downloading and installing packages. The included user resource templates for VMs with bootstrap scripts should only be used for trial/demonstration purposes. More info can be found in the [custom templates documentation](./custom.md).
+
+## Using Custom Images
+
+For custom image usage, visit this [page](./custom.md).

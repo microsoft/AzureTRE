@@ -78,7 +78,8 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_webapps_to_vm" {
-  access = "Allow"
+  access                       = "Allow"
+  destination_address_prefixes = module.windows_vm.vm_private_ip_addresses
   destination_port_ranges = [
     "80",
     "443",
@@ -87,15 +88,14 @@ resource "azurerm_network_security_rule" "allow_outbound_webapps_to_vm" {
     "3389",
     "5432",
   ]
-  destination_address_prefixes = module.windows_vm.vm_private_ip_addresses
-  source_address_prefixes      = data.azurerm_subnet.webapps.address_prefixes
-  direction                    = "Outbound"
-  name                         = "outbound-from-webapps-to-vm"
-  network_security_group_name  = azurerm_network_security_group.vm_nsg.name
-  priority                     = 140
-  protocol                     = "Tcp"
-  resource_group_name          = module.windows_vm.resource_group_name
-  source_port_range            = "*"
+  direction                   = "Outbound"
+  name                        = "outbound-from-webapps-to-vm"
+  network_security_group_name = azurerm_network_security_group.vm_nsg.name
+  priority                    = 140
+  protocol                    = "Tcp"
+  resource_group_name         = module.windows_vm.resource_group_name
+  source_address_prefixes     = data.azurerm_subnet.webapps.address_prefixes
+  source_port_range           = "*"
 }
 
 resource "azurerm_network_security_rule" "deny_outbound_override" {
