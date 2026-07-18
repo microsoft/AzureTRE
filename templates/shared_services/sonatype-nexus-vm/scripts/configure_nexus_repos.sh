@@ -94,30 +94,45 @@ if [ "$anon_status_code" -ne 200 ]; then
 fi
 
 echo "Configuring Nexus repositories..."
-# Create proxy for each .json file
+# Create or update a proxy for each .json file so modified configurations are
+# applied to an existing Nexus instance without needing to recreate it.
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
     echo "Found config file: $filename. Sending to Nexus..."
     base_type=$( jq .baseType "$filename" | sed 's/"//g')
     repo_type=$( jq .repoType "$filename" | sed 's/"//g')
     repo_name=$( jq .name "$filename" | sed 's/"//g')
-    base_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
+    create_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
+    update_url="$create_url/$repo_name"
 
     configure_repo() {
       local file="$1"
-      local url="$2"
-      local pass="$3"
+      local create="$2"
+      local update="$3"
+      local pass="$4"
       local code
+      # Try to create the repository first.
       code=$(curl -iu admin:"$pass" -XPOST \
-        "$url" \
+        "$create" \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -d @"$file" \
         -k -s -w "%{http_code}" -o /dev/null)
-      echo "Response received from Nexus: $code"
-      [ "$code" -eq 201 ]
+      echo "Response received from Nexus when creating repository: $code"
+      if [ "$code" -eq 201 ]; then
+        return 0
+      fi
+      # If it already exists, update it so configuration changes are applied.
+      code=$(curl -iu admin:"$pass" -XPUT \
+        "$update" \
+        -H 'accept: application/json' \
+        -H 'Content-Type: application/json' \
+        -d @"$file" \
+        -k -s -w "%{http_code}" -o /dev/null)
+      echo "Response received from Nexus when updating repository: $code"
+      [ "$code" -eq 204 ]
     }
 
-    if ! retry_with_backoff configure_repo "$filename" "$base_url" "$1"; then
+    if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$1"; then
       echo "ERROR - Timeout while trying to configure $repo_name"
       exit 1
     fi
