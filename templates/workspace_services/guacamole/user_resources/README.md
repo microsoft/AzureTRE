@@ -5,6 +5,22 @@ This folder contains user resources that can be deployed with the Guacamole work
 - linuxvm - a Linux-based virtual machine
 - windowsvm - A Windows-based virtual machine
 
+## Windows VM tooling
+
+The Windows VM templates (`guacamole-azure-windowsvm` and the airlock `guacamole-azure-import-reviewvm` / `guacamole-azure-export-reviewvm`) share a single configuration script, `guacamole-azure-windowsvm/terraform/vm/vm_config.ps1`. It configures the package managers (pip, conda, R) to use the Nexus proxy and installs data science and Azure tooling from Nexus, since the VMs have no direct internet access:
+
+- Azure CLI
+- Visual Studio Code
+- Azure Storage Explorer
+
+The review VM bundles reference the same file via a symlink and receive it at build time through a Porter build context (`porter-build-context.env`), so the tooling is maintained in one place. The airlock review VMs then run their specialised review-data download on top of this shared configuration. Pinned tool versions are defined at the top of `vm_config.ps1`.
+
+Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode` and `storage-explorer` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
+
+### Shared review VM Terraform
+
+The two airlock review VMs (`guacamole-azure-import-reviewvm` and `guacamole-azure-export-reviewvm`) are almost identical. To avoid duplication, `guacamole-azure-import-reviewvm` is the source of truth for the common Terraform (`main.tf`, `data.tf`, `locals.tf`, `variables.tf`, `outputs.tf`, `windowsvm.tf`) and the `download_review_data.ps1` script, plus the shared helper scripts (`reset_password.sh`, `delete_vm_extensions.sh`). The export review VM references these via symlinks and receives them at build time through Porter build contexts (`porter-build-context.env`), keeping only its airlock-export-specific networking in a dedicated `terraform/network.tf`. `porter_build_bundle.sh` accepts multiple whitespace-separated build contexts to support this.
+
 ## Customising the user resources
 
 The `guacamole-azure-linuxvm` and `guacamole-azure-windowsvm` folders follow a consistent layout.
