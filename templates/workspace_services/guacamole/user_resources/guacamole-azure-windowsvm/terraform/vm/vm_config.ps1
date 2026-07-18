@@ -291,7 +291,8 @@ New-DesktopShortcut -Name "RStudio" -TargetPath "$Env:ProgramFiles\RStudio\rstud
 # Note: the R installer already creates its own versioned desktop shortcut (e.g. "R 4.4.1"), so we don't add another.
 New-DesktopShortcut -Name "Git Bash" -TargetPath "$Env:ProgramFiles\Git\git-bash.exe"
 # PyCharm Community (NSIS) installs under Program Files (x86) by default - check both roots.
-$PyCharmExe = Get-ChildItem -Path "$Env:ProgramFiles\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe", "${Env:ProgramFiles(x86)}\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+# Note: the doubled dollar ($$) escapes Terraform templatefile interpolation so PowerShell receives a literal Program Files (x86) env expansion.
+$PyCharmExe = Get-ChildItem -Path "$Env:ProgramFiles\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe", "$${Env:ProgramFiles(x86)}\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($PyCharmExe) { New-DesktopShortcut -Name "PyCharm Community" -TargetPath $PyCharmExe.FullName }
 else { Write-Host "Skipping desktop shortcut for PyCharm Community - not found" }
 New-DesktopShortcut -Name "JupyterLab" -TargetPath "$MiniforgePath\Scripts\jupyter-lab.exe" -WorkingDirectory "%USERPROFILE%"
