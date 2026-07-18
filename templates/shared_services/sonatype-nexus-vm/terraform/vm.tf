@@ -119,8 +119,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
   # custom_data is ignored so that changes to the Nexus repository configuration are
-  # applied to the running VM via the ConfigureNexusRepos extension rather than by
-  # destroying and recreating the VM.
+  # applied to the running VM via the configure_nexus_repos run command rather than
+  # by destroying and recreating the VM.
   lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, custom_data] }
 
   source_image_reference {
@@ -240,7 +240,7 @@ locals {
   # Script that copies the (potentially updated) repository configuration onto the
   # VM and (re)applies it via the Nexus API. Run by the configure_nexus_repos run
   # command, which re-executes whenever this content changes.
-  configure_nexus_repos_content = templatefile("${path.module}/configure_nexus_repos_wrapper.sh", {
+  configure_nexus_repos_content = sensitive(templatefile("${path.module}/configure_nexus_repos_wrapper.sh", {
     NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
     REPO_CONFIG_FILES = {
       for file in local.nexus_repos_config_files :
@@ -248,7 +248,7 @@ locals {
     }
     REALMS_CONFIG    = base64encode(file(local.nexus_realms_config_file))
     CONFIGURE_SCRIPT = base64encode(file(local.configure_nexus_script))
-  })
+  }))
 }
 
 resource "azurerm_virtual_machine_extension" "keyvault" {

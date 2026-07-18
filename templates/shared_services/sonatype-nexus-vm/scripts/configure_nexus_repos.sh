@@ -1,6 +1,7 @@
 #!/bin/bash
 set -o pipefail
 set -o nounset
+shopt -s nullglob
 # set -o xtrace
 
 if [ -z "$1" ]; then
@@ -129,7 +130,7 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
         -d @"$file" \
         -k -s -w "%{http_code}" -o /dev/null)
       echo "Response received from Nexus when updating repository: $code"
-      [ "$code" -eq 204 ]
+      [ "$code" -eq 200 ] || [ "$code" -eq 202 ] || [ "$code" -eq 204 ]
     }
 
     if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$1"; then
