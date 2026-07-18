@@ -26,15 +26,6 @@ trusted-host = ${nexus_proxy_url}
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($PipConfigFilePath, $ConfigBody, $Utf8NoBomEncoding)
 
-### Anaconda Config
-if( ${CondaConfig} -eq 1 )
-{
-  conda config --add channels ${nexus_proxy_url}/repository/conda-mirror/main/  --system
-  conda config --add channels ${nexus_proxy_url}/repository/conda-repo/main/  --system
-  conda config --remove channels defaults --system
-  conda config --set channel_alias ${nexus_proxy_url}/repository/conda-mirror/  --system
-}
-
 # Docker proxy config
 $DaemonConfig = @"
 {
@@ -42,27 +33,6 @@ $DaemonConfig = @"
 }
 "@
 $DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
-
-# R config
-$RConfig = @"
-local({
-    r <- getOption("repos")
-    r["Nexus"] <- "${nexus_proxy_url}/repository/r-proxy/"
-    options(repos = r)
-})
-"@
-
-$RBasePath = "$Env:ProgramFiles\R"
-
-if (Test-Path $RBasePath) {
-  $RVersions = Get-ChildItem -Path $RBasePath -Directory | Where-Object { $_.Name -like "R-*" }
-
-  foreach ($RVersion in $RVersions) {
-      $ConfigPath = Join-Path -Path $RVersion.FullName -ChildPath "etc\Rprofile.site"
-      $RConfig | Out-File -Encoding Ascii (New-Item -Path $ConfigPath -Force)
-  }
-}
-
 
 # Pinned versions - update these to roll the installed tooling forward.
 $AzureCliVersion        = "2.81.0"
@@ -139,6 +109,43 @@ function Install-TreTool {
   }
 }
 
+function Configure-CondaProxy {
+  param(
+    [string]$CondaExecutable = "conda"
+  )
+
+  try {
+    & $CondaExecutable config --add channels ${nexus_proxy_url}/repository/conda-mirror/main/ --system
+    & $CondaExecutable config --add channels ${nexus_proxy_url}/repository/conda-repo/main/ --system
+    & $CondaExecutable config --remove channels defaults --system
+    & $CondaExecutable config --set channel_alias ${nexus_proxy_url}/repository/conda-mirror/ --system
+  }
+  catch {
+    Write-Host "WARNING: Failed to configure conda proxy using $CondaExecutable - $($_.Exception.Message)"
+  }
+}
+
+function Configure-RProxy {
+  $RConfig = @"
+local({
+    r <- getOption("repos")
+    r["Nexus"] <- "${nexus_proxy_url}/repository/r-proxy/"
+    options(repos = r)
+})
+"@
+
+  $RBasePath = "$Env:ProgramFiles\R"
+
+  if (Test-Path $RBasePath) {
+    $RVersions = Get-ChildItem -Path $RBasePath -Directory | Where-Object { $_.Name -like "R-*" }
+
+    foreach ($RVersion in $RVersions) {
+      $ConfigPath = Join-Path -Path $RVersion.FullName -ChildPath "etc\Rprofile.site"
+      $RConfig | Out-File -Encoding Ascii (New-Item -Path $ConfigPath -Force)
+    }
+  }
+}
+
 function New-DesktopShortcut {
   param(
     [Parameter(Mandatory = $true)][string]$Name,
@@ -176,6 +183,15 @@ function New-DesktopShortcut {
 
 # Make sure the proxy is up before pulling any of the installers below.
 Wait-ForNexus | Out-Null
+
+# Configure conda on images that already include it.
+if( ${CondaConfig} -eq 1 )
+{
+  Configure-CondaProxy
+}
+
+# Configure any pre-existing R installations before tool install.
+Configure-RProxy
 
 $AzureCliMsi = Join-Path $ToolsDir "azure-cli.msi"
 Install-TreTool -Name "Azure CLI" `
@@ -217,6 +233,14 @@ Install-TreTool -Name "Miniforge (Python)" `
   -FilePath $MiniforgeSetup `
   -ArgumentList @("/InstallationType=AllUsers", "/RegisterPython=1", "/AddToPath=1", "/S", "/D=$MiniforgePath")
 
+$MiniforgeConda = Join-Path $MiniforgePath "Scripts\conda.exe"
+if (Test-Path $MiniforgeConda) {
+  Configure-CondaProxy -CondaExecutable $MiniforgeConda
+}
+else {
+  Write-Host "Skipping Miniforge conda proxy configuration - conda not found at $MiniforgeConda"
+}
+
 # JupyterLab - installed into the Miniforge base environment via the Nexus PyPI proxy (pip.ini configured above)
 $MiniforgePip = Join-Path $MiniforgePath "Scripts\pip.exe"
 if (Test-Path $MiniforgePip) {
@@ -240,6 +264,9 @@ Install-TreTool -Name "R" `
   -OutFile $RSetup `
   -FilePath $RSetup `
   -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-")
+
+# Ensure the newly installed R gets the CRAN proxy config too.
+Configure-RProxy
 
 # RStudio Desktop (open source) - proxied via the Nexus r-studio-download raw repository
 $RStudioSetup = Join-Path $ToolsDir "rstudio-setup.exe"

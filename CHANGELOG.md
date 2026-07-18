@@ -251,7 +251,7 @@ BUG FIXES:
 In future versions, public access will be fully removed, and the ACR will become private only. Please ensure that relevant templates are updated to their latest versions to support communication through the private endpoint ([#4533](https://github.com/microsoft/AzureTRE/pull/4533))
 
 ENHANCEMENTS:
-* Add ability to pass values to install stage on pipleine ([#4451](https://github.com/microsoft/AzureTRE/pull/4451))
+* Add ability to pass values to install stage on pipeline ([#4451](https://github.com/microsoft/AzureTRE/pull/4451))
 * Format the error message in the Operations panel for enhanced readability ([#4493](https://github.com/microsoft/AzureTRE/issues/4493))
 * Modify the AML workspace service so it does not use local authentication keys for storage access ([#4341](https://github.com/microsoft/AzureTRE/issues/4341))
 * Enhanced the logout message to emphasize session security. ([#4410](https://github.com/AzureTRE/AzureTRE/issues/4410))
@@ -346,7 +346,7 @@ COMPONENTS:
 ## 0.21.0
 
 **BREAKING CHANGES & MIGRATIONS**:
-* Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major verison increase will prevent upgrade, do not force the upgrade unless you are fully aware of the consequences.
+* Workspace bundle uses infrastructure encryption on shared storage which will recreate storage share. Major version increase will prevent upgrade, do not force the upgrade unless you are fully aware of the consequences.
 
 ENHANCEMENTS:
 * Core key vault firewall should not be set to "Allow public access from all networks" ([#4250](https://github.com/microsoft/AzureTRE/issues/4250))
@@ -402,7 +402,7 @@ COMPONENTS:
 | tre-workspace-service-azuresql | 1.0.15 |
 
 
-## 0.20.0 (Feburary 9, 2025)
+## 0.20.0 (February 9, 2025)
 
 **BREAKING CHANGES & MIGRATIONS**:
 * InnerEye and MLFlow bundles depreciated and removed from main. If you wish to update and deploy these workspace services they can be retrieved from release 0.19.1. ([#4127](https://github.com/microsoft/AzureTRE/issues/4127))
@@ -674,7 +674,7 @@ COMPONENTS:
 ## 0.17.0
 
 **BREAKING CHANGES & MIGRATIONS**:
-* Update terraform MySQL resources to MySQL Flexible resources to fix depricating recources. ([#3892](https://github.com/microsoft/AzureTRE/pull/3892)) - Migration to new version of Gitea and MySQL, needs to be carried out manually, details to be included in a later release.
+* Update terraform MySQL resources to MySQL Flexible resources to fix deprecating resources. ([#3892](https://github.com/microsoft/AzureTRE/pull/3892)) - Migration to new version of Gitea and MySQL, needs to be carried out manually, details to be included in a later release.
 
 ENHANCEMENTS:
 * Switch from OpenCensus to OpenTelemetry for logging ([#3762](https://github.com/microsoft/AzureTRE/pull/3762))
@@ -1711,4 +1711,3 @@ FEATURES:
 * Centrally manage the firewall share service state to enable other services to ask for rule changes
 
 Many more enhancements are listed on the [release page](https://github.com/microsoft/AzureTRE/releases/tag/v0.4)
-

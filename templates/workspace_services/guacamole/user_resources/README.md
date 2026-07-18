@@ -20,7 +20,7 @@ It configures the package managers (pip, conda, R) to use the Nexus proxy and in
 
 The review VM bundles reference the same file via a symlink and receive it at build time through a Porter build context (`porter-build-context.env`), so the tooling is maintained in one place. The airlock review VMs then run their specialised review-data download on top of this shared configuration. Pinned tool versions are defined at the top of `vm_config.ps1`.
 
-Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode`, `storage-explorer`, `miniforge-download`, `cran-r-download`, `pycharm-download` and `git-download` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
+Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode`, `storage-explorer`, `miniforge-download`, `cran-r-download`, `r-studio-download`, `pycharm-download` and `git-download` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
 
 ### Shared review VM Terraform
 
