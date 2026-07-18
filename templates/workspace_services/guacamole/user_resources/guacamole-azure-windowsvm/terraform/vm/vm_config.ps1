@@ -65,8 +65,14 @@ if (Test-Path $RBasePath) {
 
 
 # Pinned versions - update these to roll the installed tooling forward.
-$AzureCliVersion       = "2.81.0"
+$AzureCliVersion        = "2.81.0"
 $StorageExplorerVersion = "1.37.0"
+$MiniforgeVersion       = "24.11.3-2"
+$RVersion               = "4.4.1"
+$RStudioVersion         = "2024.12.1-563"
+$PyCharmVersion         = "2024.3.1"
+$GitVersion             = "2.47.1"
+$MiniforgePath          = "C:\Miniforge3"
 
 $ToolsDir = Join-Path $env:TEMP "tre-tools"
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
@@ -133,6 +139,41 @@ function Install-TreTool {
   }
 }
 
+function New-DesktopShortcut {
+  param(
+    [Parameter(Mandatory = $true)][string]$Name,
+    [Parameter(Mandatory = $true)][string]$TargetPath,
+    [string]$Arguments = "",
+    [string]$WorkingDirectory = ""
+  )
+
+  # Best-effort - never fail VM configuration because of a shortcut.
+  try {
+    # Allow wildcard targets (tools whose install path contains a version).
+    if ($TargetPath -match '[\*\?]') {
+      $resolved = Get-ChildItem -Path $TargetPath -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($resolved) { $TargetPath = $resolved.FullName }
+    }
+    if (-not (Test-Path $TargetPath)) {
+      Write-Host "Skipping desktop shortcut for $Name - target not found: $TargetPath"
+      return
+    }
+    $desktop = "C:\Users\Public\Desktop"
+    New-Item -ItemType Directory -Force -Path $desktop | Out-Null
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut((Join-Path $desktop "$Name.lnk"))
+    $shortcut.TargetPath = $TargetPath
+    if ($Arguments) { $shortcut.Arguments = $Arguments }
+    if ($WorkingDirectory) { $shortcut.WorkingDirectory = $WorkingDirectory }
+    else { $shortcut.WorkingDirectory = Split-Path $TargetPath -Parent }
+    $shortcut.Save()
+    Write-Host "Created desktop shortcut for $Name"
+  }
+  catch {
+    Write-Host "WARNING: Failed to create desktop shortcut for $Name - $($_.Exception.Message)"
+  }
+}
+
 # Make sure the proxy is up before pulling any of the installers below.
 Wait-ForNexus | Out-Null
 
@@ -159,3 +200,71 @@ Install-TreTool -Name "Azure Storage Explorer" `
   -OutFile $StorageExplorerSetup `
   -FilePath $StorageExplorerSetup `
   -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/ALLUSERS")
+
+# Git for Windows - proxied via the Nexus git-download raw repository
+$GitSetup = Join-Path $ToolsDir "git-setup.exe"
+Install-TreTool -Name "Git" `
+  -Url "${nexus_proxy_url}/repository/git-download/v$GitVersion.windows.1/Git-$GitVersion-64-bit.exe" `
+  -OutFile $GitSetup `
+  -FilePath $GitSetup `
+  -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/NOCANCEL", "/SP-")
+
+# Miniforge (conda-forge Python distribution) - proxied via the Nexus miniforge-download raw repository
+$MiniforgeSetup = Join-Path $ToolsDir "miniforge-setup.exe"
+Install-TreTool -Name "Miniforge (Python)" `
+  -Url "${nexus_proxy_url}/repository/miniforge-download/$MiniforgeVersion/Miniforge3-$MiniforgeVersion-Windows-x86_64.exe" `
+  -OutFile $MiniforgeSetup `
+  -FilePath $MiniforgeSetup `
+  -ArgumentList @("/InstallationType=AllUsers", "/RegisterPython=1", "/AddToPath=1", "/S", "/D=$MiniforgePath")
+
+# JupyterLab - installed into the Miniforge base environment via the Nexus PyPI proxy (pip.ini configured above)
+$MiniforgePip = Join-Path $MiniforgePath "Scripts\pip.exe"
+if (Test-Path $MiniforgePip) {
+  try {
+    Write-Host "Installing JupyterLab into the Miniforge base environment"
+    & $MiniforgePip install --no-warn-script-location jupyterlab
+    if ($LASTEXITCODE -ne 0) { Write-Host "WARNING: JupyterLab install exited with code $LASTEXITCODE" }
+  }
+  catch {
+    Write-Host "WARNING: Failed to install JupyterLab - $($_.Exception.Message)"
+  }
+}
+else {
+  Write-Host "Skipping JupyterLab install - Miniforge pip not found at $MiniforgePip"
+}
+
+# R (CRAN base) - proxied via the Nexus cran-r-download raw repository
+$RSetup = Join-Path $ToolsDir "r-setup.exe"
+Install-TreTool -Name "R" `
+  -Url "${nexus_proxy_url}/repository/cran-r-download/bin/windows/base/old/$RVersion/R-$RVersion-win.exe" `
+  -OutFile $RSetup `
+  -FilePath $RSetup `
+  -ArgumentList @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-")
+
+# RStudio Desktop (open source) - proxied via the Nexus r-studio-download raw repository
+$RStudioSetup = Join-Path $ToolsDir "rstudio-setup.exe"
+Install-TreTool -Name "RStudio Desktop" `
+  -Url "${nexus_proxy_url}/repository/r-studio-download/electron/windows/RStudio-$RStudioVersion.exe" `
+  -OutFile $RStudioSetup `
+  -FilePath $RStudioSetup `
+  -ArgumentList @("/S")
+
+# PyCharm Community Edition - proxied via the Nexus pycharm-download raw repository
+$PyCharmSetup = Join-Path $ToolsDir "pycharm-setup.exe"
+Install-TreTool -Name "PyCharm Community" `
+  -Url "${nexus_proxy_url}/repository/pycharm-download/python/pycharm-community-$PyCharmVersion.exe" `
+  -OutFile $PyCharmSetup `
+  -FilePath $PyCharmSetup `
+  -ArgumentList @("/S")
+
+# Create desktop shortcuts for the installed GUI tools (best-effort; missing tools are skipped)
+New-DesktopShortcut -Name "Visual Studio Code" -TargetPath "$Env:ProgramFiles\Microsoft VS Code\Code.exe"
+New-DesktopShortcut -Name "Azure Storage Explorer" -TargetPath "$Env:ProgramFiles\Microsoft Azure Storage Explorer\StorageExplorer.exe"
+New-DesktopShortcut -Name "RStudio" -TargetPath "$Env:ProgramFiles\RStudio\rstudio.exe"
+# Note: the R installer already creates its own versioned desktop shortcut (e.g. "R 4.4.1"), so we don't add another.
+New-DesktopShortcut -Name "Git Bash" -TargetPath "$Env:ProgramFiles\Git\git-bash.exe"
+# PyCharm Community (NSIS) installs under Program Files (x86) by default - check both roots.
+$PyCharmExe = Get-ChildItem -Path "$Env:ProgramFiles\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe", "${Env:ProgramFiles(x86)}\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($PyCharmExe) { New-DesktopShortcut -Name "PyCharm Community" -TargetPath $PyCharmExe.FullName }
+else { Write-Host "Skipping desktop shortcut for PyCharm Community - not found" }
+New-DesktopShortcut -Name "JupyterLab" -TargetPath "$MiniforgePath\Scripts\jupyter-lab.exe" -WorkingDirectory "%USERPROFILE%"
