@@ -2,11 +2,14 @@
 ## (Unreleased)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
-* Refactor the Guacamole Windows VM and airlock import/export review VMs to share a single Terraform VM module (`terraform/vm`) instead of duplicated `.tf` files. Bundles bumped to new majors (`tre-service-guacamole-windowsvm` 2.0.0, import/export `reviewvm` 1.0.0); existing VM user resources must be redeployed. ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
 ENHANCEMENTS:
 * Install data science and Azure tooling on the Guacamole Windows VM and airlock review VMs via the shared `vm_config.ps1`, pulled through Nexus to replace the removed DSVM images: Azure CLI, VS Code, Storage Explorer, Python (Miniforge)+JupyterLab, R, RStudio, PyCharm Community and Git, plus desktop shortcuts. (`tre-service-guacamole-windowsvm` 2.1.0, import/export `reviewvm` 1.1.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
-* Add Nexus proxy repositories for the Windows data science tooling installers (Miniforge, CRAN R, PyCharm and Git). (`sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Add Nexus proxy repositories for the Windows data science tooling installers
+  (Miniforge, CRAN R, PyCharm and Git). Existing Nexus shared service instances
+  should be upgraded/redeployed so these repositories are created before using
+  the updated Windows VM templates. (`sonatype-nexus` 3.9.0)
+  ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))

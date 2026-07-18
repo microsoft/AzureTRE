@@ -75,7 +75,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | azcliprod.blob.core.windows.net | Enables Nexus to "proxy" the Azure CLI Windows MSI installer for Windows VMs. |
 | update.code.visualstudio.com, vscode.download.prss.microsoft.com | Enables Nexus to "proxy" the Visual Studio Code Windows installer for Windows VMs. |
 | github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" the Azure Storage Explorer Windows installer (hosted on GitHub Releases) for Windows VMs. |
-| github.com, objects.githubusercontent.com | Enables Nexus to "proxy" Miniforge installers (hosted on GitHub Releases) for Windows VMs. |
+| github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" Miniforge installers (hosted on GitHub Releases) for Windows VMs. |
 | cloud.r-project.org | Enables Nexus to "proxy" CRAN R Windows installers for Windows VMs. |
 | download1.rstudio.org | Enables Nexus to "proxy" RStudio Windows installers for Windows VMs. |
 | download.jetbrains.com, download-cdn.jetbrains.com | Enables Nexus to "proxy" PyCharm Community installers for Windows VMs. |
