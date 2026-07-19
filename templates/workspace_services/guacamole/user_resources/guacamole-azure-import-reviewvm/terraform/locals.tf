@@ -1,6 +1,4 @@
 locals {
-  short_workspace_id = substr(var.workspace_id, -4, -1)
-
   nexus_proxy_url = "https://nexus-${data.azurerm_public_ip.app_gateway_ip.fqdn}"
 
   # Load VM SKU/image details from porter.yaml
