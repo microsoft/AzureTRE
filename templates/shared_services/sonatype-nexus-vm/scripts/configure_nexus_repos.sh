@@ -110,14 +110,16 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
       local create="$2"
       local update="$3"
       local pass="$4"
-      local code
+      local response code body
       # Try to create the repository first.
-      code=$(curl -iu admin:"$pass" -XPOST \
+      response=$(curl -u admin:"$pass" -XPOST \
         "$create" \
         -H 'accept: application/json' \
         -H 'Content-Type: application/json' \
         -d @"$file" \
-        -k -s -w "%{http_code}" -o /dev/null)
+        -k -s -w $'\n%{http_code}')
+      code=${response##*$'\n'}
+      body=${response%$'\n'*}
       echo "Response received from Nexus when creating repository: $code"
       if [ "$code" -eq 201 ]; then
         return 0
@@ -130,7 +132,19 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
         -d @"$file" \
         -k -s -w "%{http_code}" -o /dev/null)
       echo "Response received from Nexus when updating repository: $code"
-      [ "$code" -eq 200 ] || [ "$code" -eq 202 ] || [ "$code" -eq 204 ]
+      if [ "$code" -eq 200 ] || [ "$code" -eq 202 ] || [ "$code" -eq 204 ]; then
+        return 0
+      fi
+      # A proxy repo whose remoteUrl no longer resolves fails Nexus 3.94+ restore
+      # validation, leaving it in a failed state: the name is reserved (create
+      # returns "Name is already used") but it cannot be updated (404). It can't
+      # be reconciled via the API, so warn and skip rather than blocking the whole
+      # upgrade on an already-broken repository.
+      if [ "$code" -eq 404 ] && printf '%s' "$body" | grep -qi 'already used'; then
+        echo "WARNING - Repository $repo_name is in a failed state in Nexus and cannot be updated (its proxy remote URL may be unreachable). Skipping."
+        return 0
+      fi
+      return 1
     }
 
     if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$1"; then

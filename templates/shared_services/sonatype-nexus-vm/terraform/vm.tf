@@ -236,18 +236,22 @@ locals {
   nexus_repos_config_files = fileset(local.nexus_repos_config_dir, "*.json")
   nexus_realms_config_file = "${path.module}/../scripts/nexus_realms_config.json"
   configure_nexus_script   = "${path.module}/../scripts/configure_nexus_repos.sh"
+  deploy_nexus_script      = "${path.module}/../scripts/deploy_nexus_container.sh"
 
-  # Script that copies the (potentially updated) repository configuration onto the
-  # VM and (re)applies it via the Nexus API. Run by the configure_nexus_repos run
-  # command, which re-executes whenever this content changes.
+  # Re-executed by the configure_nexus_repos run command whenever this content
+  # changes, applying repository and image changes to the running VM.
   configure_nexus_repos_content = sensitive(templatefile("${path.module}/configure_nexus_repos_wrapper.sh", {
     NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
+    ACR_NAME             = data.azurerm_container_registry.mgmt_acr.name
+    NEXUS_IMAGE_TAG      = var.nexus_image_tag
+    MSI_ID               = azurerm_user_assigned_identity.nexus_msi.client_id
     REPO_CONFIG_FILES = {
       for file in local.nexus_repos_config_files :
       file => base64encode(file("${local.nexus_repos_config_dir}/${file}"))
     }
     REALMS_CONFIG    = base64encode(file(local.nexus_realms_config_file))
     CONFIGURE_SCRIPT = base64encode(file(local.configure_nexus_script))
+    DEPLOY_SCRIPT    = base64encode(file(local.deploy_nexus_script))
   }))
 }
 
