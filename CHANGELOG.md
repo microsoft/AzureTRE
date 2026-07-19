@@ -17,7 +17,6 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Remove unused `short_workspace_id` local variable from the export review VM Terraform root module (fixes tflint `terraform_unused_declarations` lint error). ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.0.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
 ## (0.28.0) (March 2, 2026)
