@@ -6,10 +6,13 @@ set -o nounset
 config_dir="/etc/nexus-data/scripts/nexus_repos_config"
 mkdir -p "$config_dir"
 
+# shellcheck disable=SC2288,SC1083
 %{ for filename, content in REPO_CONFIG_FILES ~}
+# shellcheck disable=SC2154
 base64 -d > "$config_dir/${filename}" <<'NEXUS_TRE_EOF'
 ${content}
 NEXUS_TRE_EOF
+# shellcheck disable=SC2288,SC1083
 %{ endfor ~}
 
 base64 -d > /etc/nexus-data/scripts/nexus_realms_config.json <<'NEXUS_TRE_EOF'
