@@ -33,7 +33,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
 }
 
 resource "azurerm_network_security_rule" "allow_outbound_airlock_exip_storage_pe" {
-  access = "Allow"
+  access                       = "Allow"
   destination_address_prefixes = [for pe in data.azurerm_private_endpoint_connection.airlock_export_inprogress_pe.private_service_connection : pe.private_ip_address]
   destination_port_range       = "*"
   direction                    = "Outbound"
