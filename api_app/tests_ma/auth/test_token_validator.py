@@ -128,6 +128,87 @@ class TestTokenValidatorValidate:
 
         assert result.roles == []
 
+    def test_raises_token_signature_invalid_on_invalid_signature(self):
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch(
+            "auth.token_validator.jwt.decode",
+            side_effect=pytest.importorskip("jwt").InvalidSignatureError("bad sig"),
+        ):
+            with pytest.raises(TokenSignatureInvalid):
+                validator.validate("tampered.jwt.token")
+
+    def test_raises_token_invalid_on_audience_mismatch(self):
+        import jwt as pyjwt
+
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch(
+            "auth.token_validator.jwt.decode",
+            side_effect=pyjwt.InvalidAudienceError("wrong audience"),
+        ):
+            with pytest.raises(TokenInvalid):
+                validator.validate("wrong-audience.jwt.token")
+
+    def test_raises_token_invalid_on_issuer_mismatch(self):
+        import jwt as pyjwt
+
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch(
+            "auth.token_validator.jwt.decode",
+            side_effect=pyjwt.InvalidIssuerError("wrong issuer"),
+        ):
+            with pytest.raises(TokenInvalid):
+                validator.validate("wrong-issuer.jwt.token")
+
+    def test_raises_token_invalid_on_algorithm_confusion(self):
+        """Tokens using an unexpected algorithm (e.g. 'none' or HS256) must be rejected."""
+        import jwt as pyjwt
+
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch(
+            "auth.token_validator.jwt.decode",
+            side_effect=pyjwt.InvalidAlgorithmError("algorithm not allowed"),
+        ):
+            with pytest.raises(TokenInvalid):
+                validator.validate("alg-confusion.jwt.token")
+
+    def test_decode_is_called_with_rs256_algorithm_only(self):
+        """jwt.decode must always be called with algorithms=['RS256'] and no others."""
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch("auth.token_validator.jwt.decode", return_value=SAMPLE_CLAIMS) as mock_decode:
+            validator.validate("valid.jwt.token")
+
+        call_kwargs = mock_decode.call_args
+        algorithms_arg = call_kwargs[1].get("algorithms") or call_kwargs[0][2]
+        assert algorithms_arg == ["RS256"], (
+            f"Expected algorithms=['RS256'] only, got {algorithms_arg!r}"
+        )
+
+    def test_raises_token_invalid_on_missing_oid_claim(self):
+        """A token whose payload lacks the 'oid' claim must raise TokenInvalid, not KeyError."""
+        claims_without_oid = {"name": "User", "email": "u@example.com", "roles": []}
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch("auth.token_validator.jwt.decode", return_value=claims_without_oid):
+            with pytest.raises(TokenInvalid, match="oid"):
+                validator.validate("no-oid.jwt.token")
+
     def test_is_workspace_token_flag_set_from_config(self):
         signing_key = MagicMock()
         mock_client = _make_mock_jwks_client(signing_key)

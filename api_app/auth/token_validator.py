@@ -63,11 +63,14 @@ class TokenValidator:
         except jwt.InvalidTokenError as exc:
             raise TokenInvalid(f"Token invalid: {exc}") from exc
 
-        return AuthenticatedUser(
-            id=claims["oid"],
-            name=claims.get("name", ""),
-            email=claims.get("email") or claims.get("preferred_username"),
-            roles=claims.get("roles", []),
-            audience=self._config.audience,
-            is_workspace_token=self._config.is_workspace_token,
-        )
+        try:
+            return AuthenticatedUser(
+                id=claims["oid"],
+                name=claims.get("name", ""),
+                email=claims.get("email") or claims.get("preferred_username"),
+                roles=claims.get("roles", []),
+                audience=self._config.audience,
+                is_workspace_token=self._config.is_workspace_token,
+            )
+        except KeyError as exc:
+            raise TokenInvalid("Token is missing required claim: oid") from exc

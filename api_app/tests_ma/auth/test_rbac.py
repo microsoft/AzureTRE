@@ -145,10 +145,70 @@ class TestRequireWorkspaceRoles:
 
         asyncio.get_event_loop().run_until_complete(_run())
 
+    def test_wrong_workspace_token_rejected_with_401(self):
+        """A token issued for workspace A must not grant access to workspace B.
 
-# ---------------------------------------------------------------------------
-# AuthenticatedUser helpers
-# ---------------------------------------------------------------------------
+        When the workspace validator raises TokenInvalid (wrong audience) the
+        code falls back to the core validator.  If the token is also invalid
+        for the core audience the result must be HTTP 401, not a silent pass.
+        """
+        from fastapi import HTTPException
+        from auth.exceptions import TokenInvalid as _TokenInvalid
+
+        dep = require_workspace_roles(WorkspaceAccessRole.Owner)
+        fake_creds, fake_workspace, _, _ = self._make_fake_deps(["WorkspaceOwner"])
+
+        # Workspace validator: wrong audience (workspace B rejects a workspace A token)
+        ws_validator_mock = MagicMock()
+        ws_validator_mock.validate.side_effect = _TokenInvalid("wrong audience")
+
+        # Core validator: also rejects the token (it's not a core token)
+        core_validator_mock = MagicMock()
+        core_validator_mock.validate.side_effect = _TokenInvalid("not a core token")
+
+        import asyncio
+
+        async def _run():
+            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator_mock):
+                with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
+                    with pytest.raises(HTTPException) as exc_info:
+                        await dep(credentials=fake_creds, workspace=fake_workspace)
+            assert exc_info.value.status_code == 401
+
+        asyncio.get_event_loop().run_until_complete(_run())
+
+    def test_non_admin_workspace_user_cannot_elevate_via_core_fallback(self):
+        """A workspace user (non-admin) whose token is rejected by the workspace validator
+        must not be able to use the core-validator fallback to gain access.
+
+        Even if the core validator 'accepts' the token, the user must hold at
+        least one of the required workspace roles (or TREAdmin) to proceed.
+        """
+        from fastapi import HTTPException
+        from auth.exceptions import TokenInvalid as _TokenInvalid
+
+        dep = require_workspace_roles(WorkspaceAccessRole.Owner)
+        fake_creds, fake_workspace, _, _ = self._make_fake_deps([])
+
+        # Workspace validator rejects the token (wrong audience)
+        ws_validator_mock = MagicMock()
+        ws_validator_mock.validate.side_effect = _TokenInvalid("wrong audience")
+
+        # Core validator accepts the token but the user has NO roles
+        core_validator_mock = MagicMock()
+        core_user = _make_user(roles=[])
+        core_validator_mock.validate.return_value = core_user
+
+        import asyncio
+
+        async def _run():
+            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator_mock):
+                with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
+                    with pytest.raises(HTTPException) as exc_info:
+                        await dep(credentials=fake_creds, workspace=fake_workspace)
+            assert exc_info.value.status_code == 403
+
+        asyncio.get_event_loop().run_until_complete(_run())
 
 
 class TestAuthenticatedUserHelpers:
