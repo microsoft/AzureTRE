@@ -1369,7 +1369,6 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         # The following ws services requires the WS app registration
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
-        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         yield
         app.dependency_overrides = {}
 

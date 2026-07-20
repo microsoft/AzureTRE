@@ -49,7 +49,6 @@ class TestWorkspaceUserRoutesWithTreAdmin:
     def _prepare(self, app, admin_user):
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
-        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
         yield
         app.dependency_overrides = {}
