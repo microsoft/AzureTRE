@@ -4,7 +4,13 @@
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ENHANCEMENTS:
-* Install data science and Azure tooling on the Guacamole Windows VM and airlock review VMs via the shared `vm_config.ps1`, pulled through Nexus to replace the removed DSVM images: Azure CLI, VS Code, Storage Explorer, Python (Miniforge)+JupyterLab, R, RStudio, PyCharm Community and Git, plus desktop shortcuts. (`tre-service-guacamole-windowsvm` 2.1.0, import/export `reviewvm` 1.1.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Install data science and Azure tooling on the Guacamole Windows VMs via the
+  shared `vm_config.ps1`, pulled through Nexus to replace the removed DSVM
+  images, and add checkbox-based selection of the optional tooling in the
+  standard Windows VM template. The airlock review VMs reuse the same shared
+  bootstrap but install only Azure CLI, VS Code and Storage Explorer so reviews
+  start faster. (`tre-service-guacamole-windowsvm` 2.2.0, import/export
+  `reviewvm` 1.2.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Add Nexus proxy repositories for the Windows data science tooling installers
   (Miniforge, CRAN R, PyCharm and Git). Existing Nexus shared service instances
   should be upgraded/redeployed so these repositories are created before using

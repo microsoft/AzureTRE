@@ -7,8 +7,15 @@ This folder contains user resources that can be deployed with the Guacamole work
 
 ## Windows VM tooling
 
-The Windows VM templates (`guacamole-azure-windowsvm` and the airlock `guacamole-azure-import-reviewvm` / `guacamole-azure-export-reviewvm`) share a single configuration script, `guacamole-azure-windowsvm/terraform/vm/vm_config.ps1`.
-It configures the package managers (pip, conda, R) to use the Nexus proxy and installs data science and Azure tooling from Nexus, since the VMs have no direct internet access:
+The Windows VM templates (`guacamole-azure-windowsvm` and the airlock
+`guacamole-azure-import-reviewvm` / `guacamole-azure-export-reviewvm`) share a
+single configuration script,
+`guacamole-azure-windowsvm/terraform/vm/vm_config.ps1`.
+It configures the package managers (pip, conda, R) to use the Nexus proxy and
+installs data science and Azure tooling from Nexus, since the VMs have no
+direct internet access. The standard Windows VM template exposes checkboxes in
+`template_schema.json` so callers can choose which tools to install; by default
+it installs:
 
 - Azure CLI
 - Visual Studio Code
@@ -18,7 +25,13 @@ It configures the package managers (pip, conda, R) to use the Nexus proxy and in
 - R and RStudio Desktop
 - PyCharm Community
 
-The review VM bundles reference the same file via a symlink and receive it at build time through a Porter build context (`porter-build-context.env`), so the tooling is maintained in one place. The airlock review VMs then run their specialised review-data download on top of this shared configuration. Pinned tool versions are defined at the top of `vm_config.ps1`.
+The review VM bundles reference the same file via a symlink and receive it at
+build time through a Porter build context (`porter-build-context.env`), so the
+tooling is maintained in one place. The airlock review VMs then run their
+specialised review-data download on top of this shared configuration, but
+intentionally install only Azure CLI, Visual Studio Code and Azure Storage
+Explorer to keep review VM startup time down. Pinned tool versions are defined
+at the top of `vm_config.ps1`.
 
 Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode`, `storage-explorer`, `miniforge-download`, `cran-r-download`, `r-studio-download`, `pycharm-download` and `git-download` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
 

@@ -19,6 +19,34 @@ variable "vm_size" {
 variable "shared_storage_access" {
   type = bool
 }
+variable "install_azure_cli" {
+  type    = bool
+  default = true
+}
+variable "install_vscode" {
+  type    = bool
+  default = true
+}
+variable "install_storage_explorer" {
+  type    = bool
+  default = true
+}
+variable "install_git" {
+  type    = bool
+  default = true
+}
+variable "install_python_tools" {
+  type    = bool
+  default = true
+}
+variable "install_r_tools" {
+  type    = bool
+  default = true
+}
+variable "install_pycharm" {
+  type    = bool
+  default = true
+}
 variable "shared_storage_name" {
   type = string
 }

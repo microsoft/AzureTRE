@@ -35,6 +35,13 @@ locals {
     templatefile("${path.module}/vm_config.ps1", {
       nexus_proxy_url        = var.nexus_proxy_url
       SharedStorageAccess    = var.shared_storage_access ? 1 : 0
+      InstallAzureCli        = var.install_azure_cli ? 1 : 0
+      InstallVsCode          = var.install_vscode ? 1 : 0
+      InstallStorageExplorer = var.install_storage_explorer ? 1 : 0
+      InstallGit             = var.install_git ? 1 : 0
+      InstallPythonTools     = var.install_python_tools ? 1 : 0
+      InstallRTools          = var.install_r_tools ? 1 : 0
+      InstallPyCharm         = var.install_pycharm ? 1 : 0
       StorageAccountName     = var.storage_account_name
       StorageAccountKey      = var.storage_account_key
       StorageAccountFileHost = var.storage_account_file_host

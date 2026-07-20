@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 2.1.0
+version: 2.2.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 11 or Windows Server 2025)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -104,6 +104,27 @@ parameters:
   - name: shared_storage_access
     type: boolean
     default: true
+  - name: install_azure_cli
+    type: boolean
+    default: true
+  - name: install_vscode
+    type: boolean
+    default: true
+  - name: install_storage_explorer
+    type: boolean
+    default: true
+  - name: install_git
+    type: boolean
+    default: true
+  - name: install_python_tools
+    type: boolean
+    default: true
+  - name: install_r_tools
+    type: boolean
+    default: true
+  - name: install_pycharm
+    type: boolean
+    default: true
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
@@ -178,6 +199,13 @@ install:
         admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        install_azure_cli: ${ bundle.parameters.install_azure_cli }
+        install_vscode: ${ bundle.parameters.install_vscode }
+        install_storage_explorer: ${ bundle.parameters.install_storage_explorer }
+        install_git: ${ bundle.parameters.install_git }
+        install_python_tools: ${ bundle.parameters.install_python_tools }
+        install_r_tools: ${ bundle.parameters.install_r_tools }
+        install_pycharm: ${ bundle.parameters.install_pycharm }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
@@ -215,6 +243,13 @@ upgrade:
         admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        install_azure_cli: ${ bundle.parameters.install_azure_cli }
+        install_vscode: ${ bundle.parameters.install_vscode }
+        install_storage_explorer: ${ bundle.parameters.install_storage_explorer }
+        install_git: ${ bundle.parameters.install_git }
+        install_python_tools: ${ bundle.parameters.install_python_tools }
+        install_r_tools: ${ bundle.parameters.install_r_tools }
+        install_pycharm: ${ bundle.parameters.install_pycharm }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
@@ -264,6 +299,13 @@ uninstall:
         admin_username: ${ bundle.parameters.admin_username }
         vm_size: ${ bundle.parameters.vm_size }
         shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        install_azure_cli: ${ bundle.parameters.install_azure_cli }
+        install_vscode: ${ bundle.parameters.install_vscode }
+        install_storage_explorer: ${ bundle.parameters.install_storage_explorer }
+        install_git: ${ bundle.parameters.install_git }
+        install_python_tools: ${ bundle.parameters.install_python_tools }
+        install_r_tools: ${ bundle.parameters.install_r_tools }
+        install_pycharm: ${ bundle.parameters.install_pycharm }
         shared_storage_name: ${ bundle.parameters.shared_storage_name }
         image_gallery_id: ${ bundle.parameters.image_gallery_id }
         enable_shutdown_schedule: ${ bundle.parameters.enable_shutdown_schedule }
