@@ -5,6 +5,8 @@ set -o nounset
 
 config_dir="/etc/nexus-data/scripts/nexus_repos_config"
 mkdir -p "$config_dir"
+# Remove stale JSON files from previous upgrades before writing the current set
+find "$config_dir" -maxdepth 1 -name '*.json' -delete
 
 # shellcheck disable=SC2288,SC1083
 %{ for filename, content in REPO_CONFIG_FILES ~}

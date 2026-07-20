@@ -37,6 +37,15 @@ else
   echo "Pulling Nexus image from Docker Hub: $NEXUS_IMAGE"
 fi
 
+# Short-circuit before the pull: skip pull and restart if already running the requested image.
+# The persistent /etc/nexus-data volume preserves Nexus state across replacement.
+existing_image=$(docker inspect --format '{{.Config.Image}}' nexus 2>/dev/null || true)
+if [ "$existing_image" == "$NEXUS_IMAGE" ]; then
+  echo "Nexus container already running requested image $NEXUS_IMAGE. Ensuring it is started."
+  docker start nexus > /dev/null 2>&1 || true
+  exit 0
+fi
+
 docker_pull_timeout=10
 
 while true; do
@@ -66,15 +75,6 @@ if [ $mem_total_mb -gt 4096 ]; then
 fi
 
 echo "System memory: ${mem_total_mb} MB. Java memory: ${java_mem} MB"
-
-# Idempotent (re)deploy: only replace the container when the image tag changes.
-# The persistent /etc/nexus-data volume preserves Nexus state across replacement.
-existing_image=$(docker inspect --format '{{.Config.Image}}' nexus 2>/dev/null || true)
-if [ "$existing_image" == "$NEXUS_IMAGE" ]; then
-  echo "Nexus container already running requested image $NEXUS_IMAGE. Ensuring it is started."
-  docker start nexus > /dev/null 2>&1 || true
-  exit 0
-fi
 
 if [ -n "$existing_image" ]; then
   echo "Replacing existing Nexus container (image $existing_image) with $NEXUS_IMAGE..."
