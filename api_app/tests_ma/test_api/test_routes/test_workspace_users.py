@@ -8,7 +8,6 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from tests_ma.test_api.conftest import create_admin_user
 from auth.rbac import require_tre_admin, \
     require_tre_user_or_admin, \
-    require_workspace_owner_or_researcher_or_airlock_manager, \
     require_workspace_owner_or_researcher_or_airlock_manager
 
 from models.domain.workspace import Workspace
