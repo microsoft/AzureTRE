@@ -10,11 +10,26 @@ if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
   image_name=$(yq eval ".custom.runtime_image.name" porter.yaml)
   source_image=$(yq eval ".custom.runtime_image.import.source" porter.yaml)
   version=$(yq eval ".custom.runtime_image.import.tag" porter.yaml)
+  target_image="${image_name}:${version}"
 
-  echo "Importing ${source_image}:${version} to ACR as ${image_name}:${version}..."
+  existing_digest=$(az acr repository show --name "${ACR_NAME}" \
+    --image "${target_image}" \
+    --query digest \
+    --output tsv 2>/dev/null || true)
+
+  if [ "${existing_digest}" = "null" ]; then
+    existing_digest=""
+  fi
+
+  if [ -n "${existing_digest}" ]; then
+    echo "Image ${target_image} already exists in ACR with digest ${existing_digest}. Skipping import."
+    exit 0
+  fi
+
+  echo "Importing ${source_image}:${version} to ACR as ${target_image}..."
   az acr import --name "${ACR_NAME}" \
     --source "${source_image}:${version}" \
-    --image "${image_name}:${version}" \
+    --image "${target_image}" \
     --force
   echo "Image imported successfully"
   exit 0
@@ -58,4 +73,3 @@ fi
 ${DOCKER_BUILD_COMMAND} --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t "${FULL_IMAGE_NAME_PREFIX}/${image_name}:${version}" \
   "${docker_cache[@]}" -f "${docker_file}" "${docker_context}"
-

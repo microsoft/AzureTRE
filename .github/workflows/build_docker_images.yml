@@ -22,34 +22,15 @@ jobs:
     name: Build images
     runs-on: ubuntu-latest
     env:
-      PYTHON_BASE_IMAGE: >-
-        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/library/python', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'python' }}
       PYTHON_TAG: 3.12-slim-bookworm
-      AIRLOCK_PYTHON_BASE_IMAGE: >-
-        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/mcr/azure-functions/python', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'mcr.microsoft.com/azure-functions/python' }}
       AIRLOCK_PYTHON_TAG: 4-python3.12
-      MAVEN_BASE_IMAGE: >-
-        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/library/maven', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'maven' }}
       MAVEN_TAG: 3.9-eclipse-temurin-17-alpine
-      GUACD_BASE_IMAGE: >-
-        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/guacamole/guacd', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'guacamole/guacd' }}
       GUACD_TAG: 1.6.0
-      GITEA_BASE_IMAGE_REPO: >-
-        ${{ vars.ACR_BASE_IMAGE_PREFIX != '' &&
-        format('{0}/mirror/gitea/gitea', vars.ACR_BASE_IMAGE_PREFIX)
-        || 'gitea/gitea' }}
       GITEA_TAG: 1.15
     permissions:
       contents: read
       actions: write # For uploading artifacts
+      id-token: write # For Azure OIDC login when using ACR mirrors
       pull-requests: read # For path filter
     steps:
       - name: Upload Event File
@@ -63,6 +44,68 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+
+      - name: Determine ACR mirror availability
+        id: acr_mirror
+        env:
+          ACR_BASE_IMAGE_PREFIX: ${{ vars.ACR_BASE_IMAGE_PREFIX }}
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          use_acr_mirrors=false
+
+          if [[ -n "${ACR_BASE_IMAGE_PREFIX}" &&
+            -n "${ACR_NAME}" &&
+            -n "${AZURE_CLIENT_ID}" &&
+            -n "${AZURE_TENANT_ID}" &&
+            -n "${AZURE_SUBSCRIPTION_ID}" ]]; then
+            use_acr_mirrors=true
+          fi
+
+          echo "use_acr_mirrors=${use_acr_mirrors}" >> "${GITHUB_OUTPUT}"
+
+      - name: Azure Login for ACR mirror
+        if: ${{ steps.acr_mirror.outputs.use_acr_mirrors == 'true' }}
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Login to ACR mirror
+        if: ${{ steps.acr_mirror.outputs.use_acr_mirrors == 'true' }}
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
+
+      - name: Select Docker base image sources
+        env:
+          ACR_BASE_IMAGE_PREFIX: ${{ vars.ACR_BASE_IMAGE_PREFIX }}
+        run: |
+          prefix="${ACR_BASE_IMAGE_PREFIX}"
+
+          python_base_image="python"
+          airlock_python_base_image="mcr.microsoft.com/azure-functions/python"
+          maven_base_image="maven"
+          guacd_base_image="guacamole/guacd"
+          gitea_base_image_repo="gitea/gitea"
+
+          if [[ "${{ steps.acr_mirror.outputs.use_acr_mirrors }}" == 'true' ]]; then
+            python_base_image="${prefix}/mirror/library/python"
+            airlock_python_base_image="${prefix}/mirror/mcr/azure-functions/python"
+            maven_base_image="${prefix}/mirror/library/maven"
+            guacd_base_image="${prefix}/mirror/guacamole/guacd"
+            gitea_base_image_repo="${prefix}/mirror/gitea/gitea"
+          fi
+
+          {
+            echo "PYTHON_BASE_IMAGE=${python_base_image}"
+            echo "AIRLOCK_PYTHON_BASE_IMAGE=${airlock_python_base_image}"
+            echo "MAVEN_BASE_IMAGE=${maven_base_image}"
+            echo "GUACD_BASE_IMAGE=${guacd_base_image}"
+            echo "GITEA_BASE_IMAGE_REPO=${gitea_base_image_repo}"
+          } >> "${GITHUB_ENV}"
 
       - name: Filter changes
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
