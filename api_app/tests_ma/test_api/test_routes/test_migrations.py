@@ -2,7 +2,7 @@ import pytest
 from mock import patch
 
 from fastapi import status
-from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
+from auth.rbac import require_tre_admin, require_tre_user_or_admin
 from resources import strings
 
 
@@ -12,10 +12,12 @@ pytestmark = pytest.mark.asyncio
 class TestMigrationRoutesWithNonAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
-            yield
-            app.dependency_overrides = {}
+        from fastapi import HTTPException
+        def forbidden():
+            raise HTTPException(status_code=403)
+        app.dependency_overrides[require_tre_admin] = forbidden
+        yield
+        app.dependency_overrides = {}
 
     # [POST] /migrations/
     async def test_post_migrations_throws_unauthenticated_when_not_admin(self, client, app):
@@ -27,11 +29,10 @@ class TestMigrationRoutesWithNonAdminRights:
 class TestMigrationRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_admin_user] = admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_tre_user_or_admin] = admin_user
+        app.dependency_overrides[require_tre_admin] = admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [POST] /migrations/
     @patch("api.routes.migrations.logger.info")

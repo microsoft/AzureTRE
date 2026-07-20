@@ -83,27 +83,49 @@ class TestRequireRoles:
 
 
 class TestRequireWorkspaceRoles:
+    def _make_fake_deps(self, user_roles):
+        """Return (fake_credentials, fake_workspace, mock_validator) for testing _check directly."""
+        from fastapi.security import HTTPAuthorizationCredentials
+        from models.domain.workspace import Workspace
+
+        fake_creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
+        # Workspace with no client_id → falls straight through to core validator
+        fake_workspace = Workspace(
+            id="ws-id",
+            templateName="test",
+            templateVersion="0.1.0",
+            etag="",
+            resourcePath="/workspaces/ws-id",
+            properties={},
+        )
+        validated_user = _make_user(roles=user_roles)
+        mock_validator = MagicMock()
+        mock_validator.validate.return_value = validated_user
+        return fake_creds, fake_workspace, mock_validator, validated_user
+
     def test_admin_always_passes_without_workspace_role(self):
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
+        fake_creds, fake_workspace, mock_validator, admin = self._make_fake_deps(["TREAdmin"])
 
         import asyncio
 
         async def _run():
-            admin = _make_user(roles=["TREAdmin"])
-            result = await dep(user=admin)
+            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+                result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
         asyncio.get_event_loop().run_until_complete(_run())
 
     def test_workspace_owner_passes(self):
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
+        fake_creds, fake_workspace, mock_validator, owner = self._make_fake_deps(["WorkspaceOwner"])
 
         import asyncio
 
         async def _run():
-            owner = _make_user(roles=["WorkspaceOwner"])
-            result = await dep(user=owner)
-            assert result is owner
+            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+                result = await dep(credentials=fake_creds, workspace=fake_workspace)
+            assert result.id == "uid"
 
         asyncio.get_event_loop().run_until_complete(_run())
 
@@ -111,13 +133,14 @@ class TestRequireWorkspaceRoles:
         from fastapi import HTTPException
 
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
+        fake_creds, fake_workspace, mock_validator, researcher = self._make_fake_deps(["WorkspaceResearcher"])
 
         import asyncio
 
         async def _run():
-            researcher = _make_user(roles=["WorkspaceResearcher"])
-            with pytest.raises(HTTPException) as exc_info:
-                await dep(user=researcher)
+            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+                with pytest.raises(HTTPException) as exc_info:
+                    await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 403
 
         asyncio.get_event_loop().run_until_complete(_run())

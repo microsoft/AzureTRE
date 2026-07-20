@@ -1,10 +1,19 @@
 from typing import Callable, Union
 
 from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 
-from auth.dependencies import get_authenticated_user, get_workspace_authenticated_user
+from auth.dependencies import _bearer, _to_http_exception, get_authenticated_user
+from auth.exceptions import AuthError, TokenExpired, TokenSignatureInvalid, TokenInvalid
 from auth.models import AuthenticatedUser, TRERole, WorkspaceAccessRole
+from auth.registry import get_core_validator, get_workspace_validator
+from models.domain.workspace import Workspace
 from resources import strings
+from services.logging import logger
+
+# Workspace dependency from API layer — needed to resolve workspace app registration
+# for audience-aware token validation on workspace-scoped routes.
+from api.dependencies.workspaces import get_workspace_by_id_from_path
 
 
 def require_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Callable:
@@ -27,18 +36,21 @@ def require_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Callable:
             )
         return user
 
+    _check._role_names = role_names
     return _check
 
 
 def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Callable:
     """Factory that returns a dependency enforcing workspace-scoped *roles*.
 
-    TREAdmin users are always allowed regardless of workspace role.  For other
-    users the token is validated against the workspace app registration and the
-    role list is checked.
+    Validates the bearer token against the workspace app registration first.
+    If that fails with a wrong-audience error, falls back to the core app
+    registration so that TREAdmin users can always reach workspace endpoints.
+    TREAdmin is always allowed regardless of workspace role.
 
-    Workspace context is resolved by pairing with
-    ``Depends(get_workspace_by_id_from_path)`` on the route.
+    The workspace is resolved from the URL path (``workspace_id`` path
+    parameter) so this factory should only be used on routes whose path
+    includes ``{workspace_id}``.
     """
     role_values = frozenset(r.value for r in roles)
     # TREAdmin can access any workspace endpoint
@@ -46,8 +58,38 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
     role_names = [r.value for r in roles]
 
     async def _check(
-        user: AuthenticatedUser = Depends(get_workspace_authenticated_user),
+        credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+        workspace: Workspace = Depends(get_workspace_by_id_from_path),
     ) -> AuthenticatedUser:
+        token = credentials.credentials
+
+        # Try workspace app registration first (audience-aware validation).
+        client_id = workspace.properties.get("client_id", "")
+        if client_id:
+            try:
+                user = get_workspace_validator(client_id).validate(token)
+                # Token is valid for this workspace — role check is final.
+                if not (set(user.roles) & allowed_values):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {role_names}",
+                        headers={"WWW-Authenticate": "Bearer"},
+                    )
+                return user
+            except (TokenExpired, TokenSignatureInvalid) as exc:
+                raise _to_http_exception(exc)
+            except TokenInvalid:
+                # Wrong audience — fall through to core validator.
+                logger.debug(
+                    "Workspace token invalid (likely wrong audience), trying core validator"
+                )
+
+        # Fall back to core app registration (allows TREAdmin access).
+        try:
+            user = get_core_validator().validate(token)
+        except AuthError as exc:
+            raise _to_http_exception(exc)
+
         if not (set(user.roles) & allowed_values):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -56,6 +98,7 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
             )
         return user
 
+    _check._role_names = role_names
     return _check
 
 

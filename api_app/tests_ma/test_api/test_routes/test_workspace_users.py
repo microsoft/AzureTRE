@@ -6,10 +6,10 @@ from fastapi import status
 from models.domain.workspace_users import AssignmentType, Role
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_admin_user
-from services.authentication import get_current_admin_user, \
-    get_current_tre_user_or_tre_admin, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
+from auth.rbac import require_tre_admin, \
+    require_tre_user_or_admin, \
+    require_workspace_owner_or_researcher_or_airlock_manager, \
+    require_workspace_owner_or_researcher_or_airlock_manager
 
 from models.domain.workspace import Workspace
 from resources import strings
@@ -47,13 +47,12 @@ def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspa
 class TestWorkspaceUserRoutesWithTreAdmin:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = admin_user
-            app.dependency_overrides[get_current_admin_user] = admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
+        app.dependency_overrides[require_tre_user_or_admin] = admin_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
+        app.dependency_overrides[require_tre_admin] = admin_user
+        yield
+        app.dependency_overrides = {}
 
     @pytest.mark.parametrize("auth_class", ["aad_authentication.AzureADAuthorization"])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())

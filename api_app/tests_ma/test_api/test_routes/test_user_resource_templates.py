@@ -4,7 +4,7 @@ from mock import patch
 
 from starlette import status
 
-from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
+from auth.rbac import require_tre_admin, require_tre_user_or_admin
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput, UnableToAccessDatabase
 from models.domain.resource import ResourceType
 from models.domain.user_resource_template import UserResourceTemplate
@@ -36,8 +36,8 @@ def user_resource_template_without_enriching():
 class TestUserResourceTemplatesRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-        app.dependency_overrides[get_current_admin_user] = admin_user
+        app.dependency_overrides[require_tre_user_or_admin] = admin_user
+        app.dependency_overrides[require_tre_admin] = admin_user
         yield
         app.dependency_overrides = {}
 
@@ -106,7 +106,7 @@ class TestUserResourceTemplatesRequiringAdminRights:
 class TestUserResourceTemplatesNotRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, researcher_user):
-        app.dependency_overrides[get_current_tre_user_or_tre_admin] = researcher_user
+        app.dependency_overrides[require_tre_user_or_admin] = researcher_user
         yield
         app.dependency_overrides = {}
 

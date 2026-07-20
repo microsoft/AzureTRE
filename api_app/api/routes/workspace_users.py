@@ -5,10 +5,10 @@ from resources import strings
 from services.authentication import get_aad_service
 from models.schemas.users import UsersInResponse, AssignableUsersInResponse, WorkspaceUserOperationResponse
 from models.schemas.roles import RolesInResponse
-from services.authentication import get_current_admin_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin
+from auth.rbac import require_tre_admin, require_workspace_owner_or_researcher_or_airlock_manager
 
-workspaces_users_admin_router = APIRouter(dependencies=[Depends(get_current_admin_user)])
-workspaces_users_shared_router = APIRouter(dependencies=[Depends(get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin)])
+workspaces_users_admin_router = APIRouter(dependencies=[Depends(require_tre_admin)])
+workspaces_users_shared_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
 
 @workspaces_users_shared_router.get("/workspaces/{workspace_id}/users", response_model=UsersInResponse, name=strings.API_GET_WORKSPACE_USERS)

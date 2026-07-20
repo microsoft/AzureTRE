@@ -23,12 +23,12 @@ from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
 from models.schemas.resource_template import ResourceTemplateInformation
-from services.authentication import get_current_admin_user, \
-    get_current_tre_user_or_tre_admin, get_current_workspace_owner_user, \
-    get_current_workspace_owner_or_researcher_user, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
-    get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin, \
-    get_current_workspace_owner_or_airlock_manager
+from auth.rbac import require_tre_admin, \
+    require_tre_user_or_admin, require_workspace_owner, \
+    require_workspace_owner_or_researcher, \
+    require_workspace_owner_or_researcher_or_airlock_manager, \
+    require_workspace_owner_or_airlock_manager, \
+    require_airlock_manager
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -249,8 +249,9 @@ def disabled_user_resource():
 class TestWorkspaceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            yield
+        app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
@@ -289,12 +290,20 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.get_identity_role_assignments")
     async def test_get_workspace_by_id_get_as_tre_user_returns_403(self, access_service_mock, get_workspace_mock, app, client):
+        from fastapi import HTTPException
         auth_info_user_in_workspace_owner_role = {'sp_id': 'ab123', 'client_id': 'cl123', 'app_role_id_workspace_owner': 'ab124', 'app_role_id_workspace_researcher': 'ab125', 'app_role_id_workspace_airlock_manager': 'ab130'}
         get_workspace_mock.return_value = sample_workspace(auth_info=auth_info_user_in_workspace_owner_role)
         access_service_mock.return_value = [RoleAssignment('ab123', 'ab124')]
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        def forbidden():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
+        try:
+            response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        finally:
+            app.dependency_overrides.pop(require_workspace_owner_or_researcher_or_airlock_manager, None)
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -341,13 +350,15 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = admin_user
-            app.dependency_overrides[get_current_admin_user] = admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
+        app.dependency_overrides[require_workspace_owner_or_researcher] = admin_user
+        app.dependency_overrides[require_workspace_owner_or_airlock_manager] = admin_user
+        app.dependency_overrides[require_workspace_owner] = admin_user
+        app.dependency_overrides[require_airlock_manager] = admin_user
+        app.dependency_overrides[require_tre_user_or_admin] = admin_user
+        app.dependency_overrides[require_tre_admin] = admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [GET] /workspaces
     @patch("api.routes.workspaces.WorkspaceRepository.get_active_workspaces")
@@ -708,10 +719,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_owner_user(self, app, owner_user):
         # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_user] = owner_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = owner_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = owner_user
-        app.dependency_overrides[get_current_workspace_owner_or_airlock_manager] = owner_user
+        app.dependency_overrides[require_workspace_owner] = owner_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = owner_user
+        app.dependency_overrides[require_workspace_owner_or_researcher] = owner_user
+        app.dependency_overrides[require_workspace_owner_or_airlock_manager] = owner_user
         yield
         app.dependency_overrides = {}
 
@@ -1356,9 +1367,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_researcher_user(self, app, researcher_user):
         # The following ws services requires the WS app registration
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager_or_tre_admin] = researcher_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
+        app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         yield
         app.dependency_overrides = {}
 
