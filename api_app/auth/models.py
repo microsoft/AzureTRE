@@ -40,4 +40,4 @@ class AuthenticatedUser(BaseModel):
         return bool(role_values & set(self.roles))
 
     def is_tre_admin(self) -> bool:
-        return TRERole.Admin in self.roles
+        return TRERole.Admin.value in self.roles

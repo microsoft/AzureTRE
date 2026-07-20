@@ -81,9 +81,3 @@ require_workspace_owner_or_researcher_or_airlock_manager = require_workspace_rol
     WorkspaceAccessRole.Researcher,
     WorkspaceAccessRole.AirlockManager,
 )
-require_workspace_owner_or_researcher_or_airlock_manager_or_admin = require_workspace_roles(
-    WorkspaceAccessRole.Owner,
-    WorkspaceAccessRole.Researcher,
-    WorkspaceAccessRole.AirlockManager,
-)
-require_workspace_owner_or_admin = require_workspace_roles(WorkspaceAccessRole.Owner)
