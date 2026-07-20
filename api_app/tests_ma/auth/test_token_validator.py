@@ -193,7 +193,7 @@ class TestTokenValidatorValidate:
             validator.validate("valid.jwt.token")
 
         call_kwargs = mock_decode.call_args
-        algorithms_arg = call_kwargs[1].get("algorithms") or call_kwargs[0][2]
+        algorithms_arg = call_kwargs.kwargs.get("algorithms")
         assert algorithms_arg == ["RS256"], (
             f"Expected algorithms=['RS256'] only, got {algorithms_arg!r}"
         )
