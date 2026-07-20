@@ -182,7 +182,6 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
                 detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS,
             ) from exc
 
-
     @staticmethod
     def _get_user_from_token(validated) -> User:
         """Convert a validated :class:`~auth.models.AuthenticatedUser` to a :class:`User`.

@@ -58,6 +58,8 @@ class TokenValidator:
             )
         except jwt.ExpiredSignatureError as exc:
             raise TokenExpired("Token expired") from exc
+        except jwt.InvalidSignatureError as exc:
+            raise TokenSignatureInvalid("Token signature invalid") from exc
         except jwt.InvalidTokenError as exc:
             raise TokenInvalid(f"Token invalid: {exc}") from exc
 
