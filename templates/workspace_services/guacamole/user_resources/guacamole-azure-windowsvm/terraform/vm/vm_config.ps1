@@ -1,5 +1,5 @@
-Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse
 $ErrorActionPreference = "Stop"
+Remove-Item -LiteralPath "C:\AzureData" -Force -Recurse -ErrorAction SilentlyContinue
 
 if( ${SharedStorageAccess} -eq 1 )
 {
@@ -15,24 +15,34 @@ If(!(Test-Path $PipConfigFolderPath))
 
 $PipConfigFilePath = $PipConfigFolderPath + "pip.ini"
 
+$NexusHost = ([System.Uri]"${nexus_proxy_url}").Host
+
 $ConfigBody = @"
 [global]
 index = ${nexus_proxy_url}/repository/pypi/pypi
 index-url = ${nexus_proxy_url}/repository/pypi/simple
-trusted-host = ${nexus_proxy_url}
+trusted-host = $NexusHost
 "@
 
 # We need to write the ini file in UTF8 (No BOM) as pip won't understand Powershell's default encoding (unicode)
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($PipConfigFilePath, $ConfigBody, $Utf8NoBomEncoding)
 
-# Docker proxy config
-$DaemonConfig = @"
+# Docker proxy config (best-effort — only applies if Docker is pre-installed)
+try {
+  $dockerConfigDir = "$env:ProgramData\docker\config"
+  if (!(Test-Path $dockerConfigDir)) {
+    New-Item -ItemType Directory -Force -Path $dockerConfigDir | Out-Null
+  }
+  $DaemonConfig = @"
 {
 "registry-mirrors": ["${nexus_proxy_url}:8083"]
 }
 "@
-$DaemonConfig | Out-File -Encoding Ascii ( New-Item -Path $env:ProgramData\docker\config\daemon.json -Force )
+  $DaemonConfig | Out-File -Encoding Ascii "$dockerConfigDir\daemon.json"
+} catch {
+  Write-Host "Skipping Docker proxy config: $_"
+}
 
 # Pinned versions - update these to roll the installed tooling forward.
 $AzureCliVersion        = "2.81.0"
