@@ -23,9 +23,9 @@ from models.schemas.workspace_service import WorkspaceServiceInCreate, Workspace
 from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
 from resources import strings
-from services.access_service import AuthConfigValidationError
+from services.aad_authentication import AuthConfigValidationError
 from services.authentication import get_current_admin_user, \
-    get_access_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, \
+    get_aad_service, get_current_workspace_owner_user, get_current_workspace_owner_or_researcher_user, get_current_tre_user_or_tre_admin, \
     get_current_workspace_owner_or_tre_admin, \
     get_current_workspace_owner_or_researcher_user_or_airlock_manager, \
     get_current_workspace_owner_or_airlock_manager, \
@@ -67,7 +67,7 @@ async def retrieve_users_active_workspaces(request: Request, user=Depends(get_cu
     except Exception:
         workspaces = await workspace_repo.get_active_workspaces()
 
-        access_service = get_access_service()
+        access_service = get_aad_service()
         user_role_assignments = get_identity_role_assignments(user)
 
         def _safe_get_workspace_role(user, workspace, user_role_assignments):

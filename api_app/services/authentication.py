@@ -1,24 +1,20 @@
 
-from fastapi import HTTPException, status
-
-from models.schemas.workspace import AuthProvider
-from resources import strings
-from services.aad_authentication import AzureADAuthorization
-from services.access_service import AccessService, AuthConfigValidationError
+from services.aad_authentication import AzureADAuthorization, AuthConfigValidationError
 
 
 def extract_auth_information(workspace_creation_properties: dict) -> dict:
-    access_service = get_access_service('AAD')
+    from fastapi import HTTPException, status
+    from resources import strings
+    aad_service = get_aad_service()
     try:
-        return access_service.extract_workspace_auth_information(workspace_creation_properties)
+        return aad_service.extract_workspace_auth_information(workspace_creation_properties)
     except AuthConfigValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-def get_access_service(provider: str = AuthProvider.AAD) -> AccessService:
-    if provider == AuthProvider.AAD:
-        return AzureADAuthorization()
-    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.INVALID_AUTH_PROVIDER)
+def get_aad_service() -> AzureADAuthorization:
+    """Return an :class:`AzureADAuthorization` instance for Graph API calls."""
+    return AzureADAuthorization()
 
 
 get_current_tre_user = AzureADAuthorization(require_one_of_roles=['TREUser'])

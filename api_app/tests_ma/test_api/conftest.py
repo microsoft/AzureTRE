@@ -17,9 +17,17 @@ def no_lifespan_events():
 @pytest.fixture(autouse=True)
 def no_auth_token():
     """ overrides validating and decoding tokens for all tests"""
-    with patch('services.aad_authentication.AccessService.__call__', return_value="token"):
-        with patch('services.aad_authentication.AzureADAuthorization._decode_token', return_value="decoded_token"):
-            yield
+    from auth.models import AuthenticatedUser
+    from mock import MagicMock
+
+    default_validated = AuthenticatedUser(id="test-user", name="Test User", roles=["TREAdmin"])
+    mock_validator = MagicMock()
+    mock_validator.validate.return_value = default_validated
+
+    with patch('fastapi.security.OAuth2AuthorizationCodeBearer.__call__', return_value="token"):
+        with patch('services.aad_authentication.get_core_validator', return_value=mock_validator):
+            with patch('services.aad_authentication.get_workspace_validator', return_value=mock_validator):
+                yield
 
 
 @pytest.fixture(autouse=True, scope="session")
