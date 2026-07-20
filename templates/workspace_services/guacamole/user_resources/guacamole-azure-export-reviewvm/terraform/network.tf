@@ -98,6 +98,20 @@ resource "azurerm_network_security_rule" "allow_inbound_webapps_to_vm" {
   source_port_range           = "*"
 }
 
+resource "azurerm_network_security_rule" "deny_inbound_override" {
+  access                      = "Deny"
+  destination_address_prefix  = "*"
+  destination_port_range      = "*"
+  direction                   = "Inbound"
+  name                        = "deny-inbound-override"
+  network_security_group_name = azurerm_network_security_group.vm_nsg.name
+  priority                    = 4096
+  protocol                    = "*"
+  resource_group_name         = module.windows_vm.resource_group_name
+  source_address_prefix       = "*"
+  source_port_range           = "*"
+}
+
 resource "azurerm_network_security_rule" "deny_outbound_override" {
   access                      = "Deny"
   destination_address_prefix  = "*"
