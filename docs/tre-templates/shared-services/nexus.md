@@ -144,7 +144,7 @@ code --install-extension {publisher}-{extension}-{version}.vsix
 
 The extensions which are  available to users can be restricted by configuring content selectors using the package `path` via the SonatypeNexus RM web interface.
 
-If extensions want to be intalled in bulk, a script such as the following can be used:
+If extensions want to be installed in bulk, a script such as the following can be used:
 
 ```bash
 #!/bin/bash
