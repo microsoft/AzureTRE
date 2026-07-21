@@ -11,7 +11,7 @@ repos:
         exclude: ^.devcontainer/.*\.json$
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
 
   - repo: https://github.com/pycqa/flake8
     rev: 7.3.0
@@ -46,8 +46,6 @@ repos:
       - id: terraform_fmt
       - id: terraform_tflint
       - id: terraform_docs
-
-
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.0
