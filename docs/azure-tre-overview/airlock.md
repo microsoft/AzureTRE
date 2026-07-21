@@ -35,7 +35,7 @@ The Airlock allows a TRE user to start the `import` or `export` process to a giv
 5. **Approved**: The Airlock request has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace, it can be accessed by the requestor from within the workspace.
 6. **Rejection In-progress**: The Airlock request has been rejected, however data movement is still ongoing.
 7. **Rejected**: The Airlock request has been rejected. The data in the process was rejected manually by the Airlock Manager.
-8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancelation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
+8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancellation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.
 
@@ -72,7 +72,7 @@ If the Security Scanning does not identify any security flaws, the request state
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, through a TRE API call.
 At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - export approved  or `stalimapp` - import approved.
 With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.
 
@@ -91,7 +91,7 @@ Considering that the Airlock requests may require large data movements, the oper
 
 ## Security Scan
 
-The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
+The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
 
 > * The Security scan will be optional, behind a feature flag enabled by a script
 > * The outcome of the security scan will be either the in-progress (`stalexip`) storage or blocked (`stalexblocked`)
