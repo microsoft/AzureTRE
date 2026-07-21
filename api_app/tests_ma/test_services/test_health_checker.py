@@ -12,14 +12,8 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-def create_mock_container(query_results=None, query_error=None, read_error=None):
+def create_mock_container(query_results=None, query_error=None):
     container_mock = MagicMock()
-
-    # Mock read()
-    if read_error:
-        container_mock.read = AsyncMock(side_effect=read_error)
-    else:
-        container_mock.read = AsyncMock(return_value={"id": "container_properties"})
 
     # Mock query_items()
     query_items_mock = MagicMock()
@@ -40,8 +34,7 @@ async def test_get_state_store_status_responding(get_container_proxy_mock) -> No
 
     assert status == StatusEnum.ok
     assert message == ""
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    container_mock.query_items.assert_called_once_with("SELECT TOP 1 VALUE 1 FROM c", max_item_count=1)
 
 
 @patch("api.dependencies.database.Database.get_container_proxy")
@@ -52,8 +45,7 @@ async def test_get_state_store_status_empty_results(get_container_proxy_mock) ->
 
     assert status == StatusEnum.ok
     assert message == ""
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    container_mock.query_items.assert_called_once_with("SELECT TOP 1 VALUE 1 FROM c", max_item_count=1)
 
 
 @patch("api.dependencies.database.Database.get_container_proxy")
@@ -77,30 +69,6 @@ async def test_get_state_store_status_other_exception(container_proxy_mock) -> N
 
 
 @patch("api.dependencies.database.Database.get_container_proxy")
-async def test_get_state_store_status_read_cosmos_http_error(get_container_proxy_mock) -> None:
-    container_mock = create_mock_container(read_error=CosmosHttpResponseError(message="some message"))
-    get_container_proxy_mock.return_value = container_mock
-    status, message = await health_checker.create_state_store_status()
-
-    assert status == StatusEnum.not_ok
-    assert message == strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_not_called()
-
-
-@patch("api.dependencies.database.Database.get_container_proxy")
-async def test_get_state_store_status_read_service_request_error(get_container_proxy_mock) -> None:
-    container_mock = create_mock_container(read_error=ServiceRequestError(message="some message"))
-    get_container_proxy_mock.return_value = container_mock
-    status, message = await health_checker.create_state_store_status()
-
-    assert status == StatusEnum.not_ok
-    assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_not_called()
-
-
-@patch("api.dependencies.database.Database.get_container_proxy")
 async def test_get_state_store_status_cosmos_http_error(get_container_proxy_mock) -> None:
     container_mock = create_mock_container(query_error=CosmosHttpResponseError(message="some message"))
     get_container_proxy_mock.return_value = container_mock
@@ -108,8 +76,7 @@ async def test_get_state_store_status_cosmos_http_error(get_container_proxy_mock
 
     assert status == StatusEnum.not_ok
     assert message == strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    container_mock.query_items.assert_called_once_with("SELECT TOP 1 VALUE 1 FROM c", max_item_count=1)
 
 
 @patch("api.dependencies.database.Database.get_container_proxy")
@@ -120,8 +87,7 @@ async def test_get_state_store_status_service_request_error(get_container_proxy_
 
     assert status == StatusEnum.not_ok
     assert message == strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
-    container_mock.read.assert_called_once()
-    container_mock.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    container_mock.query_items.assert_called_once_with("SELECT TOP 1 VALUE 1 FROM c", max_item_count=1)
 
 
 @patch("core.credentials.get_credential_async_context")
