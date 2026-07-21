@@ -65,7 +65,7 @@ export const RootLayout: React.FunctionComponent = () => {
           if (e.status === 404 /*subscription not supported*/) {
             config.debug && console.warn(e.message);
             setLoadingCostState(LoadingState.NotSupported);
-          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavaiable*/) {
+          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavailable*/) {
             let msg = JSON.parse(e.message);
             let retryAfter = Number(msg.error["retry-after"]);
             config.debug && console.info("retrying after " + retryAfter + " seconds");

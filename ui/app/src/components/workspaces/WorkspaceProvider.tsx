@@ -146,7 +146,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       } catch (e: any) {
         if (e instanceof APIError) {
           if (e.status === 404 /*subscription not supported*/) {
-          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavaiable*/) {
+          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavailable*/) {
             let msg = JSON.parse(e.message);
             let retryAfter = Number(msg.error["retry-after"]);
             setTimeout(getWorkspaceCosts, retryAfter * 1000);
