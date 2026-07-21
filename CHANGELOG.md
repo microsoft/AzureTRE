@@ -12,6 +12,7 @@ ENHANCEMENTS:
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
 * Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Added support for formatting UI code via `pre-commit` and fixed existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
+* Added pre-commit hooks for file checks, ShellCheck, Markdown linting, Bandit security checks, and Terraform format/tflint/docs. ([#4913](https://github.com/microsoft/AzureTRE/issues/4913))
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
 BUG FIXES:
@@ -1217,8 +1218,8 @@ COMPONENTS:
 
       If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarily activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
-  
-  
+
+
   :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
