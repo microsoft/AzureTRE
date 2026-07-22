@@ -49,7 +49,7 @@
     "address_space_size": {
       "type": "string",
       "title": "Address space size",
-      "description": "Network address size cidr or (small /24, medium /22, large /16 or custom with an IP) to be used by the workspace.",
+      "description": "Network address size cidr or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.",
       "default": "small",
       "enum": [
         "24",
