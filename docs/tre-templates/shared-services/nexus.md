@@ -78,7 +78,6 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" Miniforge installers (hosted on GitHub Releases) for Windows VMs. |
 | cran.r-project.org | Enables Nexus to "proxy" CRAN R Windows installers for Windows VMs. |
 | download1.rstudio.org | Enables Nexus to "proxy" RStudio Windows installers for Windows VMs. |
-| download.jetbrains.com, download-cdn.jetbrains.com | Enables Nexus to "proxy" PyCharm Community installers for Windows VMs. |
 
 ## Current Repos
 
@@ -106,7 +105,6 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Miniforge Download | raw | [https://github.com/conda-forge/miniforge/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/miniforge-download` | Provide access to Miniforge installers for Python/conda on Windows VMs |
 | CRAN R Download | raw | [https://cran.r-project.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/cran-r-download` | Provide access to CRAN R Windows installers |
 | R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to RStudio Windows installers |
-| PyCharm Download | raw | [https://download.jetbrains.com/python] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/pycharm-download` | Provide access to PyCharm Community Windows installers |
 | Git Download | raw | [https://github.com/git-for-windows/git/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/git-download` | Provide access to Git for Windows installers |
 | VS Code Extensions | raw | [https://marketplace.visualstudio.com/_apis/public/gallery/publishers/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/` | Provide access to VS Code extensions |
 

@@ -67,10 +67,6 @@ variable "install_r_tools" {
   type    = bool
   default = true
 }
-variable "install_pycharm" {
-  type    = bool
-  default = true
-}
 variable "storage_account_name" {
   type    = string
   default = ""

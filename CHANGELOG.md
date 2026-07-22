@@ -9,10 +9,13 @@ ENHANCEMENTS:
   images, and add checkbox-based selection of the optional tooling in the
   standard Windows VM template. The airlock review VMs reuse the same shared
   bootstrap but install only Azure CLI, VS Code and Storage Explorer so reviews
-  start faster. (`tre-service-guacamole-windowsvm` 2.2.0, import/export
-  `reviewvm` 1.2.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+  start faster. All tooling (including VS Code and JupyterLab) is pinned to
+  specific versions for reproducible builds, and the shared storage account
+  credentials are only injected into the VM `custom_data` when shared storage
+  access is enabled. (`tre-service-guacamole-windowsvm` 2.2.1, import/export
+  `reviewvm` 1.2.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Add Nexus proxy repositories for the Windows data science tooling installers
-  (Miniforge, CRAN R, PyCharm and Git). Existing Nexus shared service instances
+  (Miniforge, CRAN R and Git). Existing Nexus shared service instances
   should be upgraded/redeployed so these repositories are created before using
   the updated Windows VM templates. (`sonatype-nexus` 3.9.0)
   ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))

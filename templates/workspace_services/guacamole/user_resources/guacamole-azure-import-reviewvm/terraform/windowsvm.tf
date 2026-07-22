@@ -33,7 +33,6 @@ module "windows_vm" {
   install_git               = false
   install_python_tools      = false
   install_r_tools           = false
-  install_pycharm           = false
   extra_custom_data         = local.review_data_script
 
   enable_cmk_encryption = var.enable_cmk_encryption

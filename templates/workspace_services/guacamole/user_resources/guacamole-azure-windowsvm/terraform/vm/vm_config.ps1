@@ -45,13 +45,14 @@ try {
 }
 
 # Pinned versions - update these to roll the installed tooling forward.
-$AzureCliVersion        = "2.81.0"
-$StorageExplorerVersion = "1.37.0"
-$MiniforgeVersion       = "24.11.3-2"
-$RVersion               = "4.4.1"
-$RStudioVersion         = "2024.12.1-563"
-$PyCharmVersion         = "2024.3.1"
-$GitVersion             = "2.47.1"
+$AzureCliVersion        = "2.88.0"
+$VsCodeVersion          = "1.129.1"
+$StorageExplorerVersion = "1.44.0"
+$MiniforgeVersion       = "26.3.2-3"
+$JupyterLabVersion      = "4.6.2"
+$RVersion               = "4.6.1"
+$RStudioVersion         = "2026.07.1-147"
+$GitVersion             = "2.55.0"
 $MiniforgePath          = "C:\Miniforge3"
 $InstallAzureCli        = (${InstallAzureCli} -eq 1)
 $InstallVsCode          = (${InstallVsCode} -eq 1)
@@ -59,7 +60,6 @@ $InstallStorageExplorer = (${InstallStorageExplorer} -eq 1)
 $InstallGit             = (${InstallGit} -eq 1)
 $InstallPythonTools     = (${InstallPythonTools} -eq 1)
 $InstallRTools          = (${InstallRTools} -eq 1)
-$InstallPyCharm         = (${InstallPyCharm} -eq 1)
 
 $ToolsDir = Join-Path $env:TEMP "tre-tools"
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
@@ -224,7 +224,7 @@ if ($InstallAzureCli) {
 $VsCodeSetup = Join-Path $ToolsDir "vscode-setup.exe"
 if ($InstallVsCode) {
   Install-TreTool -Name "Visual Studio Code" `
-    -Url "${nexus_proxy_url}/repository/vscode/latest/win32-x64/stable" `
+    -Url "${nexus_proxy_url}/repository/vscode/$VsCodeVersion/win32-x64/stable" `
     -OutFile $VsCodeSetup `
     -FilePath $VsCodeSetup `
     -ArgumentList @("/VERYSILENT", "/NORESTART", "/MERGETASKS=!runcode,addcontextmenufiles,addcontextmenufolders,addtopath")
@@ -272,7 +272,7 @@ if ($InstallPythonTools) {
   if (Test-Path $MiniforgePip) {
     try {
       Write-Host "Installing JupyterLab into the Miniforge base environment"
-      & $MiniforgePip install --no-warn-script-location jupyterlab
+      & $MiniforgePip install --no-warn-script-location "jupyterlab==$JupyterLabVersion"
       if ($LASTEXITCODE -ne 0) { Write-Host "WARNING: JupyterLab install exited with code $LASTEXITCODE" }
     }
     catch {
@@ -307,16 +307,6 @@ if ($InstallRTools) {
     -ArgumentList @("/S")
 }
 
-# PyCharm Community Edition - proxied via the Nexus pycharm-download raw repository
-$PyCharmSetup = Join-Path $ToolsDir "pycharm-setup.exe"
-if ($InstallPyCharm) {
-  Install-TreTool -Name "PyCharm Community" `
-    -Url "${nexus_proxy_url}/repository/pycharm-download/python/pycharm-community-$PyCharmVersion.exe" `
-    -OutFile $PyCharmSetup `
-    -FilePath $PyCharmSetup `
-    -ArgumentList @("/S")
-}
-
 # Create desktop shortcuts for the installed GUI tools (best-effort; missing tools are skipped)
 if ($InstallVsCode) {
   New-DesktopShortcut -Name "Visual Studio Code" -TargetPath "$Env:ProgramFiles\Microsoft VS Code\Code.exe"
@@ -327,16 +317,9 @@ if ($InstallStorageExplorer) {
 if ($InstallRTools) {
   New-DesktopShortcut -Name "RStudio" -TargetPath "$Env:ProgramFiles\RStudio\rstudio.exe"
 }
-# Note: the R installer already creates its own versioned desktop shortcut (e.g. "R 4.4.1"), so we don't add another.
+# Note: the R installer already creates its own versioned desktop shortcut (e.g. "R 4.6.1"), so we don't add another.
 if ($InstallGit) {
   New-DesktopShortcut -Name "Git Bash" -TargetPath "$Env:ProgramFiles\Git\git-bash.exe"
-}
-# PyCharm Community (NSIS) installs under Program Files (x86) by default - check both roots.
-# Note: the doubled dollar ($$) escapes Terraform templatefile interpolation so PowerShell receives a literal Program Files (x86) env expansion.
-if ($InstallPyCharm) {
-  $PyCharmExe = Get-ChildItem -Path "$Env:ProgramFiles\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe", "$${Env:ProgramFiles(x86)}\JetBrains\PyCharm Community Edition*\bin\pycharm64.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($PyCharmExe) { New-DesktopShortcut -Name "PyCharm Community" -TargetPath $PyCharmExe.FullName }
-  else { Write-Host "Skipping desktop shortcut for PyCharm Community - not found" }
 }
 if ($InstallPythonTools) {
   New-DesktopShortcut -Name "JupyterLab" -TargetPath "$MiniforgePath\Scripts\jupyter-lab.exe" -WorkingDirectory "%USERPROFILE%"

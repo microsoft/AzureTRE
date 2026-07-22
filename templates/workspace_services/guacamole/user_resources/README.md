@@ -23,7 +23,6 @@ it installs:
 - Git
 - Python via Miniforge, with JupyterLab
 - R and RStudio Desktop
-- PyCharm Community
 
 The review VM bundles reference the same file via a symlink and receive it at
 build time through a Porter build context (`porter-build-context.env`), so the
@@ -33,7 +32,7 @@ intentionally install only Azure CLI, Visual Studio Code and Azure Storage
 Explorer to keep review VM startup time down. Pinned tool versions are defined
 at the top of `vm_config.ps1`.
 
-Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode`, `storage-explorer`, `miniforge-download`, `cran-r-download`, `r-studio-download`, `pycharm-download` and `git-download` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
+Installing this tooling requires the Nexus shared service to have the `azure-cli`, `vscode`, `storage-explorer`, `miniforge-download`, `cran-r-download`, `r-studio-download` and `git-download` proxy repositories (see `templates/shared_services/sonatype-nexus-vm`).
 
 ### Shared review VM Terraform
 

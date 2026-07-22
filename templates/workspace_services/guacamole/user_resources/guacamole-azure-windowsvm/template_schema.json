@@ -65,43 +65,37 @@
     "install_azure_cli": {
       "type": "boolean",
       "title": "Install Azure CLI",
-      "description": "Install Azure CLI from the Nexus proxy during VM bootstrap.",
+      "description": "Install Azure CLI.",
       "default": true
     },
     "install_vscode": {
       "type": "boolean",
       "title": "Install Visual Studio Code",
-      "description": "Install Visual Studio Code from the Nexus proxy during VM bootstrap.",
+      "description": "Install Visual Studio Code.",
       "default": true
     },
     "install_storage_explorer": {
       "type": "boolean",
       "title": "Install Azure Storage Explorer",
-      "description": "Install Azure Storage Explorer from the Nexus proxy during VM bootstrap.",
+      "description": "Install Azure Storage Explorer.",
       "default": true
     },
     "install_git": {
       "type": "boolean",
       "title": "Install Git",
-      "description": "Install Git for Windows from the Nexus proxy during VM bootstrap.",
+      "description": "Install Git for Windows.",
       "default": true
     },
     "install_python_tools": {
       "type": "boolean",
       "title": "Install Python tools (Miniforge + JupyterLab)",
-      "description": "Install Miniforge and JupyterLab from the Nexus proxy during VM bootstrap.",
+      "description": "Install Miniforge and JupyterLab.",
       "default": true
     },
     "install_r_tools": {
       "type": "boolean",
       "title": "Install R tools (R + RStudio)",
-      "description": "Install R and RStudio Desktop from the Nexus proxy during VM bootstrap.",
-      "default": true
-    },
-    "install_pycharm": {
-      "type": "boolean",
-      "title": "Install PyCharm Community",
-      "description": "Install PyCharm Community from the Nexus proxy during VM bootstrap.",
+      "description": "Install R and RStudio Desktop.",
       "default": true
     },
     "enable_shutdown_schedule": {

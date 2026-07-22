@@ -43,10 +43,6 @@ variable "install_r_tools" {
   type    = bool
   default = true
 }
-variable "install_pycharm" {
-  type    = bool
-  default = true
-}
 variable "shared_storage_name" {
   type = string
 }

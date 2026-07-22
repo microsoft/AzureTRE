@@ -14,8 +14,8 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 - Nexus is a prerequisite of installing the Windows VMs given the bootstrap scripts that install data science and Azure tooling.
 - The standard Windows VM template exposes checkboxes so you can choose which
   tools to install during bootstrap. By default it installs Azure CLI, Visual
-  Studio Code, Azure Storage Explorer, Git, Miniforge + JupyterLab, R +
-  RStudio, and PyCharm Community.
+  Studio Code, Azure Storage Explorer, Git, Miniforge + JupyterLab, and R +
+  RStudio.
 - The airlock review VMs intentionally install only Azure CLI, Visual Studio
   Code, and Azure Storage Explorer so the review process starts faster.
 - In production we recommend using VM images to avoid transient issues downloading and installing packages. The included user resource templates for VMs with bootstrap scripts should only be used for trial/demonstration purposes. More info can be found in the [custom templates documentation](./custom.md).

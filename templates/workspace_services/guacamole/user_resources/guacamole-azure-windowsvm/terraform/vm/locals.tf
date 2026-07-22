@@ -41,10 +41,9 @@ locals {
       InstallGit             = var.install_git ? 1 : 0
       InstallPythonTools     = var.install_python_tools ? 1 : 0
       InstallRTools          = var.install_r_tools ? 1 : 0
-      InstallPyCharm         = var.install_pycharm ? 1 : 0
-      StorageAccountName     = var.storage_account_name
-      StorageAccountKey      = var.storage_account_key
-      StorageAccountFileHost = var.storage_account_file_host
+      StorageAccountName     = var.shared_storage_access ? var.storage_account_name : ""
+      StorageAccountKey      = var.shared_storage_access ? var.storage_account_key : ""
+      StorageAccountFileHost = var.shared_storage_access ? var.storage_account_file_host : ""
       FileShareName          = var.shared_storage_access ? var.file_share_name : ""
       CondaConfig            = local.selected_image.conda_config ? 1 : 0
     }),

@@ -1,7 +1,7 @@
 locals {
   core_vnet                       = "vnet-${var.tre_id}"
   core_resource_group_name        = "rg-${var.tre_id}"
-  nexus_allowed_fqdns             = "pypi.org,*.pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,keyserver.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,conda.anaconda.org,azure.archive.ubuntu.com,packages.microsoft.com,repo.almalinux.org,download-ib01.fedoraproject.org,cran.r-project.org,cloud.r-project.org,download1.rstudio.org,*.snapcraftcontent.com,download.microsoft.com,marketplace.visualstudio.com,azcliprod.blob.core.windows.net,update.code.visualstudio.com,vscode.download.prss.microsoft.com,github.com,objects.githubusercontent.com,release-assets.githubusercontent.com,download.jetbrains.com,download-cdn.jetbrains.com"
+  nexus_allowed_fqdns             = "pypi.org,*.pypi.org,files.pythonhosted.org,security.ubuntu.com,archive.ubuntu.com,keyserver.ubuntu.com,repo.anaconda.com,*.docker.com,*.docker.io,conda.anaconda.org,azure.archive.ubuntu.com,packages.microsoft.com,repo.almalinux.org,download-ib01.fedoraproject.org,cran.r-project.org,cloud.r-project.org,download1.rstudio.org,*.snapcraftcontent.com,download.microsoft.com,marketplace.visualstudio.com,azcliprod.blob.core.windows.net,update.code.visualstudio.com,vscode.download.prss.microsoft.com,github.com,objects.githubusercontent.com,release-assets.githubusercontent.com"
   nexus_allowed_fqdns_list        = distinct(compact(split(",", replace(local.nexus_allowed_fqdns, " ", ""))))
   workspace_vm_allowed_fqdns      = "*.o.lencr.org,*.c.lencr.org,*.i.lencr.org"
   workspace_vm_allowed_fqdns_list = distinct(compact(split(",", replace(local.workspace_vm_allowed_fqdns, " ", ""))))
