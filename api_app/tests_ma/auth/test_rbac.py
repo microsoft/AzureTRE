@@ -1,9 +1,6 @@
 """Tests for auth.rbac role-checking dependencies."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-
-from fastapi import FastAPI, Depends
-from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
 
 from auth.models import AuthenticatedUser, TRERole, WorkspaceAccessRole
 from auth.rbac import require_roles, require_workspace_roles
@@ -21,48 +18,33 @@ def _make_user(**kwargs) -> AuthenticatedUser:
 
 
 class TestRequireRoles:
-    def _app_with_dep(self, dep):
-        app = FastAPI()
-
-        @app.get("/protected")
-        async def _route(user=Depends(dep)):
-            return {"id": user.id}
-
-        return app
-
     def test_allows_user_with_required_role(self):
         admin = _make_user(roles=["TREAdmin"])
         dep = require_roles(TRERole.Admin)
 
-        app = self._app_with_dep(dep)
-        app.dependency_overrides[dep] = lambda: admin  # type: ignore[index]
-        # dependency_overrides must target the inner _check function
-        # Use the approach below instead
+        import asyncio
+
+        async def _run():
+            result = await dep(user=admin)
+            assert result.id == "uid"
+            assert "TREAdmin" in result.roles
+
+        asyncio.get_event_loop().run_until_complete(_run())
 
     def test_raises_403_when_user_lacks_role(self):
         from fastapi import HTTPException
 
         dep = require_roles(TRERole.Admin)
 
-        # Extract the inner _check dependency
-        inner_dep = dep
+        import asyncio
 
-        async def _call_dep():
+        async def _run():
             user_with_no_roles = _make_user(roles=["TREUser"])
-            # Manually invoke the inner check with a user missing the role.
-            from auth.dependencies import get_authenticated_user
-            from fastapi import HTTPException
-
             with pytest.raises(HTTPException) as exc_info:
-                # Simulate what FastAPI would do
-                from auth.rbac import require_roles as _req
-                checker = _req(TRERole.Admin)
-                await checker(user=user_with_no_roles)
-
+                await dep(user=user_with_no_roles)
             assert exc_info.value.status_code == 403
 
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(_call_dep())
+        asyncio.get_event_loop().run_until_complete(_run())
 
     def test_allows_user_with_any_of_multiple_roles(self):
         dep = require_roles(TRERole.Admin, TRERole.User)

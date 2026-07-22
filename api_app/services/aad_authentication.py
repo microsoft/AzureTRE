@@ -74,7 +74,10 @@ class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
             scheme_name="oauth2",
             auto_error=auto_error,
         )
-        self.require_one_of_roles = require_one_of_roles
+        # Normalise to an empty list so membership checks in __call__ never
+        # raise TypeError when the service is instantiated purely for Graph
+        # API calls (e.g. via get_aad_service()) without role requirements.
+        self.require_one_of_roles = require_one_of_roles or []
 
     async def __call__(self, request: Request) -> User:
         token: str = await super().__call__(request)

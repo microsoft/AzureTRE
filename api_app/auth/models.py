@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class TRERole(StrEnum):
@@ -27,7 +27,7 @@ class AuthenticatedUser(BaseModel):
     id: str
     name: str
     email: Optional[str] = None
-    roles: List[str] = []
+    roles: List[str] = Field(default_factory=list)
     audience: str = ""
     is_workspace_token: bool = False
 

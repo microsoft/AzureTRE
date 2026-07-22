@@ -24,7 +24,7 @@ from models.schemas.resource import ResourceHistoryInList, ResourcePatch
 from models.schemas.resource_template import ResourceTemplateInformationInList
 from resources import strings
 from services.aad_authentication import AuthConfigValidationError
-from auth.rbac import require_tre_admin, require_workspace_owner, require_workspace_owner_or_researcher, \
+from auth.rbac import require_tre_admin, require_workspace_owner, \
     require_tre_user_or_admin, require_workspace_owner_or_researcher_or_airlock_manager, \
     require_workspace_owner_or_airlock_manager
 from services.authentication import get_aad_service, extract_auth_information
@@ -278,7 +278,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     return OperationInResponse(operation=operation)
 
 
-@workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner_or_researcher), Depends(get_workspace_by_id_from_path)])
+@workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner), Depends(get_workspace_by_id_from_path)])
 async def patch_workspace_service(resource_patch: ResourcePatch, response: Response, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled

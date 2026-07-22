@@ -27,7 +27,7 @@ def no_auth_token():
 
     fake_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
 
-    with patch('fastapi.security.OAuth2AuthorizationCodeBearer.__call__', return_value="token"):
+    with patch('fastapi.security.OAuth2AuthorizationCodeBearer.__call__', new=AsyncMock(return_value="token")):
         with patch('services.aad_authentication.get_core_validator', return_value=mock_validator):
             with patch('services.aad_authentication.get_workspace_validator', return_value=mock_validator):
                 with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
