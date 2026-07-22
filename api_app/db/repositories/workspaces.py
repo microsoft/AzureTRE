@@ -185,7 +185,7 @@ class WorkspaceRepository(ResourceRepository):
             cidr_netmask = WorkspaceRepository.predefined_address_spaces[address_space_size]
             return await self.get_new_address_space(cidr_netmask)
 
-        raise InvalidInput(f"Invalid 'address_space_size': {raw_size}")
+        raise InvalidInput(f"Invalid 'address_space_size': {address_space_size}")
 
     # 772 check that the provided address_space is available in the network.
     async def validate_address_space(self, address_space):
