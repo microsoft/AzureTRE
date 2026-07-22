@@ -61,6 +61,11 @@ class TestTokenValidatorValidate:
         with pytest.raises(TypeError):
             user.roles = []  # type: ignore[misc]
 
+        # roles is a tuple, so in-place escalation is impossible too
+        assert isinstance(user.roles, tuple)
+        with pytest.raises(AttributeError):
+            user.roles.append("TREAdmin")  # type: ignore[attr-defined]
+
     def test_raises_token_expired_on_expired_signature(self):
         import jwt as pyjwt
 
@@ -122,7 +127,7 @@ class TestTokenValidatorValidate:
         with patch("auth.token_validator.jwt.decode", return_value=claims_no_roles):
             result = validator.validate("token")
 
-        assert result.roles == []
+        assert result.roles == ()
 
     def test_raises_token_signature_invalid_on_invalid_signature(self):
         signing_key = MagicMock()

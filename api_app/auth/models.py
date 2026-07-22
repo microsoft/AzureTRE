@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import List, Optional, Union
+from typing import Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -20,14 +20,15 @@ class AuthenticatedUser(BaseModel):
     """Immutable, validated user derived from a JWT.
 
     Fields map directly to standard JWT claims; ``id`` holds the ``oid``
-    claim (the stable object identifier in Entra ID).  The model is frozen so
-    roles cannot be escalated after creation.
+    claim (the stable object identifier in Entra ID).  The model is frozen and
+    ``roles`` is stored as a tuple so roles cannot be reassigned *or* mutated
+    in place (e.g. ``roles.append(...)``) after creation.
     """
 
     id: str
     name: str
     email: Optional[str] = None
-    roles: List[str] = Field(default_factory=list)
+    roles: Tuple[str, ...] = Field(default_factory=tuple)
     audience: str = ""
     is_workspace_token: bool = False
 

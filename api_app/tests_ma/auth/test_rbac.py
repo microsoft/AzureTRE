@@ -214,3 +214,9 @@ class TestAuthenticatedUserHelpers:
         user = _make_user(roles=["TREAdmin"])
         with pytest.raises(TypeError):
             user.roles = []  # type: ignore[misc]
+
+    def test_roles_cannot_be_mutated_in_place(self):
+        user = _make_user(roles=["TREUser"])
+        assert isinstance(user.roles, tuple)
+        with pytest.raises(AttributeError):
+            user.roles.append("TREAdmin")  # type: ignore[attr-defined]

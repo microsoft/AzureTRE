@@ -13,6 +13,7 @@ class TestMigrationRoutesWithNonAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
         from fastapi import HTTPException
+
         def forbidden():
             raise HTTPException(status_code=403)
         app.dependency_overrides[require_tre_admin] = forbidden
