@@ -102,6 +102,38 @@ class TestTokenValidatorValidate:
         with pytest.raises(TokenInvalid, match="Cannot obtain signing key"):
             validator.validate("any.jwt.token")
 
+    def test_token_missing_required_claim_is_rejected(self):
+        """A token lacking a required claim (e.g. exp) must be rejected, not accepted."""
+        import jwt as pyjwt
+
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch(
+            "auth.token_validator.jwt.decode",
+            side_effect=pyjwt.MissingRequiredClaimError("exp"),
+        ):
+            with pytest.raises(TokenInvalid):
+                validator.validate("token.without.exp")
+
+    def test_exp_is_a_required_claim(self):
+        """The validator must ask PyJWT to require exp/iss/aud presence."""
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        captured = {}
+
+        def fake_decode(token, key, **kwargs):
+            captured.update(kwargs.get("options", {}))
+            return SAMPLE_CLAIMS
+
+        with patch("auth.token_validator.jwt.decode", side_effect=fake_decode):
+            validator.validate("token")
+
+        assert "exp" in captured.get("require", [])
+
     def test_email_falls_back_to_preferred_username(self):
         claims_no_email = {
             "oid": "uid",

@@ -65,6 +65,10 @@ class TokenValidator:
                     "verify_exp": True,
                     "verify_aud": True,
                     "verify_iss": True,
+                    # Reject tokens that omit these claims entirely — PyJWT only
+                    # validates a claim's value when present, so without this a
+                    # token lacking `exp` would never be considered expired.
+                    "require": ["exp", "iss", "aud"],
                 },
             )
         except jwt.ExpiredSignatureError as exc:

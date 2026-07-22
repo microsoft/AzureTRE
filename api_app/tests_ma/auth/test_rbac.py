@@ -29,7 +29,7 @@ class TestRequireRoles:
             assert result.id == "uid"
             assert "TREAdmin" in result.roles
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_raises_403_when_user_lacks_role(self):
         from fastapi import HTTPException
@@ -44,7 +44,7 @@ class TestRequireRoles:
                 await dep(user=user_with_no_roles)
             assert exc_info.value.status_code == 403
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_allows_user_with_any_of_multiple_roles(self):
         dep = require_roles(TRERole.Admin, TRERole.User)
@@ -56,7 +56,7 @@ class TestRequireRoles:
             result = await dep(user=tre_user)
             assert result.id == "uid"
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ class TestRequireWorkspaceRoles:
                     result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_workspace_owner_passes(self):
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
@@ -119,7 +119,7 @@ class TestRequireWorkspaceRoles:
                 result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_raises_403_for_user_without_workspace_role(self):
         from fastapi import HTTPException
@@ -135,7 +135,7 @@ class TestRequireWorkspaceRoles:
                     await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 403
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_wrong_workspace_token_rejected_with_401(self):
         """A token issued for workspace A must not grant access to workspace B.
@@ -167,7 +167,7 @@ class TestRequireWorkspaceRoles:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 401
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_non_admin_workspace_user_cannot_elevate_via_core_fallback(self):
         """A non-admin core token must never satisfy a workspace-scoped check.
@@ -201,7 +201,7 @@ class TestRequireWorkspaceRoles:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 401
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_non_admin_endpoint_does_not_fall_back_to_core(self):
         """When allow_tre_admin is False, a wrong-audience token is rejected with
@@ -226,7 +226,7 @@ class TestRequireWorkspaceRoles:
             assert exc_info.value.status_code == 401
             core_validator_mock.validate.assert_not_called()
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
 
 class TestRequireBearerCredentials:
@@ -242,7 +242,7 @@ class TestRequireBearerCredentials:
             assert exc_info.value.status_code == 401
             assert exc_info.value.headers.get("WWW-Authenticate") == "Bearer"
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
     def test_present_credentials_are_returned(self):
         from fastapi.security import HTTPAuthorizationCredentials
@@ -256,7 +256,7 @@ class TestRequireBearerCredentials:
             result = await require_bearer_credentials(credentials=creds)
             assert result is creds
 
-        asyncio.get_event_loop().run_until_complete(_run())
+        asyncio.run(_run())
 
 
 class TestAuthenticatedUserHelpers:
