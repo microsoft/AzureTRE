@@ -27,6 +27,17 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.0.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
+* Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
+* Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
+* Update allowed URLs in Nexus for letsencrypt ([#4899](https://github.com/microsoft/AzureTRE/pull/4899))
+* Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
+* Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
+* Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
+* Fix issues identified by flake8 ([#4958](https://github.com/microsoft/AzureTRE/issues/4958))
+* Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
+* Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
+* Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
