@@ -104,7 +104,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | VS Code | raw | [https://update.code.visualstudio.com] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode` | Provide access to the Visual Studio Code Windows installer |
 | Storage Explorer | raw | [https://github.com/microsoft/AzureStorageExplorer/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/storage-explorer` | Provide access to the Azure Storage Explorer Windows installer |
 | Miniforge Download | raw | [https://github.com/conda-forge/miniforge/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/miniforge-download` | Provide access to Miniforge installers for Python/conda on Windows VMs |
-| CRAN R Download | raw | [https://cloud.r-project.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/cran-r-download` | Provide access to CRAN R Windows installers |
+| CRAN R Download | raw | [https://cran.r-project.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/cran-r-download` | Provide access to CRAN R Windows installers |
 | R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to RStudio Windows installers |
 | PyCharm Download | raw | [https://download.jetbrains.com/python] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/pycharm-download` | Provide access to PyCharm Community Windows installers |
 | Git Download | raw | [https://github.com/git-for-windows/git/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/git-download` | Provide access to Git for Windows installers |
