@@ -454,3 +454,14 @@ async def test_get_address_space_based_on_size_with_invalid_string_raises_error(
     with pytest.raises(InvalidInput) as ex:
         await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
     assert str(ex.value) == "'address_space_size' numeric value must be between 16 and 29"
+
+
+@pytest.mark.asyncio
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_none_address_space_size(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = None
+    assert "10.1.4.0/24" == await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
