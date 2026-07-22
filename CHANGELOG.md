@@ -26,7 +26,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.0.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.2.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
