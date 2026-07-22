@@ -103,7 +103,7 @@ The mandatory parameters for workspace services are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
-### Workpace services requiring additional address spaces
+### Workspace services requiring additional address spaces
 
 Some workspace services may require additional address spaces to be provisioned. This may be necessary if they need advanced network security groups, route tables or delegated subnets.
 
