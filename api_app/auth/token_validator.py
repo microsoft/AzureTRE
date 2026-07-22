@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 import jwt
 from jwt import PyJWKClient
@@ -21,11 +22,21 @@ class TokenValidator:
     Uses :class:`jwt.PyJWKClient` which handles JWKS caching and key rotation
     automatically — keys removed from the JWKS endpoint are evicted from the
     cache, preventing unbounded growth.
+
+    A ``jwks_client`` may be supplied so that multiple validators sharing the
+    same JWKS endpoint (e.g. all per-workspace validators) reuse a single
+    client and its key cache, avoiding redundant HTTP fetches.
     """
 
-    def __init__(self, config: TokenValidatorConfig) -> None:
+    def __init__(
+        self,
+        config: TokenValidatorConfig,
+        jwks_client: Optional[PyJWKClient] = None,
+    ) -> None:
         self._config = config
-        self._jwks_client = PyJWKClient(config.jwks_uri, cache_keys=True, lifespan=300)
+        self._jwks_client = jwks_client or PyJWKClient(
+            config.jwks_uri, cache_keys=True, lifespan=300
+        )
 
     def validate(self, token: str) -> AuthenticatedUser:
         """Validate *token* and return an :class:`AuthenticatedUser`.

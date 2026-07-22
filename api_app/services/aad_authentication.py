@@ -1,22 +1,16 @@
 from collections import defaultdict
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 import requests
-from fastapi import HTTPException, Request, status
-from fastapi.security import OAuth2AuthorizationCodeBearer
 from msal import ConfidentialClientApplication
 from semantic_version import Version
 
-from auth.exceptions import AuthError, TokenExpired, TokenInvalid, TokenSignatureInvalid
-from auth.registry import get_core_validator, get_workspace_validator
 from core import config
-from db.errors import EntityDoesNotExist
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_users import AssignableUser, AssignedUser, AssignmentType, Role
 from resources import strings
-from db.repositories.workspaces import WorkspaceRepository
 from services.logging import logger
 
 
@@ -33,166 +27,25 @@ class UserRoleAssignmentError(Exception):
     """Raised when a user role assignment fails."""
 
 
-def _authenticated_user_to_user(validated) -> User:
-    """Convert an :class:`~auth.models.AuthenticatedUser` to the legacy :class:`~models.domain.authentication.User`."""
-    return User(
-        id=validated.id,
-        name=validated.name,
-        email=validated.email or "",
-        roles=list(validated.roles),
-    )
-
-
 class PrincipalType(Enum):
     User = "User"
     Group = "Group"
     ServicePrincipal = "ServicePrincipal"
 
 
-class AzureADAuthorization(OAuth2AuthorizationCodeBearer):
-    """FastAPI security dependency that validates Entra ID JWTs.
+class AzureADAuthorization:
+    """Service wrapper for Microsoft Graph calls related to workspace auth.
 
-    Uses :mod:`auth.token_validator` (backed by :class:`jwt.PyJWKClient`) for
-    JWT validation so key management is handled automatically.
+    Handles workspace app-registration validation and role-assignment lookups
+    via the Microsoft Graph API. JWT validation for incoming API requests is
+    handled separately by the :mod:`auth` package.
     """
 
-    require_one_of_roles: Optional[list] = None
-    aad_instance: str = config.AAD_AUTHORITY_URL
-
-    TRE_CORE_ROLES = ['TREAdmin', 'TREUser', 'TREAirlockAutomation']
     WORKSPACE_ROLES_DICT = {
         'WorkspaceOwner': 'app_role_id_workspace_owner',
         'WorkspaceResearcher': 'app_role_id_workspace_researcher',
         'AirlockManager': 'app_role_id_workspace_airlock_manager',
     }
-
-    def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
-        super().__init__(
-            authorizationUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
-            tokenUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            refreshUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            scheme_name="oauth2",
-            auto_error=auto_error,
-        )
-        # Normalise to an empty list so membership checks in __call__ never
-        # raise TypeError when the service is instantiated purely for Graph
-        # API calls (e.g. via get_aad_service()) without role requirements.
-        self.require_one_of_roles = require_one_of_roles or []
-
-    async def __call__(self, request: Request) -> User:
-        token: str = await super().__call__(request)
-
-        decoded_user = None
-
-        # Try workspace app registration first when a workspace_id is present
-        # and the route requires workspace-scoped roles.
-        if 'workspace_id' in request.path_params and any(
-            role in self.require_one_of_roles for role in self.WORKSPACE_ROLES_DICT
-        ):
-            logger.debug("Workspace ID present — attempting workspace app registration")
-            try:
-                app_reg_id = await self._fetch_ws_app_reg_id_from_ws_id(request)
-                if app_reg_id:
-                    try:
-                        validated = get_workspace_validator(app_reg_id).validate(token)
-                        decoded_user = self._get_user_from_token(validated)
-                    except (TokenExpired, TokenSignatureInvalid) as exc:
-                        raise HTTPException(
-                            status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail=strings.EXPIRED_SIGNATURE
-                            if isinstance(exc, TokenExpired)
-                            else strings.INVALID_SIGNATURE,
-                        )
-                    except TokenInvalid:
-                        logger.debug(
-                            "Workspace token invalid, will try core app registration"
-                        )
-            except HTTPException:
-                raise
-            except Exception as exc:
-                logger.debug("Failed to resolve workspace app registration: %s", exc)
-
-        # Try core app registration for TRE core roles.
-        if decoded_user is None and any(
-            role in self.require_one_of_roles for role in self.TRE_CORE_ROLES
-        ):
-            try:
-                validated = get_core_validator().validate(token)
-                decoded_user = self._get_user_from_token(validated)
-            except TokenExpired:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=strings.EXPIRED_SIGNATURE,
-                )
-            except TokenSignatureInvalid:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=strings.INVALID_SIGNATURE,
-                )
-            except TokenInvalid:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=strings.INVALID_TOKEN,
-                )
-            except AuthError as exc:
-                logger.debug("Core token validation failed: %s", exc)
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN,
-                )
-
-        if decoded_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN,
-            )
-
-        if not any(role in self.require_one_of_roles for role in decoded_user.roles):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        return decoded_user
-
-    @staticmethod
-    async def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
-        workspace_id = request.path_params.get('workspace_id')
-        if not workspace_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS,
-            )
-        try:
-            ws_repo = await WorkspaceRepository.create()
-            workspace = await ws_repo.get_workspace_by_id(workspace_id)
-            return workspace.properties.get('client_id', '')
-        except EntityDoesNotExist:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=strings.WORKSPACE_DOES_NOT_EXIST,
-            )
-        except HTTPException:
-            raise
-        except Exception as exc:
-            logger.exception(
-                "Failed to get workspace app registration ID for workspace %s",
-                workspace_id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS,
-            ) from exc
-
-    @staticmethod
-    def _get_user_from_token(validated) -> User:
-        """Convert a validated :class:`~auth.models.AuthenticatedUser` to a :class:`User`.
-
-        This method is kept as an instance-patchable hook so tests can inject
-        specific users without needing real JWTs.
-        """
-        return _authenticated_user_to_user(validated)
 
     @staticmethod
     def _get_msgraph_token() -> str:
