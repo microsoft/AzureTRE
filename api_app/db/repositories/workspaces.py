@@ -174,16 +174,12 @@ class WorkspaceRepository(ResourceRepository):
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
         # If a numeric cidr was provided (e.g. as a string like "25"), accept it
-        try:
-            if address_space_size.isdigit():
-                cidr_netmask = int(address_space_size)
-                # basic validation for reasonable CIDR mask values
-                if cidr_netmask < 16 or cidr_netmask > 29:
-                    raise InvalidInput("'address_space_size' numeric value must be between 16 and 29")
-                return await self.get_new_address_space(cidr_netmask)
-        except ValueError:
-            # fall through to predefined handling
-            pass
+        if address_space_size.isdecimal():
+            cidr_netmask = int(address_space_size)
+            # basic validation for reasonable CIDR mask values
+            if cidr_netmask < 16 or cidr_netmask > 29:
+                raise InvalidInput("'address_space_size' numeric value must be between 16 and 29")
+            return await self.get_new_address_space(cidr_netmask)
 
         if address_space_size in WorkspaceRepository.predefined_address_spaces:
             cidr_netmask = WorkspaceRepository.predefined_address_spaces[address_space_size]
