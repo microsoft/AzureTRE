@@ -37,8 +37,6 @@ def _make_mock_jwks_client(signing_key: MagicMock) -> MagicMock:
 
 class TestTokenValidatorValidate:
     def test_returns_authenticated_user_on_valid_token(self):
-        import jwt as pyjwt
-
         signing_key = MagicMock()
         mock_client = _make_mock_jwks_client(signing_key)
         validator = _make_validator(mock_client)
@@ -53,8 +51,6 @@ class TestTokenValidatorValidate:
         assert "TREAdmin" in result.roles
 
     def test_frozen_user_cannot_be_mutated(self):
-        import jwt as pyjwt
-
         signing_key = MagicMock()
         mock_client = _make_mock_jwks_client(signing_key)
         validator = _make_validator(mock_client)
