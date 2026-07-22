@@ -26,14 +26,14 @@ module "windows_vm" {
 
   admin_username = random_string.username.result
 
-  nexus_proxy_url           = local.nexus_proxy_url
-  install_azure_cli         = true
-  install_vscode            = true
-  install_storage_explorer  = true
-  install_git               = false
-  install_python_tools      = false
-  install_r_tools           = false
-  extra_custom_data         = local.review_data_script
+  nexus_proxy_url          = local.nexus_proxy_url
+  install_azure_cli        = true
+  install_vscode           = true
+  install_storage_explorer = true
+  install_git              = false
+  install_python_tools     = false
+  install_r_tools          = false
+  extra_custom_data        = local.review_data_script
 
   enable_cmk_encryption = var.enable_cmk_encryption
   key_store_id          = var.key_store_id
