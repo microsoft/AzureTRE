@@ -3,7 +3,7 @@ from typing import Callable, Union
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 
-from auth.dependencies import _bearer, _to_http_exception, get_authenticated_user
+from auth.dependencies import require_bearer_credentials, _to_http_exception, get_authenticated_user
 from auth.exceptions import AuthError, TokenExpired, TokenSignatureInvalid, TokenInvalid
 from auth.models import AuthenticatedUser, TRERole, WorkspaceAccessRole
 from auth.registry import get_core_validator, get_workspace_validator
@@ -45,8 +45,9 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
 
     Validates the bearer token against the workspace app registration first.
     If that fails with a wrong-audience error, falls back to the core app
-    registration so that TREAdmin users can always reach workspace endpoints.
-    TREAdmin is always allowed regardless of workspace role.
+    registration **only** so that TREAdmin users can always reach workspace
+    endpoints. A valid core token that is not TREAdmin is rejected (401) — a
+    non-admin core token must never satisfy a workspace-scoped check.
 
     The workspace is resolved from the URL path (``workspace_id`` path
     parameter) so this factory should only be used on routes whose path
@@ -58,7 +59,7 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
     role_names = [r.value for r in roles]
 
     async def _check(
-        credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+        credentials: HTTPAuthorizationCredentials = Depends(require_bearer_credentials),
         workspace: Workspace = Depends(get_workspace_by_id_from_path),
     ) -> AuthenticatedUser:
         token = credentials.credentials
@@ -84,16 +85,18 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
                     "Workspace token invalid (likely wrong audience), trying core validator"
                 )
 
-        # Fall back to core app registration (allows TREAdmin access).
+        # Fall back to core app registration. A core token is only accepted
+        # here for TREAdmin (cross-audience access to any workspace); any other
+        # valid core token is treated as invalid for this workspace resource.
         try:
             user = get_core_validator().validate(token)
         except AuthError as exc:
             raise _to_http_exception(exc)
 
-        if not (set(user.roles) & allowed_values):
+        if not user.is_tre_admin():
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {role_names}",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=strings.INVALID_TOKEN,
                 headers={"WWW-Authenticate": "Bearer"},
             )
         return user

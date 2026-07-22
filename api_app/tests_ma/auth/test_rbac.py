@@ -65,20 +65,20 @@ class TestRequireRoles:
 
 
 class TestRequireWorkspaceRoles:
-    def _make_fake_deps(self, user_roles):
-        """Return (fake_credentials, fake_workspace, mock_validator) for testing _check directly."""
+    def _make_fake_deps(self, user_roles, with_client_id=True):
+        """Return (fake_credentials, fake_workspace, mock_validator, user) for testing _check directly."""
         from fastapi.security import HTTPAuthorizationCredentials
         from models.domain.workspace import Workspace
 
         fake_creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
-        # Workspace with no client_id → falls straight through to core validator
+        properties = {"client_id": "ws-client-id"} if with_client_id else {}
         fake_workspace = Workspace(
             id="ws-id",
             templateName="test",
             templateVersion="0.1.0",
             etag="",
             resourcePath="/workspaces/ws-id",
-            properties={},
+            properties=properties,
         )
         validated_user = _make_user(roles=user_roles)
         mock_validator = MagicMock()
@@ -86,26 +86,36 @@ class TestRequireWorkspaceRoles:
         return fake_creds, fake_workspace, mock_validator, validated_user
 
     def test_admin_always_passes_without_workspace_role(self):
+        """A TREAdmin using a core token reaches a workspace endpoint via the fallback."""
+        from auth.exceptions import TokenInvalid as _TokenInvalid
+
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
-        fake_creds, fake_workspace, mock_validator, admin = self._make_fake_deps(["TREAdmin"])
+        fake_creds, fake_workspace, _, admin = self._make_fake_deps(["TREAdmin"])
+
+        # Workspace validator rejects the core token (wrong audience); core validator accepts it.
+        ws_validator = MagicMock()
+        ws_validator.validate.side_effect = _TokenInvalid("wrong audience")
+        core_validator = MagicMock()
+        core_validator.validate.return_value = admin
 
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
-                result = await dep(credentials=fake_creds, workspace=fake_workspace)
+            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
+                with patch('auth.rbac.get_core_validator', return_value=core_validator):
+                    result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
         asyncio.get_event_loop().run_until_complete(_run())
 
     def test_workspace_owner_passes(self):
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
-        fake_creds, fake_workspace, mock_validator, owner = self._make_fake_deps(["WorkspaceOwner"])
+        fake_creds, fake_workspace, ws_validator, owner = self._make_fake_deps(["WorkspaceOwner"])
 
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
                 result = await dep(credentials=fake_creds, workspace=fake_workspace)
             assert result.id == "uid"
 
@@ -115,12 +125,12 @@ class TestRequireWorkspaceRoles:
         from fastapi import HTTPException
 
         dep = require_workspace_roles(WorkspaceAccessRole.Owner)
-        fake_creds, fake_workspace, mock_validator, researcher = self._make_fake_deps(["WorkspaceResearcher"])
+        fake_creds, fake_workspace, ws_validator, researcher = self._make_fake_deps(["WorkspaceResearcher"])
 
         import asyncio
 
         async def _run():
-            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+            with patch('auth.rbac.get_workspace_validator', return_value=ws_validator):
                 with pytest.raises(HTTPException) as exc_info:
                     await dep(credentials=fake_creds, workspace=fake_workspace)
             assert exc_info.value.status_code == 403
@@ -160,11 +170,11 @@ class TestRequireWorkspaceRoles:
         asyncio.get_event_loop().run_until_complete(_run())
 
     def test_non_admin_workspace_user_cannot_elevate_via_core_fallback(self):
-        """A workspace user (non-admin) whose token is rejected by the workspace validator
-        must not be able to use the core-validator fallback to gain access.
+        """A non-admin core token must never satisfy a workspace-scoped check.
 
-        Even if the core validator 'accepts' the token, the user must hold at
-        least one of the required workspace roles (or TREAdmin) to proceed.
+        Even if the core validator accepts the token *and* its claims contain a
+        workspace role, the fallback path only grants access to TREAdmin; any
+        other core token is rejected with 401 (wrong audience for this resource).
         """
         from fastapi import HTTPException
         from auth.exceptions import TokenInvalid as _TokenInvalid
@@ -176,9 +186,10 @@ class TestRequireWorkspaceRoles:
         ws_validator_mock = MagicMock()
         ws_validator_mock.validate.side_effect = _TokenInvalid("wrong audience")
 
-        # Core validator accepts the token but the user has NO roles
+        # Core validator accepts the token and it even carries a workspace role,
+        # but the user is NOT TREAdmin.
         core_validator_mock = MagicMock()
-        core_user = _make_user(roles=[])
+        core_user = _make_user(roles=["WorkspaceOwner"])
         core_validator_mock.validate.return_value = core_user
 
         import asyncio
@@ -188,7 +199,37 @@ class TestRequireWorkspaceRoles:
                 with patch('auth.rbac.get_core_validator', return_value=core_validator_mock):
                     with pytest.raises(HTTPException) as exc_info:
                         await dep(credentials=fake_creds, workspace=fake_workspace)
-            assert exc_info.value.status_code == 403
+            assert exc_info.value.status_code == 401
+
+        asyncio.get_event_loop().run_until_complete(_run())
+
+
+class TestRequireBearerCredentials:
+    def test_missing_credentials_raises_401_with_www_authenticate(self):
+        from fastapi import HTTPException
+        from auth.dependencies import require_bearer_credentials
+
+        import asyncio
+
+        async def _run():
+            with pytest.raises(HTTPException) as exc_info:
+                await require_bearer_credentials(credentials=None)
+            assert exc_info.value.status_code == 401
+            assert exc_info.value.headers.get("WWW-Authenticate") == "Bearer"
+
+        asyncio.get_event_loop().run_until_complete(_run())
+
+    def test_present_credentials_are_returned(self):
+        from fastapi.security import HTTPAuthorizationCredentials
+        from auth.dependencies import require_bearer_credentials
+
+        creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials="tok")
+
+        import asyncio
+
+        async def _run():
+            result = await require_bearer_credentials(credentials=creds)
+            assert result is creds
 
         asyncio.get_event_loop().run_until_complete(_run())
 
