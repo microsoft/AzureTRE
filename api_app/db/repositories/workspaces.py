@@ -161,7 +161,10 @@ class WorkspaceRepository(ResourceRepository):
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
         raw_size = workspace_properties.get("address_space_size")
-        address_space_size = str(raw_size or "small").strip().lower()
+        if raw_size is None or str(raw_size).strip() == "":
+            address_space_size = "small"
+        else:
+            address_space_size = str(raw_size).strip().lower()
 
         # 773 allow custom sized networks to be requested
         if address_space_size == "custom":
@@ -182,9 +185,11 @@ class WorkspaceRepository(ResourceRepository):
             # fall through to predefined handling
             pass
 
-        # Default mask is 24 (small). Keep backwards compatibility with presets.
-        cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
-        return await self.get_new_address_space(cidr_netmask)
+        if address_space_size in WorkspaceRepository.predefined_address_spaces:
+            cidr_netmask = WorkspaceRepository.predefined_address_spaces[address_space_size]
+            return await self.get_new_address_space(cidr_netmask)
+
+        raise InvalidInput(f"Invalid 'address_space_size': {raw_size}")
 
     # 772 check that the provided address_space is available in the network.
     async def validate_address_space(self, address_space):
