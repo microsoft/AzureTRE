@@ -26,7 +26,8 @@ from resources import strings
 from services.aad_authentication import AuthConfigValidationError
 from auth.rbac import require_tre_admin, require_workspace_owner, \
     require_tre_user_or_admin, require_workspace_owner_or_researcher_or_airlock_manager, \
-    require_workspace_owner_or_airlock_manager
+    require_workspace_owner_or_airlock_manager, require_workspace_owner_or_tre_admin, \
+    require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin
 from services.authentication import get_aad_service, extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -37,7 +38,7 @@ from models.domain.request_action import RequestAction
 from services.logging import logger
 
 workspaces_core_router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
-workspaces_shared_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
+workspaces_shared_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin)])
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
@@ -195,7 +196,7 @@ async def invoke_action_on_workspace(response: Response, action: str, user=Depen
 async def get_workspace_service_templates(
         workspace=Depends(get_workspace_by_id_from_path),
         template_repo=Depends(get_repository(ResourceTemplateRepository)),
-        user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> ResourceTemplateInformationInList:
+        user=Depends(require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin)) -> ResourceTemplateInformationInList:
     template_infos = await template_repo.get_templates_information(ResourceType.WorkspaceService, user.roles)
     return ResourceTemplateInformationInList(templates=template_infos)
 
@@ -206,22 +207,22 @@ async def get_user_resource_templates(
         service_template_name: str,
         workspace=Depends(get_workspace_by_id_from_path),
         template_repo=Depends(get_repository(ResourceTemplateRepository)),
-        user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> ResourceTemplateInformationInList:
+        user=Depends(require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin)) -> ResourceTemplateInformationInList:
     template_infos = await template_repo.get_templates_information(ResourceType.UserResource, user.roles, service_template_name)
     return ResourceTemplateInformationInList(templates=template_infos)
 
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(require_workspace_owner)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(require_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_operations_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=await operations_repo.get_operations_by_resource_id(resource_id=workspace.id))
 
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(require_workspace_owner)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(require_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_operation_by_workspace_id_and_operation_id(workspace=Depends(get_workspace_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInList:
     return OperationInResponse(operation=operation)
 
 
-@workspaces_shared_router.get("/workspaces/{workspace_id}/history", response_model=ResourceHistoryInList, name=strings.API_GET_RESOURCE_HISTORY, dependencies=[Depends(require_workspace_owner)])
+@workspaces_shared_router.get("/workspaces/{workspace_id}/history", response_model=ResourceHistoryInList, name=strings.API_GET_RESOURCE_HISTORY, dependencies=[Depends(require_workspace_owner_or_tre_admin)])
 async def retrieve_workspace_history_by_workspace_id(workspace=Depends(get_workspace_by_id_from_path), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> ResourceHistoryInList:
     return ResourceHistoryInList(resource_history=await resource_history_repo.get_resource_history_by_resource_id(resource_id=workspace.id))
 

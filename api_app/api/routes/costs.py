@@ -15,13 +15,13 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.costs import CostReport, GranularityEnum, WorkspaceCostReport
 from resources import strings
-from auth.rbac import require_tre_admin, require_workspace_owner
+from auth.rbac import require_tre_admin, require_workspace_owner_or_tre_admin
 from services.cost_service import CostService, ServiceUnavailable, SubscriptionNotSupported, TooManyRequests, WorkspaceDoesNotExist, cost_service_factory
 from services.logging import logger
 
 
 costs_core_router = APIRouter(dependencies=[Depends(require_tre_admin)])
-costs_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner)])
+costs_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_tre_admin)])
 
 
 def validate_report_period(from_date: Optional[datetime], to_date: Optional[datetime]):
@@ -86,7 +86,7 @@ async def costs(
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
                             name=strings.API_GET_WORKSPACE_COSTS,
-                            dependencies=[Depends(require_workspace_owner)],
+                            dependencies=[Depends(require_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
                           cost_service: CostService = Depends(cost_service_factory),

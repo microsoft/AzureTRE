@@ -28,7 +28,9 @@ from auth.rbac import require_tre_admin, \
     require_workspace_owner_or_researcher, \
     require_workspace_owner_or_researcher_or_airlock_manager, \
     require_workspace_owner_or_airlock_manager, \
-    require_airlock_manager
+    require_airlock_manager, \
+    require_workspace_owner_or_tre_admin, \
+    require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -298,12 +300,12 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
         def forbidden():
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = forbidden
         try:
             response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_BY_ID, workspace_id=WORKSPACE_ID))
             assert response.status_code == status.HTTP_403_FORBIDDEN
         finally:
-            app.dependency_overrides.pop(require_workspace_owner_or_researcher_or_airlock_manager, None)
+            app.dependency_overrides.pop(require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin, None)
 
     # [GET] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", side_effect=EntityDoesNotExist)
@@ -351,9 +353,11 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = admin_user
         app.dependency_overrides[require_workspace_owner_or_researcher] = admin_user
         app.dependency_overrides[require_workspace_owner_or_airlock_manager] = admin_user
         app.dependency_overrides[require_workspace_owner] = admin_user
+        app.dependency_overrides[require_workspace_owner_or_tre_admin] = admin_user
         app.dependency_overrides[require_airlock_manager] = admin_user
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
@@ -735,7 +739,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     def log_in_with_owner_user(self, app, owner_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[require_workspace_owner] = owner_user
+        app.dependency_overrides[require_workspace_owner_or_tre_admin] = owner_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = owner_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = owner_user
         app.dependency_overrides[require_workspace_owner_or_researcher] = owner_user
         app.dependency_overrides[require_workspace_owner_or_airlock_manager] = owner_user
         yield
@@ -1383,6 +1389,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     def log_in_with_researcher_user(self, app, researcher_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = researcher_user
         app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
         yield
         app.dependency_overrides = {}

@@ -40,22 +40,31 @@ def require_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Callable:
     return _check
 
 
-def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Callable:
+def require_workspace_roles(
+    *roles: Union[TRERole, WorkspaceAccessRole],
+    allow_tre_admin: bool = False,
+) -> Callable:
     """Factory that returns a dependency enforcing workspace-scoped *roles*.
 
-    Validates the bearer token against the workspace app registration first.
-    If that fails with a wrong-audience error, falls back to the core app
-    registration **only** so that TREAdmin users can always reach workspace
-    endpoints. A valid core token that is not TREAdmin is rejected (401) — a
-    non-admin core token must never satisfy a workspace-scoped check.
+    Validates the bearer token against the workspace app registration first
+    (audience-aware). A token carrying one of the required workspace *roles* is
+    accepted.
+
+    ``allow_tre_admin`` controls whether a TREAdmin — who authenticates with a
+    *core* token (wrong audience for the workspace app registration) — may also
+    reach the endpoint. When ``True``, a wrong-audience token falls back to the
+    core app registration and is accepted **only** if it is a valid TREAdmin
+    token. When ``False`` (the default), no core fallback occurs and any token
+    that is not valid for the workspace audience is rejected with 401 — this
+    preserves the separation between platform administration and workspace
+    access.
 
     The workspace is resolved from the URL path (``workspace_id`` path
     parameter) so this factory should only be used on routes whose path
     includes ``{workspace_id}``.
     """
     role_values = frozenset(r.value for r in roles)
-    # TREAdmin can access any workspace endpoint
-    allowed_values = role_values | {TRERole.Admin.value}
+    allowed_values = role_values | ({TRERole.Admin.value} if allow_tre_admin else frozenset())
     role_names = [r.value for r in roles]
 
     async def _check(
@@ -80,14 +89,24 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
             except (TokenExpired, TokenSignatureInvalid) as exc:
                 raise _to_http_exception(exc)
             except TokenInvalid:
-                # Wrong audience — fall through to core validator.
+                # Wrong audience — only a TREAdmin core token may proceed, and
+                # only when this endpoint opts in via allow_tre_admin.
                 logger.debug(
                     "Workspace token invalid (likely wrong audience), trying core validator"
                 )
 
+        # Endpoints that do not permit TREAdmin get no cross-audience fallback:
+        # a token that is not valid for the workspace audience is rejected.
+        if not allow_tre_admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=strings.INVALID_TOKEN,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         # Fall back to core app registration. A core token is only accepted
-        # here for TREAdmin (cross-audience access to any workspace); any other
-        # valid core token is treated as invalid for this workspace resource.
+        # here for TREAdmin; any other valid core token is treated as invalid
+        # for this workspace resource.
         try:
             user = get_core_validator().validate(token)
         except AuthError as exc:
@@ -113,6 +132,8 @@ def require_workspace_roles(*roles: Union[TRERole, WorkspaceAccessRole]) -> Call
 require_tre_user = require_roles(TRERole.User)
 require_tre_admin = require_roles(TRERole.Admin)
 require_tre_user_or_admin = require_roles(TRERole.User, TRERole.Admin)
+
+# Workspace-scoped checks WITHOUT TREAdmin access (workspace roles only).
 require_workspace_owner = require_workspace_roles(WorkspaceAccessRole.Owner)
 require_workspace_researcher = require_workspace_roles(WorkspaceAccessRole.Researcher)
 require_airlock_manager = require_workspace_roles(WorkspaceAccessRole.AirlockManager)
@@ -126,4 +147,19 @@ require_workspace_owner_or_researcher_or_airlock_manager = require_workspace_rol
     WorkspaceAccessRole.Owner,
     WorkspaceAccessRole.Researcher,
     WorkspaceAccessRole.AirlockManager,
+)
+
+# Workspace-scoped checks that ALSO permit TREAdmin (mirror the old
+# ``..._or_tre_admin`` dependencies).
+require_workspace_owner_or_tre_admin = require_workspace_roles(
+    WorkspaceAccessRole.Owner, allow_tre_admin=True
+)
+require_workspace_owner_or_researcher_or_tre_admin = require_workspace_roles(
+    WorkspaceAccessRole.Owner, WorkspaceAccessRole.Researcher, allow_tre_admin=True
+)
+require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin = require_workspace_roles(
+    WorkspaceAccessRole.Owner,
+    WorkspaceAccessRole.Researcher,
+    WorkspaceAccessRole.AirlockManager,
+    allow_tre_admin=True,
 )
