@@ -12,18 +12,15 @@ _bearer = HTTPBearer(auto_error=True)
 
 def _to_http_exception(exc: AuthError) -> HTTPException:
     if isinstance(exc, TokenExpired):
-        return HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=strings.EXPIRED_SIGNATURE,
-        )
-    if isinstance(exc, TokenSignatureInvalid):
-        return HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=strings.INVALID_SIGNATURE,
-        )
+        detail = strings.EXPIRED_SIGNATURE
+    elif isinstance(exc, TokenSignatureInvalid):
+        detail = strings.INVALID_SIGNATURE
+    else:
+        detail = strings.INVALID_TOKEN
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=strings.INVALID_TOKEN,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 
