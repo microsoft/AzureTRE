@@ -6,11 +6,7 @@ import { Workspace } from "../../models/workspace";
 import { ResourceType } from "../../models/resourceType";
 
 // Mock workspace data for testing
-const createMockWorkspace = (
-  id: string,
-  displayName: string,
-  updatedWhen: number,
-): Workspace => ({
+const createMockWorkspace = (id: string, displayName: string, updatedWhen: number): Workspace => ({
   id,
   isEnabled: true,
   resourcePath: `/workspaces/${id}`,
