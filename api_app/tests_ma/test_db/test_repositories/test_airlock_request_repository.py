@@ -169,7 +169,7 @@ async def test_get_airlock_requests_queries_db(airlock_request_repo):
 
 
 async def test_get_in_flight_v1_airlock_request_ids_queries_with_serializable_statuses(airlock_request_repo):
-    airlock_request_repo.container.query_items = MagicMock(return_value=[])
+    airlock_request_repo.container.query_items = MagicMock()
 
     await airlock_request_repo.get_in_flight_v1_airlock_request_ids()
 
