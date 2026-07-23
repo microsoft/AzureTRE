@@ -8,21 +8,14 @@ interface CliCommandProps {
   isLoading: boolean;
 }
 
-export const CliCommand: React.FunctionComponent<CliCommandProps> = (
-  props: CliCommandProps,
-) => {
+export const CliCommand: React.FunctionComponent<CliCommandProps> = (props: CliCommandProps) => {
   const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard";
-  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(
-    COPY_TOOL_TIP_DEFAULT_MESSAGE,
-  );
+  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(COPY_TOOL_TIP_DEFAULT_MESSAGE);
 
   const handleCopyCommand = () => {
     navigator.clipboard.writeText(props.command);
     setCopyToolTipMessage("Copied");
-    setTimeout(
-      () => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE),
-      3000,
-    );
+    setTimeout(() => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE), 3000);
   };
 
   const renderCommand = () => {
@@ -36,9 +29,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
     const commandWithoutParams = commandMatches[0];
     const paramsOnly = props.command.replace(commandWithoutParams, "");
     // regex to match all the parameters, along with their assigned values
-    const paramsList = paramsOnly.match(
-      /(?<= )-{1,2}[\w-]+(?:(?!( -){1,2}).)*/g,
-    );
+    const paramsList = paramsOnly.match(/(?<= )-{1,2}[\w-]+(?:(?!( -){1,2}).)*/g);
 
     return (
       <Stack
@@ -50,9 +41,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
           },
         }}
       >
-        <code style={{ color: "blue", fontSize: "13px" }}>
-          {commandWithoutParams}
-        </code>
+        <code style={{ color: "blue", fontSize: "13px" }}>{commandWithoutParams}</code>
         <Stack.Item style={{ paddingLeft: "30px" }}>
           {paramsList?.map((paramWithValue, index) => {
             // split the parameter from it's value
@@ -65,11 +54,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
             return (
               <div key={`${param}-${index}`} style={{ wordBreak: "break-all", fontSize: "13px" }}>
                 <code style={{ color: "teal" }}>{param}</code>
-                <code
-                  style={{ color: paramValueIsComment ? "firebrick" : "black" }}
-                >
-                  {paramValue}
-                </code>
+                <code style={{ color: paramValueIsComment ? "firebrick" : "black" }}>{paramValue}</code>
               </div>
             );
           })}
@@ -80,10 +65,7 @@ export const CliCommand: React.FunctionComponent<CliCommandProps> = (
 
   return (
     <Stack>
-      <Stack
-        horizontal
-        style={{ backgroundColor: "#e6e6e6", alignItems: "center" }}
-      >
+      <Stack horizontal style={{ backgroundColor: "#e6e6e6", alignItems: "center" }}>
         <Stack.Item grow style={{ paddingLeft: "10px", height: "100%" }}>
           <Text>{props.title}</Text>
         </Stack.Item>

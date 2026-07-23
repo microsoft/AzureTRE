@@ -8,11 +8,7 @@ interface ErrorPanelProps {
   onDismiss: () => void;
 }
 
-export const ErrorPanel: React.FunctionComponent<ErrorPanelProps> = ({
-  errorMessage,
-  isOpen,
-  onDismiss,
-}) => {
+export const ErrorPanel: React.FunctionComponent<ErrorPanelProps> = ({ errorMessage, isOpen, onDismiss }) => {
   const cleanupError = (error: string) => {
     let cleanedError = stripAnsi(error);
     cleanedError = cleanedError.replace(/[│╷╵]/g, "\n");
