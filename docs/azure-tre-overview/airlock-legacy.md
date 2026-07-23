@@ -110,10 +110,11 @@ The following diagram shows the legacy airlock flow with data copies between sto
 To upgrade a workspace from the legacy architecture:
 
 1. Ensure core is deployed with the current codebase (`enable_legacy_airlock: true` to keep legacy infrastructure alongside the new accounts).
-2. Update the workspace `airlock_version` property to `2`.
-3. Redeploy the workspace — this switches from the legacy airlock terraform module to the consolidated module.
-4. New airlock requests will use the consolidated storage accounts. In-flight requests on the legacy path will continue to completion on the legacy accounts (the version is stamped on each request at creation time).
-5. Once all workspaces are migrated and no legacy requests are in-flight, set `enable_legacy_airlock: false` in `config.yaml` and redeploy core to remove the legacy storage accounts.
+2. **Verify all in-progress airlock requests have completed** — requests with status `Draft`, `Submitted`, `InReview`, `ApprovalInProgress`, `RejectionInProgress`, or `BlockingInProgress` will not function properly after upgrade.
+3. Update the workspace `airlock_version` property to `2`.
+4. Redeploy the workspace — this switches from the legacy airlock terraform module to the consolidated module.
+5. New airlock requests will use the consolidated storage accounts.
+6. Once all workspaces are migrated and no legacy requests are in-flight, set `enable_legacy_airlock: false` in `config.yaml` and redeploy core to remove the legacy storage accounts.
 
-!!! note
-    In-flight airlock requests are safe during upgrade. Each request has `airlock_version` stamped at creation time, so upgrading a workspace does not affect requests that are already in progress.
+!!! warning
+    Do not upgrade a workspace to `airlock_version: 2` while airlock requests are in progress. In-progress v1 requests cannot be migrated to v2 infrastructure and will become inaccessible. Ensure all requests have reached a final state (Approved, Rejected, Blocked, Cancelled, Failed, or Revoked) before upgrading.
