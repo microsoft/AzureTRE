@@ -7,21 +7,21 @@ import { TopNav } from "./TopNav";
 // Mock child components
 vi.mock("./UserMenu", () => {
   const UserMenu = () => <div data-testid="user-menu">User Menu</div>;
-  UserMenu.displayName = 'UserMenu';
+  UserMenu.displayName = "UserMenu";
   return { UserMenu };
 });
 
 vi.mock("./notifications/NotificationPanel", () => {
   const NotificationPanel = () => <div data-testid="notification-panel">Notifications</div>;
-  NotificationPanel.displayName = 'NotificationPanel';
+  NotificationPanel.displayName = "NotificationPanel";
   return { NotificationPanel };
 });
 
 // Mock config.json
 vi.mock("../../config.json", () => ({
   default: {
-    uiSiteName: "Test TRE Environment"
-  }
+    uiSiteName: "Test TRE Environment",
+  },
 }));
 
 // Mock FluentUI components
@@ -37,7 +37,7 @@ vi.mock("@fluentui/react", () => {
       {children}
     </div>
   );
-  Item.displayName = 'StackItem';
+  Item.displayName = "StackItem";
   MockStack.Item = Item;
 
   return {
@@ -58,11 +58,7 @@ vi.mock("@fluentui/react", () => {
 });
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe("TopNav Component", () => {

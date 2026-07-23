@@ -79,16 +79,20 @@ vi.mock("./components/shared/GenericErrorBoundary", () => ({
   GenericErrorBoundary: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const TestWrapper = ({ children, initialEntries = ["/"] }: { children: React.ReactNode; initialEntries?: string[] }) => {
+const TestWrapper = ({
+  children,
+  initialEntries = ["/"],
+}: {
+  children: React.ReactNode;
+  initialEntries?: string[];
+}) => {
   const msalInstance = createMockMsalInstance();
   const store = createMockStore();
 
   return (
     <MsalProvider instance={msalInstance}>
       <Provider store={store}>
-        <MemoryRouter initialEntries={initialEntries}>
-          {children}
-        </MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
       </Provider>
     </MsalProvider>
   );
@@ -104,7 +108,7 @@ describe("App Component", () => {
       render(
         <TestWrapper>
           <App />
-        </TestWrapper>
+        </TestWrapper>,
       );
     });
 
@@ -121,7 +125,7 @@ describe("App Component", () => {
       render(
         <TestWrapper initialEntries={["/logout"]}>
           <App />
-        </TestWrapper>
+        </TestWrapper>,
       );
     });
 
@@ -129,9 +133,7 @@ describe("App Component", () => {
       expect(screen.getByText("You are logged out.")).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText(/You are now logged out of the Azure TRE portal/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/You are now logged out of the Azure TRE portal/)).toBeInTheDocument();
   });
 
   it("renders workspace provider for workspace routes", async () => {
@@ -139,7 +141,7 @@ describe("App Component", () => {
       render(
         <TestWrapper initialEntries={["/workspaces/test-workspace/"]}>
           <App />
-        </TestWrapper>
+        </TestWrapper>,
       );
     });
 

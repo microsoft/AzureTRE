@@ -18,16 +18,14 @@ interface ResourceOperationsListProps {
   resource: Resource;
 }
 
-export const ResourceOperationsList: React.FunctionComponent<
-  ResourceOperationsListProps
-> = (props: ResourceOperationsListProps) => {
+export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsListProps> = (
+  props: ResourceOperationsListProps,
+) => {
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
   const workspaceCtx = useContext(WorkspaceContext);
   const { resourceId } = useParams();
-  const [resourceOperations, setResourceOperations] = useState(
-    [] as Array<Operation>,
-  );
+  const [resourceOperations, setResourceOperations] = useState([] as Array<Operation>);
   const [loadingState, setLoadingState] = useState("loading");
 
   useEffect(() => {
@@ -35,24 +33,11 @@ export const ResourceOperationsList: React.FunctionComponent<
       try {
         // get resource operations
         const scopeId =
-          workspaceCtx.roles && workspaceCtx.roles.length > 0
-            ? workspaceCtx.workspaceApplicationIdURI
-            : "";
-        const ops = await apiCall(
-          `${props.resource.resourcePath}/${ApiEndpoint.Operations}`,
-          HttpMethod.Get,
-          scopeId,
-        );
-        config.debug &&
-          console.log(
-            `Got resource operations, for resource:${props.resource.id}: ${ops.operations}`,
-          );
+          workspaceCtx.roles && workspaceCtx.roles.length > 0 ? workspaceCtx.workspaceApplicationIdURI : "";
+        const ops = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, scopeId);
+        config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${ops.operations}`);
         setResourceOperations(ops.operations.reverse());
-        setLoadingState(
-          ops && ops.operations.length > 0
-            ? LoadingState.Ok
-            : LoadingState.Error,
-        );
+        setLoadingState(ops && ops.operations.length > 0 ? LoadingState.Ok : LoadingState.Error);
       } catch (err: any) {
         err.userMessage = "Error retrieving resource operations";
         setApiError(err);
@@ -60,13 +45,7 @@ export const ResourceOperationsList: React.FunctionComponent<
       }
     };
     getOperations();
-  }, [
-    apiCall,
-    props.resource,
-    resourceId,
-    workspaceCtx.roles,
-    workspaceCtx.workspaceApplicationIdURI,
-  ]);
+  }, [apiCall, props.resource, resourceId, workspaceCtx.roles, workspaceCtx.workspaceApplicationIdURI]);
 
   const stackStyles: IStackStyles = {
     root: {
@@ -82,33 +61,13 @@ export const ResourceOperationsList: React.FunctionComponent<
           {resourceOperations &&
             resourceOperations.map((op: Operation, i: number) => {
               return (
-                <Stack
-                  wrap
-                  horizontal
-                  style={{ borderBottom: "1px #999 solid", padding: "10px 0" }}
-                  key={i}
-                >
+                <Stack wrap horizontal style={{ borderBottom: "1px #999 solid", padding: "10px 0" }} key={i}>
                   <Stack grow styles={stackStyles}>
-                    <ResourceOperationListItem
-                      header={"Resource Id"}
-                      val={op.resourceId}
-                    />
-                    <ResourceOperationListItem
-                      header={"Resource Path"}
-                      val={op.resourcePath}
-                    />
-                    <ResourceOperationListItem
-                      header={"Resource Version"}
-                      val={op.resourceVersion.toString()}
-                    />
-                    <ResourceOperationListItem
-                      header={"Status"}
-                      val={op.status}
-                    />
-                    <ResourceOperationListItem
-                      header={"Action"}
-                      val={op.action}
-                    />
+                    <ResourceOperationListItem header={"Resource Id"} val={op.resourceId} />
+                    <ResourceOperationListItem header={"Resource Path"} val={op.resourcePath} />
+                    <ResourceOperationListItem header={"Resource Version"} val={op.resourceVersion.toString()} />
+                    <ResourceOperationListItem header={"Status"} val={op.status} />
+                    <ResourceOperationListItem header={"Action"} val={op.action} />
                     <ResourceOperationListItem
                       header={"Message"}
                       val={op.message}
@@ -122,14 +81,8 @@ export const ResourceOperationsList: React.FunctionComponent<
                       header={"Updated"}
                       val={`${moment.unix(op.updatedWhen).toLocaleString()} (${moment.unix(op.updatedWhen).fromNow()})`}
                     />
-                    <ResourceOperationListItem
-                      header={"User"}
-                      val={op.user.name}
-                    />
-                    <ResourceOperationStepsList
-                      header={"Steps"}
-                      val={op.steps}
-                    />
+                    <ResourceOperationListItem header={"User"} val={op.user.name} />
+                    <ResourceOperationStepsList header={"Steps"} val={op.steps} />
                   </Stack>
                 </Stack>
               );
@@ -141,12 +94,7 @@ export const ResourceOperationsList: React.FunctionComponent<
     default:
       return (
         <div style={{ marginTop: "20px" }}>
-          <Spinner
-            label="Loading operations"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading operations" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }
