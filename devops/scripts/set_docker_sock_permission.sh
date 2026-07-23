@@ -4,6 +4,17 @@
 
 set -eo pipefail
 
+run_as_root() {
+  if (( EUID == 0 )); then
+    "$@"
+  elif command -v sudo >/dev/null; then
+    sudo "$@"
+  else
+    echo "root privileges are required to update docker socket permissions" >&2
+    return 1
+  fi
+}
+
 main() {
   local target_user="${1:-${SUDO_USER:-${USER:-vscode}}}"
   local socket_path="/var/run/docker.sock"
@@ -34,7 +45,7 @@ main() {
         echo "docker group GID ${docker_gid} does not match socket GID ${socket_gid}; using group ${target_group}"
       else
         echo "Updating docker group GID from ${docker_gid} to ${socket_gid}"
-        groupmod -g "${socket_gid}" docker
+        run_as_root groupmod -g "${socket_gid}" docker
       fi
     fi
   else
@@ -43,12 +54,12 @@ main() {
       echo "Using existing group ${target_group} for docker socket GID ${socket_gid}"
     else
       echo "Creating docker group with GID ${socket_gid}"
-      groupadd -g "${socket_gid}" docker
+      run_as_root groupadd -g "${socket_gid}" docker
     fi
   fi
 
-  usermod -aG "${target_group}" "${target_user}"
-  chmod g+rw "${socket_path}"
+  run_as_root usermod -aG "${target_group}" "${target_user}"
+  run_as_root chmod g+rw "${socket_path}"
 }
 
 main "$@"

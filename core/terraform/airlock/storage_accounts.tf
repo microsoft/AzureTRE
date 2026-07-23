@@ -4,12 +4,12 @@
 # deployments do not accidentally churn the consolidated accounts.
 moved {
   from = azurerm_storage_account.sa_import_external
-  to   = azurerm_storage_account.sa_airlock_core
+  to   = azurerm_storage_account.sa_import_external[0]
 }
 
 moved {
   from = azurerm_storage_account.sa_import_in_progress
-  to   = azurerm_storage_account.sa_airlock_workspace_global
+  to   = azurerm_storage_account.sa_import_in_progress[0]
 }
 
 resource "azurerm_storage_account" "sa_airlock_core" {

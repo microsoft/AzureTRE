@@ -168,6 +168,17 @@ async def test_get_airlock_requests_queries_db(airlock_request_repo):
     airlock_request_repo.container.query_items.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
+async def test_get_in_flight_v1_airlock_request_ids_queries_with_serializable_statuses(airlock_request_repo):
+    airlock_request_repo.container.query_items = MagicMock(return_value=[])
+
+    await airlock_request_repo.get_in_flight_v1_airlock_request_ids()
+
+    parameters = airlock_request_repo.container.query_items.call_args.kwargs["parameters"]
+    final_statuses = next(parameter["value"] for parameter in parameters if parameter["name"] == "@finalStatuses")
+    assert final_statuses == [status.value for status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES]
+    assert all(type(final_status) is str for final_status in final_statuses)
+
+
 async def test_get_airlock_requests_with_user_id(airlock_request_repo):
     airlock_request_repo.container.query_items = MagicMock()
     user_id = "test_user_id"

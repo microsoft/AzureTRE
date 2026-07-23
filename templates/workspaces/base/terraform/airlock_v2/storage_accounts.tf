@@ -4,6 +4,7 @@
 
 # Data source to reference the global workspace storage account
 data "azurerm_storage_account" "sa_airlock_workspace_global" {
+  provider            = azurerm.core
   name                = local.airlock_workspace_global_storage_name
   resource_group_name = local.core_resource_group_name
 }
@@ -34,6 +35,8 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
 }
 
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
+  provider = azurerm.core
+
   # Use a deterministic name per workspace to avoid conflicts when multiple
   # workspaces assign the same role on the same global storage account.
   name                 = uuidv5("url", "${data.azurerm_storage_account.sa_airlock_workspace_global.id}-${var.workspace_id}-blob-data-contributor")
