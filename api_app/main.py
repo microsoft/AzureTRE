@@ -18,6 +18,7 @@ from api.errors.generic_error import generic_error_handler
 from core import config
 from db.events import bootstrap_database
 from services.logging import initialize_logging, logger
+from services.legacy_airlock_guard import run_legacy_airlock_migration_guard
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 
@@ -27,6 +28,8 @@ async def lifespan(app: FastAPI):
     while not await bootstrap_database():
         await asyncio.sleep(5)
         logger.warning("Database connection could not be established")
+
+    await run_legacy_airlock_migration_guard()
 
     deploymentStatusUpdater = DeploymentStatusUpdater()
     await deploymentStatusUpdater.init_repos()

@@ -41,7 +41,8 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
-        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user)
+        airlock_version = workspace.properties.get("airlock_version", 1)
+        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user, airlock_version=airlock_version)
         await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
         allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)
