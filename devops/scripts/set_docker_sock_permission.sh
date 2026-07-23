@@ -2,7 +2,7 @@
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: MIT
 
-set -euo pipefail
+set -eo pipefail
 
 main() {
   local target_user="${1:-${SUDO_USER:-${USER:-vscode}}}"
