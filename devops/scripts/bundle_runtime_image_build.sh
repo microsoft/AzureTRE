@@ -12,16 +12,11 @@ if [ "$(yq eval ".custom.runtime_image.import" porter.yaml)" != "null" ]; then
   version=$(yq eval ".custom.runtime_image.import.tag" porter.yaml)
   target_image="${image_name}:${version}"
 
-  existing_digest=$(az acr repository show --name "${ACR_NAME}" \
-    --image "${target_image}" \
+  existing_digest=$(az acr manifest show-metadata -r "${ACR_NAME}" -n "${target_image}" \
     --query digest \
     --output tsv 2>/dev/null || true)
 
-  if [ "${existing_digest}" = "null" ]; then
-    existing_digest=""
-  fi
-
-  if [ -n "${existing_digest}" ]; then
+  if [ -n "${existing_digest}" ] && [ "${existing_digest}" != "null" ]; then
     echo "Image ${target_image} already exists in ACR with digest ${existing_digest}. Skipping import."
     exit 0
   fi
