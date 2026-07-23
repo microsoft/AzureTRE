@@ -17,19 +17,21 @@ def no_lifespan_events():
 @pytest.fixture(autouse=True)
 def no_auth_token():
     """ overrides validating and decoding tokens for all tests"""
-    from auth.models import AuthenticatedUser
-    from fastapi.security import HTTPAuthorizationCredentials
-    from mock import AsyncMock, MagicMock
+from auth.models import AuthenticatedUser
+from fastapi.security import HTTPAuthorizationCredentials
+from mock import AsyncMock, MagicMock
 
-    default_validated = AuthenticatedUser(id="test-user", name="Test User", roles=["TREAdmin"])
-    mock_validator = MagicMock()
-    mock_validator.validate.return_value = default_validated
+fake_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
 
-    with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
-        with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
-            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
-                with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
-                    yield
+default_validated = AuthenticatedUser(id="test-user", name="Test User", roles=["TREAdmin"])
+mock_validator = MagicMock()
+mock_validator.validate.return_value = default_validated
+
+with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
+    with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
+        with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+            with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
+                yield
 
 
 @pytest.fixture(autouse=True, scope="session")
