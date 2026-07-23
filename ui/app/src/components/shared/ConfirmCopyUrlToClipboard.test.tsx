@@ -52,21 +52,17 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("renders dialog with correct title and content", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Access a Protected Endpoint");
     expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
-      "Copy the link below, paste it and use it from a workspace virtual machine"
+      "Copy the link below, paste it and use it from a workspace virtual machine",
     );
   });
 
   it("displays the connection URI in read-only text field", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const textField = screen.getByTestId("text-field");
     expect(textField).toBeInTheDocument();
@@ -75,9 +71,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("renders copy button with copy icon", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const copyButton = screen.getByTestId("primary-button");
     expect(copyButton).toBeInTheDocument();
@@ -85,31 +79,23 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("shows default tooltip message initially", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const tooltip = screen.getByTestId("tooltip");
     expect(tooltip).toHaveAttribute("title", "Copy to clipboard");
   });
 
   it("copies URL to clipboard when copy button is clicked", async () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const copyButton = screen.getByTestId("primary-button");
     fireEvent.click(copyButton);
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://test-connection.example.com"
-    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("https://test-connection.example.com");
   });
 
   it("shows 'Copied' tooltip message after clicking copy button", async () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const copyButton = screen.getByTestId("primary-button");
     fireEvent.click(copyButton);
@@ -127,9 +113,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("calls onDismiss when close button is clicked", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const closeButton = screen.getByTestId("dialog-close");
     fireEvent.click(closeButton);
@@ -146,9 +130,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
       },
     };
 
-    render(
-      <ConfirmCopyUrlToClipboard resource={resourceWithoutUri} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={resourceWithoutUri} onDismiss={mockOnDismiss} />);
 
     const textField = screen.getByTestId("text-field");
     expect(textField).toHaveValue("");
@@ -157,9 +139,7 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   it("handles clipboard write failure gracefully", async () => {
     (navigator.clipboard.writeText as Mock).mockRejectedValue(new Error("Clipboard error"));
 
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const copyButton = screen.getByTestId("primary-button");
 
@@ -168,18 +148,14 @@ describe("ConfirmCopyUrlToClipboard Component", () => {
   });
 
   it("renders horizontal stack layout", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const stack = screen.getByTestId("stack");
     expect(stack).toHaveAttribute("data-horizontal", "true");
   });
 
   it("renders stack item with grow property", () => {
-    render(
-      <ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    render(<ConfirmCopyUrlToClipboard resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const stackItem = screen.getByTestId("stack-item");
     expect(stackItem).toHaveAttribute("data-grow", "true");

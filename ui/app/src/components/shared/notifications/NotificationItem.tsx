@@ -34,9 +34,7 @@ interface NotificationItemProps {
   showCallout: (o: Operation, r: Resource) => void;
 }
 
-export const NotificationItem: React.FunctionComponent<
-  NotificationItemProps
-> = (props: NotificationItemProps) => {
+export const NotificationItem: React.FunctionComponent<NotificationItemProps> = (props: NotificationItemProps) => {
   const [now, setNow] = useState(moment.utc());
   const [isExpanded, setIsExpanded] = useState(false);
   const [notification, setNotification] = useState({} as TRENotification);
@@ -63,19 +61,9 @@ export const NotificationItem: React.FunctionComponent<
         // is this a workspace, or workspace child resource operation?
         if (op.resourcePath.indexOf(ApiEndpoint.Workspaces) !== -1) {
           const wsId = op.resourcePath.split("/")[2];
-          let scopeId = (
-            await apiCall(
-              `${ApiEndpoint.Workspaces}/${wsId}/scopeid`,
-              HttpMethod.Get,
-            )
-          ).workspaceAuth.scopeId;
-          ws = (
-            await apiCall(
-              `${ApiEndpoint.Workspaces}/${wsId}`,
-              HttpMethod.Get,
-              scopeId,
-            )
-          ).workspace;
+          let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}/scopeid`, HttpMethod.Get)).workspaceAuth
+            .scopeId;
+          ws = (await apiCall(`${ApiEndpoint.Workspaces}/${wsId}`, HttpMethod.Get, scopeId)).workspace;
 
           // is a workspace child resource operation
           if (op.resourcePath.split("/").length >= 3) {
@@ -126,17 +114,11 @@ export const NotificationItem: React.FunctionComponent<
         <></>
       ) : loadingNotification ? (
         <li>
-          <Shimmer
-            shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]}
-          />
+          <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]} />
           <Shimmer width="50%" />
-          <Shimmer
-            shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]}
-          />
+          <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]} />
           <Shimmer />
-          <Shimmer
-            shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]}
-          />
+          <Shimmer shimmerElements={[{ type: ShimmerElementType.gap, width: "100%" }]} />
           <Shimmer />
         </li>
       ) : errorNotification ? (
@@ -148,9 +130,7 @@ export const NotificationItem: React.FunctionComponent<
           {inProgressStates.indexOf(props.operation.status) !== -1 && (
             <NotificationPoller
               notification={notification}
-              updateOperation={(operation: Operation) =>
-                updateOperation(operation)
-              }
+              updateOperation={(operation: Operation) => updateOperation(operation)}
             />
           )}
 
@@ -173,9 +153,7 @@ export const NotificationItem: React.FunctionComponent<
                 to={props.operation.resourcePath}
               >
                 <Icon
-                  iconName={
-                    getIconAndColourForStatus(props.operation.status)[0]
-                  }
+                  iconName={getIconAndColourForStatus(props.operation.status)[0]}
                   style={{
                     color: getIconAndColourForStatus(props.operation.status)[1],
                     position: "relative",
@@ -183,8 +161,7 @@ export const NotificationItem: React.FunctionComponent<
                     marginRight: "10px",
                   }}
                 />
-                {notification.resource.properties.display_name}:{" "}
-                {props.operation.action}
+                {notification.resource.properties.display_name}: {props.operation.action}
               </Link>
             }
             description={`${notification.resource.resourceType} is ${props.operation.status}`}
@@ -194,10 +171,7 @@ export const NotificationItem: React.FunctionComponent<
             <Stack.Item grow={5}>
               {props.operation.steps &&
               props.operation.steps.length > 0 &&
-              !(
-                props.operation.steps.length === 1 &&
-                props.operation.steps[0].templateStepId === "main"
-              ) ? (
+              !(props.operation.steps.length === 1 && props.operation.steps[0].templateStepId === "main") ? (
                 <FluentLink
                   title={isExpanded ? "Show less" : "Show more"}
                   href="#"
@@ -218,9 +192,7 @@ export const NotificationItem: React.FunctionComponent<
             </Stack.Item>
             <Stack.Item>
               {" "}
-              <div className="tre-notification-time">
-                {getRelativeTime(props.operation.createdWhen)}
-              </div>
+              <div className="tre-notification-time">{getRelativeTime(props.operation.createdWhen)}</div>
             </Stack.Item>
           </Stack>
 
@@ -242,8 +214,7 @@ export const NotificationItem: React.FunctionComponent<
                         />
                         {s.templateStepId === "main" ? (
                           <>
-                            {notification.resource.properties.display_name}:{" "}
-                            {props.operation.action}
+                            {notification.resource.properties.display_name}: {props.operation.action}
                           </>
                         ) : (
                           s.stepTitle
