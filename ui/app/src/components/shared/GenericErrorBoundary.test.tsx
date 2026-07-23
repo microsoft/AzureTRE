@@ -4,7 +4,7 @@ import { render, screen, createPartialFluentUIMock } from "../../test-utils";
 import { GenericErrorBoundary } from "./GenericErrorBoundary";
 
 // Mock FluentUI components using centralized utility
-vi.mock("@fluentui/react", () => createPartialFluentUIMock(['MessageBar', 'Link', 'Icon']));
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon"]));
 
 // Component that throws an error for testing
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
@@ -29,7 +29,7 @@ describe("GenericErrorBoundary Component", () => {
     render(
       <GenericErrorBoundary>
         <ThrowError shouldThrow={false} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     expect(screen.getByTestId("success-content")).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe("GenericErrorBoundary Component", () => {
     render(
       <GenericErrorBoundary>
         <ThrowError shouldThrow={true} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     expect(screen.getByTestId("message-bar")).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe("GenericErrorBoundary Component", () => {
     render(
       <GenericErrorBoundary>
         <ThrowError shouldThrow={true} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     expect(screen.queryByTestId("success-content")).not.toBeInTheDocument();
@@ -65,21 +65,17 @@ describe("GenericErrorBoundary Component", () => {
     render(
       <GenericErrorBoundary>
         <ThrowError shouldThrow={true} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "UNHANDLED EXCEPTION",
-      expect.any(Error),
-      expect.any(Object)
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith("UNHANDLED EXCEPTION", expect.any(Error), expect.any(Object));
   });
 
   it("shows helpful error message with debugging guidance", () => {
     render(
       <GenericErrorBoundary>
         <ThrowError shouldThrow={true} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     expect(screen.getByText(/check your configuration and refresh/)).toBeInTheDocument();
@@ -92,7 +88,7 @@ describe("GenericErrorBoundary Component", () => {
         <div data-testid="child-1">Child 1</div>
         <div data-testid="child-2">Child 2</div>
         <ThrowError shouldThrow={false} />
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     expect(screen.getByTestId("child-1")).toBeInTheDocument();
@@ -106,7 +102,7 @@ describe("GenericErrorBoundary Component", () => {
         <div data-testid="child-1">Child 1</div>
         <ThrowError shouldThrow={true} />
         <div data-testid="child-2">Child 2</div>
-      </GenericErrorBoundary>
+      </GenericErrorBoundary>,
     );
 
     // Should show error boundary UI instead of children

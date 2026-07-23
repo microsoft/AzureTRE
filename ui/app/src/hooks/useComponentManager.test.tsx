@@ -35,7 +35,7 @@ const mockResource1: Resource = {
     id: "uid1",
     email: "user1@example.com",
     roleAssignments: [],
-    roles: []
+    roles: [],
   },
   history: [],
   _etag: "etag1",
@@ -58,8 +58,7 @@ describe("useComponentManager", () => {
     const mockOnRemove = vi.fn();
 
     const { result, rerender } = renderHook(
-      ({ resource }: { resource: Resource }) =>
-        useComponentManager(resource, mockOnUpdate, mockOnRemove),
+      ({ resource }: { resource: Resource }) => useComponentManager(resource, mockOnUpdate, mockOnRemove),
       {
         initialProps: { resource: mockResource1 },
       },
@@ -87,8 +86,7 @@ describe("useComponentManager", () => {
     const mockOnRemove = vi.fn();
 
     const { result, rerender } = renderHook(
-      ({ resource }: { resource: Resource }) =>
-        useComponentManager(resource, mockOnUpdate, mockOnRemove),
+      ({ resource }: { resource: Resource }) => useComponentManager(resource, mockOnUpdate, mockOnRemove),
       {
         initialProps: { resource: mockResource1 },
       },

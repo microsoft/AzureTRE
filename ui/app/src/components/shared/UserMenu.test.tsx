@@ -30,22 +30,13 @@ vi.mock("@azure/msal-react", () => ({
 vi.mock("@fluentui/react", () => {
   const PrimaryButton = ({ children, menuProps, onClick, style }: any) => (
     <>
-      <button
-        data-testid="primary-button"
-        onClick={onClick}
-        style={style}
-        data-menu={menuProps ? "true" : "false"}
-      >
+      <button data-testid="primary-button" onClick={onClick} style={style} data-menu={menuProps ? "true" : "false"}>
         {children}
       </button>
       {menuProps && (
         <div data-testid="menu-items">
           {menuProps.items.map((item: any) => (
-            <button
-              key={item.key}
-              data-testid={`menu-item-${item.key}`}
-              onClick={item.onClick}
-            >
+            <button key={item.key} data-testid={`menu-item-${item.key}`} onClick={item.onClick}>
               {item.text}
             </button>
           ))}
@@ -53,21 +44,21 @@ vi.mock("@fluentui/react", () => {
       )}
     </>
   );
-  PrimaryButton.displayName = 'PrimaryButton';
+  PrimaryButton.displayName = "PrimaryButton";
 
   const Persona = ({ text, size, imageAlt }: any) => (
     <div data-testid="persona" data-size={size} data-alt={imageAlt}>
       {text}
     </div>
   );
-  Persona.displayName = 'Persona';
+  Persona.displayName = "Persona";
 
   return {
     PrimaryButton,
     Persona,
     PersonaSize: {
       size32: "size32",
-    }
+    },
   };
 });
 
