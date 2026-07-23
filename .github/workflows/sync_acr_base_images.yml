@@ -1,0 +1,161 @@
+---
+name: Sync ACR Base Images
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sync:
+    name: Import newer upstream base images into ACR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - name: Validate required secrets
+        run: |
+          if [ "${{ secrets.ACR_NAME }}" = '' ]; then
+            echo "Missing secret: ACR_NAME" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_CLIENT_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_CLIENT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_TENANT_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_TENANT_ID" && exit 1
+          fi
+          if [ "${{ secrets.AZURE_SUBSCRIPTION_ID }}" = '' ]; then
+            echo "Missing secret: AZURE_SUBSCRIPTION_ID" && exit 1
+          fi
+
+      - name: Azure Login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Login to ACR
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
+
+      - name: Sync image mirrors
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+        run: |
+          set -euo pipefail
+
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          ACR_LOGIN_SERVER="${ACR_NAME}${acr_domain_suffix}"
+
+          # source_repo|target_repo|tag
+          IMAGES=(
+            "docker.io/library/python|mirror/library/python|3.12-slim-bookworm"
+            "docker.io/library/maven|mirror/library/maven|3.9-eclipse-temurin-17-alpine"
+            "docker.io/guacamole/guacd|mirror/guacamole/guacd|1.6.0"
+            "docker.io/gitea/gitea|mirror/gitea/gitea|1.15"
+            "docker.io/gitea/gitea|mirror/gitea/gitea|1.17.3"
+            "mcr.microsoft.com/azure-functions/python|mirror/mcr/azure-functions/python|4-python3.12"
+            "docker.io/library/debian|mirror/library/debian|bookworm-slim"
+            "docker.io/library/debian|mirror/library/debian|bullseye-slim"
+          )
+
+          sync_image() {
+            local source_repo="$1"
+            local target_repo="$2"
+            local tag="$3"
+            local source_ref="${source_repo}:${tag}"
+            local target_ref="${ACR_LOGIN_SERVER}/${target_repo}:${tag}"
+            local digest_format='{{json .Manifest.Digest}}'
+
+            local source_digest
+            local target_digest
+
+            if ! source_digest=$(docker buildx imagetools inspect "${source_ref}" \
+              --format "${digest_format}" | tr -d '"'); then
+              echo "::error::Failed to inspect source image ${source_ref}. Aborting to avoid unintended forced import."
+              return 1
+            fi
+
+            if ! target_digest=$(docker buildx imagetools inspect "${target_ref}" \
+              --format "${digest_format}" | tr -d '"'); then
+              echo "::warning::Failed to inspect target image ${target_ref}. Proceeding with import."
+              target_digest=""
+            fi
+
+            if [[ -z "${source_digest}" ]]; then
+              echo "::error::Source digest for ${source_ref} is empty. Aborting to avoid unintended forced import."
+              return 1
+            fi
+
+            if [[ -z "${target_digest}" ]]; then
+              echo "::warning::Target digest for ${target_ref} is empty. Import will proceed."
+            fi
+
+            if [[ -n "${source_digest}" && -n "${target_digest}" && "${source_digest}" == "${target_digest}" ]]; then
+              echo "Up-to-date: ${target_repo}:${tag} (${source_digest})"
+              return 0
+            fi
+
+            echo "Importing ${source_ref} -> ${target_repo}:${tag}"
+            az acr import \
+              --name "${ACR_NAME}" \
+              --source "${source_ref}" \
+              --image "${target_repo}:${tag}" \
+              --force
+          }
+
+          for image in "${IMAGES[@]}"; do
+            IFS='|' read -r source_repo target_repo tag <<< "${image}"
+            sync_image "${source_repo}" "${target_repo}" "${tag}"
+          done
+
+      - name: Publish sync summary
+        env:
+          ACR_NAME: ${{ secrets.ACR_NAME }}
+          CURRENT_ACR_BASE_IMAGE_PREFIX: ${{ vars.ACR_BASE_IMAGE_PREFIX }}
+        run: |
+          set -euo pipefail
+
+          acr_domain_suffix=$(az cloud show --query suffixes.acrLoginServerEndpoint --output tsv)
+          expected_prefix="${ACR_NAME}${acr_domain_suffix}"
+
+          {
+            echo "## ACR base image sync summary"
+            echo
+            echo "- Expected ACR_BASE_IMAGE_PREFIX: ${expected_prefix}"
+
+            if [[ -n "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+              echo "- Current ACR_BASE_IMAGE_PREFIX: ${CURRENT_ACR_BASE_IMAGE_PREFIX}"
+            else
+              echo "- Current ACR_BASE_IMAGE_PREFIX: (not set)"
+            fi
+
+            echo
+            if [[ -z "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX is not set."
+              echo "Please set it to ${expected_prefix}."
+              echo "See: Repository Settings > Secrets and variables > Actions > Variables"
+            elif [[ "${CURRENT_ACR_BASE_IMAGE_PREFIX}" != "${expected_prefix}" ]]; then
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX does not match the expected value."
+              echo "Please update it to ${expected_prefix}."
+            else
+              echo "Repository variable ACR_BASE_IMAGE_PREFIX is correctly configured."
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ -z "${CURRENT_ACR_BASE_IMAGE_PREFIX}" ]]; then
+            echo "::warning::Repository variable ACR_BASE_IMAGE_PREFIX is not set. Expected: ${expected_prefix}"
+          elif [[ "${CURRENT_ACR_BASE_IMAGE_PREFIX}" != "${expected_prefix}" ]]; then
+            echo "::warning::Repository variable ACR_BASE_IMAGE_PREFIX mismatch. Current: ${CURRENT_ACR_BASE_IMAGE_PREFIX}, Expected: ${expected_prefix}"
+          fi

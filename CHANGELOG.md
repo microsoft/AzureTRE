@@ -9,12 +9,14 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
+* Add ACR base-image mirroring workflow and configurable Docker base-image arguments for CI builds ([#4952](https://github.com/microsoft/AzureTRE/pull/4952))
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
 * Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Added support for formatting UI code via `pre-commit` and fixed existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
 BUG FIXES:
+* Fix Docker image workflows to authenticate before using private ACR mirrors and skip redundant runtime-image imports when the target tag is already present. ([#4952](https://github.com/microsoft/AzureTRE/pull/4952))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))

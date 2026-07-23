@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
-FROM python:3.12-slim-bookworm
+ARG PYTHON_TAG=3.12-slim-bookworm
+ARG PYTHON_BASE_IMAGE=python
+FROM ${PYTHON_BASE_IMAGE}:${PYTHON_TAG}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

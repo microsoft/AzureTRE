@@ -1,4 +1,6 @@
-FROM python:3.12-slim-bookworm AS base
+ARG PYTHON_TAG=3.12-slim-bookworm
+ARG PYTHON_BASE_IMAGE=python
+FROM ${PYTHON_BASE_IMAGE}:${PYTHON_TAG} AS base
 
 COPY requirements.txt /.
 RUN pip3 install --no-cache-dir -r requirements.txt

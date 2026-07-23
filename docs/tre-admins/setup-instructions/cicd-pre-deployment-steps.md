@@ -95,6 +95,7 @@ Configure the following **variables** in your github environment:
 | ----------- | ----------- |
 | `AZURE_ENVIRONMENT` | Optional. The Azure cloud environment. Default is `AzureCloud`. Use `AzureUSGovernment` for US Government cloud |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
+| `ACR_BASE_IMAGE_PREFIX` | Optional. ACR login server prefix used by image build workflows to pull mirrored base images instead of directly pulling from Docker Hub. Example value: `myacr.azurecr.io`. |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `CORE_ADDRESS_SPACE` | Optional. The address space for the Azure TRE core virtual network. Default value is `10.0.0.0/22`. |
 | `TRE_ADDRESS_SPACE` | Optional. The address space for the whole TRE environment virtual network where workspaces networks will be created (can include the core network as well). Default value is `10.0.0.0/16` |
@@ -107,6 +108,20 @@ Configure the following **variables** in your github environment:
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `CUSTOM_DOMAIN` | Optional. Custom domain name to access the Azure TRE portal. See [Custom domain name](../custom-domain.md). |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |
+
+### Optional: Mirror Docker Hub base images into ACR for CI
+
+To reduce Docker Hub rate-limit exposure in CI, Azure TRE includes a dedicated workflow to mirror selected upstream base images into your ACR and use those mirrors during image builds.
+
+1. Set repository/environment variable `ACR_BASE_IMAGE_PREFIX` to your ACR login server (for example, `myacr.azurecr.io`).
+2. Ensure the following secrets are configured for the mirror workflow:
+- `ACR_NAME`
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
+3. Run `/.github/workflows/sync_acr_base_images.yml` manually once to seed mirrored images, then allow the scheduled run to keep them up to date.
+
+The Docker image build workflow (`/.github/workflows/build_docker_images.yml`) automatically uses mirrored base images when `ACR_BASE_IMAGE_PREFIX` is set, and falls back to upstream image sources when it is not set.
 
 ### Configure Authentication Secrets
 
