@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 0.15.0
+version: 1.6.0
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -133,6 +133,10 @@ parameters:
     type: boolean
     default: true
     description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
+  - name: airlock_version
+    type: integer
+    default: 2
+    description: "Airlock storage version: 1 = legacy per-stage storage accounts (stalimip{tre_id}), 2 = consolidated metadata-based storage (stalairlock{tre_id})"
 
 outputs:
   - name: app_role_id_workspace_owner
@@ -220,6 +224,7 @@ install:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        airlock_version: ${ bundle.parameters.airlock_version }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -270,6 +275,7 @@ upgrade:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        airlock_version: ${ bundle.parameters.airlock_version }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -343,6 +349,7 @@ uninstall:
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
+        airlock_version: ${ bundle.parameters.airlock_version }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
