@@ -12,25 +12,14 @@ import {
   Text,
 } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
-import {
-  completedStates,
-  inProgressStates,
-  Operation,
-  successStates,
-} from "../../../models/operation";
+import { completedStates, inProgressStates, Operation, successStates } from "../../../models/operation";
 import { NotificationItem } from "./NotificationItem";
 import { IconButton } from "@fluentui/react/lib/Button";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { Resource } from "../../../models/resource";
-import {
-  useAppDispatch,
-  useAppSelector,
-} from "../../../hooks/customReduxHooks";
-import {
-  setInitialOperations,
-  dismissCompleted,
-} from "../../shared/notifications/operationsSlice";
+import { useAppDispatch, useAppSelector } from "../../../hooks/customReduxHooks";
+import { setInitialOperations, dismissCompleted } from "../../shared/notifications/operationsSlice";
 
 export const NotificationPanel: React.FunctionComponent = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,9 +35,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
 
   useEffect(() => {
     const loadAllOps = async () => {
-      let opsToAdd = (
-        await apiCall(`${ApiEndpoint.Operations}`, HttpMethod.Get)
-      ).operations as Array<Operation>;
+      let opsToAdd = (await apiCall(`${ApiEndpoint.Operations}`, HttpMethod.Get)).operations as Array<Operation>;
       dispatch(setInitialOperations(opsToAdd));
     };
 
@@ -85,9 +72,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
       />
 
       {operations.items &&
-        operations.items.filter((o: Operation) =>
-          inProgressStates.includes(o.status),
-        ).length > 0 && (
+        operations.items.filter((o: Operation) => inProgressStates.includes(o.status)).length > 0 && (
           <span style={{ marginTop: -15, display: "block" }}>
             <ProgressIndicator barHeight={2} />
           </span>
@@ -157,10 +142,8 @@ export const NotificationPanel: React.FunctionComponent = () => {
               return false;
             }}
             disabled={
-              operations.items.filter(
-                (o: Operation) =>
-                  o.dismiss !== true && completedStates.includes(o.status),
-              ).length === 0
+              operations.items.filter((o: Operation) => o.dismiss !== true && completedStates.includes(o.status))
+                .length === 0
             }
           >
             Dismiss Completed
@@ -168,10 +151,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         </div>
         {operations.items.length === 0 && (
           <div style={{ marginTop: "20px" }}>
-            <MessageBar
-              messageBarType={MessageBarType.success}
-              isMultiline={false}
-            >
+            <MessageBar messageBarType={MessageBarType.success} isMultiline={false}>
               No notifications to display
             </MessageBar>
           </div>
@@ -179,11 +159,7 @@ export const NotificationPanel: React.FunctionComponent = () => {
         <ul className="tre-notifications-list">
           {operations.items.map((o: Operation, i: number) => {
             return (
-              <NotificationItem
-                operation={o}
-                key={i}
-                showCallout={(o: Operation, r: Resource) => callout(o, r)}
-              />
+              <NotificationItem operation={o} key={i} showCallout={(o: Operation, r: Resource) => callout(o, r)} />
             );
           })}
         </ul>

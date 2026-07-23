@@ -38,7 +38,7 @@ vi.mock("./ResourceHeader", () => {
       <div>Readonly: {readonly?.toString()}</div>
     </div>
   );
-  ResourceHeader.displayName = 'ResourceHeader';
+  ResourceHeader.displayName = "ResourceHeader";
   return { ResourceHeader };
 });
 
@@ -49,15 +49,13 @@ vi.mock("./ResourceBody", () => {
       <div>Readonly: {readonly?.toString()}</div>
     </div>
   );
-  ResourceBody.displayName = 'ResourceBody';
+  ResourceBody.displayName = "ResourceBody";
   return { ResourceBody };
 });
 
 vi.mock("./ExceptionLayout", () => {
-  const ExceptionLayout = ({ e }: any) => (
-    <div data-testid="exception-layout">{e.userMessage}</div>
-  );
-  ExceptionLayout.displayName = 'ExceptionLayout';
+  const ExceptionLayout = ({ e }: any) => <div data-testid="exception-layout">{e.userMessage}</div>;
+  ExceptionLayout.displayName = "ExceptionLayout";
   return { ExceptionLayout };
 });
 
@@ -67,12 +65,7 @@ vi.mock("@fluentui/react", async () => {
   return {
     ...actual,
     Spinner: ({ label, ariaLive, labelPosition, size }: any) => (
-      <div
-        data-testid="spinner"
-        aria-live={ariaLive}
-        data-label-position={labelPosition}
-        data-size={size}
-      >
+      <div data-testid="spinner" aria-live={ariaLive} data-label-position={labelPosition} data-size={size}>
         {label}
       </div>
     ),
@@ -109,11 +102,7 @@ const mockSharedService: SharedService = {
 };
 
 const renderWithRouter = (component: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
 describe("SharedServiceItem Component", () => {
@@ -126,7 +115,7 @@ describe("SharedServiceItem Component", () => {
   });
 
   it("shows loading spinner initially", () => {
-    mockApiCall.mockImplementation(() => new Promise(() => { })); // Never resolves
+    mockApiCall.mockImplementation(() => new Promise(() => {})); // Never resolves
 
     renderWithRouter(<SharedServiceItem />);
 
@@ -192,18 +181,16 @@ describe("SharedServiceItem Component", () => {
     renderWithRouter(<SharedServiceItem />);
 
     await waitFor(() => {
-      expect(mockApiCall).toHaveBeenCalledWith(
-        "shared-services/test-shared-service-id",
-        "GET"
-      );
+      expect(mockApiCall).toHaveBeenCalledWith("shared-services/test-shared-service-id", "GET");
     });
-  }); it("sets up component manager with correct callbacks", async () => {
+  });
+  it("sets up component manager with correct callbacks", async () => {
     mockApiCall.mockResolvedValue({ sharedService: mockSharedService });
 
     // Set up the mock to capture the calls
     mockUseComponentManager.mockReturnValue({
       componentAction: "none",
-      operation: null
+      operation: null,
     });
 
     renderWithRouter(<SharedServiceItem />);
@@ -227,7 +214,7 @@ describe("SharedServiceItem Component", () => {
 
     mockUseComponentManager.mockReturnValue({
       componentAction: "none",
-      operation: null
+      operation: null,
     });
 
     renderWithRouter(<SharedServiceItem />);
@@ -271,7 +258,7 @@ describe("SharedServiceItem Component", () => {
   });
 
   it("configures spinner with correct properties", () => {
-    mockApiCall.mockImplementation(() => new Promise(() => { })); // Never resolves
+    mockApiCall.mockImplementation(() => new Promise(() => {})); // Never resolves
 
     renderWithRouter(<SharedServiceItem />);
 

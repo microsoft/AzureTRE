@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  IContextualMenuProps,
-  Persona,
-  PersonaSize,
-  PrimaryButton,
-} from "@fluentui/react";
+import { IContextualMenuProps, Persona, PersonaSize, PrimaryButton } from "@fluentui/react";
 import { useAccount, useMsal } from "@azure/msal-react";
 
 export const UserMenu: React.FunctionComponent = () => {
@@ -28,15 +23,8 @@ export const UserMenu: React.FunctionComponent = () => {
 
   return (
     <div className="tre-user-menu">
-      <PrimaryButton
-        menuProps={menuProps}
-        style={{ background: "none", border: "none" }}
-      >
-        <Persona
-          text={account?.name}
-          size={PersonaSize.size32}
-          imageAlt={account?.name}
-        />
+      <PrimaryButton menuProps={menuProps} style={{ background: "none", border: "none" }}>
+        <Persona text={account?.name} size={PersonaSize.size32} imageAlt={account?.name} />
       </PrimaryButton>
     </div>
   );

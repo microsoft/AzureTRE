@@ -19,10 +19,7 @@ export const WorkspaceItem: React.FunctionComponent = () => {
 
   return (
     <>
-      <ResourceHeader
-        resource={workspaceCtx.workspace}
-        latestUpdate={latestUpdate}
-      />
+      <ResourceHeader resource={workspaceCtx.workspace} latestUpdate={latestUpdate} />
       <ResourceBody resource={workspaceCtx.workspace} />
     </>
   );

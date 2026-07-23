@@ -21,7 +21,7 @@ vi.mock("react-router-dom", async () => {
     ...actual,
     useNavigate: () => globalThis.__mockNavigate,
     useParams: () => ({}),
-    useLocation: () => ({ pathname: '/test', search: '', hash: '', state: null })
+    useLocation: () => ({ pathname: "/test", search: "", hash: "", state: null }),
   };
 });
 
@@ -32,34 +32,26 @@ vi.mock("../../hooks/useComponentManager", () => ({
 
 // Mock child components
 vi.mock("./ResourceContextMenu", () => {
-  const ResourceContextMenu = ({ resource }: any) => (
-    <div data-testid="resource-context-menu">{resource.id}</div>
-  );
-  ResourceContextMenu.displayName = 'ResourceContextMenu';
+  const ResourceContextMenu = ({ resource }: any) => <div data-testid="resource-context-menu">{resource.id}</div>;
+  ResourceContextMenu.displayName = "ResourceContextMenu";
   return { ResourceContextMenu };
 });
 
 vi.mock("./StatusBadge", () => {
-  const StatusBadge = ({ _resource, status }: any) => (
-    <div data-testid="status-badge">{status}</div>
-  );
-  StatusBadge.displayName = 'StatusBadge';
+  const StatusBadge = ({ _resource, status }: any) => <div data-testid="status-badge">{status}</div>;
+  StatusBadge.displayName = "StatusBadge";
   return { StatusBadge };
 });
 
 vi.mock("./PowerStateBadge", () => {
-  const PowerStateBadge = ({ state }: any) => (
-    <div data-testid="power-state-badge">{state}</div>
-  );
-  PowerStateBadge.displayName = 'PowerStateBadge';
+  const PowerStateBadge = ({ state }: any) => <div data-testid="power-state-badge">{state}</div>;
+  PowerStateBadge.displayName = "PowerStateBadge";
   return { PowerStateBadge };
 });
 
 vi.mock("./CostsTag", () => {
-  const CostsTag = ({ resourceId }: any) => (
-    <div data-testid="costs-tag">{resourceId}</div>
-  );
-  CostsTag.displayName = 'CostsTag';
+  const CostsTag = ({ resourceId }: any) => <div data-testid="costs-tag">{resourceId}</div>;
+  CostsTag.displayName = "CostsTag";
   return { CostsTag };
 });
 
@@ -69,13 +61,13 @@ vi.mock("./ConfirmCopyUrlToClipboard", () => {
       Copy URL Dialog
     </div>
   );
-  ConfirmCopyUrlToClipboard.displayName = 'ConfirmCopyUrlToClipboard';
+  ConfirmCopyUrlToClipboard.displayName = "ConfirmCopyUrlToClipboard";
   return { ConfirmCopyUrlToClipboard };
 });
 
 vi.mock("./SecuredByRole", () => {
   const SecuredByRole = ({ element }: any) => element;
-  SecuredByRole.displayName = 'SecuredByRole';
+  SecuredByRole.displayName = "SecuredByRole";
   return { SecuredByRole };
 });
 
@@ -105,46 +97,37 @@ vi.mock("@fluentui/react", async () => {
 
   // Add Item property to Stack
   const Item = ({ children, align, grow, styles }: any) => (
-    <div
-      data-testid="stack-item"
-      data-align={align}
-      data-grow={grow}
-      style={styles?.root}
-    >
+    <div data-testid="stack-item" data-align={align} data-grow={grow} style={styles?.root}>
       {children}
     </div>
   );
-  Item.displayName = 'StackItem';
+  Item.displayName = "StackItem";
   MockStack.Item = Item;
 
   return {
     ...actual,
     Stack: MockStack,
     PrimaryButton: ({ text, children, _iconProps, styles, onClick, disabled }: any) => (
-      <button
-        data-testid="primary-button"
-        onClick={onClick}
-        disabled={disabled}
-        style={styles?.root}
-      >
+      <button data-testid="primary-button" onClick={onClick} disabled={disabled} style={styles?.root}>
         {text || children}
       </button>
     ),
-    Icon: ({ iconName }: any) => (
-      <div data-testid={`icon-${iconName}`}>{iconName}</div>
-    ),
+    Icon: ({ iconName }: any) => <div data-testid={`icon-${iconName}`}>{iconName}</div>,
     IconButton: ({ onClick, title }: any) => (
       <button data-testid="icon-button" onClick={onClick} title={title}></button>
     ),
     TooltipHost: ({ content, children }: any) => (
-      <div data-testid="tooltip" title={content}>{children}</div>
+      <div data-testid="tooltip" title={content}>
+        {children}
+      </div>
     ),
-    Callout: ({ children, hidden }: any) =>
-      !hidden ? <div data-testid="callout">{children}</div> : null,
+    Callout: ({ children, hidden }: any) => (!hidden ? <div data-testid="callout">{children}</div> : null),
     Text: ({ children }: any) => <span>{children}</span>,
     Link: ({ children }: any) => <a data-testid="fluent-link">{children}</a>,
     Shimmer: ({ width, height }: any) => (
-      <div data-testid="shimmer" style={{ width, height }}>Loading...</div>
+      <div data-testid="shimmer" style={{ width, height }}>
+        Loading...
+      </div>
     ),
     mergeStyleSets: (styles: any) => styles,
     DefaultPalette: { white: "#ffffff" },
@@ -155,12 +138,7 @@ vi.mock("@fluentui/react", async () => {
 // *** NOW IMPORTS AFTER ALL MOCKS ***
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  act
-} from "../../test-utils";
+import { render, screen, fireEvent, act } from "../../test-utils";
 import { ResourceCard } from "./ResourceCard";
 import { Resource, ComponentAction, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -244,13 +222,13 @@ const mockAppRolesContext = {
 const renderWithContexts = (
   component: React.ReactElement,
   workspaceContext = mockWorkspaceContext,
-  appRolesContext = mockAppRolesContext
+  appRolesContext = mockAppRolesContext,
 ) => {
   return render(component, {
     // Use spread operator to include children property which is required by AllProvidersProps
     children: component,
     workspaceContext,
-    appRolesContext
+    appRolesContext,
   });
 };
 
@@ -300,9 +278,7 @@ describe("ResourceCard Component", () => {
       isEnabled: false,
     };
 
-    renderWithContexts(
-      <ResourceCard {...defaultProps} resource={disabledResource} />
-    );
+    renderWithContexts(<ResourceCard {...defaultProps} resource={disabledResource} />);
 
     const connectButton = screen.getByTestId("primary-button");
     expect(connectButton).toBeDisabled();
@@ -319,9 +295,7 @@ describe("ResourceCard Component", () => {
 
   it("calls selectResource when provided", () => {
     const mockSelectResource = vi.fn();
-    renderWithContexts(
-      <ResourceCard {...defaultProps} selectResource={mockSelectResource} />
-    );
+    renderWithContexts(<ResourceCard {...defaultProps} selectResource={mockSelectResource} />);
 
     const card = screen.getByTestId("clickable-stack");
     fireEvent.click(card);
@@ -420,9 +394,7 @@ describe("ResourceCard Component", () => {
       },
     };
 
-    renderWithContexts(
-      <ResourceCard {...defaultProps} resource={resourceWithoutConnection} />
-    );
+    renderWithContexts(<ResourceCard {...defaultProps} resource={resourceWithoutConnection} />);
 
     expect(screen.queryByTestId("primary-button")).not.toBeInTheDocument();
   });
@@ -446,7 +418,7 @@ describe("ResourceCard Component", () => {
       renderWithContexts(
         <ResourceCard {...defaultProps} resource={workspaceWithoutAuth} />,
         mockWorkspaceContext,
-        nonAdminContext
+        nonAdminContext,
       );
     });
 
