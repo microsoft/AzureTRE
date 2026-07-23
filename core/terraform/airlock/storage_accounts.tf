@@ -1,15 +1,16 @@
 
 
 # Preserve the original legacy resource addresses in state so existing
-# deployments do not accidentally churn the consolidated accounts.
+# deployments do not accidentally destroy the legacy accounts on upgrade.
+# The legacy resources now use count-based addressing in storage_accounts_v1.tf.
 moved {
   from = azurerm_storage_account.sa_import_external
-  to   = azurerm_storage_account.sa_airlock_core
+  to   = azurerm_storage_account.sa_import_external[0]
 }
 
 moved {
   from = azurerm_storage_account.sa_import_in_progress
-  to   = azurerm_storage_account.sa_airlock_workspace_global
+  to   = azurerm_storage_account.sa_import_in_progress[0]
 }
 
 resource "azurerm_storage_account" "sa_airlock_core" {

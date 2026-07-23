@@ -34,7 +34,7 @@ main() {
         echo "docker group GID ${docker_gid} does not match socket GID ${socket_gid}; using group ${target_group}"
       else
         echo "Updating docker group GID from ${docker_gid} to ${socket_gid}"
-        groupmod -g "${socket_gid}" docker
+        sudo groupmod -g "${socket_gid}" docker
       fi
     fi
   else
@@ -43,12 +43,12 @@ main() {
       echo "Using existing group ${target_group} for docker socket GID ${socket_gid}"
     else
       echo "Creating docker group with GID ${socket_gid}"
-      groupadd -g "${socket_gid}" docker
+      sudo groupadd -g "${socket_gid}" docker
     fi
   fi
 
-  usermod -aG "${target_group}" "${target_user}"
-  chmod g+rw "${socket_path}"
+  sudo usermod -aG "${target_group}" "${target_user}"
+  sudo chmod g+rw "${socket_path}"
 }
 
 main "$@"
