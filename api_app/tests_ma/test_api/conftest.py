@@ -25,14 +25,11 @@ def no_auth_token():
     mock_validator = MagicMock()
     mock_validator.validate.return_value = default_validated
 
-    fake_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
-
-    with patch('fastapi.security.OAuth2AuthorizationCodeBearer.__call__', new=AsyncMock(return_value="token")):
-        with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
-            with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
-                with patch('auth.rbac.get_core_validator', return_value=mock_validator):
-                    with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
-                        yield
+    with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
+        with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
+            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+                with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
+                    yield
 
 
 @pytest.fixture(autouse=True, scope="session")
