@@ -20,11 +20,7 @@ import {
 } from "@fluentui/react";
 import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { ApiEndpoint } from "../../models/apiEndpoints";
-import {
-  AirlockRequest,
-  AirlockRequestStatus,
-  AirlockRequestType,
-} from "../../models/airlock";
+import { AirlockRequest, AirlockRequestStatus, AirlockRequestType } from "../../models/airlock";
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "../../models/loadingState";
@@ -40,22 +36,15 @@ interface Workspace {
 }
 
 export const RequestsList: React.FunctionComponent = () => {
-  const [myAirlockRequests, setMyAirlockRequests] = useState(
-    [] as AirlockRequest[],
-  );
-  const [airlockManagerRequests, setAirlockManagerRequests] = useState(
-    [] as AirlockRequest[],
-  );
-  const [airlockRequests, setAirlockRequests] = useState(
-    [] as AirlockRequest[],
-  );
+  const [myAirlockRequests, setMyAirlockRequests] = useState([] as AirlockRequest[]);
+  const [airlockManagerRequests, setAirlockManagerRequests] = useState([] as AirlockRequest[]);
+  const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
   const [requestColumns, setRequestColumns] = useState([] as IColumn[]);
   const [orderBy, setOrderBy] = useState("updatedWhen");
   const [orderAscending, setOrderAscending] = useState(false);
   const [filters, setFilters] = useState(new Map<string, string>());
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [contextMenuProps, setContextMenuProps] =
-    useState<IContextualMenuProps>();
+  const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
   const [activeFilter, setActiveFilter] = useState<string>("myRequests");
   const [searchText, setSearchText] = useState("");
@@ -63,17 +52,12 @@ export const RequestsList: React.FunctionComponent = () => {
   const theme = getTheme();
   const navigate = useNavigate();
 
-  const mapRequestsToWorkspace = (
-    requests: AirlockRequest[],
-    workspaces: Workspace[],
-  ) => {
+  const mapRequestsToWorkspace = (requests: AirlockRequest[], workspaces: Workspace[]) => {
     return requests.map((request) => {
       const workspace = workspaces.find((w) => w.id === request.workspaceId);
       return {
         ...request,
-        workspace: workspace
-          ? workspace.properties.display_name
-          : "Unknown Workspace",
+        workspace: workspace ? workspace.properties.display_name : "Unknown Workspace",
       };
     });
   };
@@ -95,11 +79,7 @@ export const RequestsList: React.FunctionComponent = () => {
     if (activeFilter === "allRequests") {
       setAirlockRequests(airlockManagerRequests);
     } else if (activeFilter === "awaitingMyReview") {
-      setAirlockRequests(
-        airlockManagerRequests.filter(
-          (r) => r.status === AirlockRequestStatus.InReview,
-        ),
-      );
+      setAirlockRequests(airlockManagerRequests.filter((r) => r.status === AirlockRequestStatus.InReview));
     } else {
       setAirlockRequests(myAirlockRequests);
     }
@@ -111,30 +91,20 @@ export const RequestsList: React.FunctionComponent = () => {
     try {
       const query = buildQuery();
       const workspacePromise = apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
-      const myRequestsPromise = apiCall(
-        `${ApiEndpoint.Requests}${query}`,
-        HttpMethod.Get,
-      );
+      const myRequestsPromise = apiCall(`${ApiEndpoint.Requests}${query}`, HttpMethod.Get);
       const managerRequestsPromise = apiCall(
         `${ApiEndpoint.Requests}${query}${query ? "&" : "?"}airlock_manager=true`,
         HttpMethod.Get,
       );
 
-      const [{ workspaces: fetchedWorkspaces }, myRequests, managerRequests] =
-        await Promise.all([
-          workspacePromise,
-          myRequestsPromise,
-          managerRequestsPromise,
-        ]);
+      const [{ workspaces: fetchedWorkspaces }, myRequests, managerRequests] = await Promise.all([
+        workspacePromise,
+        myRequestsPromise,
+        managerRequestsPromise,
+      ]);
 
-      const mappedMyRequests = mapRequestsToWorkspace(
-        myRequests,
-        fetchedWorkspaces || [],
-      );
-      const mappedManagerRequests = mapRequestsToWorkspace(
-        managerRequests,
-        fetchedWorkspaces || [],
-      );
+      const mappedMyRequests = mapRequestsToWorkspace(myRequests, fetchedWorkspaces || []);
+      const mappedManagerRequests = mapRequestsToWorkspace(managerRequests, fetchedWorkspaces || []);
 
       setMyAirlockRequests(mappedMyRequests);
       setAirlockManagerRequests(mappedManagerRequests);
@@ -187,19 +157,12 @@ export const RequestsList: React.FunctionComponent = () => {
     key: option.key,
     text: option.label,
     iconProps: {
-      iconName:
-        orderBy === option.key
-          ? orderAscending
-            ? "SortUp"
-            : "SortDown"
-          : "Sort",
+      iconName: orderBy === option.key ? (orderAscending ? "SortUp" : "SortDown") : "Sort",
     },
     onClick: () => handleSortChange(option.key),
   }));
 
-  const handleSortButtonClick = (
-    ev?: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>,
-  ) => {
+  const handleSortButtonClick = (ev?: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
     if (!ev) {
       return;
     }
@@ -221,18 +184,13 @@ export const RequestsList: React.FunctionComponent = () => {
   };
 
   const openContextMenu = useCallback(
-    (
-      column: IColumn,
-      ev: React.MouseEvent<HTMLElement>,
-      options: Array<string>,
-    ) => {
+    (column: IColumn, ev: React.MouseEvent<HTMLElement>, options: Array<string>) => {
       const filterOptions = options.map((option) => {
         return {
           key: option,
           name: option,
           canCheck: true,
-          checked:
-            filters?.has(column.key) && filters.get(column.key) === option,
+          checked: filters?.has(column.key) && filters.get(column.key) === option,
           onClick: () => {
             setFilters((f) => {
               if (f.get(column.key) === option) {
@@ -275,10 +233,7 @@ export const RequestsList: React.FunctionComponent = () => {
   );
 
   useEffect(() => {
-    const orderByColumn = (
-      ev: React.MouseEvent<HTMLElement>,
-      column: IColumn,
-    ) => {
+    const orderByColumn = (ev: React.MouseEvent<HTMLElement>, column: IColumn) => {
       orderRequests(column);
     };
 
@@ -291,27 +246,12 @@ export const RequestsList: React.FunctionComponent = () => {
         isIconOnly: true,
         onRender: (request: AirlockRequest) => {
           if (request.status === AirlockRequestStatus.Draft) {
-            return (
-              <Icon
-                iconName="FolderOpen"
-                style={{ verticalAlign: "bottom", fontSize: 14 }}
-              />
-            );
+            return <Icon iconName="FolderOpen" style={{ verticalAlign: "bottom", fontSize: 14 }} />;
           } else if (request.files?.length > 0 && request.files[0].name) {
             const fileType = request.files[0].name.split(".").pop();
-            return (
-              <Icon
-                {...getFileTypeIconProps({ extension: fileType })}
-                style={{ verticalAlign: "bottom" }}
-              />
-            );
+            return <Icon {...getFileTypeIconProps({ extension: fileType })} style={{ verticalAlign: "bottom" }} />;
           } else {
-            return (
-              <Icon
-                iconName="Page"
-                style={{ verticalAlign: "bottom", fontSize: 14 }}
-              />
-            );
+            return <Icon iconName="Page" style={{ verticalAlign: "bottom", fontSize: 14 }} />;
           }
         },
       },
@@ -340,9 +280,7 @@ export const RequestsList: React.FunctionComponent = () => {
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        onRender: (request: AirlockRequest) => (
-          <Persona size={PersonaSize.size24} text={request.createdBy?.name} />
-        ),
+        onRender: (request: AirlockRequest) => <Persona size={PersonaSize.size24} text={request.createdBy?.name} />,
       },
       {
         key: "type",
@@ -355,12 +293,9 @@ export const RequestsList: React.FunctionComponent = () => {
         columnActionsMode: ColumnActionsMode.hasDropdown,
         isSorted: orderBy === "type",
         isSortedDescending: !orderAscending,
-        onColumnClick: (ev, column) =>
-          openContextMenu(column, ev, Object.values(AirlockRequestType)),
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestType)),
         onColumnContextMenu: (column, ev) =>
-          column &&
-          ev &&
-          openContextMenu(column, ev, Object.values(AirlockRequestType)),
+          column && ev && openContextMenu(column, ev, Object.values(AirlockRequestType)),
         isFiltered: filters.has("type"),
       },
       {
@@ -373,12 +308,9 @@ export const RequestsList: React.FunctionComponent = () => {
         columnActionsMode: ColumnActionsMode.hasDropdown,
         isSorted: orderBy === "status",
         isSortedDescending: !orderAscending,
-        onColumnClick: (ev, column) =>
-          openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         onColumnContextMenu: (column, ev) =>
-          column &&
-          ev &&
-          openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+          column && ev && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         isFiltered: filters.has("status"),
         onRender: (request: AirlockRequest) => request.status.replace("_", " "),
       },
@@ -393,9 +325,7 @@ export const RequestsList: React.FunctionComponent = () => {
         isSorted: orderBy === "createdTime",
         isSortedDescending: !orderAscending,
         onRender: (request: AirlockRequest) => {
-          return (
-            <span>{moment.unix(request.createdWhen).format("DD/MM/YYYY")}</span>
-          );
+          return <span>{moment.unix(request.createdWhen).format("DD/MM/YYYY")}</span>;
         },
         onColumnClick: orderByColumn,
       },
@@ -430,9 +360,9 @@ export const RequestsList: React.FunctionComponent = () => {
       buttonStyles:
         activeFilter === "allRequests"
           ? {
-            root: { fontWeight: "600" },
-            label: { fontWeight: "600" },
-          }
+              root: { fontWeight: "600" },
+              label: { fontWeight: "600" },
+            }
           : undefined,
       onClick: () => {
         setActiveFilter("allRequests");
@@ -447,26 +377,21 @@ export const RequestsList: React.FunctionComponent = () => {
       key: "awaitingMyReview",
       text: "Awaiting my review",
       iconProps: {
-        iconName:
-          activeFilter === "awaitingMyReview" ? "CheckMark" : "TemporaryUser",
+        iconName: activeFilter === "awaitingMyReview" ? "CheckMark" : "TemporaryUser",
       },
       buttonStyles:
         activeFilter === "awaitingMyReview"
           ? {
-            root: { fontWeight: "600" },
-            label: { fontWeight: "600" },
-          }
+              root: { fontWeight: "600" },
+              label: { fontWeight: "600" },
+            }
           : undefined,
       onClick: () => {
         setActiveFilter("awaitingMyReview");
         if (filters.size > 0) {
           setFilters(new Map());
         }
-        setAirlockRequests(
-          airlockManagerRequests.filter(
-            (r) => r.status === AirlockRequestStatus.InReview,
-          ),
-        );
+        setAirlockRequests(airlockManagerRequests.filter((r) => r.status === AirlockRequestStatus.InReview));
       },
     });
   }
@@ -475,10 +400,13 @@ export const RequestsList: React.FunctionComponent = () => {
     key: "myRequests",
     text: "My Requests",
     iconProps: { iconName: activeFilter === "myRequests" ? "CheckMark" : "EditContact" },
-    buttonStyles: activeFilter === "myRequests" ? {
-      root: { fontWeight: '600' },
-      label: { fontWeight: '600' }
-    } : undefined,
+    buttonStyles:
+      activeFilter === "myRequests"
+        ? {
+            root: { fontWeight: "600" },
+            label: { fontWeight: "600" },
+          }
+        : undefined,
     onClick: () => {
       setActiveFilter("myRequests");
       if (filters.size > 0) {
@@ -546,11 +474,7 @@ export const RequestsList: React.FunctionComponent = () => {
       <Stack className="tre-panel">
         <Stack.Item>
           <Stack tokens={{ childrenGap: 12 }}>
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              verticalAlign="center"
-            >
+            <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
               <h1 style={{ marginBottom: 0 }}>Airlock Requests</h1>
               <CommandBarButton
                 iconProps={{ iconName: "refresh" }}
@@ -561,10 +485,7 @@ export const RequestsList: React.FunctionComponent = () => {
                 }}
               />
             </Stack>
-            <CommandBar
-              items={quickFilterCommandBarItems}
-              ariaLabel="Quick filters"
-            />
+            <CommandBar items={quickFilterCommandBarItems} ariaLabel="Quick filters" />
             <CommandBar
               items={searchCommandBarItems}
               farItems={searchCommandBarFarItems}
@@ -581,32 +502,22 @@ export const RequestsList: React.FunctionComponent = () => {
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
           onItemInvoked={(item) =>
-            navigate(
-              `/${ApiEndpoint.Workspaces}/${item.workspaceId}/${ApiEndpoint.AirlockRequests}/${item.id}`,
-            )
+            navigate(`/${ApiEndpoint.Workspaces}/${item.workspaceId}/${ApiEndpoint.AirlockRequests}/${item.id}`)
           }
           className="tre-table"
           enableShimmer={loadingState === LoadingState.Loading}
         />
         {contextMenuProps && <ContextualMenu {...contextMenuProps} />}
-        {filteredRequests.length === 0 &&
-          loadingState !== LoadingState.Loading && (
-            <div
-              style={{ textAlign: "center", padding: "50px 10px 100px 10px" }}
-            >
-              <h4>No requests found</h4>
-              {filters.size > 0 || searchText.trim().length > 0 ? (
-                <small>
-                  There are no requests matching your selected filter(s).
-                </small>
-              ) : (
-                <small>
-                  Looks like there are no airlock requests yet. Create a new
-                  request to get started.
-                </small>
-              )}
-            </div>
-          )}
+        {filteredRequests.length === 0 && loadingState !== LoadingState.Loading && (
+          <div style={{ textAlign: "center", padding: "50px 10px 100px 10px" }}>
+            <h4>No requests found</h4>
+            {filters.size > 0 || searchText.trim().length > 0 ? (
+              <small>There are no requests matching your selected filter(s).</small>
+            ) : (
+              <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
