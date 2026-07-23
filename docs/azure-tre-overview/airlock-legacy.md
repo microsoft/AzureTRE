@@ -7,7 +7,7 @@
 
 The legacy airlock architecture uses **separate storage accounts for each stage** of the airlock process. Data is physically copied between storage accounts as the request progresses through stages. This results in 5 core storage accounts and 5 per-workspace storage accounts (10+ total).
 
-To use the legacy architecture, set `airlock_version: 1` (the default) in your workspace properties and ensure `enable_legacy_airlock: true` is set in your `config.yaml`.
+To use the legacy architecture, set `airlock_version: 1` in your workspace properties and ensure `enable_legacy_airlock: true` is set in your `config.yaml`. Note that new deployments default to `airlock_version: 2` (consolidated storage).
 
 ## Storage Accounts
 

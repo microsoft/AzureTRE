@@ -178,7 +178,7 @@ class AirlockRequestRepository(BaseRepository):
         )
         parameters = [
             {"name": "@airlockVersion", "value": 1},
-            {"name": "@finalStatuses", "value": self.FINAL_AIRLOCK_STATUSES}
+            {"name": "@finalStatuses", "value": [s.value for s in self.FINAL_AIRLOCK_STATUSES]}
         ]
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]

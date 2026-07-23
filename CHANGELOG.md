@@ -16,7 +16,7 @@ ENHANCEMENTS:
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
 BUG FIXES:
-* Fix airlock import-review workspace template to restore v1 storage account (`stalimip{tre_id}`) access for legacy workspaces when `airlock_version=1`, while preserving ABAC-conditional v2 (`stalairlock{tre_id}`) access. Bumps `tre-workspace-airlock-import-review` to v1.6.0.
+* Fix airlock import-review workspace template to restore v1 storage account (`stalimip{tre_id}`) access for legacy workspaces when `airlock_version=1`, while preserving ABAC-conditional v2 (`stalairlock{tre_id}`) access. Bumps `tre-workspace-airlock-import-review` to v1.6.0. ([#4964](https://github.com/microsoft/AzureTRE/pull/4964))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))

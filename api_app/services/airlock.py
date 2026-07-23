@@ -74,10 +74,10 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
 
 def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
     if airlock_request.type == constants.IMPORT_TYPE:
-        # Only import Draft (external upload) is publicly accessible via App GW/SAS
+        # Only import Draft (external upload) is publicly accessible
         return airlock_request.status == AirlockRequestStatus.Draft
     else:
-        # Only export Approved is publicly accessible via App GW/SAS
+        # Only export Approved is publicly accessible
         return airlock_request.status == AirlockRequestStatus.Approved
 
 
@@ -136,7 +136,7 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
                                    start=start,
                                    expiry=expiry)
 
-    # Return standard blob storage URL format
+    # Return a direct storage account SAS URL (blob service endpoint)
     return "https://{}.blob.{}/{}?{}" \
         .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
