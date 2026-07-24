@@ -24,7 +24,7 @@ index-url = ${nexus_proxy_url}/repository/pypi/simple
 trusted-host = $NexusHost
 "@
 
-# We need to write the ini file in UTF8 (No BOM) as pip won't understand Powershell's default encoding (unicode)
+# We need to write the ini file in UTF-8 (No BOM) as pip won't understand PowerShell's default encoding (unicode)
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($PipConfigFilePath, $ConfigBody, $Utf8NoBomEncoding)
 
