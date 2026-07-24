@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.4.6
+version: 2.0.0
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -9,7 +9,10 @@ registry: azuretre
 custom:
   # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
-    "2 CPU | 8GB RAM": Standard_D2s_v5
+    "2 CPU | 8GB RAM": Standard_D2s_v6
+    "4 CPU | 16GB RAM": Standard_D4s_v6
+    "8 CPU | 32GB RAM": Standard_D8s_v6
+    "16 CPU | 64GB RAM": Standard_D16s_v6
   image_options:
     "Windows Server 2025":
       source_image_reference:
