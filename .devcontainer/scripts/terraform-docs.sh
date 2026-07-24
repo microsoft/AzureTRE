@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 get_latest_release() {
   curl --silent "https://api.github.com/repos/$1/releases/latest" |

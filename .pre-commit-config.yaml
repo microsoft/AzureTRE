@@ -7,7 +7,6 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-yaml
-        args: [--unsafe]
       - id: check-json
         exclude: ^\.devcontainer/.*\.json$
       - id: check-merge-conflict
@@ -24,7 +23,7 @@ repos:
     hooks:
       - id: bandit
         args: ["-ll"]
-        exclude: ^(tests/|e2e_tests/)
+        exclude: (^|/)(tests|e2e_tests)/
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.2
