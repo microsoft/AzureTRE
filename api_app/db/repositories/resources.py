@@ -151,6 +151,17 @@ class ResourceRepository(BaseRepository):
                                         keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
         return keys
 
+    def _remove_property_by_path(self, properties: dict, path: str):
+        parts = path.split(".")
+        current = properties
+        for i, part in enumerate(parts):
+            if not isinstance(current, dict) or part not in current:
+                return
+            if i == len(parts) - 1:
+                del current[part]
+            else:
+                current = current[part]
+
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
@@ -184,8 +195,7 @@ class ResourceRepository(BaseRepository):
 
             properties_to_remove = old_properties - new_properties
             for prop in properties_to_remove:
-                if prop in resource.properties:
-                    del resource.properties[prop]
+                self._remove_property_by_path(resource.properties, prop)
 
             resource.templateVersion = resource_patch.templateVersion
 
