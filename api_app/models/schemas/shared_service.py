@@ -65,7 +65,7 @@ class SharedServicesInList(BaseModel):
 
 class SharedServiceInCreate(BaseModel):
     templateName: str = Field(title="Shared service type", description="Bundle name")
-    properties: dict = Field(default={}, title="Shared service parameters", description="Values for the parameters required by the shared service resource specification")
+    properties: dict = Field(default_factory=dict, title="Shared service parameters", description="Values for the parameters required by the shared service resource specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "templateName": "tre-shared-service-firewall",
