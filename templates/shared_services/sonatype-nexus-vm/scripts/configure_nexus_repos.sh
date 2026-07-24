@@ -4,10 +4,39 @@ set -o nounset
 shopt -s nullglob
 # set -o xtrace
 
-if [ -z "$1" ]; then
-  echo 'Nexus password needs to be passed as argument'
+VAULT_NAME="${1:-}"
+MSI_CLIENT_ID="${2:-}"
+
+if [ -z "$VAULT_NAME" ]; then
+  echo 'ERROR - VAULT_NAME (arg 1) must be provided'
   exit 1
 fi
+
+if [ -z "$MSI_CLIENT_ID" ]; then
+  echo 'ERROR - MSI_CLIENT_ID (arg 2) must be provided'
+  exit 1
+fi
+
+# Fetch the Nexus admin password from Key Vault using the VM's managed identity via IMDS.
+# HTTP to link-local address bypasses firewall; Key Vault is reached over its private endpoint.
+echo "Fetching Nexus admin password from Key Vault '${VAULT_NAME}'..."
+KV_TOKEN=$(curl -s -H 'Metadata:true' \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&client_id=${MSI_CLIENT_ID}&resource=https://vault.azure.net" \
+  | jq -r '.access_token')
+if [ -z "$KV_TOKEN" ] || [ "$KV_TOKEN" = "null" ]; then
+  echo "ERROR - Failed to get Key Vault access token from IMDS"
+  exit 1
+fi
+
+NEXUS_ADMIN_PASSWORD=$(curl -s \
+  -H "Authorization: Bearer ${KV_TOKEN}" \
+  "https://${VAULT_NAME}.vault.azure.net/secrets/nexus-admin-password?api-version=7.4" \
+  | jq -r '.value')
+if [ -z "$NEXUS_ADMIN_PASSWORD" ] || [ "$NEXUS_ADMIN_PASSWORD" = "null" ]; then
+  echo "ERROR - Failed to fetch nexus-admin-password from Key Vault '${VAULT_NAME}'"
+  exit 1
+fi
+echo "Successfully fetched Nexus admin password from Key Vault."
 
 retry_with_backoff() {
   local func="$1"
@@ -47,7 +76,7 @@ fi
 
 # Accept Community Edition EULA (required for Nexus 3.77+)
 echo "Checking Community Edition EULA status..."
-eula_response=$(curl -s -u admin:"$1" \
+eula_response=$(curl -s -u admin:"$NEXUS_ADMIN_PASSWORD" \
   'http://localhost/service/rest/v1/system/eula' \
   -H 'accept: application/json' \
   -k 2>/dev/null)
@@ -57,7 +86,7 @@ if echo "$eula_response" | jq -e '.accepted == false' > /dev/null 2>&1; then
   # Extract disclaimer and build proper JSON using jq to handle escaping
   disclaimer=$(echo "$eula_response" | jq -r '.disclaimer')
   eula_payload=$(jq -n --arg disc "$disclaimer" '{"disclaimer": $disc, "accepted": true}')
-  eula_status_code=$(curl -s -u admin:"$1" -X POST \
+  eula_status_code=$(curl -s -u admin:"$NEXUS_ADMIN_PASSWORD" -X POST \
     'http://localhost/service/rest/v1/system/eula' \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
@@ -75,14 +104,14 @@ else
 fi
 
 echo "Getting current anonymous settings in Nexus..."
-current_anon_json=$(curl -iu admin:"$1" -X GET \
+current_anon_json=$(curl -iu admin:"$NEXUS_ADMIN_PASSWORD" -X GET \
   'http://localhost/service/rest/v1/security/anonymous' \
   -H 'accept: application/json' \
   -k -s)
 echo "Current anonymous settings: $current_anon_json"
 
 echo "Enabling anonymous access in Nexus..."
-anon_status_code=$(curl -iu admin:"$1" -X PUT \
+anon_status_code=$(curl -iu admin:"$NEXUS_ADMIN_PASSWORD" -X PUT \
   'http://localhost/service/rest/v1/security/anonymous' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
@@ -147,14 +176,14 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
       return 1
     }
 
-    if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$1"; then
+    if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$NEXUS_ADMIN_PASSWORD"; then
       echo "ERROR - Timeout while trying to configure $repo_name"
       exit 1
     fi
 done
 
 echo 'Configuring realms...'
-status_code=$(curl -iu admin:"$1" -XPUT \
+status_code=$(curl -iu admin:"$NEXUS_ADMIN_PASSWORD" -XPUT \
   'http://localhost/service/rest/v1/security/realms/active' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
