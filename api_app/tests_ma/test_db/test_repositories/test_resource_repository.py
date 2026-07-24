@@ -464,7 +464,7 @@ async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo
         await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
     # check it's invalid when trying to update a non-updateable field
-    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
+    patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'Windows 11'})
     with pytest.raises(ValidationError):
         await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
