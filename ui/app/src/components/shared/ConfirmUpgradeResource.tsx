@@ -264,6 +264,41 @@ const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
   return { allOf: conditionalEntries };
 };
 
+// Helper to extract all property keys from template properties and allOf conditionals
+export const getAllPropertyKeysFromTemplate = (template: any): string[] => {
+  if (!template) return [];
+  let keys = getAllPropertyKeys(template.properties);
+
+  if (template.allOf) {
+    template.allOf.forEach((condition: any) => {
+      if (condition.then && condition.then.properties) {
+        keys = keys.concat(getAllPropertyKeys(condition.then.properties));
+      }
+      if (condition.else && condition.else.properties) {
+        keys = keys.concat(getAllPropertyKeys(condition.else.properties));
+      }
+    });
+  }
+  return [...new Set(keys)];
+};
+
+// Helper to extract top-level keys (matching backend removal checks)
+export const getTopLevelKeysFromTemplate = (template: any): string[] => {
+  if (!template) return [];
+  let keys = Object.keys(template.properties || {});
+  if (template.allOf) {
+    template.allOf.forEach((condition: any) => {
+      if (condition.then && condition.then.properties) {
+        keys = keys.concat(Object.keys(condition.then.properties));
+      }
+      if (condition.else && condition.else.properties) {
+        keys = keys.concat(Object.keys(condition.else.properties));
+      }
+    });
+  }
+  return [...new Set(keys)];
+};
+
 export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps> = (props: ConfirmUpgradeProps) => {
   const apiCall = useAuthApiCall();
   const [selectedVersion, setSelectedVersion] = useState("");
@@ -274,7 +309,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
   const [allNewProperties, setAllNewProperties] = useState<string[]>([]); // All new properties including hidden ones
   const [newPropertiesToFill, setNewPropertiesToFill] = useState<string[]>([]); // Only visible properties
-  const [newPropertyValues, setNewPropertyValues] = useState<any>({});
+  const [newPropertyValues, setNewPropertyValues] = useState<Record<string, any>>({});
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
   const [removedProperties, setRemovedProperties] = useState<string[]>([]);
@@ -329,7 +364,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
     let templateGetPath;
 
-    // let workspaceApplicationIdURI = undefined;
     switch (props.resource.resourceType) {
       case ResourceType.Workspace:
         templateListPath = ApiEndpoint.WorkspaceTemplates;
@@ -349,7 +383,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           const workspaceId = (props.resource.properties.parentWorkspaceService as WorkspaceService).workspaceId;
           templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
-          // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
           break;
         } else {
           throw Error("Parent workspace service must be passed as prop when creating user resource.");
@@ -391,41 +424,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
         // Use full fetched schema from API
         setNewTemplateSchema(newTemplate);
-
-        // Helper to extract keys from template properties and allOf conditionals
-        const getAllPropertyKeysFromTemplate = (template: any): string[] => {
-          if (!template) return [];
-          let keys = getAllPropertyKeys(template.properties);
-
-          if (template.allOf) {
-            template.allOf.forEach((condition: any) => {
-              if (condition.then && condition.then.properties) {
-                keys = keys.concat(getAllPropertyKeys(condition.then.properties));
-              }
-              if (condition.else && condition.else.properties) {
-                keys = keys.concat(getAllPropertyKeys(condition.else.properties));
-              }
-            });
-          }
-          return [...new Set(keys)];
-        };
-
-        // Helper to extract top-level keys (matching backend removal checks)
-        const getTopLevelKeysFromTemplate = (template: any): string[] => {
-          if (!template) return [];
-          let keys = Object.keys(template.properties || {});
-          if (template.allOf) {
-            template.allOf.forEach((condition: any) => {
-              if (condition.then && condition.then.properties) {
-                keys = keys.concat(Object.keys(condition.then.properties));
-              }
-              if (condition.else && condition.else.properties) {
-                keys = keys.concat(Object.keys(condition.else.properties));
-              }
-            });
-          }
-          return [...new Set(keys)];
-        };
 
         const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
         const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);

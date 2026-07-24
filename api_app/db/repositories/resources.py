@@ -1,7 +1,7 @@
 import copy
 import semantic_version
 from datetime import datetime, UTC
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from resources.strings import RESOURCE_ACTION_INSTALL
@@ -111,14 +111,23 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def _get_all_property_keys_from_template(self, resource_template: ResourceTemplate) -> set:
-        properties = set(resource_template.properties.keys())
-        if hasattr(resource_template, "allOf") and resource_template.allOf is not None:
-            for condition in resource_template.allOf:
-                if "then" in condition and "properties" in condition["then"]:
-                    properties.update(condition["then"]["properties"].keys())
-                if "else" in condition and "properties" in condition["else"]:
-                    properties.update(condition["else"]["properties"].keys())
+    def _get_all_property_keys_from_template(self, resource_template: Any) -> set:
+        if hasattr(resource_template, "dict"):
+            template_dict = resource_template.dict()
+        elif isinstance(resource_template, dict):
+            template_dict = resource_template
+        else:
+            template_dict = {}
+
+        properties = set(template_dict.get("properties", {}).keys())
+        all_of = template_dict.get("allOf")
+        if all_of:
+            for condition in all_of:
+                if isinstance(condition, dict):
+                    if "then" in condition and isinstance(condition["then"], dict) and "properties" in condition["then"]:
+                        properties.update(condition["then"]["properties"].keys())
+                    if "else" in condition and isinstance(condition["else"], dict) and "properties" in condition["else"]:
+                        properties.update(condition["else"]["properties"].keys())
         return properties
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
@@ -137,6 +146,10 @@ class ResourceRepository(BaseRepository):
             parent_service_name = None
             if resource.resourceType == ResourceType.UserResource:
                 parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
+                if not parent_service_name and hasattr(resource, "parentWorkspaceServiceId") and resource.parentWorkspaceServiceId:
+                    resource_repo = await ResourceRepository.create()
+                    parent_service = await resource_repo.get_resource_by_id(resource.parentWorkspaceServiceId)
+                    parent_service_name = parent_service.templateName
 
             new_template = await resource_template_repo.get_template_by_name_and_version(
                 resource.templateName,

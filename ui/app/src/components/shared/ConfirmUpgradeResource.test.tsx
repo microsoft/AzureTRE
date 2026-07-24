@@ -876,4 +876,62 @@ describe("ConfirmUpgradeResource Component", () => {
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
   });
+
+  it("handles non-string new properties (boolean, number, array) with defaults without coercing to empty string", async () => {
+    const mockNewTemplateTypedSchema = {
+      properties: {
+        display_name: { type: "string" },
+        enabled_feature: { type: "boolean", default: true },
+        max_count: { type: "number", default: 5 },
+        tags: { type: "array", default: ["tag1", "tag2"] },
+      },
+      required: ["display_name"],
+      uiSchema: {},
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateTypedSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).not.toBeDisabled();
+
+    fireEvent.click(upgradeButton);
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        mockResource.resourcePath,
+        "PATCH",
+        mockWorkspaceContext.workspaceApplicationIdURI,
+        expect.objectContaining({
+          templateVersion: "1.1.0",
+          properties: expect.objectContaining({
+            enabled_feature: true,
+            max_count: 5,
+            tags: ["tag1", "tag2"],
+          }),
+        }),
+        "JSON",
+        undefined,
+        undefined,
+        mockResource._etag,
+      );
+    });
+  });
 });
