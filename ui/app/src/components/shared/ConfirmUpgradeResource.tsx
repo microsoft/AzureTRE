@@ -129,7 +129,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         }
 
         if (parentService && parentService.templateName) {
-          const workspaceId = parentService.workspaceId || workspaceCtx.workspace?.id;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           break;
         }
@@ -488,13 +487,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             </DialogFooter>
           </>
         )}
-        {apiError && requestLoadingState !== LoadingState.Loading && <ExceptionLayout e={apiError} />}
         {requestLoadingState === LoadingState.Loading && (
           <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
-        {!apiError && requestLoadingState === LoadingState.Error && (
-          <ExceptionLayout e={apiError ?? ({} as APIError)} />
-        )}
+        {requestLoadingState === LoadingState.Error && apiError && <ExceptionLayout e={apiError} />}
       </Dialog>
     </>
   );

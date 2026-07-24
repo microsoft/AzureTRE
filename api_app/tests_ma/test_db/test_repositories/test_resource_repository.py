@@ -470,9 +470,7 @@ async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_allows_new_non_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+async def test_validate_patch_allows_new_non_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, new properties (not in old version) can be specified
     even if they are marked as updateable: false in the new template version
@@ -497,9 +495,7 @@ async def test_validate_patch_allows_new_non_updateable_property_during_upgrade(
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_rejects_existing_non_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+async def test_validate_patch_rejects_existing_non_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, existing non-updateable properties still cannot be modified
     """
@@ -522,9 +518,7 @@ async def test_validate_patch_rejects_existing_non_updateable_property_during_up
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_allows_updateable_property_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified
     """
@@ -547,9 +541,7 @@ async def test_validate_patch_allows_updateable_property_during_upgrade(enrich_t
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_allows_mix_of_new_and_updateable_properties_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+async def test_validate_patch_allows_mix_of_new_and_updateable_properties_during_upgrade(resource_repo):
     """
     Test that during upgrade, you can specify both new non-updateable properties and existing updateable properties
     """
