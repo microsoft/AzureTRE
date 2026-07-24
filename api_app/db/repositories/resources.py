@@ -242,8 +242,8 @@ class ResourceRepository(BaseRepository):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-        # get the old template properties for comparison during upgrades
-        old_template_properties = set(enriched_template["properties"].keys())
+        # get the old template properties (including allOf) for comparison during upgrades
+        old_template_properties = self._get_all_property_keys_from_template(resource_template)
 
         # get the schema for the target version if upgrade is happening
         if resource_patch.templateVersion is not None:
@@ -260,19 +260,39 @@ class ResourceRepository(BaseRepository):
             )
             enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
 
+        # Helper to get property schema definition from properties or allOf
+        def get_prop_schema(schema_dict: dict, prop_name: str) -> Optional[dict]:
+            if "properties" in schema_dict and prop_name in schema_dict["properties"]:
+                return schema_dict["properties"][prop_name]
+            if "allOf" in schema_dict and schema_dict["allOf"]:
+                for condition in schema_dict["allOf"]:
+                    if isinstance(condition, dict):
+                        if "then" in condition and isinstance(condition["then"], dict) and "properties" in condition["then"] and prop_name in condition["then"]["properties"]:
+                            return condition["then"]["properties"][prop_name]
+                        if "else" in condition and isinstance(condition["else"], dict) and "properties" in condition["else"] and prop_name in condition["else"]["properties"]:
+                            return condition["else"]["properties"][prop_name]
+            return None
+
+        pipeline_properties = self._get_pipeline_properties(enriched_template)
+
+        # If updating/patching properties, ensure every patched property is allowed
+        if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
+            is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
+            for prop_name in resource_patch.properties.keys():
+                prop_def = get_prop_schema(enriched_template, prop_name)
+                is_updateable = prop_def.get("updateable", False) is True if prop_def else False
+                is_new_on_upgrade = is_upgrade and prop_name not in old_template_properties
+                is_pipeline_prop = prop_name in pipeline_properties
+
+                if not (is_updateable or is_new_on_upgrade or is_pipeline_prop):
+                    raise ValidationError(f"Property '{prop_name}' is not updateable.")
+
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
         update_template["required"] = []
         update_template["properties"] = {}
 
-        pipeline_properties = self._get_pipeline_properties(enriched_template)
-
-        for prop_name, prop in enriched_template["properties"].items():
-            # Allow property if:
-            # 1. Installing (all properties allowed)
-            # 2. Property is explicitly updateable (updateable: true in template)
-            # 3. Upgrading and the property is NEW (not in old template) and being added in this patch
-            # 4. Property is set using a parent property using {{ resource.parent.properties.my_parent_property }}
+        for prop_name, prop in enriched_template.get("properties", {}).items():
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True

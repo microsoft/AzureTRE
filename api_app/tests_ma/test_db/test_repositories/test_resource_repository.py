@@ -676,6 +676,31 @@ def test_get_all_property_keys_from_template_includes_allOf_conditional_properti
 
 
 @pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_rejects_non_updateable_allOf_property(enrich_template_mock, resource_repo):
+    """
+    Test that validate_patch rejects attempts to patch non-updateable conditional properties inside allOf
+    """
+    template_dict = sample_resource_template()
+    template_dict['allOf'] = [
+        {
+            "if": {"properties": {"vm_size": {"const": "small"}}},
+            "then": {"properties": {"secret_conditional_field": {"type": "string", "updateable": False}}}
+        }
+    ]
+    template = parse_obj_as(ResourceTemplate, template_dict)
+    enrich_template_mock.return_value = template_dict
+
+    template_repo = MagicMock()
+    template_repo.enrich_template = enrich_template_mock
+
+    # Attempt to patch non-updateable allOf property should fail
+    patch = ResourcePatch(properties={'secret_conditional_field': 'new-value'})
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo):
