@@ -42,7 +42,11 @@ fi
 existing_image=$(docker inspect --format '{{.Config.Image}}' nexus 2>/dev/null || true)
 if [ "$existing_image" == "$NEXUS_IMAGE" ]; then
   echo "Nexus container already running requested image $NEXUS_IMAGE. Ensuring it is started."
-  docker start nexus > /dev/null 2>&1 || true
+  docker start nexus
+  if [ "$(docker inspect -f '{{.State.Running}}' nexus 2>/dev/null)" != "true" ]; then
+    echo "ERROR: Nexus container failed to start." >&2
+    exit 1
+  fi
   exit 0
 fi
 

@@ -34,4 +34,4 @@ NEXUS_TRE_EOF
 chmod 0744 /etc/nexus-data/scripts/deploy_nexus_container.sh
 bash /etc/nexus-data/scripts/deploy_nexus_container.sh '${ACR_NAME}' '${NEXUS_IMAGE_TAG}' '${MSI_ID}'
 
-bash /etc/nexus-data/scripts/configure_nexus_repos.sh '${NEXUS_ADMIN_PASSWORD}'
+bash /etc/nexus-data/scripts/configure_nexus_repos.sh '${VAULT_NAME}' '${MSI_ID}'
