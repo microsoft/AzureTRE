@@ -28,7 +28,7 @@
       }
   },
   "apt": {
-      "distribution": "jammy-security",
+      "distribution": "bionic-security",
       "flat": false
   },
   "baseType": "apt",

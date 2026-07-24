@@ -1,5 +1,5 @@
 {
-  "name": "ubuntu",
+  "name": "ubuntu-jammy",
   "online": true,
   "storage": {
       "blobStoreName": "default",
@@ -28,7 +28,7 @@
       }
   },
   "apt": {
-      "distribution": "bionic",
+      "distribution": "jammy",
       "flat": false
   },
   "baseType": "apt",

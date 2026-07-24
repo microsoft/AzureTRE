@@ -89,8 +89,10 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Docker | apt | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker/` | Install Docker via apt on Linux systems. |
 | Docker GPG | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-public-key/` | Provide public key to sign apt source for above Docker apt. |
 | Docker Hub | docker | [https://registry-1.docker.io] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-hub/` | Provide docker access to public images repo. |
-| Ubuntu Packages | apt | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Provide access to Ubuntu apt packages on Ubuntu systems. |
-| Ubuntu Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Provide access to Ubuntu Security apt packages on Ubuntu systems. |
+| Ubuntu Packages | apt | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Provide access to Ubuntu Bionic (18.04) apt packages on Ubuntu systems. |
+| Ubuntu Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Provide access to Ubuntu Bionic (18.04) Security apt packages on Ubuntu systems. |
+| Ubuntu Jammy Packages | apt | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-jammy/` | Provide access to Ubuntu Jammy (22.04) apt packages on Ubuntu systems. |
+| Ubuntu Jammy Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security-jammy/` | Provide access to Ubuntu Jammy (22.04) Security apt packages on Ubuntu systems. |
 | Almalinux | yum | [https://repo.almalinux.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/almalinux` | Install Almalinux packages |
 | R-Proxy | r | [https://cran.r-project.org/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-proxy` | Provide access to CRAN packages for R |
 | R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to download R Studio |
