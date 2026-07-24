@@ -91,11 +91,11 @@ def override_get_user():
 
 def get_required_roles(endpoint):
     defaults = endpoint.__defaults__ or ()
-    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), defaults))
+    dependencies = list(filter(lambda x: hasattr(x, 'dependency') and hasattr(x.dependency, 'require_one_of_roles'), defaults))
     if dependencies:
         return dependencies[0].dependency.require_one_of_roles
     # New-style deps: check for _role_names attribute on the closure
-    dependencies = list(filter(lambda x: hasattr(x.dependency, '_role_names'), defaults))
+    dependencies = list(filter(lambda x: hasattr(x, 'dependency') and hasattr(x.dependency, '_role_names'), defaults))
     if dependencies:
         return dependencies[0].dependency._role_names
     return []
