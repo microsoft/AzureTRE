@@ -1,5 +1,5 @@
 {
-  "name": "docker",
+  "name": "ubuntu-security-bionic",
   "online": true,
   "storage": {
       "blobStoreName": "default",
@@ -7,7 +7,7 @@
       "write_policy": "ALLOW"
   },
   "proxy": {
-      "remoteUrl": "https://download.docker.com/linux/ubuntu/",
+      "remoteUrl": "http://security.ubuntu.com/ubuntu/",
       "contentMaxAge": 1440,
       "metadataMaxAge": 1440
   },
@@ -28,7 +28,7 @@
       }
   },
   "apt": {
-      "distribution": "bionic",
+      "distribution": "bionic-security",
       "flat": false
   },
   "baseType": "apt",

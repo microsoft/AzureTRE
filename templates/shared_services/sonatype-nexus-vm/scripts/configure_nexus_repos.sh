@@ -124,62 +124,80 @@ if [ "$anon_status_code" -ne 200 ]; then
 fi
 
 echo "Configuring Nexus repositories..."
-# Create or update a proxy for each .json file so modified configurations are
-# applied to an existing Nexus instance without needing to recreate it.
+# Create or update each repo so modified configurations are applied to an existing
+# Nexus instance without needing to recreate it.
+# Groups must be created after their proxy members, so we do two passes.
+
+configure_repo() {
+  local file="$1"
+  local create="$2"
+  local update="$3"
+  local pass="$4"
+  local response code body
+  # Try to create the repository first.
+  response=$(curl -u admin:"$pass" -XPOST \
+    "$create" \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d @"$file" \
+    -k -s -w $'\n%{http_code}')
+  code=${response##*$'\n'}
+  body=${response%$'\n'*}
+  echo "Response received from Nexus when creating repository: $code"
+  if [ "$code" -eq 201 ]; then
+    return 0
+  fi
+  # If it already exists, update it so configuration changes are applied.
+  code=$(curl -iu admin:"$pass" -XPUT \
+    "$update" \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d @"$file" \
+    -k -s -w "%{http_code}" -o /dev/null)
+  echo "Response received from Nexus when updating repository: $code"
+  if [ "$code" -eq 200 ] || [ "$code" -eq 202 ] || [ "$code" -eq 204 ]; then
+    return 0
+  fi
+  # A proxy repo whose remoteUrl no longer resolves fails Nexus 3.94+ restore
+  # validation, leaving it in a failed state: the name is reserved (create
+  # returns "Name is already used") but it cannot be updated (404). It can't
+  # be reconciled via the API, so warn and skip rather than blocking the whole
+  # upgrade on an already-broken repository.
+  if [ "$code" -eq 404 ] && printf '%s' "$body" | grep -qi 'already used'; then
+    echo "WARNING - Repository is in a failed state in Nexus and cannot be updated (its proxy remote URL may be unreachable). Skipping."
+    return 0
+  fi
+  return 1
+}
+
+configure_one_repo() {
+  local filename="$1"
+  echo "Found config file: $filename. Sending to Nexus..."
+  local base_type repo_type repo_name create_url update_url
+  base_type=$( jq .baseType "$filename" | sed 's/"//g')
+  repo_type=$( jq .repoType "$filename" | sed 's/"//g')
+  repo_name=$( jq .name "$filename" | sed 's/"//g')
+  create_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
+  update_url="$create_url/$repo_name"
+
+  if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$NEXUS_ADMIN_PASSWORD"; then
+    echo "ERROR - Timeout while trying to configure $repo_name"
+    exit 1
+  fi
+}
+
+# Pass 1: proxy and hosted repos — group members must exist before their groups.
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
-    echo "Found config file: $filename. Sending to Nexus..."
-    base_type=$( jq .baseType "$filename" | sed 's/"//g')
     repo_type=$( jq .repoType "$filename" | sed 's/"//g')
-    repo_name=$( jq .name "$filename" | sed 's/"//g')
-    create_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
-    update_url="$create_url/$repo_name"
+    [ "$repo_type" = "group" ] && continue
+    configure_one_repo "$filename"
+done
 
-    configure_repo() {
-      local file="$1"
-      local create="$2"
-      local update="$3"
-      local pass="$4"
-      local response code body
-      # Try to create the repository first.
-      response=$(curl -u admin:"$pass" -XPOST \
-        "$create" \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d @"$file" \
-        -k -s -w $'\n%{http_code}')
-      code=${response##*$'\n'}
-      body=${response%$'\n'*}
-      echo "Response received from Nexus when creating repository: $code"
-      if [ "$code" -eq 201 ]; then
-        return 0
-      fi
-      # If it already exists, update it so configuration changes are applied.
-      code=$(curl -iu admin:"$pass" -XPUT \
-        "$update" \
-        -H 'accept: application/json' \
-        -H 'Content-Type: application/json' \
-        -d @"$file" \
-        -k -s -w "%{http_code}" -o /dev/null)
-      echo "Response received from Nexus when updating repository: $code"
-      if [ "$code" -eq 200 ] || [ "$code" -eq 202 ] || [ "$code" -eq 204 ]; then
-        return 0
-      fi
-      # A proxy repo whose remoteUrl no longer resolves fails Nexus 3.94+ restore
-      # validation, leaving it in a failed state: the name is reserved (create
-      # returns "Name is already used") but it cannot be updated (404). It can't
-      # be reconciled via the API, so warn and skip rather than blocking the whole
-      # upgrade on an already-broken repository.
-      if [ "$code" -eq 404 ] && printf '%s' "$body" | grep -qi 'already used'; then
-        echo "WARNING - Repository $repo_name is in a failed state in Nexus and cannot be updated (its proxy remote URL may be unreachable). Skipping."
-        return 0
-      fi
-      return 1
-    }
-
-    if ! retry_with_backoff configure_repo "$filename" "$create_url" "$update_url" "$NEXUS_ADMIN_PASSWORD"; then
-      echo "ERROR - Timeout while trying to configure $repo_name"
-      exit 1
-    fi
+# Pass 2: group repos.
+for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
+    repo_type=$( jq .repoType "$filename" | sed 's/"//g')
+    [ "$repo_type" != "group" ] && continue
+    configure_one_repo "$filename"
 done
 
 echo 'Configuring realms...'

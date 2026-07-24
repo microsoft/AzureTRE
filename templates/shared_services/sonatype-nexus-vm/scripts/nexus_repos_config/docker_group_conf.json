@@ -1,0 +1,13 @@
+{
+  "name": "docker",
+  "online": true,
+  "storage": {
+      "blobStoreName": "default",
+      "strictContentTypeValidation": true
+  },
+  "group": {
+      "memberNames": ["docker-bionic", "docker-jammy"]
+  },
+  "baseType": "apt",
+  "repoType": "group"
+}

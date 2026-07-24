@@ -1,5 +1,5 @@
 {
-  "name": "ubuntu-security",
+  "name": "ubuntu-bionic",
   "online": true,
   "storage": {
       "blobStoreName": "default",
@@ -7,7 +7,7 @@
       "write_policy": "ALLOW"
   },
   "proxy": {
-      "remoteUrl": "http://security.ubuntu.com/ubuntu/",
+      "remoteUrl": "http://archive.ubuntu.com/ubuntu/",
       "contentMaxAge": 1440,
       "metadataMaxAge": 1440
   },
@@ -28,7 +28,7 @@
       }
   },
   "apt": {
-      "distribution": "bionic-security",
+      "distribution": "bionic",
       "flat": false
   },
   "baseType": "apt",

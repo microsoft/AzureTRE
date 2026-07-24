@@ -14,7 +14,7 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Fix Guacamole Linux VM bootstrap failures on Ubuntu 22.04 (jammy): add dedicated `ubuntu-jammy` and `ubuntu-security-jammy` Nexus apt proxy repositories alongside the existing `bionic` repos, and update the VM apt sources to use the jammy-specific proxies. (`sonatype-nexus` 3.10.1) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992))
+* Fix Guacamole Linux VM bootstrap failures on Ubuntu 22.04 (jammy): rework `ubuntu`, `ubuntu-security`, and `docker` Nexus apt repos into per-distribution proxy members (`-bionic`, `-jammy`) behind stable apt group repos, so clients on any supported Ubuntu release use the same group URL without reconfiguration. Update `microsoft-apt` distribution to `jammy`. (`sonatype-nexus` 3.10.1) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992))
 * Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))

@@ -1,5 +1,5 @@
 {
-  "name": "ubuntu",
+  "name": "docker-jammy",
   "online": true,
   "storage": {
       "blobStoreName": "default",
@@ -7,7 +7,7 @@
       "write_policy": "ALLOW"
   },
   "proxy": {
-      "remoteUrl": "http://archive.ubuntu.com/ubuntu/",
+      "remoteUrl": "https://download.docker.com/linux/ubuntu/",
       "contentMaxAge": 1440,
       "metadataMaxAge": 1440
   },
@@ -28,7 +28,7 @@
       }
   },
   "apt": {
-      "distribution": "bionic",
+      "distribution": "jammy",
       "flat": false
   },
   "baseType": "apt",
