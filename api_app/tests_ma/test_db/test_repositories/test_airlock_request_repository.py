@@ -128,7 +128,7 @@ async def test_create_airlock_request_item_creates_an_airlock_request_with_the_r
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID, created_by_user)
 
     assert airlock_request.workspaceId == WORKSPACE_ID
-    assert airlock_request.createdBy["id"] == 'user-guid-here'
+    assert airlock_request.createdBy["id"] == created_by_user.id
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
