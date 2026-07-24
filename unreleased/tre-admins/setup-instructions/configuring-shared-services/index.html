@@ -4674,7 +4674,10 @@
 </ol>
 <p>This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the <code>./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config</code> folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</p>
 <p>You can optionally go to the Nexus web interface by visiting <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/</code> in the jumpbox and signing in with the username <code>admin</code> and the password secret located in your core keyvault, with the key <code>nexus-admin-password</code>. Here you should be able to see all of the configured repositories and you can use the UI to manage settings etc.</p>
-<p>Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the <code>./nexus_repos_config</code> directory and redeploy.</p>
+<p>Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted.
+If you wish to permanently add, alter or remove repositories, modify the JSON files within the <code>./nexus_repos_config</code> directory and upgrade the shared service.
+On upgrade the updated configuration is copied to the existing Nexus VM and re-applied via the Nexus API, so the VM does not need to be recreated.
+Note that deleting a JSON file does not remove the corresponding repository from a running Nexus instance; remove it via the Nexus UI or API as well.</p>
 <p>You can view further information on the <a href="../../../tre-templates/shared-services/nexus/">Nexus shared service documentation</a>.</p>
 <h2 id="optional-install-gitea-and-configure-repositories">(Optional) Install Gitea and configure repositories</h2>
 <p>Gitea allows you to mirror Git repositories to make them available within the TRE. This is optional as part of this quickstart.</p>
