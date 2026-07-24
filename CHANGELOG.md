@@ -2,6 +2,7 @@
 ## (Unreleased)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
+* <!-- markdownlint-disable-next-line MD013 -->
 * Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
 ENHANCEMENTS:
