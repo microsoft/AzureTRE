@@ -54,7 +54,7 @@ class AirlockReview(AzureTREModel):
     Airlock review
     """
     id: str = Field(title="Id", description="GUID identifying the review")
-    reviewer: dict = {}
+    reviewer: dict = Field(default_factory=dict)
     dateCreated: float = 0
     reviewDecision: AirlockReviewDecision = Field(default=AirlockReviewDecision.Approved, title="Airlock review decision")
     decisionExplanation: str = Field(default="", title="Explanation why the request was approved/rejected")
@@ -73,8 +73,8 @@ class AirlockRequestHistoryItem(AzureTREModel):
     """
     resourceVersion: int
     updatedWhen: float
-    updatedBy: dict = {}
-    properties: dict = {}
+    updatedBy: dict = Field(default_factory=dict)
+    properties: dict = Field(default_factory=dict)
 
     @field_validator("updatedBy", mode="before")
     @classmethod
@@ -99,21 +99,21 @@ class AirlockRequest(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
-    createdBy: dict = {}
+    createdBy: dict = Field(default_factory=dict)
     createdWhen: float = Field(None, title="Creation time of the request")
-    updatedBy: dict = {}
+    updatedBy: dict = Field(default_factory=dict)
     updatedWhen: float = 0
-    history: List[AirlockRequestHistoryItem] = []
+    history: List[AirlockRequestHistoryItem] = Field(default_factory=list)
     workspaceId: str = Field(default="", title="Workspace ID", description="Service target Workspace id")
     type: AirlockRequestType = Field(default=AirlockRequestType.Import, title="Airlock request type")
     files: List[AirlockFile] = Field(default_factory=list, title="Files of the request")
-    title: str = Field("Airlock Request", title="Brief title for the request")
-    businessJustification: str = Field("Business Justification", title="Explanation that will be provided to the request reviewer")
+    title: str = Field(default="Airlock Request", title="Brief title for the request")
+    businessJustification: str = Field(default="Business Justification", title="Explanation that will be provided to the request reviewer")
     status: AirlockRequestStatus = AirlockRequestStatus.Draft
     statusMessage: Optional[str] = Field(None, title="Optional - contains additional information about the current status.")
     reviews: Optional[List[AirlockReview]] = None
     etag: Optional[str] = Field(None, title="_etag", alias="_etag")
-    reviewUserResources: Dict[str, AirlockReviewUserResource] = Field({}, title="User resources created for Airlock Reviews")
+    reviewUserResources: Dict[str, AirlockReviewUserResource] = Field(default_factory=dict, title="User resources created for Airlock Reviews")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @field_validator("etag", mode="before")
