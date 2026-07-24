@@ -10,7 +10,7 @@ import json
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 from shared_code import blob_operations, constants
-from pydantic import BaseModel, parse_obj_as
+from pydantic import BaseModel, TypeAdapter
 
 
 class RequestProperties(BaseModel):
@@ -86,7 +86,7 @@ def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
         body = msg.get_body().decode('utf-8')
         logging.debug('Python ServiceBus queue trigger processed message: %s', body)
         json_body = json.loads(body)
-        result = parse_obj_as(RequestProperties, json_body["data"])
+        result = TypeAdapter(RequestProperties).validate_python(json_body["data"])
         if not result:
             raise Exception("Failed parsing request properties")
     except json.decoder.JSONDecodeError:

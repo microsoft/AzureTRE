@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic.types import UUID4
 
 from models.domain.azuretremodel import AzureTREModel
@@ -44,16 +44,16 @@ class OperationStep(AzureTREModel):
     """
     id: str = Field(title="Id", description="Unique id identifying the step")
     templateStepId: str = Field(title="templateStepId", description="Unique id identifying the step")
-    stepTitle: Optional[str] = Field(title="stepTitle", description="Human readable title of what the step is for")
-    resourceId: Optional[str] = Field(title="resourceId", description="Id of the resource to update")
+    stepTitle: Optional[str] = Field(default=None, title="stepTitle", description="Human readable title of what the step is for")
+    resourceId: Optional[str] = Field(default=None, title="resourceId", description="Id of the resource to update")
     resourceTemplateName: Optional[str] = Field("", title="resourceTemplateName", description="Name of the template for the resource under change")
-    resourceType: Optional[ResourceType] = Field(title="resourceType", description="Type of resource under change")
-    resourceAction: Optional[str] = Field(title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    resourceType: Optional[ResourceType] = Field(default=None, title="resourceType", description="Type of resource under change")
+    resourceAction: Optional[str] = Field(default=None, title="resourceAction", description="Action - install / upgrade / uninstall etc")
     status: Optional[Status] = Field(None, title="Operation step status")
     message: Optional[str] = Field("", title="Additional operation step status information")
-    updatedWhen: Optional[float] = Field("", title="POSIX Timestamp for When the operation step was updated")
+    updatedWhen: Optional[float] = Field(default=None, title="POSIX Timestamp for When the operation step was updated")
     # An example for this property will be if we have a step that is responsible for updating the firewall, and its origin was the guacamole workspace service, the id here will be the guacamole id
-    sourceTemplateResourceId: Optional[str] = Field(title="sourceTemplateResourceId", description="Id of the parent of the resource to update")
+    sourceTemplateResourceId: Optional[str] = Field(default=None, title="sourceTemplateResourceId", description="Id of the parent of the resource to update")
 
     def is_success(self) -> bool:
         return self.status in (
@@ -92,8 +92,15 @@ class Operation(AzureTREModel):
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
     updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+
+    @field_validator("user", mode="before")
+    @classmethod
+    def convert_user_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 
 
 class DeploymentStatusUpdateMessage(AzureTREModel):
@@ -105,4 +112,4 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     id: UUID4 = Field(title="", description="")
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")
-    outputs: List[Output] = Field(title="", description="", default=[])
+    outputs: List[Output] = Field(title="", description="", default_factory=list)

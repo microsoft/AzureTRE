@@ -279,7 +279,7 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.updatedBy = user
+        airlock_request.updatedBy = user.model_dump()
         airlock_request.updatedWhen = get_timestamp()
         await airlock_request_repo.save_item(airlock_request)
     except Exception:

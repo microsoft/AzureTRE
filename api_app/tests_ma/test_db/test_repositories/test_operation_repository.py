@@ -64,4 +64,4 @@ async def test_create_operation_steps_from_multi_step_template(_, __, ___, resou
 
     )
 
-    assert operation.dict() == expected_op.dict()
+    assert operation.model_dump() == expected_op.model_dump()

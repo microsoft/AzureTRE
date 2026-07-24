@@ -30,7 +30,7 @@ def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> di
         properties={},
         customActions=[],
         parentWorkspaceService="parent_service")
-    return template.dict()
+    return template.model_dump()
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')

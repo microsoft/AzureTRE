@@ -1,5 +1,4 @@
 import re
-import json
 
 from typing import Dict, Optional
 from azure.eventgrid import EventGridEvent
@@ -20,7 +19,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
 
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id).__dict__,
+        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id).model_dump(mode="json"),
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )
@@ -56,9 +55,8 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
     )
 
     # For EventGridEvent, data should be a Dict[str, object]
-    # Becuase data has nested objects, they all need to be recursively converted to dict
-    # To do that, we use a json() method implemented for all objects in AzureTREModel, and convert it back from json
-    data_dict = json.loads(data.json())
+    # Because data has nested objects, use JSON mode to recursively produce Event Grid-safe values
+    data_dict = data.model_dump(mode="json")
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",

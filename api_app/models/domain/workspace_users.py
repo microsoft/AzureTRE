@@ -1,5 +1,5 @@
-from typing import List
-from pydantic import BaseModel, Field
+from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -7,7 +7,7 @@ class AssignableUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
-    email: str = Field(default=None)
+    email: Optional[str] = Field(default=None)
 
 
 class AssignmentType(Enum):
@@ -18,6 +18,11 @@ class AssignmentType(Enum):
 class Role(BaseModel):
     id: str
     displayName: str
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_id_to_string(cls, value):
+        return str(value)
 
     def __eq__(self, other):
         if not isinstance(other, Role):
@@ -32,5 +37,5 @@ class AssignedUser(BaseModel):
     id: str
     displayName: str
     userPrincipalName: str
-    email: str = Field(default=None)
+    email: Optional[str] = Field(default=None)
     roles: List[Role] = Field(default_factory=list)

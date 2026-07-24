@@ -38,7 +38,7 @@ def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
 
 
 def enrich_template(original_template, extra_properties, is_update: bool = False, is_workspace_scope: bool = True) -> dict:
-    template = original_template.dict(exclude_none=True)
+    template = original_template.model_dump(exclude_none=True)
 
     all_required = [definition[0] for definition in extra_properties] + [template["required"]]
     all_properties = [definition[1] for definition in extra_properties] + [template["properties"]]

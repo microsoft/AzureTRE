@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 from models.domain.resource import ResourceType
 from models.domain.workspace import Workspace, WorkspaceAuth
@@ -32,60 +32,52 @@ class AuthProvider(StrEnum):
 
 class AuthenticationConfiguration(BaseModel):
     provider: AuthProvider = Field(AuthProvider.AAD, title="Authentication Provider")
-    data: dict = Field({}, title="Authentication information")
+    data: dict = Field(default_factory=dict, title="Authentication information")
 
 
 class WorkspaceInResponse(BaseModel):
     workspace: Workspace
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "workspace": get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e")
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "workspace": get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e")
         }
+    })
 
 
 class WorkspaceAuthInResponse(BaseModel):
     workspaceAuth: WorkspaceAuth
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "scopeId": "api://mytre-ws-1233456"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "scopeId": "api://mytre-ws-1233456"
         }
+    })
 
 
 class WorkspacesInList(BaseModel):
     workspaces: List[Workspace]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "workspaces": [
-                    get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e", "0001"),
-                    get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748", "0002"),
-                ]
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "workspaces": [
+                get_sample_workspace("933ad738-7265-4b5f-9eae-a1a62928772e", "0001"),
+                get_sample_workspace("2fdc9fba-726e-4db6-a1b8-9018a2165748", "0002"),
+            ]
         }
+    })
 
 
 class WorkspaceInCreate(BaseModel):
     templateName: str = Field(title="Workspace type", description="Bundle name")
-    properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "templateName": "tre-workspace-base",
-                "properties": {
-                    "display_name": "the workspace display name",
-                    "description": "workspace description",
-                    "auth_type": "Manual",
-                    "client_id": "<WORKSPACE_CLIENT_ID>",
-                    "client_secret": "<WORKSPACE_CLIENT_SECRET>",
-                    "address_space_size": "small"
-                }
+    properties: dict = Field(default_factory=dict, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "templateName": "tre-workspace-base",
+            "properties": {
+                "display_name": "the workspace display name",
+                "description": "workspace description",
+                "auth_type": "Manual",
+                "client_id": "<WORKSPACE_CLIENT_ID>",
+                "client_secret": "<WORKSPACE_CLIENT_SECRET>",
+                "address_space_size": "small"
             }
         }
+    })

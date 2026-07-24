@@ -20,7 +20,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from pydantic import UUID4, parse_obj_as
+from pydantic import UUID4, TypeAdapter
 
 
 class ResourceRepository(BaseRepository):
@@ -70,15 +70,14 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            return parse_obj_as(SharedService, resource)
+            return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resource)
+            return TypeAdapter(Workspace).validate_python(resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
-            return parse_obj_as(WorkspaceService, resource)
+            return TypeAdapter(WorkspaceService).validate_python(resource)
         if resource["resourceType"] == ResourceType.UserResource:
-            return parse_obj_as(UserResource, resource)
-
-        return parse_obj_as(Resource, resource)
+            return TypeAdapter(UserResource).validate_python(resource)
+        return TypeAdapter(Resource).validate_python(resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND c.deploymentStatus != @deletedStatus AND c.deploymentStatus != @failedStatus"
@@ -90,7 +89,7 @@ class ResourceRepository(BaseRepository):
         resources = await self.query(query=query, parameters=parameters)
         if not resources:
             raise EntityDoesNotExist
-        return parse_obj_as(Resource, resources[0])
+        return TypeAdapter(Resource).validate_python(resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -107,15 +106,14 @@ class ResourceRepository(BaseRepository):
             if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
-        self._validate_resource_parameters(resource_input.dict(), template)
-
-        return parse_obj_as(ResourceTemplate, template)
+        self._validate_resource_parameters(resource_input.model_dump(), template)
+        return TypeAdapter(ResourceTemplate).validate_python(template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user
+        resource.user = user.model_dump()
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:
@@ -195,7 +193,7 @@ class ResourceRepository(BaseRepository):
             if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
-        self._validate_resource_parameters(resource_patch.dict(), update_template)
+        self._validate_resource_parameters(resource_patch.model_dump(), update_template)
 
     def get_timestamp(self) -> float:
         return datetime.now(UTC).timestamp()

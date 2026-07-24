@@ -5,7 +5,7 @@ import time
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from fastapi import HTTPException
-from pydantic import ValidationError, parse_obj_as
+from pydantic import ValidationError, TypeAdapter
 
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from services.airlock import update_and_publish_event_airlock_request
@@ -77,7 +77,7 @@ class AirlockStatusUpdater():
             complete_message = False
 
             try:
-                message = parse_obj_as(StepResultStatusUpdateMessage, json.loads(str(msg)))
+                message = TypeAdapter(StepResultStatusUpdateMessage).validate_python(json.loads(str(msg)))
 
                 current_span.set_attribute("step_id", message.id)
                 current_span.set_attribute("event_type", message.eventType)

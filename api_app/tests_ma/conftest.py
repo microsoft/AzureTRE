@@ -524,6 +524,11 @@ def resource_to_update() -> Resource:
 @pytest.fixture
 def pipeline_step() -> PipelineStep:
     return PipelineStep(
+        stepId="test-step-id",
+        stepTitle="Test Pipeline Step",
+        resourceTemplateName="test-template",
+        resourceType=ResourceType.Workspace,
+        resourceAction="install",
         properties=[
             PipelineStepProperty(
                 name="rule_collections",
@@ -557,6 +562,11 @@ def pipeline_step() -> PipelineStep:
 @pytest.fixture
 def simple_pipeline_step() -> PipelineStep:
     return PipelineStep(
+        stepId="simple-step-id",
+        stepTitle="Simple Pipeline Step",
+        resourceTemplateName="simple-template",
+        resourceType=ResourceType.Workspace,
+        resourceAction="install",
         properties=[
             PipelineStepProperty(
                 name="just_text", type="string", value="Updated by {{resource.id}}"
