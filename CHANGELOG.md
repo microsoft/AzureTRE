@@ -15,6 +15,7 @@ ENHANCEMENTS:
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
 BUG FIXES:
+* `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
