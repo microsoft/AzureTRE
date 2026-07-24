@@ -22,7 +22,7 @@ class ResourceHistoryItem(AzureTREModel):
     """
     id: str = Field(title="Id", description="GUID identifying the resource request")
     resourceId: str = Field(title="Id", description="GUID identifying the resource request")
-    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    properties: dict = Field(default_factory=dict, title="Resource template parameters", description="Parameters for the deployment")
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
@@ -50,7 +50,7 @@ class Resource(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the resource request")
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    properties: dict = Field({}, title="Resource template parameters", description="Parameters for the deployment")
+    properties: dict = Field(default_factory=dict, title="Resource template parameters", description="Parameters for the deployment")
     availableUpgrades: Optional[List[AvailableUpgrade]] = Field(None, title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
@@ -58,7 +58,7 @@ class Resource(AzureTREModel):
     etag: str = Field(title="_etag", description="eTag of the document", alias="_etag")
     resourcePath: str = ""
     resourceVersion: int = 0
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
     updatedWhen: float = 0
 
     @field_validator("properties", mode="before")

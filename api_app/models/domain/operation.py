@@ -112,4 +112,4 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     id: UUID4 = Field(title="", description="")
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")
-    outputs: List[Output] = Field(title="", description="", default=[])
+    outputs: List[Output] = Field(title="", description="", default_factory=list)
