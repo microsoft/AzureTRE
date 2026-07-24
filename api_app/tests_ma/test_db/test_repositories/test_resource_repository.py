@@ -84,8 +84,7 @@ def sample_resource_template() -> ResourceTemplate:
                                     'description': 'Select Windows image to use for VM',
                                     'enum': [
                                         'Windows 11',
-                                        'Server 2019 Data Science VM',
-                                        'Server 2022 Data Science VM'
+                                        'Windows Server 2025'
                                     ],
                                     'updateable': False
                                 },
@@ -165,8 +164,8 @@ def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
                 'title': 'Windows image',
                 'description': 'Select Windows image to use for VM',
                 'enum': [
-                    'Windows 10',
-                    'Server 2019 Data Science VM'
+                    'Windows 11',
+                    'Windows Server 2025'
                 ],
                 'updateable': False
             },
@@ -516,7 +515,7 @@ async def test_validate_patch_rejects_existing_non_updateable_property_during_up
     template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
 
     # Try to update existing non-updateable property during upgrade - this should FAIL
-    patch = ResourcePatch(templateVersion='0.2.0', properties={'os_image': 'Windows 10'})
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'os_image': 'Windows Server 2025'})
 
     with pytest.raises(ValidationError):
         await resource_repo.validate_patch(patch, template_repo, parse_obj_as(ResourceTemplate, old_template), strings.RESOURCE_ACTION_UPDATE)
