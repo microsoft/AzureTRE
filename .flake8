@@ -1,2 +1,4 @@
 [flake8]
-ignore = E501, W503
+# E231 is ignored because pycodestyle on Python 3.12+ mis-tokenises f-string
+# contents (commas/colons inside URL, OData and JSON string literals) as code.
+ignore = E501, W503, E231

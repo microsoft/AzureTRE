@@ -24,7 +24,7 @@ from service_bus.resource_request_sender import (
     send_resource_request_message,
     RequestAction,
 )
-from services.authentication import get_access_service
+from services.authentication import get_aad_service
 from services.logging import logger
 
 
@@ -157,13 +157,8 @@ def construct_location_header(operation: Operation) -> str:
 
 
 def get_identity_role_assignments(user):
-    access_service = get_access_service()
-    return access_service.get_identity_role_assignments(user.id)
-
-
-def get_app_user_roles_assignments_emails(app_obj_id):
-    access_service = get_access_service()
-    return access_service.get_app_user_role_assignments_emails(app_obj_id)
+    aad_service = get_aad_service()
+    return aad_service.get_identity_role_assignments(user.id)
 
 
 async def send_uninstall_message(

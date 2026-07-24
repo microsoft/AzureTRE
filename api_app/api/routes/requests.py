@@ -5,14 +5,14 @@ from api.helpers import get_repository
 from resources import strings
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
-from services.authentication import get_current_tre_user_or_tre_admin
+from auth.rbac import require_tre_user_or_admin
 
-router = APIRouter(dependencies=[Depends(get_current_tre_user_or_tre_admin)])
+router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
 
 
 @router.get("/requests", response_model=List[AirlockRequest], name=strings.API_LIST_REQUESTS)
 async def get_requests(
-    user=Depends(get_current_tre_user_or_tre_admin),
+    user=Depends(require_tre_user_or_admin),
     airlock_request_repo: AirlockRequestRepository = Depends(get_repository(AirlockRequestRepository)),
     airlock_manager: bool = False,
     type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None,

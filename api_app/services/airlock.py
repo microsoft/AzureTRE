@@ -17,7 +17,7 @@ from models.schemas.resource import ResourcePatch
 from typing import Tuple, List, Optional
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
-from services.authentication import get_access_service
+from services.authentication import get_aad_service
 
 from resources import strings, constants
 
@@ -272,7 +272,7 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
 
-    access_service = get_access_service()
+    access_service = get_aad_service()
     role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
     if config.ENABLE_AIRLOCK_EMAIL_CHECK:
         check_email_exists(role_assignment_details)
@@ -331,7 +331,7 @@ async def update_and_publish_event_airlock_request(
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
-        access_service = get_access_service()
+        access_service = get_aad_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
