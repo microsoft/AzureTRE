@@ -11,11 +11,7 @@ import {
   ITooltipProps,
 } from "@fluentui/react";
 import React from "react";
-import {
-  awaitingStates,
-  failedStates,
-  inProgressStates,
-} from "../../models/operation";
+import { awaitingStates, failedStates, inProgressStates } from "../../models/operation";
 import { Resource } from "../../models/resource";
 
 interface StatusBadgeProps {
@@ -23,9 +19,7 @@ interface StatusBadgeProps {
   resource?: Resource;
 }
 
-export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
-  props: StatusBadgeProps,
-) => {
+export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (props: StatusBadgeProps) => {
   let badgeType;
   if (props.status && inProgressStates.indexOf(props.status) !== -1) {
     badgeType = "inProgress";
@@ -38,11 +32,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
   const failedTooltipProps: ITooltipProps = {
     onRenderContent: () => (
       <div style={{ padding: "20px 24px" }}>
-        <Text
-          block
-          variant="xLarge"
-          style={{ marginBottom: 12, fontWeight: FontWeights.semilight }}
-        >
+        <Text block variant="xLarge" style={{ marginBottom: 12, fontWeight: FontWeights.semilight }}>
           {props.status.replace("_", " ")}
         </Text>
         <Text block variant="small">
@@ -50,9 +40,8 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
             <Stack.Item>
               <Stack horizontal tokens={{ childrenGap: 5 }}>
                 <Stack.Item>
-                  There was an issue with the latest deployment or update for
-                  this resource. Please see the Operations panel within the
-                  resource for details.
+                  There was an issue with the latest deployment or update for this resource. Please see the Operations
+                  panel within the resource for details.
                 </Stack.Item>
               </Stack>
             </Stack.Item>
@@ -64,9 +53,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
 
   switch (badgeType) {
     case "inProgress":
-      let label = awaitingStates.includes(props.status)
-        ? "pending"
-        : props.status.replace("_", " ");
+      let label = awaitingStates.includes(props.status) ? "pending" : props.status.replace("_", " ");
       return (
         <Spinner
           label={label}
@@ -78,10 +65,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
       );
     case "failed":
       return (
-        <TooltipHost
-          id={`item-${props.resource?.id}-failed`}
-          tooltipProps={failedTooltipProps}
-        >
+        <TooltipHost id={`item-${props.resource?.id}-failed`} tooltipProps={failedTooltipProps}>
           <FontIcon
             aria-describedby={`item-${props.resource?.id}-failed`}
             aria-label="Error"
@@ -93,10 +77,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (
     case "disabled":
       return (
         <>
-          <TooltipHost
-            content="This resource is disabled"
-            id={`item-${props.resource?.id}-disabled`}
-          >
+          <TooltipHost content="This resource is disabled" id={`item-${props.resource?.id}-disabled`}>
             <FontIcon
               aria-label="Disabled"
               aria-describedby={`item-${props.resource?.id}-disabled`}
