@@ -2,23 +2,9 @@
 ## (Unreleased)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
+* Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 
 ENHANCEMENTS:
-* Install data science and Azure tooling on the Guacamole Windows VMs via the
-  shared `vm_config.ps1`, pulled through Nexus to replace the removed DSVM
-  images, and add checkbox-based selection of the optional tooling in the
-  standard Windows VM template. The airlock review VMs reuse the same shared
-  bootstrap but install only Azure CLI, VS Code and Storage Explorer so reviews
-  start faster. All tooling (including VS Code and JupyterLab) is pinned to
-  specific versions for reproducible builds, and the shared storage account
-  credentials are only injected into the VM `custom_data` when shared storage
-  access is enabled. (`tre-service-guacamole-windowsvm` 2.2.2, import/export
-  `reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
-* Add Nexus proxy repositories for the Windows data science tooling installers
-  (Miniforge, CRAN R and Git). Existing Nexus shared service instances
-  should be upgraded/redeployed so these repositories are created before using
-  the updated Windows VM templates. (`sonatype-nexus` 3.9.0)
-  ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
@@ -26,8 +12,6 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Only wait for the Nexus proxy in the shared Guacamole Windows VM `vm_config.ps1` when at least one Nexus-backed install/config action is enabled, so VMs with all optional tooling disabled bootstrap without the Nexus wait. (`tre-service-guacamole-windowsvm` 2.2.2, import/export `reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
-* Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
