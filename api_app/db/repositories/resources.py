@@ -111,7 +111,7 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
-    def _get_all_property_keys_from_template(self, resource_template: Any) -> set:
+    def _get_all_property_keys_from_template(self, resource_template: Any, prefix: str = "") -> set:
         if hasattr(resource_template, "dict"):
             template_dict = resource_template.dict()
         elif isinstance(resource_template, dict):
@@ -119,16 +119,29 @@ class ResourceRepository(BaseRepository):
         else:
             template_dict = {}
 
-        properties = set(template_dict.get("properties", {}).keys())
+        keys = set()
+        properties = template_dict.get("properties", {})
+        if isinstance(properties, dict):
+            for k, v in properties.items():
+                full_key = f"{prefix}{k}"
+                keys.add(full_key)
+                if isinstance(v, dict) and "properties" in v:
+                    keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+
         all_of = template_dict.get("allOf")
         if all_of:
             for condition in all_of:
                 if isinstance(condition, dict):
-                    if "then" in condition and isinstance(condition["then"], dict) and "properties" in condition["then"]:
-                        properties.update(condition["then"]["properties"].keys())
-                    if "else" in condition and isinstance(condition["else"], dict) and "properties" in condition["else"]:
-                        properties.update(condition["else"]["properties"].keys())
-        return properties
+                    for clause in ["then", "else"]:
+                        if clause in condition and isinstance(condition[clause], dict):
+                            clause_props = condition[clause].get("properties", {})
+                            if isinstance(clause_props, dict):
+                                for k, v in clause_props.items():
+                                    full_key = f"{prefix}{k}"
+                                    keys.add(full_key)
+                                    if isinstance(v, dict) and "properties" in v:
+                                        keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+        return keys
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
@@ -260,31 +273,56 @@ class ResourceRepository(BaseRepository):
             )
             enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
 
-        # Helper to get property schema definition from properties or allOf
-        def get_prop_schema(schema_dict: dict, prop_name: str) -> Optional[dict]:
-            if "properties" in schema_dict and prop_name in schema_dict["properties"]:
-                return schema_dict["properties"][prop_name]
+        # Helper to get property schema definition from properties or allOf using dotted path
+        def get_prop_schema(schema_dict: dict, path: str) -> Optional[dict]:
+            parts = path.split(".")
+            current = schema_dict.get("properties", {})
+            for i, part in enumerate(parts):
+                if isinstance(current, dict) and part in current:
+                    if i == len(parts) - 1:
+                        return current[part]
+                    current = current[part].get("properties", {})
+                else:
+                    break
             if "allOf" in schema_dict and schema_dict["allOf"]:
                 for condition in schema_dict["allOf"]:
                     if isinstance(condition, dict):
-                        if "then" in condition and isinstance(condition["then"], dict) and "properties" in condition["then"] and prop_name in condition["then"]["properties"]:
-                            return condition["then"]["properties"][prop_name]
-                        if "else" in condition and isinstance(condition["else"], dict) and "properties" in condition["else"] and prop_name in condition["else"]["properties"]:
-                            return condition["else"]["properties"][prop_name]
+                        for clause in ["then", "else"]:
+                            if clause in condition and isinstance(condition[clause], dict):
+                                curr = condition[clause].get("properties", {})
+                                for i, part in enumerate(parts):
+                                    if isinstance(curr, dict) and part in curr:
+                                        if i == len(parts) - 1:
+                                            return curr[part]
+                                        curr = curr[part].get("properties", {})
+                                    else:
+                                        break
             return None
 
         pipeline_properties = self._get_pipeline_properties(enriched_template)
 
+        is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
+
+        def is_property_allowed(prop_path: str, prop_val: Any) -> bool:
+            prop_def = get_prop_schema(enriched_template, prop_path)
+            is_updateable = prop_def.get("updateable", False) is True if prop_def else False
+            is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
+            is_pipeline_prop = prop_path in pipeline_properties
+
+            if is_updateable or is_new_on_upgrade or is_pipeline_prop:
+                return True
+
+            if isinstance(prop_val, dict):
+                for sub_k, sub_v in prop_val.items():
+                    sub_path = f"{prop_path}.{sub_k}"
+                    if is_property_allowed(sub_path, sub_v):
+                        return True
+            return False
+
         # If updating/patching properties, ensure every patched property is allowed
         if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
-            is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
-            for prop_name in resource_patch.properties.keys():
-                prop_def = get_prop_schema(enriched_template, prop_name)
-                is_updateable = prop_def.get("updateable", False) is True if prop_def else False
-                is_new_on_upgrade = is_upgrade and prop_name not in old_template_properties
-                is_pipeline_prop = prop_name in pipeline_properties
-
-                if not (is_updateable or is_new_on_upgrade or is_pipeline_prop):
+            for prop_name, prop_val in resource_patch.properties.items():
+                if not is_property_allowed(prop_name, prop_val):
                     raise ValidationError(f"Property '{prop_name}' is not updateable.")
 
         # validate the PATCH data against the target schema.
@@ -293,16 +331,11 @@ class ResourceRepository(BaseRepository):
         update_template["properties"] = {}
 
         for prop_name, prop in enriched_template.get("properties", {}).items():
+            prop_val = resource_patch.properties.get(prop_name) if resource_patch.properties else None
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True
-                or (
-                    resource_patch.templateVersion is not None
-                    and resource_patch.templateVersion != resource_template.version
-                    and resource_patch.properties is not None
-                    and prop_name in resource_patch.properties
-                    and prop_name not in old_template_properties
-                )
+                or (is_upgrade and prop_val is not None and is_property_allowed(prop_name, prop_val))
                 or prop_name in pipeline_properties
             ):
                 update_template["properties"][prop_name] = prop

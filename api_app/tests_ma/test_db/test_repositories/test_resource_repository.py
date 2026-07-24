@@ -703,6 +703,48 @@ async def test_validate_patch_rejects_non_updateable_allOf_property(enrich_templ
 @pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_new_nested_property_under_existing_object_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that during a template upgrade, adding a new nested property under an existing non-updateable object property is allowed.
+    """
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['parent_object'] = {
+        'type': 'object',
+        'updateable': False,
+        'properties': {
+            'existing_child': {'type': 'string', 'updateable': False}
+        }
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template_dict['properties']['parent_object']['properties']['new_child'] = {'type': 'string'}
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    get_template_mock.return_value = new_template
+    enrich_template_mock.side_effect = [old_template_dict, new_template_dict]
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = enrich_template_mock
+
+    patch = ResourcePatch(
+        templateVersion='0.2.0',
+        properties={
+            'parent_object': {
+                'existing_child': 'old_val',
+                'new_child': 'new_val'
+            }
+        }
+    )
+
+    await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo):
     """
     Test that during a template upgrade for a UserResource, parent_service_name is passed
