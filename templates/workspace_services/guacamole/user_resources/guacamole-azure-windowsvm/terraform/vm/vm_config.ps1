@@ -60,6 +60,11 @@ $InstallStorageExplorer = (${InstallStorageExplorer} -eq 1)
 $InstallGit             = (${InstallGit} -eq 1)
 $InstallPythonTools     = (${InstallPythonTools} -eq 1)
 $InstallRTools          = (${InstallRTools} -eq 1)
+$ConfigureConda         = (${CondaConfig} -eq 1)
+
+# Only wait for (and pull from) Nexus when at least one Nexus-backed install/config action is enabled.
+$NexusActionsEnabled    = $InstallAzureCli -or $InstallVsCode -or $InstallStorageExplorer -or `
+                          $InstallGit -or $InstallPythonTools -or $InstallRTools -or $ConfigureConda
 
 $ToolsDir = Join-Path $env:TEMP "tre-tools"
 New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
@@ -199,10 +204,15 @@ function New-DesktopShortcut {
 }
 
 # Make sure the proxy is up before pulling any of the installers below.
-Wait-ForNexus | Out-Null
+if ($NexusActionsEnabled) {
+  Wait-ForNexus | Out-Null
+}
+else {
+  Write-Host "No Nexus-backed install/config actions enabled - skipping the wait for the Nexus proxy."
+}
 
 # Configure conda on images that already include it.
-if( ${CondaConfig} -eq 1 )
+if ($ConfigureConda)
 {
   Configure-CondaProxy
 }

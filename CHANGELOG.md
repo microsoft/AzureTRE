@@ -12,8 +12,8 @@ ENHANCEMENTS:
   start faster. All tooling (including VS Code and JupyterLab) is pinned to
   specific versions for reproducible builds, and the shared storage account
   credentials are only injected into the VM `custom_data` when shared storage
-  access is enabled. (`tre-service-guacamole-windowsvm` 2.2.1, import/export
-  `reviewvm` 1.2.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+  access is enabled. (`tre-service-guacamole-windowsvm` 2.2.2, import/export
+  `reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Add Nexus proxy repositories for the Windows data science tooling installers
   (Miniforge, CRAN R and Git). Existing Nexus shared service instances
   should be upgraded/redeployed so these repositories are created before using
@@ -26,7 +26,8 @@ ENHANCEMENTS:
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
 
 BUG FIXES:
-* Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.2.1) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Only wait for the Nexus proxy in the shared Guacamole Windows VM `vm_config.ps1` when at least one Nexus-backed install/config action is enabled, so VMs with all optional tooling disabled bootstrap without the Nexus wait. (`tre-service-guacamole-windowsvm` 2.2.2, import/export `reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Allow the airlock export review VM to reach the Nexus proxy (shared services subnet) so the shared `vm_config.ps1` bootstrap can install the data science tooling; the export review VM's locked-down NSG previously denied this. (`tre-service-guacamole-export-reviewvm` 1.2.2) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
