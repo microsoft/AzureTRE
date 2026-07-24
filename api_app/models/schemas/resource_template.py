@@ -10,7 +10,7 @@ class ResourceTemplateInCreate(BaseModel):
     version: str = Field(title="Template version")
     current: bool = Field(title="Mark this version as current")
     json_schema: Dict = Field(title="JSON Schema compliant template")
-    customActions: List[CustomAction] = Field(default=[], title="Custom actions")
+    customActions: List[CustomAction] = Field(default_factory=list, title="Custom actions")
 
 
 class ResourceTemplateInResponse(ResourceTemplate):
@@ -21,7 +21,7 @@ class ResourceTemplateInformation(BaseModel):
     name: str = Field(title="Template name")
     title: str = Field(title="Template title", default="")
     description: str = Field(title="Template description", default="")
-    authorizedRoles: Optional[List[str]] = Field(title="If not empty, the user is required to have one of these roles to install the template", default=[])
+    authorizedRoles: Optional[List[str]] = Field(title="If not empty, the user is required to have one of these roles to install the template", default_factory=list)
 
 
 class ResourceTemplateInformationInList(BaseModel):

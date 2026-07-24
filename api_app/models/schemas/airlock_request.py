@@ -63,15 +63,15 @@ class AirlockRequestAndOperationInResponse(BaseModel):
 
 
 class AirlockRequestWithAllowedUserActions(BaseModel):
-    airlockRequest: AirlockRequest = Field([], title="Airlock Request")
-    allowedUserActions: List[str] = Field([], title="actions that the requesting user can do on the request")
+    airlockRequest: AirlockRequest = Field(title="Airlock Request")
+    allowedUserActions: List[str] = Field(default_factory=list, title="actions that the requesting user can do on the request")
     model_config = ConfigDict(json_schema_extra={
         "example": get_sample_airlock_request_with_allowed_user_actions("933ad738-7265-4b5f-9eae-a1a62928772e"),
     })
 
 
 class AirlockRequestWithAllowedUserActionsInList(BaseModel):
-    airlockRequests: List[AirlockRequestWithAllowedUserActions] = Field([], title="Airlock Requests")
+    airlockRequests: List[AirlockRequestWithAllowedUserActions] = Field(default_factory=list, title="Airlock Requests")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "airlockRequests": [
@@ -86,7 +86,7 @@ class AirlockRequestInCreate(BaseModel):
     type: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
-    properties: dict = Field({}, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
+    properties: dict = Field(default_factory=dict, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "type": "import",

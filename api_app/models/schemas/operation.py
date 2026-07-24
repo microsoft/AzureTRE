@@ -40,7 +40,7 @@ class OperationInResponse(BaseModel):
 
 
 class OperationInList(BaseModel):
-    operations: List[Operation] = Field([], title="Operations")
+    operations: List[Operation] = Field(default_factory=list, title="Operations")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "operations": [

@@ -43,7 +43,7 @@ class WorkspaceServicesInList(BaseModel):
 
 class WorkspaceServiceInCreate(BaseModel):
     templateName: str = Field(title="Workspace service type", description="Bundle name")
-    properties: dict = Field({}, title="Workspace service parameters", description="Values for the parameters required by the workspace service resource specification")
+    properties: dict = Field(default_factory=dict, title="Workspace service parameters", description="Values for the parameters required by the workspace service resource specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "templateName": "tre-service-guacamole",

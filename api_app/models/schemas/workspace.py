@@ -32,7 +32,7 @@ class AuthProvider(StrEnum):
 
 class AuthenticationConfiguration(BaseModel):
     provider: AuthProvider = Field(AuthProvider.AAD, title="Authentication Provider")
-    data: dict = Field({}, title="Authentication information")
+    data: dict = Field(default_factory=dict, title="Authentication information")
 
 
 class WorkspaceInResponse(BaseModel):
@@ -67,7 +67,7 @@ class WorkspacesInList(BaseModel):
 
 class WorkspaceInCreate(BaseModel):
     templateName: str = Field(title="Workspace type", description="Bundle name")
-    properties: dict = Field({}, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
+    properties: dict = Field(default_factory=dict, title="Workspace parameters", description="Values for the parameters required by the workspace resource specification")
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "templateName": "tre-workspace-base",
