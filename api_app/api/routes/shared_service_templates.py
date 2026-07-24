@@ -26,7 +26,7 @@ async def get_shared_service_templates(authorized_only: bool = False, template_r
 async def get_shared_service_template(shared_service_template_name: str, is_update: bool = False, version: Optional[str] = None, template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServiceTemplateInResponse:
     try:
         template = await get_template(shared_service_template_name, template_repo, ResourceType.SharedService, is_update=is_update, version=version)
-return TypeAdapter(SharedServiceTemplateInResponse).validate_python(template)
+        return TypeAdapter(SharedServiceTemplateInResponse).validate_python(template)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.SHARED_SERVICE_TEMPLATE_DOES_NOT_EXIST)
 
