@@ -122,10 +122,10 @@ export const matchesIfCondition = (ifSchema: any, state: any): boolean => {
       } else if ("enum" in (cond as any) && Array.isArray((cond as any).enum)) {
         if (!(cond as any).enum.includes(val)) return false;
       } else {
-        if (!val) return false;
+        if (val === undefined || val === null || val === "") return false;
       }
     } else {
-      if (!val) return false;
+      if (val === undefined || val === null || val === "") return false;
     }
   }
   return true;

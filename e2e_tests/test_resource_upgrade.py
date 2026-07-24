@@ -4,7 +4,7 @@ from httpx import AsyncClient, Timeout
 from starlette import status
 
 import config
-from helpers import get_admin_token, get_auth_header
+from helpers import get_auth_header
 from resources import strings
 from resources.resource import get_resource, post_resource
 from e2e_tests.conftest import get_workspace_owner_token
@@ -95,30 +95,51 @@ async def test_upgrade_guacamole_user_resource_template(setup_test_workspace_and
     assert upgraded_resource.get("properties", {}).get("description") == "Updated research description for VM post-upgrade", "Updateable property 'description' was not updated post-upgrade"
 
 
-@pytest.mark.smoke
-async def test_patch_rejects_non_updateable_property_modification(verify) -> None:
+@pytest.mark.extended
+@pytest.mark.timeout(75 * 60)
+async def test_patch_rejects_non_updateable_property_modification(setup_test_workspace_and_guacamole_service, verify) -> None:
     """
     E2E Test to verify that PATCH rejects attempts to modify non-updateable properties
-    (such as os_image, which has updateable: false).
+    (such as os_image, which has updateable: false) on an active resource instance.
     """
-    admin_token = await get_admin_token(verify)
+    _, workspace_id, workspace_service_path, _ = setup_test_workspace_and_guacamole_service
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    # Provision initial Guacamole VM user resource
+    user_resource_payload = {
+        "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
+        "properties": {
+            "display_name": "E2E Non-Updateable Test VM",
+            "description": "VM created to test non-updateable property rejection",
+            "os_image": "Windows 11",
+            "admin_username": "researcher"
+        }
+    }
+
+    user_resource_path, user_resource_id = await post_resource(
+        user_resource_payload,
+        f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}',
+        workspace_owner_token,
+        verify,
+        method="POST"
+    )
+
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        # Invalid patch payload attempting to update non-updateable os_image property
         invalid_patch = {
             "properties": {
                 "os_image": "Windows Server 2025"
             }
         }
-        auth_headers = get_auth_header(admin_token)
+        auth_headers = get_auth_header(workspace_owner_token)
         auth_headers["eTag"] = "*"
 
-        # Call PATCH on an endpoint expecting a 400/422 validation failure
+        # Call PATCH on resource instance expecting a 400/422 validation failure
         response = await client.patch(
-            f"{config.TRE_URL}/api{strings.API_WORKSPACE_SERVICE_TEMPLATES}/guacamole",
+            f"{config.TRE_URL}/api{user_resource_path}",
             headers=auth_headers,
             json=invalid_patch
         )
 
-        assert response.status_code in [status.HTTP_400_BAD_REQUEST, status.HTTP_422_UNPROCESSABLE_ENTITY, status.HTTP_405_METHOD_NOT_ALLOWED], (
-            f"Expected validation failure status code when modifying non-updateable os_image, got {response.status_code}"
+        assert response.status_code in [status.HTTP_400_BAD_REQUEST, status.HTTP_422_UNPROCESSABLE_ENTITY], (
+            f"Expected validation failure (400 or 422) when modifying non-updateable os_image on resource instance, got {response.status_code}"
         )

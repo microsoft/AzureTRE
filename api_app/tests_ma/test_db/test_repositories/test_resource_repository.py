@@ -739,7 +739,57 @@ async def test_validate_patch_allows_new_nested_property_under_existing_object_d
         }
     )
 
-    await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE)
+    current_properties = {'parent_object': {'existing_child': 'old_val'}}
+    await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE, current_properties=current_properties)
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+async def test_validate_patch_rejects_modifying_existing_nested_non_updateable_property_during_upgrade(get_template_mock, resource_repo):
+    """
+    Test that validate_patch rejects modifying an existing non-updateable nested property
+    during an upgrade, even when bundled alongside a newly added nested property.
+    """
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['parent_object'] = {
+        'type': 'object',
+        'updateable': False,
+        'properties': {
+            'existing_child': {'type': 'string', 'updateable': False}
+        }
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template_dict['properties']['parent_object']['properties']['new_child'] = {'type': 'string'}
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    get_template_mock.return_value = new_template
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = MagicMock(return_value=new_template_dict)
+
+    # Resource currently has existing_child set to 'val1'
+    current_properties = {
+        'parent_object': {
+            'existing_child': 'val1'
+        }
+    }
+
+    # Patch attempts to modify existing_child to 'ATTACK_VAL' while also providing new_child
+    patch = ResourcePatch(
+        templateVersion='0.2.0',
+        properties={
+            'parent_object': {
+                'existing_child': 'ATTACK_VAL',
+                'new_child': 'val2'
+            }
+        }
+    )
+
+    with pytest.raises(ValidationError, match="Property 'parent_object.existing_child' is not updateable."):
+        await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE, current_properties=current_properties)
 
 
 @pytest.mark.asyncio

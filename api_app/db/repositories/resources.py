@@ -151,16 +151,26 @@ class ResourceRepository(BaseRepository):
                                         keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
         return keys
 
+    def _get_leaf_properties(self, properties: Any, prefix: str = "") -> List[Tuple[str, Any]]:
+        leaves: List[Tuple[str, Any]] = []
+        if isinstance(properties, dict):
+            for k, v in properties.items():
+                full_key = f"{prefix}{k}"
+                if isinstance(v, dict):
+                    leaves.extend(self._get_leaf_properties(v, prefix=f"{full_key}."))
+                else:
+                    leaves.append((full_key, v))
+        return leaves
+
     def _remove_property_by_path(self, properties: dict, path: str):
         parts = path.split(".")
         current = properties
-        for i, part in enumerate(parts):
+        for part in parts[:-1]:
             if not isinstance(current, dict) or part not in current:
                 return
-            if i == len(parts) - 1:
-                del current[part]
-            else:
-                current = current[part]
+            current = current[part]
+        if isinstance(current, dict) and parts[-1] in current:
+            del current[parts[-1]]
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
@@ -200,7 +210,7 @@ class ResourceRepository(BaseRepository):
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-            await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
+            await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action, current_properties=resource.properties)
 
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
@@ -269,7 +279,7 @@ class ResourceRepository(BaseRepository):
                                 properties.append(prop["name"])
         return properties
 
-    async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
+    async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str, current_properties: Optional[dict] = None):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
@@ -325,13 +335,25 @@ class ResourceRepository(BaseRepository):
 
         is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
 
-        def is_property_allowed(prop_path: str, prop_val: Any) -> bool:
+        def get_nested_val(data: Any, path: str) -> Any:
+            if not isinstance(data, dict):
+                return None
+            parts = path.split(".")
+            curr = data
+            for part in parts:
+                if not isinstance(curr, dict) or part not in curr:
+                    return None
+                curr = curr[part]
+            return curr
+
+        def is_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
             """
-            Determines whether a patched property path (or any of its nested sub-keys) is permitted.
+            Determines whether a patched leaf property path is permitted.
             Allowed if:
             1. Explicitly marked updateable: true in the template schema (top-level or allOf).
-            2. Introduced as a new property (or new nested sub-property) during a template upgrade.
+            2. Introduced as a new property path during a template upgrade.
             3. Referenced as a pipeline property in the template's install/upgrade pipeline.
+            4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
             """
             prop_def = get_prop_schema(enriched_template, prop_path)
             is_updateable = prop_def.get("updateable", False) is True if prop_def else False
@@ -341,18 +363,28 @@ class ResourceRepository(BaseRepository):
             if is_updateable or is_new_on_upgrade or is_pipeline_prop:
                 return True
 
-            if isinstance(prop_val, dict):
-                for sub_k, sub_v in prop_val.items():
-                    sub_path = f"{prop_path}.{sub_k}"
-                    if is_property_allowed(sub_path, sub_v):
-                        return True
+            if current_properties is not None and is_upgrade:
+                existing_val = get_nested_val(current_properties, prop_path)
+                if existing_val is not None and existing_val == prop_val:
+                    return True
+
             return False
 
-        # If updating/patching properties, ensure every patched property is allowed
+        def is_any_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
+            if not isinstance(prop_val, dict):
+                return is_leaf_allowed(prop_path, prop_val)
+            leaves = self._get_leaf_properties({prop_path: prop_val})
+            for leaf_path, leaf_v in leaves:
+                if is_leaf_allowed(leaf_path, leaf_v):
+                    return True
+            return False
+
+        # If updating/patching properties, ensure EVERY patched leaf property is allowed
         if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
-            for prop_name, prop_val in resource_patch.properties.items():
-                if not is_property_allowed(prop_name, prop_val):
-                    raise ValidationError(f"Property '{prop_name}' is not updateable.")
+            leaf_props = self._get_leaf_properties(resource_patch.properties)
+            for prop_path, prop_val in leaf_props:
+                if not is_leaf_allowed(prop_path, prop_val):
+                    raise ValidationError(f"Property '{prop_path}' is not updateable.")
 
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
@@ -364,7 +396,7 @@ class ResourceRepository(BaseRepository):
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True
-                or (is_upgrade and prop_val is not None and is_property_allowed(prop_name, prop_val))
+                or (is_upgrade and prop_val is not None and is_any_leaf_allowed(prop_name, prop_val))
                 or prop_name in pipeline_properties
             ):
                 update_template["properties"][prop_name] = prop

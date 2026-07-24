@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
-import { getAllPropertyKeysFromTemplate, getTopLevelKeysFromTemplate } from "../../utils/schemaUpgradeUtils";
+import { matchesIfCondition } from "../../utils/schemaUpgradeUtils";
 import { Resource, AvailableUpgrade } from "../../models/resource";
 import { UserResource } from "../../models/userResource";
 import { ResourceType } from "../../models/resourceType";
@@ -1059,5 +1059,28 @@ describe("ConfirmUpgradeResource Component", () => {
 
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).not.toBeDisabled();
+  });
+
+  it("matchesIfCondition handles boolean false and numeric 0 as valid non-missing values", () => {
+    const ifSchema = {
+      properties: {
+        enabled_flag: { type: "boolean" },
+        count_val: { type: "number" },
+      },
+    };
+
+    const stateWithFalseAndZero = {
+      enabled_flag: false,
+      count_val: 0,
+    };
+
+    expect(matchesIfCondition(ifSchema, stateWithFalseAndZero)).toBe(true);
+
+    const stateWithUndefined = {
+      enabled_flag: undefined,
+      count_val: 0,
+    };
+
+    expect(matchesIfCondition(ifSchema, stateWithUndefined)).toBe(false);
   });
 });

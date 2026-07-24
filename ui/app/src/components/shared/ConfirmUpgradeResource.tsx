@@ -151,6 +151,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     const fetchNewTemplateSchema = async () => {
       setLoadingSchema(true);
       setApiError(null);
+      setRequestLoadingState(LoadingState.Ok);
       try {
         let activeTemplateGetPath = templateGetPath;
         if (!activeTemplateGetPath && props.resource.resourceType === ResourceType.UserResource) {
@@ -173,6 +174,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           err.userMessage = "Parent workspace service information is missing for this user resource.";
           err.status = 400;
           setApiError(err);
+          setRequestLoadingState(LoadingState.Error);
           setLoadingSchema(false);
           return;
         }
@@ -294,6 +296,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           err.userMessage = "Failed to fetch new template schema";
         }
         setApiError(err);
+        setRequestLoadingState(LoadingState.Error);
       } finally {
         setLoadingSchema(false);
       }
