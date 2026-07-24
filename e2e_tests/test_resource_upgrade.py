@@ -4,7 +4,7 @@ from httpx import AsyncClient, Timeout
 from starlette import status
 
 import config
-from helpers import get_auth_header
+from helpers import get_auth_header, get_admin_token
 from resources import strings
 from resources.resource import get_resource, post_resource
 from e2e_tests.conftest import get_workspace_owner_token
@@ -57,9 +57,10 @@ async def test_upgrade_guacamole_user_resource_template(setup_test_workspace_and
     LOGGER.info(f"Initial resource template version: {initial_version}")
 
     # Fetch template to find available versions
+    admin_token = await get_admin_token(verify)
     template_data = await get_resource(
         f'/api{strings.API_WORKSPACE_SERVICE_TEMPLATES}/guacamole/{strings.API_USER_RESOURCE_TEMPLATES}/{strings.GUACAMOLE_WINDOWS_USER_RESOURCE}',
-        workspace_owner_token,
+        admin_token,
         verify
     )
     current_version = template_data.get("version")
