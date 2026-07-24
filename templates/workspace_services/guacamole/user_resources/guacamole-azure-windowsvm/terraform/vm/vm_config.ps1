@@ -332,5 +332,5 @@ if ($InstallGit) {
   New-DesktopShortcut -Name "Git Bash" -TargetPath "$Env:ProgramFiles\Git\git-bash.exe"
 }
 if ($InstallPythonTools) {
-  New-DesktopShortcut -Name "JupyterLab" -TargetPath "$MiniforgePath\Scripts\jupyter-lab.exe" -WorkingDirectory "%USERPROFILE%"
+  New-DesktopShortcut -Name "JupyterLab" -TargetPath "$MiniforgePath\Scripts\jupyter-lab.exe" -WorkingDirectory $env:USERPROFILE
 }
