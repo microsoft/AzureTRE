@@ -216,7 +216,7 @@ export const collectConditionalKeys = (entry: any): string[] => {
     // a conditional only sets then.required / else.required without redefining
     // the property's schema under then/else.properties)
     if (Array.isArray(schemaPart.required)) {
-      keys.push(...schemaPart.required.filter((r) => typeof r === "string"));
+      keys.push(...schemaPart.required.filter((r: unknown): r is string => typeof r === "string"));
     }
   };
   collect(entry.if);
