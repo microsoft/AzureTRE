@@ -2,7 +2,7 @@ import copy
 import uuid
 
 from datetime import datetime, timezone, UTC
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
@@ -34,7 +34,7 @@ class AirlockRequestRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.now(timezone.utc).timestamp()
 
-    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
+    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: Union[User, dict], request_properties: dict) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
             resourceVersion=original_request.resourceVersion,
             updatedWhen=original_request.updatedWhen,
@@ -45,7 +45,12 @@ class AirlockRequestRepository(BaseRepository):
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.updatedBy = updated_by.model_dump()
+        if hasattr(updated_by, "model_dump"):
+            new_request.updatedBy = updated_by.model_dump()
+        elif isinstance(updated_by, dict):
+            new_request.updatedBy = updated_by
+        else:
+            raise TypeError("updated_by must be a User model or dict")
         new_request.updatedWhen = self.get_timestamp()
 
         await self.upsert_item_with_etag(new_request, new_request.etag)
@@ -184,7 +189,7 @@ class AirlockRequestRepository(BaseRepository):
     async def update_airlock_request(
             self,
             original_request: AirlockRequest,
-            updated_by: User,
+            updated_by: Union[User, dict],
             new_status: Optional[AirlockRequestStatus] = None,
             request_files: Optional[List[AirlockFile]] = None,
             status_message: Optional[str] = None,
@@ -246,7 +251,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
-            updated_by: Optional[User] = None) -> AirlockRequest:
+            updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
@@ -266,7 +271,9 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews.append(airlock_review)
 
         if review_user_resource is not None and updated_by is not None:
-            updated_request.reviewUserResources[updated_by.id] = review_user_resource
+            reviewer_id = updated_by.id if hasattr(updated_by, "id") else updated_by.get("id")
+            if reviewer_id:
+                updated_request.reviewUserResources[reviewer_id] = review_user_resource
 
         return updated_request
 

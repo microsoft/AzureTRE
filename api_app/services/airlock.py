@@ -14,7 +14,7 @@ from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
 from models.schemas.resource import ResourcePatch
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Union
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
 from services.authentication import get_access_service
@@ -297,15 +297,16 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
 
 
 async def update_and_publish_event_airlock_request(
-        airlock_request: AirlockRequest,
-        airlock_request_repo: AirlockRequestRepository,
-        updated_by: User,
-        workspace: Workspace,
-        new_status: Optional[AirlockRequestStatus] = None,
-        request_files: Optional[List[AirlockFile]] = None,
-        status_message: Optional[str] = None,
-        airlock_review: Optional[AirlockReview] = None,
-        review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
+    airlock_request: AirlockRequest,
+    airlock_request_repo: AirlockRequestRepository,
+    updated_by: Union[User, dict],
+    workspace: Workspace,
+    new_status: Optional[AirlockRequestStatus] = None,
+    request_files: Optional[List[AirlockFile]] = None,
+    status_message: Optional[str] = None,
+    airlock_review: Optional[AirlockReview] = None,
+    review_user_resource: Optional[AirlockReviewUserResource] = None,
+) -> AirlockRequest:
     try:
         logger.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = await airlock_request_repo.update_airlock_request(
