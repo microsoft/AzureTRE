@@ -1,10 +1,7 @@
 import * as React from "react";
 import { Dropdown, IDropdownOption, Label, Panel, PanelType, PrimaryButton, Spinner, Stack } from "@fluentui/react";
 import { IPersonaProps } from "@fluentui/react/lib/Persona";
-import {
-  IBasePickerSuggestionsProps,
-  NormalPeoplePicker
-} from "@fluentui/react/lib/Pickers";
+import { IBasePickerSuggestionsProps, NormalPeoplePicker } from "@fluentui/react/lib/Pickers";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
@@ -37,7 +34,9 @@ const suggestionProps: IBasePickerSuggestionsProps = {
   suggestionsContainerAriaLabel: "Suggested contacts",
 };
 
-export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssignProps> = (props: WorkspaceUsersAssignProps) => {
+export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssignProps> = (
+  props: WorkspaceUsersAssignProps,
+) => {
   const workspaceCtx = useContext(WorkspaceContext);
   const { workspace } = workspaceCtx;
 
@@ -56,18 +55,21 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const filterPersonasByText = async (filterText: string): Promise<IPersonaProps[]> => {
     try {
       const scopeId = "";
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.AssignableUsers}?filter=${filterText}`, HttpMethod.Get, scopeId);
+      const response = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.AssignableUsers}?filter=${filterText}`,
+        HttpMethod.Get,
+        scopeId,
+      );
       const assignableUsers = response.assignable_users;
 
       const options: IPersonaProps[] = assignableUsers.map((assignableUser: AssignableUser) => ({
         text: assignableUser.displayName,
         secondaryText: assignableUser.userPrincipalName,
-        key: assignableUser.id
+        key: assignableUser.id,
       }));
 
       return options;
-    }
-    catch (err: any) {
+    } catch (err: any) {
       err.userMessage = "Error retrieving assignable users";
     }
     return [];
@@ -75,9 +77,8 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
   const onChange = (items?: IPersonaProps[] | undefined): void => {
     if (items && items.length > 0) {
-      setSelectedUsers(items.map(item => item.key as string));
-    }
-    else {
+      setSelectedUsers(items.map((item) => item.key as string));
+    } else {
       setSelectedUsers(null);
     }
   };
@@ -98,19 +99,21 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
   const getWorkspaceRoles = useCallback(async () => {
     try {
       const scopeId = "";
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Roles}`, HttpMethod.Get, scopeId);
+      const response = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Roles}`,
+        HttpMethod.Get,
+        scopeId,
+      );
 
       const options: IDropdownOption[] = response.roles.map((workspaceRole: WorkspaceRole) => ({
         key: workspaceRole.id,
-        text: workspaceRole.displayName
+        text: workspaceRole.displayName,
       }));
 
       setRoleOptions(options);
-    }
-    catch (err: any) {
+    } catch (err: any) {
       err.userMessage = "Error retrieving assignable users";
     }
-
   }, [apiCall, workspace.id]);
 
   useEffect(() => {
@@ -122,25 +125,32 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
 
     const scopeId = "";
     try {
-      const response = await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign`, HttpMethod.Post, scopeId, {
-        role_id: selectedRole,
-        user_ids: selectedUsers
-      });
+      const response = await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign`,
+        HttpMethod.Post,
+        scopeId,
+        {
+          role_id: selectedRole,
+          user_ids: selectedUsers,
+        },
+      );
       props.onAssignUser(response);
-    }
-    catch (err: any) {
+    } catch (err: any) {
       err.userMessage = "Error assigning workspace user";
       setHasAssignmentError(true);
       setAssignmentError(err);
     }
     setAssigning(false);
-
   }, [selectedUsers, apiCall, workspace.id, selectedRole, props]);
 
   const renderFooter = useCallback(() => {
-    return (<div style={{ textAlign: "end" }}>
-      <PrimaryButton onClick={() => assign()} disabled={assigning || (!selectedUsers || !selectedRole)}>Assign</PrimaryButton>
-    </div>);
+    return (
+      <div style={{ textAlign: "end" }}>
+        <PrimaryButton onClick={() => assign()} disabled={assigning || !selectedUsers || !selectedRole}>
+          Assign
+        </PrimaryButton>
+      </div>
+    );
   }, [selectedUsers, selectedRole, assign, assigning]);
 
   return (
@@ -184,19 +194,15 @@ export const WorkSpaceUsersAssignNew: React.FunctionComponent<WorkspaceUsersAssi
             onChange={onRoleChange}
           />
         </Stack>
-        {
-          assigning && <Stack>
+        {assigning && (
+          <Stack>
             <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
               <Spinner />
             </Stack.Item>
           </Stack>
-        }
-        {
-          hasAssignmentError && <ExceptionLayout e={assignmentError} />
-        }
+        )}
+        {hasAssignmentError && <ExceptionLayout e={assignmentError} />}
       </Stack>
     </Panel>
-
-  )
-}
-
+  );
+};

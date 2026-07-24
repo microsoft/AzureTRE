@@ -1,12 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
-import {
-  render,
-  screen,
-  waitFor,
-  createAuthApiCallMock,
-  createApiEndpointsMock
-} from "../../test-utils";
+import { render, screen, waitFor, createAuthApiCallMock, createApiEndpointsMock } from "../../test-utils";
 import { createCompleteFluentUIMock } from "../../test-utils/fluentui-mocks";
 import { CostsTag } from "./CostsTag";
 import { CostsContext } from "../../contexts/CostsContext";
@@ -61,7 +55,6 @@ const mockWorkspace = {
   workspaceURL: "https://workspace.example.com",
 };
 
-
 const createMockCostsContext = (costs?: CostResource[]) => ({
   costs: costs || [],
   loadingState: LoadingState.Ok,
@@ -89,10 +82,8 @@ const renderWithContexts = (
 
   return render(
     <CostsContext.Provider value={costsContext as any}>
-      <WorkspaceContext.Provider value={workspaceContext as any}>
-        {component}
-      </WorkspaceContext.Provider>
-    </CostsContext.Provider>
+      <WorkspaceContext.Provider value={workspaceContext as any}>{component}</WorkspaceContext.Provider>
+    </CostsContext.Provider>,
   );
 };
 
@@ -110,9 +101,13 @@ describe("CostsTag Component", () => {
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     mockApiCall.mockImplementation(async () => {
       await delay(100);
-      return { workspaceAuth: { scopeId: "scope" }, costs: [{ cost: 123.45, currency: "USD" }], id: "resource1", name: "Resource 1" };
+      return {
+        workspaceAuth: { scopeId: "scope" },
+        costs: [{ cost: 123.45, currency: "USD" }],
+        id: "resource1",
+        name: "Resource 1",
+      };
     });
-
 
     // Provide a workspace with id: undefined to trigger loading state
     const workspaceWithNoId = { ...mockWorkspace, id: undefined };
@@ -136,7 +131,7 @@ describe("CostsTag Component", () => {
         <WorkspaceContext.Provider value={workspaceContext}>
           <CostsTag resourceId="resource1" />
         </WorkspaceContext.Provider>
-      </CostsContext.Provider>
+      </CostsContext.Provider>,
     );
 
     // Wait for shimmer to appear (async)
