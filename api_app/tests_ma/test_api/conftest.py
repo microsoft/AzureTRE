@@ -17,9 +17,21 @@ def no_lifespan_events():
 @pytest.fixture(autouse=True)
 def no_auth_token():
     """ overrides validating and decoding tokens for all tests"""
-    with patch('services.aad_authentication.AccessService.__call__', return_value="token"):
-        with patch('services.aad_authentication.AzureADAuthorization._decode_token', return_value="decoded_token"):
-            yield
+    from auth.models import AuthenticatedUser
+    from fastapi.security import HTTPAuthorizationCredentials
+    from mock import AsyncMock, MagicMock
+
+    fake_credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token")
+
+    default_validated = AuthenticatedUser(id="test-user", name="Test User", roles=["TREAdmin"])
+    mock_validator = MagicMock()
+    mock_validator.validate.return_value = default_validated
+
+    with patch('fastapi.security.HTTPBearer.__call__', new=AsyncMock(return_value=fake_credentials)):
+        with patch('auth.dependencies.get_core_validator', return_value=mock_validator):
+            with patch('auth.rbac.get_core_validator', return_value=mock_validator):
+                with patch('auth.rbac.get_workspace_validator', return_value=mock_validator):
+                    yield
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -78,9 +90,15 @@ def override_get_user():
 
 
 def get_required_roles(endpoint):
-    dependencies = list(filter(lambda x: hasattr(x.dependency, 'require_one_of_roles'), endpoint.__defaults__))
-    required_roles = dependencies[0].dependency.require_one_of_roles
-    return required_roles
+    defaults = endpoint.__defaults__ or ()
+    dependencies = list(filter(lambda x: hasattr(x, 'dependency') and hasattr(x.dependency, 'require_one_of_roles'), defaults))
+    if dependencies:
+        return dependencies[0].dependency.require_one_of_roles
+    # New-style deps: check for _role_names attribute on the closure
+    dependencies = list(filter(lambda x: hasattr(x, 'dependency') and hasattr(x.dependency, '_role_names'), defaults))
+    if dependencies:
+        return dependencies[0].dependency._role_names
+    return []
 
 
 @pytest.fixture(scope='module')

@@ -222,7 +222,7 @@ async def test_get_airlock_requests_with_multiple_filters(airlock_request_repo):
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_no_roles(
     mock_workspace_repo,
@@ -249,7 +249,7 @@ async def test_get_airlock_requests_for_airlock_manager_no_roles(
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_single_workspace(
     mock_workspace_repo,
@@ -281,7 +281,7 @@ async def test_get_airlock_requests_for_airlock_manager_single_workspace(
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_multiple_workspaces(
     mock_workspace_repo,
@@ -318,7 +318,7 @@ async def test_get_airlock_requests_for_airlock_manager_multiple_workspaces(
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_active_workspaces_but_no_manager_role(
     mock_workspace_repo,
@@ -346,7 +346,7 @@ async def test_get_airlock_requests_for_airlock_manager_active_workspaces_but_no
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_passes_correct_arguments(
     mock_workspace_repo,
@@ -395,7 +395,7 @@ async def test_get_airlock_requests_for_airlock_manager_passes_correct_arguments
 
 @pytest.mark.asyncio
 @patch.object(AirlockRequestRepository, 'get_airlock_requests', new_callable=AsyncMock)
-@patch('db.repositories.airlock_requests.get_access_service', autospec=True)
+@patch('db.repositories.airlock_requests.get_aad_service', autospec=True)
 @patch('db.repositories.airlock_requests.WorkspaceRepository', autospec=True)
 async def test_get_airlock_requests_for_airlock_manager_argument_compatibility(
     mock_workspace_repo,

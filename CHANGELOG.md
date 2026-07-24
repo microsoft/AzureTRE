@@ -9,12 +9,14 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
+* Strengthen TRE API authentication: introduce layered `auth/` package with typed exceptions, `PyJWKClient`-backed token validation with issuer checking, immutable `AuthenticatedUser` model, and composable RBAC factories; remove the `AccessService` abstraction that is no longer needed now that Entra ID is the only auth provider. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
 * Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Added support for formatting UI code via `pre-commit` and fixed existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
 BUG FIXES:
+* Remove duplicate API route dependencies to prevent authentication checks from running twice per request. ([#4797](https://github.com/microsoft/AzureTRE/issues/4797))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))

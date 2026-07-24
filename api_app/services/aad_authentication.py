@@ -1,32 +1,30 @@
-import base64
 from collections import defaultdict
 from enum import Enum
-from typing import List, Optional
-import jwt
+from typing import List
+
 import requests
-
-from fastapi import Request, HTTPException, status
 from msal import ConfidentialClientApplication
-
-from services.access_service import AccessService, AuthConfigValidationError, UserRoleAssignmentError
-from core import config
-from db.errors import EntityDoesNotExist
-from models.domain.authentication import User, RoleAssignment
-from models.domain.workspace_users import AssignedUser, AssignmentType, AssignableUser, Role
-from models.domain.workspace import Workspace, WorkspaceRole
-from resources import strings
-from db.repositories.workspaces import WorkspaceRepository
-from services.logging import logger
-
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 from semantic_version import Version
+
+from core import config
+from models.domain.authentication import User, RoleAssignment
+from models.domain.workspace import Workspace, WorkspaceRole
+from models.domain.workspace_users import AssignableUser, AssignedUser, AssignmentType, Role
+from resources import strings
+from services.logging import logger
 
 
 MICROSOFT_GRAPH_URL = config.MICROSOFT_GRAPH_URL.strip("/")
 GRAPH_REQUEST_TIMEOUT = 10
 USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION = "2.1.0"
+
+
+class AuthConfigValidationError(Exception):
+    """Raised when the input auth information is invalid."""
+
+
+class UserRoleAssignmentError(Exception):
+    """Raised when a user role assignment fails."""
 
 
 class PrincipalType(Enum):
@@ -35,169 +33,20 @@ class PrincipalType(Enum):
     ServicePrincipal = "ServicePrincipal"
 
 
-class AzureADAuthorization(AccessService):
-    _jwt_keys: dict = {}
+class AzureADAuthorization:
+    """Service wrapper for Microsoft Graph calls related to workspace auth.
 
-    require_one_of_roles = None
-    aad_instance = config.AAD_AUTHORITY_URL
+    Handles workspace app-registration validation and role-assignment lookups
+    via the Microsoft Graph API. JWT validation for incoming API requests is
+    handled separately by the :mod:`auth` package.
+    """
 
-    TRE_CORE_ROLES = ['TREAdmin', 'TREUser', 'TREAirlockAutomation']
-    WORKSPACE_ROLES_DICT = {'WorkspaceOwner': 'app_role_id_workspace_owner', 'WorkspaceResearcher': 'app_role_id_workspace_researcher', 'AirlockManager': 'app_role_id_workspace_airlock_manager'}
+    WORKSPACE_ROLES_DICT = {
+        'WorkspaceOwner': 'app_role_id_workspace_owner',
+        'WorkspaceResearcher': 'app_role_id_workspace_researcher',
+        'AirlockManager': 'app_role_id_workspace_airlock_manager',
+    }
 
-    def __init__(self, auto_error: bool = True, require_one_of_roles: Optional[list] = None):
-        super(AzureADAuthorization, self).__init__(
-            authorizationUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/authorize",
-            tokenUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            refreshUrl=f"{self.aad_instance}/{config.AAD_TENANT_ID}/oauth2/v2.0/token",
-            scheme_name="oauth2",
-            auto_error=auto_error
-        )
-        self.require_one_of_roles = require_one_of_roles
-
-    async def __call__(self, request: Request) -> User:
-
-        token: str = await super(AzureADAuthorization, self).__call__(request)
-
-        decoded_token = None
-
-        # Try workspace app registration if appropriate
-        if 'workspace_id' in request.path_params and any(role in self.require_one_of_roles for role in self.WORKSPACE_ROLES_DICT.keys()):
-            # as we have a workspace_id not given, try decoding token
-            logger.debug("Workspace ID was provided. Getting Workspace API app registration")
-            try:
-                # get the app reg id - which might be blank if the workspace hasn't fully created yet.
-                # if it's blank, don't use workspace auth, use core auth - and a TRE Admin can still get it
-                app_reg_id = await self._fetch_ws_app_reg_id_from_ws_id(request)
-                if app_reg_id != "":
-                    decoded_token = self._decode_token(token, app_reg_id)
-            except HTTPException as h:
-                raise h
-            except Exception as e:
-                logger.debug(e)
-                logger.debug("Failed to decode using workspace_id, trying with TRE API app registration")
-                pass
-
-        # Try TRE API app registration if appropriate
-        if decoded_token is None and any(role in self.require_one_of_roles for role in self.TRE_CORE_ROLES):
-            try:
-                decoded_token = self._decode_token(token, config.API_AUDIENCE)
-            except jwt.exceptions.InvalidSignatureError:
-                logger.debug("Failed to decode using TRE API app registration (Invalid Signatrue)")
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_SIGNATURE)
-            except jwt.exceptions.ExpiredSignatureError:
-                logger.debug("Failed to decode using TRE API app registration (Expired Signature)")
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.EXPIRED_SIGNATURE)
-            except jwt.exceptions.InvalidTokenError:
-                # any other token validation exception, we want to catch all of these...
-                logger.debug("Failed to decode using TRE API app registration (Invalid token)")
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.INVALID_TOKEN)
-            except Exception as e:
-                # Unexpected token decoding/validation exception. making sure we are not crashing (with 500)
-                logger.debug(e)
-                pass
-
-        # Failed to decode token using either app registration
-        if decoded_token is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_UNABLE_TO_VALIDATE_TOKEN)
-
-        try:
-            user = self._get_user_from_token(decoded_token)
-        except Exception as e:
-            logger.debug(e)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER, headers={"WWW-Authenticate": "Bearer"})
-
-        try:
-            if not any(role in self.require_one_of_roles for role in user.roles):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
-        except Exception as e:
-            logger.debug(e)
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f'{strings.ACCESS_USER_DOES_NOT_HAVE_REQUIRED_ROLE}: {self.require_one_of_roles}', headers={"WWW-Authenticate": "Bearer"})
-
-        return user
-
-    @staticmethod
-    async def _fetch_ws_app_reg_id_from_ws_id(request: Request) -> str:
-        workspace_id = None
-        if "workspace_id" not in request.path_params:
-            logger.error("Neither a workspace ID nor a default app registration id were provided")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
-        try:
-            workspace_id = request.path_params['workspace_id']
-            ws_repo = await WorkspaceRepository.create()
-            workspace = await ws_repo.get_workspace_by_id(workspace_id)
-
-            ws_app_reg_id = ""
-            if "client_id" in workspace.properties:
-                ws_app_reg_id = workspace.properties['client_id']
-
-            return ws_app_reg_id
-        except EntityDoesNotExist:
-            logger.exception(strings.WORKSPACE_DOES_NOT_EXIST)
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.WORKSPACE_DOES_NOT_EXIST)
-        except Exception:
-            logger.exception(f"Failed to get workspace app registration ID for workspace {workspace_id}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=strings.AUTH_COULD_NOT_VALIDATE_CREDENTIALS)
-
-    @staticmethod
-    def _get_user_from_token(decoded_token: dict) -> User:
-        user_id = decoded_token['oid']
-
-        return User(id=user_id,
-                    name=decoded_token.get('name', ''),
-                    email=decoded_token.get('email', ''),
-                    roles=decoded_token.get('roles', []))
-
-    def _decode_token(self, token: str, ws_app_reg_id: str) -> dict:
-        key_id = self._get_key_id(token)
-        key = self._get_token_key(key_id)
-
-        logger.debug("workspace app registration id: %s", ws_app_reg_id)
-        return jwt.decode(token, key, options={"verify_signature": True}, algorithms=['RS256'], audience=ws_app_reg_id)
-
-    @staticmethod
-    def _get_key_id(token: str) -> str:
-        headers = jwt.get_unverified_header(token)
-        return headers['kid'] if headers and 'kid' in headers else None
-
-    @staticmethod
-    def _ensure_b64padding(key: str) -> str:
-        """
-        The base64 encoded keys are not always correctly padded, so pad with the right number of =
-        """
-        key = key.encode('utf-8')
-        missing_padding = len(key) % 4
-        for _ in range(missing_padding):
-            key = key + b'='
-        return key
-
-    def _get_token_key(self, key_id: str) -> str:
-        """
-        Rather tha use PyJWKClient.get_signing_key_from_jwt every time, we'll get all the keys from AAD and cache them.
-        """
-        if key_id not in AzureADAuthorization._jwt_keys:
-            response = requests.get(f"{self.aad_instance}/{config.AAD_TENANT_ID}/v2.0/.well-known/openid-configuration", timeout=GRAPH_REQUEST_TIMEOUT)
-            aad_metadata = response.json() if response.ok else None
-            jwks_uri = aad_metadata['jwks_uri'] if aad_metadata and 'jwks_uri' in aad_metadata else None
-            if jwks_uri:
-                response = requests.get(jwks_uri, timeout=GRAPH_REQUEST_TIMEOUT)
-                keys = response.json() if response.ok else None
-                if keys and 'keys' in keys:
-                    for key in keys['keys']:
-                        n = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['n'])), "big")
-                        e = int.from_bytes(base64.urlsafe_b64decode(self._ensure_b64padding(key['e'])), "big")
-                        pub_key = rsa.RSAPublicNumbers(e, n).public_key(default_backend())
-
-                        # Cache the PEM formatted public key.
-                        AzureADAuthorization._jwt_keys[key['kid']] = pub_key.public_bytes(
-                            encoding=serialization.Encoding.PEM,
-                            format=serialization.PublicFormat.PKCS1
-                        )
-
-        return AzureADAuthorization._jwt_keys[key_id]
-
-    # The below functions are needed to list which workspaces a specific user has access to i.e. GET /workspaces.
-    # The below functions require Directory.ReadAll permissions on AzureAD.
-    # If there is no need to list all workspaces for a specific user, then Directory.ReadAll permissions are not required.
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = [f"{MICROSOFT_GRAPH_URL}/.default"]
