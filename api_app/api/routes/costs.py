@@ -86,7 +86,6 @@ async def costs(
 
 @costs_workspace_router.get("/workspaces/{workspace_id}/costs", response_model=WorkspaceCostReport,
                             name=strings.API_GET_WORKSPACE_COSTS,
-                            dependencies=[Depends(require_workspace_owner_or_tre_admin)],
                             responses=get_workspace_cost_report_responses())
 async def workspace_costs(workspace_id: UUID4, params: CostsQueryParams = Depends(),
                           cost_service: CostService = Depends(cost_service_factory),
