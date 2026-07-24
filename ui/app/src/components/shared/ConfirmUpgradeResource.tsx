@@ -459,7 +459,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
                       // Check if required field is empty
                       if (isPropertyRequiredInState(newTemplateSchema, key, newPropertyValues)) {
-                        return val === "" || val === undefined;
+                        return val === "" || val === undefined || val === null;
                       }
                       return false;
                     }))

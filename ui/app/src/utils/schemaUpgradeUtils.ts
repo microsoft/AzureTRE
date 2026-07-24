@@ -205,8 +205,16 @@ export const collectConditionalKeys = (entry: any): string[] => {
   const keys: string[] = [];
   if (!entry) return keys;
   const collect = (schemaPart: any) => {
-    if (schemaPart && schemaPart.properties) {
+    if (!schemaPart) return;
+    // collect any property names declared under a properties block
+    if (schemaPart.properties) {
       keys.push(...Object.keys(schemaPart.properties));
+    }
+    // also collect any property names declared as required (common pattern where
+    // a conditional only sets then.required / else.required without redefining
+    // the property's schema under then/else.properties)
+    if (Array.isArray(schemaPart.required)) {
+      keys.push(...schemaPart.required.filter((r) => typeof r === "string"));
     }
   };
   collect(entry.if);
