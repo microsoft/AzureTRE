@@ -1,10 +1,4 @@
-import {
-  Icon,
-  mergeStyles,
-  Panel,
-  PanelType,
-  PrimaryButton,
-} from "@fluentui/react";
+import { Icon, mergeStyles, Panel, PanelType, PrimaryButton } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
@@ -44,13 +38,11 @@ const creatingIconClass = mergeStyles({
   padding: 20,
 });
 
-export const CreateUpdateResource: React.FunctionComponent<
-  CreateUpdateResourceProps
-> = (props: CreateUpdateResourceProps) => {
+export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceProps> = (
+  props: CreateUpdateResourceProps,
+) => {
   const [page, setPage] = useState("selectTemplate" as keyof PageTitle);
-  const [selectedTemplate, setTemplate] = useState(
-    props.updateResource?.templateName || "",
-  );
+  const [selectedTemplate, setTemplate] = useState(props.updateResource?.templateName || "");
   const [deployOperation, setDeployOperation] = useState({} as Operation);
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
@@ -99,16 +91,13 @@ export const CreateUpdateResource: React.FunctionComponent<
     case ResourceType.UserResource:
       if (props.parentResource) {
         // If we are creating a user resource, parent resource must have a workspaceId
-        const workspaceId = (props.parentResource as WorkspaceService)
-          .workspaceId;
+        const workspaceId = (props.parentResource as WorkspaceService).workspaceId;
         templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
         templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
         workspaceApplicationIdURI = props.workspaceApplicationIdURI;
         break;
       } else {
-        throw Error(
-          "Parent workspace service must be passed as prop when creating user resource.",
-        );
+        throw Error("Parent workspace service must be passed as prop when creating user resource.");
       }
     default:
       throw Error("Unsupported resource type.");
@@ -125,9 +114,7 @@ export const CreateUpdateResource: React.FunctionComponent<
       break;
     default:
       if (!props.parentResource) {
-        throw Error(
-          "A parentResource must be passed as prop if creating a workspace-service or user-resource",
-        );
+        throw Error("A parentResource must be passed as prop if creating a workspace-service or user-resource");
       }
       resourcePath = `${props.parentResource.resourcePath}/${props.resourceType}s`;
   }
@@ -146,11 +133,7 @@ export const CreateUpdateResource: React.FunctionComponent<
     // if an onAdd callback has been given, get the resource we just created and pass it back
     if (props.onAddResource) {
       let resource = getResourceFromResult(
-        await apiCall(
-          operation.resourcePath,
-          HttpMethod.Get,
-          props.workspaceApplicationIdURI,
-        ),
+        await apiCall(operation.resourcePath, HttpMethod.Get, props.workspaceApplicationIdURI),
       );
       props.onAddResource(resource);
     }
@@ -185,8 +168,7 @@ export const CreateUpdateResource: React.FunctionComponent<
         <div style={{ textAlign: "center", paddingTop: 100 }}>
           <Icon iconName="CloudAdd" className={creatingIconClass} />
           <h1>
-            {props.updateResource?.id ? "Updating" : "Creating"}{" "}
-            {props.resourceType}...
+            {props.updateResource?.id ? "Updating" : "Creating"} {props.resourceType}...
           </h1>
           <p>Check the notifications panel for deployment progress.</p>
           <PrimaryButton

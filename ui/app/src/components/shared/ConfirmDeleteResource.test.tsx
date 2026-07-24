@@ -21,7 +21,7 @@ const mockAddUpdateOperation = vi.fn();
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: (...args: unknown[]) => mockAddUpdateOperation(...args),
-  default: (state: { items: unknown[] } = { items: [] }) => state
+  default: (state: { items: unknown[] } = { items: [] }) => state,
 }));
 
 // Mock FluentUI components - only the ones we need for this test
@@ -29,25 +29,14 @@ vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    ...createPartialFluentUIMock([
-      'Dialog',
-      'DialogFooter',
-      'DialogType',
-      'PrimaryButton',
-      'DefaultButton',
-      'Spinner'
-    ]),
+    ...createPartialFluentUIMock(["Dialog", "DialogFooter", "DialogType", "PrimaryButton", "DefaultButton", "Spinner"]),
   };
 });
 
 // Mock ExceptionLayout
 vi.mock("./ExceptionLayout", () => {
-  const ExceptionLayout = ({ e }: any) => (
-    <div data-testid="exception-layout">
-      Error: {e.userMessage || e.message}
-    </div>
-  );
-  ExceptionLayout.displayName = 'ExceptionLayout';
+  const ExceptionLayout = ({ e }: any) => <div data-testid="exception-layout">Error: {e.userMessage || e.message}</div>;
+  ExceptionLayout.displayName = "ExceptionLayout";
   return { ExceptionLayout };
 });
 
@@ -101,10 +90,8 @@ const renderWithContext = (component: React.ReactElement) => {
   const store = createTestStore();
   return render(
     <Provider store={store}>
-      <WorkspaceContext.Provider value={mockWorkspaceContext}>
-        {component}
-      </WorkspaceContext.Provider>
-    </Provider>
+      <WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>
+    </Provider>,
   );
 };
 
@@ -117,30 +104,24 @@ describe("ConfirmDeleteResource Component", () => {
   });
 
   it("renders dialog with correct title and message", () => {
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Delete Resource?");
     expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
-      "Are you sure you want to permanently delete Test Resource?"
+      "Are you sure you want to permanently delete Test Resource?",
     );
   });
 
   it("renders delete and cancel buttons", () => {
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     expect(screen.getByTestId("primary-button")).toHaveTextContent("Delete");
     expect(screen.getByTestId("default-button")).toHaveTextContent("Cancel");
   });
 
   it("calls onDismiss when cancel button is clicked", async () => {
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("default-button"));
@@ -149,9 +130,7 @@ describe("ConfirmDeleteResource Component", () => {
   });
 
   it("calls onDismiss when close button is clicked", async () => {
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("dialog-close"));
@@ -161,11 +140,9 @@ describe("ConfirmDeleteResource Component", () => {
 
   it("shows spinner while deletion is in progress", async () => {
     // Mock API call to never resolve to keep loading state
-    mockApiCall.mockImplementation(() => new Promise(() => { }));
+    mockApiCall.mockImplementation(() => new Promise(() => {}));
 
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));
@@ -183,9 +160,7 @@ describe("ConfirmDeleteResource Component", () => {
     const mockOperation = { id: "test-operation-id", resourceId: "test-resource-id" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));
@@ -197,7 +172,7 @@ describe("ConfirmDeleteResource Component", () => {
         "DELETE",
         undefined, // not a workspace service, so no auth
         undefined,
-        "JSON"
+        "JSON",
       );
     });
 
@@ -214,12 +189,7 @@ describe("ConfirmDeleteResource Component", () => {
     const mockOperation = { id: "test-operation-id", resourceId: "test-resource-id" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithContext(
-      <ConfirmDeleteResource
-        resource={workspaceServiceResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={workspaceServiceResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));
@@ -231,7 +201,7 @@ describe("ConfirmDeleteResource Component", () => {
         "DELETE",
         "test-app-id-uri", // should use workspace auth
         undefined,
-        "JSON"
+        "JSON",
       );
     });
   });
@@ -245,9 +215,7 @@ describe("ConfirmDeleteResource Component", () => {
     const mockOperation = { id: "test-operation-id", resourceId: "test-resource-id" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithContext(
-      <ConfirmDeleteResource resource={userResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={userResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));
@@ -259,7 +227,7 @@ describe("ConfirmDeleteResource Component", () => {
         "DELETE",
         "test-app-id-uri", // should use workspace auth
         undefined,
-        "JSON"
+        "JSON",
       );
     });
   });
@@ -268,9 +236,7 @@ describe("ConfirmDeleteResource Component", () => {
     const errorMessage = "Failed to delete resource";
     mockApiCall.mockRejectedValue(new Error("Network error"));
 
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));
@@ -280,17 +246,13 @@ describe("ConfirmDeleteResource Component", () => {
       expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId("exception-layout")).toHaveTextContent(
-      "Error: " + errorMessage
-    );
+    expect(screen.getByTestId("exception-layout")).toHaveTextContent("Error: " + errorMessage);
   });
 
   it("does not call onDismiss when deletion fails", async () => {
     mockApiCall.mockRejectedValue(new Error("Network error"));
 
-    renderWithContext(
-      <ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />
-    );
+    renderWithContext(<ConfirmDeleteResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("primary-button"));

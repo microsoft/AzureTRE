@@ -1,18 +1,7 @@
-import {
-  Dialog,
-  DialogFooter,
-  PrimaryButton,
-  DefaultButton,
-  DialogType,
-  Spinner,
-} from "@fluentui/react";
+import { Dialog, DialogFooter, PrimaryButton, DefaultButton, DialogType, Spinner } from "@fluentui/react";
 import React, { useContext, useState } from "react";
 import { Resource } from "../../models/resource";
-import {
-  HttpMethod,
-  ResultType,
-  useAuthApiCall,
-} from "../../hooks/useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { ResourceType } from "../../models/resourceType";
 import { APIError } from "../../models/exceptions";
@@ -27,9 +16,7 @@ interface ConfirmDeleteProps {
 }
 
 // show a 'are you sure' modal, and then send a patch if the user confirms
-export const ConfirmDeleteResource: React.FunctionComponent<
-  ConfirmDeleteProps
-> = (props: ConfirmDeleteProps) => {
+export const ConfirmDeleteResource: React.FunctionComponent<ConfirmDeleteProps> = (props: ConfirmDeleteProps) => {
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
   const [loading, setLoading] = useState(LoadingState.Ok);
@@ -89,11 +76,7 @@ export const ConfirmDeleteResource: React.FunctionComponent<
           </DialogFooter>
         )}
         {loading === LoadingState.Loading && (
-          <Spinner
-            label="Sending request..."
-            ariaLive="assertive"
-            labelPosition="right"
-          />
+          <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
         {loading === LoadingState.Error && <ExceptionLayout e={apiError} />}
       </Dialog>
