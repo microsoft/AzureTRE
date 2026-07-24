@@ -70,12 +70,7 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            try:
-                # Pydantic v2
-                return TypeAdapter(SharedService).validate_python(resource)
-            except AttributeError:
-                # Pydantic v1 fallback
-                return TypeAdapter(SharedService).validate_python(resource)
+return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
             try:
                 # Pydantic v2
