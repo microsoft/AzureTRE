@@ -1,5 +1,5 @@
 {
-    "name": "microsoft-apt",
+    "name": "microsoft-apt-jammy",
     "online": true,
     "storage": {
         "blobStoreName": "default",
@@ -29,7 +29,7 @@
     },
     "apt": {
         "distribution": "jammy",
-      "flat": false
+        "flat": false
     },
     "baseType": "apt",
     "repoType": "proxy"

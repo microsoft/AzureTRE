@@ -1,0 +1,13 @@
+{
+    "name": "microsoft-apt",
+    "online": true,
+    "storage": {
+        "blobStoreName": "default",
+        "strictContentTypeValidation": true
+    },
+    "group": {
+        "memberNames": ["microsoft-apt-bionic", "microsoft-apt-jammy"]
+    },
+    "baseType": "apt",
+    "repoType": "group"
+}

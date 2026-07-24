@@ -194,9 +194,37 @@ for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
 done
 
 # Pass 2: group repos.
+# On existing Nexus instances a repo with the group's name may already exist as a proxy
+# (from before the group+member pattern was introduced). Delete it so the group can be
+# created; the proxy members created in Pass 1 retain all cached content.
+delete_if_not_group() {
+  local repo_name="$1"
+  local pass="$2"
+  local existing_type
+  existing_type=$(curl -s -u admin:"$pass" \
+    'http://localhost/service/rest/v1/repositories' \
+    -H 'accept: application/json' \
+    -k | jq -r --arg name "$repo_name" '.[] | select(.name == $name) | .type')
+  if [ -z "$existing_type" ] || [ "$existing_type" = "group" ]; then
+    return 0
+  fi
+  echo "Repo '$repo_name' exists as type '$existing_type' — deleting it so a group can take its name..."
+  local code
+  code=$(curl -s -u admin:"$pass" -XDELETE \
+    "http://localhost/service/rest/v1/repositories/$repo_name" \
+    -k -w "%{http_code}" -o /dev/null)
+  echo "Delete response for '$repo_name': $code"
+  [ "$code" -eq 204 ] || [ "$code" -eq 200 ]
+}
+
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
     repo_type=$( jq .repoType "$filename" | sed 's/"//g')
     [ "$repo_type" != "group" ] && continue
+    repo_name=$( jq -r .name "$filename")
+    if ! retry_with_backoff delete_if_not_group "$repo_name" "$NEXUS_ADMIN_PASSWORD"; then
+      echo "ERROR - Could not remove conflicting non-group repo '$repo_name'"
+      exit 1
+    fi
     configure_one_repo "$filename"
 done
 
