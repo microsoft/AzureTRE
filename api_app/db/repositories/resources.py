@@ -345,17 +345,33 @@ class ResourceRepository(BaseRepository):
                 curr = curr[part]
             return curr
 
+        def has_updateable_parent(path: str) -> bool:
+            """
+            Returns True if any ancestor object of the dotted property path is marked
+            updateable: true in the template schema (including properties defined under allOf).
+            """
+            parts = path.split(".")
+            # Walk up the chain excluding the full leaf path (checked separately)
+            for i in range(len(parts) - 1, 0, -1):
+                ancestor_path = ".".join(parts[:i])
+                ancestor_def = get_prop_schema(enriched_template, ancestor_path)
+                if ancestor_def and ancestor_def.get("updateable", False) is True:
+                    return True
+            return False
+
         def is_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
             """
             Determines whether a patched leaf property path is permitted.
             Allowed if:
-            1. Explicitly marked updateable: true in the template schema (top-level or allOf).
+            1. Explicitly marked updateable: true in the template schema on the property itself
+               OR on any of its ancestor objects (top-level or via allOf clauses).
             2. Introduced as a new property path during a template upgrade.
             3. Referenced as a pipeline property in the template's install/upgrade pipeline.
             4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
             """
             prop_def = get_prop_schema(enriched_template, prop_path)
-            is_updateable = prop_def.get("updateable", False) is True if prop_def else False
+            # Allow if this leaf OR any ancestor object is marked updateable: true
+            is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(prop_path)
             is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
             is_pipeline_prop = prop_path in pipeline_properties
 
