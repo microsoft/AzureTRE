@@ -51,6 +51,7 @@ async function getCommandFromComment({ core, context, github }) {
   const commentBody = context.payload.comment.body;
   const commentFirstLine = commentBody.split("\n")[0];
   let command = "none";
+  let skipDeployment = false;
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
     // only allow actions for users with write access
@@ -83,6 +84,7 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests";
+            skipDeployment = commandHasSkipDeploymentFlag(parts);
           }
           break;
         }
@@ -92,6 +94,7 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended";
+            skipDeployment = commandHasSkipDeploymentFlag(parts);
           }
           break;
         }
@@ -138,6 +141,7 @@ async function getCommandFromComment({ core, context, github }) {
         break;
     }
   }
+  logAndSetOutput(core, "skipDeployment", skipDeployment.toString());
   logAndSetOutput(core, "command", command);
   return command;
 }
@@ -159,19 +163,19 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
   const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, pr.authorUsername, pr.repoOwner, pr.repoName);
   const externalPr = !prAuthorHasWriteAccess;
   if (externalPr) {
-    if (commandParts.length === 1) {
+    const commentSha = getShaFromCommandParts(commandParts);
+    if (!commentSha) {
       const message = `:warning: When using \`${command}\` on external PRs, the SHA of the checked commit must be specified`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
-    const commentSha = commandParts[1];
     if (commentSha.length < 7) {
       const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`${commentSha}\`)`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
     if (!pr.headSha.startsWith(commentSha)) {
-      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
+      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`${command}\``;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
@@ -181,6 +185,14 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
   await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
   return true
 
+}
+
+function commandHasSkipDeploymentFlag(commandParts) {
+  return commandParts.slice(1).includes("skip_deployment");
+}
+
+function getShaFromCommandParts(commandParts) {
+  return commandParts.slice(1).find(part => part !== "skip_deployment");
 }
 
 async function prContainsNonDocChanges(github, repoOwner, repoName, prNumber) {
@@ -246,10 +258,10 @@ async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, 
   const body = `${leadingContent}
 
 You can use the following commands:
-&nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad - build, deploy and run smoke & extended AAD tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
+&nbsp;&nbsp;&nbsp;&nbsp;/test [<sha>] [skip_deployment] - build, deploy and run smoke tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-extended [<sha>] [skip_deployment] - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad [<sha>] - build, deploy and run smoke & extended AAD tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services [<sha>] - test the deployment of shared services on a PR build
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;

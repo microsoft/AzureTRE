@@ -30,8 +30,9 @@ jobs:
       prRef: ${{ steps.check_command.outputs.prRef }}
       prHeadSha: ${{ steps.check_command.outputs.prHeadSha }}
       prRefId: ${{ steps.check_command.outputs.prRefId }}
-      branchRefId: ${{ steps.check_command.outputs.branchRefid }}
+      branchRefId: ${{ steps.check_command.outputs.branchRefId }}
       ciGitRef: ${{ steps.check_command.outputs.ciGitRef }}
+      skipDeployment: ${{ steps.check_command.outputs.skipDeployment }}
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
@@ -56,7 +57,8 @@ jobs:
           echo "prHeadSha   : ${{ steps.check_command.outputs.prHeadSha }}"
           echo "prRefId     : ${{ steps.check_command.outputs.prRefId }}"
           echo "ciGitRef    : ${{ steps.check_command.outputs.ciGitRef }}"
-          echo "branchRefId : ${{ steps.check_command.outputs.prRefId }}"
+          echo "branchRefId : ${{ steps.check_command.outputs.branchRefId }}"
+          echo "skipDeploy  : ${{ steps.check_command.outputs.skipDeployment }}"
 
       # If we don't run the actual deploy (see the run_test job below) we won't receive a check-run status,
       # and will have to send it "manually"
@@ -178,6 +180,7 @@ jobs:
       environmentName: CICD
       E2E_TESTS_NUMBER_PROCESSES: 1
       DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
+      skipDeployment: ${{ needs.pr_comment.outputs.skipDeployment == 'true' }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
