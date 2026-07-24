@@ -179,12 +179,15 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
 // Utility to build a reduced schema with only given keys and their nested schema (depth 1), including required
 export const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
   if (!fullSchema || !fullSchema.properties) return null;
-  const reducedProperties: any = {};
+  // Use a null-prototype object to avoid accidental prototype pollution
+  const reducedProperties: any = Object.create(null);
   const required: string[] = [];
 
   keys.forEach((key) => {
     // Only allow top-level property keys (no nested with dots) for simplicity here
     const topKey = key.split(".")[0];
+    // Skip unsafe prototype-like keys
+    if (partGuard(topKey)) return;
     if (fullSchema.properties[topKey]) {
       if (!reducedProperties[topKey]) {
         reducedProperties[topKey] = fullSchema.properties[topKey];
