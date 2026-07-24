@@ -26,7 +26,7 @@ class ResourceHistoryItem(AzureTREModel):
     isEnabled: bool = True
     resourceVersion: int = 0
     updatedWhen: float = 0
-    user: dict = {}
+    user: dict = Field(default_factory=dict)
 
     @field_validator("user", mode="before")
     @classmethod

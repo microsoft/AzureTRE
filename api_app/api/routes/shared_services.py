@@ -42,8 +42,8 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
         return RestrictedSharedServicesInList(sharedServices=[service.model_dump() for service in shared_services])
 
 
-@shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse | RestrictedSharedServicesInList, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
-async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList | RestrictedSharedServicesInList:
+@shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse | RestrictedSharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_current_tre_user_or_tre_admin), Depends(get_shared_service_by_id_from_path)])
+async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(get_current_tre_user_or_tre_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> SharedServicesInList | RestrictedSharedServiceInResponse:
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
     if user_is_tre_admin(user):
         return SharedServiceInResponse(sharedService=shared_service)
