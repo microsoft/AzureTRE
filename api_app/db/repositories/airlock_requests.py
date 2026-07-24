@@ -6,13 +6,7 @@ from typing import List, Optional
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
-try:
-    # Pydantic v2
-    from pydantic import TypeAdapter
-    parse_obj_as = TypeAdapter
-except ImportError:
-    # Pydantic v1 fallback
-    from pydantic import TypeAdapter
+from pydantic import TypeAdapter
 from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_access_service
 from models.domain.authentication import User
