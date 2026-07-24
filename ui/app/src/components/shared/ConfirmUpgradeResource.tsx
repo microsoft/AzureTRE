@@ -14,11 +14,7 @@ import React, { useContext, useState, useEffect, useRef } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { WorkspaceService } from "../../models/workspaceService";
-import {
-  HttpMethod,
-  ResultType,
-  useAuthApiCall,
-} from "../../hooks/useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { ResourceType } from "../../models/resourceType";
 import { APIError } from "../../models/exceptions";
@@ -39,7 +35,7 @@ const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   if (!properties) return [];
   let keys: string[] = [];
   for (const [key, value] of Object.entries(properties)) {
-    if (value && typeof value === "object" && 'properties' in value) {
+    if (value && typeof value === "object" && "properties" in value) {
       // recur for nested properties
       keys = keys.concat(getAllPropertyKeys(value["properties"], prefix + key + "."));
     } else {
@@ -50,11 +46,11 @@ const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
 };
 
 // Utility to check if a path part name is a prototype property
-const partGuard = (part: string) => part === '__proto__' || part === 'constructor' || part === 'prototype';
+const partGuard = (part: string) => part === "__proto__" || part === "constructor" || part === "prototype";
 
 // Utility to get a nested value from an object using a dotted path (e.g. "parent.child")
 const getNestedValue = (obj: any, path: string): any => {
-  const parts = path.split('.');
+  const parts = path.split(".");
   let current = obj;
   for (const part of parts) {
     if (partGuard(part)) {
@@ -68,14 +64,14 @@ const getNestedValue = (obj: any, path: string): any => {
 
 // Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
 const setNestedValue = (obj: any, path: string, value: any): void => {
-  const parts = path.split('.');
+  const parts = path.split(".");
   let current = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
     if (partGuard(part)) {
       return;
     }
-    if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
+    if (!(part in current) || typeof current[part] !== "object" || current[part] === null) {
       current[part] = {};
     }
     current = current[part];
@@ -88,7 +84,7 @@ const setNestedValue = (obj: any, path: string, value: any): void => {
 
 // Utility to get schema property from properties object using a dotted path
 const getSchemaPropertyFromProperties = (properties: any, path: string): any => {
-  const parts = path.split('.');
+  const parts = path.split(".");
   let current = properties;
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
@@ -107,10 +103,10 @@ const getSchemaPropertyFromProperties = (properties: any, path: string): any => 
 // Utility to get schema property from template (both properties and allOf) using a dotted path
 const getSchemaProperty = (template: any, path: string): any => {
   if (!template) return null;
-  
+
   let prop = getSchemaPropertyFromProperties(template.properties, path);
   if (prop) return prop;
-  
+
   if (template.allOf) {
     for (const condition of template.allOf) {
       if (condition.then && condition.then.properties) {
@@ -128,7 +124,7 @@ const getSchemaProperty = (template: any, path: string): any => {
 
 // Utility to get nested uiSchema object using a dotted path
 const getNestedUiSchema = (uiSchema: any, path: string): any => {
-  const parts = path.split('.');
+  const parts = path.split(".");
   let current = uiSchema;
   for (const part of parts) {
     if (partGuard(part)) {
@@ -145,7 +141,7 @@ const matchesIfCondition = (ifSchema: any, state: any): boolean => {
   if (!ifSchema || !ifSchema.properties) return false;
   for (const [key, cond] of Object.entries(ifSchema.properties)) {
     const val = getNestedValue(state, key);
-    if (cond && typeof cond === 'object' && 'const' in cond) {
+    if (cond && typeof cond === "object" && "const" in cond) {
       if (val !== cond.const) return false;
     } else {
       if (!val) return false;
@@ -155,25 +151,21 @@ const matchesIfCondition = (ifSchema: any, state: any): boolean => {
 };
 
 // Utility to check if a nested property (dotted path) is required in the schema given the current form state
-const isPropertyRequiredInState = (
-  templateSchema: any,
-  path: string,
-  state: any
-): boolean => {
+const isPropertyRequiredInState = (templateSchema: any, path: string, state: any): boolean => {
   if (!templateSchema) return false;
 
   const checkRequired = (schema: any, currentPath: string, currentState: any): boolean => {
-    const parts = currentPath.split('.');
+    const parts = currentPath.split(".");
     let currentSchema = schema.properties;
     let currentRequired = schema.required;
     let currState = currentState;
 
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
-      
+
       // Check if required at current level
       let isPartRequired = currentRequired && currentRequired.includes(part);
-      
+
       // Also check if required by any allOf condition at this level
       if (schema.allOf) {
         for (const condition of schema.allOf) {
@@ -222,7 +214,7 @@ const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
 
   keys.forEach((key) => {
     // Only allow top-level property keys (no nested with dots) for simplicity here
-    const topKey = key.split('.')[0];
+    const topKey = key.split(".")[0];
     if (fullSchema.properties[topKey]) {
       if (!reducedProperties[topKey]) {
         reducedProperties[topKey] = fullSchema.properties[topKey];
@@ -264,7 +256,7 @@ const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
     if (entry && entry.if) {
       const conditionalKeys = collectConditionalKeys(entry);
       // include entry if any conditionalKey matches a new key (top-level match)
-      if (conditionalKeys.some((k) => newKeys.some((nk) => nk.split('.')[0] === k))) {
+      if (conditionalKeys.some((k) => newKeys.some((nk) => nk.split(".")[0] === k))) {
         conditionalEntries.push(entry);
       }
     }
@@ -272,15 +264,11 @@ const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
   return { allOf: conditionalEntries };
 };
 
-export const ConfirmUpgradeResource: React.FunctionComponent<
-  ConfirmUpgradeProps
-> = (props: ConfirmUpgradeProps) => {
+export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps> = (props: ConfirmUpgradeProps) => {
   const apiCall = useAuthApiCall();
   const [selectedVersion, setSelectedVersion] = useState("");
   const [apiError, setApiError] = useState<APIError | null>(null);
-  const [requestLoadingState, setRequestLoadingState] = useState(
-    LoadingState.Ok,
-  );
+  const [requestLoadingState, setRequestLoadingState] = useState(LoadingState.Ok);
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
 
@@ -358,16 +346,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
       case ResourceType.UserResource:
         if (props.resource.properties.parentWorkspaceService) {
           // If we are upgrading a user resource, parent resource must have a workspaceId
-          const workspaceId = (props.resource.properties.parentWorkspaceService as WorkspaceService)
-            .workspaceId;
+          const workspaceId = (props.resource.properties.parentWorkspaceService as WorkspaceService).workspaceId;
           templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.resource.properties.parentWorkspaceService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           // workspaceApplicationIdURI = props.resource.properties.parentWorkspaceService.workspaceApplicationIdURI;
           break;
         } else {
-          throw Error(
-            "Parent workspace service must be passed as prop when creating user resource.",
-          );
+          throw Error("Parent workspace service must be passed as prop when creating user resource.");
         }
       default:
         throw Error("Unsupported resource type.");
@@ -411,7 +396,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         const getAllPropertyKeysFromTemplate = (template: any): string[] => {
           if (!template) return [];
           let keys = getAllPropertyKeys(template.properties);
-          
+
           if (template.allOf) {
             template.allOf.forEach((condition: any) => {
               if (condition.then && condition.then.properties) {
@@ -475,21 +460,21 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
         // Filter out properties that are in the pipeline - they will be substituted by the backend
         const newPropKeysWithoutPipeline = newPropKeys.filter((key) => {
-          const topKey = key.split('.')[0];
+          const topKey = key.split(".")[0];
           return !pipelineProps.has(topKey);
         });
 
         // Filter out properties that are hidden (tre-hidden) - they don't need user input
         const uiSchema = newTemplate?.uiSchema || {};
         const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
-          const parts = key.split('.');
+          const parts = key.split(".");
           let isHidden = false;
-          let currentPath = '';
+          let currentPath = "";
           for (const part of parts) {
             currentPath = currentPath ? `${currentPath}.${part}` : part;
             const propertyUiSchema = getNestedUiSchema(uiSchema, currentPath);
-            const classNames = propertyUiSchema?.classNames || propertyUiSchema?.['ui:classNames'];
-            if (classNames?.includes('tre-hidden')) {
+            const classNames = propertyUiSchema?.classNames || propertyUiSchema?.["ui:classNames"];
+            if (classNames?.includes("tre-hidden")) {
               isHidden = true;
               break;
             }
@@ -510,7 +495,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
         // prefill newPropertyValues with schema defaults (excluding pipeline properties)
         const initialValues: any = {};
         newPropKeysToSend.forEach((key) => {
-          const topKey = key.split('.')[0];
+          const topKey = key.split(".")[0];
           // If the top-level property already exists in the resource, copy it to avoid losing other sub-properties
           if (props.resource.properties && props.resource.properties[topKey] !== undefined) {
             if (!initialValues[topKey]) {
@@ -519,7 +504,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           }
 
           const propSchema = getSchemaProperty(newTemplate, key);
-          
+
           // Only set if a default value is defined in the schema
           if (propSchema && propSchema.default !== undefined) {
             setNestedValue(initialValues, key, propSchema.default);
@@ -569,17 +554,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
   // Use buildReducedSchema to include all new properties (including hidden ones)
   // Hidden properties will be rendered but not shown due to tre-hidden CSS class
-  const reducedSchemaProperties = newTemplateSchema
-    ? buildReducedSchema(newTemplateSchema, allNewProperties)
-    : null;
+  const reducedSchemaProperties = newTemplateSchema ? buildReducedSchema(newTemplateSchema, allNewProperties) : null;
 
   // Extract any conditional blocks from full schema, filtered by all new properties
   const conditionalBlocks = newTemplateSchema ? extractConditionalBlocks(newTemplateSchema, allNewProperties) : {};
 
   // Compose final schema combining reduced properties with conditional blocks
-  const finalSchema = reducedSchemaProperties
-    ? { ...reducedSchemaProperties, ...conditionalBlocks }
-    : null;
+  const finalSchema = reducedSchemaProperties ? { ...reducedSchemaProperties, ...conditionalBlocks } : null;
 
   // UI schema override: hide the form's submit button because we use external Upgrade button
   // start with existing UI order and classNames from full schema uiSchema
@@ -617,9 +598,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
   const getDropdownOptions = () => {
     const options = [];
-    const nonMajorUpgrades = props.resource.availableUpgrades.filter(
-      (upgrade) => !upgrade.forceUpdateRequired,
-    );
+    const nonMajorUpgrades = props.resource.availableUpgrades.filter((upgrade) => !upgrade.forceUpdateRequired);
     options.push(...convertToDropDownOptions(nonMajorUpgrades));
     return options;
   };
@@ -641,7 +620,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
             {loadingSchema && <Spinner label="Loading new template schema..." />}
             {!loadingSchema && removedProperties.length > 0 && (
               <MessageBar messageBarType={MessageBarType.warning}>
-                Warning: The following properties are no longer present in the template and will be removed: {removedProperties.join(', ')}
+                Warning: The following properties are no longer present in the template and will be removed:{" "}
+                {removedProperties.join(", ")}
               </MessageBar>
             )}
             {!loadingSchema && allNewProperties.length > 0 && (
@@ -686,7 +666,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
                       // Check if value is invalid enum (for both required and optional fields)
                       const propSchema = getSchemaProperty(newTemplateSchema, key);
-                      if (propSchema && propSchema.enum && val !== undefined && val !== "" && !propSchema.enum.includes(val)) {
+                      if (
+                        propSchema &&
+                        propSchema.enum &&
+                        val !== undefined &&
+                        val !== "" &&
+                        !propSchema.enum.includes(val)
+                      ) {
                         return true;
                       }
 
@@ -704,15 +690,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
           </>
         )}
         {requestLoadingState === LoadingState.Loading && (
-          <Spinner
-            label="Sending request..."
-            ariaLive="assertive"
-            labelPosition="right"
-          />
+          <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
-        {requestLoadingState === LoadingState.Error && (
-          <ExceptionLayout e={apiError ?? ({} as APIError)} />
-        )}
+        {requestLoadingState === LoadingState.Error && <ExceptionLayout e={apiError ?? ({} as APIError)} />}
       </Dialog>
     </>
   );

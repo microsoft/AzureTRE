@@ -43,7 +43,7 @@ vi.mock("../../hooks/customReduxHooks", () => ({
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: vi.fn(),
-  default: (state: any = { items: [] }) => state
+  default: (state: any = { items: [] }) => state,
 }));
 
 // Mock FluentUI components using centralized mocks
@@ -52,24 +52,22 @@ vi.mock("@fluentui/react", async () => {
   return {
     ...actual,
     ...createPartialFluentUIMock([
-      'Dialog',
-      'DialogFooter',
-      'DialogType',
-      'PrimaryButton',
-      'DefaultButton',
-      'Dropdown',
-      'Spinner',
-      'MessageBar',
-      'MessageBarType',
-      'Icon'
+      "Dialog",
+      "DialogFooter",
+      "DialogType",
+      "PrimaryButton",
+      "DefaultButton",
+      "Dropdown",
+      "Spinner",
+      "MessageBar",
+      "MessageBarType",
+      "Icon",
     ]),
   };
 });
 
 vi.mock("./ExceptionLayout", () => ({
-  ExceptionLayout: ({ e }: any) => (
-    <div data-testid="exception-layout">{e.userMessage}</div>
-  ),
+  ExceptionLayout: ({ e }: any) => <div data-testid="exception-layout">{e.userMessage}</div>,
 }));
 
 const mockAvailableUpgrades: AvailableUpgrade[] = [
@@ -138,11 +136,7 @@ const mockWorkspaceContext = {
 };
 
 const renderWithWorkspaceContext = (component: React.ReactElement) => {
-  return render(
-    <WorkspaceContext.Provider value={mockWorkspaceContext}>
-      {component}
-    </WorkspaceContext.Provider>
-  );
+  return render(<WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>);
 };
 
 describe("ConfirmUpgradeResource Component", () => {
@@ -164,40 +158,23 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("renders upgrade dialog with correct title and content", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Upgrade Template Version?"
-    );
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Upgrade Template Version?");
     expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
-      "Are you sure you want upgrade the template version of Test Resource from version 1.0.0?"
+      "Are you sure you want upgrade the template version of Test Resource from version 1.0.0?",
     );
   });
 
   it("shows warning message about irreversible upgrade", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     expect(screen.getByTestId("message-bar")).toBeInTheDocument();
     expect(screen.getByText("Upgrading the template version is irreversible.")).toBeInTheDocument();
   });
 
   it("renders dropdown with available upgrade versions", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const dropdown = screen.getByTestId("dropdown");
     expect(dropdown).toBeInTheDocument();
@@ -211,24 +188,14 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("disables upgrade button when no version is selected", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
   });
 
   it("enables upgrade button when version is selected", async () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const dropdown = screen.getByTestId("dropdown");
     fireEvent.change(dropdown, { target: { value: "1.1.0" } });
@@ -257,12 +224,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: mockOperation });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -289,7 +251,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        mockResource._etag
+        mockResource._etag,
       );
     });
 
@@ -301,12 +263,9 @@ describe("ConfirmUpgradeResource Component", () => {
     mockApiCall.mockImplementation((url, method) => {
       if (method === "PATCH") {
         return new Promise((resolve) =>
-          setTimeout(
-            () => {
-              resolve({ operation: { id: "operation-id", status: "running" } });
-            },
-            100
-          )
+          setTimeout(() => {
+            resolve({ operation: { id: "operation-id", status: "running" } });
+          }, 100),
         );
       }
       // Handle GET requests for schemas
@@ -322,12 +281,7 @@ describe("ConfirmUpgradeResource Component", () => {
       });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -335,9 +289,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Click upgrade and check for loading spinner
@@ -364,12 +316,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.reject(new Error("Network error"));
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -377,9 +324,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Click upgrade
@@ -411,12 +356,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: mockOperation });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -424,9 +364,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Click upgrade
@@ -442,7 +380,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -468,12 +406,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: mockOperation });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={sharedServiceResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={sharedServiceResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -481,9 +414,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Click upgrade
@@ -499,7 +430,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -515,10 +446,7 @@ describe("ConfirmUpgradeResource Component", () => {
     };
 
     renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={resourceWithMajorUpgrade}
-        onDismiss={mockOnDismiss}
-      />
+      <ConfirmUpgradeResource resource={resourceWithMajorUpgrade} onDismiss={mockOnDismiss} />,
     );
 
     // Minor updates should be available
@@ -530,12 +458,7 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("displays form when new properties need to be added", async () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version that has new properties
     const dropdown = screen.getByTestId("dropdown");
@@ -543,9 +466,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Should show info message about new properties
@@ -556,12 +477,7 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("displays warning about removed properties", async () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -569,9 +485,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Should show warning about removed properties
@@ -580,12 +494,7 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("disables upgrade button when required new properties are cleared", async () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -593,9 +502,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Find the input field and clear it
@@ -610,12 +517,7 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("enables upgrade button when all new properties are filled in", async () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -623,9 +525,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Find the new_property input field and fill it
@@ -656,12 +556,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: mockOperation });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -669,9 +564,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Fill in the new property
@@ -697,7 +590,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        mockResource._etag
+        mockResource._etag,
       );
     });
   });
@@ -717,12 +610,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version to trigger template fetching
     const dropdown = screen.getByTestId("dropdown");
@@ -730,9 +618,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Verify that GET requests for templates did NOT use workspace auth
@@ -769,12 +655,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -782,9 +663,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Should NOT show the "You must specify values" message because all properties are hidden
@@ -822,12 +701,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -835,9 +709,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     // Wait for schema to load
     await waitFor(() => {
-      expect(
-        screen.queryByText("Loading new template schema...")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
     // Should show the message because there's at least one visible property
@@ -900,12 +772,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResourceWithNested}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResourceWithNested} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -943,7 +810,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        mockResourceWithNested._etag
+        mockResourceWithNested._etag,
       );
     });
   });
@@ -991,12 +858,7 @@ describe("ConfirmUpgradeResource Component", () => {
       return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
     });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResourceWithEnum}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResourceWithEnum} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
