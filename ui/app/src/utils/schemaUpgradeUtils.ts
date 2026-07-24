@@ -122,10 +122,12 @@ export const matchesIfCondition = (ifSchema: any, state: any): boolean => {
       } else if ("enum" in (cond as any) && Array.isArray((cond as any).enum)) {
         if (!(cond as any).enum.includes(val)) return false;
       } else {
-        if (val === undefined || val === null || val === "") return false;
+        // treat only undefined/null as missing; allow false, 0, and empty string as valid values
+        if (val === undefined || val === null) return false;
       }
     } else {
-      if (val === undefined || val === null || val === "") return false;
+      // treat only undefined/null as missing; allow false, 0, and empty string as valid values
+      if (val === undefined || val === null) return false;
     }
   }
   return true;
@@ -228,11 +230,14 @@ export const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
   const conditionalEntries: any[] = [];
   if (!schema) return { allOf: [] };
   const allOf = schema.allOf || [];
+  // precompute top-level names for the new keys
+  const newTopKeys = new Set(newKeys.map((nk) => (typeof nk === "string" ? nk.split(".")[0] : nk)));
   allOf.forEach((entry: any) => {
     if (entry && entry.if) {
       const conditionalKeys = collectConditionalKeys(entry);
-      // include entry if any conditionalKey matches a new key (top-level match)
-      if (conditionalKeys.some((k) => newKeys.some((nk) => nk.split(".")[0] === k))) {
+      const conditionalTopKeys = conditionalKeys.map((k) => (typeof k === "string" ? k.split(".")[0] : k));
+      // include entry if any top-level conditional key matches a top-level new key
+      if (conditionalTopKeys.some((ck) => newTopKeys.has(ck))) {
         conditionalEntries.push(entry);
       }
     }

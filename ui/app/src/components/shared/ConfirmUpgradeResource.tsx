@@ -103,49 +103,67 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       return;
     }
 
-    // Construct API paths for templates of specified resourceType
-    let templateListPath;
+    // Construct API path for templates of specified resourceType
     // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
     let templateGetPath;
 
     switch (props.resource.resourceType) {
       case ResourceType.Workspace:
-        templateListPath = ApiEndpoint.WorkspaceTemplates;
-        templateGetPath = templateListPath;
+        templateGetPath = ApiEndpoint.WorkspaceTemplates;
         break;
       case ResourceType.WorkspaceService:
-        templateListPath = ApiEndpoint.WorkspaceServiceTemplates;
-        templateGetPath = templateListPath;
+        templateGetPath = ApiEndpoint.WorkspaceServiceTemplates;
         break;
       case ResourceType.SharedService:
-        templateListPath = ApiEndpoint.SharedServiceTemplates;
-        templateGetPath = templateListPath;
+        templateGetPath = ApiEndpoint.SharedServiceTemplates;
         break;
       case ResourceType.UserResource: {
         const ur = props.resource as UserResource;
-        const parentService =
-          props.parentWorkspaceService || (props.resource.properties?.parentWorkspaceService as WorkspaceService);
+
+        // Prefer explicit prop when provided
+        let parentService: WorkspaceService | undefined = props.parentWorkspaceService;
+
+        // Otherwise, try to read any embedded parentWorkspaceService in the resource properties
+        if (!parentService && props.resource.properties?.parentWorkspaceService) {
+          parentService = props.resource.properties.parentWorkspaceService as WorkspaceService;
+        }
 
         if (parentService && parentService.templateName) {
           const workspaceId = parentService.workspaceId || workspaceCtx.workspace?.id;
-          templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           break;
-        } else if (ur.parentWorkspaceServiceId && workspaceCtx.workspace?.id) {
-          // Fall back to fetching parent workspace service via API inside fetchNewTemplateSchema if needed
-          templateListPath = "";
-          templateGetPath = "";
-          break;
-        } else {
-          const err = new APIError();
-          err.userMessage = "Parent workspace service information is missing for this user resource.";
-          err.status = 400;
-          setApiError(err);
-          return;
         }
+
+        // If we don't have the full parent service but do have an ID, defer and fetch the parent service later
+        if (!parentService && ur.parentWorkspaceServiceId) {
+          if (workspaceCtx.workspace?.id) {
+            // signal to fetch the parent workspace service inside fetchNewTemplateSchema
+            templateGetPath = "";
+            break;
+          } else {
+            const err = new APIError();
+            err.userMessage =
+              "Cannot resolve parent workspace service for this user resource because workspace context is missing.";
+            err.status = 400;
+            setApiError(err);
+            return;
+          }
+        }
+
+        // No parent information available at all -> report error to UI instead of throwing
+        const err = new APIError();
+        err.userMessage = "Parent workspace service information is missing for this user resource.";
+        err.status = 400;
+        setApiError(err);
+        return;
       }
       default:
-        throw Error("Unsupported resource type.");
+        // Report unsupported resource type to UI rather than throwing
+        const err = new APIError();
+        err.userMessage = `Unsupported resource type: ${props.resource.resourceType}`;
+        err.status = 400;
+        setApiError(err);
+        return;
     }
 
     const fetchNewTemplateSchema = async () => {
@@ -470,10 +488,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             </DialogFooter>
           </>
         )}
+        {apiError && requestLoadingState !== LoadingState.Loading && <ExceptionLayout e={apiError} />}
         {requestLoadingState === LoadingState.Loading && (
           <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
-        {requestLoadingState === LoadingState.Error && <ExceptionLayout e={apiError ?? ({} as APIError)} />}
+        {!apiError && requestLoadingState === LoadingState.Error && (
+          <ExceptionLayout e={apiError ?? ({} as APIError)} />
+        )}
       </Dialog>
     </>
   );

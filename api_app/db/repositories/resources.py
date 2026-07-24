@@ -189,8 +189,7 @@ class ResourceRepository(BaseRepository):
             if resource.resourceType == ResourceType.UserResource:
                 parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
                 if not parent_service_name and hasattr(resource, "parentWorkspaceServiceId") and resource.parentWorkspaceServiceId:
-                    resource_repo = await ResourceRepository.create()
-                    parent_service = await resource_repo.get_resource_by_id(resource.parentWorkspaceServiceId)
+                    parent_service = await self.get_resource_by_id(resource.parentWorkspaceServiceId)
                     parent_service_name = parent_service.templateName
 
             new_template = await resource_template_repo.get_template_by_name_and_version(
@@ -370,14 +369,16 @@ class ResourceRepository(BaseRepository):
 
             return False
 
-        def is_any_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
+        def is_all_leaves_allowed(prop_path: str, prop_val: Any) -> bool:
             if not isinstance(prop_val, dict):
                 return is_leaf_allowed(prop_path, prop_val)
             leaves = self._get_leaf_properties({prop_path: prop_val})
+            # Require every leaf in the provided property object to be allowed.
             for leaf_path, leaf_v in leaves:
-                if is_leaf_allowed(leaf_path, leaf_v):
-                    return True
-            return False
+                if not is_leaf_allowed(leaf_path, leaf_v):
+                    return False
+            # If there are no leaves (empty object), treat as not allowed to avoid accidental permits.
+            return len(leaves) > 0
 
         # If updating/patching properties, ensure EVERY patched leaf property is allowed
         if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
@@ -396,7 +397,11 @@ class ResourceRepository(BaseRepository):
             if (
                 resource_action == RESOURCE_ACTION_INSTALL
                 or prop.get("updateable", False) is True
-                or (is_upgrade and prop_val is not None and is_any_leaf_allowed(prop_name, prop_val))
+                or (
+                    is_upgrade
+                    and (resource_patch.properties is not None and prop_name in resource_patch.properties)
+                    and is_all_leaves_allowed(prop_name, prop_val)
+                )
                 or prop_name in pipeline_properties
             ):
                 update_template["properties"][prop_name] = prop
