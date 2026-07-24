@@ -42,7 +42,7 @@ export default defineConfig({
         "src/vite-env.d.ts",
         "src/react-app-env.d.ts",
         "vite.config.ts",
-        "eslint.config.js"
+        "eslint.config.js",
       ],
       thresholds: {
         global: {

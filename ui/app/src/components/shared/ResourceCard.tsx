@@ -1,9 +1,5 @@
 import React, { useCallback, useContext, useState, useEffect } from "react";
-import {
-  ComponentAction,
-  VMPowerStates,
-  Resource,
-} from "../../models/resource";
+import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
 import {
   Callout,
   DefaultPalette,
@@ -46,9 +42,7 @@ interface ResourceCardProps {
   usersCache?: Map<string, CachedUser>; // ownerId -> user info mapping
 }
 
-export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
-  props: ResourceCardProps,
-) => {
+export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: ResourceCardProps) => {
   const [loading] = useState(false);
   const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -87,41 +81,32 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
   }, [props.resource, props.usersCache]);
 
   const costTagRolesByResourceType = {
-    [ResourceType.Workspace]: [
-      RoleName.TREAdmin,
-      WorkspaceRoleName.WorkspaceOwner,
-    ],
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner], // when implemented WorkspaceRoleName.WorkspaceResearcher]
   };
 
-  const costsTagsRoles =
-    costTagRolesByResourceType[props.resource.resourceType];
+  const costsTagsRoles = costTagRolesByResourceType[props.resource.resourceType];
 
   const goToResource = useCallback(() => {
     const { resource } = props;
     const { resourceType, resourcePath, id } = resource;
 
     // shared services are accessed from the root and the workspace, have to handle the URL differently
-    const resourceUrl =
-      ResourceType.SharedService === resourceType && workspaceCtx.workspace.id
-        ? id
-        : resourcePath;
+    const resourceUrl = ResourceType.SharedService === resourceType && workspaceCtx.workspace.id ? id : resourcePath;
 
     props.selectResource?.(resource);
     navigate(resourceUrl);
   }, [navigate, props, workspaceCtx.workspace]);
 
-  let connectUri =
-    props.resource.properties && props.resource.properties.connection_uri;
+  let connectUri = props.resource.properties && props.resource.properties.connection_uri;
   const shouldDisable = () => {
     return (
       latestUpdate.componentAction === ComponentAction.Lock ||
       actionsDisabledStates.includes(props.resource.deploymentStatus) ||
       !props.resource.isEnabled ||
-      (props.resource.azureStatus?.powerState &&
-        props.resource.azureStatus.powerState !== VMPowerStates.Running)
+      (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
     );
   };
 
@@ -137,25 +122,16 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
     successStates.includes(resourceStatus) &&
     props.resource.isEnabled
   ) {
-    headerBadge = (
-      <PowerStateBadge state={props.resource.azureStatus.powerState} />
-    );
+    headerBadge = <PowerStateBadge state={props.resource.azureStatus.powerState} />;
   } else {
-    headerBadge = (
-      <StatusBadge resource={props.resource} status={resourceStatus} />
-    );
+    headerBadge = <StatusBadge resource={props.resource} status={resourceStatus} />;
   }
 
   const appRoles = useContext(AppRolesContext);
   const authNotProvisioned =
-    props.resource.resourceType === ResourceType.Workspace &&
-    !props.resource.properties.scope_id;
-  const enableClickOnCard =
-    !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
-  const workspaceId =
-    props.resource.resourceType === ResourceType.Workspace
-      ? props.resource.id
-      : "";
+    props.resource.resourceType === ResourceType.Workspace && !props.resource.properties.scope_id;
+  const enableClickOnCard = !authNotProvisioned || appRoles.roles.includes(RoleName.TREAdmin);
+  const workspaceId = props.resource.resourceType === ResourceType.Workspace ? props.resource.id : "";
   const cardStyles = enableClickOnCard ? noNavCardStyles : clickableCardStyles;
 
   return (
@@ -177,11 +153,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
         </Stack>
       ) : (
         <TooltipHost
-          content={
-            authNotProvisioned
-              ? "Authentication has not yet been provisioned for this resource."
-              : ""
-          }
+          content={authNotProvisioned ? "Authentication has not yet been provisioned for this resource." : ""}
           id={`card-${props.resource.id}`}
           styles={{ root: { width: "100%" } }}
         >
@@ -228,10 +200,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                   </Stack.Item>
                   <Stack.Item>
                     {!props.readonly && (
-                      <ResourceContextMenu
-                        resource={props.resource}
-                        componentAction={latestUpdate.componentAction}
-                      />
+                      <ResourceContextMenu resource={props.resource} componentAction={latestUpdate.componentAction} />
                     )}
                   </Stack.Item>
                 </Stack>
@@ -246,9 +215,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                 <PrimaryButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    props.isExposedExternally === false
-                      ? setShowCopyUrl(true)
-                      : window.open(connectUri);
+                    props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri);
                   }}
                   disabled={shouldDisable()}
                   title={
@@ -262,10 +229,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                 </PrimaryButton>
               )}
               {showCopyUrl && (
-                <ConfirmCopyUrlToClipboard
-                  onDismiss={() => setShowCopyUrl(false)}
-                  resource={props.resource}
-                />
+                <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
               )}
             </Stack>
           </Stack>
@@ -284,12 +248,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
           }}
           setInitialFocus
         >
-          <Text
-            block
-            variant="xLarge"
-            className={styles.title}
-            id={`item-${props.itemId}-label`}
-          >
+          <Text block variant="xLarge" className={styles.title} id={`item-${props.itemId}-label`}>
             {props.resource.templateName} ({props.resource.templateVersion})
           </Text>
           <Text block variant="small" id={`item-${props.itemId}-description`}>
@@ -297,35 +256,23 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
               <Stack.Item>
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
                   <Stack.Item style={calloutKeyStyles}>Resource Id:</Stack.Item>
-                  <Stack.Item style={calloutValueStyles}>
-                    {props.resource.id}
-                  </Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{props.resource.id}</Stack.Item>
                 </Stack>
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
-                  <Stack.Item style={calloutKeyStyles}>
-                    Last Modified By:
-                  </Stack.Item>
-                  <Stack.Item style={calloutValueStyles}>
-                    {props.resource.user.name}
-                  </Stack.Item>
+                  <Stack.Item style={calloutKeyStyles}>Last Modified By:</Stack.Item>
+                  <Stack.Item style={calloutValueStyles}>{props.resource.user.name}</Stack.Item>
                 </Stack>
                 {props.resource.resourceType === ResourceType.UserResource &&
                   (props.resource as UserResource).ownerId &&
                   (props.resource as UserResource).ownerId.trim() && (
                     <>
                       <Stack horizontal tokens={{ childrenGap: 5 }}>
-                        <Stack.Item style={calloutKeyStyles}>
-                          Owner ID:
-                        </Stack.Item>
-                        <Stack.Item style={calloutValueStyles}>
-                          {(props.resource as UserResource).ownerId}
-                        </Stack.Item>
+                        <Stack.Item style={calloutKeyStyles}>Owner ID:</Stack.Item>
+                        <Stack.Item style={calloutValueStyles}>{(props.resource as UserResource).ownerId}</Stack.Item>
                       </Stack>
                       {getOwnerDisplayName() && (
                         <Stack horizontal tokens={{ childrenGap: 5 }}>
-                          <Stack.Item style={calloutKeyStyles}>
-                            Owner:
-                          </Stack.Item>
+                          <Stack.Item style={calloutKeyStyles}>Owner:</Stack.Item>
                           <Stack.Item style={calloutValueStyles}>
                             {getOwnerDisplayName()}
                             {getOwnerEmail() && (
@@ -345,14 +292,9 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (
                     </>
                   )}
                 <Stack horizontal tokens={{ childrenGap: 5 }}>
-                  <Stack.Item style={calloutKeyStyles}>
-                    Last Updated:
-                  </Stack.Item>
+                  <Stack.Item style={calloutKeyStyles}>Last Updated:</Stack.Item>
                   <Stack.Item style={calloutValueStyles}>
-                    {moment
-                      .unix(props.resource.updatedWhen)
-                      .toDate()
-                      .toDateString()}
+                    {moment.unix(props.resource.updatedWhen).toDate().toDateString()}
                   </Stack.Item>
                 </Stack>
               </Stack.Item>

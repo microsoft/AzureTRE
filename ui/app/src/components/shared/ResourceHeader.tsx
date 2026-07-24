@@ -1,11 +1,7 @@
 import React from "react";
 import { ProgressIndicator, Stack } from "@fluentui/react";
 import { ResourceContextMenu } from "../shared/ResourceContextMenu";
-import {
-  ComponentAction,
-  Resource,
-  ResourceUpdate,
-} from "../../models/resource";
+import { ComponentAction, Resource, ResourceUpdate } from "../../models/resource";
 import { StatusBadge } from "./StatusBadge";
 import { PowerStateBadge } from "./PowerStateBadge";
 
@@ -15,17 +11,13 @@ interface ResourceHeaderProps {
   readonly?: boolean;
 }
 
-export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (
-  props: ResourceHeaderProps,
-) => {
+export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (props: ResourceHeaderProps) => {
   return (
     <>
       {props.resource && props.resource.id && (
         <div className="tre-panel">
           <Stack>
-            <Stack.Item
-              style={!props.readonly ? { borderBottom: "1px #999 solid" } : {}}
-            >
+            <Stack.Item style={!props.readonly ? { borderBottom: "1px #999 solid" } : {}}>
               <Stack horizontal>
                 <Stack.Item grow={1}>
                   <div style={{ display: "flex", alignItems: "center" }}>
@@ -40,14 +32,11 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (
                       {props.resource.properties?.display_name}
                     </h1>
                     {props.resource.azureStatus?.powerState && (
-                      <PowerStateBadge
-                        state={props.resource.azureStatus.powerState}
-                      />
+                      <PowerStateBadge state={props.resource.azureStatus.powerState} />
                     )}
                   </div>
                 </Stack.Item>
-                {(props.latestUpdate.operation ||
-                  props.resource.deploymentStatus) && (
+                {(props.latestUpdate.operation || props.resource.deploymentStatus) && (
                   <Stack.Item align="center">
                     <StatusBadge
                       resource={props.resource}
