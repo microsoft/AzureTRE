@@ -14,6 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "ignoreDeprecations": "5.0",
     "jsx": "react-jsx",
     "types": ["vite/client", "vite-plugin-svgr/client"]
   },

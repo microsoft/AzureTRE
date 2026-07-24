@@ -269,7 +269,15 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       )}
       {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
       {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
-      {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
+      {showUpgrade && (
+        <ConfirmUpgradeResource
+          onDismiss={() => setShowUpgrade(false)}
+          resource={props.resource}
+          parentWorkspaceService={
+            props.resource.resourceType === ResourceType.UserResource ? (parentResource as WorkspaceService) : undefined
+          }
+        />
+      )}
     </>
   );
 };

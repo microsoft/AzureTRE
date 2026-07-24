@@ -1,7 +1,7 @@
 import copy
 import semantic_version
 from datetime import datetime, UTC
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from resources.strings import RESOURCE_ACTION_INSTALL
@@ -111,6 +111,67 @@ class ResourceRepository(BaseRepository):
 
         return parse_obj_as(ResourceTemplate, template)
 
+    def _get_all_property_keys_from_template(self, resource_template: Any, prefix: str = "") -> set:
+        """
+        Recursively extracts all property keys (including top-level properties, nested sub-properties
+        via dotted paths like 'parent.child', and conditional properties defined in 'allOf' clauses).
+
+        Converting templates to a set of dotted property paths ensures upgrade diff calculations
+        detect newly introduced nested properties and prevent existing non-updateable conditional fields
+        from being misidentified as new.
+        """
+        if hasattr(resource_template, "dict"):
+            template_dict = resource_template.dict()
+        elif isinstance(resource_template, dict):
+            template_dict = resource_template
+        else:
+            template_dict = {}
+
+        keys = set()
+        properties = template_dict.get("properties", {})
+        if isinstance(properties, dict):
+            for k, v in properties.items():
+                full_key = f"{prefix}{k}"
+                keys.add(full_key)
+                if isinstance(v, dict) and "properties" in v:
+                    keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+
+        all_of = template_dict.get("allOf")
+        if all_of:
+            for condition in all_of:
+                if isinstance(condition, dict):
+                    for clause in ["then", "else"]:
+                        if clause in condition and isinstance(condition[clause], dict):
+                            clause_props = condition[clause].get("properties", {})
+                            if isinstance(clause_props, dict):
+                                for k, v in clause_props.items():
+                                    full_key = f"{prefix}{k}"
+                                    keys.add(full_key)
+                                    if isinstance(v, dict) and "properties" in v:
+                                        keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+        return keys
+
+    def _get_leaf_properties(self, properties: Any, prefix: str = "") -> List[Tuple[str, Any]]:
+        leaves: List[Tuple[str, Any]] = []
+        if isinstance(properties, dict):
+            for k, v in properties.items():
+                full_key = f"{prefix}{k}"
+                if isinstance(v, dict):
+                    leaves.extend(self._get_leaf_properties(v, prefix=f"{full_key}."))
+                else:
+                    leaves.append((full_key, v))
+        return leaves
+
+    def _remove_property_by_path(self, properties: dict, path: str):
+        parts = path.split(".")
+        current = properties
+        for part in parts[:-1]:
+            if not isinstance(current, dict) or part not in current:
+                return
+            current = current[part]
+        if isinstance(current, dict) and parts[-1] in current:
+            del current[parts[-1]]
+
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
@@ -123,10 +184,32 @@ class ResourceRepository(BaseRepository):
 
         if resource_patch.templateVersion is not None:
             await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+
+            parent_service_name = None
+            if resource.resourceType == ResourceType.UserResource:
+                parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
+                if not parent_service_name and hasattr(resource, "parentWorkspaceServiceId") and resource.parentWorkspaceServiceId:
+                    parent_service = await self.get_resource_by_id(resource.parentWorkspaceServiceId)
+                    parent_service_name = parent_service.templateName
+
+            new_template = await resource_template_repo.get_template_by_name_and_version(
+                resource.templateName,
+                resource_patch.templateVersion,
+                resource.resourceType,
+                parent_service_name=parent_service_name
+            )
+
+            old_properties = self._get_all_property_keys_from_template(resource_template)
+            new_properties = self._get_all_property_keys_from_template(new_template)
+
+            properties_to_remove = old_properties - new_properties
+            for prop in properties_to_remove:
+                self._remove_property_by_path(resource.properties, prop)
+
             resource.templateVersion = resource_patch.templateVersion
 
         if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-            self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action)
+            await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action, current_properties=resource.properties)
 
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
@@ -183,16 +266,160 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str):
+    def _get_pipeline_properties(self, enriched_template) -> List[str]:
+        properties = []
+        pipeline = enriched_template.get("pipeline")
+        if pipeline:
+            for phase in ["install", "upgrade"]:
+                if phase in pipeline and pipeline[phase]:
+                    for step in pipeline[phase]:
+                        if "properties" in step and step["properties"]:
+                            for prop in step["properties"]:
+                                properties.append(prop["name"])
+        return properties
+
+    async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str, current_properties: Optional[dict] = None):
         # get the enriched (combined) template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-        # validate the PATCH data against a cut down version of the full template.
+        # get the old template properties (including allOf) for comparison during upgrades
+        old_template_properties = self._get_all_property_keys_from_template(resource_template)
+
+        # get the schema for the target version if upgrade is happening
+        if resource_patch.templateVersion is not None:
+            # fetch the template for the target version
+            parent_service_name = None
+            if resource_template.resourceType == ResourceType.UserResource:
+                parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
+
+            target_template = await resource_template_repo.get_template_by_name_and_version(
+                resource_template.name,
+                resource_patch.templateVersion,
+                resource_template.resourceType,
+                parent_service_name=parent_service_name
+            )
+            enriched_template = resource_template_repo.enrich_template(target_template, is_update=True)
+
+        # Helper to get property schema definition from properties or allOf using dotted path
+        def get_prop_schema(schema_dict: dict, path: str) -> Optional[dict]:
+            """
+            Resolves a property definition dict from top-level properties or allOf conditional clauses
+            using a dotted property path (e.g. 'parent_object.child_prop').
+            """
+            parts = path.split(".")
+            current = schema_dict.get("properties", {})
+            for i, part in enumerate(parts):
+                if isinstance(current, dict) and part in current:
+                    if i == len(parts) - 1:
+                        return current[part]
+                    current = current[part].get("properties", {})
+                else:
+                    break
+            if "allOf" in schema_dict and schema_dict["allOf"]:
+                for condition in schema_dict["allOf"]:
+                    if isinstance(condition, dict):
+                        for clause in ["then", "else"]:
+                            if clause in condition and isinstance(condition[clause], dict):
+                                curr = condition[clause].get("properties", {})
+                                for i, part in enumerate(parts):
+                                    if isinstance(curr, dict) and part in curr:
+                                        if i == len(parts) - 1:
+                                            return curr[part]
+                                        curr = curr[part].get("properties", {})
+                                    else:
+                                        break
+            return None
+
+        pipeline_properties = self._get_pipeline_properties(enriched_template)
+
+        is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
+
+        def get_nested_val(data: Any, path: str) -> Any:
+            if not isinstance(data, dict):
+                return None
+            parts = path.split(".")
+            curr = data
+            for part in parts:
+                if not isinstance(curr, dict) or part not in curr:
+                    return None
+                curr = curr[part]
+            return curr
+
+        def has_updateable_parent(path: str) -> bool:
+            """
+            Returns True if any ancestor object of the dotted property path is marked
+            updateable: true in the template schema (including properties defined under allOf).
+            """
+            parts = path.split(".")
+            # Walk up the chain excluding the full leaf path (checked separately)
+            for i in range(len(parts) - 1, 0, -1):
+                ancestor_path = ".".join(parts[:i])
+                ancestor_def = get_prop_schema(enriched_template, ancestor_path)
+                if ancestor_def and ancestor_def.get("updateable", False) is True:
+                    return True
+            return False
+
+        def is_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
+            """
+            Determines whether a patched leaf property path is permitted.
+            Allowed if:
+            1. Explicitly marked updateable: true in the template schema on the property itself
+               OR on any of its ancestor objects (top-level or via allOf clauses).
+            2. Introduced as a new property path during a template upgrade.
+            3. Referenced as a pipeline property in the template's install/upgrade pipeline.
+            4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
+            """
+            prop_def = get_prop_schema(enriched_template, prop_path)
+            # Allow if this leaf OR any ancestor object is marked updateable: true
+            is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(prop_path)
+            is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
+            is_pipeline_prop = prop_path in pipeline_properties
+
+            if is_updateable or is_new_on_upgrade or is_pipeline_prop:
+                return True
+
+            if current_properties is not None and is_upgrade:
+                existing_val = get_nested_val(current_properties, prop_path)
+                if existing_val is not None and existing_val == prop_val:
+                    return True
+
+            return False
+
+        def is_all_leaves_allowed(prop_path: str, prop_val: Any) -> bool:
+            if not isinstance(prop_val, dict):
+                return is_leaf_allowed(prop_path, prop_val)
+            leaves = self._get_leaf_properties({prop_path: prop_val})
+            # Require every leaf in the provided property object to be allowed.
+            for leaf_path, leaf_v in leaves:
+                if not is_leaf_allowed(leaf_path, leaf_v):
+                    return False
+            # If there are no leaves (empty object), treat as not allowed to avoid accidental permits.
+            return len(leaves) > 0
+
+        # If updating/patching properties, ensure EVERY patched leaf property is allowed
+        if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
+            leaf_props = self._get_leaf_properties(resource_patch.properties)
+            for prop_path, prop_val in leaf_props:
+                if not is_leaf_allowed(prop_path, prop_val):
+                    raise ValidationError(f"Property '{prop_path}' is not updateable.")
+
+        # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
         update_template["required"] = []
         update_template["properties"] = {}
-        for prop_name, prop in enriched_template["properties"].items():
-            if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
+
+        for prop_name, prop in enriched_template.get("properties", {}).items():
+            prop_val = resource_patch.properties.get(prop_name) if resource_patch.properties else None
+            if (
+                resource_action == RESOURCE_ACTION_INSTALL
+                or prop.get("updateable", False) is True
+                or (
+                    is_upgrade
+                    and (resource_patch.properties is not None and prop_name in resource_patch.properties)
+                    and is_all_leaves_allowed(prop_name, prop_val)
+                )
+                or prop_name in pipeline_properties
+            ):
                 update_template["properties"][prop_name] = prop
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
