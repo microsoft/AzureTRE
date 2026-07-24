@@ -190,3 +190,7 @@ status_code=$(curl -iu admin:"$NEXUS_ADMIN_PASSWORD" -XPUT \
   -d @"$(dirname "${BASH_SOURCE[0]}")"/nexus_realms_config.json \
   -k -s -w "%{http_code}" -o /dev/null)
 echo "Response received from Nexus: $status_code"
+if [ "$status_code" -ne 200 ] && [ "$status_code" -ne 204 ]; then
+  echo 'ERROR - Failed to configure realms'
+  exit 1
+fi
