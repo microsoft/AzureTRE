@@ -2,7 +2,9 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
+import { getAllPropertyKeysFromTemplate, getTopLevelKeysFromTemplate } from "../../utils/schemaUpgradeUtils";
 import { Resource, AvailableUpgrade } from "../../models/resource";
+import { UserResource } from "../../models/userResource";
 import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
@@ -933,5 +935,129 @@ describe("ConfirmUpgradeResource Component", () => {
         mockResource._etag,
       );
     });
+  });
+
+  it("correctly evaluates enum conditions in allOf if-schemas so unrelated required fields do not disable upgrade button", async () => {
+    const mockNewTemplateEnumSchema = {
+      properties: {
+        address_space_size: { type: "string", default: "small" },
+        address_space: { type: "string" },
+      },
+      required: ["address_space_size"],
+      allOf: [
+        {
+          if: {
+            properties: {
+              address_space_size: { enum: ["custom"] },
+            },
+          },
+          then: {
+            required: ["address_space"],
+          },
+        },
+      ],
+      uiSchema: {},
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateEnumSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    const upgradeButton = screen.getByTestId("primary-button");
+    // Should be enabled because address_space_size is "small", not "custom", so address_space is NOT required
+    expect(upgradeButton).not.toBeDisabled();
+  });
+
+  it("does not disable upgrade button for optional new properties that are empty", async () => {
+    const mockNewTemplateOptionalSchema = {
+      properties: {
+        display_name: { type: "string" },
+        optional_notes: { type: "string" },
+      },
+      required: ["display_name"],
+      uiSchema: {},
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateOptionalSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    const upgradeButton = screen.getByTestId("primary-button");
+    // Upgrade button should be enabled even though optional_notes is empty
+    expect(upgradeButton).not.toBeDisabled();
+  });
+
+  it("handles user resource upgrade cleanly when parentWorkspaceService prop is passed", async () => {
+    const userResource: UserResource = {
+      ...(mockResource as UserResource),
+      resourceType: ResourceType.UserResource,
+      parentWorkspaceServiceId: "parent-service-id",
+    };
+    const parentWsService = {
+      id: "parent-service-id",
+      templateName: "guacamole",
+      workspaceId: "workspace-id",
+    } as any;
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(mockNewTemplateSchema);
+        }
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource
+        resource={userResource}
+        onDismiss={mockOnDismiss}
+        parentWorkspaceService={parentWsService}
+      />,
+    );
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).not.toBeDisabled();
   });
 });

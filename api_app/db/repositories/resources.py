@@ -112,6 +112,14 @@ class ResourceRepository(BaseRepository):
         return parse_obj_as(ResourceTemplate, template)
 
     def _get_all_property_keys_from_template(self, resource_template: Any, prefix: str = "") -> set:
+        """
+        Recursively extracts all property keys (including top-level properties, nested sub-properties
+        via dotted paths like 'parent.child', and conditional properties defined in 'allOf' clauses).
+
+        Converting templates to a set of dotted property paths ensures upgrade diff calculations
+        detect newly introduced nested properties and prevent existing non-updateable conditional fields
+        from being misidentified as new.
+        """
         if hasattr(resource_template, "dict"):
             template_dict = resource_template.dict()
         elif isinstance(resource_template, dict):
@@ -275,6 +283,10 @@ class ResourceRepository(BaseRepository):
 
         # Helper to get property schema definition from properties or allOf using dotted path
         def get_prop_schema(schema_dict: dict, path: str) -> Optional[dict]:
+            """
+            Resolves a property definition dict from top-level properties or allOf conditional clauses
+            using a dotted property path (e.g. 'parent_object.child_prop').
+            """
             parts = path.split(".")
             current = schema_dict.get("properties", {})
             for i, part in enumerate(parts):
@@ -304,6 +316,13 @@ class ResourceRepository(BaseRepository):
         is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
 
         def is_property_allowed(prop_path: str, prop_val: Any) -> bool:
+            """
+            Determines whether a patched property path (or any of its nested sub-keys) is permitted.
+            Allowed if:
+            1. Explicitly marked updateable: true in the template schema (top-level or allOf).
+            2. Introduced as a new property (or new nested sub-property) during a template upgrade.
+            3. Referenced as a pipeline property in the template's install/upgrade pipeline.
+            """
             prop_def = get_prop_schema(enriched_template, prop_path)
             is_updateable = prop_def.get("updateable", False) is True if prop_def else False
             is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
