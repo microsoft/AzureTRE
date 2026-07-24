@@ -151,24 +151,14 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         airlock_requests = await self.query(query=query, parameters=parameters)
-        try:
-            # Pydantic v2
-            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
+        return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
 
     async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
             airlock_requests = await self.read_item_by_id(str(airlock_request_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
-        try:
-            # Pydantic v2
-            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
-        except AttributeError:
-            # Pydantic v1 fallback
-            return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
+        return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
