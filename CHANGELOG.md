@@ -12,8 +12,6 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
-* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`. ([#4914](https://github.com/microsoft/AzureTRE/issues/4914))
-* Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Added support for formatting UI code via `pre-commit` and fixed existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
@@ -23,8 +21,8 @@ BUG FIXES:
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Update allowed URLs in Nexus for letsencrypt ([#4899](https://github.com/microsoft/AzureTRE/pull/4899))
-* Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
-* Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
+* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`. ([#4914](https://github.com/microsoft/AzureTRE/issues/4914))
+* Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Fix issues identified by flake8 ([#4958](https://github.com/microsoft/AzureTRE/issues/4958))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
