@@ -1,5 +1,7 @@
 import pytest
 import pytest_asyncio
+
+
 from mock import patch
 
 from fastapi import FastAPI
@@ -126,12 +128,12 @@ def no_workspace_role_user():
     return inner
 
 
-@pytest_asyncio.fixture(scope='module')
+@pytest.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
 
-    the_app = get_application()
-    return the_app
+    
+    return get_application()
 
 
 @pytest_asyncio.fixture
@@ -139,3 +141,5 @@ async def client(app: FastAPI) -> AsyncClient:
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver", headers={"Content-Type": "application/json"}) as client:
         yield client
+
+
