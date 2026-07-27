@@ -30,9 +30,9 @@ def get_sample_shared_service_template() -> dict:
 def get_sample_shared_service_template_in_response() -> dict:
     shared_template = get_sample_shared_service_template()
     shared_template["system_properties"] = {
-        "tre_id": Property(type="string"),
-        "shared_service_id": Property(type="string"),
-        "azure_location": Property(type="string"),
+        "tre_id": Property(type="string").model_dump(),
+        "shared_service_id": Property(type="string").model_dump(),
+        "azure_location": Property(type="string").model_dump(),
     }
     return shared_template
 
