@@ -22,7 +22,7 @@ BUG FIXES:
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Update allowed URLs in Nexus for letsencrypt ([#4899](https://github.com/microsoft/AzureTRE/pull/4899))
 * Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`. ([#4914](https://github.com/microsoft/AzureTRE/issues/4914))
-* Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
+* Update dependencies to address Dependabot security alerts: `aiohttp`, `pytest`, `pytest-asyncio`, `Pygments`, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4915](https://github.com/microsoft/AzureTRE/issues/4915), [#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Fix issues identified by flake8 ([#4958](https://github.com/microsoft/AzureTRE/issues/4958))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
