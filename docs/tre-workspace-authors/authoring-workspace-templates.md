@@ -82,7 +82,9 @@ This file follows the [JSON schema standard](https://json-schema.org/) Draft 202
 Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 2020-12** specification:
 
 ```json
-"$schema": "https://json-schema.org/draft/2020-12/schema"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
 ```
 
 Draft 2020-12 is supported by the API schema validation engine and is the recommended JSON Schema version for Azure TRE templates.
