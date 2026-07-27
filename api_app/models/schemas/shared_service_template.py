@@ -48,7 +48,7 @@ class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
                     "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/myshared_service/shared_service.json",
                     "type": "object",
                     "title": "My Shared Service Template",
-                    "description": "These is a test shared service resource template schema",
+                    "description": "This is a test shared service resource template schema",
                     "required": [],
                     "authorizedRoles": [],
                     "properties": {}

@@ -49,7 +49,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
                     "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
                     "type": "object",
                     "title": "My Workspace Service Template",
-                    "description": "These is a test workspace service resource template schema",
+                    "description": "This is a test workspace service resource template schema",
                     "required": [],
                     "authorizedRoles": [],
                     "properties": {}

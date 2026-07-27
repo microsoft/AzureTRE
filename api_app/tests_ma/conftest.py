@@ -126,7 +126,7 @@ def input_user_resource_template():
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
             "type": "object",
             "title": "My User Resource Template",
-            "description": "These is a test user resource template schema",
+            "description": "This is a test user resource template schema",
             "required": [],
             "properties": {},
         },
