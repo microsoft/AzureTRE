@@ -34,9 +34,9 @@ def get_sample_workspace_template_object(template_name: str = "tre-workspace-bas
 def get_sample_workspace_template_in_response() -> dict:
     workspace_template = get_sample_workspace_template_object().model_dump()
     workspace_template["system_properties"] = {
-        "tre_id": Property(type="string"),
-        "workspace_id": Property(type="string"),
-        "azure_location": Property(type="string"),
+        "tre_id": Property(type="string").model_dump(),
+        "workspace_id": Property(type="string").model_dump(),
+        "azure_location": Property(type="string").model_dump(),
     }
     return workspace_template
 
