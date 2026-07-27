@@ -28,7 +28,6 @@
       "updateable": true
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Should the OpenAI instance be publicly accessible?",
@@ -36,7 +35,6 @@
       "updateable": true
     },
     "openai_model": {
-      "$id": "#/properties/openai_model",
       "type": "string",
       "title": "OpenAI Model",
       "description": "Which OpenAI Model should be used? (be mindful of subscription limits)",

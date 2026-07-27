@@ -23,7 +23,6 @@ Content-Type: {{contentType}}
     ],
     "properties": {
       "vm_size": {
-        "$id": "#/properties/vm_size",
         "type": "string",
         "title": "VM size",
         "description": "Size of the VMs in my workspace",
@@ -35,7 +34,6 @@ Content-Type: {{contentType}}
         ]
       },
       "no_of_vms": {
-        "$id": "#/properties/no_of_vms",
         "type": "integer",
         "title": "Number of VMs",
         "description": "Number of virtual machines to be deployed in the workspace",

@@ -28,7 +28,6 @@
       "updateable": true
     },
     "os_image": {
-      "$id": "#/properties/os_image",
       "type": "string",
       "title": "Linux image",
       "description": "Select Linux image to use for VM",
@@ -44,7 +43,6 @@
       "default": ""
     },
     "vm_size": {
-      "$id": "#/properties/vm_size",
       "type": "string",
       "title": "VM Size",
       "description": "Select size of VM",
@@ -58,14 +56,12 @@
       "updateable": true
     },
     "shared_storage_access": {
-      "$id": "#/properties/shared_storage_access",
       "type": "boolean",
       "title": "Shared storage",
       "default": true,
       "description": "Enable access to shared storage"
     },
     "enable_shutdown_schedule": {
-      "$id": "#/properties/enable_shutdown_schedule",
       "type": "boolean",
       "title": "Enable Shutdown Schedule",
       "default": false,

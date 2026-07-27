@@ -28,7 +28,6 @@
       "updateable": true
     },
     "sql_sku": {
-      "$id": "#/properties/sql_sku",
       "type": "string",
       "title": "MySQL server SKU",
       "description": "MySQL server SKU",
@@ -41,7 +40,6 @@
       "default": "B | 4GB 2vCores"
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Gitea accessible from outside of the TRE network.",

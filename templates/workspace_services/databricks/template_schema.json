@@ -28,14 +28,12 @@
       "updateable": true
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Databricks workspace accessible from outside of the workspace network",
       "default": false
     },
     "address_space": {
-      "$id": "#/properties/address_space",
       "type": "string",
       "title": "Address space",
       "description": "The address space of the databricks subnets"

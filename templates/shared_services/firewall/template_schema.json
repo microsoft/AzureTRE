@@ -7,7 +7,6 @@
   "required": [],
   "properties": {
     "rule_collections": {
-      "$id": "#properties/rule_collections",
       "title": "application rule collections",
       "type": "array",
       "default": [],
@@ -183,7 +182,6 @@
       }
     },
     "network_rule_collections": {
-      "$id": "#properties/network_rule_collections",
       "title": "network rule collections",
       "type": "array",
       "default": [],

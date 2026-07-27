@@ -28,31 +28,26 @@
       "updateable": true
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Azure ML workspace accessible from outside of the workspace network. Also opens firewall rules to allow compute instances with public IP addresses.",
       "default": false
     },
     "address_space": {
-      "$id": "#/properties/address_space",
       "type": "string",
       "title": "Address space",
       "description": "The address space for use by AML subnets"
     },
     "log_analytics_workspace_name": {
-      "$id": "#/properties/log_analytics_workspace_name",
       "type": "string",
       "title": "Log Analytics Workspace Name"
     },
     "workspace_owners_group_id": {
-      "$id": "#/properties/workspace_owners_group_id",
       "type": "string",
       "title": "Workspace Owners Group ID",
       "description": "Object ID of the workspace owners AAD group"
     },
     "workspace_researchers_group_id": {
-      "$id": "#/properties/workspace_researchers_group_id",
       "type": "string",
       "title": "Workspace Researchers Group ID",
       "description": "Object ID of the workspace researchers AAD group"
