@@ -3,6 +3,27 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 
 
+LEGACY_NULL_PROPERTY_FIELDS = {
+    "const",
+    "default",
+    "description",
+    "enum",
+    "exclusiveMaximum",
+    "exclusiveMinimum",
+    "items",
+    "maximum",
+    "maxLength",
+    "minimum",
+    "minLength",
+    "multipleOf",
+    "pattern",
+    "properties",
+    "readOnly",
+    "sensitive",
+    "updateable",
+}
+
+
 def get_system_properties(id_field: str = "workspace_id"):
     return {
         "tre_id": {
@@ -30,6 +51,15 @@ def merge_properties(all_properties: List[Dict]) -> Dict:
     return properties
 
 
+def remove_legacy_null_property_fields(properties: Dict) -> None:
+    """Remove invalid null fields added by the legacy Property model."""
+    for property_schema in properties.values():
+        if isinstance(property_schema, dict):
+            for field in LEGACY_NULL_PROPERTY_FIELDS:
+                if property_schema.get(field) is None:
+                    property_schema.pop(field, None)
+
+
 def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
     workspace_schema_def = Path(__file__).parent / ".." / "schemas" / schema_file
     with open(workspace_schema_def) as schema_f:
@@ -45,6 +75,7 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
 
     template["required"] = merge_required(all_required)
     template["properties"] = merge_properties(all_properties)
+    remove_legacy_null_property_fields(template["properties"])
 
     # if this is an update, mark the non-updateable properties as readOnly
     # this will help the UI render fields appropriately and know what it can send in a PATCH

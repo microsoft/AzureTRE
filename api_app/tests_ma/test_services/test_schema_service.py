@@ -1,4 +1,5 @@
 import pytest
+from jsonschema import validate
 from mock import patch, call
 
 import services.schema_service
@@ -124,6 +125,30 @@ def test_enrich_template_adds_system_properties(basic_resource_template):
     template = services.schema_service.enrich_template(original_template, [])
 
     assert 'tre_id' in template['system_properties']
+
+
+def test_enrich_template_removes_invalid_legacy_null_property_fields(basic_resource_template):
+    basic_resource_template.properties = {
+        "os_image": {
+            "type": "string",
+            "items": None,
+            "properties": None,
+            "enum": None,
+            "pattern": None,
+            "default": None,
+            "const": None,
+        }
+    }
+
+    template = services.schema_service.enrich_template(basic_resource_template, [])
+
+    assert "items" not in template["properties"]["os_image"]
+    assert "properties" not in template["properties"]["os_image"]
+    assert "enum" not in template["properties"]["os_image"]
+    assert "pattern" not in template["properties"]["os_image"]
+    assert "default" not in template["properties"]["os_image"]
+    assert "const" not in template["properties"]["os_image"]
+    validate(instance={"os_image": "Windows Server 2025"}, schema=template)
 
 
 def test_enrich_template_adds_read_only_on_update(basic_resource_template):
