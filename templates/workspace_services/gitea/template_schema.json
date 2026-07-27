@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/gitea/template_schema.json",
   "type": "object",
   "title": "Gitea",
   "description": "Gitea is a lightweight DevOps platform. Features include code hosting, code review, CI/CD, project management and package management.",

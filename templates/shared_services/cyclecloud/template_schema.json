@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/cyclecloud/template_schema.json",
   "type": "object",
   "title": "Azure CycleCloud",
   "description": "Azure CycleCloud is an enterprise-friendly tool for orchestrating and managing High Performance Computing (HPC) environments on Azure.",

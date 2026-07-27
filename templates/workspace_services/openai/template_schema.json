@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/sql/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/openai/template_schema.json",
   "type": "object",
   "title": "OpenAI Workspace Service",
   "description": "Provides OpenAI within the workspace",

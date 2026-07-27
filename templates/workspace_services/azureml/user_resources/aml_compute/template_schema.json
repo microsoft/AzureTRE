@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/user_resources/aml_compute/custom_parameters.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/azureml/user_resources/aml_compute/template_schema.json",
   "type": "object",
   "title": "Azure Machine Learning Compute Instance",
   "description": "An Azure Machine Learning compute instance is a managed cloud-based workstation for data scientists. Each compute instance has only one owner, although you can share files between multiple compute instances.",

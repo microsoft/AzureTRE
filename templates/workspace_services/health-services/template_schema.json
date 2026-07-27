@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/healthcare_services/template_schema.json",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/health-services/template_schema.json",
   "type": "object",
   "title": "Azure Health Data Services Workspace Service",
   "description": "Provides Azure Health Data Services within the workspace",
