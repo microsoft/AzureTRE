@@ -90,7 +90,7 @@ Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 
 Draft 2020-12 is supported by the API schema validation engine and is the recommended JSON Schema version for Azure TRE templates.
 
 !!! note
-    ***`$id` is not required on individual properties or subschemas.** Properties defined under `"properties"` are natively addressable by standard JSON Pointer (e.g. `#/properties/property_name`).
+    **`$id` is not required on individual properties or subschemas.** Properties defined under "properties" are natively addressable by standard JSON Pointer (e.g. `#/properties/property_name`).
     * In JSON Schema Draft 2020-12, `$id` is strictly reserved for declaring base URIs (e.g. at the root schema level) and cannot contain fragment identifiers (such as `#/properties/...`). If custom plain-name anchors are needed within a subschema, use `$anchor` instead.
 
 ### Template properties
