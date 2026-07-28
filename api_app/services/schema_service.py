@@ -56,8 +56,8 @@ def remove_legacy_null_property_fields(properties: Dict) -> None:
     for property_schema in properties.values():
         if isinstance(property_schema, dict):
             for field in LEGACY_NULL_PROPERTY_FIELDS:
-                if property_schema.get(field) is None:
-                    property_schema.pop(field, None)
+                if field in property_schema and property_schema[field] is None:
+                    property_schema.pop(field)
 
 
 def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
