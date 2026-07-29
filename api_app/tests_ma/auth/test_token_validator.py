@@ -150,6 +150,21 @@ class TestTokenValidatorValidate:
 
         assert result.email == "user@tenant.com"
 
+    def test_email_defaults_to_empty_string_when_no_email_or_preferred_username(self):
+        # Regression: a token with neither `email` nor `preferred_username`
+        # must yield an empty-string email (not None), so that downstream
+        # consumers requiring a string email (e.g. the Event Grid airlock
+        # notification payload) do not fail validation and return a 503.
+        claims_no_email = {"oid": "uid", "name": "User", "roles": []}
+        signing_key = MagicMock()
+        mock_client = _make_mock_jwks_client(signing_key)
+        validator = _make_validator(mock_client)
+
+        with patch("auth.token_validator.jwt.decode", return_value=claims_no_email):
+            result = validator.validate("token")
+
+        assert result.email == ""
+
     def test_roles_default_to_empty_list(self):
         claims_no_roles = {"oid": "uid", "name": "User"}
         signing_key = MagicMock()

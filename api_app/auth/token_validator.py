@@ -84,7 +84,7 @@ class TokenValidator:
             return AuthenticatedUser(
                 id=claims["oid"],
                 name=claims.get("name", ""),
-                email=claims.get("email") or claims.get("preferred_username"),
+                email=claims.get("email") or claims.get("preferred_username") or "",
                 roles=claims.get("roles") or [],
                 audience=self._config.audience,
                 is_workspace_token=self._config.is_workspace_token,

@@ -682,3 +682,53 @@ async def test_update_and_publish_event_airlock_request_503_includes_underlying_
 
     assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert underlying_msg in ex.value.detail
+
+
+def test_authenticated_user_with_empty_email_persists_and_builds_notification():
+    """Regression: an AuthenticatedUser with an empty email and tuple roles is a
+    valid createdBy/updatedBy for an airlock request and does not break the
+    Event Grid airlock notification payload (which requires a string email).
+
+    A missing `email`/`preferred_username` claim previously yielded a None email
+    that failed AirlockNotificationUserData validation, surfacing as a 503.
+    """
+    from auth.models import AuthenticatedUser
+
+    user = AuthenticatedUser(
+        id="user-oid",
+        name="No Email User",
+        email="",
+        roles=("WorkspaceResearcher",),
+        audience="api://workspace",
+        is_workspace_token=True,
+    )
+
+    airlock_request = AirlockRequest(
+        id=AIRLOCK_REQUEST_ID,
+        workspaceId=WORKSPACE_ID,
+        type=AirlockRequestType.Import,
+        createdBy=user,
+        updatedBy=user,
+        createdWhen=CURRENT_TIME,
+        updatedWhen=CURRENT_TIME,
+    )
+
+    # createdBy/updatedBy are coerced to plain dicts, roles remain a tuple.
+    assert isinstance(airlock_request.createdBy, dict)
+    assert airlock_request.createdBy["email"] == ""
+    assert airlock_request.createdBy["roles"] == ("WorkspaceResearcher",)
+
+    # Building the notification payload from the persisted user must not raise.
+    notification = AirlockNotificationRequestData(
+        id=airlock_request.id,
+        created_when=airlock_request.createdWhen,
+        created_by=airlock_request.createdBy,
+        updated_when=airlock_request.updatedWhen,
+        updated_by=airlock_request.updatedBy,
+        request_type=airlock_request.type,
+        files=airlock_request.files,
+        status=airlock_request.status,
+        business_justification=airlock_request.businessJustification)
+
+    assert notification.created_by.email == ""
+    assert notification.updated_by.email == ""
