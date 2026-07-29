@@ -262,6 +262,10 @@ STEP_RESULT_MESSAGE_INVALID_STATUS = "Service bus message has invalid status cha
 
 # Event grid
 EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
+EVENT_GRID_PUBLISH_FAILED = "Failed to publish Event Grid event: {}"
+
+# Graph / role assignments
+GRAPH_ROLE_ASSIGNMENT_ERROR = "Failed to fetch workspace role assignments from Microsoft Graph: {}"
 
 # Workspace creation validation
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"
