@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.13.7
+version: 0.13.8
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -12,6 +12,7 @@ credentials:
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
     env: AUTH_CLIENT_SECRET
+    sensitive: true
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
   # Credentials for interacting with Azure
@@ -23,6 +24,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: tre_id
@@ -94,6 +96,7 @@ parameters:
       when you create the ws application"
   - name: client_secret
     type: string
+    sensitive: true
     description:
       "The client secret of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"

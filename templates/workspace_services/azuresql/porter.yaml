@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-azuresql
-version: 1.0.17
+version: 1.0.18
 description: "An Azure SQL workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -15,6 +15,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 parameters:
   - name: workspace_id
     type: string

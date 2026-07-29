@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 2.0.0
+version: 2.0.1
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -40,6 +40,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: workspace_id
@@ -89,6 +90,7 @@ parameters:
     default: "2 CPU | 8GB RAM"
   - name: airlock_request_sas_url
     type: string
+    sensitive: true
     description: "A SAS token to access storage resource in workspace under review"
     env: airlock_request_sas_url
   - name: enable_cmk_encryption

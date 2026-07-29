@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.5.4
+version: 0.5.5
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -31,6 +31,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 parameters:
   - name: tre_id
     type: string
