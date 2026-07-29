@@ -48,6 +48,22 @@ You can use the full or short form of the SHA, but it must be at least 7 charact
 As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, run the same checks on the PR code as for `/test`.
 
+### `/test-backups [<sha>]`
+
+This command runs the build, deploy, and backup tests for a PR.
+
+Use this command when a change has been made that could affect workspace backup functionality.
+
+For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test-backups` is sufficient.
+
+For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test-backups <sha>` where `<sha>` is the SHA for the commit that you have verified.
+You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
+
+**IMPORTANT**
+
+As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
+Before running tests on a PR, run the same checks on the PR code as for `/test`.
+
 ### `/test-destroy-env`
 
 When running `/test` multiple times on a PR, the same TRE ID and environment are used by default. The `/test-destroy-env` command destroys a previously created validation environment, allowing you to re-run `/test` with a clean starting point.
