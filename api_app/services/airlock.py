@@ -275,9 +275,9 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
     try:
         access_service = get_aad_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to retrieve workspace role assignments from Microsoft Graph")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR.format(e))
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR)
 
     if config.ENABLE_AIRLOCK_EMAIL_CHECK:
         check_email_exists(role_assignment_details)
@@ -336,9 +336,9 @@ async def update_and_publish_event_airlock_request(
     try:
         access_service = get_aad_service()
         role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to retrieve workspace role assignments from Microsoft Graph")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR.format(e))
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR)
 
     try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
