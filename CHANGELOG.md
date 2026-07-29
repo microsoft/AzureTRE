@@ -12,8 +12,7 @@ ENHANCEMENTS:
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
-* Strengthen TRE API authentication: introduce layered `auth/` package with typed exceptions, `PyJWKClient`-backed token validation with issuer checking, immutable `AuthenticatedUser` model, and composable RBAC factories; remove the `AccessService` abstraction that is no longer needed now that Entra ID is the only auth provider. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
-* Add exponential-backoff retry in Event Grid publisher for transient failures (HTTP 429/5xx and network errors); split Graph role-assignment lookup from Event Grid publish in airlock service so auth failures are reported distinctly and underlying exception detail is included in 503 responses. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
+* Strengthen TRE API authentication with a layered `auth/` package (typed exceptions, `PyJWKClient`-backed token validation with issuer checking, immutable `AuthenticatedUser` model, composable RBAC factories), removing the redundant `AccessService` abstraction, and add Event Grid publish resilience (retry on transient 429/5xx and network errors, with Graph and publish failures reported distinctly). ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
 * Add support for formatting UI code via `pre-commit` and fix existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Update the version of `super-linter` used in the `build_validation_develop` workflow to 8.7.0 ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
 
