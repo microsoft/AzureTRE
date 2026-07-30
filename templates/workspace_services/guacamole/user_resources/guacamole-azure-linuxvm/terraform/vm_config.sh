@@ -25,12 +25,13 @@ echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
+sudo rm -f /etc/apt/sources.list.d/microsoft-edge*.list
 
 ## VS Code
 echo "init_vm.sh: VS Code"
 echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
 sudo apt install -y code
-sudo apt install -y gvfs-bin || true
+sudo apt install -y gvfs
 
 echo "init_vm.sh: Folders"
 sudo mkdir -p /opt/vscode/user-data
