@@ -10,8 +10,7 @@ migrations_core_router = APIRouter(dependencies=[Depends(require_tre_admin)])
 @migrations_core_router.post("/migrations",
                              status_code=status.HTTP_202_ACCEPTED,
                              name=strings.API_MIGRATE_DATABASE,
-                             response_model=MigrationOutList,
-                             dependencies=[Depends(require_tre_admin)])
+                             response_model=MigrationOutList)
 async def migrate_database():
     try:
         migrations = list()
