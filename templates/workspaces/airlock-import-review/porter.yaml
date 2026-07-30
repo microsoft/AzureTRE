@@ -89,6 +89,10 @@ parameters:
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"
     default: "P1v3"
+  - name: enable_backup
+    type: boolean
+    default: true
+    description: "Enable backups for the workspace, including VMs and shared storage."
   - name: enable_cmk_encryption
     type: boolean
     default: false
@@ -173,6 +177,7 @@ install:
         ui_client_id: ${ bundle.parameters.ui_client_id }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_backup: ${ bundle.parameters.enable_backup }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
@@ -215,6 +220,7 @@ upgrade:
         ui_client_id: ${ bundle.parameters.ui_client_id }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_backup: ${ bundle.parameters.enable_backup }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
@@ -257,6 +263,7 @@ uninstall:
         ui_client_id: ${ bundle.parameters.ui_client_id }
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
+        enable_backup: ${ bundle.parameters.enable_backup }
         enable_airlock: false
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }

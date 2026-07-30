@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-import-reviewvm
-version: 0.4.4
+version: 2.0.0
 description: "An Azure TRE User Resource Template for reviewing Airlock import requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -9,17 +9,20 @@ registry: azuretre
 custom:
   # For information on vm_sizes and image_options, see README.me in the guacamole/user-resources folder
   vm_sizes:
-    "2 CPU | 8GB RAM": Standard_D2s_v5
+    "2 CPU | 8GB RAM": Standard_D2s_v6
+    "4 CPU | 16GB RAM": Standard_D4s_v6
+    "8 CPU | 32GB RAM": Standard_D8s_v6
+    "16 CPU | 64GB RAM": Standard_D16s_v6
   image_options:
-    "Server 2019 Data Science VM":
+    "Windows Server 2025":
       source_image_reference:
-        publisher: microsoft-dsvm
-        offer: dsvm-win-2019
-        sku: winserver-2019
+        publisher: MicrosoftWindowsServer
+        offer: WindowsServer
+        sku: 2025-datacenter-g2
         version: latest
-      conda_config: true
-      secure_boot_enabled: false # dsvm-win-2019 is not a gen2 image
-      vtpm_enabled: false
+      conda_config: false
+      secure_boot_enabled: true
+      vtpm_enabled: true
     # For information on using custom images, see README.me in the guacamole/user-resources folder
     # "Custom Image From Gallery":
     #   source_image_name: sltestwin1
@@ -80,7 +83,7 @@ parameters:
     default: "public"
   - name: os_image
     type: string
-    default: "Server 2019 Data Science VM"
+    default: "Windows Server 2025"
   - name: vm_size
     type: string
     default: "2 CPU | 8GB RAM"

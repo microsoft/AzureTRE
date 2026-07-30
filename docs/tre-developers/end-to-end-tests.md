@@ -31,6 +31,6 @@ Run `make test-e2e-custom SELECTOR='manual_app'` to exercise the same flow.
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.
 
-- This will copy `config.yaml` settings to `/workspaces/AzureTRE/e2e_tests/.env` for you which supplies your authentciation details
+- This will copy `config.yaml` settings to `/workspaces/AzureTRE/e2e_tests/.env` for you which supplies your authentication details
 
 - This will also use `/workspaces/AzureTRE/core/private.env` file for other values.
