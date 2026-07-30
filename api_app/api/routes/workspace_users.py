@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Response, status, HTTPException
 from api.dependencies.workspaces import get_workspace_by_id_from_path
 from models.schemas.workspace_users import UserRoleAssignmentRequest
 from resources import strings
+from services.aad_authentication import UserRoleAssignmentError
 from services.authentication import get_aad_service
 from models.schemas.users import UsersInResponse, AssignableUsersInResponse, WorkspaceUserOperationResponse
 from models.schemas.roles import RolesInResponse
@@ -31,13 +32,15 @@ async def get_workspace_roles(workspace=Depends(get_workspace_by_id_from_path), 
 
 @workspaces_users_admin_router.post("/workspaces/{workspace_id}/users/assign", status_code=status.HTTP_202_ACCEPTED, name=strings.API_ASSIGN_WORKSPACE_USER)
 async def assign_workspace_user(response: Response, userRoleAssignmentRequest: UserRoleAssignmentRequest, workspace=Depends(get_workspace_by_id_from_path), access_service=Depends(get_aad_service)) -> WorkspaceUserOperationResponse:
-
-    for user_id in userRoleAssignmentRequest.user_ids:
-        access_service.assign_workspace_user(
-            user_id,
-            workspace,
-            userRoleAssignmentRequest.role_id
-        )
+    try:
+        for user_id in userRoleAssignmentRequest.user_ids:
+            access_service.assign_workspace_user(
+                user_id,
+                workspace,
+                userRoleAssignmentRequest.role_id
+            )
+    except UserRoleAssignmentError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return WorkspaceUserOperationResponse(user_ids=userRoleAssignmentRequest.user_ids, role_id=userRoleAssignmentRequest.role_id)
 
@@ -48,10 +51,13 @@ async def remove_workspace_user_assignment(user_id: str,
                                            workspace=Depends(get_workspace_by_id_from_path),
                                            access_service=Depends(get_aad_service)) -> WorkspaceUserOperationResponse:
 
-    access_service.remove_workspace_role_user_assignment(
-        user_id,
-        role_id,
-        workspace
-    )
+    try:
+        access_service.remove_workspace_role_user_assignment(
+            user_id,
+            role_id,
+            workspace
+        )
+    except UserRoleAssignmentError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return WorkspaceUserOperationResponse(user_ids=[user_id], role_id=role_id)

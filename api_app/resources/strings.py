@@ -112,6 +112,7 @@ ACCESS_PLEASE_SUPPLY_CLIENT_ID = "Please supply the client_id for the AAD applic
 ACCESS_UNABLE_TO_GET_INFO_FOR_APP = "Unable to get app info for app:"
 ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER = "Unable to get role assignments for user"
 ACCESS_UNABLE_TO_GET_ACCOUNT_TYPE = "Unable to look up account type"
+ACCESS_MS_GRAPH_QUERY_FAILED = "Microsoft Graph query failed"
 ACCESS_UNHANDLED_ACCOUNT_TYPE = "Unhandled account type"
 
 ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER = "Workspace Researcher or Owner rights are required"

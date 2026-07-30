@@ -15,12 +15,14 @@ The base workspace template contains the following resources:
 
 When deploying a workspace the following properties need to be configured.
 
-### Required Properties
+### Properties
 
 | Property | Options | Description |
 | -------- | ------- | ----------- |
-| `client_id` | Valid client ID of the Workspace App Registration. | The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application. |
-| `client_secret` | Valid client secret. | |
+| `client_id` | Valid client ID of a pre-created Workspace App Registration. | Optional. Provide this to reuse an existing application. Leave empty (default) to allow the TRE to create and manage the workspace application automatically. |
+
+!!! note
+    When `client_id` is provided, Terraform imports and manages the application (including its secret), so the application is **deleted when the workspace is uninstalled**. Leave `client_id` empty to have the TRE create and manage a dedicated application for the workspace.
 
 ## Azure Trusted Services
 *Azure Trusted Services* are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.
@@ -29,3 +31,8 @@ Further details around which Azure services are allowed to connect can be found 
 
 - Key Vault: <https://docs.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services>
 - Azure Storage: <https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?msclkid=ee4e79e4b97911eca46dae54da464d11&tabs=azure-portal#trusted-access-for-resources-registered-in-your-subscription>
+
+## Client secret management
+The workspace application password is created with a default validity of approximately 2 years. The secret is stored in the workspace Key Vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
+
+Workspaces should be upgraded periodically (at least every 2 years) to refresh the password.

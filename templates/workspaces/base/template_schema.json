@@ -5,7 +5,6 @@
   "title": "Base Workspace",
   "description": "This workspace template is the foundation for TRE workspaces.",
   "required": [
-    "auth_type",
     "address_space_size"
   ],
   "authorizedRoles": [],
@@ -64,15 +63,17 @@
       "description": "Network address space to be used by the workspace.",
       "updateable": true
     },
-    "auth_type": {
+    "client_id": {
       "type": "string",
-      "title": "Workspace Authentication Type",
-      "description": "",
-      "default": "Automatic",
-      "enum": [
-        "Automatic",
-        "Manual"
-      ],
+      "title": "Application (Client) ID",
+      "description": "Optional. Provide the client ID of a pre-created AAD application. If left empty, Terraform will create a new one automatically.",
+      "updateable": true
+    },
+    "create_aad_groups": {
+      "type": "boolean",
+      "title": "Create AAD Groups for each workspace role (Required for user management)",
+      "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
+      "default": true,
       "updateable": true
     },
     "enable_backup": {
@@ -95,6 +96,39 @@
       "description": "Check this box if you want to deploy the workspace to another subscription.",
       "default": false,
       "updateable": false
+    },
+    "aad_redirect_uris": {
+      "type": "array",
+      "title": "AAD Redirect URIs",
+      "description": "Additional redirect URIs for the workspace AAD app",
+      "updateable": true,
+      "items": {
+        "title": "items",
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "title": "name",
+            "type": "string",
+            "description": "Redirect URI Name",
+            "examples": [
+              "My Redirect URI"
+            ],
+            "pattern": "^.*$"
+          },
+          "value": {
+            "title": "value",
+            "type": "string",
+            "description": "Redirect URI Value",
+            "examples": [
+              "https://a-domain-name.com/oauth/"
+            ]
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -229,82 +263,6 @@
     {
       "if": {
         "properties": {
-          "auth_type": {
-            "const": "Manual"
-          }
-        },
-        "required": [
-          "auth_type"
-        ]
-      },
-      "then": {
-        "properties": {
-          "client_id": {
-            "type": "string",
-            "title": "Application (Client) ID",
-            "description": "The AAD Application Registration ID for the workspace.",
-            "updateable": true
-          },
-          "client_secret": {
-            "type": "string",
-            "title": "Application (Client) Secret",
-            "description": "The AAD Application Registration secret for the workspace. This value will be stored in the Workspace Key Vault.",
-            "sensitive": true,
-            "updateable": true
-          }
-        },
-        "required": [
-          "client_id"
-        ]
-      },
-      "else": {
-        "properties": {
-          "create_aad_groups": {
-            "type": "boolean",
-            "title": "Create AAD Groups for each workspace role (Required for user management)",
-            "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
-            "default": false,
-            "updateable": true
-          },
-          "aad_redirect_uris": {
-            "type": "array",
-            "title": "AAD Redirect URIs",
-            "description": "Redirect URIs for the AAD app in Automatic Auth mode",
-            "updateable": true,
-            "items": {
-              "title": "items",
-              "type": "object",
-              "required": [
-                "name",
-                "value"
-              ],
-              "properties": {
-                "name": {
-                  "title": "name",
-                  "type": "string",
-                  "description": "Redirect URI Name",
-                  "examples": [
-                    "My Redirect URI"
-                  ],
-                  "pattern": "^.*$"
-                },
-                "value": {
-                  "title": "value",
-                  "type": "string",
-                  "description": "Redirect URI Value",
-                  "examples": [
-                    "https://a-domain-name.com/oauth/"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
           "deploy_to_another_subscription": {
             "const": true
           }
@@ -346,10 +304,8 @@
       "app_service_plan_sku",
       "address_space_size",
       "address_space",
-      "auth_type",
-      "create_aad_groups",
       "client_id",
-      "client_secret",
+      "create_aad_groups",
       "enable_backup",
       "enable_airlock",
       "configure_review_vms",

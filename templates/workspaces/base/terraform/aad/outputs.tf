@@ -1,13 +1,13 @@
 output "app_role_workspace_owner_id" {
-  value = random_uuid.app_role_workspace_owner_id.result
+  value = azuread_application.workspace.app_role_ids["WorkspaceOwner"]
 }
 
 output "app_role_workspace_researcher_id" {
-  value = random_uuid.app_role_workspace_researcher_id.result
+  value = azuread_application.workspace.app_role_ids["WorkspaceResearcher"]
 }
 
 output "app_role_workspace_airlock_manager_id" {
-  value = random_uuid.app_role_workspace_airlock_manager_id.result
+  value = azuread_application.workspace.app_role_ids["AirlockManager"]
 }
 
 output "client_id" {
@@ -15,7 +15,7 @@ output "client_id" {
 }
 
 output "scope_id" {
-  value = "api://${var.workspace_resource_name_suffix}"
+  value = tolist(azuread_application.workspace.identifier_uris)[0]
 }
 
 output "sp_id" {
@@ -33,5 +33,3 @@ output "workspace_researchers_group_id" {
 output "workspace_airlock_managers_group_id" {
   value = var.create_aad_groups ? azuread_group.workspace_airlock_managers[0].object_id : ""
 }
-
-

@@ -47,12 +47,6 @@ variable "enable_local_debugging" {
   description = "This will allow storage account access over the internet. Set to true to allow deploying this from a local machine."
 }
 
-variable "register_aad_application" {
-  type        = bool
-  default     = false
-  description = "Create an AAD application automatically for the Workspace."
-}
-
 variable "create_aad_groups" {
   type        = bool
   default     = false
@@ -93,46 +87,13 @@ variable "enable_backup" {
   description = "Enable backups for the workspace"
 }
 
-# These variables are only passed in if you are not registering an AAD
-# application as they need passing back out
-variable "app_role_id_workspace_owner" {
-  type        = string
-  default     = ""
-  description = "The id of the application role WorkspaceOwner in the identity provider, this is passed in so that we may return it as an output."
-}
-variable "app_role_id_workspace_researcher" {
-  type        = string
-  default     = ""
-  description = "The id of the application role WorkspaceResearcher in the identity provider, this is passed in so that we may return it as an output."
-}
-variable "app_role_id_workspace_airlock_manager" {
-  type        = string
-  default     = ""
-  description = "The id of the application role AirlockManager in the identity provider, this is passed in so that we may return it as an output."
-}
 variable "client_id" {
   type        = string
   default     = ""
   description = "The client id of the workspace in the identity provider, this is passed in so that we may return it as an output."
 }
-variable "client_secret" {
-  type        = string
-  default     = ""
-  sensitive   = true
-  description = "The client secret of the workspace in the identity provider, this is passed in so that we may return it as an output."
-}
 variable "ui_client_id" {
   type = string
-}
-variable "sp_id" {
-  type        = string
-  default     = ""
-  description = "The Service Principal in the Identity provider to be able to get claims, this is passed in so that we may return it as an output."
-}
-variable "scope_id" {
-  type        = string
-  default     = ""
-  description = "The Service Principal Name or Identifier URI, this is passed in so that we may return it as an output."
 }
 variable "workspace_owner_object_id" {
   type        = string

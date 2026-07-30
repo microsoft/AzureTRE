@@ -59,6 +59,12 @@ tre:
   # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
   user_management_enabled: false
 
+  # NOT RECOMMENDED. Set to true to assign workspace roles via direct app-role assignment instead of
+  # Entra ID groups. This grants the API app `AppRoleAssignment.ReadWrite.All` and is required to assign
+  # service principals (e.g. automation identities) a workspace role. Note: some workspace services rely on
+  # Entra ID groups, which direct assignment does not populate - prefer group-based user management.
+  # direct_user_management_enabled: false
+
   # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
   # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
   # Note, these need to be fully qualified, i.e. they end in a dot(.)
@@ -76,11 +82,11 @@ authentication:
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
   # create an identity with `Application.ReadWrite.OwnedBy`.
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
-  # create an identity with `Application.ReadWrite.All` and `Directory.Read.All`.
+  # create an identity with `Application.ReadWrite.All`.
   # When this is true, create Workspaces will also create an AAD Application automatically.
   # When this is false, the AAD Application will need creating manually.
   auto_workspace_app_registration: true
-  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`
+  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permissions.
   auto_workspace_group_creation: false
   # Setting this to true will remove the need for users to manually grant consent when creating new workspaces.
   # The identity will be granted Application.ReadWrite.All and DelegatedPermissionGrant.ReadWrite.All permissions.

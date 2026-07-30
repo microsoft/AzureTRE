@@ -412,6 +412,32 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test-manual-app'`, () => {
+        test(`should set command to 'run-tests-manual-app'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-manual-app',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-manual-app');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-manual-app',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running manual app tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+          });
+        });
+      });
+
       describe(`for '/test-shared-services'`, () => {
         test(`should set command to 'run-tests-shared-services'`, async () => {
           const context = createCommentContext({

@@ -4,8 +4,27 @@
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * <!-- markdownlint-disable-next-line MD013 -->
 * Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+* Base workspace bundle 3.0.0 (major upgrade from 2.8.4) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+  
+  **Migration Guide:**
+  1. **Existing Workspaces:** Continue to operate without changes;
+  2. **New Workspaces:**
+     - No `client_secret` parameter needed
+     - Optionally provide `client_id` to reuse pre-existing application
+     - Leave `client_id` empty for fully automatic application creation
+  3. **Upgrading Workspaces:**
+     - Only upgrade once you have tested the process in a non-production environment with your own bundles.
+     - Ensure Application Admin identity owns existing workspace applications
+     - Run workspace upgrade - Terraform will import and take over secret management
+  
+  **Permission Changes:**
+  - **Removed:** `Directory.Read.All` no longer required
+  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.ReadBasic.All`, `DelegatedPermissionGrant.ReadWrite.All`
+  
+  ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
 ENHANCEMENTS:
+* Add optional `direct_user_management_enabled` setting (default `false`, not recommended). When enabled, the API assigns workspace roles via direct app-role assignment instead of Entra ID groups (granting the API app `AppRoleAssignment.ReadWrite.All`), which is required to assign service principals a workspace role. Group-based user management remains the default and recommended approach as some workspace services rely on Entra ID groups. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 * Enable graceful upgrading of the Nexus shared service: modified or added repository configs and the container image (now `3.94.0`) are applied to the existing VM on upgrade without recreating it. Removed the non-functional `snapcraft` proxy (dead remote URL) and skip repositories left in a failed state so they don't block upgrades. (`sonatype-nexus` 3.10.0) ([#2721](https://github.com/microsoft/AzureTRE/issues/2721))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))

@@ -113,7 +113,7 @@ class AirlockReviewInCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "approval": "True",
+                "approval": True,
                 "decisionExplanation": "the reason why this request was approved/rejected"
             }
         }

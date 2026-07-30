@@ -67,6 +67,7 @@ resource "azurerm_linux_web_app" "api" {
     OTEL_RESOURCE_ATTRIBUTES                         = "service.name=api,service.version=${local.version}"
     OTEL_EXPERIMENTAL_RESOURCE_DETECTORS             = "azure_app_service"
     USER_MANAGEMENT_ENABLED                          = var.user_management_enabled
+    DIRECT_USER_MANAGEMENT_ENABLED                   = var.direct_user_management_enabled
   }
 
   identity {
