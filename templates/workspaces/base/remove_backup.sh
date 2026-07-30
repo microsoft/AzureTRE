@@ -120,7 +120,13 @@ while IFS= read -r lock_id; do
   case "$(echo "${lock_id}" | tr '[:upper:]' '[:lower:]')" in
     "${storage_account_id_lower}/"*)
       echo "Deleting resource lock ${lock_id}..."
-      az lock delete --ids "${lock_id}" --output none || echo "Warning: could not delete lock ${lock_id}."
+      if ! az lock delete --ids "${lock_id}" --output none 2>/dev/null; then
+        # Only fatal if the lock still exists (ignore a delete/list race).
+        if az lock show --ids "${lock_id}" --output none 2>/dev/null; then
+          echo "Error: could not delete lock ${lock_id}. Aborting so the uninstall can be retried." >&2
+          exit 1
+        fi
+      fi
       ;;
   esac
 done <<< "${lock_ids}"
