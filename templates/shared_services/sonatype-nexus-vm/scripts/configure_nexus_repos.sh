@@ -126,7 +126,6 @@ fi
 echo "Configuring Nexus repositories..."
 # Create or update each repo so modified configurations are applied to an existing
 # Nexus instance without needing to recreate it.
-# Groups must be created after their proxy members, so we do two passes.
 
 configure_repo() {
   local file="$1"
@@ -177,6 +176,15 @@ configure_one_repo() {
   base_type=$( jq .baseType "$filename" | sed 's/"//g')
   repo_type=$( jq .repoType "$filename" | sed 's/"//g')
   repo_name=$( jq .name "$filename" | sed 's/"//g')
+
+  # A repo's format/type cannot be changed in place, so if one already exists
+  # under this name with a different format or type (e.g. an old apt proxy being
+  # replaced by a raw proxy), delete it first so it can be recreated.
+  if ! retry_with_backoff delete_if_type_mismatch "$repo_name" "$base_type" "$repo_type" "$NEXUS_ADMIN_PASSWORD"; then
+    echo "ERROR - Could not remove conflicting repo '$repo_name'"
+    exit 1
+  fi
+
   create_url="http://localhost/service/rest/v1/repositories/$base_type/$repo_type"
   update_url="$create_url/$repo_name"
 
@@ -186,29 +194,24 @@ configure_one_repo() {
   fi
 }
 
-# Pass 1: proxy and hosted repos — group members must exist before their groups.
-for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
-    repo_type=$( jq .repoType "$filename" | sed 's/"//g')
-    [ "$repo_type" = "group" ] && continue
-    configure_one_repo "$filename"
-done
-
-# Pass 2: group repos.
-# On existing Nexus instances a repo with the group's name may already exist as a proxy
-# (from before the group+member pattern was introduced). Delete it so the group can be
-# created; the proxy members created in Pass 1 retain all cached content.
-delete_if_not_group() {
+# Delete an existing repository if its format or type differs from the desired
+# configuration. Nexus won't let a repo change format/type via update, so an
+# in-place migration (for example an apt proxy replaced by a raw proxy under the
+# same name) requires removing the old repo before recreating it.
+delete_if_type_mismatch() {
   local repo_name="$1"
-  local pass="$2"
-  local existing_type
-  existing_type=$(curl -s -u admin:"$pass" \
+  local want_format="$2"
+  local want_type="$3"
+  local pass="$4"
+  local existing
+  existing=$(curl -s -u admin:"$pass" \
     'http://localhost/service/rest/v1/repositories' \
     -H 'accept: application/json' \
-    -k | jq -r --arg name "$repo_name" '.[] | select(.name == $name) | .type')
-  if [ -z "$existing_type" ] || [ "$existing_type" = "group" ]; then
+    -k | jq -r --arg name "$repo_name" '.[] | select(.name == $name) | "\(.format) \(.type)"')
+  if [ -z "$existing" ] || [ "$existing" = "$want_format $want_type" ]; then
     return 0
   fi
-  echo "Repo '$repo_name' exists as type '$existing_type' — deleting it so a group can take its name..."
+  echo "Repo '$repo_name' exists as '$existing' but config wants '$want_format $want_type' — deleting it so it can be recreated..."
   local code
   code=$(curl -s -u admin:"$pass" -XDELETE \
     "http://localhost/service/rest/v1/repositories/$repo_name" \
@@ -218,13 +221,6 @@ delete_if_not_group() {
 }
 
 for filename in "$(dirname "${BASH_SOURCE[0]}")"/nexus_repos_config/*.json; do
-    repo_type=$( jq .repoType "$filename" | sed 's/"//g')
-    [ "$repo_type" != "group" ] && continue
-    repo_name=$( jq -r .name "$filename")
-    if ! retry_with_backoff delete_if_not_group "$repo_name" "$NEXUS_ADMIN_PASSWORD"; then
-      echo "ERROR - Could not remove conflicting non-group repo '$repo_name'"
-      exit 1
-    fi
     configure_one_repo "$filename"
 done
 

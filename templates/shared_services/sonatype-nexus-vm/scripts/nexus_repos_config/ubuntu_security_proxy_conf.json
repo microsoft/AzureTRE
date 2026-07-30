@@ -1,13 +1,12 @@
 {
-    "name": "microsoft-apt-jammy",
+    "name": "ubuntu-security",
     "online": true,
     "storage": {
         "blobStoreName": "default",
-        "strictContentTypeValidation": true,
-        "write_policy": "ALLOW"
+        "strictContentTypeValidation": false
     },
     "proxy": {
-        "remoteUrl": "https://packages.microsoft.com",
+        "remoteUrl": "http://security.ubuntu.com/ubuntu/",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },
@@ -27,10 +26,9 @@
             "useTrustStore": false
         }
     },
-    "apt": {
-        "distribution": "jammy",
-        "flat": false
+    "raw": {
+        "contentDisposition": "ATTACHMENT"
     },
-    "baseType": "apt",
+    "baseType": "raw",
     "repoType": "proxy"
 }
