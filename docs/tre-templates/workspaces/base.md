@@ -21,6 +21,9 @@ When deploying a workspace the following properties need to be configured.
 | -------- | ------- | ----------- |
 | `client_id` | Valid client ID of a pre-created Workspace App Registration. | Optional. Provide this to reuse an existing application. Leave empty (default) to allow the TRE to create and manage the workspace application automatically. |
 
+!!! note
+    When `client_id` is provided, Terraform imports and manages the application (including its secret), so the application is **deleted when the workspace is uninstalled**. Leave `client_id` empty to have the TRE create and manage a dedicated application for the workspace.
+
 ## Azure Trusted Services
 *Azure Trusted Services* are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.
 

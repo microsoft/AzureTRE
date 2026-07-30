@@ -43,6 +43,9 @@ Example on how to run the script:
 | `--name` | The name of the application. This will be suffixed with 'API' by the script. |
 | `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE. |
 
+!!! note
+    When you provide a pre-created application's `client_id` at workspace creation, Terraform imports the application and takes over its lifecycle (roles, service principal and secret). As a result the application is **deleted when the workspace is uninstalled**. Do not share a pre-created application across multiple workspaces or with other purposes.
+
 
 ## Comments
 When the Workspace Microsoft Entra ID app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace Microsoft Entra ID app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`
