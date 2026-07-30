@@ -73,7 +73,7 @@
                     "type": "string",
                     "description": "Event timestamp."
                 },
-                "description": {
+                "message": {
                     "type": "string",
                     "description": "Event message."
                 },

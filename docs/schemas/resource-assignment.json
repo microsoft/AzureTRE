@@ -11,7 +11,7 @@
             "description": "User id.",
             "format": "uuid"
         },
-        "ResourceId": {
+        "resourceId": {
             "type": "string",
             "description": "Resource id.",
             "format": "uuid"

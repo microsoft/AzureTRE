@@ -16,7 +16,7 @@
             "type": "string",
             "description": "Resource specification version."
         },
-        "ResourceVersion": {
+        "resourceVersion": {
             "type": "string",
             "description": "Resource version."
         },
