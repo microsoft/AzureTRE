@@ -137,6 +137,11 @@
           "description": "When true, TreAdmins can assign/deassign users to workspaces via the UI.",
           "type": "boolean"
         },
+        "direct_user_management_enabled": {
+          "description": "When true, the API assigns workspace roles via direct app-role assignment instead of Entra ID group membership (grants the API app AppRoleAssignment.ReadWrite.All). Required to assign service principals. NOT recommended: some workspace services rely on Entra ID groups, which direct assignment does not populate. Default false.",
+          "type": "boolean",
+          "default": false
+        },
         "enable_dns_policy": {
           "description": "Enable DNS policy on the firewall to restrict DNS resolution to allowed domain list.",
           "type": "boolean"

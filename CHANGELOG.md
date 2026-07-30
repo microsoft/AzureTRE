@@ -24,6 +24,7 @@
   ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
 ENHANCEMENTS:
+* Add optional `direct_user_management_enabled` setting (default `false`, not recommended). When enabled, the API assigns workspace roles via direct app-role assignment instead of Entra ID groups (granting the API app `AppRoleAssignment.ReadWrite.All`), which is required to assign service principals a workspace role. Group-based user management remains the default and recommended approach as some workspace services rely on Entra ID groups. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 * Enable graceful upgrading of the Nexus shared service: modified or added repository configs and the container image (now `3.94.0`) are applied to the existing VM on upgrade without recreating it. Removed the non-functional `snapcraft` proxy (dead remote URL) and skip repositories left in a failed state so they don't block upgrades. (`sonatype-nexus` 3.10.0) ([#2721](https://github.com/microsoft/AzureTRE/issues/2721))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))

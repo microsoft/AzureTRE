@@ -245,17 +245,22 @@ class AzureADAuthorization:
         """
         Assign a principal to a workspace role.
 
-        If workspace has AAD groups configured, uses group membership.
-        Otherwise uses direct app role assignment (e.g., when groups are not configured).
+        When DIRECT_USER_MANAGEMENT_ENABLED, assigns the app role directly (works for
+        service principals and propagates to tokens immediately). Otherwise assigns via
+        Entra ID group membership, which requires the workspace to have groups enabled.
         """
-        if self._is_workspace_role_group_in_use(workspace):
-            if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-                logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-                raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
-            return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
+        if config.DIRECT_USER_MANAGEMENT_ENABLED:
+            return self._assign_principal_to_app_role_direct(user_id, workspace, role_id)
 
-        # Direct app role assignment when no groups configured
-        return self._assign_principal_to_app_role_direct(user_id, workspace, role_id)
+        if not self._is_workspace_role_group_in_use(workspace):
+            logger.error(f"Unable to assign user {user_id} to role {role_id}: Entra ID groups are not in use on this workspace")
+            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to role {role_id}: Entra ID groups are not enabled on this workspace. User management requires the workspace to be deployed with 'create_aad_groups' set to true, or 'direct_user_management_enabled' to be enabled.")
+
+        if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
+            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
+
+        return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
     def _assign_principal_to_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
         """
@@ -389,18 +394,22 @@ class AzureADAuthorization:
         """
         Remove a principal from a workspace role.
 
-        If workspace has AAD groups configured, uses group removal.
-        Otherwise uses direct app role removal (e.g., when groups are not configured).
+        When DIRECT_USER_MANAGEMENT_ENABLED, removes the direct app-role assignment.
+        Otherwise removes via Entra ID group membership, which requires the workspace
+        to have groups enabled.
         """
+        if config.DIRECT_USER_MANAGEMENT_ENABLED:
+            return self._remove_principal_from_app_role_direct(user_id, workspace, role_id)
+
+        if not self._is_workspace_role_group_in_use(workspace):
+            logger.error(f"Unable to remove user {user_id} from role {role_id}: Entra ID groups are not in use on this workspace")
+            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}: Entra ID groups are not enabled on this workspace. User management requires the workspace to be deployed with 'create_aad_groups' set to true, or 'direct_user_management_enabled' to be enabled.")
+
         if workspace.templateName == "tre-workspace-base" and compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
             logger.error(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
             raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}, Workspace needs to be version {USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION} or greater")
 
-        if self._is_workspace_role_group_in_use(workspace):
-            return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
-
-        # Direct app role removal when no groups configured
-        return self._remove_principal_from_app_role_direct(user_id, workspace, role_id)
+        return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
     def _remove_principal_from_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
         """

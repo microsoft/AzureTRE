@@ -59,6 +59,12 @@ tre:
   # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
   user_management_enabled: false
 
+  # NOT RECOMMENDED. Set to true to assign workspace roles via direct app-role assignment instead of
+  # Entra ID groups. This grants the API app `AppRoleAssignment.ReadWrite.All` and is required to assign
+  # service principals (e.g. automation identities) a workspace role. Note: some workspace services rely on
+  # Entra ID groups, which direct assignment does not populate - prefer group-based user management.
+  # direct_user_management_enabled: false
+
   # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
   # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
   # Note, these need to be fully qualified, i.e. they end in a dot(.)

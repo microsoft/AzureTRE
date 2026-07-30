@@ -152,6 +152,10 @@ inputs:
     description: "If set to true TRE Admins are able to assign and de-assign users to workspaces via the UI"
     required: false
     default: "false"
+  DIRECT_USER_MANAGEMENT_ENABLED:
+    description: "If set to true the API assigns workspace roles via direct app-role assignment (grants the API app AppRoleAssignment.ReadWrite.All). Required to assign service principals."
+    required: false
+    default: "false"
   PRIVATE_AGENT_SUBNET_ID:
     description: Enables vnet exception for the subnet to access private resources
     required: false
@@ -311,6 +315,8 @@ runs:
           -e TF_VAR_external_key_store_id="${{ inputs.EXTERNAL_KEY_STORE_ID }}" \
           -e TF_VAR_user_management_enabled="${{ (inputs.USER_MANAGEMENT_ENABLED != '' && inputs.USER_MANAGEMENT_ENABLED) || 'false' }}" \
           -e USER_MANAGEMENT_ENABLED="${{ inputs.USER_MANAGEMENT_ENABLED }}" \
+          -e TF_VAR_direct_user_management_enabled="${{ (inputs.DIRECT_USER_MANAGEMENT_ENABLED != '' && inputs.DIRECT_USER_MANAGEMENT_ENABLED) || 'false' }}" \
+          -e DIRECT_USER_MANAGEMENT_ENABLED="${{ inputs.DIRECT_USER_MANAGEMENT_ENABLED }}" \
           -e PRIVATE_AGENT_SUBNET_ID=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_private_agent_subnet_id=${{ inputs.PRIVATE_AGENT_SUBNET_ID }} \
           -e TF_VAR_auto_grant_workspace_consent="${{ (inputs.AUTO_GRANT_WORKSPACE_CONSENT != '' && inputs.AUTO_GRANT_WORKSPACE_CONSENT) || 'false' }}" \

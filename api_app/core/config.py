@@ -74,3 +74,4 @@ API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 
 # User Management
 USER_MANAGEMENT_ENABLED: bool = config("USER_MANAGEMENT_ENABLED", cast=bool, default=False)
+DIRECT_USER_MANAGEMENT_ENABLED: bool = config("DIRECT_USER_MANAGEMENT_ENABLED", cast=bool, default=False)
