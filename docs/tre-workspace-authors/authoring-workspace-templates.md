@@ -91,7 +91,7 @@ Draft 2020-12 is supported by the API schema validation engine and is the recomm
 
 !!! note
     **`$id` is not required on individual properties or subschemas.** Properties defined under "properties" are natively addressable by standard JSON Pointer (e.g. `#/properties/property_name`).
-    * In JSON Schema Draft 2020-12, `$id` is strictly reserved for declaring base URIs (e.g. at the root schema level) and cannot contain fragment identifiers (such as `#/properties/...`). If custom plain-name anchors are needed within a subschema, use `$anchor` instead.
+    * In JSON Schema Draft 2020-12, `$id` is used for establishing the base URI of schema resources (e.g. at the root schema level). Placing `$id` on individual properties or subschemas is generally unnecessary and can alter reference resolution context. If custom plain-name anchors are needed within a subschema, use `$anchor` instead.
 
 ### Template properties
 
