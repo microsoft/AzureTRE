@@ -33,8 +33,7 @@ airlock_workspace_router = APIRouter(dependencies=[Depends(require_workspace_own
 
 # airlock
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests", status_code=status_code.HTTP_201_CREATED,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CREATE_AIRLOCK_REQUEST,
-                               dependencies=[Depends(get_workspace_by_id_from_path)])
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CREATE_AIRLOCK_REQUEST)
 async def create_draft_request(airlock_request_input: AirlockRequestInCreate, user=Depends(require_workspace_owner_or_researcher),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
                                workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
@@ -53,8 +52,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests",
                               status_code=status_code.HTTP_200_OK,
                               response_model=AirlockRequestWithAllowedUserActionsInList,
-                              name=strings.API_LIST_AIRLOCK_REQUESTS,
-                              dependencies=[Depends(get_workspace_by_id_from_path)])
+                              name=strings.API_LIST_AIRLOCK_REQUESTS)
 async def get_all_airlock_requests_by_workspace(
         airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
@@ -73,8 +71,7 @@ async def get_all_airlock_requests_by_workspace(
 
 
 @airlock_workspace_router.get("/workspaces/{workspace_id}/requests/{airlock_request_id}", status_code=status_code.HTTP_200_OK,
-                              response_model=AirlockRequestWithAllowedUserActions, name=strings.API_GET_AIRLOCK_REQUEST,
-                              dependencies=[Depends(get_workspace_by_id_from_path)])
+                              response_model=AirlockRequestWithAllowedUserActions, name=strings.API_GET_AIRLOCK_REQUEST)
 async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                          airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
                                          user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> AirlockRequestWithAllowedUserActions:
@@ -83,8 +80,7 @@ async def retrieve_airlock_request_by_id(airlock_request=Depends(get_airlock_req
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/submit", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_SUBMIT_AIRLOCK_REQUEST,
-                               dependencies=[Depends(get_workspace_by_id_from_path)])
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_SUBMIT_AIRLOCK_REQUEST)
 async def create_submit_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(require_workspace_owner_or_researcher),
                                 airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
@@ -96,8 +92,7 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CANCEL_AIRLOCK_REQUEST,
-                               dependencies=[Depends(get_workspace_by_id_from_path)])
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CANCEL_AIRLOCK_REQUEST)
 async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(require_workspace_owner_or_researcher),
                                 workspace=Depends(get_workspace_by_id_from_path),
@@ -113,8 +108,7 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
 
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/revoke", status_code=status_code.HTTP_200_OK,
-                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_REVOKE_AIRLOCK_REQUEST,
-                               dependencies=[Depends(get_workspace_by_id_from_path)])
+                               response_model=AirlockRequestWithAllowedUserActions, name=strings.API_REVOKE_AIRLOCK_REQUEST)
 async def create_revoke_request(revoke_input: AirlockRevokeInCreate,
                                 airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(require_airlock_manager),
@@ -127,8 +121,7 @@ async def create_revoke_request(revoke_input: AirlockRevokeInCreate,
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review-user-resource",
                                status_code=status_code.HTTP_202_ACCEPTED, response_model=AirlockRequestAndOperationInResponse,
-                               name=strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE,
-                               dependencies=[Depends(get_workspace_by_id_from_path)])
+                               name=strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE)
 async def create_review_user_resource(
         response: Response,
         airlock_request=Depends(get_airlock_request_by_id_from_path),
@@ -165,7 +158,7 @@ async def create_review_user_resource(
 
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/review",
                                status_code=status_code.HTTP_200_OK, response_model=AirlockRequestWithAllowedUserActions,
-                               name=strings.API_REVIEW_AIRLOCK_REQUEST, dependencies=[Depends(get_workspace_by_id_from_path)])
+                               name=strings.API_REVIEW_AIRLOCK_REQUEST)
 async def create_airlock_review(
         airlock_review_input: AirlockReviewInCreate,
         airlock_request=Depends(get_airlock_request_by_id_from_path),

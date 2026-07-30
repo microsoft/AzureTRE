@@ -42,7 +42,7 @@ async def retrieve_shared_services(shared_services_repo=Depends(get_repository(S
         return RestrictedSharedServicesInList(sharedServices=shared_services)
 
 
-@shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID, dependencies=[Depends(get_shared_service_by_id_from_path)])
+@shared_services_router.get("/shared-services/{shared_service_id}", response_model=SharedServiceInResponse, name=strings.API_GET_SHARED_SERVICE_BY_ID)
 async def retrieve_shared_service_by_id(shared_service=Depends(get_shared_service_by_id_from_path), user=Depends(require_tre_user_or_admin), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))):
     await enrich_resource_with_available_upgrades(shared_service, resource_template_repo)
     if user_is_tre_admin(user):
@@ -81,8 +81,7 @@ async def create_shared_service(response: Response, shared_service_input: Shared
 @shared_services_router.patch("/shared-services/{shared_service_id}",
                               status_code=status.HTTP_202_ACCEPTED,
                               response_model=OperationInResponse,
-                              name=strings.API_UPDATE_SHARED_SERVICE,
-                              dependencies=[Depends(get_shared_service_by_id_from_path)])
+                              name=strings.API_UPDATE_SHARED_SERVICE)
 async def patch_shared_service(shared_service_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), shared_service_repo=Depends(get_repository(SharedServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), shared_service=Depends(get_shared_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), etag: str = Header(...), force_version_update: bool = False) -> SharedServiceInResponse:
     try:
         patched_shared_service, _ = await shared_service_repo.patch_shared_service(shared_service, shared_service_patch, etag, resource_template_repo, resource_history_repo, user, force_version_update)
@@ -142,12 +141,12 @@ async def invoke_action_on_shared_service(response: Response, action: str, user=
 
 
 # Shared service operations
-@shared_services_router.get("/shared-services/{shared_service_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(require_tre_admin), Depends(get_shared_service_by_id_from_path)])
+@shared_services_router.get("/shared-services/{shared_service_id}/operations", response_model=OperationInList, name=strings.API_GET_RESOURCE_OPERATIONS, dependencies=[Depends(require_tre_admin)])
 async def retrieve_shared_service_operations_by_shared_service_id(shared_service=Depends(get_shared_service_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository))) -> OperationInList:
     return OperationInList(operations=await operations_repo.get_operations_by_resource_id(resource_id=shared_service.id))
 
 
-@shared_services_router.get("/shared-services/{shared_service_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(require_tre_admin), Depends(get_shared_service_by_id_from_path)])
+@shared_services_router.get("/shared-services/{shared_service_id}/operations/{operation_id}", response_model=OperationInResponse, name=strings.API_GET_RESOURCE_OPERATION_BY_ID, dependencies=[Depends(require_tre_admin)])
 async def retrieve_shared_service_operation_by_shared_service_id_and_operation_id(shared_service=Depends(get_shared_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)) -> OperationInResponse:
     return OperationInResponse(operation=operation)
 
