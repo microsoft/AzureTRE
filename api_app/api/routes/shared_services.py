@@ -23,7 +23,7 @@ from models.domain.request_action import RequestAction
 from services.logging import logger
 
 
-shared_services_router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
+shared_services_router = APIRouter()
 
 
 def user_is_tre_admin(user):
