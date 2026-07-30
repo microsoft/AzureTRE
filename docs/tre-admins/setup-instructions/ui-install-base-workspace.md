@@ -26,7 +26,7 @@ Workspace can be easily created via AzureTRE UI. Open a browser and navigate to:
 
     - General information such as name and description
     - [Optional] Update values for Shared Storage Quota, App Service Plan (SKU) and Address space if needed
-    - Workspace Authentication Type - this determines whether you'd like TRE to create an app registration for the workspace automatically, or whether you wish to provide an existing one that you've created manually. To read about how to create it manually read the [Creating a manual Entra ID application for the workspace](#creating-a-manual-entra-id-application-for-the-workspace) section below.
+    - [Optional] Application (Client) ID - leave empty (default) to have TRE automatically create and manage the workspace app registration, or provide the client ID of a pre-created Entra ID application to reuse an existing one. To create one manually read the [Creating a manual Entra ID application for the workspace](#creating-a-manual-entra-id-application-for-the-workspace) section below.
 
 1. After filling the details press submit.
 
