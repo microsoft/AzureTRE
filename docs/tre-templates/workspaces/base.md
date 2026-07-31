@@ -1,6 +1,6 @@
 # Azure TRE base workspace
 
-The base workspace template is the foundation that all other workspaces and workspace services are built upon. Alternative workspace architectures could be used. However, the templates provided in this repository rely on the specific architecture of this base workspace.
+The base workspace template is the foundation that all other workspaces and workspace services are built upon. Alternative workspace architectures could be used. However, the templates provided in this repository use the base workspace.
 
 The base workspace template contains the following resources:
 
@@ -33,8 +33,10 @@ When `enable_backup` is set (the default) the base workspace deploys a Recovery 
 
 Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.
 
+> **Note:** If [vault immutability](https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept) is enabled on the Recovery Services Vault (for example, enforced by an Azure Policy in your environment), backups cannot be deleted before they expire. In this case `delete_backups_on_uninstall = true` will not be able to remove the backups or vault, and workspace deletion may fail.
+
 ## Azure Trusted Services
-*Azure Trusted Services* are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.
+*Azure Trusted Services* are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured could be deployed by a custom workspace.
 
 Further details around which Azure services are allowed to connect can be found below:
 
