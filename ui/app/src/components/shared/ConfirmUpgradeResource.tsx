@@ -77,7 +77,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const modalProps = {
     titleAriaId: "labelId",
     subtitleAriaId: "subTextId",
-    isBlocking: true,
+    isBlocking: false,
     styles: dialogStyles,
   };
 
@@ -94,6 +94,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
   // Fetch new template schema and identify new properties missing in current resource
   useEffect(() => {
+    let didCancel = false;
+
     if (!selectedVersion) {
       setAllNewProperties([]);
       setNewPropertiesToFill([]);
@@ -182,6 +184,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
               HttpMethod.Get,
               workspaceCtx.workspaceApplicationIdURI,
             );
+            if (didCancel) return;
+
             const parentService = parentResponse?.workspaceService as WorkspaceService;
             if (parentService && parentService.templateName) {
               activeTemplateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
@@ -190,6 +194,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         }
 
         if (!activeTemplateGetPath) {
+          if (didCancel) return;
           const err = new APIError();
           err.userMessage = "Parent workspace service information is missing for this user resource.";
           err.status = 400;
@@ -208,6 +213,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           undefined,
           ResultType.JSON,
         );
+        if (didCancel) return;
 
         // Reuse cached current template if available to avoid redundant network calls
         let currentTemplate;
@@ -221,8 +227,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             undefined,
             ResultType.JSON,
           );
+          if (didCancel) return;
           currentTemplateRef.current = currentTemplate;
         }
+
+        if (didCancel) return;
 
         // Use full fetched schema from API
         setNewTemplateSchema(newTemplate);
@@ -320,18 +329,25 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         });
         setNewPropertyValues(initialValues);
       } catch (err: any) {
+        if (didCancel) return;
         if (!err.userMessage) {
           err.userMessage = "Failed to fetch new template schema";
         }
         setApiError(err);
         setRequestLoadingState(LoadingState.Error);
       } finally {
-        setLoadingSchema(false);
+        if (!didCancel) {
+          setLoadingSchema(false);
+        }
       }
     };
 
     fetchNewTemplateSchema();
-  }, [selectedVersion]);
+
+    return () => {
+      didCancel = true;
+    };
+  }, [selectedVersion, props.resource, props.parentWorkspaceService, workspaceCtx, apiCall]);
 
   const upgradeCall = async () => {
     setRequestLoadingState(LoadingState.Loading);

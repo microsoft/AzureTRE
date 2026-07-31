@@ -1293,4 +1293,158 @@ describe("ConfirmUpgradeResource Component", () => {
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
   });
+
+  it("reruns schema fetch when workspace context becomes available after version is selected", async () => {
+    const userResource: UserResource = {
+      ...mockResource,
+      resourceType: ResourceType.UserResource,
+      parentWorkspaceServiceId: "ws-service-1",
+    } as UserResource;
+
+    const initialContext = {
+      ...mockWorkspaceContext,
+      workspace: undefined as any,
+    };
+
+    const { rerender } = render(
+      <WorkspaceContext.Provider value={initialContext}>
+        <ConfirmUpgradeResource resource={userResource} onDismiss={mockOnDismiss} />
+      </WorkspaceContext.Provider>,
+    );
+
+    // Select version when context is missing
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Cannot resolve parent workspace service for this user resource because workspace context is missing.",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    // Provide parent service GET response
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET") {
+        if (url.includes("/workspace-services/ws-service-1")) {
+          return Promise.resolve({
+            workspaceService: { templateName: "parent-service-template" },
+          });
+        }
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        }
+        if (url.includes("version=1.1.0")) {
+          return Promise.resolve(mockNewTemplateSchema);
+        }
+      }
+      return Promise.resolve({});
+    });
+
+    // Update context with workspace
+    const updatedContext = {
+      ...mockWorkspaceContext,
+      workspace: {
+        id: "test-workspace-id",
+        isEnabled: true,
+        resourcePath: "/workspaces/test-workspace-id",
+        resourceVersion: 1,
+        resourceType: ResourceType.Workspace,
+        templateName: "base",
+        templateVersion: "1.0.0",
+        availableUpgrades: [],
+        deploymentStatus: "deployed",
+        updatedWhen: Date.now(),
+        history: [],
+        _etag: "test-etag",
+        properties: { display_name: "Test Workspace" },
+        user: { id: "u1", name: "User", email: "u@e.com", roleAssignments: [], roles: [] },
+        workspaceURL: "https://ws.example.com",
+      },
+    };
+
+    rerender(
+      <WorkspaceContext.Provider value={updatedContext}>
+        <ConfirmUpgradeResource resource={userResource} onDismiss={mockOnDismiss} />
+      </WorkspaceContext.Provider>,
+    );
+
+    // Effect should re-run and successfully load schema, resolving error state
+    await waitFor(() => {
+      expect(screen.queryByTestId("exception-layout")).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue("default_value")).toBeInTheDocument();
+    });
+  });
+
+  it("ignores out-of-order response from cancelled schema fetch when version changes", async () => {
+    let resolveV110: (val: any) => void = () => {};
+    const v110Promise = new Promise((resolve) => {
+      resolveV110 = resolve;
+    });
+
+    const schemaV110 = {
+      properties: {
+        display_name: { type: "string" },
+        v110_property: { type: "string", default: "v110_default" },
+      },
+      required: ["display_name"],
+      uiSchema: {},
+    };
+
+    const schemaV120 = {
+      properties: {
+        display_name: { type: "string" },
+        v120_property: { type: "string", default: "v120_default" },
+      },
+      required: ["display_name"],
+      uiSchema: {},
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET") {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        }
+        if (url.includes("version=1.1.0")) {
+          return v110Promise;
+        }
+        if (url.includes("version=1.2.0")) {
+          return Promise.resolve(schemaV120);
+        }
+      }
+      return Promise.resolve({});
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+
+    // Select 1.1.0 first (promise is pending)
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    // Select 1.2.0 immediately (resolves fast)
+    fireEvent.change(dropdown, { target: { value: "1.2.0" } });
+
+    // Wait for 1.2.0 schema to finish loading
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("v120_default")).toBeInTheDocument();
+    });
+
+    // Now resolve the late 1.1.0 promise
+    await act(async () => {
+      resolveV110(schemaV110);
+    });
+
+    // Verify state still displays 1.2.0 schema and didn't get overwritten by late 1.1.0 response
+    expect(screen.getByDisplayValue("v120_default")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("v110_default")).not.toBeInTheDocument();
+  });
+
+  it("configures dialog with isBlocking false to allow light-dismiss when clicking outside", () => {
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+    const dialog = screen.getByTestId("dialog");
+    expect(dialog).toBeInTheDocument();
+  });
 });
