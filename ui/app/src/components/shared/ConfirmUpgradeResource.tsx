@@ -250,8 +250,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           return false;
         });
 
-        // Compute removedPropsArray based on all property keys (including nested properties)
-        const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
+        // Compute removedPropsArray based on property keys present in current resource instance that are no longer in new template
+        const removedPropsArray = currentKeys.filter(
+          (k) => !newKeys.includes(k) && getNestedValue(props.resource.properties, k) !== undefined,
+        );
 
         // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
         const pipelineProps = new Set<string>();

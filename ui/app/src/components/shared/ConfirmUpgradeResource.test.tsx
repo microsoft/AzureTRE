@@ -479,7 +479,14 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("displays warning about removed properties", async () => {
-    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
+    const resourceWithRemovedProp = {
+      ...mockResource,
+      properties: {
+        ...mockResource.properties,
+        existing_property: "some_value",
+      },
+    };
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={resourceWithRemovedProp} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
