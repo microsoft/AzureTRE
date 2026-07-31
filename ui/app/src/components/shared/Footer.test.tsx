@@ -14,16 +14,16 @@ vi.mock("../../hooks/useAuthApiCall", () => ({
 vi.mock("../../config.json", () => ({
   default: {
     uiFooterText: "Test Footer Text",
-    version: "1.0.0"
-  }
+    version: "1.0.0",
+  },
 }));
 
 // Mock API endpoints
 vi.mock("../../models/apiEndpoints", () => ({
   ApiEndpoint: {
     Metadata: "/api/metadata",
-    Health: "/api/health"
-  }
+    Health: "/api/health",
+  },
 }));
 
 describe("Footer Component", () => {
@@ -52,11 +52,12 @@ describe("Footer Component", () => {
   it("shows info callout when info button is clicked", async () => {
     mockApiCall
       .mockResolvedValueOnce({ api_version: "2.0.0" }) // metadata call
-      .mockResolvedValueOnce({ // health call
+      .mockResolvedValueOnce({
+        // health call
         services: [
           { service: "API", status: "OK" },
-          { service: "Database", status: "OK" }
-        ]
+          { service: "Database", status: "OK" },
+        ],
       });
 
     await act(async () => {
@@ -78,9 +79,7 @@ describe("Footer Component", () => {
   });
 
   it("shows API version in callout", async () => {
-    mockApiCall
-      .mockResolvedValueOnce({ api_version: "2.0.0" })
-      .mockResolvedValueOnce({ services: [] });
+    mockApiCall.mockResolvedValueOnce({ api_version: "2.0.0" }).mockResolvedValueOnce({ services: [] });
 
     await act(async () => {
       render(<Footer />);
@@ -100,14 +99,12 @@ describe("Footer Component", () => {
   });
 
   it("shows service health status", async () => {
-    mockApiCall
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({
-        services: [
-          { service: "API", status: "OK" },
-          { service: "Database", status: "ERROR" }
-        ]
-      });
+    mockApiCall.mockResolvedValueOnce({}).mockResolvedValueOnce({
+      services: [
+        { service: "API", status: "OK" },
+        { service: "Database", status: "ERROR" },
+      ],
+    });
 
     await act(async () => {
       render(<Footer />);
@@ -138,9 +135,7 @@ describe("Footer Component", () => {
   });
 
   it("handles missing health services gracefully", async () => {
-    mockApiCall
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({}); // No services property
+    mockApiCall.mockResolvedValueOnce({}).mockResolvedValueOnce({}); // No services property
 
     await act(async () => {
       render(<Footer />);

@@ -8,12 +8,13 @@ vi.mock("@azure/msal-react", () => {
 
   return {
     MsalProvider: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
-    MsalAuthenticationTemplate: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+    MsalAuthenticationTemplate: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
     useMsal: () => ({
       instance: {
         acquireTokenSilent: async () => ({ accessToken: "test-token" }),
         acquireTokenPopup: async () => ({ accessToken: "test-token" }),
-        logout: async () => { },
+        logout: async () => {},
       },
       accounts: [],
     }),
