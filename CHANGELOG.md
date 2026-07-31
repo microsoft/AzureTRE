@@ -18,6 +18,7 @@ ENHANCEMENTS:
 * Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 BUG FIXES:
+* Fix workspace deletion when backup is enabled for the base, unrestricted and airlock-import-review workspaces by adding a `delete_backups_on_uninstall` flag and a pre-teardown backup cleanup (`remove_backup.sh`) that stops protection and either deletes or retains the Recovery Services Vault, so deletion works with Azure secure-by-default soft delete ([#4962](https://github.com/microsoft/AzureTRE/issues/4962))
 * Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
