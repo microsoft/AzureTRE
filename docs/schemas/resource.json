@@ -17,7 +17,7 @@
             "description": "Resource specification version."
         },
         "resourceVersion": {
-            "type": "string",
+            "type": "integer",
             "description": "Resource version."
         },
         "title": {

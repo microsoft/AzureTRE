@@ -32,7 +32,7 @@
             "format": "uuid"
         },
         "resourceVersion": {
-            "type": "string",
+            "type": "integer",
             "description": "Resource version."
         },
         "createdAt": {

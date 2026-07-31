@@ -43,3 +43,13 @@ def test_workspace_service_get_resource_request_message_payload_augments_payload
     message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id
+
+
+def test_resource_history_in_list_schema_is_valid():
+    from models.schemas.resource import ResourceHistoryInList, get_sample_resource_history
+    sample_data = {
+        "resource_history": [get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748")]
+    }
+    history_list = ResourceHistoryInList(**sample_data)
+    assert len(history_list.resource_history) == 1
+    assert history_list.resource_history[0].resourceVersion == 1

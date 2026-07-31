@@ -34,10 +34,10 @@ def get_sample_resource_history(resource_id: str) -> dict:
             "display_name": "my user resource",
             "description": "some description",
         },
-        "isEnabled": "true",
-        "resourceVersion": "1",
-        "updatedWhen": "",
-        "user": ""
+        "isEnabled": True,
+        "resourceVersion": 1,
+        "updatedWhen": 1643026046.002206,
+        "user": {}
     }
 
 
