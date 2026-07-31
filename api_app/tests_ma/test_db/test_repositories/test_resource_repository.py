@@ -408,3 +408,27 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
     with pytest.raises(ValidationError):
         resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+
+
+def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_repo):
+    template = {
+        "$schema": "http://json-schema.org/draft-07/schema",
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["guac_disable_paste"],
+        "properties": {
+            "guac_disable_paste": {
+                "$id": "#/properties/guac_disable_paste",
+                "type": "boolean"
+            }
+        }
+    }
+
+    resource_input = {
+        "properties": {
+            "guac_disable_paste": True
+        }
+    }
+
+    # Should not raise SchemaError from jsonschema's metaschema checks.
+    resource_repo._validate_resource_parameters(resource_input, template)

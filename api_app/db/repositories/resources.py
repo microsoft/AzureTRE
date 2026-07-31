@@ -47,8 +47,33 @@ class ResourceRepository(BaseRepository):
         return query, parameters
 
     @staticmethod
+    def _normalize_template_schema(resource_template: dict) -> dict:
+        """Remove invalid legacy nested $id values from template schemas.
+
+        jsonschema>=4.25 rejects non-empty fragment identifiers for $id.
+        Historical templates include values like "#/properties/foo" at
+        property level, which are not required for validation.
+        """
+        normalized_template = copy.deepcopy(resource_template)
+
+        def _walk(node):
+            if isinstance(node, dict):
+                # Keep top-level $id intact; remove invalid legacy nested fragments.
+                if node.get("$id", "").startswith("#/properties/"):
+                    node.pop("$id", None)
+                for value in node.values():
+                    _walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    _walk(value)
+
+        _walk(normalized_template)
+        return normalized_template
+
+    @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
-        validate(instance=resource_input["properties"], schema=resource_template)
+        normalized_template = ResourceRepository._normalize_template_schema(resource_template)
+        validate(instance=resource_input["properties"], schema=normalized_template)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = await ResourceTemplateRepository.create()
