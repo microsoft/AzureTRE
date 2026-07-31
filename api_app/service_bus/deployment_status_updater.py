@@ -26,6 +26,9 @@ from models.schemas.resource import ResourcePatch
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
+MAX_CLEANUP_RETRIES = 3
+
+
 class DeploymentStatusUpdater():
     def __init__(self):
         pass
@@ -43,60 +46,44 @@ class DeploymentStatusUpdater():
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
             polling_count = 0
-
             while True:
-                try:
-                    current_time = time.time()
-                    polling_count += 1
-                    # Log a heartbeat message every 60 seconds to show the service is still working
-                    if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
-                        last_heartbeat_time = current_time
-                        polling_count = 0
-
-                    async with credentials.get_credential_async_context() as credential:
-                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
-
-                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
-                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                            async with AutoLockRenewer() as renewer:
+                complete_message = True
+                async with credentials.get_credential_async() as credential:
+                    async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
+                        try:
+                            logger.debug("Creating Deployment Status receiver session")
+                            async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=config.SERVICE_BUS_MAX_WAIT_TIME, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                                renewer = AutoLockRenewer()
                                 renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+
                                 async for msg in receiver:
                                     complete_message = await self.process_message(msg)
                                     if complete_message:
                                         await receiver.complete_message(msg)
                                     else:
-                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                         await receiver.abandon_message(msg)
-                            logger.info(f"Closing session: {receiver.session.session_id}")
 
-                except OperationTimeoutError:
-                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                                await renewer.close()
+                                polling_count = 0
 
-                except ServiceBusConnectionError:
-                    # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
+                        except OperationTimeoutError:
+                            polling_count += 1
+                            # log a heartbeat every ~5 minutes when queue is idle (max_wait_time is usually ~10s)
+                            if time.time() - last_heartbeat_time > 300:
+                                logger.info(f"Deployment status updater polling... (idle checks: {polling_count})")
+                                last_heartbeat_time = time.time()
+                        except ServiceBusConnectionError as e:
+                            logger.warning(f"Service Bus connection error in deployment status updater, will retry: {e}")
+                            await asyncio.sleep(5)
+                        except Exception:
+                            logger.exception("Unexpected error in deployment status receiver loop")
+                            await asyncio.sleep(5)
 
-                except Exception as e:
-                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                    logger.exception(f"Unknown exception. Will retry - {e}")
-
-    async def process_message(self, msg):
+    async def process_message(self, msg) -> bool:
         complete_message = False
-        message = ""
-
-        with tracer.start_as_current_span("process_message") as current_span:
+        with tracer.start_as_current_span("process_message"):
             try:
                 message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
-
-                current_span.set_attribute("step_id", message.stepId)
-                current_span.set_attribute("operation_id", message.operationId)
-                current_span.set_attribute("status", message.status)
-
-                logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
                 complete_message = await self.update_status_in_database(message)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")
             except (json.JSONDecodeError, ValidationError):
@@ -160,6 +147,13 @@ class DeploymentStatusUpdater():
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
+            # If the 'main' step succeeded for an uninstall operation, free any allocated address space
+            # owned by a WorkspaceService resource. MUST be executed BEFORE preparing/enqueuing any next step
+            # (such as a trailing workspace upgrade step), so Cosmos DB state is updated before the next step
+            # queries the workspace document.
+            if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
+                await self._free_workspace_address_space(resource_to_persist, operation)
+
             # more steps in the op to do?
             if is_last_step is False:
                 assert current_step_index < (len(operation.steps) - 1)
@@ -190,40 +184,6 @@ class DeploymentStatusUpdater():
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
-            # If the 'main' step succeeded for an uninstall operation, free any allocated address space
-            # owned by a WorkspaceService resource. We trigger cleanup when the step with templateStepId == 'main'
-            # is successful; this ensures the primary resource has been destroyed successfully before attempting to free the ip address space
-            try:
-                # if the step that just succeeded is the main step for this operation, and this is an uninstall,
-                # proceed with post-uninstall cleanup. No need to scan the operation.steps list again.
-                if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
-                    if resource_to_persist.get("resourceType") == ResourceType.WorkspaceService:
-                        address_to_free = resource_to_persist.get("properties", {}).get("address_space")
-                        parent_workspace_id = resource_to_persist.get("workspaceId")
-                        if address_to_free and parent_workspace_id:
-                            try:
-                                workspace_repo = await WorkspaceRepository.create()
-                                max_retries = 3
-                                for attempt in range(max_retries):
-                                    workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
-                                    workspace_address_spaces = workspace.properties.get("address_spaces", [])
-                                    if address_to_free not in workspace_address_spaces:
-                                        break
-                                    new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
-                                    workspace_patch = ResourcePatch()
-                                    workspace_patch.properties = {"address_spaces": new_address_spaces}
-                                    try:
-                                        await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, self.resource_template_repo, self.resource_history_repo, operation.user, False)
-                                        logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
-                                        break
-                                    except CosmosAccessConditionFailedError:
-                                        if attempt == max_retries - 1:
-                                            raise
-                                        logger.warning(f"ETag conflict when freeing workspace address space after successful uninstall. Retrying (attempt {attempt + 1}/{max_retries})...")
-                            except Exception:
-                                logger.exception("Failed to free workspace address space after successful uninstall")
-            except Exception:
-                logger.exception("Unexpected error during post-uninstall address space cleanup")
 
             result = True
 
@@ -235,6 +195,55 @@ class DeploymentStatusUpdater():
             logger.exception("Failed to update status")
 
         return result
+
+    async def _free_workspace_address_space(self, resource_to_persist: dict, operation: Operation):
+        """
+        Frees any allocated address space owned by a WorkspaceService resource after a successful uninstall main step.
+        Updates the parent Workspace document in Cosmos DB so that subsequent pipeline steps (e.g., workspace upgrade)
+        or future operations rely on the updated address_spaces property.
+        """
+        if resource_to_persist.get("resourceType") != ResourceType.WorkspaceService:
+            return
+
+        address_to_free = resource_to_persist.get("properties", {}).get("address_space")
+        parent_workspace_id = resource_to_persist.get("workspaceId")
+        resource_id = resource_to_persist.get("id")
+
+        if not address_to_free or not parent_workspace_id:
+            return
+
+        try:
+            workspace_repo = await WorkspaceRepository.create()
+            for attempt in range(MAX_CLEANUP_RETRIES):
+                try:
+                    workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
+                    workspace_address_spaces = workspace.properties.get("address_spaces", [])
+                    if address_to_free not in workspace_address_spaces:
+                        break
+                    new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
+                    workspace_patch = ResourcePatch()
+                    workspace_patch.properties = {"address_spaces": new_address_spaces}
+
+                    # Note: patch_workspace with force_version_update=False updates the Cosmos DB record only;
+                    # it does not trigger an independent deployment operation. Infrastructure updates (Terraform)
+                    # are driven by the trailing workspace upgrade step in the uninstall pipeline.
+                    await workspace_repo.patch_workspace(
+                        workspace,
+                        workspace_patch,
+                        workspace.etag,
+                        self.resource_template_repo,
+                        self.resource_history_repo,
+                        operation.user,
+                        False
+                    )
+                    logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
+                    break
+                except CosmosAccessConditionFailedError:
+                    if attempt == MAX_CLEANUP_RETRIES - 1:
+                        raise
+                    logger.warning(f"ETag conflict when freeing workspace address space after successful uninstall. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+        except Exception as e:
+            logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after uninstalling {resource_id}: {e}", exc_info=True)
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()
