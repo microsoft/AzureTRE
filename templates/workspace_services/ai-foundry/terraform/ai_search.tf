@@ -2,7 +2,7 @@
 # Creates Azure Cognitive Search service for RAG scenarios
 
 resource "azapi_resource" "ai_search" {
-  count = var.enable_ai_search ? 1 : 0
+  count = var.enable_agent_service ? 1 : 0
 
   type      = "Microsoft.Search/searchServices@2024-06-01-preview"
   name      = "srch-${local.service_resource_name_suffix}-${random_string.suffix.result}"
@@ -51,7 +51,7 @@ resource "azapi_resource" "ai_search" {
 
 # Private endpoint for AI Search
 resource "azurerm_private_endpoint" "ai_search" {
-  count = var.enable_ai_search && !var.is_exposed_externally ? 1 : 0
+  count = var.enable_agent_service && !var.is_exposed_externally ? 1 : 0
 
   name                = "pe-${azapi_resource.ai_search[0].name}"
   location            = data.azurerm_resource_group.ws.location
@@ -78,27 +78,27 @@ resource "azurerm_private_endpoint" "ai_search" {
   }
 }
 
-# Role assignment for AI Foundry to access AI Search
+# Role assignments for the AI Foundry project (agent) identity to access AI Search
 resource "azurerm_role_assignment" "ai_foundry_search_contributor" {
-  count = var.enable_ai_search ? 1 : 0
+  count = var.enable_agent_service ? 1 : 0
 
   scope                = azapi_resource.ai_search[0].id
   role_definition_name = "Search Service Contributor"
-  principal_id         = azurerm_cognitive_account.ai_foundry.identity[0].principal_id
+  principal_id         = azurerm_cognitive_account_project.default.identity[0].principal_id
 }
 
 resource "azurerm_role_assignment" "ai_foundry_search_index_contributor" {
-  count = var.enable_ai_search ? 1 : 0
+  count = var.enable_agent_service ? 1 : 0
 
   scope                = azapi_resource.ai_search[0].id
   role_definition_name = "Search Index Data Contributor"
-  principal_id         = azurerm_cognitive_account.ai_foundry.identity[0].principal_id
+  principal_id         = azurerm_cognitive_account_project.default.identity[0].principal_id
 }
 
 # Connection from AI Foundry Project to AI Search
-# This makes AI Search visible as a knowledge store in the AI Foundry portal
+# This makes AI Search available as the agent vector store and knowledge store.
 resource "azapi_resource" "ai_search_connection" {
-  count = var.enable_ai_search ? 1 : 0
+  count = var.enable_agent_service ? 1 : 0
 
   type      = "Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview"
   name      = "ai-search"
@@ -112,8 +112,10 @@ resource "azapi_resource" "ai_search_connection" {
       target   = "https://${azapi_resource.ai_search[0].name}.search.windows.net"
       authType = "AAD"
       metadata = {
-        ApiVersion = "2024-06-01-preview"
+        ApiType    = "Azure"
+        ApiVersion = "2024-05-01-preview"
         ResourceId = azapi_resource.ai_search[0].id
+        location   = data.azurerm_resource_group.ws.location
       }
     }
   }

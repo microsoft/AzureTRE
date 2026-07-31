@@ -4,7 +4,7 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* Add Azure AI Foundry workspace service with support for AI Hub, AI Search, Cosmos DB, and VNet injection for Standard Agents ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
+* Add Azure AI Foundry workspace service, with an optional "Enable Agent Service" (Foundry Agent Service Standard Setup) that provisions a private Cosmos DB, AI Search and VNet-injected agent subnet wired together via capability hosts ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
 * _No changes yet_

@@ -30,12 +30,12 @@ resource "azurerm_cognitive_account" "ai_foundry" {
     default_action = "Allow"
   }
 
-  # Network injection for agent networking (optional)
+  # Network injection for the Foundry Agent Service (Standard Setup, optional)
   dynamic "network_injection" {
-    for_each = var.enable_agent_networking ? [1] : []
+    for_each = var.enable_agent_service ? [1] : []
     content {
       scenario  = "agent"
-      subnet_id = azurerm_subnet.agents.id
+      subnet_id = azurerm_subnet.agents[0].id
     }
   }
 
@@ -51,6 +51,11 @@ resource "azurerm_cognitive_account" "ai_foundry" {
   lifecycle {
     ignore_changes = [tags]
   }
+
+  # On destroy, wait after the account is deleted before the agent subnet is
+  # removed so the platform can release the network-injection
+  # serviceAssociationLink (see time_sleep.wait_for_subnet_release in network.tf).
+  depends_on = [time_sleep.wait_for_subnet_release]
 }
 
 # Wait for AIServices to fully provision internally
@@ -158,7 +163,8 @@ resource "azurerm_storage_container" "ai_foundry" {
 }
 
 # Connection from AI Foundry Project to Workspace Storage
-# This makes the storage account visible in the AI Foundry portal
+# This makes the storage account visible in the AI Foundry portal and provides
+# the storage connection referenced by the agent capability host.
 resource "azapi_resource" "storage_connection" {
   type      = "Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview"
   name      = "workspace-storage"
@@ -168,13 +174,13 @@ resource "azapi_resource" "storage_connection" {
 
   body = {
     properties = {
-      category = "AzureBlob"
+      category = "AzureStorageAccount"
       target   = data.azurerm_storage_account.workspace.primary_blob_endpoint
       authType = "AAD"
       metadata = {
-        ResourceId    = data.azurerm_storage_account.workspace.id
-        AccountName   = data.azurerm_storage_account.workspace.name
-        ContainerName = azurerm_storage_container.ai_foundry.name
+        ApiType    = "Azure"
+        ResourceId = data.azurerm_storage_account.workspace.id
+        location   = data.azurerm_resource_group.ws.location
       }
     }
   }
@@ -196,4 +202,13 @@ resource "azurerm_role_assignment" "ai_foundry_storage_file_contributor" {
   scope                = data.azurerm_storage_account.workspace.id
   role_definition_name = "Storage File Data Privileged Contributor"
   principal_id         = azurerm_cognitive_account.ai_foundry.identity[0].principal_id
+}
+
+# The agent (project) identity needs blob data access to the workspace storage
+# to read/write the agent containers created by the capability host.
+resource "azurerm_role_assignment" "project_storage_blob_contributor" {
+  count                = var.enable_agent_service ? 1 : 0
+  scope                = data.azurerm_storage_account.workspace.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_cognitive_account_project.default.identity[0].principal_id
 }

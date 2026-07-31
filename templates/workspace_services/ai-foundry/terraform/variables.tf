@@ -43,21 +43,9 @@ variable "is_exposed_externally" {
   default     = false
 }
 
-variable "enable_ai_search" {
+variable "enable_agent_service" {
   type        = bool
-  description = "Enable Azure AI Search for RAG and knowledge retrieval scenarios"
-  default     = false
-}
-
-variable "enable_cosmos_db" {
-  type        = bool
-  description = "Enable Azure Cosmos DB for agent state persistence and conversation history"
-  default     = false
-}
-
-variable "enable_agent_networking" {
-  type        = bool
-  description = "Enable VNet injection for Standard Agents. Adds network injections which can take 30-60+ minutes to provision. Deploy without this first, then upgrade to enable."
+  description = "Enable the Foundry Agent Service (Standard Setup): provisions Cosmos DB, AI Search and a VNet-injected agent subnet with account/project capability hosts. Adds network injection which can take 30-60+ minutes to provision."
   default     = false
 }
 

@@ -39,7 +39,8 @@
         "gpt-4 | turbo-2024-04-09",
         "gpt-4 | 0613",
         "gpt-35-turbo | 0125",
-        "gpt-35-turbo | 1106"
+        "gpt-35-turbo | 1106",
+        "gpt-5.1 | 2025-11-13"
       ],
       "default": "gpt-4o | 2024-05-13",
       "updateable": true
@@ -61,27 +62,11 @@
       "description": "Is the Azure AI Foundry accessible from outside of the workspace network. When enabled, resources are accessible via public endpoints.",
       "default": false
     },
-    "enable_ai_search": {
-      "$id": "#/properties/enable_ai_search",
+    "enable_agent_service": {
+      "$id": "#/properties/enable_agent_service",
       "type": "boolean",
-      "title": "Enable Azure AI Search",
-      "description": "Deploy Azure AI Search for RAG (Retrieval-Augmented Generation) and knowledge retrieval scenarios. Enables the AI Foundry project to search and index documents.",
-      "default": false,
-      "updateable": true
-    },
-    "enable_cosmos_db": {
-      "$id": "#/properties/enable_cosmos_db",
-      "type": "boolean",
-      "title": "Enable Azure Cosmos DB",
-      "description": "Deploy Azure Cosmos DB for AI agent state persistence and conversation history. Required for multi-turn agent conversations and long-running agent tasks.",
-      "default": false,
-      "updateable": true
-    },
-    "enable_agent_networking": {
-      "$id": "#/properties/enable_agent_networking",
-      "type": "boolean",
-      "title": "Enable Agent VNet Injection",
-      "description": "Enable VNet injection for Standard Agents to prevent data exfiltration. WARNING: This can take 30-60+ minutes to provision. Deploy without this first, then upgrade to enable.",
+      "title": "Enable Agent Service",
+      "description": "Deploy the Foundry Agent Service (Standard Setup). This provisions a private Azure Cosmos DB, Azure AI Search and a VNet-injected agent subnet, wired together via capability hosts, so agents run fully inside the workspace network with no data exfiltration. WARNING: enabling or disabling this can take 30-60+ minutes to provision.",
       "default": false,
       "updateable": true
     },
@@ -123,13 +108,7 @@
     "is_exposed_externally": {
       "ui:widget": "checkbox"
     },
-    "enable_ai_search": {
-      "ui:widget": "checkbox"
-    },
-    "enable_cosmos_db": {
-      "ui:widget": "checkbox"
-    },
-    "enable_agent_networking": {
+    "enable_agent_service": {
       "ui:widget": "checkbox"
     }
   },

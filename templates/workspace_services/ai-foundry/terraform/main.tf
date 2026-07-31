@@ -100,7 +100,7 @@ data "azurerm_storage_account" "workspace" {
 }
 
 data "azurerm_private_dns_zone" "cosmos_db" {
-  count               = var.enable_cosmos_db ? 1 : 0
+  count               = var.enable_agent_service ? 1 : 0
   name                = "privatelink.documents.azure.com"
   resource_group_name = local.core_resource_group_name
 }

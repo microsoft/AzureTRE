@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ai-foundry
-version: 0.2.28
+version: 0.3.2
 description: "Azure AI Foundry workspace service - provides AI/ML capabilities with private endpoint access"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -65,18 +65,10 @@ parameters:
     default: false
     description: "Determines if the AI Foundry resources are accessible from outside the workspace network"
     env: IS_EXPOSED_EXTERNALLY
-  - name: enable_ai_search
+  - name: enable_agent_service
     type: boolean
     default: false
-    description: "Enable Azure AI Search for RAG and knowledge retrieval scenarios"
-  - name: enable_cosmos_db
-    type: boolean
-    default: false
-    description: "Enable Azure Cosmos DB for agent state persistence and conversation history"
-  - name: enable_agent_networking
-    type: boolean
-    default: false
-    description: "Enable VNet injection for Standard Agents (can take 30-60+ min). Deploy without this first, then upgrade to enable."
+    description: "Enable the Foundry Agent Service (Standard Setup): provisions Cosmos DB, AI Search and a VNet-injected agent subnet with capability hosts. Can take 30-60+ min to provision."
   - name: address_space
     type: string
     description: "Address space for the AI Foundry agent subnet"
@@ -126,9 +118,7 @@ install:
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        enable_ai_search: ${ bundle.parameters.enable_ai_search }
-        enable_cosmos_db: ${ bundle.parameters.enable_cosmos_db }
-        enable_agent_networking: ${ bundle.parameters.enable_agent_networking }
+        enable_agent_service: ${ bundle.parameters.enable_agent_service }
         address_space: ${ bundle.parameters.address_space }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
         workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
@@ -157,9 +147,7 @@ upgrade:
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        enable_ai_search: ${ bundle.parameters.enable_ai_search }
-        enable_cosmos_db: ${ bundle.parameters.enable_cosmos_db }
-        enable_agent_networking: ${ bundle.parameters.enable_agent_networking }
+        enable_agent_service: ${ bundle.parameters.enable_agent_service }
         address_space: ${ bundle.parameters.address_space }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
         workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
@@ -188,9 +176,7 @@ uninstall:
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
-        enable_ai_search: ${ bundle.parameters.enable_ai_search }
-        enable_cosmos_db: ${ bundle.parameters.enable_cosmos_db }
-        enable_agent_networking: ${ bundle.parameters.enable_agent_networking }
+        enable_agent_service: ${ bundle.parameters.enable_agent_service }
         address_space: ${ bundle.parameters.address_space }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
         workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
