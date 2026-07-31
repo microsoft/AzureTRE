@@ -3859,6 +3859,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#test-backups-sha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-backups [&lt;sha&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-destroy-env" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4601,6 +4612,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#test-backups-sha" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-backups [&lt;sha&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-destroy-env" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4681,6 +4703,15 @@ Before running tests on a PR, ensure that there are no changes in the PR that co
 <p>For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), <code>/test-extended</code> is sufficient.</p>
 <p>If a change has been made which would affect any of the core shared services, make sure you run <code>/test-shared-services</code>.</p>
 <p>For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use <code>/test-extended &lt;sha&gt;</code> where <code>&lt;sha&gt;</code> is the SHA for the commit that you have verified.
+You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).</p>
+<p><strong>IMPORTANT</strong></p>
+<p>As with <code>/test</code>, this command works on PRs from forks, and makes the deployment secrets available.
+Before running tests on a PR, run the same checks on the PR code as for <code>/test</code>.</p>
+<h3 id="test-backups-sha"><code>/test-backups [&lt;sha&gt;]</code></h3>
+<p>This command runs the build, deploy, and backup tests for a PR.</p>
+<p>Use this command when a change has been made that could affect workspace backup functionality.</p>
+<p>For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), <code>/test-backups</code> is sufficient.</p>
+<p>For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use <code>/test-backups &lt;sha&gt;</code> where <code>&lt;sha&gt;</code> is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).</p>
 <p><strong>IMPORTANT</strong></p>
 <p>As with <code>/test</code>, this command works on PRs from forks, and makes the deployment secrets available.

@@ -1663,6 +1663,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#azure-trusted-services" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4538,6 +4549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#azure-trusted-services" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4566,7 +4588,7 @@
 
 
 <h1 id="azure-tre-base-workspace">Azure TRE base workspace</h1>
-<p>The base workspace template is the foundation that all other workspaces and workspace services are built upon. Alternative workspace architectures could be used. However, the templates provided in this repository rely on the specific architecture of this base workspace.</p>
+<p>The base workspace template is the foundation that all other workspaces and workspace services are built upon. Alternative workspace architectures could be used. However, the templates provided in this repository use the base workspace.</p>
 <p>The base workspace template contains the following resources:</p>
 <ul>
 <li>Virtual Network</li>
@@ -4600,8 +4622,32 @@
 </tr>
 </tbody>
 </table>
+<h2 id="backup">Backup</h2>
+<p>When <code>enable_backup</code> is set (the default) the base workspace deploys a Recovery Services Vault into the workspace resource group and protects the workspace's shared storage (and any VMs configured for backup).</p>
+<table>
+<thead>
+<tr>
+<th><code>delete_backups_on_uninstall</code></th>
+<th>Behaviour on workspace deletion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>false</code> (default)</td>
+<td><strong>Retain the backups.</strong> Protection is stopped but the recovery points are kept. The vault, its backup resources and the workspace resource group are removed from the Terraform state, so the <strong>resource group is retained and continues to hold the Recovery Services Vault and its recovery points</strong> after the workspace is deleted.</td>
+</tr>
+<tr>
+<td><code>true</code></td>
+<td><strong>Delete the backups.</strong> Protection is stopped with data deletion, the backup containers are unregistered and the Recovery Services Vault (with its recovery points) is deleted. Terraform then destroys the rest of the workspace, including its resource group, leaving nothing behind.</td>
+</tr>
+</tbody>
+</table>
+<p>Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.</p>
+<blockquote>
+<p><strong>Note:</strong> If <a href="https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept">vault immutability</a> is enabled on the Recovery Services Vault (for example, enforced by an Azure Policy in your environment), backups cannot be deleted before they expire. In this case <code>delete_backups_on_uninstall = true</code> will not be able to remove the backups or vault, and workspace deletion may fail.</p>
+</blockquote>
 <h2 id="azure-trusted-services">Azure Trusted Services</h2>
-<p><em>Azure Trusted Services</em> are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured can be deployed.</p>
+<p><em>Azure Trusted Services</em> are allowed to connect to both the key vault and storage account provisioned within the workspace. If this is undesirable additional resources without this setting configured could be deployed by a custom workspace.</p>
 <p>Further details around which Azure services are allowed to connect can be found below:</p>
 <ul>
 <li>Key Vault: <a href="https://docs.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services">https://docs.microsoft.com/en-us/azure/key-vault/general/overview-vnet-service-endpoints#trusted-services</a></li>
