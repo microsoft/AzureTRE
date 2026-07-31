@@ -209,7 +209,7 @@ class ResourceRepository(BaseRepository):
             self._deep_dict_update(resource.properties, resource_patch.properties)
 
         await self.update_item_with_etag(resource, etag)
-        return resource, resource_template
+        return resource, new_template if new_template is not None else resource_template
 
     async def get_resource_dependency_list(self, resource: Resource) -> List:
         # Get the parent resource path and id

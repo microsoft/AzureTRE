@@ -850,7 +850,7 @@ async def test_patch_resource_removes_nested_properties_on_upgrade(get_template_
 
     patch = ResourcePatch(templateVersion='0.2.0', properties={})
 
-    await resource_repo.patch_resource(
+    _, returned_template = await resource_repo.patch_resource(
         resource,
         patch,
         old_template,
@@ -863,6 +863,7 @@ async def test_patch_resource_removes_nested_properties_on_upgrade(get_template_
 
     assert 'removed_child' not in resource.properties['parent_object']
     assert resource.properties['parent_object']['kept_child'] == 'val1'
+    assert returned_template == new_template
 
 
 @pytest.mark.asyncio
