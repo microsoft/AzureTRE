@@ -186,21 +186,6 @@ class ResourceRepository(BaseRepository):
         if resource_patch.templateVersion is not None:
             new_template = await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
 
-            if not new_template:
-                parent_service_name = None
-                if resource.resourceType == ResourceType.UserResource:
-                    parent_service_name = getattr(resource_template, "parentWorkspaceService", None)
-                    if not parent_service_name and hasattr(resource, "parentWorkspaceServiceId") and resource.parentWorkspaceServiceId:
-                        parent_service = await self.get_resource_by_id(resource.parentWorkspaceServiceId)
-                        parent_service_name = parent_service.templateName
-
-                new_template = await resource_template_repo.get_template_by_name_and_version(
-                    resource.templateName,
-                    resource_patch.templateVersion,
-                    resource.resourceType,
-                    parent_service_name=parent_service_name
-                )
-
             old_properties = self._get_all_property_keys_from_template(resource_template)
             new_properties = self._get_all_property_keys_from_template(new_template)
 
@@ -408,7 +393,6 @@ class ResourceRepository(BaseRepository):
 
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
-        update_template["required"] = []
         update_template["properties"] = {}
 
         for prop_name, prop in enriched_template.get("properties", {}).items():
@@ -423,7 +407,18 @@ class ResourceRepository(BaseRepository):
                 )
                 or prop_name in pipeline_properties
             ):
-                update_template["properties"][prop_name] = prop
+                update_template["properties"][prop_name] = copy.deepcopy(prop)
+
+        def _strip_required(schema_node: Any):
+            if isinstance(schema_node, dict):
+                schema_node.pop("required", None)
+                for v in schema_node.values():
+                    _strip_required(v)
+            elif isinstance(schema_node, list):
+                for item in schema_node:
+                    _strip_required(item)
+
+        _strip_required(update_template)
 
         self._validate_resource_parameters(resource_patch.dict(), update_template)
 

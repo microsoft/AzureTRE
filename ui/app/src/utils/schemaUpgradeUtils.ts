@@ -201,7 +201,12 @@ export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
       .map((k) => k.slice(propName.length + 1));
 
     if (exactMatch || matchingSubKeys.length > 0) {
-      if (matchingSubKeys.length > 0 && propSchema && typeof propSchema === "object" && propSchema.properties) {
+      if (
+        matchingSubKeys.length > 0 &&
+        propSchema &&
+        typeof propSchema === "object" &&
+        (propSchema as any).properties
+      ) {
         prunedProperties[propName] = pruneSchemaNode(propSchema, matchingSubKeys);
       } else {
         prunedProperties[propName] = { ...(propSchema as any) };

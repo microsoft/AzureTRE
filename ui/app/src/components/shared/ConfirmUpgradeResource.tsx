@@ -34,7 +34,6 @@ import {
   buildReducedSchema,
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
-  getTopLevelKeysFromTemplate,
 } from "../../utils/schemaUpgradeUtils";
 
 interface ConfirmUpgradeProps {
@@ -241,10 +240,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           return false;
         });
 
-        // Compute removedPropsArray based only on top-level keys
-        const currentTopKeys = getTopLevelKeysFromTemplate(currentTemplate);
-        const newTopKeys = getTopLevelKeysFromTemplate(newTemplate);
-        const removedPropsArray = currentTopKeys.filter((k) => !newTopKeys.includes(k));
+        // Compute removedPropsArray based on all property keys (including nested properties)
+        const removedPropsArray = currentKeys.filter((k) => !newKeys.includes(k));
 
         // Get properties defined in pipeline upgrade steps - these should NOT be sent by UI
         const pipelineProps = new Set<string>();

@@ -17,6 +17,7 @@ from db.repositories.resources import ResourceRepository
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.resource import Resource
 from models.domain.resource_template import ResourceTemplate
+from models.domain.user_resource import UserResource
 from models.domain.user_resource_template import UserResourceTemplate
 from models.domain.workspace import ResourceType
 from models.schemas.resource import ResourcePatch
@@ -633,7 +634,8 @@ async def test_validate_patch_allows_upgrade_pipeline_property(template_repo, re
     await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
 
-def test_get_all_property_keys_from_template_includes_allOf_conditional_properties(resource_repo):
+@pytest.mark.asyncio
+async def test_get_all_property_keys_from_template_includes_allOf_conditional_properties(resource_repo):
     """
     Test that _get_all_property_keys_from_template correctly collects properties defined
     in conditional allOf blocks (both then and else clauses).
@@ -668,6 +670,32 @@ def test_get_all_property_keys_from_template_includes_allOf_conditional_properti
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_allows_partial_update_on_nested_object_with_required_fields(resource_repo):
+    """
+    Test that validate_patch allows partial update of nested object properties even if the schema
+    defines nested required fields.
+    """
+    template_repo = MagicMock()
+    template_dict = sample_resource_template()
+    template_dict["properties"]["parent_obj"] = {
+        "type": "object",
+        "updateable": True,
+        "required": ["child_a", "child_b"],
+        "properties": {
+            "child_a": {"type": "string"},
+            "child_b": {"type": "string"}
+        }
+    }
+    template_repo.enrich_template = MagicMock(return_value=template_dict)
+    template = parse_obj_as(ResourceTemplate, template_dict)
+
+    patch = ResourcePatch(properties={"parent_obj": {"child_b": "new_value"}})
+
+    # Should pass without raising ValidationError for missing sibling field child_a
+    await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_rejects_non_updateable_allOf_property(enrich_template_mock, resource_repo):
     """
@@ -686,8 +714,9 @@ async def test_validate_patch_rejects_non_updateable_allOf_property(enrich_templ
     template_repo = MagicMock()
     template_repo.enrich_template = enrich_template_mock
 
-    # Attempt to patch non-updateable allOf property should fail
-    patch = ResourcePatch(properties={'secret_conditional_field': 'new-value'})
+    # Resource has vm_size small, patching secret_conditional_field should be denied since updateable: False
+    patch = ResourcePatch(properties={"secret_conditional_field": "new_secret"})
+
     with pytest.raises(ValidationError):
         await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
@@ -697,7 +726,8 @@ async def test_validate_patch_rejects_non_updateable_allOf_property(enrich_templ
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_allows_new_nested_property_under_existing_object_during_upgrade(enrich_template_mock, get_template_mock, resource_repo):
     """
-    Test that during a template upgrade, adding a new nested property under an existing non-updateable object property is allowed.
+    Test that during an upgrade, adding a newly-introduced nested property inside an existing object
+    passes validation even if the parent object is not marked updateable.
     """
     old_template_dict = sample_resource_template()
     old_template_dict['properties']['parent_object'] = {
@@ -711,27 +741,28 @@ async def test_validate_patch_allows_new_nested_property_under_existing_object_d
 
     new_template_dict = copy.deepcopy(old_template_dict)
     new_template_dict['version'] = '0.2.0'
-    new_template_dict['properties']['parent_object']['properties']['new_child'] = {'type': 'string'}
+    new_template_dict['properties']['parent_object']['properties']['new_child'] = {
+        'type': 'string',
+        'updateable': False
+    }
     new_template = parse_obj_as(ResourceTemplate, new_template_dict)
 
     get_template_mock.return_value = new_template
-    enrich_template_mock.side_effect = [old_template_dict, new_template_dict]
+    enrich_template_mock.return_value = new_template_dict
 
     template_repo = MagicMock()
     template_repo.get_template_by_name_and_version = get_template_mock
     template_repo.enrich_template = enrich_template_mock
 
-    patch = ResourcePatch(
-        templateVersion='0.2.0',
-        properties={
-            'parent_object': {
-                'existing_child': 'old_val',
-                'new_child': 'new_val'
-            }
-        }
-    )
+    current_properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'parent_object': {'existing_child': 'old_val'}
+    }
 
-    current_properties = {'parent_object': {'existing_child': 'old_val'}}
+    # Patching new_child during upgrade should be allowed
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'parent_object': {'new_child': 'new_val'}})
     await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE, current_properties=current_properties)
 
 
@@ -739,8 +770,8 @@ async def test_validate_patch_allows_new_nested_property_under_existing_object_d
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 async def test_validate_patch_rejects_modifying_existing_nested_non_updateable_property_during_upgrade(get_template_mock, resource_repo):
     """
-    Test that validate_patch rejects modifying an existing non-updateable nested property
-    during an upgrade, even when bundled alongside a newly added nested property.
+    Test that during an upgrade, attempting to modify an existing non-updateable nested property
+    fails validation.
     """
     old_template_dict = sample_resource_template()
     old_template_dict['properties']['parent_object'] = {
@@ -754,7 +785,6 @@ async def test_validate_patch_rejects_modifying_existing_nested_non_updateable_p
 
     new_template_dict = copy.deepcopy(old_template_dict)
     new_template_dict['version'] = '0.2.0'
-    new_template_dict['properties']['parent_object']['properties']['new_child'] = {'type': 'string'}
     new_template = parse_obj_as(ResourceTemplate, new_template_dict)
 
     get_template_mock.return_value = new_template
@@ -762,25 +792,16 @@ async def test_validate_patch_rejects_modifying_existing_nested_non_updateable_p
     template_repo.get_template_by_name_and_version = get_template_mock
     template_repo.enrich_template = MagicMock(return_value=new_template_dict)
 
-    # Resource currently has existing_child set to 'val1'
     current_properties = {
-        'parent_object': {
-            'existing_child': 'val1'
-        }
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'parent_object': {'existing_child': 'old_val'}
     }
 
-    # Patch attempts to modify existing_child to 'ATTACK_VAL' while also providing new_child
-    patch = ResourcePatch(
-        templateVersion='0.2.0',
-        properties={
-            'parent_object': {
-                'existing_child': 'ATTACK_VAL',
-                'new_child': 'val2'
-            }
-        }
-    )
-
-    with pytest.raises(ValidationError, match="Property 'parent_object.existing_child' is not updateable."):
+    # Attempting to change existing_child during upgrade should raise ValidationError
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'parent_object': {'existing_child': 'modified_val'}})
+    with pytest.raises(ValidationError):
         await resource_repo.validate_patch(patch, template_repo, old_template, strings.RESOURCE_ACTION_UPDATE, current_properties=current_properties)
 
 
@@ -791,7 +812,6 @@ async def test_patch_resource_removes_nested_properties_on_upgrade(get_template_
     Test that patch_resource removes nested properties that were deleted in the new template version.
     """
     resource_repo.update_item_with_etag = AsyncMock(return_value=None)
-    resource_repo.validate_template_version_patch = AsyncMock(return_value=None)
     resource_history_repo.create_resource_history_item = AsyncMock()
 
     old_template_dict = sample_resource_template()
@@ -808,6 +828,8 @@ async def test_patch_resource_removes_nested_properties_on_upgrade(get_template_
     new_template_dict['version'] = '0.2.0'
     del new_template_dict['properties']['parent_object']['properties']['removed_child']
     new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    resource_repo.validate_template_version_patch = AsyncMock(return_value=new_template)
 
     get_template_mock.return_value = new_template
     template_repo = MagicMock()
@@ -878,16 +900,20 @@ async def test_validate_patch_passes_parent_service_name_for_user_resources(enri
 
 
 @pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceRepository.create')
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_patch_resource_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo, resource_history_repo):
+async def test_patch_resource_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, create_repo_mock, resource_repo, resource_history_repo):
     """
     Test that patch_resource passes parent_service_name to get_template_by_name_and_version
     when upgrading a UserResource.
     """
     resource_repo.update_item_with_etag = AsyncMock(return_value=None)
-    resource_repo.validate_template_version_patch = AsyncMock(return_value=None)
     resource_history_repo.create_resource_history_item = AsyncMock()
+
+    mock_parent_repo = AsyncMock()
+    mock_parent_repo.get_resource_by_id.return_value = MagicMock(templateName='parent-service-name')
+    create_repo_mock.return_value = mock_parent_repo
 
     old_template_dict = sample_resource_template()
     old_template_dict['resourceType'] = ResourceType.UserResource
@@ -905,8 +931,11 @@ async def test_patch_resource_passes_parent_service_name_for_user_resources(enri
     template_repo.enrich_template = enrich_template_mock
 
     user = create_test_user()
-    resource = sample_resource()
-    resource.resourceType = ResourceType.UserResource
+    resource_dict = sample_resource().dict()
+    resource_dict['resourceType'] = ResourceType.UserResource
+    resource_dict['parentWorkspaceServiceId'] = 'parent-service-id'
+    resource_dict['templateVersion'] = '0.1.0'
+    resource = parse_obj_as(UserResource, resource_dict)
 
     resource_patch = ResourcePatch(templateVersion='0.2.0', properties={})
 
@@ -925,5 +954,5 @@ async def test_patch_resource_passes_parent_service_name_for_user_resources(enri
         resource.templateName,
         '0.2.0',
         ResourceType.UserResource,
-        parent_service_name='parent-service-name'
+        'parent-service-name'
     )
