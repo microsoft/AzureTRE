@@ -1,11 +1,4 @@
-import {
-  DefaultButton,
-  MessageBar,
-  MessageBarType,
-  Spinner,
-  SpinnerSize,
-  Stack,
-} from "@fluentui/react";
+import { DefaultButton, MessageBar, MessageBarType, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { useEffect, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
@@ -18,9 +11,7 @@ interface SelectTemplateProps {
   onSelectTemplate: (templateName: string) => void;
 }
 
-export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
-  props: SelectTemplateProps,
-) => {
+export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (props: SelectTemplateProps) => {
   const [templates, setTemplates] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
   const apiCall = useAuthApiCall();
@@ -29,11 +20,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
   useEffect(() => {
     const getTemplates = async () => {
       try {
-        const templatesResponse = await apiCall(
-          props.templatesPath,
-          HttpMethod.Get,
-          props.workspaceApplicationIdURI,
-        );
+        const templatesResponse = await apiCall(props.templatesPath, HttpMethod.Get, props.workspaceApplicationIdURI);
         setTemplates(templatesResponse.templates);
         setLoading(LoadingState.Ok);
       } catch (err: any) {
@@ -47,12 +34,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
     if (!templates) {
       getTemplates();
     }
-  }, [
-    apiCall,
-    props.templatesPath,
-    templates,
-    props.workspaceApplicationIdURI,
-  ]);
+  }, [apiCall, props.templatesPath, templates, props.workspaceApplicationIdURI]);
 
   switch (loading) {
     case LoadingState.Ok:
@@ -63,10 +45,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
               <div key={i}>
                 <h2>{template.title}</h2>
                 <p>{template.description}</p>
-                <DefaultButton
-                  text="Create"
-                  onClick={() => props.onSelectTemplate(template.name)}
-                />
+                <DefaultButton text="Create" onClick={() => props.onSelectTemplate(template.name)} />
               </div>
             );
           })}
@@ -74,10 +53,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
       ) : (
         <MessageBar messageBarType={MessageBarType.info} isMultiline={true}>
           <h3>No templates found</h3>
-          <p>
-            Looks like there aren't any templates registered for this resource
-            type.
-          </p>
+          <p>Looks like there aren't any templates registered for this resource type.</p>
         </MessageBar>
       );
     case LoadingState.Error:
@@ -85,12 +61,7 @@ export const SelectTemplate: React.FunctionComponent<SelectTemplateProps> = (
     default:
       return (
         <div style={{ marginTop: 20 }}>
-          <Spinner
-            label="Loading templates"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading templates" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }

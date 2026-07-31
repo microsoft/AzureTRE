@@ -8,9 +8,9 @@ interface ResourceOperationStepsListProps {
   val?: OperationStep[];
 }
 
-export const ResourceOperationStepsList: React.FunctionComponent<
-  ResourceOperationStepsListProps
-> = (props: ResourceOperationStepsListProps) => {
+export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperationStepsListProps> = (
+  props: ResourceOperationStepsListProps,
+) => {
   const stackItemStyles: IStackItemStyles = {
     root: {
       padding: "5px 0",
@@ -47,9 +47,7 @@ export const ResourceOperationStepsList: React.FunctionComponent<
                   )}
                 </>
               ) : (
-                <div style={{ color: DefaultPalette.neutralTertiary }}>
-                  {step.message}
-                </div>
+                <div style={{ color: DefaultPalette.neutralTertiary }}>{step.message}</div>
               )}
             </Stack.Item>
           );

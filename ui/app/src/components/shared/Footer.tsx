@@ -55,7 +55,9 @@ export const Footer: React.FunctionComponent = () => {
   return (
     <div className={contentClass}>
       <Stack horizontal style={{ alignItems: "center" }}>
-        <StackItem grow={1}>{(uiConfig.uiFooterText ?? "") === "" ? "Azure Trusted Research Environment" : uiConfig.uiFooterText}</StackItem>
+        <StackItem grow={1}>
+          {(uiConfig.uiFooterText ?? "") === "" ? "Azure Trusted Research Environment" : uiConfig.uiFooterText}
+        </StackItem>
         <StackItem>
           <IconButton
             styles={iconButtonStyles}
@@ -103,11 +105,7 @@ export const Footer: React.FunctionComponent = () => {
           >
             {health?.services?.map((s) => {
               return (
-                <Stack
-                  horizontal
-                  horizontalAlign="space-between"
-                  key={s.service}
-                >
+                <Stack horizontal horizontalAlign="space-between" key={s.service}>
                   <Stack.Item>{s.service}:</Stack.Item>
                   <Stack.Item>{s.status}</Stack.Item>
                 </Stack>

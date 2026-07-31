@@ -17,39 +17,24 @@ interface ResourceBodyProps {
   readonly?: boolean;
 }
 
-export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (
-  props: ResourceBodyProps,
-) => {
+export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
 
   const operationsRolesByResourceType = {
-    [ResourceType.Workspace]: [
-      RoleName.TREAdmin,
-      WorkspaceRoleName.WorkspaceOwner,
-    ],
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [
-      WorkspaceRoleName.WorkspaceOwner,
-      WorkspaceRoleName.WorkspaceResearcher,
-    ],
+    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
   };
 
   const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [
-      RoleName.TREAdmin,
-      WorkspaceRoleName.WorkspaceOwner,
-    ],
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [
-      WorkspaceRoleName.WorkspaceOwner,
-      WorkspaceRoleName.WorkspaceResearcher,
-    ],
+    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
   };
 
-  const operationsRoles =
-    operationsRolesByResourceType[props.resource.resourceType];
+  const operationsRoles = operationsRolesByResourceType[props.resource.resourceType];
   const historyRoles = historyRolesByResourceType[props.resource.resourceType];
   const workspaceId = workspaceCtx.workspace?.id || "";
 
@@ -65,8 +50,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (
         <div style={{ padding: 5 }}>
           {props.readonly}
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {props.resource.properties?.overview ||
-              props.resource.properties?.description}
+            {props.resource.properties?.overview || props.resource.properties?.description}
           </ReactMarkdown>
         </div>
       </PivotItem>
