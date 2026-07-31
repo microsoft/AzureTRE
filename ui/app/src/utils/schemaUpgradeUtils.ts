@@ -58,6 +58,29 @@ export const setNestedValue = (obj: any, path: string, value: any): void => {
   }
 };
 
+// Utility to deeply merge two property objects (e.g. existing resource properties and new property values)
+export const mergePropertyValues = (existing: any, updated: any): any => {
+  if (!existing || typeof existing !== "object") return updated || {};
+  if (!updated || typeof updated !== "object") return existing || {};
+  const result: any = { ...existing };
+  for (const key of Object.keys(updated)) {
+    if (partGuard(key)) continue;
+    if (
+      updated[key] &&
+      typeof updated[key] === "object" &&
+      !Array.isArray(updated[key]) &&
+      existing[key] &&
+      typeof existing[key] === "object" &&
+      !Array.isArray(existing[key])
+    ) {
+      result[key] = mergePropertyValues(existing[key], updated[key]);
+    } else {
+      result[key] = updated[key];
+    }
+  }
+  return result;
+};
+
 // Utility to get schema property from properties object using a dotted path
 export const getSchemaPropertyFromProperties = (properties: any, path: string): any => {
   const parts = path.split(".");

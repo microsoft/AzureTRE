@@ -31,6 +31,7 @@ import {
   getSchemaProperty,
   getNestedUiSchema,
   isPropertyRequiredInState,
+  mergePropertyValues,
   buildReducedSchema,
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
@@ -494,27 +495,30 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                 primaryDisabled={
                   !selectedVersion ||
                   (newPropertiesToFill.length > 0 &&
-                    newPropertiesToFill.some((key) => {
-                      const val = getNestedValue(newPropertyValues, key);
+                    (() => {
+                      const combinedState = mergePropertyValues(props.resource.properties, newPropertyValues);
+                      return newPropertiesToFill.some((key) => {
+                        const val = getNestedValue(newPropertyValues, key);
 
-                      // Check if value is invalid enum (for both required and optional fields)
-                      const propSchema = getSchemaProperty(newTemplateSchema, key);
-                      if (
-                        propSchema &&
-                        propSchema.enum &&
-                        val !== undefined &&
-                        val !== "" &&
-                        !propSchema.enum.includes(val)
-                      ) {
-                        return true;
-                      }
+                        // Check if value is invalid enum (for both required and optional fields)
+                        const propSchema = getSchemaProperty(newTemplateSchema, key);
+                        if (
+                          propSchema &&
+                          propSchema.enum &&
+                          val !== undefined &&
+                          val !== "" &&
+                          !propSchema.enum.includes(val)
+                        ) {
+                          return true;
+                        }
 
-                      // Check if required field is empty
-                      if (isPropertyRequiredInState(newTemplateSchema, key, newPropertyValues)) {
-                        return val === "" || val === undefined || val === null;
-                      }
-                      return false;
-                    }))
+                        // Check if required field is empty
+                        if (isPropertyRequiredInState(newTemplateSchema, key, combinedState)) {
+                          return val === "" || val === undefined || val === null;
+                        }
+                        return false;
+                      });
+                    })())
                 }
                 text="Upgrade"
                 onClick={() => upgradeCall()}

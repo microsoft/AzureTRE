@@ -1236,4 +1236,61 @@ describe("ConfirmUpgradeResource Component", () => {
       );
     });
   });
+
+  it("disables upgrade button when conditional required rule depends on existing resource property", async () => {
+    const templateWithConditionalRequired = {
+      properties: {
+        display_name: { type: "string" },
+        existing_mode: { type: "string" },
+        conditional_new_prop: { type: "string" },
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              existing_mode: { const: "advanced" },
+            },
+          },
+          then: {
+            required: ["conditional_new_prop"],
+          },
+        },
+      ],
+      uiSchema: {},
+    };
+
+    const resourceWithExistingMode: Resource = {
+      ...mockResource,
+      properties: {
+        display_name: "Test Resource",
+        existing_mode: "advanced",
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(mockCurrentTemplateSchema);
+        } else {
+          return Promise.resolve(templateWithConditionalRequired);
+        }
+      }
+      return Promise.resolve({ operation: { id: "op-1", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource resource={resourceWithExistingMode} onDismiss={mockOnDismiss} />,
+    );
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    // Upgrade button should be disabled because conditional_new_prop is required (due to existing_mode === "advanced") and empty
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).toBeDisabled();
+  });
 });
