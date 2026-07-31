@@ -1,12 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  render,
-  screen,
-  waitFor,
-  createApiEndpointsMock,
-  createPartialFluentUIMock
-} from "../../test-utils";
+import { render, screen, waitFor, createApiEndpointsMock, createPartialFluentUIMock } from "../../test-utils";
 import { SecuredByRole } from "./SecuredByRole";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
@@ -29,7 +23,7 @@ vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    ...createPartialFluentUIMock(['MessageBar', 'MessageBarType']),
+    ...createPartialFluentUIMock(["MessageBar", "MessageBarType"]),
   };
 });
 
@@ -74,20 +68,14 @@ const createMockAppRolesContext = (roles: string[] = []) => ({
   setAppRoles: vi.fn(),
 });
 
-const renderWithContexts = (
-  component: React.ReactElement,
-  workspaceRoles: string[] = [],
-  appRoles: string[] = [],
-) => {
+const renderWithContexts = (component: React.ReactElement, workspaceRoles: string[] = [], appRoles: string[] = []) => {
   const workspaceContext = createMockWorkspaceContext(workspaceRoles);
   const appRolesContext = createMockAppRolesContext(appRoles);
 
   return render(
     <WorkspaceContext.Provider value={workspaceContext}>
-      <AppRolesContext.Provider value={appRolesContext}>
-        {component}
-      </AppRolesContext.Provider>
-    </WorkspaceContext.Provider>
+      <AppRolesContext.Provider value={appRolesContext}>{component}</AppRolesContext.Provider>
+    </WorkspaceContext.Provider>,
   );
 };
 
@@ -98,12 +86,9 @@ describe("SecuredByRole Component", () => {
 
   it("renders secured content when user has required workspace role", () => {
     renderWithContexts(
-      <SecuredByRole
-        element={<TestElement />}
-        allowedWorkspaceRoles={["workspace_researcher"]}
-      />,
+      <SecuredByRole element={<TestElement />} allowedWorkspaceRoles={["workspace_researcher"]} />,
       ["workspace_researcher"], // user has this role
-      []
+      [],
     );
 
     expect(screen.getByTestId("secured-content")).toBeInTheDocument();
@@ -111,12 +96,9 @@ describe("SecuredByRole Component", () => {
 
   it("renders secured content when user has required app role", () => {
     renderWithContexts(
-      <SecuredByRole
-        element={<TestElement />}
-        allowedAppRoles={["TREAdmin"]}
-      />,
+      <SecuredByRole element={<TestElement />} allowedAppRoles={["TREAdmin"]} />,
       [],
-      ["TREAdmin"] // user has this role
+      ["TREAdmin"], // user has this role
     );
 
     expect(screen.getByTestId("secured-content")).toBeInTheDocument();
@@ -124,12 +106,9 @@ describe("SecuredByRole Component", () => {
 
   it("renders secured content when user has any of multiple allowed workspace roles", () => {
     renderWithContexts(
-      <SecuredByRole
-        element={<TestElement />}
-        allowedWorkspaceRoles={["workspace_owner", "workspace_researcher"]}
-      />,
+      <SecuredByRole element={<TestElement />} allowedWorkspaceRoles={["workspace_owner", "workspace_researcher"]} />,
       ["workspace_researcher"], // user has one of the allowed roles
-      []
+      [],
     );
 
     expect(screen.getByTestId("secured-content")).toBeInTheDocument();
@@ -137,12 +116,9 @@ describe("SecuredByRole Component", () => {
 
   it("renders secured content when user has any of multiple allowed app roles", () => {
     renderWithContexts(
-      <SecuredByRole
-        element={<TestElement />}
-        allowedAppRoles={["TREAdmin", "TREUser"]}
-      />,
+      <SecuredByRole element={<TestElement />} allowedAppRoles={["TREAdmin", "TREUser"]} />,
       [],
-      ["TREUser"] // user has one of the allowed roles
+      ["TREUser"], // user has one of the allowed roles
     );
 
     expect(screen.getByTestId("secured-content")).toBeInTheDocument();
@@ -156,7 +132,7 @@ describe("SecuredByRole Component", () => {
         allowedAppRoles={["TREAdmin"]}
       />,
       ["workspace_researcher"], // doesn't have workspace role
-      ["TREAdmin"] // but has app role
+      ["TREAdmin"], // but has app role
     );
 
     expect(screen.getByTestId("secured-content")).toBeInTheDocument();
@@ -170,7 +146,7 @@ describe("SecuredByRole Component", () => {
         allowedAppRoles={["TREAdmin"]}
       />,
       ["workspace_researcher"], // doesn't have required workspace role
-      ["TREUser"] // doesn't have required app role
+      ["TREUser"], // doesn't have required app role
     );
 
     expect(screen.queryByTestId("secured-content")).not.toBeInTheDocument();
@@ -186,7 +162,7 @@ describe("SecuredByRole Component", () => {
         errorString={errorMessage}
       />,
       ["workspace_researcher"], // doesn't have required role
-      []
+      [],
     );
 
     expect(screen.queryByTestId("secured-content")).not.toBeInTheDocument();
@@ -205,7 +181,7 @@ describe("SecuredByRole Component", () => {
         errorString={errorMessage}
       />,
       [], // no roles loaded yet
-      [] // no app roles loaded yet
+      [], // no app roles loaded yet
     );
 
     expect(screen.queryByTestId("secured-content")).not.toBeInTheDocument();
@@ -218,9 +194,7 @@ describe("SecuredByRole Component", () => {
 
     const appRolesContext = createMockAppRolesContext([]);
 
-    mockApiCall
-      .mockResolvedValueOnce({ workspaceAuth: { scopeId: "test-scope-id" } })
-      .mockResolvedValueOnce(undefined); // roles callback will be called
+    mockApiCall.mockResolvedValueOnce({ workspaceAuth: { scopeId: "test-scope-id" } }).mockResolvedValueOnce(undefined); // roles callback will be called
 
     render(
       <WorkspaceContext.Provider value={emptyWorkspaceContext}>
@@ -231,14 +205,11 @@ describe("SecuredByRole Component", () => {
             workspaceId="test-workspace-id"
           />
         </AppRolesContext.Provider>
-      </WorkspaceContext.Provider>
+      </WorkspaceContext.Provider>,
     );
 
     await waitFor(() => {
-      expect(mockApiCall).toHaveBeenCalledWith(
-        "/api/workspaces/test-workspace-id/scopeid",
-        "GET"
-      );
+      expect(mockApiCall).toHaveBeenCalledWith("/api/workspaces/test-workspace-id/scopeid", "GET");
     });
 
     expect(mockApiCall).toHaveBeenCalledWith(
@@ -248,7 +219,7 @@ describe("SecuredByRole Component", () => {
       undefined,
       "JSON",
       expect.any(Function),
-      true
+      true,
     );
   });
 
@@ -260,7 +231,7 @@ describe("SecuredByRole Component", () => {
         workspaceId="test-workspace-id"
       />,
       ["workspace_researcher"], // roles already in context
-      []
+      [],
     );
 
     expect(mockApiCall).not.toHaveBeenCalled();
@@ -270,10 +241,10 @@ describe("SecuredByRole Component", () => {
     renderWithContexts(
       <SecuredByRole
         element={<TestElement />}
-      // no allowed roles specified
+        // no allowed roles specified
       />,
       ["workspace_researcher"],
-      ["TREUser"]
+      ["TREUser"],
     );
 
     expect(screen.queryByTestId("secured-content")).not.toBeInTheDocument();

@@ -519,6 +519,14 @@ test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 	$(call target_title, "Running E2E shared service tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=shared_services
 
+# Description: Run E2E backup tests
+# # The E2E backup tests include:
+# # - tests marked with the `backups` selector that verify workspace backup functionality
+# Example: make test-e2e-backups
+test-e2e-backups: ## 🧪 Run E2E backup tests
+	$(call target_title, "Running E2E backup tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=backups
+
 # Description: Run E2E tests with custom selector
 # Arguments: SELECTOR - the selector to run the tests with
 # Example: make test-e2e-custom SELECTOR=smoke
