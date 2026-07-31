@@ -8,7 +8,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessCon
 from fastapi import HTTPException, status
 from pydantic import parse_obj_as
 from db.repositories.workspaces import WorkspaceRepository
-from services.authentication import get_access_service
+from services.authentication import get_aad_service
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
@@ -162,7 +162,7 @@ class AirlockRequestRepository(BaseRepository):
 
     async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
-        access_service = get_access_service()
+        access_service = get_aad_service()
 
         workspaces = await workspace_repo.get_active_workspaces()
         user_role_assignments = access_service.get_identity_role_assignments(user_id)
