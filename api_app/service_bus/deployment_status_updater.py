@@ -80,9 +80,14 @@ class DeploymentStatusUpdater():
 
     async def process_message(self, msg) -> bool:
         complete_message = False
-        with tracer.start_as_current_span("process_message"):
+        with tracer.start_as_current_span("process_message") as current_span:
             try:
                 message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
+
+                current_span.set_attribute("step_id", message.stepId)
+                current_span.set_attribute("operation_id", message.operationId)
+                current_span.set_attribute("status", message.status)
+
                 complete_message = await self.update_status_in_database(message)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")
             except (json.JSONDecodeError, ValidationError):

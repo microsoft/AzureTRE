@@ -154,6 +154,30 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
     logging_mock.assert_not_called()
 
 
+@patch('service_bus.deployment_status_updater.tracer')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_process_message_sets_span_attributes(resource_repo, operation_repo, _, __, tracer_mock):
+    expected_workspace = create_sample_workspace_object(test_sb_message["id"])
+    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.dict()
+
+    operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
+    operation_repo.return_value.get_operation_by_id.return_value = operation
+
+    mock_span = MagicMock()
+    tracer_mock.start_as_current_span.return_value.__enter__.return_value = mock_span
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
+
+    mock_span.set_attribute.assert_any_call("step_id", test_sb_message["stepId"])
+    mock_span.set_attribute.assert_any_call("operation_id", uuid.UUID(test_sb_message["operationId"]))
+    mock_span.set_attribute.assert_any_call("status", test_sb_message["status"])
+
+
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
