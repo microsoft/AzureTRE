@@ -53,17 +53,16 @@ class DeploymentStatusUpdater():
                         try:
                             logger.debug("Creating Deployment Status receiver session")
                             async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=config.SERVICE_BUS_MAX_WAIT_TIME, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                                renewer = AutoLockRenewer()
-                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                async with AutoLockRenewer() as renewer:
+                                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
 
-                                async for msg in receiver:
-                                    complete_message = await self.process_message(msg)
-                                    if complete_message:
-                                        await receiver.complete_message(msg)
-                                    else:
-                                        await receiver.abandon_message(msg)
+                                    async for msg in receiver:
+                                        complete_message = await self.process_message(msg)
+                                        if complete_message:
+                                            await receiver.complete_message(msg)
+                                        else:
+                                            await receiver.abandon_message(msg)
 
-                                await renewer.close()
                                 polling_count = 0
 
                         except OperationTimeoutError:
