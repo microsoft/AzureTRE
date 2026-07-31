@@ -48,9 +48,9 @@ class DeploymentStatusUpdater():
             polling_count = 0
             while True:
                 complete_message = True
-                async with credentials.get_credential_async_context() as credential:
-                    async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
-                        try:
+                try:
+                    async with credentials.get_credential_async_context() as credential:
+                        async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
                             logger.debug("Creating Deployment Status receiver session")
                             async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=config.SERVICE_BUS_MAX_WAIT_TIME, session_id=NEXT_AVAILABLE_SESSION) as receiver:
                                 async with AutoLockRenewer() as renewer:
@@ -65,18 +65,18 @@ class DeploymentStatusUpdater():
 
                                 polling_count = 0
 
-                        except OperationTimeoutError:
-                            polling_count += 1
-                            # log a heartbeat every ~5 minutes when queue is idle (max_wait_time is usually ~10s)
-                            if time.time() - last_heartbeat_time > 300:
-                                logger.info(f"Deployment status updater polling... (idle checks: {polling_count})")
-                                last_heartbeat_time = time.time()
-                        except ServiceBusConnectionError as e:
-                            logger.warning(f"Service Bus connection error in deployment status updater, will retry: {e}")
-                            await asyncio.sleep(5)
-                        except Exception:
-                            logger.exception("Unexpected error in deployment status receiver loop")
-                            await asyncio.sleep(5)
+                except OperationTimeoutError:
+                    polling_count += 1
+                    # log a heartbeat every ~5 minutes when queue is idle (max_wait_time is usually ~10s)
+                    if time.time() - last_heartbeat_time > 300:
+                        logger.info(f"Deployment status updater polling... (idle checks: {polling_count})")
+                        last_heartbeat_time = time.time()
+                except ServiceBusConnectionError as e:
+                    logger.warning(f"Service Bus connection error in deployment status updater, will retry: {e}")
+                    await asyncio.sleep(5)
+                except Exception:
+                    logger.exception("Unexpected error in deployment status receiver loop")
+                    await asyncio.sleep(5)
 
     async def process_message(self, msg) -> bool:
         complete_message = False

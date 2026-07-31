@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import json
 from unittest.mock import MagicMock, ANY
@@ -830,3 +831,26 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
 
     assert complete_message is True
     assert call_order == ["patch_workspace", "send_deployment_message"]
+
+
+@patch("service_bus.deployment_status_updater.config")
+@patch("service_bus.deployment_status_updater.credentials")
+@patch("service_bus.deployment_status_updater.logger")
+async def test_receive_messages_handles_credential_context_failure(logger_mock, credentials_mock, config_mock):
+    config_mock.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE = "test_namespace"
+    config_mock.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = "test_queue"
+    config_mock.SERVICE_BUS_MAX_WAIT_TIME = 10
+
+    # Simulate exception when entering credential context manager
+    credentials_mock.get_credential_async_context.side_effect = Exception("Credential error")
+
+    status_updater = DeploymentStatusUpdater()
+
+    # Run receive_messages in a task and cancel after one loop iteration
+    task = asyncio.create_task(status_updater.receive_messages())
+    await asyncio.sleep(0.1)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    logger_mock.exception.assert_called_with("Unexpected error in deployment status receiver loop")
