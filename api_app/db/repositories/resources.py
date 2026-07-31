@@ -172,6 +172,13 @@ class ResourceRepository(BaseRepository):
         if isinstance(current, dict) and parts[-1] in current:
             del current[parts[-1]]
 
+    def _deep_dict_update(self, target: dict, patch: dict):
+        for k, v in patch.items():
+            if isinstance(v, dict) and isinstance(target.get(k), dict):
+                self._deep_dict_update(target[k], v)
+            else:
+                target[k] = v
+
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
@@ -199,7 +206,7 @@ class ResourceRepository(BaseRepository):
             await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action, current_properties=resource.properties, target_template=new_template)
 
             # if we're here then we're valid - update the props + persist
-            resource.properties.update(resource_patch.properties)
+            self._deep_dict_update(resource.properties, resource_patch.properties)
 
         await self.update_item_with_etag(resource, etag)
         return resource, resource_template

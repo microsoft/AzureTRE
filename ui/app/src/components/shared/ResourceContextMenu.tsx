@@ -274,7 +274,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           onDismiss={() => setShowUpgrade(false)}
           resource={props.resource}
           parentWorkspaceService={
-            props.resource.resourceType === ResourceType.UserResource ? (parentResource as WorkspaceService) : undefined
+            props.resource.resourceType === ResourceType.UserResource &&
+            (parentResource as WorkspaceService)?.templateName
+              ? (parentResource as WorkspaceService)
+              : undefined
           }
         />
       )}

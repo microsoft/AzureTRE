@@ -956,3 +956,28 @@ async def test_patch_resource_passes_parent_service_name_for_user_resources(enri
         ResourceType.UserResource,
         'parent-service-name'
     )
+
+
+def test_deep_dict_update_preserves_nested_siblings(resource_repo):
+    target = {
+        "display_name": "My Resource",
+        "parent_object": {
+            "sibling_field": "existing_value",
+            "target_field": "old_value"
+        }
+    }
+    patch = {
+        "parent_object": {
+            "target_field": "new_value",
+            "added_field": "added_value"
+        }
+    }
+    resource_repo._deep_dict_update(target, patch)
+    assert target == {
+        "display_name": "My Resource",
+        "parent_object": {
+            "sibling_field": "existing_value",
+            "target_field": "new_value",
+            "added_field": "added_value"
+        }
+    }
