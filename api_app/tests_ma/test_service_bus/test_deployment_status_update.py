@@ -631,7 +631,7 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     workspace_repo.get_workspace_by_id.return_value = parent_workspace
 
     # First attempt raises CosmosAccessConditionFailedError, second succeeds
-    workspace_repo.patch_workspace.side_effect = [CosmosAccessConditionFailedError, None]
+    workspace_repo.patch_workspace.side_effect = [CosmosAccessConditionFailedError(), None]
     workspace_repo_mock.return_value = workspace_repo
 
     status_updater = DeploymentStatusUpdater()
@@ -706,7 +706,7 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     workspace_repo.get_workspace_by_id.return_value = parent_workspace
 
     # All attempts raise CosmosAccessConditionFailedError
-    workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError
+    workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
     workspace_repo_mock.return_value = workspace_repo
 
     status_updater = DeploymentStatusUpdater()

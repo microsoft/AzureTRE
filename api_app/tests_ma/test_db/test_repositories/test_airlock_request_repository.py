@@ -147,7 +147,7 @@ async def test_update_airlock_request_with_forbidden_status_should_fail_on_valid
         await airlock_request_repo.update_airlock_request(mock_existing_request, user, new_status)
 
 
-@patch("db.repositories.airlock_requests.AirlockRequestRepository.update_airlock_request_item", side_effect=[CosmosAccessConditionFailedError, None])
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.update_airlock_request_item", side_effect=[CosmosAccessConditionFailedError(), None])
 @patch("db.repositories.airlock_requests.AirlockRequestRepository.get_airlock_request_by_id", return_value=airlock_request_mock(status=DRAFT))
 async def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to_date(_, update_airlock_request_item_mock, airlock_request_repo):
     expected_update_attempts = 2
