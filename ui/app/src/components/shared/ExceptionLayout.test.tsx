@@ -5,7 +5,7 @@ import { ExceptionLayout } from "./ExceptionLayout";
 import { APIError } from "../../models/exceptions";
 
 // Mock FluentUI components using centralized utility
-vi.mock("@fluentui/react", () => createPartialFluentUIMock(['MessageBar', 'Link', 'Icon']));
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon"]));
 
 describe("ExceptionLayout Component", () => {
   const createMockError = (overrides: Partial<APIError> = {}): APIError => {
@@ -23,7 +23,7 @@ describe("ExceptionLayout Component", () => {
     const error = createMockError({
       status: 403,
       userMessage: "You don't have permission",
-      message: "Forbidden access"
+      message: "Forbidden access",
     });
 
     await act(async () => {
@@ -52,7 +52,7 @@ describe("ExceptionLayout Component", () => {
     const error = createMockError({
       status: 500,
       userMessage: "Internal server error",
-      message: "Something went wrong"
+      message: "Something went wrong",
     });
 
     await act(async () => {

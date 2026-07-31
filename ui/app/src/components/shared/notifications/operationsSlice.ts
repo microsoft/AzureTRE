@@ -19,9 +19,7 @@ const operationsSlice = createSlice({
       state.items = action.payload;
     },
     addUpdateOperation(state, action: PayloadAction<Operation>) {
-      let i = state.items.findIndex(
-        (f: Operation) => f.id === action.payload.id,
-      );
+      let i = state.items.findIndex((f: Operation) => f.id === action.payload.id);
       if (i !== -1) {
         state.items.splice(i, 1, action.payload);
       } else {
@@ -38,6 +36,5 @@ const operationsSlice = createSlice({
   },
 });
 
-export const { setInitialOperations, addUpdateOperation, dismissCompleted } =
-  operationsSlice.actions;
+export const { setInitialOperations, addUpdateOperation, dismissCompleted } = operationsSlice.actions;
 export default operationsSlice.reducer;

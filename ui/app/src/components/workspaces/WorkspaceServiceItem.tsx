@@ -28,20 +28,15 @@ interface WorkspaceServiceItemProps {
   removeWorkspaceService: (ws: WorkspaceService) => void;
 }
 
-export const WorkspaceServiceItem: React.FunctionComponent<
-  WorkspaceServiceItemProps
-> = (props: WorkspaceServiceItemProps) => {
+export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemProps> = (
+  props: WorkspaceServiceItemProps,
+) => {
   const { workspaceServiceId } = useParams();
   const [userResources, setUserResources] = useState([] as Array<UserResource>);
-  const [workspaceService, setWorkspaceService] = useState(
-    {} as WorkspaceService,
-  );
+  const [workspaceService, setWorkspaceService] = useState({} as WorkspaceService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [selectedUserResource, setSelectedUserResource] = useState(
-    {} as UserResource,
-  );
-  const [hasUserResourceTemplates, setHasUserResourceTemplates] =
-    useState(false);
+  const [selectedUserResource, setSelectedUserResource] = useState({} as UserResource);
+  const [hasUserResourceTemplates, setHasUserResourceTemplates] = useState(false);
   const [usersCache, setUsersCache] = useState(new Map<string, CachedUser>());
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
@@ -57,9 +52,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
     },
     (r: Resource) => {
       props.removeWorkspaceService(r as WorkspaceService);
-      navigate(
-        `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`,
-      );
+      navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`);
     },
   );
 
@@ -71,11 +64,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
       try {
         let svc = props.workspaceService || ({} as WorkspaceService);
         // did we get passed the workspace service, or shall we get it from the api?
-        if (
-          props.workspaceService &&
-          props.workspaceService.id &&
-          props.workspaceService.id === workspaceServiceId
-        ) {
+        if (props.workspaceService && props.workspaceService.id && props.workspaceService.id === workspaceServiceId) {
           setWorkspaceService(props.workspaceService);
         } else {
           let ws = await apiCall(
@@ -100,9 +89,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
           HttpMethod.Get,
           workspaceCtx.workspaceApplicationIdURI,
         );
-        setHasUserResourceTemplates(
-          ut && ut.templates && ut.templates.length > 0,
-        );
+        setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
         setUserResources(u.userResources);
 
         // Fetch users for caching owner information
@@ -112,13 +99,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI,
           );
-          
+
           const cache = new Map<string, CachedUser>();
           if (usersResponse.users) {
             usersResponse.users.forEach((user: any) => {
               cache.set(user.id, {
                 displayName: user.displayName,
-                email: user.email || user.userPrincipalName
+                email: user.email || user.userPrincipalName,
               });
             });
           }
@@ -173,10 +160,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<
               path="*"
               element={
                 <>
-                  <ResourceHeader
-                    resource={workspaceService}
-                    latestUpdate={latestUpdate}
-                  />
+                  <ResourceHeader resource={workspaceService} latestUpdate={latestUpdate} />
                   <ResourceBody resource={workspaceService} />
                   {hasUserResourceTemplates && (
                     <Stack className="tre-panel">
@@ -195,19 +179,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<
                                 text="Create new"
                                 disabled={
                                   !workspaceService.isEnabled ||
-                                  latestUpdate.componentAction ===
-                                    ComponentAction.Lock ||
-                                  successStates.indexOf(
-                                    workspaceService.deploymentStatus,
-                                  ) === -1
+                                  latestUpdate.componentAction === ComponentAction.Lock ||
+                                  successStates.indexOf(workspaceService.deploymentStatus) === -1
                                 }
                                 title={
                                   !workspaceService.isEnabled ||
-                                  latestUpdate.componentAction ===
-                                    ComponentAction.Lock ||
-                                  successStates.indexOf(
-                                    workspaceService.deploymentStatus,
-                                  ) === -1
+                                  latestUpdate.componentAction === ComponentAction.Lock ||
+                                  successStates.indexOf(workspaceService.deploymentStatus) === -1
                                     ? "Service must be enabled, successfully deployed, and not locked"
                                     : "Create a User Resource"
                                 }
@@ -215,10 +193,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<
                                   createFormCtx.openCreateForm({
                                     resourceType: ResourceType.UserResource,
                                     resourceParent: workspaceService,
-                                    onAdd: (r: Resource) =>
-                                      addUserResource(r as UserResource),
-                                    workspaceApplicationIdURI:
-                                      workspaceCtx.workspaceApplicationIdURI,
+                                    onAdd: (r: Resource) => addUserResource(r as UserResource),
+                                    workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI,
                                   });
                                 }}
                               />
@@ -230,19 +206,11 @@ export const WorkspaceServiceItem: React.FunctionComponent<
                         {userResources && (
                           <ResourceCardList
                             resources={userResources}
-                            selectResource={(r: Resource) =>
-                              setSelectedUserResource(r as UserResource)
-                            }
-                            updateResource={(r: Resource) =>
-                              updateUserResource(r as UserResource)
-                            }
-                            removeResource={(r: Resource) =>
-                              removeUserResource(r as UserResource)
-                            }
+                            selectResource={(r: Resource) => setSelectedUserResource(r as UserResource)}
+                            updateResource={(r: Resource) => updateUserResource(r as UserResource)}
+                            removeResource={(r: Resource) => removeUserResource(r as UserResource)}
                             emptyText="This workspace service contains no user resources."
-                            isExposedExternally={
-                              workspaceService.properties.is_exposed_externally
-                            }
+                            isExposedExternally={workspaceService.properties.is_exposed_externally}
                             usersCache={usersCache}
                           />
                         )}
@@ -257,12 +225,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<
               element={
                 <UserResourceItem
                   userResource={selectedUserResource}
-                  updateUserResource={(u: UserResource) =>
-                    updateUserResource(u)
-                  }
-                  removeUserResource={(u: UserResource) =>
-                    removeUserResource(u)
-                  }
+                  updateUserResource={(u: UserResource) => updateUserResource(u)}
+                  removeUserResource={(u: UserResource) => removeUserResource(u)}
                 />
               }
             />
