@@ -84,9 +84,9 @@ class DeploymentStatusUpdater():
             try:
                 message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
 
-                current_span.set_attribute("step_id", message.stepId)
-                current_span.set_attribute("operation_id", message.operationId)
-                current_span.set_attribute("status", message.status)
+                current_span.set_attribute("step_id", str(message.stepId))
+                current_span.set_attribute("operation_id", str(message.operationId))
+                current_span.set_attribute("status", str(message.status))
 
                 complete_message = await self.update_status_in_database(message)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")

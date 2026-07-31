@@ -175,7 +175,7 @@ async def test_process_message_sets_span_attributes(resource_repo, operation_rep
     await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
 
     mock_span.set_attribute.assert_any_call("step_id", test_sb_message["stepId"])
-    mock_span.set_attribute.assert_any_call("operation_id", uuid.UUID(test_sb_message["operationId"]))
+    mock_span.set_attribute.assert_any_call("operation_id", test_sb_message["operationId"])
     mock_span.set_attribute.assert_any_call("status", test_sb_message["status"])
 
 
