@@ -579,7 +579,7 @@ async def test_validate_patch_allows_install_pipeline_property(template_repo, re
         'updateable': False
     }
     template_dict['pipeline'] = {
-        'upgrade': [
+        'install': [
             {
                 'stepId': 'main',
                 'properties': [

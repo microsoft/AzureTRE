@@ -145,6 +145,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
               "Cannot resolve parent workspace service for this user resource because workspace context is missing.";
             err.status = 400;
             setApiError(err);
+            setRequestLoadingState(LoadingState.Error);
             return;
           }
         }
@@ -154,6 +155,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         err.userMessage = "Parent workspace service information is missing for this user resource.";
         err.status = 400;
         setApiError(err);
+        setRequestLoadingState(LoadingState.Error);
         return;
       }
       default:
@@ -162,6 +164,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         err.userMessage = `Unsupported resource type: ${props.resource.resourceType}`;
         err.status = 400;
         setApiError(err);
+        setRequestLoadingState(LoadingState.Error);
         return;
     }
 
@@ -292,18 +295,12 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         // prefill newPropertyValues with schema defaults (excluding pipeline properties)
         const initialValues: any = {};
         newPropKeysToSend.forEach((key) => {
-          const topKey = key.split(".")[0];
-          // If the top-level property already exists in the resource, copy it to avoid losing other sub-properties
-          if (props.resource.properties && props.resource.properties[topKey] !== undefined) {
-            if (!initialValues[topKey]) {
-              initialValues[topKey] = JSON.parse(JSON.stringify(props.resource.properties[topKey]));
-            }
-          }
-
           const propSchema = getSchemaProperty(newTemplate, key);
+          const currentValue = getNestedValue(props.resource.properties, key);
 
-          // Only set if a default value is defined in the schema
-          if (propSchema && propSchema.default !== undefined) {
+          if (currentValue !== undefined) {
+            setNestedValue(initialValues, key, currentValue);
+          } else if (propSchema && propSchema.default !== undefined) {
             setNestedValue(initialValues, key, propSchema.default);
           }
         });

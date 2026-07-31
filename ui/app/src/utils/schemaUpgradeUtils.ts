@@ -176,33 +176,61 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
   return false;
 };
 
-// Utility to build a reduced schema with only given keys and their nested schema (depth 1), including required
-export const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
-  if (!fullSchema || !fullSchema.properties) return null;
-  // Use a null-prototype object to avoid accidental prototype pollution
-  const reducedProperties: any = Object.create(null);
-  const required: string[] = [];
+/**
+ * Recursively prunes an object schema node to only include properties
+ * that match or are prefixes of active property keys.
+ */
+export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
+  if (!schemaNode || typeof schemaNode !== "object") {
+    return schemaNode;
+  }
 
-  keys.forEach((key) => {
-    // Only allow top-level property keys (no nested with dots) for simplicity here
-    const topKey = key.split(".")[0];
-    // Skip unsafe prototype-like keys
-    if (partGuard(topKey)) return;
-    if (fullSchema.properties[topKey]) {
-      if (!reducedProperties[topKey]) {
-        reducedProperties[topKey] = fullSchema.properties[topKey];
-        if (fullSchema.required && fullSchema.required.includes(topKey)) {
-          required.push(topKey);
-        }
+  if (!schemaNode.properties || typeof schemaNode.properties !== "object") {
+    return { ...schemaNode };
+  }
+
+  const prunedProperties: Record<string, any> = Object.create(null);
+  const prunedRequired: string[] = [];
+
+  for (const [propName, propSchema] of Object.entries(schemaNode.properties)) {
+    if (partGuard(propName)) continue;
+
+    const exactMatch = activeKeys.includes(propName);
+    const matchingSubKeys = activeKeys
+      .filter((k) => k.startsWith(propName + "."))
+      .map((k) => k.slice(propName.length + 1));
+
+    if (exactMatch || matchingSubKeys.length > 0) {
+      if (matchingSubKeys.length > 0 && propSchema && typeof propSchema === "object" && propSchema.properties) {
+        prunedProperties[propName] = pruneSchemaNode(propSchema, matchingSubKeys);
+      } else {
+        prunedProperties[propName] = { ...(propSchema as any) };
+      }
+
+      if (Array.isArray(schemaNode.required) && schemaNode.required.includes(propName)) {
+        prunedRequired.push(propName);
       }
     }
-  });
+  }
 
-  return {
-    type: "object",
-    properties: reducedProperties,
-    required: required.length > 0 ? required : undefined,
+  const result: any = {
+    ...schemaNode,
+    properties: prunedProperties,
   };
+
+  if (prunedRequired.length > 0) {
+    result.required = prunedRequired;
+  } else {
+    delete result.required;
+  }
+
+  return result;
+};
+
+// Utility to build a reduced schema with only given keys, recursively pruning object schemas
+export const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
+  if (!fullSchema || !fullSchema.properties) return null;
+  return pruneSchemaNode(fullSchema, keys);
 };
 
 // Utility to collect direct property keys referenced inside conditional schemas

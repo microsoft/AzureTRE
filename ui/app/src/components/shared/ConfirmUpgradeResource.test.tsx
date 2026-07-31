@@ -785,15 +785,15 @@ describe("ConfirmUpgradeResource Component", () => {
       expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
-    // The form inputs should be prefilled (including the existing child value in the nested parent_object)
-    expect(screen.getByDisplayValue("existing_child_value")).toBeInTheDocument();
+    // The form inputs should only be rendered for newly added nested properties, while existing sub-fields are pruned
+    expect(screen.queryByDisplayValue("existing_child_value")).not.toBeInTheDocument();
     expect(screen.getByDisplayValue("default_nested_value")).toBeInTheDocument();
 
     // Click upgrade
     const upgradeButton = screen.getByTestId("primary-button");
     fireEvent.click(upgradeButton);
 
-    // Verify the PATCH API call includes the nested properties correctly, omitting the optional nested field with no default
+    // Verify the PATCH API call includes the newly added nested properties, omitting existing sub-fields and optional nested fields with no default
     await waitFor(() => {
       expect(mockApiCall).toHaveBeenCalledWith(
         mockResourceWithNested.resourcePath,
@@ -803,9 +803,7 @@ describe("ConfirmUpgradeResource Component", () => {
           templateVersion: "1.1.0",
           properties: expect.objectContaining({
             parent_object: {
-              existing_child: "existing_child_value",
               new_nested_child: "default_nested_value",
-              // optional_nested_no_default should be undefined/omitted
             },
           }),
         }),
@@ -1082,5 +1080,74 @@ describe("ConfirmUpgradeResource Component", () => {
     };
 
     expect(matchesIfCondition(ifSchema, stateWithUndefined)).toBe(false);
+  });
+
+  it("renders exception layout when parent workspace service info is missing for user resource", async () => {
+    const userResourceMissingParent: UserResource = {
+      ...(mockResource as UserResource),
+      resourceType: ResourceType.UserResource,
+    };
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource resource={userResourceMissingParent} onDismiss={mockOnDismiss} />,
+    );
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
+      expect(
+        screen.getByText("Parent workspace service information is missing for this user resource."),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("renders exception layout when workspace context is missing for user resource with parent ID", async () => {
+    const userResourceWithParentId: UserResource = {
+      ...(mockResource as UserResource),
+      resourceType: ResourceType.UserResource,
+      parentWorkspaceServiceId: "parent-service-id",
+    };
+
+    const emptyWorkspaceContext = {
+      ...mockWorkspaceContext,
+      workspace: undefined,
+    };
+
+    render(
+      <WorkspaceContext.Provider value={emptyWorkspaceContext as any}>
+        <ConfirmUpgradeResource resource={userResourceWithParentId} onDismiss={mockOnDismiss} />
+      </WorkspaceContext.Provider>,
+    );
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Cannot resolve parent workspace service for this user resource because workspace context is missing.",
+        ),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("renders exception layout for unsupported resource types", async () => {
+    const unsupportedResource = {
+      ...mockResource,
+      resourceType: "UnsupportedType" as ResourceType,
+    };
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={unsupportedResource} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
+      expect(screen.getByText("Unsupported resource type: UnsupportedType")).toBeInTheDocument();
+    });
   });
 });
