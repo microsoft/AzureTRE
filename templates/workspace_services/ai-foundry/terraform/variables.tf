@@ -29,6 +29,11 @@ variable "openai_model" {
   type        = string
   description = "OpenAI model to deploy in format 'model_name | version'"
   default     = "gpt-4o | 2024-05-13"
+
+  validation {
+    condition     = length(split("|", var.openai_model)) == 2
+    error_message = "openai_model must be in the format 'model_name | version' (exactly one '|' separator)."
+  }
 }
 
 variable "openai_model_capacity" {
@@ -57,9 +62,19 @@ variable "address_space" {
 variable "workspace_owners_group_id" {
   type        = string
   description = "Object ID of the workspace owners AAD group"
+
+  validation {
+    condition     = length(trimspace(var.workspace_owners_group_id)) > 0
+    error_message = "workspace_owners_group_id must be set (the parent workspace must expose the owners AAD group object ID)."
+  }
 }
 
 variable "workspace_researchers_group_id" {
   type        = string
   description = "Object ID of the workspace researchers AAD group"
+
+  validation {
+    condition     = length(trimspace(var.workspace_researchers_group_id)) > 0
+    error_message = "workspace_researchers_group_id must be set (the parent workspace must expose the researchers AAD group object ID)."
+  }
 }

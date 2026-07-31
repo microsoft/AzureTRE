@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/ai-foundry/template_schema.json",
   "type": "object",
   "title": "AI Foundry Workspace Service",
-  "description": "Provides Azure AI Foundry capabilities within the workspace with private endpoint access only",
+  "description": "Provides Azure AI Foundry capabilities within the workspace. Private endpoint access only by default; public endpoints can optionally be enabled via 'Expose externally'.",
   "required": [],
   "properties": {
     "display_name": {
@@ -24,7 +24,7 @@
       "type": "string",
       "title": "Workspace Service Overview",
       "description": "Long form description of the workspace service, in markdown syntax",
-      "default": "Azure AI Foundry is a comprehensive platform for developing, deploying, and managing AI applications. It provides access to a variety of AI models, including GPT-4, GPT-4o, and more. This service is deployed with private endpoints only, preventing any data exfiltration. For more information, see the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/).",
+      "default": "Azure AI Foundry is a comprehensive platform for developing, deploying, and managing AI applications. It provides access to a variety of AI models, including GPT-4, GPT-4o, and more. By default this service is deployed with private endpoints only, helping prevent data exfiltration; enabling 'Expose externally' provisions public endpoints instead. For more information, see the [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/).",
       "updateable": true
     },
     "openai_model": {

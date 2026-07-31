@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ai-foundry
-version: 0.3.2
+version: 0.3.3
 description: "Azure AI Foundry workspace service - provides AI/ML capabilities with private endpoint access"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
