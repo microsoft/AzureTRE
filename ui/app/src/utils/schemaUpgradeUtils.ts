@@ -13,6 +13,7 @@ export const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   if (!properties) return [];
   let keys: string[] = [];
   for (const [key, value] of Object.entries(properties)) {
+    if (partGuard(key)) continue;
     if (value && typeof value === "object" && "properties" in value) {
       // recur for nested properties
       keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + "."));
@@ -302,14 +303,14 @@ export const getAllPropertyKeysFromTemplate = (template: any): string[] => {
 // Helper to extract top-level keys (matching backend removal checks)
 export const getTopLevelKeysFromTemplate = (template: any): string[] => {
   if (!template) return [];
-  let keys = Object.keys(template.properties || {});
+  let keys = Object.keys(template.properties || {}).filter((k) => !partGuard(k));
   if (template.allOf) {
     template.allOf.forEach((condition: any) => {
       if (condition.then && condition.then.properties) {
-        keys = keys.concat(Object.keys(condition.then.properties));
+        keys = keys.concat(Object.keys(condition.then.properties).filter((k) => !partGuard(k)));
       }
       if (condition.else && condition.else.properties) {
-        keys = keys.concat(Object.keys(condition.else.properties));
+        keys = keys.concat(Object.keys(condition.else.properties).filter((k) => !partGuard(k)));
       }
     });
   }

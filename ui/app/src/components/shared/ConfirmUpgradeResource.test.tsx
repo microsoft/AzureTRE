@@ -2,7 +2,7 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
-import { matchesIfCondition } from "../../utils/schemaUpgradeUtils";
+import { matchesIfCondition, getAllPropertyKeys } from "../../utils/schemaUpgradeUtils";
 import { Resource, AvailableUpgrade } from "../../models/resource";
 import { UserResource } from "../../models/userResource";
 import { ResourceType } from "../../models/resourceType";
@@ -1148,6 +1148,92 @@ describe("ConfirmUpgradeResource Component", () => {
     await waitFor(() => {
       expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
       expect(screen.getByText("Unsupported resource type: UnsupportedType")).toBeInTheDocument();
+    });
+  });
+
+  it("getAllPropertyKeys skips prototype-pollution keys", () => {
+    const propertiesWithProto = {
+      display_name: { type: "string" },
+      __proto__: { type: "string" },
+      constructor: { type: "string" },
+      prototype: { type: "string" },
+      valid_prop: { type: "string" },
+    };
+    const keys = getAllPropertyKeys(propertiesWithProto);
+    expect(keys).toEqual(["display_name", "valid_prop"]);
+  });
+
+  it("treats enum-invalid keys as visible/required-for-input regardless of tre-hidden and pre-fills template default", async () => {
+    const currentTemplateWithEnum = {
+      properties: {
+        display_name: { type: "string" },
+        tier: { type: "string", enum: ["basic", "standard", "deprecated_premium"] },
+      },
+    };
+
+    const newTemplateWithEnumAndTreHidden = {
+      properties: {
+        display_name: { type: "string" },
+        tier: { type: "string", enum: ["basic", "standard"], default: "basic" },
+      },
+      uiSchema: {
+        tier: {
+          "ui:classNames": "tre-hidden",
+        },
+      },
+    };
+
+    const resourceWithInvalidEnum: Resource = {
+      ...mockResource,
+      properties: {
+        display_name: "Test Resource",
+        tier: "deprecated_premium", // Not in new template enum ["basic", "standard"]
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        if (url.includes("version=1.0.0")) {
+          return Promise.resolve(currentTemplateWithEnum);
+        } else {
+          return Promise.resolve(newTemplateWithEnumAndTreHidden);
+        }
+      }
+      return Promise.resolve({ operation: { id: "op-1", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={resourceWithInvalidEnum} onDismiss={mockOnDismiss} />);
+
+    const dropdown = screen.getByTestId("dropdown");
+    fireEvent.change(dropdown, { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      // Prompt message for user input should be present because tier is invalid enum
+      expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+    });
+
+    // Upgrade button should be enabled because default 'basic' was pre-filled (which is valid enum)
+    const upgradeButton = screen.getByTestId("primary-button");
+    expect(upgradeButton).not.toBeDisabled();
+
+    fireEvent.click(upgradeButton);
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        mockResource.resourcePath,
+        "PATCH",
+        mockWorkspaceContext.workspaceApplicationIdURI,
+        expect.objectContaining({
+          templateVersion: "1.1.0",
+          properties: expect.objectContaining({
+            tier: "basic", // Default 'basic' pre-filled, NOT invalid 'deprecated_premium'
+          }),
+        }),
+        "JSON",
+        undefined,
+        undefined,
+        mockResource._etag,
+      );
     });
   });
 });

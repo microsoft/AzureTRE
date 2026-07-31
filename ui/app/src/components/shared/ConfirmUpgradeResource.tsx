@@ -261,9 +261,21 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           return !pipelineProps.has(topKey);
         });
 
-        // Filter out properties that are hidden (tre-hidden) - they don't need user input
+        // Filter out properties that are hidden (tre-hidden) - they don't need user input unless they have an invalid enum value
         const uiSchema = newTemplate?.uiSchema || {};
         const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
+          const propSchema = getSchemaProperty(newTemplate, key);
+          const currentValue = getNestedValue(props.resource.properties, key);
+          const isEnumInvalid =
+            propSchema &&
+            Array.isArray(propSchema.enum) &&
+            currentValue !== undefined &&
+            !propSchema.enum.includes(currentValue);
+
+          if (isEnumInvalid) {
+            return true;
+          }
+
           const parts = key.split(".");
           let isHidden = false;
           let currentPath = "";
@@ -295,7 +307,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           const propSchema = getSchemaProperty(newTemplate, key);
           const currentValue = getNestedValue(props.resource.properties, key);
 
-          if (currentValue !== undefined) {
+          const isCurrentValueAllowed =
+            currentValue !== undefined &&
+            (!propSchema?.enum || (Array.isArray(propSchema.enum) && propSchema.enum.includes(currentValue)));
+
+          if (isCurrentValueAllowed) {
             setNestedValue(initialValues, key, currentValue);
           } else if (propSchema && propSchema.default !== undefined) {
             setNestedValue(initialValues, key, propSchema.default);
@@ -358,9 +374,34 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   // start with existing UI order and classNames from full schema uiSchema
   const baseUiSchema = newTemplateSchema?.uiSchema || {};
 
-  // Compose final uiSchema merging baseUiSchema with our overrides
+  // Strip tre-hidden for visible new properties so user can edit them if needed
+  const sanitizedUiSchema = React.useMemo(() => {
+    if (!baseUiSchema || !newPropertiesToFill.length) return baseUiSchema;
+    const cloned = JSON.parse(JSON.stringify(baseUiSchema));
+    newPropertiesToFill.forEach((key) => {
+      const parts = key.split(".");
+      let current = cloned;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (!current || !current[part]) break;
+        if (i === parts.length - 1) {
+          if (typeof current[part].classNames === "string") {
+            current[part].classNames = current[part].classNames.replace(/\btre-hidden\b/g, "").trim();
+          }
+          if (typeof current[part]["ui:classNames"] === "string") {
+            current[part]["ui:classNames"] = current[part]["ui:classNames"].replace(/\btre-hidden\b/g, "").trim();
+          }
+        } else {
+          current = current[part];
+        }
+      }
+    });
+    return cloned;
+  }, [baseUiSchema, newPropertiesToFill]);
+
+  // Compose final uiSchema merging sanitizedUiSchema with our overrides
   const uiSchema = {
-    ...baseUiSchema,
+    ...sanitizedUiSchema,
     "ui:submitButtonOptions": { norender: true },
   };
 
