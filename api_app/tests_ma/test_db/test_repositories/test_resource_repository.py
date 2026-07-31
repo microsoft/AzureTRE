@@ -451,7 +451,7 @@ async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo
 
     # check it's invalid when sending an unexpected field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'unexpected_field': 'surprise!'})
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="Property 'unexpected_field' is unexpected."):
         await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
     # check it's invalid when sending a bad value (new install)
@@ -466,7 +466,7 @@ async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo
 
     # check it's invalid when trying to update a non-updateable field
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'Windows 11'})
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="Property 'os_image' is not updateable."):
         await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
 
 

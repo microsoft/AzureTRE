@@ -391,12 +391,17 @@ class ResourceRepository(BaseRepository):
             # If there are no leaves (empty object), treat as not allowed to avoid accidental permits.
             return len(leaves) > 0
 
+        target_template_properties = self._get_all_property_keys_from_template(enriched_template)
+
         # If updating/patching properties, ensure EVERY patched leaf property is allowed
         if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
             leaf_props = self._get_leaf_properties(resource_patch.properties)
             for prop_path, prop_val in leaf_props:
                 if not is_leaf_allowed(prop_path, prop_val):
-                    raise ValidationError(f"Property '{prop_path}' is not updateable.")
+                    if prop_path in target_template_properties:
+                        raise ValidationError(f"Property '{prop_path}' is not updateable.")
+                    else:
+                        raise ValidationError(f"Property '{prop_path}' is unexpected.")
 
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
