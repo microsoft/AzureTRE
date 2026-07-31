@@ -77,7 +77,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const modalProps = {
     titleAriaId: "labelId",
     subtitleAriaId: "subTextId",
-    isBlocking: false,
+    isBlocking: true,
     styles: dialogStyles,
   };
 
@@ -347,7 +347,19 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     return () => {
       didCancel = true;
     };
-  }, [selectedVersion, props.resource, props.parentWorkspaceService, workspaceCtx, apiCall]);
+  }, [
+    selectedVersion,
+    props.resource.id,
+    props.resource.resourceType,
+    props.resource.templateName,
+    props.resource.templateVersion,
+    props.resource.resourcePath,
+    props.parentWorkspaceService?.id,
+    props.parentWorkspaceService?.templateName,
+    workspaceCtx.workspace?.id,
+    workspaceCtx.workspaceApplicationIdURI,
+    apiCall,
+  ]);
 
   const upgradeCall = async () => {
     setRequestLoadingState(LoadingState.Loading);
