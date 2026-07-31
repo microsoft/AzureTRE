@@ -48,7 +48,7 @@ class DeploymentStatusUpdater():
             polling_count = 0
             while True:
                 complete_message = True
-                async with credentials.get_credential_async() as credential:
+                async with credentials.get_credential_async_context() as credential:
                     async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
                         try:
                             logger.debug("Creating Deployment Status receiver session")
