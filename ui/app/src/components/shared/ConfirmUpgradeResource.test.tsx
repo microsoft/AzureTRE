@@ -23,7 +23,7 @@ vi.mock("../../hooks/customReduxHooks", () => ({
 
 vi.mock("../shared/notifications/operationsSlice", () => ({
   addUpdateOperation: vi.fn(),
-  default: (state: { items: unknown[] } = { items: [] }) => state
+  default: (state: { items: unknown[] } = { items: [] }) => state,
 }));
 
 // Mock FluentUI components using centralized mocks
@@ -32,25 +32,23 @@ vi.mock("@fluentui/react", async () => {
   return {
     ...actual,
     ...createPartialFluentUIMock([
-      'Dialog',
-      'DialogFooter',
-      'DialogType',
-      'PrimaryButton',
-      'DefaultButton',
-      'Dropdown',
-      'Spinner',
-      'MessageBar',
-      'MessageBarType',
-      'Icon'
+      "Dialog",
+      "DialogFooter",
+      "DialogType",
+      "PrimaryButton",
+      "DefaultButton",
+      "Dropdown",
+      "Spinner",
+      "MessageBar",
+      "MessageBarType",
+      "Icon",
     ]),
   };
 });
 
 vi.mock("./ExceptionLayout", () => {
-  const ExceptionLayout = ({ e }: any) => (
-    <div data-testid="exception-layout">{e.userMessage}</div>
-  );
-  ExceptionLayout.displayName = 'ExceptionLayout';
+  const ExceptionLayout = ({ e }: any) => <div data-testid="exception-layout">{e.userMessage}</div>;
+  ExceptionLayout.displayName = "ExceptionLayout";
   return { ExceptionLayout };
 });
 
@@ -120,11 +118,7 @@ const mockWorkspaceContext = {
 };
 
 const renderWithWorkspaceContext = (component: React.ReactElement) => {
-  return render(
-    <WorkspaceContext.Provider value={mockWorkspaceContext}>
-      {component}
-    </WorkspaceContext.Provider>
-  );
+  return render(<WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>);
 };
 
 describe("ConfirmUpgradeResource Component", () => {
@@ -135,40 +129,23 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("renders upgrade dialog with correct title and content", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Upgrade Template Version?"
-    );
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Upgrade Template Version?");
     expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
-      "Are you sure you want upgrade the template version of Test Resource from version 1.0.0?"
+      "Are you sure you want upgrade the template version of Test Resource from version 1.0.0?",
     );
   });
 
   it("shows warning message about irreversible upgrade", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     expect(screen.getByTestId("message-bar")).toBeInTheDocument();
     expect(screen.getByText("Upgrading the template version is irreversible.")).toBeInTheDocument();
   });
 
   it("renders dropdown with available upgrade versions", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const dropdown = screen.getByTestId("dropdown");
     expect(dropdown).toBeInTheDocument();
@@ -182,24 +159,14 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("disables upgrade button when no version is selected", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
   });
 
   it("enables upgrade button when version is selected", () => {
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     const dropdown = screen.getByTestId("dropdown");
     fireEvent.change(dropdown, { target: { value: "1.1.0" } });
@@ -212,12 +179,7 @@ describe("ConfirmUpgradeResource Component", () => {
     const mockOperation = { id: "operation-id", status: "running" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version
     const dropdown = screen.getByTestId("dropdown");
@@ -236,7 +198,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        mockResource._etag
+        mockResource._etag,
       );
     });
 
@@ -245,16 +207,9 @@ describe("ConfirmUpgradeResource Component", () => {
   });
 
   it("shows loading spinner during API call", async () => {
-    mockApiCall.mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100))
-    );
+    mockApiCall.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version and click upgrade
     const dropdown = screen.getByTestId("dropdown");
@@ -271,12 +226,7 @@ describe("ConfirmUpgradeResource Component", () => {
     const error = new Error("Network error");
     mockApiCall.mockRejectedValue(error);
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version and click upgrade
     const dropdown = screen.getByTestId("dropdown");
@@ -295,12 +245,7 @@ describe("ConfirmUpgradeResource Component", () => {
     const mockOperation = { id: "operation-id", status: "running" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={mockResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
 
     // Select a version and click upgrade
     const dropdown = screen.getByTestId("dropdown");
@@ -318,7 +263,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -331,12 +276,7 @@ describe("ConfirmUpgradeResource Component", () => {
     const mockOperation = { id: "operation-id", status: "running" };
     mockApiCall.mockResolvedValue({ operation: mockOperation });
 
-    renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={sharedServiceResource}
-        onDismiss={mockOnDismiss}
-      />
-    );
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={sharedServiceResource} onDismiss={mockOnDismiss} />);
 
     // Select a version and click upgrade
     const dropdown = screen.getByTestId("dropdown");
@@ -354,7 +294,7 @@ describe("ConfirmUpgradeResource Component", () => {
         "JSON",
         undefined,
         undefined,
-        expect.any(String)
+        expect.any(String),
       );
     });
   });
@@ -370,10 +310,7 @@ describe("ConfirmUpgradeResource Component", () => {
     };
 
     renderWithWorkspaceContext(
-      <ConfirmUpgradeResource
-        resource={resourceWithMajorUpgrade}
-        onDismiss={mockOnDismiss}
-      />
+      <ConfirmUpgradeResource resource={resourceWithMajorUpgrade} onDismiss={mockOnDismiss} />,
     );
 
     // Minor updates should be available

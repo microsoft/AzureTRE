@@ -18,9 +18,7 @@ interface WorkspaceLeftNavProps {
   isTREAdminUser: boolean;
 }
 
-export const WorkspaceLeftNav: React.FunctionComponent<
-  WorkspaceLeftNavProps
-> = (props: WorkspaceLeftNavProps) => {
+export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = (props: WorkspaceLeftNavProps) => {
   const navigate = useNavigate();
   const emptyLinks: INavLinkGroup[] = [{ links: [] }];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
@@ -71,14 +69,11 @@ export const WorkspaceLeftNav: React.FunctionComponent<
             url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
             isExpanded: false,
             links: sharedServiceLinkArray,
-          });
-
+          },
+        );
 
         // Only show airlock link if enabled for workspace
-        if (
-          workspaceCtx.workspace.properties !== undefined &&
-          workspaceCtx.workspace.properties.enable_airlock
-        ) {
+        if (workspaceCtx.workspace.properties !== undefined && workspaceCtx.workspace.properties.enable_airlock) {
           navLinks[0].links.push({
             name: "Airlock",
             key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.AirlockRequests}`,
@@ -89,13 +84,12 @@ export const WorkspaceLeftNav: React.FunctionComponent<
 
       // Only add Users link if workspace is fully deployed
       if (successStates.includes(workspaceCtx.workspace.deploymentStatus)) {
-        navLinks[0].links.push(
-          {
-            name: "Users",
-            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-            isExpanded: false,
-          })
+        navLinks[0].links.push({
+          name: "Users",
+          key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+          url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+          isExpanded: false,
+        });
       }
 
       setServiceLinks(navLinks);
@@ -115,9 +109,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<
         onLinkClick={(e, item) => {
           e?.preventDefault();
           if (!item || !item.url) return;
-          let selectedService = props.workspaceServices.find(
-            (w) => item.key?.indexOf(w.id.toString()) !== -1,
-          );
+          let selectedService = props.workspaceServices.find((w) => item.key?.indexOf(w.id.toString()) !== -1);
           if (selectedService) {
             props.setWorkspaceService(selectedService);
           }

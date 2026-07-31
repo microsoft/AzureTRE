@@ -1,9 +1,4 @@
-import {
-  MessageBar,
-  MessageBarType,
-  Link as FluentLink,
-  Icon,
-} from "@fluentui/react";
+import { MessageBar, MessageBarType, Link as FluentLink, Icon } from "@fluentui/react";
 import React, { useState } from "react";
 import { APIError } from "../../models/exceptions";
 
@@ -11,9 +6,7 @@ interface ExceptionLayoutProps {
   e: APIError;
 }
 
-export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (
-  props: ExceptionLayoutProps,
-) => {
+export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (props: ExceptionLayoutProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showMessageBar, setShowMessageBar] = useState(true);
 
@@ -53,13 +46,11 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (
             >
               {showDetails ? (
                 <>
-                  <Icon iconName="ChevronUp" aria-label="Expand Details" />{" "}
-                  {"Hide Details"}
+                  <Icon iconName="ChevronUp" aria-label="Expand Details" /> {"Hide Details"}
                 </>
               ) : (
                 <>
-                  <Icon iconName="ChevronDown" aria-label="Collapse Details" />{" "}
-                  {"Show Details"}{" "}
+                  <Icon iconName="ChevronDown" aria-label="Collapse Details" /> {"Show Details"}{" "}
                 </>
               )}
             </FluentLink>
