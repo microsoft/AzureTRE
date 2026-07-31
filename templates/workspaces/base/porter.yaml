@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.8.5
+version: 2.10.1
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -141,6 +141,10 @@ parameters:
     type: boolean
     default: true
     description: "Enable backups for the workspace, including the vm's & shared storage."
+  - name: delete_backups_on_uninstall
+    type: boolean
+    default: false
+    description: "When deleting the workspace, also delete the backups (Recovery Services Vault and its recovery points). When false the vault and its resource group are retained so the backed up data is kept."
   - name: enable_dns_policy
     type: boolean
     default: false
@@ -377,6 +381,21 @@ upgrade:
         register-aad-application: "${ bundle.parameters.register_aad_application }"
 
 uninstall:
+  - exec:
+      description: "Handle backup resources before tearing down the workspace"
+      command: ./remove_backup.sh
+      arguments:
+        - ${ bundle.parameters.tfstate_resource_group_name }
+        - ${ bundle.parameters.tfstate_storage_account_name }
+        - ${ bundle.parameters.tfstate_container_name }
+        - ${ bundle.parameters.tre_id }
+        - ${ bundle.parameters.id }
+        - ${ bundle.parameters.enable_backup }
+        - ${ bundle.parameters.delete_backups_on_uninstall }
+        - ${ bundle.parameters.workspace_subscription_id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
   - terraform:
       description: "Tear down workspace"
       vars:
