@@ -151,6 +151,48 @@ def test_enrich_template_removes_invalid_legacy_null_property_fields(basic_resou
     validate(instance={"os_image": "Windows Server 2025"}, schema=template)
 
 
+def test_enrich_template_removes_invalid_legacy_null_property_fields_recursively(basic_resource_template):
+    basic_resource_template.properties = {
+        "vm_config": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "vm_size": {
+                        "type": "string",
+                        "items": None,
+                        "enum": ["Standard_D2_v3"]
+                    }
+                }
+            }
+        }
+    }
+    basic_resource_template.allOf = [{
+        "if": {
+            "properties": {
+                "assign_to_another_user": {
+                    "const": True
+                }
+            }
+        },
+        "then": {
+            "properties": {
+                "owner_id": {
+                    "type": "string",
+                    "pattern": None,
+                    "minLength": 1
+                }
+            }
+        }
+    }]
+
+    template = services.schema_service.enrich_template(basic_resource_template, [])
+
+    assert "items" not in template["properties"]["vm_config"]["items"]["properties"]["vm_size"]
+    assert "pattern" not in template["allOf"][0]["then"]["properties"]["owner_id"]
+    validate(instance={"vm_config": [{"vm_size": "Standard_D2_v3"}]}, schema=template)
+
+
 def test_enrich_template_adds_read_only_on_update(basic_resource_template):
     original_template = basic_resource_template
 
