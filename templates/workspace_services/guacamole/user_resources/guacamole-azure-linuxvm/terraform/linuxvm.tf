@@ -120,6 +120,16 @@ resource "azurerm_key_vault_secret" "linuxvm_password" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# Grant the owning user read access (secrets reader) to their own VM password
+# secret. Scoped to this single secret so users can only read their own
+# credentials.
+resource "azurerm_role_assignment" "vm_password_secret_reader" {
+  count                = var.owner_id != "" ? 1 : 0
+  scope                = azurerm_key_vault_secret.linuxvm_password.resource_versionless_id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = var.owner_id
+}
+
 resource "azurerm_dev_test_global_vm_shutdown_schedule" "shutdown_schedule" {
   count = var.enable_shutdown_schedule ? 1 : 0
 
