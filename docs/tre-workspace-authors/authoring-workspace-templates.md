@@ -85,6 +85,17 @@ When authoring a `template_schema.json` file, you can reference properties from 
 !!! todo
     After a workspace with virtual machines is implemented this section can be written based on that. ([Outputs in Porter documentation](https://porter.sh/author-bundles/#outputs) to be linked here too.)
 
+#### Exposing secrets to researchers
+
+Resources sometimes need to surface secret values (for example a VM administrator password, a storage account key, or a database connection string) to researchers. Rather than returning the secret value directly, store the secret in the workspace Key Vault and output a **Key Vault secret identifier** (the full secret URI) in a property whose name contains `keyvault_secret_id`.
+
+The API treats any resource property whose name contains `keyvault_secret_id` as a reference to a workspace Key Vault secret. Researchers (and workspace owners) can then retrieve the underlying secret value on demand via the secrets endpoints:
+
+* `GET /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}`
+* `GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/secrets/{secret_name}`
+
+where `secret_name` is the name of the property that holds the `keyvault_secret_id`. The API only retrieves secrets from the workspace's own Key Vault.
+
 ### Actions
 
 The required actions are the main two of CNAB spec:
