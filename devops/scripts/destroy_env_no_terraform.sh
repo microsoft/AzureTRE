@@ -185,6 +185,26 @@ function purge_container_repositories() {
   done
 }
 
+function delete_databricks_workspaces() {
+  local rg=$1
+
+  local workspaces
+  workspaces=$(az databricks workspace list --resource-group "$rg" --query [].name --output tsv)
+
+  local workspace
+  for workspace in $workspaces; do
+    echo "Deleting Databricks workspace ${workspace} in resource group ${rg}"
+    az databricks workspace delete --resource-group "$rg" --name "$workspace" --yes
+  done
+}
+
+# Databricks creates managed resource groups with deny assignments that are
+# removed only when the owning workspace is deleted.
+echo "${matching_resource_groups}" |
+while read -r rg_item; do
+  delete_databricks_workspaces "$rg_item"
+done
+
 # this will find the mgmt, core resource groups as well as any workspace ones
 # we are reverse-sorting to first delete the workspace groups (might not be
 # good enough because we use no-wait sometimes)
