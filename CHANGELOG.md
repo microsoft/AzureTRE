@@ -31,6 +31,7 @@ BUG FIXES:
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
 * Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
 * Pin MKDocs to v1 to prevent incompatible upgrade. ([#5009](https://github.com/microsoft/AzureTRE/issues/5009))
+* Prevent AttributeError failure when the API attempts a database update retry after initially failing with an out of date etag ([#5023](https://github.com/microsoft/AzureTRE/pull/5023))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**
