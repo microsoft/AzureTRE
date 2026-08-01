@@ -96,6 +96,11 @@ The API treats any resource property whose name contains `keyvault_secret_id` as
 
 where `secret_name` is the name of the property that holds the `keyvault_secret_id`. The API only retrieves secrets from the workspace's own Key Vault.
 
+Key Vault access is performed **on behalf of the signed-in user** using an On-Behalf-Of (OBO) token exchange. The core API's managed identity is registered as a federated identity credential on the per-workspace app registration, so the API authenticates as the workspace application without a stored client secret and then exchanges the caller's token for a Key Vault data-plane token scoped to that user. As a result, the caller only receives secrets they have themselves been granted read access to on the workspace Key Vault; the API's own identity is not used to read the secret.
+
+> [!NOTE]
+> The federated identity credential is only created when the workspace app registration is managed by TRE (`register_aad_application = true`). If the workspace application is registered externally, the equivalent federated credential must be configured on that application manually for secret retrieval to work.
+
 ### Actions
 
 The required actions are the main two of CNAB spec:

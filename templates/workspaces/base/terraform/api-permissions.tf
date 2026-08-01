@@ -14,11 +14,3 @@ resource "azurerm_role_assignment" "api_reader" {
   role_definition_name = "Reader"
   principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
 }
-
-# The API needs to read secrets (e.g. VM credentials, connection strings) that
-# resources store in the workspace Key Vault, so they can be surfaced to researchers.
-resource "azurerm_role_assignment" "api_keyvault_secrets_user" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
-}

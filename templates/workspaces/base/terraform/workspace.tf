@@ -45,6 +45,7 @@ module "aad" {
   ui_client_id                   = var.ui_client_id
   auto_grant_workspace_consent   = var.auto_grant_workspace_consent
   core_api_client_id             = var.core_api_client_id
+  api_identity_principal_id      = data.azurerm_user_assigned_identity.api_id.principal_id
 
   depends_on = [
     azurerm_role_assignment.keyvault_resourceprocessor_ws_role,

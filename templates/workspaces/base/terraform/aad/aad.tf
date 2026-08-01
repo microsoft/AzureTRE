@@ -105,6 +105,19 @@ resource "azuread_service_principal" "workspace" {
   }
 }
 
+# Federated identity credential so the core API's managed identity can act as
+# the workspace app registration (via the On-Behalf-Of flow) without a stored
+# client secret. Used to retrieve workspace Key Vault secrets on behalf of the
+# signed-in user.
+resource "azuread_application_federated_identity_credential" "api_obo" {
+  application_id = azuread_application.workspace.id
+  display_name   = "tre-api-obo"
+  description    = "Allows the TRE API managed identity to perform On-Behalf-Of token exchange as the workspace application."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+  subject        = var.api_identity_principal_id
+}
+
 resource "azuread_service_principal_delegated_permission_grant" "ui" {
   count                                = var.auto_grant_workspace_consent ? 1 : 0
   service_principal_object_id          = data.azuread_service_principal.ui.object_id

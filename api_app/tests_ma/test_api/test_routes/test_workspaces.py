@@ -971,12 +971,12 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         workspace_service.properties["admin_password_keyvault_secret_id"] = "https://kv/secrets/admin"
         get_workspace_service_mock.return_value = workspace_service
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"), headers={"Authorization": "Bearer " "test-token"})
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["key"] == "admin_password_keyvault_secret_id"
         assert response.json()["value"] == "a-secret-value"
-        get_secret_value_mock.assert_called_once_with("https://kv/secrets/admin", None)
+        get_secret_value_mock.assert_called_once_with("https://kv/secrets/admin", None, "12345", "test-token")
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
     @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
@@ -1025,15 +1025,16 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     async def test_get_workspace_service_secret_passes_workspace_keyvault_uri(self, get_workspace_mock, get_workspace_service_mock, get_secret_value_mock, app, client):
         workspace = sample_workspace()
         workspace.properties["keyvault_uri"] = "https://kv.vault.azure.net/"
+        workspace.properties["client_id"] = "workspace-client-id"
         get_workspace_mock.return_value = workspace
         workspace_service = sample_workspace_service()
         workspace_service.properties["admin_password_keyvault_secret_id"] = "https://kv.vault.azure.net/secrets/admin"
         get_workspace_service_mock.return_value = workspace_service
 
-        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"))
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"), headers={"Authorization": "Bearer " "test-token"})
 
         assert response.status_code == status.HTTP_200_OK
-        get_secret_value_mock.assert_called_once_with("https://kv.vault.azure.net/secrets/admin", "https://kv.vault.azure.net/")
+        get_secret_value_mock.assert_called_once_with("https://kv.vault.azure.net/secrets/admin", "https://kv.vault.azure.net/", "workspace-client-id", "test-token")
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/secrets/{secret_name}
     @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
@@ -1045,7 +1046,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         user_resource.properties["admin_password_keyvault_secret_id"] = "https://kv/secrets/admin"
         get_user_resource_mock.return_value = user_resource
 
-        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID, secret_name="admin_password_keyvault_secret_id"))
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID, secret_name="admin_password_keyvault_secret_id"), headers={"Authorization": "Bearer " "test-token"})
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["value"] == "a-secret-value"

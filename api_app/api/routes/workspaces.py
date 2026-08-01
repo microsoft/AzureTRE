@@ -55,7 +55,14 @@ def validate_user_has_valid_role_for_user_resource(user, user_resource):
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
 
 
-async def retrieve_resource_secret(resource, secret_name: str, workspace) -> SecretInResponse:
+def _extract_bearer_token(authorization: str) -> str:
+    """Return the raw bearer token from an Authorization header value, or None."""
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization[len("bearer "):].strip()
+    return None
+
+
+async def retrieve_resource_secret(resource, secret_name: str, workspace, user_token: str) -> SecretInResponse:
     if not is_secret_property(secret_name):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.SECRET_PROPERTY_IS_NOT_A_SECRET)
 
@@ -64,7 +71,11 @@ async def retrieve_resource_secret(resource, secret_name: str, workspace) -> Sec
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.SECRET_PROPERTY_DOES_NOT_EXIST)
 
     try:
-        secret_value = await get_secret_value(keyvault_secret_id, workspace.properties.get("keyvault_uri"))
+        secret_value = await get_secret_value(
+            keyvault_secret_id,
+            workspace.properties.get("keyvault_uri"),
+            workspace.properties.get("client_id"),
+            user_token)
     except SecretRetrievalError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -260,8 +271,8 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}", response_model=SecretInResponse, name=strings.API_GET_WORKSPACE_SERVICE_SECRET, dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
-async def retrieve_workspace_service_secret(secret_name: str, workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path)) -> SecretInResponse:
-    return await retrieve_resource_secret(workspace_service, secret_name, workspace)
+async def retrieve_workspace_service_secret(secret_name: str, workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), authorization: str = Header(None)) -> SecretInResponse:
+    return await retrieve_resource_secret(workspace_service, secret_name, workspace, _extract_bearer_token(authorization))
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
@@ -428,9 +439,10 @@ async def retrieve_user_resource_secret(
         secret_name: str,
         workspace=Depends(get_workspace_by_id_from_path),
         user_resource=Depends(get_user_resource_by_id_from_path),
+        authorization: str = Header(None),
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> SecretInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
-    return await retrieve_resource_secret(user_resource, secret_name, workspace)
+    return await retrieve_resource_secret(user_resource, secret_name, workspace, _extract_bearer_token(authorization))
 
 
 @user_resources_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_USER_RESOURCE)
