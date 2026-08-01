@@ -112,11 +112,10 @@ Key Vault access is performed **on behalf of the signed-in user** using an On-Be
 
 Because the exchange requires the caller's own token as the user assertion, a caller can never retrieve a secret they do not already have Key Vault data-plane access to — even though the request is proxied through the core API. The core API therefore holds **no standing permission** to read workspace Key Vault secrets (the previous `Key Vault Secrets User` role assignment on the API managed identity has been removed).
 
+For the full flow, the trust relationships involved, and the compromise/blast-radius analysis, see [Secret retrieval](../azure-tre-overview/architecture.md#secret-retrieval) in the architecture documentation.
+
 > [!NOTE]
 > The federated identity credential is only created when the workspace app registration is managed by TRE (`register_aad_application = true`). If the workspace application is registered externally, the equivalent federated credential must be configured on that application manually for secret retrieval to work.
-
-> [!WARNING]
-> The federated identity credential lets the core API's managed identity authenticate *as* the workspace application. If the core API's managed identity were compromised, the attacker could impersonate the workspace app registration (client assertion) and, for OBO, would additionally need a valid user token captured while proxying a request. The blast radius is limited to the permissions the workspace application itself holds and to secrets the impersonated user can already read; the credential grants no direct Key Vault access of its own. This is a deliberately smaller blast radius than storing a workspace client secret or granting the API standing Key Vault access. Protect the core API managed identity accordingly and grant workspace applications only the least privilege they require.
 
 ### Actions
 
