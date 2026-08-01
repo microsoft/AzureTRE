@@ -3,6 +3,7 @@ azure-core==1.38.0
 azure-cosmos==4.14.3
 azure-eventgrid==4.22.0
 azure-identity==1.25.1
+azure-keyvault-secrets==4.11.0
 azure-mgmt-compute==37.1.0
 azure-mgmt-cosmosdb==9.9.0
 azure-mgmt-costmanagement==4.0.1

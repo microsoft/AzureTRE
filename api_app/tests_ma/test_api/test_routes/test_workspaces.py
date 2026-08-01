@@ -22,6 +22,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace, WorkspaceRole
 from models.domain.workspace_service import WorkspaceService
 from resources import strings
+from services.secrets import SecretRetrievalError
 from models.schemas.resource_template import ResourceTemplateInformation
 from auth.rbac import require_tre_admin, \
     require_tre_user_or_admin, require_workspace_owner, \
@@ -959,6 +960,95 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["userResource"]["id"] == user_resource.id
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_secret_returns_secret_value(self, get_workspace_mock, get_workspace_service_mock, get_secret_value_mock, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        workspace_service = sample_workspace_service()
+        workspace_service.properties["admin_password_keyvault_secret_id"] = "https://kv/secrets/admin"
+        get_workspace_service_mock.return_value = workspace_service
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["key"] == "admin_password_keyvault_secret_id"
+        assert response.json()["value"] == "a-secret-value"
+        get_secret_value_mock.assert_called_once_with("https://kv/secrets/admin", None)
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_secret_returns_400_when_property_is_not_a_secret(self, get_workspace_mock, get_workspace_service_mock, get_secret_value_mock, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        get_workspace_service_mock.return_value = sample_workspace_service()
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="display_name"))
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        get_secret_value_mock.assert_not_called()
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_secret_returns_404_when_property_does_not_exist(self, get_workspace_mock, get_workspace_service_mock, get_secret_value_mock, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        get_workspace_service_mock.return_value = sample_workspace_service()
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="missing_keyvault_secret_id"))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        get_secret_value_mock.assert_not_called()
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", side_effect=SecretRetrievalError("boom"))
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_secret_returns_404_when_retrieval_fails(self, get_workspace_mock, get_workspace_service_mock, _, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        workspace_service = sample_workspace_service()
+        workspace_service.properties["admin_password_keyvault_secret_id"] = "https://kv/secrets/admin"
+        get_workspace_service_mock.return_value = workspace_service
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_workspace_service_secret_passes_workspace_keyvault_uri(self, get_workspace_mock, get_workspace_service_mock, get_secret_value_mock, app, client):
+        workspace = sample_workspace()
+        workspace.properties["keyvault_uri"] = "https://kv.vault.azure.net/"
+        get_workspace_mock.return_value = workspace
+        workspace_service = sample_workspace_service()
+        workspace_service.properties["admin_password_keyvault_secret_id"] = "https://kv.vault.azure.net/secrets/admin"
+        get_workspace_service_mock.return_value = workspace_service
+
+        response = await client.get(app.url_path_for(strings.API_GET_WORKSPACE_SERVICE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, secret_name="admin_password_keyvault_secret_id"))
+
+        assert response.status_code == status.HTTP_200_OK
+        get_secret_value_mock.assert_called_once_with("https://kv.vault.azure.net/secrets/admin", "https://kv.vault.azure.net/")
+
+    # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/secrets/{secret_name}
+    @patch("api.routes.workspaces.get_secret_value", return_value="a-secret-value")
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_get_user_resource_secret_returns_secret_value(self, get_workspace_mock, get_user_resource_mock, get_secret_value_mock, app, client):
+        get_workspace_mock.return_value = sample_workspace()
+        user_resource = sample_user_resource_object()
+        user_resource.properties["admin_password_keyvault_secret_id"] = "https://kv/secrets/admin"
+        get_user_resource_mock.return_value = user_resource
+
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_SECRET, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID, secret_name="admin_password_keyvault_secret_id"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["value"] == "a-secret-value"
 
     # [GET] /workspaces/{workspace_id}/services/{service_id}/user-resources/{resource_id}/history
     @patch("api.routes.shared_services.ResourceHistoryRepository.get_resource_history_by_resource_id")
