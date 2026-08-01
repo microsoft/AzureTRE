@@ -56,6 +56,7 @@ nav:
           - System Architecture: azure-tre-overview/architecture.md
           - Network Architecture: azure-tre-overview/networking.md
           - Azure Resources: azure-tre-overview/tre-resources-breakdown.md
+          - Secret Retrieval: azure-tre-overview/secret-retrieval.md
           - Airlock: azure-tre-overview/airlock.md
           - Cost Reporting: azure-tre-overview/cost-reporting.md
       - Terms and Definitions: using-tre/terms-definitions.md
