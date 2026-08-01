@@ -96,10 +96,27 @@ The API treats any resource property whose name contains `keyvault_secret_id` as
 
 where `secret_name` is the name of the property that holds the `keyvault_secret_id`. The API only retrieves secrets from the workspace's own Key Vault.
 
+#### How the UI decides which secrets to show
+
+The UI does **not** inspect property *values* to find secrets. It relies purely on the property-name convention: for a workspace service or user resource, any property whose name contains `keyvault_secret_id` is rendered as a masked secret (`••••••••`) with a reveal button, instead of as plain text. The property value stored on the resource is only the Key Vault secret identifier (URI); the underlying secret value is fetched on demand from the secrets endpoint above when the user clicks *reveal*, and is never persisted in the resource document, the Cosmos DB store, or the browser.
+
+This means:
+
+* Only **workspace services** and **user resources** can expose secrets this way. Properties on workspaces or shared services are not offered for reveal.
+* Whether a secret appears is entirely determined by the template author naming an output property `*keyvault_secret_id*`. If no template outputs such a property, no secrets appear in the UI.
+* Naming a property `*keyvault_secret_id*` but storing anything other than a valid Key Vault secret identifier from the workspace's own Key Vault will result in an error when the user tries to reveal it.
+
+#### Security model
+
 Key Vault access is performed **on behalf of the signed-in user** using an On-Behalf-Of (OBO) token exchange. The core API's managed identity is registered as a federated identity credential on the per-workspace app registration, so the API authenticates as the workspace application without a stored client secret and then exchanges the caller's token for a Key Vault data-plane token scoped to that user. As a result, the caller only receives secrets they have themselves been granted read access to on the workspace Key Vault; the API's own identity is not used to read the secret.
+
+Because the exchange requires the caller's own token as the user assertion, a caller can never retrieve a secret they do not already have Key Vault data-plane access to — even though the request is proxied through the core API. The core API therefore holds **no standing permission** to read workspace Key Vault secrets (the previous `Key Vault Secrets User` role assignment on the API managed identity has been removed).
 
 > [!NOTE]
 > The federated identity credential is only created when the workspace app registration is managed by TRE (`register_aad_application = true`). If the workspace application is registered externally, the equivalent federated credential must be configured on that application manually for secret retrieval to work.
+
+> [!WARNING]
+> The federated identity credential lets the core API's managed identity authenticate *as* the workspace application. If the core API's managed identity were compromised, the attacker could impersonate the workspace app registration (client assertion) and, for OBO, would additionally need a valid user token captured while proxying a request. The blast radius is limited to the permissions the workspace application itself holds and to secrets the impersonated user can already read; the credential grants no direct Key Vault access of its own. This is a deliberately smaller blast radius than storing a workspace client secret or granting the API standing Key Vault access. Protect the core API managed identity accordingly and grant workspace applications only the least privilege they require.
 
 ### Actions
 
