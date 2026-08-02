@@ -2,6 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, MagicMock
 import pytest
 from azure.core.exceptions import ServiceRequestError
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.servicebus.exceptions import ServiceBusConnectionError
 from mock import patch
 from models.schemas.status import StatusEnum
@@ -11,10 +12,17 @@ from services import health_checker
 pytestmark = pytest.mark.asyncio
 
 
-@patch("azure.cosmos.aio.ContainerProxy.query_items", return_value=AsyncMock())
-async def test_get_state_store_status_responding(_) -> None:
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_responding(container_proxy_mock) -> None:
+    query_results = AsyncIterator([{}])
+    container = MagicMock()
+    container.query_items.return_value = query_results
+    container_proxy_mock.return_value = container
+
     status, message = await health_checker.create_state_store_status()
 
+    container.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    assert query_results.items_returned == 1
     assert status == StatusEnum.ok
     assert message == ""
 
@@ -37,6 +45,19 @@ async def test_get_state_store_status_other_exception(container_proxy_mock) -> N
 
     assert status == StatusEnum.not_ok
     assert message == strings.UNSPECIFIED_ERROR
+
+
+@patch("api.dependencies.database.Database.get_container_proxy")
+async def test_get_state_store_status_not_accessible_when_query_iteration_fails(container_proxy_mock) -> None:
+    container = MagicMock()
+    container.query_items.return_value = FailingAsyncIterator(CosmosHttpResponseError(message="some message"))
+    container_proxy_mock.return_value = container
+
+    status, message = await health_checker.create_state_store_status()
+
+    container.query_items.assert_called_once_with("SELECT TOP 1 * FROM c", max_item_count=1)
+    assert status == StatusEnum.not_ok
+    assert message == strings.STATE_STORE_ENDPOINT_NOT_ACCESSIBLE
 
 
 @patch("core.credentials.get_credential_async_context")
@@ -132,12 +153,26 @@ async def test_get_resource_processor_status_other_exception(resource_processor_
 class AsyncIterator:
     def __init__(self, seq):
         self.iter = iter(seq)
+        self.items_returned = 0
 
     def __aiter__(self):
         return self
 
     async def __anext__(self):
         try:
-            return next(self.iter)
+            item = next(self.iter)
+            self.items_returned += 1
+            return item
         except StopIteration:
             raise StopAsyncIteration
+
+
+class FailingAsyncIterator:
+    def __init__(self, exception):
+        self.exception = exception
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        raise self.exception

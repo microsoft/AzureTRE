@@ -1413,6 +1413,36 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
         assert response.status_code == status.HTTP_200_OK
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[
+        ResourceTemplateInformation(name="tre-service-guacamole-import-reviewvm"),
+        ResourceTemplateInformation(name="tre-service-guacamole-windowsvm")
+    ])
+    async def test_get_user_resource_templates_excludes_import_review_vm_for_base_workspace(self, _, __, app, client):
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
+
+        assert response.status_code == status.HTTP_200_OK
+        template_names = [template["name"] for template in response.json()["templates"]]
+        assert "tre-service-guacamole-import-reviewvm" not in template_names
+        assert "tre-service-guacamole-windowsvm" in template_names
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_templates_information", return_value=[
+        ResourceTemplateInformation(name="tre-service-guacamole-import-reviewvm"),
+        ResourceTemplateInformation(name="tre-service-guacamole-windowsvm")
+    ])
+    async def test_get_user_resource_templates_includes_import_review_vm_for_import_review_workspace(self, _, get_workspace_mock, app, client):
+        workspace = sample_workspace()
+        workspace.templateName = "tre-workspace-airlock-import-review"
+        get_workspace_mock.return_value = workspace
+
+        response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE_TEMPLATES_IN_WORKSPACE, workspace_id=WORKSPACE_ID, service_template_name="guacamole"))
+
+        assert response.status_code == status.HTTP_200_OK
+        template_names = [template["name"] for template in response.json()["templates"]]
+        assert "tre-service-guacamole-import-reviewvm" in template_names
+        assert "tre-service-guacamole-windowsvm" in template_names
+
     # [GET] /workspaces/{workspace_id}/workspace-services
     @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
