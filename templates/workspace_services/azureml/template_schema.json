@@ -226,6 +226,7 @@
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msauth.net",
+                    "*.instances.azureml.ms",
                     "{{ resource.properties.aml_fqdn }}",
                     "automlresources-prod.azureedge.net"
                   ],
@@ -371,6 +372,7 @@
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "aadcdn.msauth.net",
+                    "*.instances.azureml.ms",
                     "{{ resource.properties.aml_fqdn }}",
                     "automlresources-prod.azureedge.net"
                   ],

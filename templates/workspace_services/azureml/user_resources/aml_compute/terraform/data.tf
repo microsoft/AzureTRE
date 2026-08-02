@@ -17,3 +17,16 @@ data "azurerm_machine_learning_workspace" "workspace" {
   name                = local.aml_workspace_name
   resource_group_name = data.azurerm_resource_group.ws.name
 }
+
+data "azurerm_storage_account" "aml" {
+  name                = lower(replace("stg${substr(local.service_resource_name_suffix, -8, -1)}", "-", ""))
+  resource_group_name = data.azurerm_resource_group.ws.name
+}
+
+data "azurerm_role_definition" "storage_blob_data_contributor" {
+  name = "Storage Blob Data Contributor"
+}
+
+data "azurerm_role_definition" "storage_file_data_contributor" {
+  name = "Storage File Data Privileged Contributor"
+}

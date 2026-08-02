@@ -28,4 +28,21 @@ resource "azapi_resource" "compute_instance" {
   }
 
   lifecycle { ignore_changes = [tags] }
+
+  depends_on = [
+    azurerm_role_assignment.user_storage_blob_data_contributor,
+    azurerm_role_assignment.user_storage_file_data_contributor
+  ]
+}
+
+resource "azurerm_role_assignment" "user_storage_blob_data_contributor" {
+  scope              = data.azurerm_storage_account.aml.id
+  role_definition_id = data.azurerm_role_definition.storage_blob_data_contributor.id
+  principal_id       = var.user_object_id
+}
+
+resource "azurerm_role_assignment" "user_storage_file_data_contributor" {
+  scope              = data.azurerm_storage_account.aml.id
+  role_definition_id = data.azurerm_role_definition.storage_file_data_contributor.id
+  principal_id       = var.user_object_id
 }
