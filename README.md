@@ -2,6 +2,8 @@
 
 **Azure TRE documentation site**: <https://microsoft.github.io/AzureTRE/>
 
+Note: when building the documentation site, pin MkDocs to `mkdocs<2.0.0` until the project has moved to a supported alternative.
+
 ## Background
 <img alt="Azure TRE logo" align="right" src="./docs/assets/azure-tre-logo.svg" width="33%" />
 
