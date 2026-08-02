@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 import pytest
 import time
 
-from mock import AsyncMock, patch
+from mock import AsyncMock, MagicMock, patch
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
@@ -102,6 +102,39 @@ class ServiceBusReceivedMessageMock:
 
     def __str__(self):
         return self.message
+
+
+def run_once():
+    calls = iter([True, False])
+    return lambda: next(calls)
+
+
+@patch('service_bus.airlock_request_status_update.credentials.get_credential_async_context')
+@patch('service_bus.airlock_request_status_update.ServiceBusClient')
+async def test_receive_messages_closes_service_bus_client_after_one_polling_iteration(sb_client, get_credential):
+    credential_context = MagicMock()
+    credential_context.__aenter__ = AsyncMock(return_value=MagicMock())
+    credential_context.__aexit__ = AsyncMock(return_value=None)
+    get_credential.return_value = credential_context
+
+    service_bus_client_context = MagicMock()
+    service_bus_client = MagicMock()
+    service_bus_client_context.__aenter__ = AsyncMock(return_value=service_bus_client)
+    service_bus_client_context.__aexit__ = AsyncMock(return_value=None)
+    sb_client.return_value = service_bus_client_context
+
+    receiver_context = MagicMock()
+    receiver = MagicMock()
+    receiver.receive_messages = AsyncMock(return_value=[])
+    receiver_context.__aenter__ = AsyncMock(return_value=receiver)
+    receiver_context.__aexit__ = AsyncMock(return_value=None)
+    service_bus_client.get_queue_receiver.return_value = receiver_context
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.receive_messages(keep_running=run_once())
+
+    service_bus_client_context.__aexit__.assert_awaited_once()
+    receiver_context.__aexit__.assert_awaited_once()
 
 
 @patch("event_grid.helpers.EventGridPublisherClient")
