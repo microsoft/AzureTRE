@@ -79,6 +79,23 @@ class ServiceBusReceivedMessageMock:
         return self.message
 
 
+class EmptyAsyncReceiver:
+    def __init__(self):
+        self.session = MagicMock()
+        self.session.session_id = "test_session_id"
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        raise StopAsyncIteration
+
+
+def run_once():
+    calls = iter([True, False])
+    return lambda: next(calls)
+
+
 def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
@@ -114,6 +131,38 @@ def create_sample_operation(resource_id, request_action):
             )
         ]
     )
+
+
+@patch('service_bus.deployment_status_updater.credentials.get_credential_async_context')
+@patch('service_bus.deployment_status_updater.AutoLockRenewer')
+@patch('service_bus.deployment_status_updater.ServiceBusClient')
+async def test_receive_messages_closes_service_bus_client_after_one_polling_iteration(sb_client, auto_lock_renewer, get_credential):
+    credential_context = MagicMock()
+    credential_context.__aenter__ = AsyncMock(return_value=MagicMock())
+    credential_context.__aexit__ = AsyncMock(return_value=None)
+    get_credential.return_value = credential_context
+
+    service_bus_client_context = MagicMock()
+    service_bus_client = MagicMock()
+    service_bus_client_context.__aenter__ = AsyncMock(return_value=service_bus_client)
+    service_bus_client_context.__aexit__ = AsyncMock(return_value=None)
+    sb_client.return_value = service_bus_client_context
+
+    receiver_context = MagicMock()
+    receiver_context.__aenter__ = AsyncMock(return_value=EmptyAsyncReceiver())
+    receiver_context.__aexit__ = AsyncMock(return_value=None)
+    service_bus_client.get_queue_receiver.return_value = receiver_context
+
+    renewer_context = MagicMock()
+    renewer_context.__aenter__ = AsyncMock(return_value=MagicMock())
+    renewer_context.__aexit__ = AsyncMock(return_value=None)
+    auto_lock_renewer.return_value = renewer_context
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.receive_messages(keep_running=run_once())
+
+    service_bus_client_context.__aexit__.assert_awaited_once()
+    receiver_context.__aexit__.assert_awaited_once()
 
 
 @pytest.mark.parametrize("payload", test_data)
