@@ -208,11 +208,12 @@ class ResourceRepository(BaseRepository):
 
             resource.templateVersion = resource_patch.templateVersion
 
-        if resource_patch.properties is not None and len(resource_patch.properties) > 0:
+        if new_template is not None or (resource_patch.properties is not None and len(resource_patch.properties) > 0):
             await self.validate_patch(resource_patch, resource_template_repo, resource_template, resource_action, current_properties=resource.properties, target_template=new_template)
 
-            # if we're here then we're valid - update the props + persist
-            self._deep_dict_update(resource.properties, resource_patch.properties)
+            # if we're here then we're valid - update the props + persist if present
+            if resource_patch.properties is not None and len(resource_patch.properties) > 0:
+                self._deep_dict_update(resource.properties, resource_patch.properties)
 
         await self.update_item_with_etag(resource, etag)
         return resource, new_template if new_template is not None else resource_template
@@ -375,9 +376,8 @@ class ResourceRepository(BaseRepository):
             # Allow if this leaf OR any ancestor object is marked updateable: true
             is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(prop_path)
             is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
-            is_pipeline_prop = prop_path in pipeline_properties
 
-            if is_updateable or is_new_on_upgrade or is_pipeline_prop:
+            if is_updateable or is_new_on_upgrade:
                 return True
 
             if current_properties is not None and is_upgrade:
@@ -456,16 +456,21 @@ class ResourceRepository(BaseRepository):
             ):
                 update_template["properties"][prop_name] = copy.deepcopy(prop)
 
-        def _strip_required(schema_node: Any):
+        def _adjust_required(schema_node: Any):
             if isinstance(schema_node, dict):
-                schema_node.pop("required", None)
+                if not is_upgrade and resource_action != RESOURCE_ACTION_INSTALL:
+                    schema_node.pop("required", None)
+                elif "required" in schema_node and isinstance(schema_node["required"], list):
+                    schema_node["required"] = [r for r in schema_node["required"] if r not in pipeline_properties]
+                    if not schema_node["required"]:
+                        schema_node.pop("required", None)
                 for v in schema_node.values():
-                    _strip_required(v)
+                    _adjust_required(v)
             elif isinstance(schema_node, list):
                 for item in schema_node:
-                    _strip_required(item)
+                    _adjust_required(item)
 
-        _strip_required(update_template)
+        _adjust_required(update_template)
 
         validation_input = resource_patch.dict()
         validation_input["properties"] = merged_properties

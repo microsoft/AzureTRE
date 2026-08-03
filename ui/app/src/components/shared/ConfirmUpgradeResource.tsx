@@ -35,6 +35,7 @@ import {
   buildReducedSchema,
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
+  isKeyActiveInTemplate,
 } from "../../utils/schemaUpgradeUtils";
 
 interface ConfirmUpgradeProps {
@@ -91,6 +92,19 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const instanceUsesWsAuth =
     props.resource.resourceType === ResourceType.WorkspaceService ||
     props.resource.resourceType === ResourceType.UserResource;
+
+  const extractNewPropertyValues = (formData: any, templateSchema: any, keys: string[]) => {
+    const updatedNewVals: Record<string, any> = {};
+    keys.forEach((key) => {
+      if (isKeyActiveInTemplate(templateSchema, key, formData)) {
+        const val = getNestedValue(formData, key);
+        if (val !== undefined) {
+          setNestedValue(updatedNewVals, key, val);
+        }
+      }
+    });
+    return updatedNewVals;
+  };
 
   // Fetch new template schema and identify new properties missing in current resource
   useEffect(() => {
@@ -313,9 +327,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         // Set allNewProperties to the filtered list (for schema building)
         setAllNewProperties(newPropKeysToSend);
 
-        // prefill newPropertyValues with schema defaults (excluding pipeline properties)
+        // prefill newPropertyValues with schema defaults for active branches only
+        const initialCombinedState = mergePropertyValues(props.resource.properties, {});
         const initialValues: any = {};
         newPropKeysToSend.forEach((key) => {
+          if (!isKeyActiveInTemplate(newTemplate, key, initialCombinedState)) {
+            return;
+          }
           const propSchema = getSchemaProperty(newTemplate, key);
           const currentValue = getNestedValue(props.resource.properties, key);
 
@@ -366,9 +384,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const upgradeCall = async () => {
     setRequestLoadingState(LoadingState.Loading);
     try {
-      let body: any = { templateVersion: selectedVersion };
+      const mergedFormData = mergePropertyValues(props.resource.properties, newPropertyValues);
+      const activePropertiesToPatch = extractNewPropertyValues(mergedFormData, newTemplateSchema, allNewProperties);
 
-      body.properties = newPropertyValues;
+      let body: any = { templateVersion: selectedVersion, properties: activePropertiesToPatch };
 
       let op = await apiCall(
         props.resource.resourcePath,
@@ -512,10 +531,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                     liveOmit={true}
                     omitExtraData={true}
                     schema={finalSchema}
-                    formData={newPropertyValues}
+                    formData={mergePropertyValues(props.resource.properties, newPropertyValues)}
                     uiSchema={uiSchema}
                     validator={validator}
-                    onChange={(e) => setNewPropertyValues(e.formData)}
+                    onChange={(e) => {
+                      const updatedNewVals = extractNewPropertyValues(e.formData, newTemplateSchema, allNewProperties);
+                      setNewPropertyValues(updatedNewVals);
+                    }}
                   />
                 )}
               </Stack>
@@ -528,17 +550,24 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                 onRenderOption={onRenderOption}
                 styles={{ dropdown: { width: 125 } }}
                 onChange={(event, option) => {
-                  option && setSelectedVersion(option.text);
+                  if (option) {
+                    setSelectedVersion(option.text);
+                    setLoadingSchema(true);
+                  }
                 }}
                 selectedKey={selectedVersion}
               />
               <PrimaryButton
                 primaryDisabled={
                   !selectedVersion ||
+                  loadingSchema ||
                   (newPropertiesToFill.length > 0 &&
                     (() => {
                       const combinedState = mergePropertyValues(props.resource.properties, newPropertyValues);
                       return newPropertiesToFill.some((key) => {
+                        if (!isKeyActiveInTemplate(newTemplateSchema, key, combinedState)) {
+                          return false;
+                        }
                         const val = getNestedValue(newPropertyValues, key);
 
                         // Check if value is invalid enum (for both required and optional fields)

@@ -339,3 +339,28 @@ export const getTopLevelKeysFromTemplate = (template: any): string[] => {
   }
   return [...new Set(keys)];
 };
+
+// Helper to determine if a property key is defined on an active branch of the template for the given state
+export const isKeyActiveInTemplate = (template: any, path: string, state: any): boolean => {
+  if (!template) return false;
+  // If property is defined in top-level properties, it's active
+  if (getSchemaPropertyFromProperties(template.properties, path)) {
+    return true;
+  }
+  // If property is defined in allOf, check matching branch
+  if (template.allOf) {
+    for (const condition of template.allOf) {
+      const matchesIf = matchesIfCondition(condition.if, state);
+      if (matchesIf && condition.then && condition.then.properties) {
+        if (getSchemaPropertyFromProperties(condition.then.properties, path)) {
+          return true;
+        }
+      } else if (!matchesIf && condition.else && condition.else.properties) {
+        if (getSchemaPropertyFromProperties(condition.else.properties, path)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+};

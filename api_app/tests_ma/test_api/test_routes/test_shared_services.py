@@ -8,7 +8,7 @@ from fastapi import status
 from models.domain.resource import ResourceHistoryItem
 
 from tests_ma.test_api.conftest import create_admin_user, create_test_user
-from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERATION_ID, sample_resource_operation
+from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERATION_ID, sample_resource_operation, sample_resource_template
 
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -44,7 +44,9 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
             'description': 'desc here',
             'overview': 'overview here',
             'private_field_1': 'value_1',
-            'private_field_2': 'value_2'
+            'private_field_2': 'value_2',
+            'title': 'A display name',
+            'os_image': 'Windows 11'
         },
         resourcePath=f'/shared-services/{shared_service_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
@@ -220,7 +222,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
-    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_minor_version_patches_shared_service(self, _, update_item_mock, __, ___, ____, _____, app, client):
@@ -242,7 +244,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     @patch("api.routes.shared_services.ResourceHistoryRepository.save_item", return_value=AsyncMock())
     @patch("api.routes.shared_services.SharedServiceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     @patch("api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id", return_value=sample_shared_service(SHARED_SERVICE_ID))
-    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_shared_service())
+    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=sample_resource_template())
     @patch("api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service())
     @patch("api.routes.shared_services.send_resource_request_message", return_value=sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID))
     async def test_patch_shared_service_with_upgrade_major_version_and_force_update_patches_shared_service(self, _, update_item_mock, __, ___, ____, _____, app, client):
