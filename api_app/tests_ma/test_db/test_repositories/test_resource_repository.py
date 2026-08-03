@@ -598,6 +598,44 @@ async def test_validate_patch_evaluates_allof_condition_against_current_properti
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_rejects_system_properties_modification_during_upgrade(resource_repo):
+    """
+    Test that during a template upgrade, system properties (e.g. tre_id) are not treated as new properties and cannot be modified.
+    """
+    old_template_dict = sample_resource_template()
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=new_template)
+    template_repo.enrich_template = MagicMock(side_effect=lambda t, is_update=False: {
+        **t.dict(),
+        'system_properties': {'tre_id': {'type': 'string'}}
+    })
+
+    current_properties = {
+        'tre_id': 'old_tre_id',
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small'
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'tre_id': 'new_tre_id'})
+
+    with pytest.raises(ValidationError):
+        await resource_repo.validate_patch(
+            patch,
+            template_repo,
+            old_template,
+            strings.RESOURCE_ACTION_UPDATE,
+            current_properties=current_properties
+        )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified
@@ -827,7 +865,7 @@ async def test_validate_patch_allows_new_nested_property_under_existing_object_d
     new_template = parse_obj_as(ResourceTemplate, new_template_dict)
 
     get_template_mock.return_value = new_template
-    enrich_template_mock.return_value = new_template_dict
+    enrich_template_mock.side_effect = [old_template_dict, new_template_dict]
 
     template_repo = MagicMock()
     template_repo.get_template_by_name_and_version = get_template_mock

@@ -279,11 +279,11 @@ class ResourceRepository(BaseRepository):
         return properties
 
     async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str, current_properties: Optional[dict] = None, target_template: Optional[ResourceTemplate] = None):
-        # get the enriched (combined) template
+        # get the enriched (combined) template for the old/current template
         enriched_template = resource_template_repo.enrich_template(resource_template, is_update=True)
 
-        # get the old template properties (including allOf) for comparison during upgrades
-        old_template_properties = self._get_all_property_keys_from_template(resource_template)
+        # get the old template properties (including allOf and system_properties) for comparison during upgrades
+        old_template_properties = self._get_all_property_keys_from_template(enriched_template)
 
         # get the schema for the target version if upgrade is happening
         if resource_patch.templateVersion is not None:
