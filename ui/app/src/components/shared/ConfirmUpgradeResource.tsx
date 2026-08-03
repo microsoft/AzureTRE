@@ -281,12 +281,26 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
         const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
         const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);
+
+        // Build a state with target-template defaults applied so that allOf branch conditions
+        // introduced by the new template (e.g. a new selector with a default value) are
+        // evaluated correctly when checking which properties become required on upgrade.
+        const stateWithNewDefaults = { ...props.resource.properties };
+        newKeys.forEach((key) => {
+          if (getNestedValue(stateWithNewDefaults, key) === undefined) {
+            const propSchema = getSchemaProperty(newTemplate, key);
+            if (propSchema && propSchema.default !== undefined) {
+              setNestedValue(stateWithNewDefaults, key, propSchema.default);
+            }
+          }
+        });
+
         const newPropKeys = newKeys.filter((key) => {
           const currentValue = getNestedValue(props.resource.properties, key);
           if (!currentKeys.includes(key)) {
             return true;
           }
-          if (currentValue === undefined && isPropertyRequiredInState(newTemplate, key, props.resource.properties)) {
+          if (currentValue === undefined && isPropertyRequiredInState(newTemplate, key, stateWithNewDefaults)) {
             return true;
           }
           const propSchema = getSchemaProperty(newTemplate, key);
@@ -331,7 +345,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             !propSchema.enum.includes(currentValue);
 
           const isMissingRequired =
-            currentValue === undefined && isPropertyRequiredInState(newTemplate, key, props.resource.properties);
+            currentValue === undefined && isPropertyRequiredInState(newTemplate, key, stateWithNewDefaults);
 
           if (isEnumInvalid || isMissingRequired) {
             return true;

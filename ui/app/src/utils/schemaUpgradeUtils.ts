@@ -14,19 +14,10 @@ export const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   let keys: string[] = [];
   for (const [key, value] of Object.entries(properties)) {
     if (partGuard(key)) continue;
-    if (value && typeof value === "object") {
-      if ("properties" in value) {
-        keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + "."));
-      } else if (
-        "items" in value &&
-        typeof (value as any).items === "object" &&
-        (value as any).items !== null &&
-        "properties" in (value as any).items
-      ) {
-        keys = keys.concat(getAllPropertyKeys((value as any).items["properties"], prefix + key + "."));
-      } else {
-        keys.push(prefix + key);
-      }
+    if (value && typeof value === "object" && "properties" in value) {
+      // Recurse only into nested objects; arrays-of-objects are treated as atomic
+      // leaves because getNestedValue/setNestedValue don't support array-index traversal.
+      keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + "."));
     } else {
       keys.push(prefix + key);
     }
@@ -104,10 +95,9 @@ export const getSchemaPropertyFromProperties = (properties: any, path: string): 
     if (i === parts.length - 1) {
       return current[part];
     }
+    // Only traverse into nested object schemas (not array items — those are atomic)
     if (current[part].properties) {
       current = current[part].properties;
-    } else if (current[part].items && current[part].items.properties) {
-      current = current[part].items.properties;
     } else {
       return null;
     }
@@ -210,12 +200,8 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
       return false;
     }
 
-    const nextProp = currentSchema.properties ? currentSchema.properties[part] : undefined;
-    if (nextProp && nextProp.items && nextProp.items.properties) {
-      currentSchema = nextProp.items;
-    } else {
-      currentSchema = nextProp;
-    }
+    // Advance to the next nested object schema (arrays-of-objects are atomic — no items traversal)
+    currentSchema = currentSchema.properties ? currentSchema.properties[part] : undefined;
     currState = currState ? currState[part] : undefined;
   }
   return false;
@@ -246,21 +232,13 @@ export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
       .map((k) => k.slice(propName.length + 1));
 
     if (exactMatch || matchingSubKeys.length > 0) {
-      if (matchingSubKeys.length > 0 && propSchema && typeof propSchema === "object") {
-        if ((propSchema as any).properties) {
-          prunedProperties[propName] = pruneSchemaNode(propSchema, matchingSubKeys);
-        } else if (
-          (propSchema as any).items &&
-          typeof (propSchema as any).items === "object" &&
-          (propSchema as any).items.properties
-        ) {
-          prunedProperties[propName] = {
-            ...(propSchema as any),
-            items: pruneSchemaNode((propSchema as any).items, matchingSubKeys),
-          };
-        } else {
-          prunedProperties[propName] = { ...(propSchema as any) };
-        }
+      if (
+        matchingSubKeys.length > 0 &&
+        propSchema &&
+        typeof propSchema === "object" &&
+        (propSchema as any).properties
+      ) {
+        prunedProperties[propName] = pruneSchemaNode(propSchema, matchingSubKeys);
       } else {
         prunedProperties[propName] = { ...(propSchema as any) };
       }

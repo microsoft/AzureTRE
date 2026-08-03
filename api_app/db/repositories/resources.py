@@ -278,8 +278,25 @@ class ResourceRepository(BaseRepository):
             for path in removed_top_paths:
                 self._remove_property_by_path(resource.properties, path)
 
-            # Prune any empty dict/list containers left behind after removal
-            self._prune_empty_containers(resource.properties)
+            # Prune empty container ancestors of removed paths that are no longer in the target schema.
+            # Do NOT call _prune_empty_containers globally — that would incorrectly remove valid empty
+            # arrays/dicts (e.g. rule_collections: []) that still exist in the target schema.
+            for removed_path in removed_top_paths:
+                parts = removed_path.split(".")
+                for depth in range(len(parts) - 1, 0, -1):
+                    parent_path = ".".join(parts[:depth])
+                    if parent_path in target_properties:
+                        break  # Ancestor is still in target schema, stop climbing
+                    # Check if this ancestor container is now empty
+                    curr: Any = resource.properties
+                    found = True
+                    for p in parent_path.split("."):
+                        if not isinstance(curr, dict) or p not in curr:
+                            found = False
+                            break
+                        curr = curr[p]
+                    if found and isinstance(curr, (dict, list)) and len(curr) == 0:
+                        self._remove_property_by_path(resource.properties, parent_path)
 
             resource.templateVersion = resource_patch.templateVersion
 
