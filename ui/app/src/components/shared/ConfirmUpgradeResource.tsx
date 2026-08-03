@@ -581,6 +581,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
                 {finalSchema && (
                   <Form
+                    liveValidate
                     liveOmit={false}
                     omitExtraData={false}
                     schema={finalSchema}

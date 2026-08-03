@@ -1247,3 +1247,101 @@ def test_deep_dict_update_preserves_nested_siblings(resource_repo):
             "added_field": "added_value"
         }
     }
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
+async def test_validate_patch_allows_absent_target_required_non_updateable_property_on_upgrade(enrich_template_mock, get_template_mock, resource_repo):
+    """
+    Test that an optional non-updateable property from the old template that becomes required in
+    the target version can be initially populated on upgrade if absent from current properties.
+    """
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['newly_required'] = {
+        'type': 'string',
+        'title': 'Newly Required Non-Updateable',
+        'updateable': False
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    target_template_dict = copy.deepcopy(old_template_dict)
+    target_template_dict['version'] = '0.2.0'
+    target_template_dict['required'].append('newly_required')
+    target_template = parse_obj_as(ResourceTemplate, target_template_dict)
+
+    get_template_mock.return_value = target_template
+    enrich_template_mock.return_value = target_template_dict
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = enrich_template_mock
+
+    # Resource current properties omit 'newly_required'
+    current_properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small'
+    }
+
+    # Patch supplies 'newly_required' during upgrade
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'newly_required': 'initial_value'})
+
+    # Validation should succeed without throwing ValidationError
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        old_template,
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties,
+        target_template=target_template
+    )
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
+async def test_patch_resource_preserves_runtime_properties_on_upgrade(get_template_mock, resource_repo, resource_history_repo):
+    """
+    Test that patch_resource preserves API-injected/runtime properties (e.g. workspace_subscription_id)
+    that are absent from both current and target template schemas.
+    """
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+
+    old_template_dict = sample_resource_template()
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    resource_repo.validate_template_version_patch = AsyncMock(return_value=new_template)
+    get_template_mock.return_value = new_template
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = get_template_mock
+    template_repo.enrich_template = MagicMock(return_value=new_template_dict)
+
+    user = create_test_user()
+    resource = sample_resource()
+    resource.properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'workspace_subscription_id': 'sub-123-abc'  # Runtime property not in template schema
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={})
+
+    updated_resource, _ = await resource_repo.patch_resource(
+        resource,
+        patch,
+        old_template,
+        "some-etag",
+        template_repo,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE
+    )
+
+    assert updated_resource.properties.get('workspace_subscription_id') == 'sub-123-abc'

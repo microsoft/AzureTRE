@@ -275,15 +275,22 @@ class ResourceRepository(BaseRepository):
         if resource_patch.templateVersion is not None:
             new_template = await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
 
+            current_template_properties = self._get_all_property_keys_from_template(resource_template)
+            enriched_current_template = resource_template_repo.enrich_template(resource_template, is_update=True)
+            if isinstance(enriched_current_template, dict):
+                current_template_properties.update(self._get_all_property_keys_from_template(enriched_current_template))
+
             enriched_target_template = resource_template_repo.enrich_template(new_template, is_update=True)
             target_properties = self._get_all_property_keys_from_template(enriched_target_template)
 
+            removed_template_paths = {path for path in current_template_properties if path not in target_properties}
+
             # Remove at the highest path that is completely absent from the target template,
-            # so that containers (e.g. obsolete: {}) and array remnants are also cleaned up.
+            # for properties that were present in the current template but absent from target template.
             existing_paths = [path for path, _ in self._get_leaf_properties(resource.properties)]
             removed_top_paths: set[str] = set()
             for path in existing_paths:
-                if path not in target_properties:
+                if any(path == tp or path.startswith(tp + ".") for tp in removed_template_paths):
                     # Find the shortest prefix of this path that is fully absent from the target
                     parts = path.split(".")
                     remove_at = path
@@ -499,6 +506,77 @@ class ResourceRepository(BaseRepository):
                     return True
             return False
 
+        target_template_properties = self._get_all_property_keys_from_template(enriched_template)
+
+        def _deep_merge(base: dict, patch: dict) -> dict:
+            res = copy.deepcopy(base)
+            for k, v in patch.items():
+                if isinstance(v, dict) and k in res and isinstance(res[k], dict):
+                    res[k] = _deep_merge(res[k], v)
+                else:
+                    res[k] = copy.deepcopy(v)
+            return res
+
+        valid_current_properties = {}
+        if current_properties:
+            for k, v in current_properties.items():
+                if any(prop_key == k or prop_key.startswith(f"{k}.") for prop_key in target_template_properties):
+                    valid_current_properties[k] = copy.deepcopy(v)
+
+        merged_properties = _deep_merge(valid_current_properties, resource_patch.properties or {}) if current_properties is not None else (resource_patch.properties or {})
+
+        def is_property_required_in_target(template_schema: dict, path: str, state: dict) -> bool:
+            if not template_schema or not isinstance(template_schema, dict):
+                return False
+
+            parts = path.split(".")
+            curr_schema = template_schema
+            curr_state = state or {}
+
+            for i, part in enumerate(parts):
+                if not curr_schema or not isinstance(curr_schema, dict):
+                    return False
+
+                is_part_required = False
+                if "required" in curr_schema and isinstance(curr_schema["required"], list):
+                    if part in curr_schema["required"]:
+                        is_part_required = True
+
+                if "allOf" in curr_schema and isinstance(curr_schema["allOf"], list):
+                    for condition in curr_schema["allOf"]:
+                        if isinstance(condition, dict):
+                            if_cond = condition.get("if")
+                            matches_if = self._matches_if_condition(if_cond, curr_state) if if_cond else False
+                            branch = condition.get("then") if matches_if else condition.get("else")
+                            if branch and isinstance(branch, dict) and "required" in branch and isinstance(branch["required"], list):
+                                if part in branch["required"]:
+                                    is_part_required = True
+
+                if i == len(parts) - 1:
+                    return is_part_required
+
+                is_part_present = isinstance(curr_state, dict) and part in curr_state and curr_state[part] is not None
+                if not is_part_required and not is_part_present:
+                    return False
+
+                next_schema = None
+                if isinstance(curr_schema.get("properties"), dict) and part in curr_schema["properties"]:
+                    next_schema = curr_schema["properties"][part]
+                else:
+                    if "allOf" in curr_schema and isinstance(curr_schema["allOf"], list):
+                        for condition in curr_schema["allOf"]:
+                            if isinstance(condition, dict):
+                                if_cond = condition.get("if")
+                                matches_if = self._matches_if_condition(if_cond, curr_state) if if_cond else False
+                                branch = condition.get("then") if matches_if else condition.get("else")
+                                if branch and isinstance(branch, dict) and isinstance(branch.get("properties"), dict) and part in branch["properties"]:
+                                    next_schema = branch["properties"][part]
+                                    break
+                curr_schema = next_schema
+                curr_state = curr_state.get(part) if isinstance(curr_state, dict) else None
+
+            return False
+
         def is_leaf_allowed(prop_path: str, prop_val: Any) -> bool:
             """
             Determines whether a patched leaf property path is permitted.
@@ -508,6 +586,7 @@ class ResourceRepository(BaseRepository):
             2. Introduced as a new property path during a template upgrade.
             3. Referenced as a pipeline property in the template's install/upgrade pipeline.
             4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
+            5. Absent from the persisted resource and required by the active target schema during an upgrade.
             """
             prop_def = get_prop_schema(enriched_template, prop_path)
             # Allow if this leaf OR any ancestor object is marked updateable: true
@@ -526,6 +605,9 @@ class ResourceRepository(BaseRepository):
                     if existing_val not in prop_def["enum"]:
                         return True
 
+                if not has_existing and is_property_required_in_target(enriched_template, prop_path, merged_properties):
+                    return True
+
             return False
 
         def is_all_leaves_allowed(prop_path: str, prop_val: Any) -> bool:
@@ -539,8 +621,6 @@ class ResourceRepository(BaseRepository):
             # If there are no leaves (empty object), treat as not allowed to avoid accidental permits.
             return len(leaves) > 0
 
-        target_template_properties = self._get_all_property_keys_from_template(enriched_template)
-
         # If updating/patching properties, ensure EVERY patched leaf property is allowed
         if resource_action != RESOURCE_ACTION_INSTALL and resource_patch.properties:
             leaf_props = self._get_leaf_properties(resource_patch.properties)
@@ -550,23 +630,6 @@ class ResourceRepository(BaseRepository):
                         raise ValidationError(f"Property '{prop_path}' is not updateable.")
                     else:
                         raise ValidationError(f"Property '{prop_path}' is unexpected.")
-
-        def _deep_merge(base: dict, patch: dict) -> dict:
-            res = copy.deepcopy(base)
-            for k, v in patch.items():
-                if isinstance(v, dict) and k in res and isinstance(res[k], dict):
-                    res[k] = _deep_merge(res[k], v)
-                else:
-                    res[k] = copy.deepcopy(v)
-            return res
-
-        valid_current_properties = {}
-        if current_properties:
-            for k, v in current_properties.items():
-                if any(prop_key == k or prop_key.startswith(f"{k}.") for prop_key in target_template_properties):
-                    valid_current_properties[k] = copy.deepcopy(v)
-
-        merged_properties = _deep_merge(valid_current_properties, resource_patch.properties or {}) if current_properties is not None else (resource_patch.properties or {})
 
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
