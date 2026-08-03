@@ -519,6 +519,37 @@ async def test_validate_patch_rejects_existing_non_updateable_property_during_up
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_allows_unchanged_null_property_during_upgrade(resource_repo):
+    """
+    Test that during a template upgrade, non-updateable properties with existing None/null value sent unchanged pass validation.
+    """
+    old_template = sample_resource_template()
+    new_template = copy.deepcopy(old_template)
+    new_template['version'] = '0.2.0'
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    current_properties = {
+        'os_image': None,
+        'vm_size': 'small'
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'os_image': None})
+
+    resource_repo._validate_resource_parameters = MagicMock()
+
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        parse_obj_as(ResourceTemplate, old_template),
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties
+    )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified

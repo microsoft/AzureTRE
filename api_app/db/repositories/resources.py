@@ -329,16 +329,16 @@ class ResourceRepository(BaseRepository):
 
         is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
 
-        def get_nested_val(data: Any, path: str) -> Any:
+        def get_nested_val(data: Any, path: str) -> tuple[bool, Any]:
             if not isinstance(data, dict):
-                return None
+                return False, None
             parts = path.split(".")
             curr = data
             for part in parts:
                 if not isinstance(curr, dict) or part not in curr:
-                    return None
+                    return False, None
                 curr = curr[part]
-            return curr
+            return True, curr
 
         def has_updateable_parent(path: str) -> bool:
             """
@@ -374,8 +374,8 @@ class ResourceRepository(BaseRepository):
                 return True
 
             if current_properties is not None and is_upgrade:
-                existing_val = get_nested_val(current_properties, prop_path)
-                if existing_val is not None and existing_val == prop_val:
+                has_existing, existing_val = get_nested_val(current_properties, prop_path)
+                if has_existing and existing_val == prop_val:
                     return True
 
             return False

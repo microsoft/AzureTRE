@@ -1449,7 +1449,7 @@ describe("ConfirmUpgradeResource Component", () => {
     expect(screen.queryByDisplayValue("v110_default")).not.toBeInTheDocument();
   });
 
-  it("configures dialog with isBlocking false to allow light-dismiss when clicking outside", () => {
+  it("renders confirmation dialog", () => {
     renderWithWorkspaceContext(<ConfirmUpgradeResource resource={mockResource} onDismiss={mockOnDismiss} />);
     const dialog = screen.getByTestId("dialog");
     expect(dialog).toBeInTheDocument();
