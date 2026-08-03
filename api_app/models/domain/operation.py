@@ -90,8 +90,8 @@ class Operation(AzureTREModel):
     status: Status = Field(None, title="Operation status")
     action: str = Field(title="action", description="Name of the action being performed on the resource, i.e. install, uninstall, start")
     message: str = Field("", title="Additional operation status information")
-    createdWhen: float = Field("", title="POSIX Timestamp for when the operation was submitted")
-    updatedWhen: float = Field("", title="POSIX Timestamp for When the operation was updated")
+    createdWhen: float = Field(0.0, title="POSIX Timestamp for when the operation was submitted")
+    updatedWhen: float = Field(0.0, title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
 

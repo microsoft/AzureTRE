@@ -64,7 +64,7 @@ class CustomAction(AzureTREModel):
 class PipelineStepProperty(AzureTREModel):
     name: str = Field(title="name", description="name of the property to update")
     type: str = Field(title="type", description="data type of the property to update")
-    value: Union[dict, str] = Field(default=None, title="value", description="value to use in substitution for the property to update")
+    value: Optional[Union[dict, str]] = Field(default=None, title="value", description="value to use in substitution for the property to update")
     arraySubstitutionAction: Optional[str] = Field(default="", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
     arrayMatchField: Optional[str] = Field(default="", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
 

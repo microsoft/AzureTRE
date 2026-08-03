@@ -83,7 +83,7 @@ class AirlockRequestWithAllowedUserActionsInList(BaseModel):
 
 
 class AirlockRequestInCreate(BaseModel):
-    type: AirlockRequestType = Field("", title="Airlock request type", description="Specifies if this is an import or an export request")
+    type: AirlockRequestType = Field(title="Airlock request type", description="Specifies if this is an import or an export request")
     title: str = Field("Airlock Request", title="Brief title for the request")
     businessJustification: str = Field("Business Justifications", title="Explanation that will be provided to the request reviewer")
     properties: dict = Field(default_factory=dict, title="Airlock request parameters", description="Values for the parameters required by the Airlock request specification")
@@ -97,11 +97,11 @@ class AirlockRequestInCreate(BaseModel):
 
 
 class AirlockReviewInCreate(BaseModel):
-    approval: bool = Field("", title="Airlock review decision", description="Airlock review decision")
+    approval: bool = Field(title="Airlock review decision", description="Airlock review decision")
     decisionExplanation: str = Field("Decision Explanation", title="Explanation of the reviewer for the reviews decision")
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "approval": "True",
+            "approval": True,
             "decisionExplanation": "the reason why this request was approved/rejected"
         }
     })
