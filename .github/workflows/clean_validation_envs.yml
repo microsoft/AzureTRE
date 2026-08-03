@@ -22,7 +22,7 @@ jobs:
       pull-requests: read # For checking PRs
       actions: read # For checking workflow runs
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # This is CRITICAL since we're making decisions based on branch existence
           fetch-depth: 0
