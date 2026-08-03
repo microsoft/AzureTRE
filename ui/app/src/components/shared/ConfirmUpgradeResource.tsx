@@ -408,13 +408,24 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   // Strip tre-hidden for visible new properties so user can edit them if needed
   const sanitizedUiSchema = React.useMemo(() => {
     if (!baseUiSchema || !newPropertiesToFill.length) return baseUiSchema;
-    const cloned = JSON.parse(JSON.stringify(baseUiSchema));
+    const safeDeepClone = (obj: any): any => {
+      if (obj === null || typeof obj !== "object") return obj;
+      if (Array.isArray(obj)) return obj.map(safeDeepClone);
+      const res: Record<string, any> = {};
+      for (const key of Object.keys(obj)) {
+        if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+        res[key] = safeDeepClone(obj[key]);
+      }
+      return res;
+    };
+    const cloned = safeDeepClone(baseUiSchema);
     newPropertiesToFill.forEach((key) => {
       const parts = key.split(".");
       let current = cloned;
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        if (!current || !current[part]) break;
+        if (part === "__proto__" || part === "constructor" || part === "prototype") break;
+        if (!current || typeof current !== "object" || !current[part]) break;
         if (i === parts.length - 1) {
           if (typeof current[part].classNames === "string") {
             current[part].classNames = current[part].classNames.replace(/\btre-hidden\b/g, "").trim();

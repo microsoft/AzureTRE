@@ -403,6 +403,17 @@ class ResourceRepository(BaseRepository):
                     else:
                         raise ValidationError(f"Property '{prop_path}' is unexpected.")
 
+        def _deep_merge(base: dict, patch: dict) -> dict:
+            res = copy.deepcopy(base)
+            for k, v in patch.items():
+                if isinstance(v, dict) and k in res and isinstance(res[k], dict):
+                    res[k] = _deep_merge(res[k], v)
+                else:
+                    res[k] = copy.deepcopy(v)
+            return res
+
+        merged_properties = _deep_merge(current_properties, resource_patch.properties or {}) if current_properties is not None else (resource_patch.properties or {})
+
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
         update_template["properties"] = {}
@@ -418,6 +429,7 @@ class ResourceRepository(BaseRepository):
                     and is_all_leaves_allowed(prop_name, prop_val)
                 )
                 or prop_name in pipeline_properties
+                or (current_properties is not None and prop_name in merged_properties)
             ):
                 update_template["properties"][prop_name] = copy.deepcopy(prop)
 
@@ -432,7 +444,10 @@ class ResourceRepository(BaseRepository):
 
         _strip_required(update_template)
 
-        self._validate_resource_parameters(resource_patch.dict(), update_template)
+        validation_input = resource_patch.dict()
+        validation_input["properties"] = merged_properties
+
+        self._validate_resource_parameters(validation_input, update_template)
 
     def get_timestamp(self) -> float:
         return datetime.now(UTC).timestamp()

@@ -550,6 +550,54 @@ async def test_validate_patch_allows_unchanged_null_property_during_upgrade(reso
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_evaluates_allof_condition_against_current_properties(resource_repo):
+    """
+    Test that during upgrade, allOf conditional branches depending on existing properties evaluate against merged state.
+    """
+    old_template = sample_resource_template()
+    old_template['properties']['auth_type'] = {
+        'type': 'string',
+        'updateable': False
+    }
+
+    new_template = copy.deepcopy(old_template)
+    new_template['version'] = '0.2.0'
+    new_template['properties']['oauth_client_id'] = {'type': 'string'}
+    new_template['allOf'] = [
+        {
+            'if': {
+                'properties': {'auth_type': {'const': 'OAuth'}}
+            },
+            'then': {
+                'properties': {'oauth_client_id': {'type': 'string'}}
+            }
+        }
+    ]
+    new_template['unevaluatedProperties'] = False
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    current_properties = {
+        'auth_type': 'OAuth',
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small'
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'oauth_client_id': 'client_123'})
+
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        parse_obj_as(ResourceTemplate, old_template),
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties
+    )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified
