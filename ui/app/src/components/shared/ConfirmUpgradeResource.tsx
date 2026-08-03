@@ -256,11 +256,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
         const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);
         const newPropKeys = newKeys.filter((key) => {
+          const currentValue = getNestedValue(props.resource.properties, key);
           if (!currentKeys.includes(key)) {
             return true;
           }
+          if (currentValue === undefined && isPropertyRequiredInState(newTemplate, key, props.resource.properties)) {
+            return true;
+          }
           const propSchema = getSchemaProperty(newTemplate, key);
-          const currentValue = getNestedValue(props.resource.properties, key);
           if (propSchema && propSchema.enum && currentValue !== undefined && !propSchema.enum.includes(currentValue)) {
             return true;
           }
@@ -290,7 +293,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           return !pipelineProps.has(topKey);
         });
 
-        // Filter out properties that are hidden (tre-hidden) - they don't need user input unless they have an invalid enum value
+        // Filter out properties that are hidden (tre-hidden) - they don't need user input unless they have an invalid enum value or are missing required properties
         const uiSchema = newTemplate?.uiSchema || {};
         const visibleNewPropKeys = newPropKeysWithoutPipeline.filter((key) => {
           const propSchema = getSchemaProperty(newTemplate, key);
@@ -301,7 +304,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             currentValue !== undefined &&
             !propSchema.enum.includes(currentValue);
 
-          if (isEnumInvalid) {
+          const isMissingRequired =
+            currentValue === undefined && isPropertyRequiredInState(newTemplate, key, props.resource.properties);
+
+          if (isEnumInvalid || isMissingRequired) {
             return true;
           }
 
@@ -554,6 +560,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                   if (option) {
                     setSelectedVersion(option.text);
                     setLoadingSchema(true);
+                    setFormHasErrors(false);
                   }
                 }}
                 selectedKey={selectedVersion}

@@ -133,8 +133,11 @@ class ResourceRepository(BaseRepository):
             for k, v in properties.items():
                 full_key = f"{prefix}{k}"
                 keys.add(full_key)
-                if isinstance(v, dict) and "properties" in v:
-                    keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+                if isinstance(v, dict):
+                    if "properties" in v:
+                        keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+                    elif "items" in v and isinstance(v["items"], dict) and "properties" in v["items"]:
+                        keys.update(self._get_all_property_keys_from_template(v["items"], prefix=f"{full_key}."))
 
         all_of = template_dict.get("allOf")
         if all_of:
@@ -147,8 +150,11 @@ class ResourceRepository(BaseRepository):
                                 for k, v in clause_props.items():
                                     full_key = f"{prefix}{k}"
                                     keys.add(full_key)
-                                    if isinstance(v, dict) and "properties" in v:
-                                        keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+                                    if isinstance(v, dict):
+                                        if "properties" in v:
+                                            keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+                                        elif "items" in v and isinstance(v["items"], dict) and "properties" in v["items"]:
+                                            keys.update(self._get_all_property_keys_from_template(v["items"], prefix=f"{full_key}."))
 
         system_props = template_dict.get("system_properties")
         if isinstance(system_props, dict):
@@ -164,19 +170,42 @@ class ResourceRepository(BaseRepository):
                 full_key = f"{prefix}{k}"
                 if isinstance(v, dict) and v:
                     leaves.extend(self._get_leaf_properties(v, prefix=f"{full_key}."))
+                elif isinstance(v, list) and v:
+                    for elem in v:
+                        if isinstance(elem, dict) and elem:
+                            leaves.extend(self._get_leaf_properties(elem, prefix=f"{full_key}."))
+                        else:
+                            leaves.append((full_key, v))
+                            break
                 else:
                     leaves.append((full_key, v))
         return leaves
 
-    def _remove_property_by_path(self, properties: dict, path: str):
+    def _remove_property_by_path(self, target: Any, path: str):
+        if not path:
+            return
         parts = path.split(".")
-        current = properties
-        for part in parts[:-1]:
-            if not isinstance(current, dict) or part not in current:
+
+        def remove_recursive(current: Any, parts_left: List[str]):
+            if not parts_left:
                 return
-            current = current[part]
-        if isinstance(current, dict) and parts[-1] in current:
-            del current[parts[-1]]
+            key = parts_left[0]
+            if len(parts_left) == 1:
+                if isinstance(current, dict) and key in current:
+                    del current[key]
+                elif isinstance(current, list):
+                    for item in current:
+                        if isinstance(item, dict) and key in item:
+                            del item[key]
+            else:
+                if isinstance(current, dict) and key in current:
+                    remove_recursive(current[key], parts_left[1:])
+                elif isinstance(current, list):
+                    for item in current:
+                        if isinstance(item, dict) and key in item:
+                            remove_recursive(item[key], parts_left[1:])
+
+        remove_recursive(target, parts)
 
     def _deep_dict_update(self, target: dict, patch: dict):
         for k, v in patch.items():
@@ -268,17 +297,15 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def _get_pipeline_properties(self, enriched_template) -> set[str]:
+    def _get_pipeline_properties(self, enriched_template, action: str = "upgrade") -> set[str]:
         properties = set()
         pipeline = enriched_template.get("pipeline")
-        if pipeline:
-            for phase in ["install", "upgrade"]:
-                if phase in pipeline and pipeline[phase]:
-                    for step in pipeline[phase]:
-                        if "properties" in step and step["properties"]:
-                            for prop in step["properties"]:
-                                if isinstance(prop, dict) and prop.get("name"):
-                                    properties.add(prop["name"])
+        if pipeline and action in pipeline and pipeline[action]:
+            for step in pipeline[action]:
+                if "properties" in step and step["properties"]:
+                    for prop in step["properties"]:
+                        if isinstance(prop, dict) and prop.get("name"):
+                            properties.add(prop["name"])
         return properties
 
     async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str, current_properties: Optional[dict] = None, target_template: Optional[ResourceTemplate] = None):
@@ -334,9 +361,9 @@ class ResourceRepository(BaseRepository):
                                         break
             return None
 
-        pipeline_properties = self._get_pipeline_properties(enriched_template)
-
         is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
+        action_phase = "upgrade" if is_upgrade else (resource_action if resource_action else "install")
+        pipeline_properties = self._get_pipeline_properties(enriched_template, action=action_phase)
 
         def get_nested_val(data: Any, path: str) -> tuple[bool, Any]:
             if not isinstance(data, dict):
