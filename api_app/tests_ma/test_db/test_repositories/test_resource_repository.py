@@ -707,6 +707,30 @@ async def test_validate_patch_allows_retained_system_properties_with_unevaluated
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_rejects_empty_object_for_non_updateable_property(resource_repo):
+    """
+    Test that sending an empty dict for a non-updateable object property is validated and rejected.
+    """
+    template_dict = sample_resource_template()
+    template_dict['properties']['parent_object'] = {
+        'type': 'object',
+        'updateable': False,
+        'properties': {
+            'child_prop': {'type': 'string'}
+        }
+    }
+    template = parse_obj_as(ResourceTemplate, template_dict)
+
+    template_repo = MagicMock()
+    template_repo.enrich_template = MagicMock(return_value=template_dict)
+
+    patch = ResourcePatch(isEnabled=True, properties={'parent_object': {}})
+
+    with pytest.raises(ValidationError, match="Property 'parent_object' is not updateable."):
+        await resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_UPDATE)
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified

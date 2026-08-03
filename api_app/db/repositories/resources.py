@@ -162,7 +162,7 @@ class ResourceRepository(BaseRepository):
         if isinstance(properties, dict):
             for k, v in properties.items():
                 full_key = f"{prefix}{k}"
-                if isinstance(v, dict):
+                if isinstance(v, dict) and v:
                     leaves.extend(self._get_leaf_properties(v, prefix=f"{full_key}."))
                 else:
                     leaves.append((full_key, v))
