@@ -149,6 +149,12 @@ class ResourceRepository(BaseRepository):
                                     keys.add(full_key)
                                     if isinstance(v, dict) and "properties" in v:
                                         keys.update(self._get_all_property_keys_from_template(v, prefix=f"{full_key}."))
+
+        system_props = template_dict.get("system_properties")
+        if isinstance(system_props, dict):
+            for k in system_props:
+                keys.add(f"{prefix}{k}")
+
         return keys
 
     def _get_leaf_properties(self, properties: Any, prefix: str = "") -> List[Tuple[str, Any]]:
@@ -412,7 +418,13 @@ class ResourceRepository(BaseRepository):
                     res[k] = copy.deepcopy(v)
             return res
 
-        merged_properties = _deep_merge(current_properties, resource_patch.properties or {}) if current_properties is not None else (resource_patch.properties or {})
+        valid_current_properties = {}
+        if current_properties:
+            for k, v in current_properties.items():
+                if any(prop_key == k or prop_key.startswith(f"{k}.") for prop_key in target_template_properties):
+                    valid_current_properties[k] = copy.deepcopy(v)
+
+        merged_properties = _deep_merge(valid_current_properties, resource_patch.properties or {}) if current_properties is not None else (resource_patch.properties or {})
 
         # validate the PATCH data against the target schema.
         update_template = copy.deepcopy(enriched_template)
