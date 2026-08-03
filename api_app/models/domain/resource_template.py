@@ -1,13 +1,41 @@
 from typing import Dict, Any, List, Optional, Union
 
-from pydantic import Field
+from pydantic import ConfigDict, Field, model_serializer
 
 from models.domain.azuretremodel import AzureTREModel
 from models.domain.resource import ResourceType
 
 
+def _strip_none_recursive(obj: Any) -> None:
+    if isinstance(obj, dict):
+        for key in list(obj.keys()):
+            if obj[key] is None:
+                del obj[key]
+            else:
+                _strip_none_recursive(obj[key])
+    elif isinstance(obj, list):
+        for item in obj:
+            _strip_none_recursive(item)
+
+
 class Property(AzureTREModel):
-    type: str = Field(title="Property type")
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, extra="allow")  # extra preserves unknown JSON Schema keywords (e.g. $ref, oneOf, format)
+
+    @model_serializer(mode='plain')
+    def _serialize(self) -> dict:
+        # Emit only explicitly-set fields plus extra keywords; strip None at all nesting levels
+        if not hasattr(self, 'model_fields_set'):
+            # Pydantic passed an uncoerced plain dict (e.g. via item-level assignment to properties)
+            result = {k: v for k, v in self.items() if v is not None}
+            _strip_none_recursive(result)
+            return result
+        data = {k: v for k, v in ((f, getattr(self, f)) for f in self.model_fields_set) if v is not None}
+        if self.__pydantic_extra__:
+            data.update({k: v for k, v in self.__pydantic_extra__.items() if v is not None})
+        _strip_none_recursive(data)
+        return data
+
+    type: Optional[str] = Field(default=None, title="Property type")
     title: str = Field(default="", title="Property description")
     description: Optional[str] = Field(default=None, title="Property description")
     default: Any = Field(default=None, title="Default value for the property")
@@ -57,6 +85,14 @@ class Pipeline(AzureTREModel):
 
 
 class ResourceTemplate(AzureTREModel):
+    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, validate_assignment=True)
+
+    @model_serializer(mode='wrap')
+    def _serialize(self, handler: Any, info: Any) -> dict:
+        data = handler(self)
+        _strip_none_recursive(data)  # covers allOf and other plain-dict fields missed by exclude_none
+        return data
+
     id: str
     name: str = Field(title="Unique template name")
     title: str = Field(default="", title="Template title or friendly name")
@@ -67,7 +103,7 @@ class ResourceTemplate(AzureTREModel):
     type: str = "object"
     required: List[str] = Field(title="List of properties which must be provided")
     authorizedRoles: Optional[List[str]] = Field(default_factory=list, title="If not empty, the user is required to have one of these roles to install the template")
-    properties: Dict[str, Any] = Field(title="Template properties")
+    properties: Dict[str, Property] = Field(title="Template properties")
     allOf: Optional[List[dict]] = Field(default=None, title="All Of", description="Used for conditionally showing and validating fields")
     actions: List[CustomAction] = Field(default_factory=list, title="Template actions")
     customActions: List[CustomAction] = Field(default_factory=list, title="Template custom actions")

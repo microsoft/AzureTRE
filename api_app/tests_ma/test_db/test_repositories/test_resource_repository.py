@@ -192,9 +192,6 @@ async def test_validate_input_against_template_raises_value_error_if_payload_is_
         properties={},
         customActions=[]).model_dump()
 
-    # the enrich template method does this
-    template_dict.pop("allOf")
-
     enriched_template_mock.return_value = template_dict
 
     # missing display name

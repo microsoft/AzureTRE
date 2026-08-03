@@ -3,27 +3,6 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 
 
-LEGACY_NULL_PROPERTY_FIELDS = {
-    "const",
-    "default",
-    "description",
-    "enum",
-    "exclusiveMaximum",
-    "exclusiveMinimum",
-    "items",
-    "maximum",
-    "maxLength",
-    "minimum",
-    "minLength",
-    "multipleOf",
-    "pattern",
-    "properties",
-    "readOnly",
-    "sensitive",
-    "updateable",
-}
-
-
 def get_system_properties(id_field: str = "workspace_id"):
     return {
         "tre_id": {
@@ -51,20 +30,6 @@ def merge_properties(all_properties: List[Dict]) -> Dict:
     return properties
 
 
-def remove_legacy_null_property_fields(schema_node) -> None:
-    """Remove invalid null fields added by the legacy Property model."""
-    if isinstance(schema_node, dict):
-        for field in list(schema_node.keys()):
-            if field in LEGACY_NULL_PROPERTY_FIELDS and schema_node[field] is None:
-                schema_node.pop(field)
-
-        for value in schema_node.values():
-            remove_legacy_null_property_fields(value)
-    elif isinstance(schema_node, list):
-        for item in schema_node:
-            remove_legacy_null_property_fields(item)
-
-
 def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
     workspace_schema_def = Path(__file__).parent / ".." / "schemas" / schema_file
     with open(workspace_schema_def) as schema_f:
@@ -80,7 +45,6 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
 
     template["required"] = merge_required(all_required)
     template["properties"] = merge_properties(all_properties)
-    remove_legacy_null_property_fields(template)
 
     # if this is an update, mark the non-updateable properties as readOnly
     # this will help the UI render fields appropriately and know what it can send in a PATCH
@@ -96,10 +60,6 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
                         for prop in conditional_property[condition]["properties"].values():
                             if not prop.get("updateable", False):
                                 prop["readOnly"] = True
-
-    # if there is an 'allOf' property which is empty, the validator fails - so remove the key
-    if "allOf" in template and template["allOf"] is None:
-        template.pop("allOf")
 
     if is_workspace_scope:
         id_field = "workspace_id"
