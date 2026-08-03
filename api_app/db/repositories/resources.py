@@ -199,12 +199,13 @@ class ResourceRepository(BaseRepository):
         if resource_patch.templateVersion is not None:
             new_template = await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
 
-            old_properties = self._get_all_property_keys_from_template(resource_template)
-            new_properties = self._get_all_property_keys_from_template(new_template)
+            enriched_target_template = resource_template_repo.enrich_template(new_template, is_update=True)
+            target_properties = self._get_all_property_keys_from_template(enriched_target_template)
 
-            properties_to_remove = old_properties - new_properties
-            for prop in properties_to_remove:
-                self._remove_property_by_path(resource.properties, prop)
+            existing_paths = [path for path, _ in self._get_leaf_properties(resource.properties)]
+            for path in existing_paths:
+                if path not in target_properties:
+                    self._remove_property_by_path(resource.properties, path)
 
             resource.templateVersion = resource_patch.templateVersion
 

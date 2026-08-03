@@ -55,6 +55,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   const [allNewProperties, setAllNewProperties] = useState<string[]>([]); // All new properties including hidden ones
   const [newPropertiesToFill, setNewPropertiesToFill] = useState<string[]>([]); // Only visible properties
   const [newPropertyValues, setNewPropertyValues] = useState<Record<string, any>>({});
+  const [formHasErrors, setFormHasErrors] = useState<boolean>(false);
   const [loadingSchema, setLoadingSchema] = useState(false);
   const [newTemplateSchema, setNewTemplateSchema] = useState<any | null>(null);
   const [removedProperties, setRemovedProperties] = useState<string[]>([]);
@@ -98,9 +99,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     keys.forEach((key) => {
       if (isKeyActiveInTemplate(templateSchema, key, formData)) {
         const val = getNestedValue(formData, key);
-        if (val !== undefined) {
-          setNestedValue(updatedNewVals, key, val);
-        }
+        setNestedValue(updatedNewVals, key, val !== undefined ? val : "");
       }
     });
     return updatedNewVals;
@@ -445,16 +444,13 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         const part = parts[i];
         if (part === "__proto__" || part === "constructor" || part === "prototype") break;
         if (!current || typeof current !== "object" || !current[part]) break;
-        if (i === parts.length - 1) {
-          if (typeof current[part].classNames === "string") {
-            current[part].classNames = current[part].classNames.replace(/\btre-hidden\b/g, "").trim();
-          }
-          if (typeof current[part]["ui:classNames"] === "string") {
-            current[part]["ui:classNames"] = current[part]["ui:classNames"].replace(/\btre-hidden\b/g, "").trim();
-          }
-        } else {
-          current = current[part];
+        if (typeof current[part].classNames === "string") {
+          current[part].classNames = current[part].classNames.replace(/\btre-hidden\b/g, "").trim();
         }
+        if (typeof current[part]["ui:classNames"] === "string") {
+          current[part]["ui:classNames"] = current[part]["ui:classNames"].replace(/\btre-hidden\b/g, "").trim();
+        }
+        current = current[part];
       }
     });
     return cloned;
@@ -537,6 +533,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                     onChange={(e) => {
                       const updatedNewVals = extractNewPropertyValues(e.formData, newTemplateSchema, allNewProperties);
                       setNewPropertyValues(updatedNewVals);
+                      setFormHasErrors(Boolean(e.errors && e.errors.length > 0));
                     }}
                   />
                 )}
@@ -558,9 +555,10 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                 selectedKey={selectedVersion}
               />
               <PrimaryButton
-                primaryDisabled={
+                disabled={
                   !selectedVersion ||
                   loadingSchema ||
+                  formHasErrors ||
                   (newPropertiesToFill.length > 0 &&
                     (() => {
                       const combinedState = mergePropertyValues(props.resource.properties, newPropertyValues);
@@ -568,23 +566,25 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                         if (!isKeyActiveInTemplate(newTemplateSchema, key, combinedState)) {
                           return false;
                         }
-                        const val = getNestedValue(newPropertyValues, key);
+                        const valInState = getNestedValue(combinedState, key);
+                        const valInNew = getNestedValue(newPropertyValues, key);
+                        const propSchema = getSchemaProperty(newTemplateSchema, key);
 
                         // Check if value is invalid enum (for both required and optional fields)
-                        const propSchema = getSchemaProperty(newTemplateSchema, key);
                         if (
                           propSchema &&
                           propSchema.enum &&
-                          val !== undefined &&
-                          val !== "" &&
-                          !propSchema.enum.includes(val)
+                          (valInState === undefined ||
+                            valInState === "" ||
+                            valInState === null ||
+                            !propSchema.enum.includes(valInState))
                         ) {
                           return true;
                         }
 
                         // Check if required field is empty
                         if (isPropertyRequiredInState(newTemplateSchema, key, combinedState)) {
-                          return val === "" || val === undefined || val === null;
+                          return valInNew === "" || valInNew === undefined || valInNew === null;
                         }
                         return false;
                       });
