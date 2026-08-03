@@ -425,12 +425,11 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_with_good_fields_passes(template_repo, resource_repo):
+async def test_validate_patch_with_good_fields_passes(resource_repo):
     """
     Make sure that patch is valid when updateable fields are included
     """
-
+    template_repo = MagicMock()
     template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
     template = sample_resource_template()
 
@@ -440,12 +439,11 @@ async def test_validate_patch_with_good_fields_passes(template_repo, resource_re
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
+async def test_validate_patch_with_bad_fields_fails(resource_repo):
     """
     Make sure that patch is NOT valid when non-updateable fields are included
     """
-
+    template_repo = MagicMock()
     template_repo.enrich_template = MagicMock(return_value=sample_resource_template())
     template = sample_resource_template()
 
@@ -714,8 +712,7 @@ async def test_validate_patch_allows_mix_of_new_and_updateable_properties_during
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_allows_install_pipeline_property(template_repo, resource_repo):
+async def test_validate_patch_allows_install_pipeline_property(resource_repo):
     """
     Make sure that patch is valid when a property is present in install pipeline substitution
     even if it is not updateable in the main properties.
@@ -739,6 +736,7 @@ async def test_validate_patch_allows_install_pipeline_property(template_repo, re
         ]
     }
 
+    template_repo = MagicMock()
     template_repo.enrich_template = MagicMock(return_value=template_dict)
     template = parse_obj_as(ResourceTemplate, template_dict)
 
@@ -751,8 +749,7 @@ async def test_validate_patch_allows_install_pipeline_property(template_repo, re
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
-async def test_validate_patch_allows_upgrade_pipeline_property(template_repo, resource_repo):
+async def test_validate_patch_allows_upgrade_pipeline_property(resource_repo):
     """
     Make sure that patch is valid when a property is present in upgrade pipeline substitution
     even if it is not updateable in the main properties.
@@ -774,6 +771,7 @@ async def test_validate_patch_allows_upgrade_pipeline_property(template_repo, re
         ]
     }
 
+    template_repo = MagicMock()
     template_repo.enrich_template = MagicMock(return_value=template_dict)
     template = parse_obj_as(ResourceTemplate, template_dict)
 

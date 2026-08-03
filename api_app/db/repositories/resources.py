@@ -266,8 +266,8 @@ class ResourceRepository(BaseRepository):
         except EntityDoesNotExist:
             raise TargetTemplateVersionDoesNotExist(f"Template '{resource_template.name}' not found for resource type '{resource_template.resourceType}' with target template version '{resource_patch.templateVersion}'")
 
-    def _get_pipeline_properties(self, enriched_template) -> List[str]:
-        properties = []
+    def _get_pipeline_properties(self, enriched_template) -> set[str]:
+        properties = set()
         pipeline = enriched_template.get("pipeline")
         if pipeline:
             for phase in ["install", "upgrade"]:
@@ -275,7 +275,8 @@ class ResourceRepository(BaseRepository):
                     for step in pipeline[phase]:
                         if "properties" in step and step["properties"]:
                             for prop in step["properties"]:
-                                properties.append(prop["name"])
+                                if isinstance(prop, dict) and prop.get("name"):
+                                    properties.add(prop["name"])
         return properties
 
     async def validate_patch(self, resource_patch: ResourcePatch, resource_template_repo: ResourceTemplateRepository, resource_template: ResourceTemplate, resource_action: str, current_properties: Optional[dict] = None, target_template: Optional[ResourceTemplate] = None):
