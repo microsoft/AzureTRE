@@ -231,6 +231,29 @@ class ResourceRepository(BaseRepository):
             return len(obj) == 0
         return False
 
+    @staticmethod
+    def _matches_if_condition(if_schema: dict, state: dict) -> bool:
+        """
+        Returns True if the resource state satisfies the JSON Schema 'if' condition.
+        Evaluates 'const' and 'enum' constraints on top-level properties only.
+        """
+        if not if_schema or not isinstance(if_schema, dict):
+            return False
+        for key, cond in if_schema.get("properties", {}).items():
+            if not isinstance(cond, dict):
+                continue
+            state_val = state.get(key)
+            if "const" in cond:
+                if state_val != cond["const"]:
+                    return False
+            elif "enum" in cond:
+                if state_val not in cond["enum"]:
+                    return False
+            else:
+                if state_val is None:
+                    return False
+        return True
+
     def _deep_dict_update(self, target: dict, patch: dict):
         for k, v in patch.items():
             if isinstance(v, dict) and isinstance(target.get(k), dict):
@@ -297,6 +320,30 @@ class ResourceRepository(BaseRepository):
                         curr = curr[p]
                     if found and isinstance(curr, (dict, list)) and len(curr) == 0:
                         self._remove_property_by_path(resource.properties, parent_path)
+
+            # After schema-based removal, also strip fields that belong exclusively to inactive
+            # allOf branches in the target template (evaluated against the post-patch state).
+            # Without this, unevaluatedProperties:false schemas reject the upgrade payload because
+            # stale fields from the old active branch are still present in resource.properties.
+            post_patch_props = {**resource.properties}
+            if resource_patch.properties:
+                post_patch_props.update(resource_patch.properties)
+
+            for condition in enriched_target_template.get("allOf", []):
+                if not isinstance(condition, dict) or "if" not in condition:
+                    continue
+                matches_if = self._matches_if_condition(condition["if"], post_patch_props)
+                active_branch = condition.get("then", {}) if matches_if else condition.get("else", {})
+                inactive_branch = condition.get("else", {}) if matches_if else condition.get("then", {})
+
+                inactive_props = set((inactive_branch or {}).get("properties", {}).keys())
+                active_props = set((active_branch or {}).get("properties", {}).keys())
+                top_level_props = set(enriched_target_template.get("properties", {}).keys())
+
+                # Only remove props that are *exclusive* to the inactive branch
+                exclusive_inactive = inactive_props - active_props - top_level_props
+                for prop_key in exclusive_inactive:
+                    resource.properties.pop(prop_key, None)
 
             resource.templateVersion = resource_patch.templateVersion
 

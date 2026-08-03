@@ -15,8 +15,9 @@ export const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
   for (const [key, value] of Object.entries(properties)) {
     if (partGuard(key)) continue;
     if (value && typeof value === "object" && "properties" in value) {
-      // Recurse only into nested objects; arrays-of-objects are treated as atomic
-      // leaves because getNestedValue/setNestedValue don't support array-index traversal.
+      // Include the object container itself so required-object detection works, then recurse into children.
+      // Arrays-of-objects are treated as atomic leaves (getNestedValue/setNestedValue don't support array-index traversal).
+      keys.push(prefix + key);
       keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + "."));
     } else {
       keys.push(prefix + key);

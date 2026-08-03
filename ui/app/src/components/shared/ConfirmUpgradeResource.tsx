@@ -434,7 +434,21 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     setRequestLoadingState(LoadingState.Loading);
     try {
       const mergedFormData = mergePropertyValues(props.resource.properties, newPropertyValues);
-      const activePropertiesToPatch = extractNewPropertyValues(mergedFormData, newTemplateSchema, allNewProperties);
+
+      // Use all template keys (not just allNewProperties which is frozen at schema-load time)
+      // so that allOf-branch properties activated by form edits (e.g. auth_type selector change)
+      // are included in the PATCH. extractNewPropertyValues already gates on isKeyActiveInTemplate,
+      // so inactive branches and pipeline properties are still excluded.
+      const pipelinePropsSet = new Set<string>();
+      if (newTemplateSchema?.pipeline?.upgrade) {
+        newTemplateSchema.pipeline.upgrade.forEach((step: any) => {
+          step.properties?.forEach((prop: any) => pipelinePropsSet.add(prop.name));
+        });
+      }
+      const allTemplateKeys = getAllPropertyKeysFromTemplate(newTemplateSchema).filter(
+        (k) => !pipelinePropsSet.has(k.split(".")[0]),
+      );
+      const activePropertiesToPatch = extractNewPropertyValues(mergedFormData, newTemplateSchema, allTemplateKeys);
 
       let body: any = { templateVersion: selectedVersion, properties: activePropertiesToPatch };
 
@@ -624,14 +638,15 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                         const valInNew = getNestedValue(newPropertyValues, key);
                         const propSchema = getSchemaProperty(newTemplateSchema, key);
 
-                        // Check if value is invalid enum (for both required and optional fields)
+                        // Check if an enum value that IS present is invalid.
+                        // Do NOT block when the value is absent — the required-field check below handles that.
                         if (
                           propSchema &&
                           propSchema.enum &&
-                          (valInState === undefined ||
-                            valInState === "" ||
-                            valInState === null ||
-                            !propSchema.enum.includes(valInState))
+                          valInState !== undefined &&
+                          valInState !== null &&
+                          valInState !== "" &&
+                          !propSchema.enum.includes(valInState)
                         ) {
                           return true;
                         }

@@ -692,7 +692,6 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         modified_workspace.templateVersion = "0.2.0"
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json=workspace_patch, headers={"etag": etag})
-        print("RESPONSE STATUS:", response.status_code, response.text)
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
 
