@@ -636,6 +636,38 @@ async def test_validate_patch_rejects_system_properties_modification_during_upgr
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_allows_enum_property_update_during_upgrade_when_existing_value_is_invalid(resource_repo):
+    """
+    Test that during a template upgrade, updating a non-updateable enum property is allowed when the resource's current value is no longer in the target template's enum list.
+    """
+    old_template = sample_resource_template()
+
+    new_template = copy.deepcopy(old_template)
+    new_template['version'] = '0.2.0'
+    new_template['properties']['os_image']['enum'] = ['Windows 11 Enterprise', 'Windows Server 2025']
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    current_properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small'
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'os_image': 'Windows 11 Enterprise'})
+
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        parse_obj_as(ResourceTemplate, old_template),
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties
+    )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified

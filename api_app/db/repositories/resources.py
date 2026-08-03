@@ -384,6 +384,10 @@ class ResourceRepository(BaseRepository):
                 if has_existing and existing_val == prop_val:
                     return True
 
+                if has_existing and prop_def and isinstance(prop_def.get("enum"), list):
+                    if existing_val not in prop_def["enum"]:
+                        return True
+
             return False
 
         def is_all_leaves_allowed(prop_path: str, prop_val: Any) -> bool:
