@@ -207,6 +207,30 @@ class ResourceRepository(BaseRepository):
 
         remove_recursive(target, parts)
 
+    def _prune_empty_containers(self, obj: Any) -> bool:
+        """Recursively prune empty dict/list containers. Returns True if the container is now empty."""
+        if isinstance(obj, dict):
+            keys_to_delete = []
+            for k, v in obj.items():
+                if isinstance(v, (dict, list)):
+                    if self._prune_empty_containers(v):
+                        keys_to_delete.append(k)
+            for k in keys_to_delete:
+                del obj[k]
+            return len(obj) == 0
+        elif isinstance(obj, list):
+            for item in obj:
+                self._prune_empty_containers(item)
+            # Remove empty dict elements from the list
+            i = 0
+            while i < len(obj):
+                if isinstance(obj[i], dict) and len(obj[i]) == 0:
+                    obj.pop(i)
+                else:
+                    i += 1
+            return len(obj) == 0
+        return False
+
     def _deep_dict_update(self, target: dict, patch: dict):
         for k, v in patch.items():
             if isinstance(v, dict) and isinstance(target.get(k), dict):
@@ -231,10 +255,31 @@ class ResourceRepository(BaseRepository):
             enriched_target_template = resource_template_repo.enrich_template(new_template, is_update=True)
             target_properties = self._get_all_property_keys_from_template(enriched_target_template)
 
+            # Remove at the highest path that is completely absent from the target template,
+            # so that containers (e.g. obsolete: {}) and array remnants are also cleaned up.
             existing_paths = [path for path, _ in self._get_leaf_properties(resource.properties)]
+            removed_top_paths: set[str] = set()
             for path in existing_paths:
                 if path not in target_properties:
-                    self._remove_property_by_path(resource.properties, path)
+                    # Find the shortest prefix of this path that is fully absent from the target
+                    parts = path.split(".")
+                    remove_at = path
+                    for i in range(1, len(parts)):
+                        prefix = ".".join(parts[:i])
+                        # If this prefix itself is absent from target_properties and no sub-key
+                        # of it exists in target_properties, remove at this level
+                        if prefix not in target_properties and not any(
+                            tp == prefix or tp.startswith(prefix + ".") for tp in target_properties
+                        ):
+                            remove_at = prefix
+                            break
+                    removed_top_paths.add(remove_at)
+
+            for path in removed_top_paths:
+                self._remove_property_by_path(resource.properties, path)
+
+            # Prune any empty dict/list containers left behind after removal
+            self._prune_empty_containers(resource.properties)
 
             resource.templateVersion = resource_patch.templateVersion
 

@@ -10,7 +10,7 @@ import {
   Icon,
   Stack,
 } from "@fluentui/react";
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext, useState, useEffect, useRef, useMemo } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
 import { UserResource } from "../../models/userResource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
@@ -43,6 +43,32 @@ interface ConfirmUpgradeProps {
   onDismiss: () => void;
   parentWorkspaceService?: WorkspaceService;
 }
+
+// Pure utility: prune ui:order in a uiSchema node to only reference properties present in the given schema node
+const pruneUiSchemaOrder = (uiSchemaNode: any, schemaNode: any): any => {
+  if (!uiSchemaNode || typeof uiSchemaNode !== "object") return uiSchemaNode;
+  const result: any = { ...uiSchemaNode };
+
+  const validPropNames = schemaNode && schemaNode.properties ? Object.keys(schemaNode.properties) : [];
+
+  if (Array.isArray(result["ui:order"])) {
+    const prunedOrder = result["ui:order"].filter((item: string) => item === "*" || validPropNames.includes(item));
+    if (!prunedOrder.includes("*")) {
+      prunedOrder.push("*");
+    }
+    result["ui:order"] = prunedOrder;
+  }
+
+  if (schemaNode && schemaNode.properties) {
+    for (const key of Object.keys(schemaNode.properties)) {
+      if (result[key] && typeof result[key] === "object") {
+        result[key] = pruneUiSchemaOrder(result[key], schemaNode.properties[key]);
+      }
+    }
+  }
+
+  return result;
+};
 
 export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps> = (props: ConfirmUpgradeProps) => {
   const apiCall = useAuthApiCall();
@@ -466,11 +492,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     return cloned;
   }, [baseUiSchema, newPropertiesToFill]);
 
-  // Compose final uiSchema merging sanitizedUiSchema with our overrides
-  const uiSchema = {
-    ...sanitizedUiSchema,
-    "ui:submitButtonOptions": { norender: true },
-  };
+  // Compose final uiSchema merging sanitizedUiSchema with our overrides and pruning ui:order
+  const uiSchema = useMemo(() => {
+    const prunedUiSchema = finalSchema ? pruneUiSchemaOrder(sanitizedUiSchema, finalSchema) : sanitizedUiSchema;
+    return {
+      ...prunedUiSchema,
+      "ui:submitButtonOptions": { norender: true },
+    };
+  }, [sanitizedUiSchema, finalSchema]);
 
   const onRenderOption = (option: any): JSX.Element => {
     return (
@@ -534,8 +563,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
                 {finalSchema && (
                   <Form
-                    liveOmit={true}
-                    omitExtraData={true}
+                    liveOmit={false}
+                    omitExtraData={false}
                     schema={finalSchema}
                     formData={mergePropertyValues(props.resource.properties, newPropertyValues)}
                     uiSchema={uiSchema}
