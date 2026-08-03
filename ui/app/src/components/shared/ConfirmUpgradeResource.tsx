@@ -99,7 +99,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     keys.forEach((key) => {
       if (isKeyActiveInTemplate(templateSchema, key, formData)) {
         const val = getNestedValue(formData, key);
-        setNestedValue(updatedNewVals, key, val !== undefined ? val : "");
+        if (val !== undefined) {
+          setNestedValue(updatedNewVals, key, val);
+        } else if (isPropertyRequiredInState(templateSchema, key, formData)) {
+          setNestedValue(updatedNewVals, key, "");
+        }
       }
     });
     return updatedNewVals;
