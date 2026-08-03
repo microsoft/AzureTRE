@@ -51,15 +51,18 @@ class ResourceRepository(BaseRepository):
         """Remove invalid legacy nested $id values from template schemas.
 
         jsonschema>=4.25 rejects non-empty fragment identifiers for $id.
-        Historical templates include values like "#/properties/foo" at
-        property level, which are not required for validation.
+        Historical templates include property-level values with non-empty
+        fragments, such as "#/properties/foo" and "#properties/foo", which
+        are not required for validation.
         """
         normalized_template = copy.deepcopy(resource_template)
 
-        def _walk(node):
+        def _walk(node, is_root=False):
             if isinstance(node, dict):
-                # Keep top-level $id intact; remove invalid legacy nested fragments.
-                if node.get("$id", "").startswith("#/properties/"):
+                # Keep top-level $id intact; nested $id values with non-empty
+                # fragments are invalid under newer JSON Schema metaschemas.
+                schema_id = node.get("$id")
+                if not is_root and isinstance(schema_id, str) and schema_id.partition("#")[2]:
                     node.pop("$id", None)
                 for value in node.values():
                     _walk(value)
@@ -67,7 +70,7 @@ class ResourceRepository(BaseRepository):
                 for value in node:
                     _walk(value)
 
-        _walk(normalized_template)
+        _walk(normalized_template, is_root=True)
         return normalized_template
 
     @staticmethod

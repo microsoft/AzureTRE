@@ -410,25 +410,35 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
         resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
 
 
-def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_repo):
+@pytest.mark.parametrize("nested_schema_id", [
+    "#/properties/guac_disable_paste",
+    "#properties/network_rule_collections",
+    "https://example.com/template_schema.json#properties/network_rule_collections"
+])
+def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_repo, nested_schema_id):
     template = {
-        "$schema": "http://json-schema.org/draft-07/schema",
         "$id": "https://example.com/template_schema.json",
         "type": "object",
-        "required": ["guac_disable_paste"],
+        "required": ["network_rule_collections"],
         "properties": {
-            "guac_disable_paste": {
-                "$id": "#/properties/guac_disable_paste",
-                "type": "boolean"
+            "network_rule_collections": {
+                "$id": nested_schema_id,
+                "type": "array"
             }
         }
     }
 
     resource_input = {
         "properties": {
-            "guac_disable_paste": True
+            "network_rule_collections": []
         }
     }
 
     # Should not raise SchemaError from jsonschema's metaschema checks.
     resource_repo._validate_resource_parameters(resource_input, template)
+
+    # Normalization must not mutate stored templates or remove root metadata.
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert normalized_template["$id"] == template["$id"]
+    assert "$id" not in normalized_template["properties"]["network_rule_collections"]
+    assert template["properties"]["network_rule_collections"]["$id"] == nested_schema_id
