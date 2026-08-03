@@ -247,6 +247,30 @@ def sample_resource_template() -> ResourceTemplate:
                                         'large'
                                     ],
                                     'updateable': True
+                                },
+                                'overview': {
+                                    'type': 'string',
+                                    'title': 'Overview'
+                                },
+                                'private_field_1': {
+                                    'type': 'string',
+                                    'title': 'Private Field 1'
+                                },
+                                'private_field_2': {
+                                    'type': 'string',
+                                    'title': 'Private Field 2'
+                                },
+                                'client_id': {
+                                    'type': 'string',
+                                    'title': 'Client ID'
+                                },
+                                'scope_id': {
+                                    'type': 'string',
+                                    'title': 'Scope ID'
+                                },
+                                'sp_id': {
+                                    'type': 'string',
+                                    'title': 'SP ID'
                                 }
                             },
                             actions=[])
