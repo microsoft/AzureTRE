@@ -435,7 +435,13 @@ class ResourceRepository(BaseRepository):
         update_template = copy.deepcopy(enriched_template)
         update_template["properties"] = {}
 
-        for prop_name, prop in enriched_template.get("properties", {}).items():
+        all_template_props = {}
+        if isinstance(enriched_template.get("properties"), dict):
+            all_template_props.update(enriched_template["properties"])
+        if isinstance(enriched_template.get("system_properties"), dict):
+            all_template_props.update(enriched_template["system_properties"])
+
+        for prop_name, prop in all_template_props.items():
             prop_val = resource_patch.properties.get(prop_name) if resource_patch.properties else None
             if (
                 resource_action == RESOURCE_ACTION_INSTALL

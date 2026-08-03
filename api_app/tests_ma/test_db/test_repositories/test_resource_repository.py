@@ -666,6 +666,47 @@ async def test_validate_patch_allows_enum_property_update_during_upgrade_when_ex
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_allows_retained_system_properties_with_unevaluated_properties_false(resource_repo):
+    """
+    Test that during upgrade, retained system properties in current_properties pass validation when unevaluatedProperties is False.
+    """
+    old_template_dict = sample_resource_template()
+    old_template_dict['unevaluatedProperties'] = False
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template_dict['unevaluatedProperties'] = False
+
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=new_template)
+    template_repo.enrich_template = MagicMock(side_effect=lambda t, is_update=False: {
+        **t.dict(exclude_none=True),
+        'unevaluatedProperties': False,
+        'system_properties': {'tre_id': {'type': 'string'}}
+    })
+
+    current_properties = {
+        'tre_id': 'tre-1234',
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small'
+    }
+
+    patch = ResourcePatch(templateVersion='0.2.0', properties={'vm_size': 'large'})
+
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        old_template,
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties
+    )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_allows_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, updateable properties can still be modified
