@@ -434,21 +434,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     setRequestLoadingState(LoadingState.Loading);
     try {
       const mergedFormData = mergePropertyValues(props.resource.properties, newPropertyValues);
-
-      // Use all template keys (not just allNewProperties which is frozen at schema-load time)
-      // so that allOf-branch properties activated by form edits (e.g. auth_type selector change)
-      // are included in the PATCH. extractNewPropertyValues already gates on isKeyActiveInTemplate,
-      // so inactive branches and pipeline properties are still excluded.
-      const pipelinePropsSet = new Set<string>();
-      if (newTemplateSchema?.pipeline?.upgrade) {
-        newTemplateSchema.pipeline.upgrade.forEach((step: any) => {
-          step.properties?.forEach((prop: any) => pipelinePropsSet.add(prop.name));
-        });
-      }
-      const allTemplateKeys = getAllPropertyKeysFromTemplate(newTemplateSchema).filter(
-        (k) => !pipelinePropsSet.has(k.split(".")[0]),
-      );
-      const activePropertiesToPatch = extractNewPropertyValues(mergedFormData, newTemplateSchema, allTemplateKeys);
+      const activePropertiesToPatch = extractNewPropertyValues(mergedFormData, newTemplateSchema, allNewProperties);
 
       let body: any = { templateVersion: selectedVersion, properties: activePropertiesToPatch };
 
@@ -480,8 +466,12 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
   // Extract any conditional blocks from full schema, filtered by all new properties
   const conditionalBlocks = newTemplateSchema ? extractConditionalBlocks(newTemplateSchema, allNewProperties) : {};
 
-  // Compose final schema combining reduced properties with conditional blocks
-  const finalSchema = reducedSchemaProperties ? { ...reducedSchemaProperties, ...conditionalBlocks } : null;
+  // Compose final schema combining reduced properties with conditional blocks.
+  // Allow unevaluated properties in this reduced form schema so existing resource properties
+  // passed via formData are not flagged as invalid by AJV.
+  const finalSchema = reducedSchemaProperties
+    ? { ...reducedSchemaProperties, ...conditionalBlocks, unevaluatedProperties: true }
+    : null;
 
   // UI schema override: hide the form's submit button because we use external Upgrade button
   // start with existing UI order and classNames from full schema uiSchema
