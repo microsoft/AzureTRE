@@ -78,6 +78,7 @@ def test_legacy_actor_dicts_validate_without_user_required_fields():
     assert operation.user == {}
     assert airlock_request.createdBy == {}
     assert airlock_request.updatedBy == {"name": "Legacy User"}
+    assert airlock_request.createdWhen is None
 
 
 def test_restricted_resource_optional_fields_default_to_none():

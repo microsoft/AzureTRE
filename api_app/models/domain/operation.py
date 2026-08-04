@@ -87,7 +87,7 @@ class Operation(AzureTREModel):
     resourceId: str = Field(title="resourceId", description="GUID identifying the resource")
     resourcePath: str = Field(title="resourcePath", description="Path of the resource undergoing change, i.e. '/workspaces/guid/workspace-services/guid/'")
     resourceVersion: int = Field(0, title="resourceVersion", description="Version of the resource this operation relates to")
-    status: Status = Field(None, title="Operation status")
+    status: Status = Field(Status.AwaitingDeployment, title="Operation status")
     action: str = Field(title="action", description="Name of the action being performed on the resource, i.e. install, uninstall, start")
     message: str = Field("", title="Additional operation status information")
     createdWhen: float = Field(0.0, title="POSIX Timestamp for when the operation was submitted")

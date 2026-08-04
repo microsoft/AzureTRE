@@ -9,7 +9,7 @@ from models.domain.resource import ResourceType
 def _strip_none_recursive(obj: Any) -> None:
     if isinstance(obj, dict):
         for key in list(obj.keys()):
-            if obj[key] is None:
+            if obj[key] is None and key not in {"const", "default"}:
                 del obj[key]
             else:
                 _strip_none_recursive(obj[key])
@@ -26,12 +26,12 @@ class Property(AzureTREModel):
         # Emit only explicitly-set fields plus extra keywords; strip None at all nesting levels
         if not hasattr(self, 'model_fields_set'):
             # Pydantic passed an uncoerced plain dict (e.g. via item-level assignment to properties)
-            result = {k: v for k, v in self.items() if v is not None}
+            result = dict(self.items())
             _strip_none_recursive(result)
             return result
-        data = {k: v for k, v in ((f, getattr(self, f)) for f in self.model_fields_set) if v is not None}
+        data = {k: v for k, v in ((f, getattr(self, f)) for f in self.model_fields_set)}
         if self.__pydantic_extra__:
-            data.update({k: v for k, v in self.__pydantic_extra__.items() if v is not None})
+            data.update(dict(self.__pydantic_extra__.items()))
         _strip_none_recursive(data)
         return data
 

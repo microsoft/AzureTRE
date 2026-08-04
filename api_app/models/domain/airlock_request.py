@@ -100,7 +100,7 @@ class AirlockRequest(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
     createdBy: dict = Field(default_factory=dict)
-    createdWhen: float = Field(None, title="Creation time of the request")
+    createdWhen: Optional[float] = Field(None, title="Creation time of the request")
     updatedBy: dict = Field(default_factory=dict)
     updatedWhen: float = 0
     history: List[AirlockRequestHistoryItem] = Field(default_factory=list)

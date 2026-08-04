@@ -1,4 +1,5 @@
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
+from models.domain.resource_template import PipelineStepProperty
 from models.schemas.operation import get_sample_operation, OperationInResponse, OperationInList
 
 
@@ -33,3 +34,35 @@ def test_operation_in_list_schema_is_valid():
     op_list = OperationInList(**sample_data)
     assert len(op_list.operations) == 1
     assert op_list.operations[0].id == operation_id
+
+
+def test_operation_omitted_status_uses_enum_default():
+    operation = Operation(
+        id="operation-id",
+        resourceId="resource-id",
+        resourcePath="/workspaces/resource-id",
+        action="install",
+        user={},
+    )
+
+    assert operation.status == Status.AwaitingDeployment
+
+
+def test_operation_omitted_timestamps_use_float_defaults():
+    operation = Operation(
+        id="operation-id",
+        resourceId="resource-id",
+        resourcePath="/workspaces/resource-id",
+        status=Status.AwaitingDeployment,
+        action="install",
+        user={},
+    )
+
+    assert isinstance(operation.createdWhen, float)
+    assert isinstance(operation.updatedWhen, float)
+
+
+def test_pipeline_step_property_value_defaults_to_none_when_omitted():
+    step_property = PipelineStepProperty(name="target_property", type="string")
+
+    assert step_property.value is None
