@@ -30,3 +30,8 @@ variable "core_api_client_id" {
   type = string
 }
 
+variable "api_identity_principal_id" {
+  type        = string
+  description = "Principal (object) id of the core API managed identity, used as the subject of the workspace app registration federated identity credential."
+}
+

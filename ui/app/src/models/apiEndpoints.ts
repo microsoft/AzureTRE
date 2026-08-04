@@ -2,6 +2,7 @@ export enum ApiEndpoint {
   Workspaces = "workspaces",
   WorkspaceServices = "workspace-services",
   UserResources = "user-resources",
+  Secrets = "secrets",
   SharedServices = "shared-services",
   Requests = "requests",
   AirlockRequests = "requests",

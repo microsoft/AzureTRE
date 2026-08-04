@@ -85,6 +85,38 @@ When authoring a `template_schema.json` file, you can reference properties from 
 !!! todo
     After a workspace with virtual machines is implemented this section can be written based on that. ([Outputs in Porter documentation](https://porter.sh/author-bundles/#outputs) to be linked here too.)
 
+#### Exposing secrets to researchers
+
+Resources sometimes need to surface secret values (for example a VM administrator password, a storage account key, or a database connection string) to researchers. Rather than returning the secret value directly, store the secret in the workspace Key Vault and output a **Key Vault secret identifier** (the full secret URI) in a property whose name contains `keyvault_secret_id`.
+
+The API treats any resource property whose name contains `keyvault_secret_id` as a reference to a workspace Key Vault secret. Researchers (and workspace owners) can then retrieve the underlying secret value on demand via the secrets endpoints:
+
+* `GET /workspaces/{workspace_id}/workspace-services/{service_id}/secrets/{secret_name}`
+* `GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/secrets/{secret_name}`
+
+where `secret_name` is the name of the property that holds the `keyvault_secret_id`. The API only retrieves secrets from the workspace's own Key Vault.
+
+#### How the UI decides which secrets to show
+
+The UI does **not** inspect property *values* to find secrets. It relies purely on the property-name convention: for a workspace service or user resource, any property whose name contains `keyvault_secret_id` is rendered as a masked secret (`••••••••`) with a reveal button, instead of as plain text. The property value stored on the resource is only the Key Vault secret identifier (URI); the underlying secret value is fetched on demand from the secrets endpoint above when the user clicks *reveal*, and is never persisted in the resource document, the Cosmos DB store, or the browser.
+
+This means:
+
+* Only **workspace services** and **user resources** can expose secrets this way. Properties on workspaces or shared services are not offered for reveal.
+* Whether a secret appears is entirely determined by the template author naming an output property `*keyvault_secret_id*`. If no template outputs such a property, no secrets appear in the UI.
+* Naming a property `*keyvault_secret_id*` but storing anything other than a valid Key Vault secret identifier from the workspace's own Key Vault will result in an error when the user tries to reveal it.
+
+#### Security model
+
+Key Vault access is performed **on behalf of the signed-in user** using an On-Behalf-Of (OBO) token exchange. The core API's managed identity is registered as a federated identity credential on the per-workspace app registration, so the API authenticates as the workspace application without a stored client secret and then exchanges the caller's token for a Key Vault data-plane token scoped to that user. As a result, the caller only receives secrets they have themselves been granted read access to on the workspace Key Vault; the API's own identity is not used to read the secret.
+
+Because the exchange requires the caller's own token as the user assertion, a caller can never retrieve a secret they do not already have Key Vault data-plane access to — even though the request is proxied through the core API. The core API therefore holds **no standing permission** to read workspace Key Vault secrets (the previous `Key Vault Secrets User` role assignment on the API managed identity has been removed).
+
+For the full flow, the trust relationships involved, and the compromise/blast-radius analysis, see [Secret retrieval](../azure-tre-overview/secret-retrieval.md) in the architecture documentation.
+
+> [!NOTE]
+> The federated identity credential is only created when the workspace app registration is managed by TRE (`register_aad_application = true`). If the workspace application is registered externally, the equivalent federated credential must be configured on that application manually for secret retrieval to work.
+
 ### Actions
 
 The required actions are the main two of CNAB spec:

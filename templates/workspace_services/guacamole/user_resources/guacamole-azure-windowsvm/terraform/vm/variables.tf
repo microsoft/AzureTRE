@@ -123,3 +123,9 @@ variable "extra_tags" {
   default     = {}
   description = "Additional tags merged into the standard user-resource tags"
 }
+
+variable "owner_id" {
+  type        = string
+  default     = ""
+  description = "AAD object id of the user that owns this user resource. When set, they are granted read access to the VM password secret. Left empty for ephemeral VMs (e.g. airlock review VMs) that use random credentials."
+}

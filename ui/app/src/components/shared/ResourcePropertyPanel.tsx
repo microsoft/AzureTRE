@@ -2,7 +2,10 @@ import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui
 import moment from "moment";
 import React from "react";
 import { Resource } from "../../models/resource";
+import { ResourceType } from "../../models/resourceType";
+import { isSecretProperty } from "../../models/secret";
 import { ComplexPropertyModal } from "./ComplexItemDisplay";
+import { SecretDisplay } from "./SecretDisplay";
 
 interface ResourcePropertyPanelProps {
   resource: Resource;
@@ -11,7 +14,13 @@ interface ResourcePropertyPanelProps {
 interface ResourcePropertyPanelItemProps {
   header: string;
   val: any;
+  resource?: Resource;
+  propertyName?: string;
 }
+
+// Secret retrieval is only available for workspace services and user resources.
+const canRevealSecret = (resource?: Resource): boolean =>
+  resource?.resourceType === ResourceType.WorkspaceService || resource?.resourceType === ResourceType.UserResource;
 
 export const ResourcePropertyPanelItem: React.FunctionComponent<ResourcePropertyPanelItemProps> = (
   props: ResourcePropertyPanelItemProps,
@@ -26,6 +35,15 @@ export const ResourcePropertyPanelItem: React.FunctionComponent<ResourceProperty
   };
 
   function renderValue(val: any, title: string) {
+    if (
+      props.propertyName &&
+      isSecretProperty(props.propertyName) &&
+      canRevealSecret(props.resource) &&
+      props.resource
+    ) {
+      return <SecretDisplay resource={props.resource} propertyName={props.propertyName} />;
+    }
+
     if (typeof val === "string") {
       if (val && val.startsWith("https://")) {
         return (
@@ -90,7 +108,15 @@ export const ResourcePropertyPanel: React.FunctionComponent<ResourcePropertyPane
         <Stack grow styles={stackStyles}>
           {Object.keys(props.resource.properties).map((key) => {
             let val = (props.resource.properties as any)[key];
-            return <ResourcePropertyPanelItem header={userFriendlyKey(key)} val={val} key={key} />;
+            return (
+              <ResourcePropertyPanelItem
+                header={userFriendlyKey(key)}
+                val={val}
+                resource={props.resource}
+                propertyName={key}
+                key={key}
+              />
+            );
           })}
         </Stack>
       </Stack>

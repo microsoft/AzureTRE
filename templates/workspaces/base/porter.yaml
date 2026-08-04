@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.10.0
+version: 2.12.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -163,6 +163,11 @@ parameters:
     description: "The name of the topic to publish scan results to"
 
 outputs:
+  - name: keyvault_uri
+    type: string
+    applyTo:
+      - install
+      - upgrade
   - name: app_role_id_workspace_owner
     type: string
     applyTo:

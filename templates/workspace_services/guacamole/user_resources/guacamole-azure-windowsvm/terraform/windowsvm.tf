@@ -14,6 +14,8 @@ module "windows_vm" {
 
   admin_username = local.admin_username
 
+  owner_id = var.owner_id
+
   nexus_proxy_url           = local.nexus_proxy_url
   shared_storage_access     = var.shared_storage_access
   install_azure_cli         = var.install_azure_cli
