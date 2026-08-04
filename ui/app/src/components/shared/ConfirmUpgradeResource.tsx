@@ -35,6 +35,7 @@ import {
   buildReducedSchema,
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
+  getConditionalPropertyKeysForTriggers,
   isKeyActiveInTemplate,
 } from "../../utils/schemaUpgradeUtils";
 
@@ -279,8 +280,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         // Use full fetched schema from API
         setNewTemplateSchema(newTemplate);
 
-        const newKeys = getAllPropertyKeysFromTemplate(newTemplate);
-        const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate);
+        const newKeys = getAllPropertyKeysFromTemplate(newTemplate, props.resource.properties);
+        const currentKeys = getAllPropertyKeysFromTemplate(currentTemplate, props.resource.properties);
 
         // Build a state with target-template defaults applied so that allOf branch conditions
         // introduced by the new template (e.g. a new selector with a default value) are
@@ -310,6 +311,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           return false;
         });
 
+        // Include conditional branch properties controlled by changed selectors. They may become
+        // active after the user changes a selector value in the upgrade form.
+        const conditionalPropertyKeys = getConditionalPropertyKeysForTriggers(newTemplate, newPropKeys);
+        const newPropKeysWithConditionalProperties = [...new Set([...newPropKeys, ...conditionalPropertyKeys])];
+
         // Compute removedPropsArray based on property keys present in current resource instance that are no longer in new template
         const removedPropsArray = currentKeys.filter(
           (k) => !newKeys.includes(k) && getNestedValue(props.resource.properties, k) !== undefined,
@@ -328,7 +334,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         }
 
         // Filter out properties that are in the pipeline - they will be substituted by the backend
-        const newPropKeysWithoutPipeline = newPropKeys.filter((key) => {
+        const newPropKeysWithoutPipeline = newPropKeysWithConditionalProperties.filter((key) => {
           const topKey = key.split(".")[0];
           return !pipelineProps.has(topKey);
         });
@@ -394,6 +400,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             setNestedValue(initialValues, key, currentValue);
           } else if (propSchema && propSchema.default !== undefined) {
             setNestedValue(initialValues, key, propSchema.default);
+            setNestedValue(initialCombinedState, key, propSchema.default);
           }
         });
         setNewPropertyValues(initialValues);
@@ -575,7 +582,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
               <Stack tokens={{ childrenGap: 15 }}>
                 {newPropertiesToFill.length > 0 && (
                   <MessageBar messageBarType={MessageBarType.info} styles={{ root: { marginBottom: 25 } }}>
-                    You must specify values for new properties:
+                    Review values for new or changed properties:
                   </MessageBar>
                 )}
 

@@ -9,16 +9,24 @@ export const partGuard = (part: string): boolean =>
   part === "__proto__" || part === "constructor" || part === "prototype";
 
 // Utility to get all property keys from template schema's properties object recursively, flattening nested if needed
-export const getAllPropertyKeys = (properties: any, prefix = ""): string[] => {
+export const getAllPropertyKeys = (properties: any, prefix = "", data: any = undefined): string[] => {
   if (!properties) return [];
   let keys: string[] = [];
   for (const [key, value] of Object.entries(properties)) {
     if (partGuard(key)) continue;
-    if (value && typeof value === "object" && "properties" in value) {
+    const currentData = data && typeof data === "object" ? data[key] : undefined;
+    if (value && typeof value === "object" && (value as any).items && typeof (value as any).items === "object") {
+      keys.push(prefix + key);
+      if (Array.isArray(currentData) && (value as any).items.properties) {
+        currentData.forEach((_item: any, index: number) => {
+          keys = keys.concat(getAllPropertyKeys((value as any).items.properties, `${prefix + key}.${index}.`, _item));
+        });
+      }
+    } else if (value && typeof value === "object" && "properties" in value) {
       // Include the object container itself so required-object detection works, then recurse into children.
       // Arrays-of-objects are treated as atomic leaves (getNestedValue/setNestedValue don't support array-index traversal).
       keys.push(prefix + key);
-      keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + "."));
+      keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + ".", currentData));
     } else {
       keys.push(prefix + key);
     }
@@ -92,12 +100,16 @@ export const getSchemaPropertyFromProperties = (properties: any, path: string): 
     if (partGuard(part)) {
       return null;
     }
+    if (/^\d+$/.test(part)) {
+      continue;
+    }
     if (!current || !current[part]) return null;
     if (i === parts.length - 1) {
       return current[part];
     }
-    // Only traverse into nested object schemas (not array items — those are atomic)
-    if (current[part].properties) {
+    if (current[part].items && /^\d+$/.test(parts[i + 1])) {
+      current = current[part].items.properties || current[part].items;
+    } else if (current[part].properties) {
       current = current[part].properties;
     } else {
       return null;
@@ -176,6 +188,12 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
     const part = parts[i];
     if (!currentSchema) return false;
 
+    if (/^\d+$/.test(part) && currentSchema.items) {
+      currentSchema = currentSchema.items;
+      currState = currState ? currState[part] : undefined;
+      continue;
+    }
+
     let isPartRequired = currentSchema.required && currentSchema.required.includes(part);
 
     if (currentSchema.allOf) {
@@ -201,8 +219,8 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
       return false;
     }
 
-    // Advance to the next nested object schema (arrays-of-objects are atomic — no items traversal)
-    currentSchema = currentSchema.properties ? currentSchema.properties[part] : undefined;
+    const nextSchema = currentSchema.properties ? currentSchema.properties[part] : undefined;
+    currentSchema = nextSchema;
     currState = currState ? currState[part] : undefined;
   }
   return false;
@@ -314,21 +332,43 @@ export const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
 };
 
 // Helper to extract all property keys from template properties and allOf conditionals
-export const getAllPropertyKeysFromTemplate = (template: any): string[] => {
+export const getAllPropertyKeysFromTemplate = (template: any, data: any = undefined): string[] => {
   if (!template) return [];
-  let keys = getAllPropertyKeys(template.properties);
+  let keys = getAllPropertyKeys(template.properties, "", data);
 
   if (template.allOf) {
     template.allOf.forEach((condition: any) => {
       if (condition.then && condition.then.properties) {
-        keys = keys.concat(getAllPropertyKeys(condition.then.properties));
+        keys = keys.concat(getAllPropertyKeys(condition.then.properties, "", data));
       }
       if (condition.else && condition.else.properties) {
-        keys = keys.concat(getAllPropertyKeys(condition.else.properties));
+        keys = keys.concat(getAllPropertyKeys(condition.else.properties, "", data));
       }
     });
   }
   return [...new Set(keys)];
+};
+
+// Include properties from branches controlled by any of the supplied keys so a selector change can activate them.
+export const getConditionalPropertyKeysForTriggers = (template: any, triggerKeys: string[]): string[] => {
+  if (!template?.allOf || triggerKeys.length === 0) return [];
+
+  const triggerTopKeys = new Set(triggerKeys.map((key) => key.split(".")[0]));
+  const dependentKeys: string[] = [];
+
+  template.allOf.forEach((condition: any) => {
+    const conditionalKeys = collectConditionalKeys(condition);
+    if (!conditionalKeys.some((key) => triggerTopKeys.has(key.split(".")[0]))) return;
+
+    if (condition.then?.properties) {
+      dependentKeys.push(...getAllPropertyKeys(condition.then.properties));
+    }
+    if (condition.else?.properties) {
+      dependentKeys.push(...getAllPropertyKeys(condition.else.properties));
+    }
+  });
+
+  return [...new Set(dependentKeys)];
 };
 
 // Helper to extract top-level keys (matching backend removal checks)

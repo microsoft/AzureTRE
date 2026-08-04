@@ -2,7 +2,11 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
-import { matchesIfCondition, getAllPropertyKeys } from "../../utils/schemaUpgradeUtils";
+import {
+  matchesIfCondition,
+  getAllPropertyKeys,
+  getSchemaPropertyFromProperties,
+} from "../../utils/schemaUpgradeUtils";
 import { Resource, AvailableUpgrade } from "../../models/resource";
 import { UserResource } from "../../models/userResource";
 import { ResourceType } from "../../models/resourceType";
@@ -473,7 +477,7 @@ describe("ConfirmUpgradeResource Component", () => {
     });
 
     // Should show info message about new properties
-    expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+    expect(screen.getByText("Review values for new or changed properties:")).toBeInTheDocument();
 
     // The form input for new_property should be rendered
     expect(screen.getByDisplayValue("default_value")).toBeInTheDocument();
@@ -677,7 +681,7 @@ describe("ConfirmUpgradeResource Component", () => {
     });
 
     // Should NOT show the "You must specify values" message because all properties are hidden
-    expect(screen.queryByText("You must specify values for new properties:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Review values for new or changed properties:")).not.toBeInTheDocument();
 
     // Button should be enabled immediately
     const upgradeButton = screen.getByTestId("primary-button");
@@ -723,7 +727,7 @@ describe("ConfirmUpgradeResource Component", () => {
     });
 
     // Should show the message because there's at least one visible property
-    expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+    expect(screen.getByText("Review values for new or changed properties:")).toBeInTheDocument();
 
     // Button should be disabled because visible_property is empty
     const upgradeButton = screen.getByTestId("primary-button");
@@ -878,11 +882,92 @@ describe("ConfirmUpgradeResource Component", () => {
     });
 
     // The form should display the message because 'vm_size' is treated as a property to fill since its current value is invalid
-    expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+    expect(screen.getByText("Review values for new or changed properties:")).toBeInTheDocument();
 
     // The button should be disabled because the required 'vm_size' has an invalid value ('medium' which is not in ['small', 'large'])
     const upgradeButton = screen.getByTestId("primary-button");
     expect(upgradeButton).toBeDisabled();
+  });
+
+  it("includes fields from the allOf branch activated by an invalid selector", async () => {
+    const currentTemplateWithAuthType = {
+      properties: {
+        display_name: { type: "string" },
+        auth_type: { type: "string", enum: ["Manual", "Automatic"] },
+        automatic_setting: { type: "string" },
+      },
+    };
+
+    const newTemplateWithAuthType = {
+      properties: {
+        display_name: { type: "string" },
+        auth_type: { type: "string", enum: ["Manual"], default: "Manual" },
+      },
+      allOf: [
+        {
+          if: { properties: { auth_type: { const: "Manual" } } },
+          then: {
+            properties: {
+              client_id: { type: "string", default: "new-client-id" },
+            },
+            required: ["client_id"],
+          },
+          else: {
+            properties: {
+              automatic_setting: { type: "string" },
+            },
+          },
+        },
+      ],
+      uiSchema: {},
+    };
+
+    const resourceWithInvalidAuthType: Resource = {
+      ...mockResource,
+      properties: {
+        display_name: "Test Resource",
+        auth_type: "Automatic",
+        automatic_setting: "existing-value",
+      },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        return Promise.resolve(url.includes("version=1.0.0") ? currentTemplateWithAuthType : newTemplateWithAuthType);
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(
+      <ConfirmUpgradeResource resource={resourceWithInvalidAuthType} onDismiss={mockOnDismiss} />,
+    );
+
+    fireEvent.change(screen.getByTestId("dropdown"), { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("new-client-id")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("primary-button"));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        resourceWithInvalidAuthType.resourcePath,
+        "PATCH",
+        mockWorkspaceContext.workspaceApplicationIdURI,
+        expect.objectContaining({
+          templateVersion: "1.1.0",
+          properties: expect.objectContaining({
+            auth_type: "Manual",
+            client_id: "new-client-id",
+          }),
+        }),
+        "JSON",
+        undefined,
+        undefined,
+        resourceWithInvalidAuthType._etag,
+      );
+    });
   });
 
   it("handles non-string new properties (boolean, number, array) with defaults without coercing to empty string", async () => {
@@ -1171,6 +1256,31 @@ describe("ConfirmUpgradeResource Component", () => {
     expect(keys).toEqual(["display_name", "valid_prop"]);
   });
 
+  it("collects new properties from existing array items", () => {
+    const properties = {
+      redirect_uris: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["value"],
+          properties: {
+            name: { type: "string" },
+            value: { type: "string" },
+          },
+        },
+      },
+    };
+
+    expect(getAllPropertyKeys(properties, "", { redirect_uris: [{ name: "primary" }] })).toEqual([
+      "redirect_uris",
+      "redirect_uris.0.name",
+      "redirect_uris.0.value",
+    ]);
+    expect(getSchemaPropertyFromProperties(properties, "redirect_uris.0.value")).toEqual(
+      properties.redirect_uris.items.properties.value,
+    );
+  });
+
   it("treats enum-invalid keys as visible/required-for-input regardless of tre-hidden and pre-fills template default", async () => {
     const currentTemplateWithEnum = {
       properties: {
@@ -1217,7 +1327,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     await waitFor(() => {
       // Prompt message for user input should be present because tier is invalid enum
-      expect(screen.getByText("You must specify values for new properties:")).toBeInTheDocument();
+      expect(screen.getByText("Review values for new or changed properties:")).toBeInTheDocument();
     });
 
     // Upgrade button should be enabled because default 'basic' was pre-filled (which is valid enum)
