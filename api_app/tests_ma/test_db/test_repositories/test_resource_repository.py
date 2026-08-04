@@ -1226,6 +1226,110 @@ async def test_patch_resource_allows_full_array_items_when_adding_property(resou
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_allows_newly_required_array_item_property_during_upgrade(resource_repo):
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['redirect_uris'] = {
+        'type': 'array',
+        'items': {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'value': {'type': 'string'}
+            }
+        }
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template_dict['properties']['redirect_uris']['items']['required'] = ['value']
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=new_template)
+    template_repo.enrich_template = MagicMock(side_effect=[old_template_dict, new_template_dict])
+
+    patch = ResourcePatch(
+        templateVersion='0.2.0',
+        properties={'redirect_uris': [{'name': 'primary', 'value': 'https://example.test'}]}
+    )
+    current_properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'redirect_uris': [{'name': 'primary'}]
+    }
+
+    await resource_repo.validate_patch(
+        patch,
+        template_repo,
+        old_template,
+        strings.RESOURCE_ACTION_UPDATE,
+        current_properties=current_properties
+    )
+
+
+@pytest.mark.asyncio
+async def test_patch_resource_removes_deleted_array_item_property_from_all_items(resource_repo, resource_history_repo):
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['redirect_uris'] = {
+        'type': 'array',
+        'items': {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'},
+                'value': {'type': 'string'}
+            }
+        }
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    del new_template_dict['properties']['redirect_uris']['items']['properties']['value']
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    resource_repo.validate_template_version_patch = AsyncMock(return_value=new_template)
+    template_repo = MagicMock()
+
+    def enrich_template(template, is_update=False):
+        return copy.deepcopy(new_template_dict if template.version == '0.2.0' else old_template_dict)
+
+    template_repo.enrich_template = MagicMock(side_effect=enrich_template)
+
+    resource = sample_resource()
+    resource.properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'redirect_uris': [
+            {'name': 'primary', 'value': 'https://primary.example'},
+            {'name': 'secondary', 'value': 'https://secondary.example'}
+        ]
+    }
+    patch = ResourcePatch(templateVersion='0.2.0', properties={})
+
+    await resource_repo.patch_resource(
+        resource,
+        patch,
+        old_template,
+        'some-etag',
+        template_repo,
+        resource_history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE
+    )
+
+    assert resource.properties['redirect_uris'] == [
+        {'name': 'primary'},
+        {'name': 'secondary'}
+    ]
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo):

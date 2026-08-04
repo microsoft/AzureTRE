@@ -290,10 +290,11 @@ class ResourceRepository(BaseRepository):
             existing_paths = [path for path, _ in self._get_leaf_properties(resource.properties)]
             removed_top_paths: set[str] = set()
             for path in existing_paths:
-                if any(path == tp or path.startswith(tp + ".") for tp in removed_template_paths):
+                schema_path = ".".join(part for part in path.split(".") if not part.isdigit())
+                if any(schema_path == tp or schema_path.startswith(tp + ".") for tp in removed_template_paths):
                     # Find the shortest prefix of this path that is fully absent from the target
-                    parts = path.split(".")
-                    remove_at = path
+                    parts = schema_path.split(".")
+                    remove_at = schema_path
                     for i in range(1, len(parts)):
                         prefix = ".".join(parts[:i])
                         # If this prefix itself is absent from target_properties and no sub-key
@@ -561,9 +562,16 @@ class ResourceRepository(BaseRepository):
             for i, part in enumerate(parts):
                 if not isinstance(curr_schema, dict):
                     return False
-                if isinstance(curr_schema.get("items"), dict):
+
+                if part.isdigit():
+                    if not isinstance(curr_schema.get("items"), dict):
+                        return False
                     curr_schema = curr_schema["items"]
-                    curr_state = curr_state[0] if isinstance(curr_state, list) and curr_state else {}
+                    if isinstance(curr_state, list) and int(part) < len(curr_state):
+                        curr_state = curr_state[int(part)]
+                    else:
+                        curr_state = {}
+                    continue
 
                 is_part_required = False
                 if "required" in curr_schema and isinstance(curr_schema["required"], list):
