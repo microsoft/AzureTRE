@@ -1130,6 +1130,71 @@ async def test_patch_resource_removes_nested_properties_on_upgrade(get_template_
 
 
 @pytest.mark.asyncio
+async def test_patch_resource_allows_full_array_items_when_adding_property(resource_repo, resource_history_repo):
+    """Full array items sent by an upgrade remain valid when only one item property is new."""
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+
+    old_template_dict = sample_resource_template()
+    old_template_dict['properties']['redirect_uris'] = {
+        'type': 'array',
+        'items': {
+            'type': 'object',
+            'properties': {
+                'name': {'type': 'string'}
+            }
+        }
+    }
+    old_template = parse_obj_as(ResourceTemplate, old_template_dict)
+
+    new_template_dict = copy.deepcopy(old_template_dict)
+    new_template_dict['version'] = '0.2.0'
+    new_template_dict['properties']['redirect_uris']['items']['properties']['value'] = {
+        'type': 'string',
+        'default': 'https://example.test'
+    }
+    new_template = parse_obj_as(ResourceTemplate, new_template_dict)
+
+    resource_repo.validate_template_version_patch = AsyncMock(return_value=new_template)
+    template_repo = MagicMock()
+
+    def enrich_template(template, is_update=False):
+        enriched = copy.deepcopy(new_template_dict if template.version == '0.2.0' else old_template_dict)
+        if not enriched.get('allOf'):
+            enriched.pop('allOf', None)
+        return enriched
+
+    template_repo.enrich_template.side_effect = enrich_template
+
+    user = create_test_user()
+    resource = sample_resource()
+    resource.properties = {
+        'title': 'Test Title',
+        'os_image': 'Windows 11',
+        'vm_size': 'small',
+        'redirect_uris': [{'name': 'primary'}]
+    }
+    patch = ResourcePatch(
+        templateVersion='0.2.0',
+        properties={'redirect_uris': [{'name': 'primary', 'value': 'https://example.test'}]}
+    )
+
+    updated_resource, returned_template = await resource_repo.patch_resource(
+        resource,
+        patch,
+        old_template,
+        'some-etag',
+        template_repo,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE
+    )
+
+    assert updated_resource.properties['redirect_uris'] == [{'name': 'primary', 'value': 'https://example.test'}]
+    assert returned_template == new_template
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.resources.ResourceTemplateRepository.get_template_by_name_and_version')
 @patch('db.repositories.resources.ResourceTemplateRepository.enrich_template')
 async def test_validate_patch_passes_parent_service_name_for_user_resources(enrich_template_mock, get_template_mock, resource_repo):

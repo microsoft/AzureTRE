@@ -454,27 +454,34 @@ class ResourceRepository(BaseRepository):
             using a dotted property path (e.g. 'parent_object.child_prop').
             """
             parts = path.split(".")
-            current = schema_dict.get("properties", {})
-            for i, part in enumerate(parts):
-                if isinstance(current, dict) and part in current:
+
+            def walk(properties: dict) -> Optional[dict]:
+                current = properties
+                for i, part in enumerate(parts):
+                    if not isinstance(current, dict) or part not in current:
+                        return None
+                    current = current[part]
                     if i == len(parts) - 1:
-                        return current[part]
-                    current = current[part].get("properties", {})
-                else:
-                    break
+                        return current
+                    if not isinstance(current, dict):
+                        return None
+                    if isinstance(current.get("items"), dict):
+                        current = current["items"].get("properties", current["items"])
+                    else:
+                        current = current.get("properties", {})
+                return None
+
+            prop = walk(schema_dict.get("properties", {}))
+            if prop:
+                return prop
             if "allOf" in schema_dict and schema_dict["allOf"]:
                 for condition in schema_dict["allOf"]:
                     if isinstance(condition, dict):
                         for clause in ["then", "else"]:
                             if clause in condition and isinstance(condition[clause], dict):
-                                curr = condition[clause].get("properties", {})
-                                for i, part in enumerate(parts):
-                                    if isinstance(curr, dict) and part in curr:
-                                        if i == len(parts) - 1:
-                                            return curr[part]
-                                        curr = curr[part].get("properties", {})
-                                    else:
-                                        break
+                                prop = walk(condition[clause].get("properties", {}))
+                                if prop:
+                                    return prop
             return None
 
         is_upgrade = resource_patch.templateVersion is not None and resource_patch.templateVersion != resource_template.version
@@ -482,15 +489,31 @@ class ResourceRepository(BaseRepository):
         pipeline_properties = self._get_pipeline_properties(enriched_template, action=action_phase)
 
         def get_nested_val(data: Any, path: str) -> tuple[bool, Any]:
-            if not isinstance(data, dict):
-                return False, None
             parts = path.split(".")
-            curr = data
-            for part in parts:
-                if not isinstance(curr, dict) or part not in curr:
-                    return False, None
-                curr = curr[part]
-            return True, curr
+
+            def walk(current: Any, index: int) -> tuple[bool, Any]:
+                if index == len(parts):
+                    return True, current
+                part = parts[index]
+                if isinstance(current, dict):
+                    if part not in current:
+                        return False, None
+                    return walk(current[part], index + 1)
+                if isinstance(current, list):
+                    if part.isdigit():
+                        item_index = int(part)
+                        if item_index >= len(current):
+                            return False, None
+                        return walk(current[item_index], index + 1)
+                    values = []
+                    for item in current:
+                        found, value = walk(item, index)
+                        if found:
+                            values.append(value)
+                    return (bool(values), values)
+                return False, None
+
+            return walk(data, 0)
 
         def has_updateable_parent(path: str) -> bool:
             """
@@ -534,8 +557,11 @@ class ResourceRepository(BaseRepository):
             curr_state = state or {}
 
             for i, part in enumerate(parts):
-                if not curr_schema or not isinstance(curr_schema, dict):
+                if not isinstance(curr_schema, dict):
                     return False
+                if isinstance(curr_schema.get("items"), dict):
+                    curr_schema = curr_schema["items"]
+                    curr_state = curr_state[0] if isinstance(curr_state, list) and curr_state else {}
 
                 is_part_required = False
                 if "required" in curr_schema and isinstance(curr_schema["required"], list):
@@ -573,7 +599,12 @@ class ResourceRepository(BaseRepository):
                                     next_schema = branch["properties"][part]
                                     break
                 curr_schema = next_schema
-                curr_state = curr_state.get(part) if isinstance(curr_state, dict) else None
+                if isinstance(curr_state, dict):
+                    curr_state = curr_state.get(part)
+                elif isinstance(curr_state, list) and part.isdigit() and int(part) < len(curr_state):
+                    curr_state = curr_state[int(part)]
+                else:
+                    curr_state = None
 
             return False
 
@@ -598,7 +629,7 @@ class ResourceRepository(BaseRepository):
 
             if current_properties is not None and is_upgrade:
                 has_existing, existing_val = get_nested_val(current_properties, prop_path)
-                if has_existing and existing_val == prop_val:
+                if has_existing and (existing_val == prop_val or (isinstance(existing_val, list) and prop_val in existing_val)):
                     return True
 
                 if has_existing and prop_def and isinstance(prop_def.get("enum"), list):
