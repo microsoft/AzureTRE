@@ -18,6 +18,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
+* Ignore changes to `ip_tags` on public IP resources to unblock deployments where these tags are set by Azure policy. (`core` 0.16.17, `tre-shared-service-certs` 0.7.11) ([#5019](https://github.com/microsoft/AzureTRE/issues/5019))
 * Fix workspace deletion when backup is enabled for the base, unrestricted and airlock-import-review workspaces by adding a `delete_backups_on_uninstall` flag and a pre-teardown backup cleanup (`remove_backup.sh`) that stops protection and either deletes or retains the Recovery Services Vault, so deletion works with Azure secure-by-default soft delete ([#4962](https://github.com/microsoft/AzureTRE/issues/4962))
 * Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
