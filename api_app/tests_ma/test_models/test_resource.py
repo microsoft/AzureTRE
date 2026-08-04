@@ -1,12 +1,18 @@
 import pytest
+from pydantic import ValidationError
 
 from models.domain.request_action import RequestAction
 from models.domain.airlock_request import AirlockRequest, AirlockRequestType
 from models.domain.operation import Operation, Status
-from models.domain.restricted_resource import RestrictedResource
-from models.domain.resource import Resource, ResourceType
+from models.domain.restricted_resource import RestrictedProperties, RestrictedResource
+from models.domain.resource import Output, Resource, ResourceHistoryItem, ResourceType
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
+from models.schemas.resource import ResourceHistoryInList
+from models.schemas.shared_service_template import SharedServiceTemplateInCreate
+from models.schemas.user_resource_template import UserResourceTemplateInCreate
+from models.schemas.workspace_service_template import WorkspaceServiceTemplateInCreate
+from models.schemas.workspace_template import WorkspaceTemplateInCreate
 
 
 OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
@@ -79,6 +85,7 @@ def test_legacy_actor_dicts_validate_without_user_required_fields():
     assert airlock_request.createdBy == {}
     assert airlock_request.updatedBy == {"name": "Legacy User"}
     assert airlock_request.createdWhen is None
+    assert isinstance(airlock_request.updatedWhen, float)
 
 
 def test_restricted_resource_optional_fields_default_to_none():
@@ -86,10 +93,54 @@ def test_restricted_resource_optional_fields_default_to_none():
         id="resource-id",
         templateName="workspace",
         templateVersion="1.0",
-        properties={},
         resourceType=ResourceType.Workspace,
         _etag="etag",
     )
 
+    assert isinstance(restricted_resource.properties, RestrictedProperties)
+    assert isinstance(restricted_resource.updatedWhen, float)
     assert restricted_resource.availableUpgrades is None
     assert restricted_resource.deploymentStatus is None
+
+
+def test_resource_omitted_timestamps_use_float_defaults():
+    resource_history = ResourceHistoryItem(id="history-id", resourceId="resource-id")
+    resource = Resource(
+        id="resource-id",
+        templateName="workspace",
+        templateVersion="1.0",
+        resourceType=ResourceType.Workspace,
+        _etag="etag",
+    )
+
+    assert isinstance(resource_history.updatedWhen, float)
+    assert isinstance(resource.updatedWhen, float)
+
+
+def test_output_requires_value():
+    with pytest.raises(ValidationError):
+        Output(name="output-name", type="string")
+
+
+def test_resource_history_example_uses_declared_field_types():
+    example = ResourceHistoryInList.model_config["json_schema_extra"]["example"]
+    resource_history = ResourceHistoryInList.model_validate(example).resource_history[0]
+
+    assert isinstance(resource_history.isEnabled, bool)
+    assert isinstance(resource_history.resourceVersion, int)
+    assert isinstance(resource_history.updatedWhen, float)
+    assert isinstance(resource_history.user, dict)
+
+
+@pytest.mark.parametrize("model", [
+    SharedServiceTemplateInCreate,
+    UserResourceTemplateInCreate,
+    WorkspaceServiceTemplateInCreate,
+    WorkspaceTemplateInCreate,
+])
+def test_resource_template_create_examples_use_boolean_current(model):
+    example = model.model_config["json_schema_extra"]["example"]
+    template = model.model_validate(example)
+
+    assert isinstance(example["current"], bool)
+    assert isinstance(template.current, bool)

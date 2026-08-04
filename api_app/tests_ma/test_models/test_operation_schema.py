@@ -45,6 +45,7 @@ def test_operation_omitted_status_uses_enum_default():
         user={},
     )
 
+    assert isinstance(operation.status, Status)
     assert operation.status == Status.AwaitingDeployment
 
 

@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
+from models.domain.airlock_request import AirlockReview, AirlockReviewDecision
 from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockReviewInCreate, get_sample_airlock_request
 from models.schemas.operation import get_sample_operation
 
@@ -36,3 +37,9 @@ def test_airlock_review_in_create_openapi_example_uses_boolean_approval():
 
     assert isinstance(example["approval"], bool)
     assert example["approval"] is True
+
+
+def test_airlock_review_omitted_date_uses_float_default():
+    review = AirlockReview(id="review-id", reviewDecision=AirlockReviewDecision.Approved)
+
+    assert isinstance(review.dateCreated, float)

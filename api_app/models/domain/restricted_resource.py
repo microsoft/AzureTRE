@@ -19,7 +19,7 @@ class RestrictedResource(AzureTREModel):
     id: str = Field(title="Id", description="GUID identifying the resource request")
     templateName: str = Field(title="Resource template name", description="The resource template (bundle) to deploy")
     templateVersion: str = Field(title="Resource template version", description="The version of the resource template (bundle) to deploy")
-    properties: RestrictedProperties = Field(None, title="Restricted Properties", description="Resource properties safe to share with non-admins")
+    properties: RestrictedProperties = Field(default_factory=RestrictedProperties, title="Restricted Properties", description="Resource properties safe to share with non-admins")
     availableUpgrades: Optional[List[AvailableUpgrade]] = Field(None, title="Available template upgrades", description="Versions of the template that are available for upgrade")
     isEnabled: bool = True  # Must be set before a resource can be deleted
     resourceType: ResourceType
@@ -28,7 +28,7 @@ class RestrictedResource(AzureTREModel):
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = Field(default_factory=dict)
-    updatedWhen: float = 0
+    updatedWhen: float = 0.0
 
     @field_validator("user", mode="before")
     @classmethod

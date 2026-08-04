@@ -25,7 +25,7 @@ class ResourceHistoryItem(AzureTREModel):
     properties: dict = Field(default_factory=dict, title="Resource template parameters", description="Parameters for the deployment")
     isEnabled: bool = True
     resourceVersion: int = 0
-    updatedWhen: float = 0
+    updatedWhen: float = 0.0
     user: dict = Field(default_factory=dict)
 
     @field_validator("user", mode="before")
@@ -59,7 +59,7 @@ class Resource(AzureTREModel):
     resourcePath: str = ""
     resourceVersion: int = 0
     user: dict = Field(default_factory=dict)
-    updatedWhen: float = 0
+    updatedWhen: float = 0.0
 
     @field_validator("properties", mode="before")
     @classmethod
@@ -110,5 +110,5 @@ class Resource(AzureTREModel):
 
 class Output(AzureTREModel):
     Name: str = Field(title="", description="", alias="name")
-    Value: Union[list, dict, str] = Field(None, title="", description="", alias="value")
+    Value: Union[list, dict, str] = Field(title="", description="", alias="value")
     Type: str = Field(title="", description="", alias="type")
