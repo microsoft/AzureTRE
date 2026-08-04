@@ -25,16 +25,15 @@ def get_sample_resource_history(resource_id: str) -> dict:
     return {
         "id": "abc9ru33-7265-4b5f-9eae-a1a62928772e",
         "resourceId": resource_id,
-        "templateName": "vm",
         "templateVersion": "0.1.0",
         "properties": {
             "display_name": "my user resource",
             "description": "some description",
         },
-        "isEnabled": "true",
-        "resourceVersion": "1",
-        "updatedWhen": "",
-        "user": ""
+        "isEnabled": True,
+        "resourceVersion": 1,
+        "updatedWhen": 0.0,
+        "user": {}
     }
 
 

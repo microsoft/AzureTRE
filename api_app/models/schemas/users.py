@@ -10,27 +10,27 @@ class UsersInResponse(BaseModel):
         "example": {
             "users": [
                 {
-                    "id": 1,
+                    "id": "1",
                     "displayName": "John Doe",
                     "userPrincipalName": "john.doe@example.com",
                     "roles": [
                         {
-                            "id": 1,
+                            "id": "1",
                             "displayName": "WorkspaceOwner"
                         },
                         {
-                            "id": 2,
+                            "id": "2",
                             "displayName": "WorkspaceResearcher"
                         }
                     ]
                 },
                 {
-                    "id": 2,
+                    "id": "2",
                     "displayName": "Jane Smith",
                     "userPrincipalName": "jane.smith@example.com",
                     "roles": [
                         {
-                            "id": 2,
+                            "id": "2",
                             "displayName": "WorkspaceResearcher"
                         }
                     ]

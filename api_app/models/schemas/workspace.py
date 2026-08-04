@@ -48,7 +48,9 @@ class WorkspaceAuthInResponse(BaseModel):
     workspaceAuth: WorkspaceAuth
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "scopeId": "api://mytre-ws-1233456"
+            "workspaceAuth": {
+                "scopeId": "api://mytre-ws-1233456"
+            }
         }
     })
 

@@ -25,7 +25,7 @@ class SharedServiceInResponse(BaseModel):
     sharedService: SharedService
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "shared_service": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
+            "sharedService": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
         }
     })
 
@@ -34,7 +34,7 @@ class RestrictedSharedServiceInResponse(BaseModel):
     sharedService: RestrictedResource
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "shared_service": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
+            "sharedService": get_sample_shared_service("2fdc9fba-726e-4db6-a1b8-9018a2165748")
         }
     })
 

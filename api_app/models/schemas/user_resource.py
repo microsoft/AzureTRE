@@ -29,7 +29,7 @@ class UserResourceInResponse(BaseModel):
     userResource: UserResource
     model_config = ConfigDict(json_schema_extra={
         "example": {
-            "user_resource": get_sample_user_resource("933ad738-7265-4b5f-9eae-a1a62928772e")
+            "userResource": get_sample_user_resource("933ad738-7265-4b5f-9eae-a1a62928772e")
         }
     })
 

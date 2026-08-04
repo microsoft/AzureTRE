@@ -42,7 +42,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
         "example": {
             "name": "my-tre-workspace-service",
             "version": "0.0.1",
-            "current": "true",
+            "current": True,
             "json_schema": {
                 "$schema": "http://json-schema.org/draft-07/schema",
                 "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",

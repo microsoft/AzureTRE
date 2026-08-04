@@ -32,6 +32,11 @@ def get_sample_user_resource_template() -> dict:
 
 def get_sample_user_resource_template_in_response() -> dict:
     workspace_template = get_sample_user_resource_template()
+    workspace_template["system_properties"] = {
+        "tre_id": Property(type="string").model_dump(),
+        "workspace_id": Property(type="string").model_dump(),
+        "azure_location": Property(type="string").model_dump(),
+    }
     return workspace_template
 
 
@@ -40,7 +45,7 @@ class UserResourceTemplateInCreate(ResourceTemplateInCreate):
         "example": {
             "name": "my-tre-user-resource",
             "version": "0.0.1",
-            "current": "true",
+            "current": True,
             "json_schema": {
                 "$schema": "http://json-schema.org/draft-07/schema",
                 "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
