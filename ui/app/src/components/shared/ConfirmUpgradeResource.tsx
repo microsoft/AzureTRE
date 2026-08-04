@@ -28,6 +28,7 @@ import validator from "@rjsf/validator-ajv8";
 import {
   getNestedValue,
   setNestedValue,
+  clonePropertyValues,
   getSchemaProperty,
   getNestedUiSchema,
   isPropertyRequiredInState,
@@ -127,9 +128,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       if (isKeyActiveInTemplate(templateSchema, key, formData)) {
         const val = getNestedValue(formData, key);
         if (val !== undefined) {
-          setNestedValue(updatedNewVals, key, val);
+          setNestedValue(updatedNewVals, key, val, formData);
         } else if (isPropertyRequiredInState(templateSchema, key, formData)) {
-          setNestedValue(updatedNewVals, key, "");
+          setNestedValue(updatedNewVals, key, "", formData);
         }
       }
     });
@@ -286,7 +287,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         // Build a state with target-template defaults applied so that allOf branch conditions
         // introduced by the new template (e.g. a new selector with a default value) are
         // evaluated correctly when checking which properties become required on upgrade.
-        const stateWithNewDefaults = { ...props.resource.properties };
+        const stateWithNewDefaults = clonePropertyValues(props.resource.properties);
         newKeys.forEach((key) => {
           if (getNestedValue(stateWithNewDefaults, key) === undefined) {
             const propSchema = getSchemaProperty(newTemplate, key);
@@ -383,8 +384,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         setAllNewProperties(newPropKeysToSend);
 
         // prefill newPropertyValues with schema defaults for active branches only
-        const initialCombinedState = mergePropertyValues(props.resource.properties, {});
-        const initialValues: any = {};
+        const initialCombinedState = clonePropertyValues(mergePropertyValues(props.resource.properties, {}));
+        const initialValues: any = clonePropertyValues(props.resource.properties);
         newPropKeysToSend.forEach((key) => {
           if (!isKeyActiveInTemplate(newTemplate, key, initialCombinedState)) {
             return;

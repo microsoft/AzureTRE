@@ -8,6 +8,8 @@
 export const partGuard = (part: string): boolean =>
   part === "__proto__" || part === "constructor" || part === "prototype";
 
+export const clonePropertyValues = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
 // Utility to get all property keys from template schema's properties object recursively, flattening nested if needed
 export const getAllPropertyKeys = (properties: any, prefix = "", data: any = undefined): string[] => {
   if (!properties) return [];
@@ -49,18 +51,21 @@ export const getNestedValue = (obj: any, path: string): any => {
 };
 
 // Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
-export const setNestedValue = (obj: any, path: string, value: any): void => {
+export const setNestedValue = (obj: any, path: string, value: any, source?: any): void => {
   const parts = path.split(".");
   let current = obj;
+  let currentSource = source;
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
     if (partGuard(part)) {
       return;
     }
+    const sourceValue = currentSource && typeof currentSource === "object" ? currentSource[part] : undefined;
     if (!(part in current) || typeof current[part] !== "object" || current[part] === null) {
-      current[part] = {};
+      current[part] = Array.isArray(sourceValue) ? clonePropertyValues(sourceValue) : {};
     }
     current = current[part];
+    currentSource = sourceValue;
   }
   const lastPart = parts[parts.length - 1];
   if (!partGuard(lastPart)) {

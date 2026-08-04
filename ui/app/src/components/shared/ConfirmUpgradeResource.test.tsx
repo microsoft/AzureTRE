@@ -827,6 +827,73 @@ describe("ConfirmUpgradeResource Component", () => {
     });
   });
 
+  it("preserves existing array item values when sending a new item property", async () => {
+    const currentTemplateWithArray = {
+      properties: {
+        redirect_uris: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+            },
+          },
+        },
+      },
+    };
+    const newTemplateWithArrayProperty = {
+      properties: {
+        redirect_uris: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              value: { type: "string", default: "https://example.test" },
+            },
+          },
+        },
+      },
+      uiSchema: {},
+    };
+    const resourceWithArray: Resource = {
+      ...mockResource,
+      properties: { redirect_uris: [{ name: "primary" }] },
+    };
+
+    mockApiCall.mockImplementation((url, method) => {
+      if (method === "GET" && url.includes("?version=")) {
+        return Promise.resolve(url.includes("version=1.0.0") ? currentTemplateWithArray : newTemplateWithArrayProperty);
+      }
+      return Promise.resolve({ operation: { id: "operation-id", status: "running" } });
+    });
+
+    renderWithWorkspaceContext(<ConfirmUpgradeResource resource={resourceWithArray} onDismiss={mockOnDismiss} />);
+    fireEvent.change(screen.getByTestId("dropdown"), { target: { value: "1.1.0" } });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("primary-button"));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        resourceWithArray.resourcePath,
+        "PATCH",
+        mockWorkspaceContext.workspaceApplicationIdURI,
+        expect.objectContaining({
+          templateVersion: "1.1.0",
+          properties: { redirect_uris: [{ name: "primary", value: "https://example.test" }] },
+        }),
+        "JSON",
+        undefined,
+        undefined,
+        resourceWithArray._etag,
+      );
+    });
+  });
+
   it("detects when an enum value is removed and prompts the user to select a valid one", async () => {
     const mockCurrentTemplateEnumSchema = {
       properties: {
