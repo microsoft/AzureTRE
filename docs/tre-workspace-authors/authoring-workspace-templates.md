@@ -112,7 +112,7 @@ To request an additional address space, the workspace service bundle must define
 The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template.
 This parameter accepts the presets `small` (/24), `medium` (/22), `large` (/16), the literal value `custom` together with an explicit `address_space` CIDR (e.g. `10.2.1.0/25`), or a numeric CIDR mask as a string.
 The API has support for allocating CIDR subnet masks from "16" to "29". Workspace templates are configured to support from "16" (65,536 IP addresses) to "24" (256 IP addresses).
-Depending on the workspace service you are deploying you may configure a template with a CIDR up to "29" which only has only 3 usable IP addresses as Azure reserves the first four and last address of every subnet.
+Depending on the workspace service you are deploying you may configure a template with a CIDR up to "29" which has only 3 usable IP addresses as Azure reserves the first four and last address of every subnet.
 The workspace service IP addresses are in addition to the workspace addresses and the address size is unrelated to the workspace IP address size.
 The workspace will be patched to add the additional address space to its vnet.
 
