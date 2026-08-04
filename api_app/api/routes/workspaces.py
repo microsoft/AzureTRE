@@ -42,6 +42,9 @@ workspaces_shared_router = APIRouter(dependencies=[Depends(require_workspace_own
 workspace_services_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 user_resources_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
+AIRLOCK_IMPORT_REVIEW_WORKSPACE_TEMPLATE_NAME = "tre-workspace-airlock-import-review"
+GUACAMOLE_IMPORT_REVIEW_VM_TEMPLATE_NAME = "tre-service-guacamole-import-reviewvm"
+
 
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
@@ -209,6 +212,11 @@ async def get_user_resource_templates(
         template_repo=Depends(get_repository(ResourceTemplateRepository)),
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin)) -> ResourceTemplateInformationInList:
     template_infos = await template_repo.get_templates_information(ResourceType.UserResource, user.roles, service_template_name)
+    if workspace.templateName != AIRLOCK_IMPORT_REVIEW_WORKSPACE_TEMPLATE_NAME:
+        template_infos = [
+            template_info for template_info in template_infos
+            if template_info.name != GUACAMOLE_IMPORT_REVIEW_VM_TEMPLATE_NAME
+        ]
     return ResourceTemplateInformationInList(templates=template_infos)
 
 
