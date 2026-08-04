@@ -171,9 +171,9 @@ class ResourceRepository(BaseRepository):
                 if isinstance(v, dict) and v:
                     leaves.extend(self._get_leaf_properties(v, prefix=f"{full_key}."))
                 elif isinstance(v, list) and v:
-                    for elem in v:
+                    for index, elem in enumerate(v):
                         if isinstance(elem, dict) and elem:
-                            leaves.extend(self._get_leaf_properties(elem, prefix=f"{full_key}."))
+                            leaves.extend(self._get_leaf_properties(elem, prefix=f"{full_key}.{index}."))
                         else:
                             leaves.append((full_key, v))
                             break
@@ -418,6 +418,8 @@ class ResourceRepository(BaseRepository):
         pipeline = enriched_template.get("pipeline")
         if pipeline and action in pipeline and pipeline[action]:
             for step in pipeline[action]:
+                if step.get("stepId") != "main":
+                    continue
                 if "properties" in step and step["properties"]:
                     for prop in step["properties"]:
                         if isinstance(prop, dict) and prop.get("name"):
@@ -634,7 +636,19 @@ class ResourceRepository(BaseRepository):
 
             if current_properties is not None and is_upgrade:
                 has_existing, existing_val = get_nested_val(current_properties, prop_path)
-                if has_existing and (existing_val == prop_val or (isinstance(existing_val, list) and prop_val in existing_val)):
+                array_parts = prop_path.split(".")
+                array_index = next((i for i, part in enumerate(array_parts) if part.isdigit()), None)
+                if array_index is not None:
+                    array_path = ".".join(array_parts[:array_index])
+                    patch_array_exists, patch_array = get_nested_val(resource_patch.properties or {}, array_path)
+                    current_array_exists, current_array = get_nested_val(current_properties, array_path)
+                    if patch_array_exists and current_array_exists and (
+                        not isinstance(patch_array, list)
+                        or not isinstance(current_array, list)
+                        or len(patch_array) != len(current_array)
+                    ):
+                        return False
+                if has_existing and existing_val == prop_val:
                     return True
 
                 if has_existing and prop_def and isinstance(prop_def.get("enum"), list):

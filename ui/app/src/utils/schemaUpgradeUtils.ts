@@ -224,7 +224,16 @@ export const isPropertyRequiredInState = (templateSchema: any, path: string, sta
       return false;
     }
 
-    const nextSchema = currentSchema.properties ? currentSchema.properties[part] : undefined;
+    let nextSchema = currentSchema.properties ? currentSchema.properties[part] : undefined;
+    if (!nextSchema && currentSchema.allOf) {
+      for (const condition of currentSchema.allOf) {
+        const branch = matchesIfCondition(condition.if, currState) ? condition.then : condition.else;
+        if (branch?.properties?.[part]) {
+          nextSchema = branch.properties[part];
+          break;
+        }
+      }
+    }
     currentSchema = nextSchema;
     currState = currState ? currState[part] : undefined;
   }

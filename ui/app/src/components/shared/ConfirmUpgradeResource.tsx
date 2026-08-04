@@ -326,6 +326,9 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         const pipelineProps = new Set<string>();
         if (newTemplate?.pipeline?.upgrade) {
           newTemplate.pipeline.upgrade.forEach((step: any) => {
+            if (step.stepId !== "main") {
+              return;
+            }
             if (step.properties) {
               step.properties.forEach((prop: any) => {
                 pipelineProps.add(prop.name);
