@@ -6,6 +6,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestType
 from models.domain.operation import Operation, Status
 from models.domain.restricted_resource import RestrictedProperties, RestrictedResource
 from models.domain.resource import Output, Resource, ResourceHistoryItem, ResourceType
+from models.domain.resource_template import Property
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourceHistoryInList
@@ -120,6 +121,14 @@ def test_resource_omitted_timestamps_use_float_defaults():
 def test_output_requires_value():
     with pytest.raises(ValidationError):
         Output(name="output-name", type="string")
+
+
+def test_resource_template_property_preserves_heterogeneous_enum_values():
+    enum_values = [1, "two", True, None]
+
+    prop = Property(enum=enum_values)
+
+    assert prop.enum == enum_values
 
 
 def test_resource_history_example_uses_declared_field_types():

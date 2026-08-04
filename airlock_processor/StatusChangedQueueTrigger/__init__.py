@@ -16,7 +16,7 @@ from pydantic import BaseModel, TypeAdapter
 class RequestProperties(BaseModel):
     request_id: str
     new_status: str
-    previous_status: Optional[str]
+    previous_status: Optional[str] = None
     type: str
     workspace_id: str
 

@@ -39,7 +39,7 @@ class Property(AzureTREModel):
     title: str = Field(default="", title="Property description")
     description: Optional[str] = Field(default=None, title="Property description")
     default: Any = Field(default=None, title="Default value for the property")
-    enum: Optional[List[str]] = Field(default=None, title="Enum values")
+    enum: Optional[List[Any]] = Field(default=None, title="Enum values")
     const: Optional[Any] = Field(default=None, title="Constant value")
     multipleOf: Optional[float] = Field(default=None, title="Multiple of")
     maximum: Optional[float] = Field(default=None, title="Maximum value")
