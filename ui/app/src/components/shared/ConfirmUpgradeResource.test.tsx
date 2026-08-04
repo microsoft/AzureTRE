@@ -6,6 +6,7 @@ import {
   matchesIfCondition,
   getAllPropertyKeys,
   getSchemaPropertyFromProperties,
+  buildReducedSchema,
 } from "../../utils/schemaUpgradeUtils";
 import { Resource, AvailableUpgrade } from "../../models/resource";
 import { UserResource } from "../../models/userResource";
@@ -875,6 +876,9 @@ describe("ConfirmUpgradeResource Component", () => {
       expect(screen.queryByText("Loading new template schema...")).not.toBeInTheDocument();
     });
 
+    expect(screen.queryByDisplayValue("primary")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("https://example.test")).toBeInTheDocument();
+
     fireEvent.click(screen.getByTestId("primary-button"));
 
     await waitFor(() => {
@@ -1346,6 +1350,29 @@ describe("ConfirmUpgradeResource Component", () => {
     expect(getSchemaPropertyFromProperties(properties, "redirect_uris.0.value")).toEqual(
       properties.redirect_uris.items.properties.value,
     );
+  });
+
+  it("prunes existing array item fields from the reduced upgrade schema", () => {
+    const schema = {
+      properties: {
+        redirect_uris: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              value: { type: "string" },
+            },
+          },
+        },
+      },
+    };
+
+    const reducedSchema = buildReducedSchema(schema, ["redirect_uris.0.value"]);
+
+    expect(reducedSchema.properties.redirect_uris.items.properties).toEqual({
+      value: { type: "string" },
+    });
   });
 
   it("treats enum-invalid keys as visible/required-for-input regardless of tre-hidden and pre-fills template default", async () => {

@@ -260,6 +260,17 @@ export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
         matchingSubKeys.length > 0 &&
         propSchema &&
         typeof propSchema === "object" &&
+        (propSchema as any).items?.properties
+      ) {
+        const itemKeys = matchingSubKeys.filter((key) => /^\d+\./.test(key)).map((key) => key.replace(/^\d+\./, ""));
+        prunedProperties[propName] = {
+          ...(propSchema as any),
+          items: pruneSchemaNode((propSchema as any).items, itemKeys),
+        };
+      } else if (
+        matchingSubKeys.length > 0 &&
+        propSchema &&
+        typeof propSchema === "object" &&
         (propSchema as any).properties
       ) {
         prunedProperties[propName] = pruneSchemaNode(propSchema, matchingSubKeys);

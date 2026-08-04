@@ -501,6 +501,37 @@ async def test_validate_patch_allows_new_non_updateable_property_during_upgrade(
 
 
 @pytest.mark.asyncio
+async def test_validate_patch_rejects_undeclared_nested_property_during_upgrade(resource_repo):
+    old_template = sample_resource_template()
+    old_template['version'] = '0.1.0'
+    new_template = sample_resource_template_with_new_property(version='0.2.0')
+    new_template['properties']['parent_object'] = {
+        'type': 'object',
+        'properties': {
+            'declared_field': {'type': 'string', 'updateable': False}
+        }
+    }
+
+    template_repo = MagicMock()
+    template_repo.get_template_by_name_and_version = AsyncMock(return_value=parse_obj_as(ResourceTemplate, new_template))
+    template_repo.enrich_template = MagicMock(side_effect=[old_template, new_template])
+
+    patch = ResourcePatch(
+        templateVersion='0.2.0',
+        properties={'parent_object': {'undeclared_field': 'value1'}}
+    )
+
+    with pytest.raises(ValidationError, match="Property 'parent_object.undeclared_field' is unexpected."):
+        await resource_repo.validate_patch(
+            patch,
+            template_repo,
+            parse_obj_as(ResourceTemplate, old_template),
+            strings.RESOURCE_ACTION_UPDATE,
+            current_properties={'title': 'Test Title', 'os_image': 'Windows 11', 'vm_size': 'small'}
+        )
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_rejects_existing_non_updateable_property_during_upgrade(resource_repo):
     """
     Test that during a template upgrade, existing non-updateable properties still cannot be modified

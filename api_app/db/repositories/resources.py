@@ -619,10 +619,15 @@ class ResourceRepository(BaseRepository):
             4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
             5. Absent from the persisted resource and required by the active target schema during an upgrade.
             """
-            prop_def = get_prop_schema(enriched_template, prop_path)
+            schema_path = ".".join(part for part in prop_path.split(".") if not part.isdigit())
+            prop_def = get_prop_schema(enriched_template, schema_path)
             # Allow if this leaf OR any ancestor object is marked updateable: true
-            is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(prop_path)
-            is_new_on_upgrade = is_upgrade and prop_path not in old_template_properties
+            is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(schema_path)
+            is_new_on_upgrade = (
+                is_upgrade
+                and schema_path in target_template_properties
+                and schema_path not in old_template_properties
+            )
 
             if is_updateable or is_new_on_upgrade:
                 return True
