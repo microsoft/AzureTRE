@@ -12,7 +12,7 @@ from tests_ma.test_api.conftest import create_admin_user, create_test_user, crea
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.operation import OperationInResponse
 
-from db.errors import EntityDoesNotExist, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
+from db.errors import EntityDoesNotExist, InvalidInput, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.authentication import RoleAssignment
@@ -800,6 +800,24 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_address_space_based_on_size", side_effect=InvalidInput("'address_space_size' numeric value must be between 16 and 29"))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_returns_422_for_invalid_address_space_size(self, create_workspace_service_item_mock, _, get_workspace_mock, __, app, client, workspace_service_input, basic_workspace_service_template):
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"] = "10.1.0.0/24"
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+        workspace_service_input["properties"]["address_space_size"] = "15"
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+        assert response.text == "'address_space_size' numeric value must be between 16 and 29"
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
