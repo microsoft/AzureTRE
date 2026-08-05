@@ -22,6 +22,8 @@ class Role(BaseModel):
     @field_validator("id", mode="before")
     @classmethod
     def convert_id_to_string(cls, value):
+        if value is None:
+            raise ValueError("Role id must not be null")
         return str(value)
 
     def __eq__(self, other):
