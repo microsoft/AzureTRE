@@ -114,6 +114,16 @@ async def test_get_airlock_request_by_id(airlock_request_repo):
     assert actual_service == airlock_request
 
 
+async def test_get_airlock_request_by_id_accepts_legacy_request_without_type(airlock_request_repo):
+    airlock_request = airlock_request_mock().model_dump()
+    airlock_request.pop("type")
+    airlock_request_repo.read_item_by_id = AsyncMock(return_value=airlock_request)
+
+    actual_service = await airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
+
+    assert actual_service.type is None
+
+
 async def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_request_id(airlock_request_repo):
     airlock_request_repo.read_item_by_id = AsyncMock()
     airlock_request_repo.read_item_by_id.side_effect = CosmosResourceNotFoundError

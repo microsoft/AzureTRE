@@ -105,7 +105,7 @@ class AirlockRequest(AzureTREModel):
     updatedWhen: float = 0.0
     history: List[AirlockRequestHistoryItem] = Field(default_factory=list)
     workspaceId: str = Field(default="", title="Workspace ID", description="Service target Workspace id")
-    type: AirlockRequestType = Field(title="Airlock request type")
+    type: Optional[AirlockRequestType] = Field(None, title="Airlock request type")
     files: List[AirlockFile] = Field(default_factory=list, title="Files of the request")
     title: str = Field(default="Airlock Request", title="Brief title for the request")
     businessJustification: str = Field(default="Business Justification", title="Explanation that will be provided to the request reviewer")
