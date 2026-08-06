@@ -15,6 +15,7 @@ ENHANCEMENTS:
 * Strengthen TRE API authentication with a layered `auth/` package (typed exceptions, `PyJWKClient`-backed token validation, immutable `AuthenticatedUser` model, composable RBAC factories), remove the redundant `AccessService` abstraction, and add Event Grid publish resilience with distinct Graph/publish failure reporting. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
 * Add support for formatting UI code via `pre-commit` and fix existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
 * Update the version of `super-linter` used in the `build_validation_develop` workflow to 8.7.0 ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
+* Add trusted CA support for devcontainer image builds and Porter bundle build and publish workflows.
 
 BUG FIXES:
 * Ignore changes to `ip_tags` on public IP resources to unblock deployments where these tags are set by Azure policy. (`core` 0.16.17, `tre-shared-service-certs` 0.7.11) ([#5019](https://github.com/microsoft/AzureTRE/issues/5019))
