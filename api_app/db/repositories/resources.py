@@ -48,14 +48,28 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _normalize_template_schema(resource_template: dict) -> dict:
-        """Remove invalid legacy nested $id values from template schemas.
+        """Normalize legacy schema artifacts before validating resource input.
 
         jsonschema>=4.25 rejects non-empty fragment identifiers for $id.
         Historical templates include property-level values with non-empty
         fragments, such as "#/properties/foo" and "#properties/foo", which
         are not required for validation.
+
+        Some templates registered via earlier model serialization behavior can
+        also contain unintended ``const: null`` on typed properties that do not
+        allow null (for example, ``{"type": "string", "const": null}``).
+        Those constraints make valid non-null inputs fail unexpectedly. We
+        ignore only this specific legacy pattern during validation while
+        preserving intentional nullable const constraints.
         """
         normalized_template = copy.deepcopy(resource_template)
+
+        def _allows_null(schema_type) -> bool:
+            if isinstance(schema_type, str):
+                return schema_type == "null"
+            if isinstance(schema_type, list):
+                return "null" in schema_type
+            return False
 
         def _walk(node, is_root=False):
             if isinstance(node, dict):
@@ -64,6 +78,17 @@ class ResourceRepository(BaseRepository):
                 schema_id = node.get("$id")
                 if not is_root and isinstance(schema_id, str) and schema_id.partition("#")[2]:
                     node.pop("$id", None)
+
+                # Backward compatibility: drop accidental const:null when the
+                # schema type explicitly does not allow null.
+                if (
+                    "const" in node
+                    and node.get("const") is None
+                    and "type" in node
+                    and not _allows_null(node.get("type"))
+                ):
+                    node.pop("const", None)
+
                 for value in node.values():
                     _walk(value)
             elif isinstance(node, list):

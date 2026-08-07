@@ -439,3 +439,64 @@ def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_
     assert normalized_template["$id"] == template["$id"]
     assert "$id" not in normalized_template["properties"]["network_rule_collections"]
     assert template["properties"]["network_rule_collections"]["$id"] == nested_schema_id
+
+
+def test_validate_resource_parameters_ignores_legacy_const_null_for_non_nullable_type(resource_repo):
+    template = {
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["overview"],
+        "properties": {
+            "overview": {
+                "type": "string",
+                "default": "A markdown overview",
+                "const": None
+            }
+        }
+    }
+
+    resource_input = {
+        "properties": {
+            "overview": "A markdown overview"
+        }
+    }
+
+    # Should validate by ignoring legacy accidental const:null.
+    resource_repo._validate_resource_parameters(resource_input, template)
+
+    # Normalization is non-mutating and scoped to validation input only.
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert "const" not in normalized_template["properties"]["overview"]
+    assert template["properties"]["overview"]["const"] is None
+
+
+def test_validate_resource_parameters_preserves_intentional_nullable_const(resource_repo):
+    template = {
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["nullable_const"],
+        "properties": {
+            "nullable_const": {
+                "type": ["string", "null"],
+                "const": None
+            }
+        }
+    }
+
+    valid_resource_input = {
+        "properties": {
+            "nullable_const": None
+        }
+    }
+    invalid_resource_input = {
+        "properties": {
+            "nullable_const": "not-null"
+        }
+    }
+
+    resource_repo._validate_resource_parameters(valid_resource_input, template)
+    with pytest.raises(ValidationError):
+        resource_repo._validate_resource_parameters(invalid_resource_input, template)
+
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert normalized_template["properties"]["nullable_const"]["const"] is None
