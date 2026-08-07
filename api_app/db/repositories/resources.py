@@ -62,13 +62,6 @@ class ResourceRepository(BaseRepository):
         """
         normalized_template = copy.deepcopy(resource_template)
 
-        def _allows_null(schema_type) -> bool:
-            if isinstance(schema_type, str):
-                return schema_type == "null"
-            if isinstance(schema_type, list):
-                return "null" in schema_type
-            return False
-
         def _walk(node, is_root=False):
             if isinstance(node, dict):
                 # Keep top-level $id intact; nested $id values with non-empty
