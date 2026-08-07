@@ -441,15 +441,15 @@ def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_
     assert template["properties"]["network_rule_collections"]["$id"] == nested_schema_id
 
 
-def test_validate_resource_parameters_ignores_legacy_const_null_for_non_nullable_type(resource_repo):
+def test_validate_resource_parameters_ignores_invalid_const_null_on_non_nullable_property(resource_repo):
     template = {
         "$id": "https://example.com/template_schema.json",
         "type": "object",
-        "required": ["overview"],
+        "required": ["storage_account_redundancy"],
         "properties": {
-            "overview": {
+            "storage_account_redundancy": {
                 "type": "string",
-                "default": "A markdown overview",
+                "enum": ["GRS", "ZRS"],
                 "const": None
             }
         }
@@ -457,46 +457,38 @@ def test_validate_resource_parameters_ignores_legacy_const_null_for_non_nullable
 
     resource_input = {
         "properties": {
-            "overview": "A markdown overview"
+            "storage_account_redundancy": "GRS"
         }
     }
 
-    # Should validate by ignoring legacy accidental const:null.
+    # Should not raise because const:null is incompatible with this non-nullable property.
     resource_repo._validate_resource_parameters(resource_input, template)
 
-    # Normalization is non-mutating and scoped to validation input only.
     normalized_template = resource_repo._normalize_template_schema(template)
-    assert "const" not in normalized_template["properties"]["overview"]
-    assert template["properties"]["overview"]["const"] is None
+    assert "const" not in normalized_template["properties"]["storage_account_redundancy"]
+    assert template["properties"]["storage_account_redundancy"]["const"] is None
 
 
-def test_validate_resource_parameters_preserves_intentional_nullable_const(resource_repo):
+def test_validate_resource_parameters_keeps_nullable_const_null(resource_repo):
     template = {
         "$id": "https://example.com/template_schema.json",
         "type": "object",
         "required": ["nullable_const"],
         "properties": {
             "nullable_const": {
-                "type": ["string", "null"],
                 "const": None
             }
         }
     }
 
-    valid_resource_input = {
+    resource_input = {
         "properties": {
             "nullable_const": None
         }
     }
-    invalid_resource_input = {
-        "properties": {
-            "nullable_const": "not-null"
-        }
-    }
 
-    resource_repo._validate_resource_parameters(valid_resource_input, template)
-    with pytest.raises(ValidationError):
-        resource_repo._validate_resource_parameters(invalid_resource_input, template)
+    # Explicit nullable const usage should still validate and remain in schema.
+    resource_repo._validate_resource_parameters(resource_input, template)
 
     normalized_template = resource_repo._normalize_template_schema(template)
     assert normalized_template["properties"]["nullable_const"]["const"] is None

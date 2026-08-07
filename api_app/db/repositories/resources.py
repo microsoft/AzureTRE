@@ -55,12 +55,10 @@ class ResourceRepository(BaseRepository):
         fragments, such as "#/properties/foo" and "#properties/foo", which
         are not required for validation.
 
-        Some templates registered via earlier model serialization behavior can
-        also contain unintended ``const: null`` on typed properties that do not
-        allow null (for example, ``{"type": "string", "const": null}``).
-        Those constraints make valid non-null inputs fail unexpectedly. We
-        ignore only this specific legacy pattern during validation while
-        preserving intentional nullable const constraints.
+        Legacy templates may also contain accidental ``const: null`` constraints
+        on properties that do not allow ``null`` values. Those constraints make
+        the schema unsatisfiable for valid non-null input values and should be
+        removed during validation normalization.
         """
         normalized_template = copy.deepcopy(resource_template)
 
@@ -79,15 +77,21 @@ class ResourceRepository(BaseRepository):
                 if not is_root and isinstance(schema_id, str) and schema_id.partition("#")[2]:
                     node.pop("$id", None)
 
-                # Backward compatibility: drop accidental const:null when the
-                # schema type explicitly does not allow null.
-                if (
-                    "const" in node
-                    and node.get("const") is None
-                    and "type" in node
-                    and not _allows_null(node.get("type"))
-                ):
-                    node.pop("const", None)
+                # Remove legacy/accidental const:null if schema disallows null.
+                # Keep explicit nullable const usage when type is absent or
+                # nullable (e.g., type includes "null").
+                if node.get("const", object()) is None:
+                    schema_type = node.get("type")
+                    type_allows_null = (
+                        schema_type is None
+                        or schema_type == "null"
+                        or (isinstance(schema_type, list) and "null" in schema_type)
+                    )
+                    enum_values = node.get("enum")
+                    enum_allows_null = not isinstance(enum_values, list) or None in enum_values
+
+                    if not type_allows_null or not enum_allows_null:
+                        node.pop("const", None)
 
                 for value in node.values():
                     _walk(value)
