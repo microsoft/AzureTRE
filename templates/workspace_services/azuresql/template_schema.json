@@ -7,7 +7,6 @@
   "required": [],
   "properties": {
     "sql_sku": {
-      "$id": "#/properties/sql_sku",
       "type": "string",
       "title": "Azure SQL SKU",
       "description": "Azure SQL SKU",
@@ -22,14 +21,12 @@
       "default": "S2 | 50 DTUs"
     },
     "storage_gb": {
-      "$id": "#/properties/storage_gb",
       "type": "number",
       "title": "Max storage allowed for a database (GB)",
       "description": "Max storage allowed for a database (GB)",
       "default": 5
     },
     "db_name": {
-      "$id": "#/properties/db_name",
       "type": "string",
       "title": "Database name",
       "description": "Database name",
