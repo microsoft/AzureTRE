@@ -1,6 +1,7 @@
 """Tests for auth.rbac role-checking dependencies."""
 import pytest
 from unittest.mock import MagicMock, patch
+from pydantic import ValidationError
 
 from auth.models import AuthenticatedUser, TRERole, WorkspaceAccessRole
 from auth.rbac import require_roles, require_workspace_roles
@@ -278,7 +279,7 @@ class TestAuthenticatedUserHelpers:
 
     def test_model_is_frozen(self):
         user = _make_user(roles=["TREAdmin"])
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             user.roles = []  # type: ignore[misc]
 
     def test_roles_cannot_be_mutated_in_place(self):
