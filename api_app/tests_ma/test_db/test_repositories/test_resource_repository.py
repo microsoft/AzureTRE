@@ -82,8 +82,9 @@ def sample_resource_template() -> ResourceTemplate:
                                     'title': 'Windows image',
                                     'description': 'Select Windows image to use for VM',
                                     'enum': [
-                                        'Windows 10',
-                                        'Server 2019 Data Science VM'
+                                        'Windows 11',
+                                        'Server 2019 Data Science VM',
+                                        'Server 2022 Data Science VM'
                                     ],
                                     'updateable': False
                                 },
@@ -98,7 +99,7 @@ def sample_resource_template() -> ResourceTemplate:
                                     'updateable': True
                                 }
                             },
-                            actions=[]).dict(exclude_none=True)
+                            actions=[]).model_dump(exclude_none=True)
 
 
 def sample_nested_template() -> ResourceTemplate:
@@ -137,7 +138,7 @@ def sample_nested_template() -> ResourceTemplate:
             }
         },
         customActions=[]
-    ).dict(exclude_none=True)
+    ).model_dump(exclude_none=True)
 
 
 @pytest.mark.asyncio
@@ -152,7 +153,7 @@ async def test_validate_input_against_template_returns_template_version_if_templ
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
@@ -189,10 +190,7 @@ async def test_validate_input_against_template_raises_value_error_if_payload_is_
         current=True,
         required=["display_name"],
         properties={},
-        customActions=[]).dict()
-
-    # the enrich template method does this
-    template_dict.pop("allOf")
+        customActions=[]).model_dump()
 
     enriched_template_mock.return_value = template_dict
 
@@ -215,7 +213,7 @@ async def test_validate_input_against_template_raises_if_user_does_not_have_requ
                                                            required=[],
                                                            authorizedRoles=["missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     with pytest.raises(UserNotAuthorizedToUseTemplate):
         _ = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
@@ -234,7 +232,7 @@ async def test_validate_input_against_template_valid_if_user_has_only_one_role(_
                                                            required=[],
                                                            authorizedRoles=["test_role", "missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
 
@@ -254,7 +252,7 @@ async def test_validate_input_against_template_valid_if_required_roles_set_is_em
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
 
@@ -352,7 +350,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource = sample_resource()
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
-    expected_resource.user = user
+    expected_resource.user = user.model_dump()
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
     await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
@@ -364,7 +362,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.resourceVersion = 2
     expected_resource.properties['display_name'] = "updated name 2"
     expected_resource.isEnabled = False
-    expected_resource.user = user
+    expected_resource.user = user.model_dump()
 
     await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
@@ -407,3 +405,90 @@ def test_validate_patch_with_bad_fields_fails(template_repo, resource_repo):
     patch = ResourcePatch(isEnabled=True, properties={'vm_size': 'large', 'os_image': 'linux'})
     with pytest.raises(ValidationError):
         resource_repo.validate_patch(patch, template_repo, template, strings.RESOURCE_ACTION_INSTALL)
+
+
+@pytest.mark.parametrize("nested_schema_id", [
+    "#/properties/guac_disable_paste",
+    "#properties/network_rule_collections",
+    "https://example.com/template_schema.json#properties/network_rule_collections"
+])
+def test_validate_resource_parameters_ignores_legacy_nested_schema_ids(resource_repo, nested_schema_id):
+    template = {
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["network_rule_collections"],
+        "properties": {
+            "network_rule_collections": {
+                "$id": nested_schema_id,
+                "type": "array"
+            }
+        }
+    }
+
+    resource_input = {
+        "properties": {
+            "network_rule_collections": []
+        }
+    }
+
+    # Should not raise SchemaError from jsonschema's metaschema checks.
+    resource_repo._validate_resource_parameters(resource_input, template)
+
+    # Normalization must not mutate stored templates or remove root metadata.
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert normalized_template["$id"] == template["$id"]
+    assert "$id" not in normalized_template["properties"]["network_rule_collections"]
+    assert template["properties"]["network_rule_collections"]["$id"] == nested_schema_id
+
+
+def test_validate_resource_parameters_ignores_invalid_const_null_on_non_nullable_property(resource_repo):
+    template = {
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["storage_account_redundancy"],
+        "properties": {
+            "storage_account_redundancy": {
+                "type": "string",
+                "enum": ["GRS", "ZRS"],
+                "const": None
+            }
+        }
+    }
+
+    resource_input = {
+        "properties": {
+            "storage_account_redundancy": "GRS"
+        }
+    }
+
+    # Should not raise because const:null is incompatible with this non-nullable property.
+    resource_repo._validate_resource_parameters(resource_input, template)
+
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert "const" not in normalized_template["properties"]["storage_account_redundancy"]
+    assert template["properties"]["storage_account_redundancy"]["const"] is None
+
+
+def test_validate_resource_parameters_keeps_nullable_const_null(resource_repo):
+    template = {
+        "$id": "https://example.com/template_schema.json",
+        "type": "object",
+        "required": ["nullable_const"],
+        "properties": {
+            "nullable_const": {
+                "const": None
+            }
+        }
+    }
+
+    resource_input = {
+        "properties": {
+            "nullable_const": None
+        }
+    }
+
+    # Explicit nullable const usage should still validate and remain in schema.
+    resource_repo._validate_resource_parameters(resource_input, template)
+
+    normalized_template = resource_repo._normalize_template_schema(template)
+    assert normalized_template["properties"]["nullable_const"]["const"] is None

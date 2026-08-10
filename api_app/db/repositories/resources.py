@@ -20,7 +20,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from pydantic import UUID4, parse_obj_as
+from pydantic import UUID4, TypeAdapter
 
 
 class ResourceRepository(BaseRepository):
@@ -47,8 +47,58 @@ class ResourceRepository(BaseRepository):
         return query, parameters
 
     @staticmethod
+    def _normalize_template_schema(resource_template: dict) -> dict:
+        """Normalize legacy schema artifacts before validating resource input.
+
+        jsonschema>=4.25 rejects non-empty fragment identifiers for $id.
+        Historical templates include property-level values with non-empty
+        fragments, such as "#/properties/foo" and "#properties/foo", which
+        are not required for validation.
+
+        Legacy templates may also contain accidental ``const: null`` constraints
+        on properties that do not allow ``null`` values. Those constraints make
+        the schema unsatisfiable for valid non-null input values and should be
+        removed during validation normalization.
+        """
+        normalized_template = copy.deepcopy(resource_template)
+
+        def _walk(node, is_root=False):
+            if isinstance(node, dict):
+                # Keep top-level $id intact; nested $id values with non-empty
+                # fragments are invalid under newer JSON Schema metaschemas.
+                schema_id = node.get("$id")
+                if not is_root and isinstance(schema_id, str) and schema_id.partition("#")[2]:
+                    node.pop("$id", None)
+
+                # Remove legacy/accidental const:null if schema disallows null.
+                # Keep explicit nullable const usage when type is absent or
+                # nullable (e.g., type includes "null").
+                if node.get("const", object()) is None:
+                    schema_type = node.get("type")
+                    type_allows_null = (
+                        schema_type is None
+                        or schema_type == "null"
+                        or (isinstance(schema_type, list) and "null" in schema_type)
+                    )
+                    enum_values = node.get("enum")
+                    enum_allows_null = not isinstance(enum_values, list) or None in enum_values
+
+                    if not type_allows_null or not enum_allows_null:
+                        node.pop("const", None)
+
+                for value in node.values():
+                    _walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    _walk(value)
+
+        _walk(normalized_template, is_root=True)
+        return normalized_template
+
+    @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
-        validate(instance=resource_input["properties"], schema=resource_template)
+        normalized_template = ResourceRepository._normalize_template_schema(resource_template)
+        validate(instance=resource_input["properties"], schema=normalized_template)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = await ResourceTemplateRepository.create()
@@ -70,15 +120,14 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            return parse_obj_as(SharedService, resource)
+            return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resource)
+            return TypeAdapter(Workspace).validate_python(resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
-            return parse_obj_as(WorkspaceService, resource)
+            return TypeAdapter(WorkspaceService).validate_python(resource)
         if resource["resourceType"] == ResourceType.UserResource:
-            return parse_obj_as(UserResource, resource)
-
-        return parse_obj_as(Resource, resource)
+            return TypeAdapter(UserResource).validate_python(resource)
+        return TypeAdapter(Resource).validate_python(resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND c.deploymentStatus != @deletedStatus AND c.deploymentStatus != @failedStatus"
@@ -90,7 +139,7 @@ class ResourceRepository(BaseRepository):
         resources = await self.query(query=query, parameters=parameters)
         if not resources:
             raise EntityDoesNotExist
-        return parse_obj_as(Resource, resources[0])
+        return TypeAdapter(Resource).validate_python(resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -107,15 +156,14 @@ class ResourceRepository(BaseRepository):
             if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
-        self._validate_resource_parameters(resource_input.dict(), template)
-
-        return parse_obj_as(ResourceTemplate, template)
+        self._validate_resource_parameters(resource_input.model_dump(), template)
+        return TypeAdapter(ResourceTemplate).validate_python(template)
 
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user
+        resource.user = user.model_dump() if hasattr(user, "model_dump") else user
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:
@@ -195,7 +243,7 @@ class ResourceRepository(BaseRepository):
             if (resource_action == RESOURCE_ACTION_INSTALL or prop.get("updateable", False) is True):
                 update_template["properties"][prop_name] = prop
 
-        self._validate_resource_parameters(resource_patch.dict(), update_template)
+        self._validate_resource_parameters(resource_patch.model_dump(), update_template)
 
     def get_timestamp(self) -> float:
         return datetime.now(UTC).timestamp()

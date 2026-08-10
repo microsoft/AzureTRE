@@ -13,7 +13,7 @@ from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERA
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
 from resources import strings
-from services.authentication import get_current_admin_user, get_current_tre_user_or_tre_admin
+from auth.rbac import require_tre_admin, require_tre_user_or_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
@@ -48,7 +48,7 @@ def sample_shared_service(shared_service_id=SHARED_SERVICE_ID):
         },
         resourcePath=f'/shared-services/{shared_service_id}',
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_admin_user()
+        user=create_admin_user().model_dump()
     )
 
 
@@ -78,10 +78,9 @@ def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID)
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
@@ -121,11 +120,10 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 class TestSharedServiceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
     def _prepare(self, app, admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = admin_user
-            app.dependency_overrides[get_current_admin_user] = admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_tre_user_or_admin] = admin_user
+        app.dependency_overrides[require_tre_admin] = admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
@@ -211,7 +209,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = False
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
         update_item_mock.assert_called_once_with(modified_shared_service, ETAG)
@@ -232,7 +230,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
         modified_shared_service.templateVersion = "0.2.0"
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
@@ -254,7 +252,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
         modified_shared_service.templateVersion = "2.0.0"
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID) + "?force_version_update=True", json=shared_service_patch, headers={"etag": ETAG})
@@ -276,7 +274,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
@@ -297,7 +295,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         modified_shared_service.isEnabled = True
         modified_shared_service.resourceVersion = 1
         modified_shared_service.updatedWhen = FAKE_UPDATE_TIMESTAMP
-        modified_shared_service.user = create_admin_user()
+        modified_shared_service.user = create_admin_user().model_dump()
 
         response = await client.patch(app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID), json=shared_service_patch, headers={"etag": ETAG})
 
@@ -347,4 +345,4 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         # Check that the error message contains the key information about the validation error
         assert "fakeField" in response.text
-        assert "extra fields not permitted" in response.text
+        assert "extra inputs are not permitted" in response.text.lower()
