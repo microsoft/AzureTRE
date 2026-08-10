@@ -61,10 +61,7 @@ export enum AirlockRequestAction {
   Revoke = "revoke",
 }
 
-export const AirlockFilesLinkValidStatus = [
-  AirlockRequestStatus.Draft,
-  AirlockRequestStatus.Approved,
-];
+export const AirlockFilesLinkValidStatus = [AirlockRequestStatus.Draft, AirlockRequestStatus.Approved];
 
 export enum AirlockReviewDecision {
   Approved = "approved",

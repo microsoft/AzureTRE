@@ -8,3 +8,8 @@ repos:
     rev: v2.4.2
     hooks:
       - id: codespell
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.0
+    hooks:
+      - id: prettier
+        files: ^ui/app/

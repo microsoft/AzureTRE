@@ -3,7 +3,43 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 
 # PORTER_INIT
 
+# The Terraform mixin mirrors providers at build time by running `terraform init`
+# on the copied terraform/ directory. The export review VM keeps only its
+# airlock-export networking (terraform/network.tf) locally and shares the rest of
+# its Terraform from the windowsvm module and the import review VM, so those files
+# must be present *before* the mixin build steps run. Copied without --link so the
+# files are materialised on the filesystem for the mixin RUN. The build contexts
+# are declared in porter-build-context.env.
+# hadolint ignore=DL3022
+COPY --from=windowsvm ./terraform/vm ${BUNDLE_DIR}/terraform/vm
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/main.tf ${BUNDLE_DIR}/terraform/main.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/data.tf ${BUNDLE_DIR}/terraform/data.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/locals.tf ${BUNDLE_DIR}/terraform/locals.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/variables.tf ${BUNDLE_DIR}/terraform/variables.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/outputs.tf ${BUNDLE_DIR}/terraform/outputs.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/windowsvm.tf ${BUNDLE_DIR}/terraform/windowsvm.tf
+# hadolint ignore=DL3022
+COPY --from=import-reviewvm ./terraform/download_review_data.ps1 ${BUNDLE_DIR}/terraform/download_review_data.ps1
+
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}/
+
+# Share the reset_password.sh / delete_vm_extensions.sh helper scripts from the
+# standard Guacamole Windows VM so they are maintained in one place (the shared
+# Terraform is copied in above, before the mixin build steps).
+# The build context is declared in porter-build-context.env.
+# ignoring hadolint DL3022; for details see https://github.com/hadolint/hadolint/issues/830
+#
+# hadolint ignore=DL3022
+COPY --from=windowsvm --link ./reset_password.sh ${BUNDLE_DIR}/reset_password.sh
+# hadolint ignore=DL3022
+COPY --from=windowsvm --link ./delete_vm_extensions.sh ${BUNDLE_DIR}/delete_vm_extensions.sh
+

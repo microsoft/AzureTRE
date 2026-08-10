@@ -1,5 +1,5 @@
-import React from 'react';
-import { vi } from 'vitest';
+import React from "react";
+import { vi } from "vitest";
 
 /**
  * Creates a mock Stack component with Item as a property.
@@ -7,28 +7,17 @@ import { vi } from 'vitest';
  */
 export const createMockStack = () => {
   const MockStackComponent = ({ children, horizontal, style, styles, _tokens, ...props }: any) => (
-    <div
-      data-testid="stack"
-      data-horizontal={horizontal}
-      style={style || styles?.root}
-      {...props}
-    >
+    <div data-testid="stack" data-horizontal={horizontal} style={style || styles?.root} {...props}>
       {children}
     </div>
   );
 
   const Item = ({ children, align, grow, style, styles, ...props }: any) => (
-    <div
-      data-testid="stack-item"
-      data-align={align}
-      data-grow={grow}
-      style={style || styles?.root}
-      {...props}
-    >
+    <div data-testid="stack-item" data-align={align} data-grow={grow} style={style || styles?.root} {...props}>
       {children}
     </div>
   );
-  Item.displayName = 'StackItem';
+  Item.displayName = "StackItem";
   MockStackComponent.Item = Item;
 
   return MockStackComponent;
@@ -41,31 +30,31 @@ export const createMockStack = () => {
 export const createFluentUIMocks = () => ({
   // Common enums and utilities (these are frequently referenced)
   MessageBarType: {
-    info: 'info',
-    error: 'error',
-    blocked: 'blocked',
-    severeWarning: 'severeWarning',
-    success: 'success',
-    warning: 'warning',
-    remove: 'remove',
+    info: "info",
+    error: "error",
+    blocked: "blocked",
+    severeWarning: "severeWarning",
+    success: "success",
+    warning: "warning",
+    remove: "remove",
   },
 
   PanelType: {
-    smallFluid: 'smallFluid',
-    smallFixedFar: 'smallFixedFar',
-    smallFixedNear: 'smallFixedNear',
-    medium: 'medium',
-    large: 'large',
-    largeFixed: 'largeFixed',
-    extraLarge: 'extraLarge',
-    custom: 'custom',
+    smallFluid: "smallFluid",
+    smallFixedFar: "smallFixedFar",
+    smallFixedNear: "smallFixedNear",
+    medium: "medium",
+    large: "large",
+    largeFixed: "largeFixed",
+    extraLarge: "extraLarge",
+    custom: "custom",
   },
 
   SpinnerSize: {
-    xSmall: 'xSmall',
-    small: 'small',
-    medium: 'medium',
-    large: 'large',
+    xSmall: "xSmall",
+    small: "small",
+    medium: "medium",
+    large: "large",
   },
 
   FontWeights: {
@@ -77,27 +66,27 @@ export const createFluentUIMocks = () => ({
   },
 
   DefaultPalette: {
-    white: '#ffffff',
-    black: '#000000',
-    themePrimary: '#0078d4',
-    neutralPrimary: '#323130',
-    neutralDark: '#201f1e',
+    white: "#ffffff",
+    black: "#000000",
+    themePrimary: "#0078d4",
+    neutralPrimary: "#323130",
+    neutralDark: "#201f1e",
   },
 
   getTheme: () => ({
     fonts: {
-      xxLarge: { fontSize: '24px' },
-      xLarge: { fontSize: '20px' },
-      large: { fontSize: '18px' },
-      mediumPlus: { fontSize: '16px' },
-      medium: { fontSize: '14px' },
-      small: { fontSize: '12px' },
+      xxLarge: { fontSize: "24px" },
+      xLarge: { fontSize: "20px" },
+      large: { fontSize: "18px" },
+      mediumPlus: { fontSize: "16px" },
+      medium: { fontSize: "14px" },
+      small: { fontSize: "12px" },
     },
     palette: {
-      themePrimary: '#0078d4',
-      neutralPrimary: '#323130',
-      neutralDark: '#201f1e',
-      white: '#ffffff',
+      themePrimary: "#0078d4",
+      neutralPrimary: "#323130",
+      neutralDark: "#201f1e",
+      white: "#ffffff",
     },
   }),
 
@@ -113,7 +102,7 @@ export const createFluentUIMocks = () => ({
         <button
           data-testid="dialog-close"
           onClick={onDismiss}
-          aria-label={dialogContentProps?.closeButtonAriaLabel || 'Close'}
+          aria-label={dialogContentProps?.closeButtonAriaLabel || "Close"}
         >
           X
         </button>
@@ -286,7 +275,7 @@ export const createFluentUIMocks = () => ({
 
   Icon: ({ iconName, styles, ...props }: any) => (
     <span
-      data-testid={`icon${iconName ? `-${iconName}` : ''}`}
+      data-testid={`icon${iconName ? `-${iconName}` : ""}`}
       data-icon-name={iconName}
       style={styles?.root}
       {...props}
@@ -296,15 +285,7 @@ export const createFluentUIMocks = () => ({
   ),
 
   // Feedback components
-  MessageBar: ({
-    children,
-    messageBarType,
-    isMultiline,
-    onDismiss,
-    dismissButtonAriaLabel,
-    styles,
-    ...props
-  }: any) => (
+  MessageBar: ({ children, messageBarType, isMultiline, onDismiss, dismissButtonAriaLabel, styles, ...props }: any) => (
     <div
       data-testid="message-bar"
       data-type={messageBarType}
@@ -314,11 +295,7 @@ export const createFluentUIMocks = () => ({
     >
       {children}
       {onDismiss && (
-        <button
-          data-testid="dismiss-button"
-          onClick={onDismiss}
-          aria-label={dismissButtonAriaLabel}
-        >
+        <button data-testid="dismiss-button" onClick={onDismiss} aria-label={dismissButtonAriaLabel}>
           X
         </button>
       )}
@@ -331,8 +308,8 @@ export const createFluentUIMocks = () => ({
       role="progressbar"
       data-size={size}
       style={styles?.root}
-      {...(ariaLive ? { 'aria-live': ariaLive } : {})}
-      {...(labelPosition ? { 'data-label-position': labelPosition } : {})}
+      {...(ariaLive ? { "aria-live": ariaLive } : {})}
+      {...(labelPosition ? { "data-label-position": labelPosition } : {})}
       {...props}
     >
       {label}
@@ -340,13 +317,7 @@ export const createFluentUIMocks = () => ({
   ),
 
   FontIcon: ({ iconName, className, style, ...props }: any) => (
-    <i
-      data-testid="font-icon"
-      data-icon-name={iconName}
-      className={className}
-      style={style}
-      {...props}
-    />
+    <i data-testid="font-icon" data-icon-name={iconName} className={className} style={style} {...props} />
   ),
 
   Shimmer: ({ width, height, styles, ...props }: any) => (
@@ -355,8 +326,8 @@ export const createFluentUIMocks = () => ({
       style={{
         width,
         height,
-        background: '#f3f2f1',
-        ...styles?.root
+        background: "#f3f2f1",
+        ...styles?.root,
       }}
       {...props}
     >
@@ -364,20 +335,11 @@ export const createFluentUIMocks = () => ({
     </div>
   ),
 
-  ProgressIndicator: ({
-    label,
-    description,
-    percentComplete,
-    progressHidden,
-    styles,
-    ...props
-  }: any) => (
+  ProgressIndicator: ({ label, description, percentComplete, progressHidden, styles, ...props }: any) => (
     <div data-testid="progress-indicator" style={styles?.root} {...props}>
       {label && <div data-testid="progress-label">{label}</div>}
       {description && <div data-testid="progress-description">{description}</div>}
-      {!progressHidden && (
-        <div data-testid="progress-bar" data-percent={percentComplete} />
-      )}
+      {!progressHidden && <div data-testid="progress-bar" data-percent={percentComplete} />}
     </div>
   ),
 
@@ -387,7 +349,7 @@ export const createFluentUIMocks = () => ({
       data-testid="tooltip"
       title={content}
       style={styles?.root}
-      {...(tooltipProps ? { 'data-tooltip-props': JSON.stringify(tooltipProps) } : {})}
+      {...(tooltipProps ? { "data-tooltip-props": JSON.stringify(tooltipProps) } : {})}
       {...props}
     >
       {children}
@@ -427,13 +389,7 @@ export const createFluentUIMocks = () => ({
         <div key={groupIndex} data-testid="nav-group">
           {group.name && <div data-testid="nav-group-name">{group.name}</div>}
           {group.links?.map((link: any, linkIndex: number) => (
-            <a
-              key={linkIndex}
-              data-testid="nav-link"
-              href={link.url}
-              onClick={link.onClick}
-              data-key={link.key}
-            >
+            <a key={linkIndex} data-testid="nav-link" href={link.url} onClick={link.onClick} data-key={link.key}>
               {link.name}
             </a>
           ))}
@@ -443,15 +399,7 @@ export const createFluentUIMocks = () => ({
   ),
 
   // Data components
-  DetailsList: ({
-    items,
-    columns,
-    onRenderItemColumn,
-    _selection,
-    _selectionMode,
-    styles,
-    ...props
-  }: any) => (
+  DetailsList: ({ items, columns, onRenderItemColumn, _selection, _selectionMode, styles, ...props }: any) => (
     <div data-testid="details-list" style={styles?.root} {...props}>
       <table>
         <thead>
@@ -479,34 +427,19 @@ export const createFluentUIMocks = () => ({
   ),
 
   // Other commonly used components
-  Separator: ({ styles, ...props }: any) => (
-    <hr data-testid="separator" style={styles?.root} {...props} />
-  ),
+  Separator: ({ styles, ...props }: any) => <hr data-testid="separator" style={styles?.root} {...props} />,
 
-  Panel: ({
-    isOpen,
-    onDismiss,
-    headerText,
-    children,
-    styles,
-    closeButtonAriaLabel,
-    isLightDismiss,
-    ...props
-  }: any) =>
+  Panel: ({ isOpen, onDismiss, headerText, children, styles, closeButtonAriaLabel, isLightDismiss, ...props }: any) =>
     isOpen ? (
       <div
         data-testid="panel"
         style={styles?.root}
-        {...(isLightDismiss ? { 'data-is-light-dismiss': true } : {})}
+        {...(isLightDismiss ? { "data-is-light-dismiss": true } : {})}
         {...props}
       >
         <div data-testid="panel-header">
           {headerText}
-          <button
-            data-testid="panel-close"
-            onClick={onDismiss}
-            aria-label={closeButtonAriaLabel || 'Close'}
-          >
+          <button data-testid="panel-close" onClick={onDismiss} aria-label={closeButtonAriaLabel || "Close"}>
             X
           </button>
         </div>
@@ -553,11 +486,17 @@ export const createPartialFluentUIMock = (componentNames: string[]) => {
 
   // Always include common enums and utilities
   const alwaysInclude = [
-    'MessageBarType', 'PanelType', 'SpinnerSize', 'FontWeights', 'DefaultPalette',
-    'getTheme', 'mergeStyleSets', 'mergeStyles'
+    "MessageBarType",
+    "PanelType",
+    "SpinnerSize",
+    "FontWeights",
+    "DefaultPalette",
+    "getTheme",
+    "mergeStyleSets",
+    "mergeStyles",
   ];
 
-  [...alwaysInclude, ...componentNames].forEach(name => {
+  [...alwaysInclude, ...componentNames].forEach((name) => {
     if (allMocks[name as keyof typeof allMocks]) {
       partialMocks[name] = allMocks[name as keyof typeof allMocks];
     }
@@ -574,7 +513,7 @@ export const mockClipboardAPI = () => {
   Object.assign(navigator, {
     clipboard: {
       writeText: vi.fn(() => Promise.resolve()),
-      readText: vi.fn(() => Promise.resolve('')),
+      readText: vi.fn(() => Promise.resolve("")),
     },
   });
 };
