@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from models.domain.resource import ResourceType
 from models.domain.resource_template import CustomAction, Property
@@ -27,50 +27,51 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
 
 
 def get_sample_user_resource_template() -> dict:
-    return get_sample_user_resource_template_object().dict()
+    return get_sample_user_resource_template_object().model_dump()
 
 
 def get_sample_user_resource_template_in_response() -> dict:
     workspace_template = get_sample_user_resource_template()
+    workspace_template["system_properties"] = {
+        "tre_id": Property(type="string").model_dump(),
+        "workspace_id": Property(type="string").model_dump(),
+        "azure_location": Property(type="string").model_dump(),
+    }
     return workspace_template
 
 
 class UserResourceTemplateInCreate(ResourceTemplateInCreate):
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "my-tre-user-resource",
-                "version": "0.0.1",
-                "current": "true",
-                "json_schema": {
-                    "$schema": "https://json-schema.org/draft/2020-12/schema",
-                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
-                    "type": "object",
-                    "title": "My User Resource Template",
-                    "description": "This is a test user resource template schema",
-                    "required": [],
-                    "authorizedRoles": [],
-                    "properties": {},
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "name": "my-tre-user-resource",
+            "version": "0.0.1",
+            "current": True,
+            "json_schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+                "type": "object",
+                "title": "My User Resource Template",
+                "description": "These is a test user resource template schema",
+                "required": [],
+                "authorizedRoles": [],
+                "properties": {},
+            },
+            "customActions": [
+                {
+                    "name": "start",
+                    "description": "Starts a VM"
                 },
-                "customActions": [
-                    {
-                        "name": "start",
-                        "description": "Starts a VM"
-                    },
-                    {
-                        "name": "stop",
-                        "description": "Stops a VM"
-                    }
-                ]
-            }
+                {
+                    "name": "stop",
+                    "description": "Stops a VM"
+                }
+            ]
         }
+    })
 
 
 class UserResourceTemplateInResponse(ResourceTemplateInResponse):
     parentWorkspaceService: str = Field(title="Workspace type", description="Bundle name")
-
-    class Config:
-        schema_extra = {
-            "example": get_sample_user_resource_template_in_response()
-        }
+    model_config = ConfigDict(json_schema_extra={
+        "example": get_sample_user_resource_template_in_response()
+    })

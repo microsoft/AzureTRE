@@ -1,34 +1,30 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, Extra
+from pydantic import ConfigDict, BaseModel, Field
 
 from models.domain.resource import ResourceHistoryItem
 
 
 class ResourcePatch(BaseModel):
-    isEnabled: Optional[bool]
-    properties: Optional[dict]
-    templateVersion: Optional[str]
-
-    class Config:
-        extra = Extra.forbid
-        schema_extra = {
-            "example": {
-                "isEnabled": False,
-                "templateVersion": "1.0.1",
-                "properties": {
-                    "display_name": "the display name",
-                    "description": "a description",
-                    "other_fields": "other properties defined by the resource template"
-                }
+    isEnabled: Optional[bool] = None
+    properties: Optional[dict] = None
+    templateVersion: Optional[str] = None
+    model_config = ConfigDict(extra="forbid", json_schema_extra={
+        "example": {
+            "isEnabled": False,
+            "templateVersion": "1.0.1",
+            "properties": {
+                "display_name": "the display name",
+                "description": "a description",
+                "other_fields": "other properties defined by the resource template"
             }
         }
+    })
 
 
 def get_sample_resource_history(resource_id: str) -> dict:
     return {
         "id": "abc9ru33-7265-4b5f-9eae-a1a62928772e",
         "resourceId": resource_id,
-        "templateName": "vm",
         "templateVersion": "0.1.0",
         "properties": {
             "display_name": "my user resource",
@@ -36,20 +32,18 @@ def get_sample_resource_history(resource_id: str) -> dict:
         },
         "isEnabled": True,
         "resourceVersion": 1,
-        "updatedWhen": 1643026046.002206,
+        "updatedWhen": 0.0,
         "user": {}
     }
 
 
 class ResourceHistoryInList(BaseModel):
-    resource_history: List[ResourceHistoryItem] = Field([], title="Resource history")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "resource_history": [
-                    get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
-                    get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
-                ]
-            }
+    resource_history: List[ResourceHistoryItem] = Field(default_factory=list, title="Resource history")
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "resource_history": [
+                get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
+                get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
+            ]
         }
+    })
