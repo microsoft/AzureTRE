@@ -22,8 +22,8 @@ The Gitea worskpace service opens outbound access to:
 1. Navigate to the Gitea workspace service using the connection URI from the details tab.
 2. and from the menu click the `Sign in` button.
 3. Click sign in with OpenID button and sign in with the same credentials used to access the workspace.
-4. Once succesfully signed in choose a username.
-5. Navigate to the user settings and under the account tab set a password for your account( `https://<gitea_url>/user/settings/account` ). This username and passowrd should be used to authenticate against Gitea when carrying out git operations.
+4. Once successfully signed in choose a username.
+5. Navigate to the user settings and under the account tab set a password for your account( `https://<gitea_url>/user/settings/account` ). This username and password should be used to authenticate against Gitea when carrying out git operations.
 
 ## Upgrading to version 1.0.0
 
