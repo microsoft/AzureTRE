@@ -7,7 +7,7 @@ resource "azurerm_public_ip" "fwtransit" {
   sku                 = "Standard"
   tags                = var.tre_core_tags
 
-  lifecycle { ignore_changes = [tags, zones] }
+  lifecycle { ignore_changes = [ip_tags, tags, zones] }
 }
 
 moved {
@@ -24,7 +24,7 @@ resource "azurerm_public_ip" "fwmanagement" {
   sku                 = "Standard"
   tags                = var.tre_core_tags
 
-  lifecycle { ignore_changes = [tags, zones] }
+  lifecycle { ignore_changes = [ip_tags, tags, zones] }
 }
 
 resource "azurerm_firewall" "fw" {

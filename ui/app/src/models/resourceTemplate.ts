@@ -22,6 +22,10 @@ export interface ResourceTemplate {
 export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
   if (template.properties) {
     Object.keys(template.properties).forEach((key: string) => {
+      if (!template.properties[key] || typeof template.properties[key] !== "object") {
+        return;
+      }
+
       Object.keys(template.properties[key]).forEach((name: string) => {
         if (template.properties[key][name] === null) {
           delete template.properties[key][name];
