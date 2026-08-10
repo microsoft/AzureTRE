@@ -115,7 +115,15 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"})
+    mock_receiver.__aiter__.return_value[0] = json.dumps({
+        "id": "test_id",
+        "action": "install",
+        "stepId": "test_step_id",
+        "operationId": "test_operation_id",
+        "name": "test_bundle",
+        "version": "1.0.0",
+        "parameters": {},
+    })
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 
@@ -167,7 +175,19 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
         ("\"text\"", "Resource request message must be a JSON object"),
         (
             '{"id": "test_id"}',
-            "Resource request message is missing fields: ['action', 'operationId', 'stepId']",
+            "Resource request message is missing fields: ['action', 'name', 'operationId', 'parameters', 'stepId', 'version']",
+        ),
+        (
+            '{"id": "test_id", "action": [], "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": {}}',
+            "Resource request message has invalid field types: ['action']",
+        ),
+        (
+            '{"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": null}',
+            "Resource request message has invalid field types: ['parameters']",
+        ),
+        (
+            '{"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": {}, "user": []}',
+            "Resource request message has invalid field types: ['user']",
         ),
     ],
 )
@@ -216,7 +236,15 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"})
+    mock_receiver.__aiter__.return_value[0] = json.dumps({
+        "id": "test_id",
+        "action": "install",
+        "stepId": "test_step_id",
+        "operationId": "test_operation_id",
+        "name": "test_bundle",
+        "version": "1.0.0",
+        "parameters": {},
+    })
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 

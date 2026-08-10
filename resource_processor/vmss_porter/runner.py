@@ -18,7 +18,41 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 
-REQUIRED_RESOURCE_REQUEST_FIELDS = {"id", "action", "stepId", "operationId"}
+RESOURCE_REQUEST_FIELD_TYPES = {
+    "id": str,
+    "action": str,
+    "stepId": str,
+    "operationId": str,
+    "name": str,
+    "version": str,
+    "parameters": dict,
+}
+OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES = {"user": dict}
+
+
+def validate_resource_request(message: object) -> None:
+    if not isinstance(message, dict):
+        raise ValueError("Resource request message must be a JSON object")
+
+    missing_fields = set(RESOURCE_REQUEST_FIELD_TYPES) - message.keys()
+    if missing_fields:
+        raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+
+    invalid_fields = [
+        field_name
+        for field_name, field_type in RESOURCE_REQUEST_FIELD_TYPES.items()
+        if not isinstance(message[field_name], field_type)
+    ]
+    if invalid_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_fields)}")
+
+    invalid_optional_fields = [
+        field_name
+        for field_name, field_type in OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES.items()
+        if field_name in message and not isinstance(message[field_name], field_type)
+    ]
+    if invalid_optional_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_optional_fields)}")
 
 
 def set_up_config() -> Optional[dict]:
@@ -74,12 +108,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
                         try:
                             message = json.loads(str(msg))
-                            if not isinstance(message, dict):
-                                raise ValueError("Resource request message must be a JSON object")
-
-                            missing_fields = REQUIRED_RESOURCE_REQUEST_FIELDS - message.keys()
-                            if missing_fields:
-                                raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+                            validate_resource_request(message)
                         except (json.JSONDecodeError, ValueError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
                             await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
