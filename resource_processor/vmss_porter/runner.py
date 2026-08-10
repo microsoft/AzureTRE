@@ -18,6 +18,9 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 
+REQUIRED_RESOURCE_REQUEST_FIELDS = {"id", "action", "stepId", "operationId"}
+
+
 def set_up_config() -> Optional[dict]:
     try:
         config = get_config()
@@ -71,7 +74,13 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
                         try:
                             message = json.loads(str(msg))
-                        except (json.JSONDecodeError) as e:
+                            if not isinstance(message, dict):
+                                raise ValueError("Resource request message must be a JSON object")
+
+                            missing_fields = REQUIRED_RESOURCE_REQUEST_FIELDS - message.keys()
+                            if missing_fields:
+                                raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+                        except (json.JSONDecodeError, ValueError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
                             await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
                             continue

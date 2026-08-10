@@ -159,6 +159,49 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "message, error_description",
+    [
+        ("null", "Resource request message must be a JSON object"),
+        ("[]", "Resource request message must be a JSON object"),
+        ("\"text\"", "Resource request message must be a JSON object"),
+        (
+            '{"id": "test_id"}',
+            "Resource request message is missing fields: ['action', 'operationId', 'stepId']",
+        ),
+    ],
+)
+async def test_receive_message_invalid_json_structure(
+    message, error_description, mock_service_bus_client, mock_auto_lock_renewer
+):
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+
+    mock_renewer = AsyncMock()
+    mock_renewer.register = Mock()
+    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
+
+    mock_receiver = AsyncMock()
+    mock_receiver.__aenter__.return_value = mock_receiver
+    mock_receiver.__aexit__.return_value = None
+    mock_receiver.session.session_id = "test_session_id"
+    mock_receiver.__aiter__.return_value = [message]
+
+    mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
+
+    run_once = Mock(side_effect=[True, False])
+    config = {"resource_request_queue": "test_queue"}
+
+    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+
+    mock_receiver.dead_letter_message.assert_awaited_once_with(
+        message,
+        reason="InvalidJSON",
+        error_description=error_description,
+    )
+    mock_receiver.complete_message.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_service_bus_client, mock_logger):
     """Test receiving a message with an unknown exception."""
     mock_service_bus_client_instance = mock_service_bus_client.return_value
