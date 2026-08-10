@@ -33,14 +33,16 @@ AIRLOCK_REVIEW_ID = "11bd2526-054b-4305-a7f9-63a2d6d2a80c"
 def sample_airlock_request_input_data():
     return {
         "type": "import",
-        "businessJustification": "some business justification"
+        "title": "a request title",
+        "businessJustification": "some business justification",
+        "properties": {}
     }
 
 
 @pytest.fixture
 def sample_airlock_review_input_data():
     return {
-        "reviewDecision": "approved",
+        "approval": True,
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
 
