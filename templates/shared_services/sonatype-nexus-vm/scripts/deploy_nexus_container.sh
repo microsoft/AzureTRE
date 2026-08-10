@@ -37,6 +37,19 @@ else
   echo "Pulling Nexus image from Docker Hub: $NEXUS_IMAGE"
 fi
 
+# Short-circuit before the pull: skip pull and restart if already running the requested image.
+# The persistent /etc/nexus-data volume preserves Nexus state across replacement.
+existing_image=$(docker inspect --format '{{.Config.Image}}' nexus 2>/dev/null || true)
+if [ "$existing_image" == "$NEXUS_IMAGE" ]; then
+  echo "Nexus container already running requested image $NEXUS_IMAGE. Ensuring it is started."
+  docker start nexus
+  if [ "$(docker inspect -f '{{.State.Running}}' nexus 2>/dev/null)" != "true" ]; then
+    echo "ERROR: Nexus container failed to start." >&2
+    exit 1
+  fi
+  exit 0
+fi
+
 docker_pull_timeout=10
 
 while true; do
@@ -66,6 +79,11 @@ if [ $mem_total_mb -gt 4096 ]; then
 fi
 
 echo "System memory: ${mem_total_mb} MB. Java memory: ${java_mem} MB"
+
+if [ -n "$existing_image" ]; then
+  echo "Replacing existing Nexus container (image $existing_image) with $NEXUS_IMAGE..."
+  docker rm -f nexus > /dev/null 2>&1 || true
+fi
 
 docker run -d -p 80:8081 -p 443:8443 -p 8083:8083 -v /etc/nexus-data:/nexus-data \
     -e INSTALL4J_ADD_VM_PARAMS="-Xmx${java_mem}m -Xms${java_mem}m" \

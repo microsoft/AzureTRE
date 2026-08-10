@@ -43,7 +43,6 @@
       "default": "nexus-ssl"
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Sonatype Nexus accessible from outside of the TRE network.",

@@ -21,14 +21,12 @@ interface AirlockRequestFilesSectionProps {
   workspaceApplicationIdURI: string;
 }
 
-export const AirlockRequestFilesSection: React.FunctionComponent<
-  AirlockRequestFilesSectionProps
-> = (props: AirlockRequestFilesSectionProps) => {
+export const AirlockRequestFilesSection: React.FunctionComponent<AirlockRequestFilesSectionProps> = (
+  props: AirlockRequestFilesSectionProps,
+) => {
   const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard";
 
-  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(
-    COPY_TOOL_TIP_DEFAULT_MESSAGE,
-  );
+  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(COPY_TOOL_TIP_DEFAULT_MESSAGE);
   const [sasUrl, setSasUrl] = useState<string>();
 
   const [sasUrlError, setSasUrlError] = useState(false);
@@ -54,9 +52,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
   }, [apiCall, props.request, props.workspaceApplicationIdURI]);
 
   const parseSasUrl = (sasUrl: string) => {
-    const match = sasUrl.match(
-      /https:\/\/(.*?).blob.core.windows.net\/(.*)\?(.*)$/,
-    );
+    const match = sasUrl.match(/https:\/\/(.*?).blob.core.windows.net\/(.*)\?(.*)$/);
     if (!match) {
       return;
     }
@@ -74,10 +70,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
     }
     navigator.clipboard.writeText(sasUrl);
     setCopyToolTipMessage("Copied");
-    setTimeout(
-      () => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE),
-      3000,
-    );
+    setTimeout(() => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE), 3000);
   };
 
   const getAzureCliCommand = (sasUrl: string) => {
@@ -107,18 +100,11 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
           <Stack>
             <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
               {props.request.status === AirlockRequestStatus.Draft ? (
-                <small>
-                  Use the storage container SAS URL to upload your request file.
-                </small>
+                <small>Use the storage container SAS URL to upload your request file.</small>
               ) : (
-                <small>
-                  Use the storage container SAS URL to view the request file.
-                </small>
+                <small>Use the storage container SAS URL to view the request file.</small>
               )}
-              <Stack
-                horizontal
-                styles={{ root: { alignItems: "center", paddingTop: "7px" } }}
-              >
+              <Stack horizontal styles={{ root: { alignItems: "center", paddingTop: "7px" } }}>
                 <Stack.Item grow>
                   <TextField readOnly value={sasUrl} />
                 </Stack.Item>
@@ -135,8 +121,7 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
             </Stack.Item>
             {props.request.status === AirlockRequestStatus.Draft && (
               <MessageBar messageBarType={MessageBarType.info}>
-                Please upload a single file. Only single-file imports (including
-                zip files) are supported.
+                Please upload a single file. Only single-file imports (including zip files) are supported.
               </MessageBar>
             )}
           </Stack>
@@ -144,13 +129,8 @@ export const AirlockRequestFilesSection: React.FunctionComponent<
         <PivotItem headerText="CLI">
           <Stack>
             <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
-              <small>
-                Use Azure command-line interface (Azure CLI) to interact with
-                the storage container.
-              </small>
-              <hr
-                style={{ border: "1px solid #faf9f8", borderRadius: "1px" }}
-              />
+              <small>Use Azure command-line interface (Azure CLI) to interact with the storage container.</small>
+              <hr style={{ border: "1px solid #faf9f8", borderRadius: "1px" }} />
             </Stack.Item>
             <Stack.Item style={{ paddingTop: "10px" }}>
               <CliCommand

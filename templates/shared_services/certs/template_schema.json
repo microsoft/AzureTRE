@@ -24,13 +24,11 @@
       "updateable": true
     },
     "domain_prefix": {
-      "$id": "#/properties/domain_prefix",
       "type": "string",
       "title": "Domain prefix",
       "description": "The FQDN prefix (which will be prepended to {TRE_ID}.{LOCATION}.cloudapp.azure.com) to generate a certificate for"
     },
     "cert_name": {
-      "$id": "#/properties/cert_name",
       "type": "string",
       "title": "Cert name",
       "description": "What to call the certificate that's exported to KeyVault (alphanumeric and '-' only)"

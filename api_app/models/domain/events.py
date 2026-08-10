@@ -6,7 +6,7 @@ from models.domain.airlock_request import AirlockFile, AirlockRequestStatus, Air
 
 class AirlockNotificationUserData(AzureTREModel):
     name: str
-    email: str
+    email: Optional[str] = None
 
 
 class AirlockNotificationRequestData(AzureTREModel):
@@ -37,6 +37,6 @@ class AirlockNotificationData(AzureTREModel):
 class StatusChangedData(AzureTREModel):
     request_id: str
     new_status: str
-    previous_status: Optional[str]
+    previous_status: Optional[str] = None
     type: str
     workspace_id: str
