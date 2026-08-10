@@ -111,7 +111,10 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                             validate_resource_request(message)
                         except (json.JSONDecodeError, ValueError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
-                            await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter malformed message")
                             continue
 
                         with tracer.start_as_current_span("receive_message") as current_span:
