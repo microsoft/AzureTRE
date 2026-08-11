@@ -46,7 +46,7 @@ Prefer read-only inspection, formatting, focused tests, `terraform validate`, an
 Run the narrowest relevant checks first, then expand as needed:
 
 | Area | Focused validation | Broader validation |
-|---|---|---|
+| --- | --- | --- |
 | API | `cd api_app && python -m pytest <relevant-test> -q` | `cd api_app && python -m pytest tests_ma/test_api -q` |
 | Resource processor | `cd resource_processor && python -m pytest <relevant-test> -q` | `cd resource_processor && python -m pytest tests_rp -q` |
 | Airlock processor | `cd airlock_processor && python -m pytest <relevant-test> -q` | `cd airlock_processor && python -m pytest tests -q` |
