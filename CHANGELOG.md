@@ -19,6 +19,7 @@ ENHANCEMENTS:
 * Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 BUG FIXES:
+* Mark secret parameters in porter.yaml as `sensitive: true` to prevent secrets from appearing in debug logs ([#5011](https://github.com/microsoft/AzureTRE/issues/5011))
 * Ignore changes to `ip_tags` on public IP resources to unblock deployments where these tags are set by Azure policy. (`core` 0.16.17, `tre-shared-service-certs` 0.7.11) ([#5019](https://github.com/microsoft/AzureTRE/issues/5019))
 * Fix workspace deletion when backup is enabled for the base, unrestricted and airlock-import-review workspaces by adding a `delete_backups_on_uninstall` flag and a pre-teardown backup cleanup (`remove_backup.sh`) that stops protection and either deletes or retains the Recovery Services Vault, so deletion works with Azure secure-by-default soft delete ([#4962](https://github.com/microsoft/AzureTRE/issues/4962))
 * Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))
