@@ -45,6 +45,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      skipDeployment:
+        description: Skip deployment jobs and run only the requested E2E tests against an existing environment
+        type: boolean
+        default: false
+        required: false
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -120,6 +125,7 @@ concurrency: "deploy-${{ inputs.ciGitRef }}"
 jobs:
   deploy_management:
     name: Deploy Management
+    if: ${{ !inputs.skipDeployment }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -832,6 +838,7 @@ jobs:
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
+    if: ${{ always() && (inputs.skipDeployment || (!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled'))) }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, deploy_ui]
@@ -876,7 +883,7 @@ jobs:
 
   e2e_tests_custom:
     name: "Run E2E Tests"
-    if: ${{ inputs.e2eTestsCustomSelector != '' }}
+    if: ${{ always() && inputs.e2eTestsCustomSelector != '' && (inputs.skipDeployment || (!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled'))) }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs:
