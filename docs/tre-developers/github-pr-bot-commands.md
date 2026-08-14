@@ -23,6 +23,8 @@ You can use the full or short form of the SHA, but it must be at least 7 charact
 
 If the PR validation environment is already deployed, add `skip_deployment` to skip the build and deployment jobs and run the smoke tests against the existing environment. For PRs from forks, include both the SHA and `skip_deployment`, for example `/test <sha> skip_deployment`.
 
+The `skip_deployment` flag is only supported by `/test` and `/test-extended`.
+
 **IMPORTANT**
 
 This command works on PRs from forks, and makes the deployment secrets available.
@@ -46,6 +48,8 @@ For other PRs, the checks below should be carried out. Once satisfied that the P
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
 
 If the PR validation environment is already deployed, add `skip_deployment` to `/test-extended` to skip the build and deployment jobs and run the smoke and extended tests against the existing environment. For PRs from forks, include both the SHA and `skip_deployment`, for example `/test-extended <sha> skip_deployment`.
+
+The `skip_deployment` flag is not supported by `/test-extended-aad` or `/test-shared-services`.
 
 **IMPORTANT**
 

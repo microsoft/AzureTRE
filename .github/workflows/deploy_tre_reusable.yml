@@ -838,6 +838,8 @@ jobs:
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
+    # When skipDeployment is true, the deploy jobs in needs are intentionally skipped.
+    # always() lets this job still evaluate its guard and run against the existing PR environment.
     if: ${{ always() && (inputs.skipDeployment || (!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled'))) }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
@@ -883,6 +885,7 @@ jobs:
 
   e2e_tests_custom:
     name: "Run E2E Tests"
+    # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: ${{ always() && inputs.e2eTestsCustomSelector != '' && (inputs.skipDeployment || (!contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled'))) }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
@@ -944,7 +947,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
-      # If prHeadSha is specified then explicity mark the checks for that SHA
+      # If prHeadSha is specified then explicitly mark the checks for that SHA.
+      # This still runs after skipDeployment builds because the summary job needs the E2E jobs,
+      # not the skipped deploy jobs.
       - name: Report check status
         if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@dfcbcf801bff1ea7f1414824fc28f2cd697b35da # v3.0.0

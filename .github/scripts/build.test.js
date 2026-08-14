@@ -455,6 +455,21 @@ describe('getCommandFromComment', () => {
             bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended-aad skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-extended-aad` without `skip_deployment`\./,
+          });
+        });
       });
 
       describe(`for '/test-shared-services'`, () => {
@@ -481,6 +496,21 @@ describe('getCommandFromComment', () => {
             bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
           });
         });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-shared-services` without `skip_deployment`\./,
+          });
+        });
       });
 
       describe(`for '/test-backups'`, () => {
@@ -505,6 +535,21 @@ describe('getCommandFromComment', () => {
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
             bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+          });
+        });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-backups` without `skip_deployment`\./,
           });
         });
       });
@@ -622,6 +667,20 @@ describe('getCommandFromComment', () => {
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
             bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
           });
+        });
+      })
+
+      describe(`for '/test-extended skip_deployment 2345678' for external PR`, () => {
+        test(`should set command to 'run-tests-extended' and skipDeployment to 'true'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended skip_deployment 2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
         });
       })
 

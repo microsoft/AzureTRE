@@ -182,6 +182,7 @@ jobs:
       environmentName: CICD
       E2E_TESTS_NUMBER_PROCESSES: 1
       DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
+      # github-script outputs strings; compare explicitly before passing to the typed workflow input.
       skipDeployment: ${{ needs.pr_comment.outputs.skipDeployment == 'true' }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

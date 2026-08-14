@@ -5,7 +5,8 @@
 // These tests can be run from the dev container using the run-tests.sh script
 //
 const { createHash } = require('crypto');
-const { create } = require('domain');
+
+const SKIP_DEPLOYMENT_FLAG = "skip_deployment";
 
 async function getCommandFromComment({ core, context, github }) {
   const commentUsername = context.payload.comment.user.login;
@@ -101,6 +102,11 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-extended-aad":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "extended AAD tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended-aad";
@@ -110,6 +116,11 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-shared-services":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-shared-services";
@@ -119,6 +130,11 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-backups":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "backup tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-backups";
@@ -197,11 +213,16 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
 }
 
 function commandHasSkipDeploymentFlag(commandParts) {
-  return commandParts.slice(1).includes("skip_deployment");
+  return commandParts.slice(1).includes(SKIP_DEPLOYMENT_FLAG);
 }
 
 function getShaFromCommandParts(commandParts) {
-  return commandParts.slice(1).find(part => part !== "skip_deployment");
+  return commandParts.slice(1).find(part => part !== SKIP_DEPLOYMENT_FLAG);
+}
+
+async function addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, command) {
+  const message = `:warning: \`${SKIP_DEPLOYMENT_FLAG}\` is only supported for \`/test\` and \`/test-extended\`. Please re-run \`${command}\` without \`${SKIP_DEPLOYMENT_FLAG}\`.`;
+  await addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message);
 }
 
 async function prContainsNonDocChanges(github, repoOwner, repoName, prNumber) {
