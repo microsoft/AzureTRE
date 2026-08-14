@@ -4,7 +4,7 @@
 
 ENHANCEMENTS:
 
-## 0.29.0
+## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * <!-- markdownlint-disable-next-line MD013 -->
