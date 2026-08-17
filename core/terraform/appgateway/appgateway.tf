@@ -90,6 +90,16 @@ resource "azurerm_application_gateway" "agw" {
     fqdns = [var.api_fqdn]
   }
 
+  # Backend pool with the airlock core storage account.
+  # Only core storage needs public App Gateway access for:
+  # - import-external: user uploads
+  # - import-in-progress: airlock manager review
+  # - export-approved: user downloads
+  backend_address_pool {
+    name  = local.airlock_core_backend_pool_name
+    fqdns = [var.airlock_core_storage_fqdn]
+  }
+
   # Backend settings for api.
   # Using custom probe to test specific health endpoint
   backend_http_settings {
@@ -113,6 +123,18 @@ resource "azurerm_application_gateway" "agw" {
     pick_host_name_from_backend_address = true
   }
 
+  # Backend settings for airlock core storage.
+  # Pass through query string for SAS token authentication
+  backend_http_settings {
+    name                                = local.airlock_core_http_setting_name
+    cookie_based_affinity               = "Disabled"
+    port                                = 443
+    protocol                            = "Https"
+    request_timeout                     = 300
+    pick_host_name_from_backend_address = true
+    probe_name                          = local.airlock_core_probe_name
+  }
+
   # Custom health probe for API.
   probe {
     name                                      = local.api_probe_name
@@ -131,6 +153,24 @@ resource "azurerm_application_gateway" "agw" {
     match {
       status_code = [
         "200-399"
+      ]
+    }
+  }
+
+  # Health probe for airlock core storage.
+  # Uses the blob service endpoint to check storage health
+  probe {
+    name                                      = local.airlock_core_probe_name
+    pick_host_name_from_backend_http_settings = true
+    interval                                  = 30
+    protocol                                  = "Https"
+    path                                      = "/"
+    timeout                                   = "30"
+    unhealthy_threshold                       = "3"
+
+    match {
+      status_code = [
+        "200-499"
       ]
     }
   }
@@ -208,6 +248,38 @@ resource "azurerm_application_gateway" "agw" {
       rewrite_rule_set_name      = "security-headers-rewrite-rule"
     }
 
+    # Route airlock core storage traffic
+    # Path: /airlock-storage/{container}/{blob} → /{container}/{blob}
+    path_rule {
+      name                       = "airlock-storage"
+      paths                      = ["/airlock-storage/*"]
+      backend_address_pool_name  = local.airlock_core_backend_pool_name
+      backend_http_settings_name = local.airlock_core_http_setting_name
+      rewrite_rule_set_name      = "airlock-storage-rewrite"
+    }
+
+  }
+
+  # Rewrite rule set for airlock storage - strips /airlock-storage prefix
+  rewrite_rule_set {
+    name = "airlock-storage-rewrite"
+
+    rewrite_rule {
+      name          = "strip-airlock-storage-prefix"
+      rule_sequence = 100
+
+      url {
+        path         = "{var_uri_path_1}"
+        query_string = "{var_query_string}"
+      }
+
+      condition {
+        variable    = "var_uri_path"
+        pattern     = "/airlock-storage/(.*)"
+        ignore_case = true
+        negate      = false
+      }
+    }
   }
 
   # Redirect any HTTP traffic to HTTPS unless its the ACME challenge path used for LetsEncrypt validation.

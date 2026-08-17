@@ -85,6 +85,10 @@
           "description": "Require email check for airlock.",
           "type": "boolean"
         },
+        "enable_legacy_airlock": {
+          "description": "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1.",
+          "type": "boolean"
+        },
         "core_address_space": {
           "description": "TRE core address spaces.",
           "type": "string"

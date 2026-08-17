@@ -69,6 +69,12 @@ variable "enable_airlock" {
   description = "Controls the deployment of Airlock resources in the workspace."
 }
 
+variable "airlock_version" {
+  type        = number
+  default     = 2
+  description = "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage."
+}
+
 variable "aad_redirect_uris_b64" {
   type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
   default = "W10=" #b64 for []
@@ -172,14 +178,16 @@ variable "enable_dns_policy" {
   default     = false
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false
-  description = "Enable Airlock malware scanning for the workspace"
+  description = "Enable Airlock malware scanning for the workspace. Passed by porter bundle but no longer used in workspace terraform after airlock consolidation."
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "airlock_malware_scan_result_topic_name" {
   type        = string
-  description = "The name of the topic to publish scan results to"
+  description = "The name of the topic to publish scan results to. Passed by porter bundle but no longer used in workspace terraform after airlock consolidation."
   default     = null
 }

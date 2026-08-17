@@ -41,3 +41,11 @@ variable "encryption_key_versionless_id" {
 variable "deployer_principal_id" {
   type = string
 }
+
+# Airlock core storage backend configuration
+# Only core storage needs public App Gateway access for import uploads and export downloads
+# Workspace storage is accessed internally via private endpoints from within workspaces
+variable "airlock_core_storage_fqdn" {
+  type        = string
+  description = "FQDN of the consolidated core airlock storage account for App Gateway backend"
+}
