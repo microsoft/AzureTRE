@@ -50,6 +50,7 @@ async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_
     mock_credential = AsyncMock()
     mock_default_credential.return_value.__aenter__.return_value = mock_credential
     mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_service_bus_client.return_value.__aenter__.return_value = mock_service_bus_client_instance
     return mock_service_bus_client_instance, mock_credential
 
 
@@ -67,6 +68,12 @@ async def test_runner(mock_receive_message, mock_service_bus_client, mock_defaul
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
 
+    # Verify context manager entered and exited cleanly
+    mock_default_credential.return_value.__aenter__.assert_called_once()
+    mock_default_credential.return_value.__aexit__.assert_called_once()
+    mock_service_bus_client.return_value.__aenter__.assert_called_once()
+    mock_service_bus_client.return_value.__aexit__.assert_called_once()
+
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.receive_message")
@@ -81,6 +88,12 @@ async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, m
     mock_default_credential.assert_called_once_with(None)
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+
+    # Verify context manager entered and exited cleanly
+    mock_default_credential.return_value.__aenter__.assert_called_once()
+    mock_default_credential.return_value.__aexit__.assert_called_once()
+    mock_service_bus_client.return_value.__aenter__.assert_called_once()
+    mock_service_bus_client.return_value.__aexit__.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -98,6 +111,12 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
     mock_default_credential.assert_called_once_with('test_msi_id')
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+
+    # Verify context manager entered and exited cleanly, even on exception
+    mock_default_credential.return_value.__aenter__.assert_called_once()
+    mock_default_credential.return_value.__aexit__.assert_called_once()
+    mock_service_bus_client.return_value.__aenter__.assert_called_once()
+    mock_service_bus_client.return_value.__aexit__.assert_called_once()
 
 
 @pytest.mark.asyncio

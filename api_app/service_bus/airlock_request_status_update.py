@@ -58,19 +58,21 @@ class AirlockStatusUpdater():
                                             # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                             await receiver.abandon_message(msg)
 
-                        await asyncio.sleep(10)
+                    await asyncio.sleep(10)
 
                 except OperationTimeoutError:
-                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                    # Timeout occurred whilst connecting - this is expected and indicates no messages are available
+                    logger.debug("No messages for this process. Will look again...")
 
                 except ServiceBusConnectionError:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
                     logger.info("Unknown Service Bus connection error. Will retry...")
+                    await asyncio.sleep(10)
 
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                     logger.exception(f"Unknown exception. Will retry - {e}")
+                    await asyncio.sleep(10)
 
     async def process_message(self, msg):
         with tracer.start_as_current_span("process_message") as current_span:
