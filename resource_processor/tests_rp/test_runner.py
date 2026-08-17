@@ -167,7 +167,16 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
 
 
 @pytest.mark.asyncio
-async def test_receive_message_dead_letter_failure_is_logged(mock_service_bus_client, mock_auto_lock_renewer, mock_logger):
+@pytest.mark.parametrize(
+    "message, expected_log",
+    [
+        ("invalid_json_string", "Failed to dead-letter malformed message"),
+        ("null", "Failed to dead-letter invalid resource request message"),
+    ],
+)
+async def test_receive_message_dead_letter_failure_is_logged(
+    message, expected_log, mock_service_bus_client, mock_auto_lock_renewer, mock_logger
+):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
 
     mock_renewer = AsyncMock()
@@ -178,7 +187,7 @@ async def test_receive_message_dead_letter_failure_is_logged(mock_service_bus_cl
     mock_receiver.__aenter__.return_value = mock_receiver
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
-    mock_receiver.__aiter__.return_value = ["invalid_json_string"]
+    mock_receiver.__aiter__.return_value = [message]
     mock_receiver.dead_letter_message.side_effect = RuntimeError("lock lost")
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
@@ -188,7 +197,7 @@ async def test_receive_message_dead_letter_failure_is_logged(mock_service_bus_cl
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
 
-    mock_logger.exception.assert_called_once_with("Failed to dead-letter malformed message")
+    mock_logger.exception.assert_called_once_with(expected_log)
     mock_receiver.complete_message.assert_not_awaited()
 
 
@@ -241,7 +250,7 @@ async def test_receive_message_invalid_json_structure(
 
     mock_receiver.dead_letter_message.assert_awaited_once_with(
         message,
-        reason="InvalidJSON",
+        reason="InvalidResourceRequest",
         error_description=error_description,
     )
     mock_receiver.complete_message.assert_not_awaited()
