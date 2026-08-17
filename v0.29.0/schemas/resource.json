@@ -1,0 +1,120 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Resource id.",
+            "format": "uuid"
+        },
+        "parentId": {
+            "type": "string",
+            "description": "Parent resource id.",
+            "format": "uuid"
+        },
+        "specificationVersion": {
+            "type": "string",
+            "description": "Resource specification version."
+        },
+        "ResourceVersion": {
+            "type": "string",
+            "description": "Resource version."
+        },
+        "title": {
+            "type": "string",
+            "description": "Resource title.",
+            "maxLength": 120
+        },
+        "description": {
+            "type": "string",
+            "description": "Resource description.",
+            "maxLength": 120
+        },
+        "resourceType": {
+            "type": "string",
+            "description": "Resource type.",
+            "enum": ["Workspace", "Service"]
+        },
+        "status": {
+            "type": "string",
+            "description": "Resource status.",
+            "enum": [
+                "NotDeployed", 
+                "Deploying", 
+                "Deployed", 
+                "Deleting", 
+                "Deleted"
+            ]
+        },
+        "isDeleted": {
+            "type": "boolean",
+            "description": "Is the resource marked for deletion?"
+        },
+        "properties": {
+            "type": "array",
+            "description": "Resource properties.",
+            "items": {"$ref": "#/$defs/property" }
+        },
+        "etag": {
+            "type": "string",
+            "description": "ETag."
+        }
+    },
+    "required": [
+        "id",
+        "parentId",
+        "specificationVersion",
+        "resourceVersion",
+        "title",
+        "description",
+        "resourceType",
+        "status",
+        "isDeleted",
+        "properties",
+        "etag"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+        "property": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "Property title."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Property description."
+                },
+                "propertyType": {
+                    "type": "string",
+                    "description": "Property type."
+                },
+                "default": {
+                    "type": "string",
+                    "description": "Property default value."
+                },
+                "required": {
+                    "type": "boolean",
+                    "description": "Is property required?"
+                },
+                "mutable": {
+                    "type": "boolean",
+                    "description": "Is value mutable?"
+                },
+                "value": {
+                    "type": "string",
+                    "description": "Property value."
+                }
+            },
+            "required": [
+                "title",
+                "description",
+                "propertyType",
+                "required",
+                "mutable",
+                "value"
+            ]
+        }
+    }
+}

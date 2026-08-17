@@ -1,0 +1,108 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Operation id.",
+            "format": "uuid"
+        },
+        "operationType": {
+            "type": "string",
+            "description": "Operation type.",
+            "enum": [
+                "Create", 
+                "Update", 
+                "Delete"
+            ]
+        },
+        "status": {
+            "type": "string",
+            "description": "Operation status.",
+            "enum": [
+                "Pending", 
+                "Processing", 
+                "Succeeded", 
+                "Failed"
+            ]
+        },
+        "resourceId": {
+            "type": "string",
+            "description": "Resource id.",
+            "format": "uuid"
+        },
+        "resourceVersion": {
+            "type": "string",
+            "description": "Resource version."
+        },
+        "createdAt": {
+            "type": "string",
+            "description": "Operation creation time."
+        },
+        "lastUpdatedAt": {
+            "type": "string",
+            "description": "Operation last update time."
+        },        
+        "events": {
+            "type": "array",
+            "description": "Operation event.",
+            "items": {"$ref": "#/$defs/event" }
+        },
+        "etag": {
+            "type": "string",
+            "description": "ETag."
+        }
+    },
+    "required": [
+        "id",
+        "operationType",
+        "status",
+        "resourceId",
+        "resourceVersion",
+        "createdAt",
+        "lastUpdatedAt",
+        "events",
+        "etag"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+        "event": {
+            "type": "object",
+            "properties": {
+                "timeStamp": {
+                    "type": "string",
+                    "description": "Event timestamp."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Event message."
+                },
+                "from": {
+                    "type": "string",
+                    "description": "Event originator."
+                },
+                "severity": {
+                    "type": "string",
+                    "description": "Event classification.",
+                    "enum": [
+                        "low", 
+                        "medium", 
+                        "high", 
+                        "critical"
+                    ]
+                },
+                "eventType": {
+                    "type": "string",
+                    "description": "Event type."
+                }
+            },
+            "required": [
+                "timeStamp",
+                "message",
+                "from",
+                "severity",
+                "eventType"
+            ]
+        }
+    }
+}
