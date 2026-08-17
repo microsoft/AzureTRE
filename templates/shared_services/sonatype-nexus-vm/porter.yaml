@@ -22,6 +22,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 parameters:
   - name: tre_id
     type: string
