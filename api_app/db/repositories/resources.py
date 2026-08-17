@@ -233,25 +233,13 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _matches_if_condition(if_schema: dict, state: dict) -> bool:
-        """
-        Returns True if the resource state satisfies the JSON Schema 'if' condition.
-        Evaluates 'const' and 'enum' constraints on top-level properties only.
-        """
-        if not if_schema or not isinstance(if_schema, dict):
+        """Return whether state satisfies the JSON Schema condition."""
+        if not isinstance(if_schema, dict):
             return False
-        for key, cond in if_schema.get("properties", {}).items():
-            if not isinstance(cond, dict):
-                continue
-            state_val = state.get(key)
-            if "const" in cond:
-                if state_val != cond["const"]:
-                    return False
-            elif "enum" in cond:
-                if state_val not in cond["enum"]:
-                    return False
-            else:
-                if state_val is None:
-                    return False
+        try:
+            validate(instance=state, schema=if_schema)
+        except ValidationError:
+            return False
         return True
 
     def _deep_dict_update(self, target: dict, patch: dict):
