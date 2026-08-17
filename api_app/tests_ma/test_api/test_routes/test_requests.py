@@ -41,7 +41,7 @@ class TestRequestsThatDontRequireAdminRigths:
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "status": AirlockRequestStatus.InReview}])
+    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
     async def test_get_requests_with_status_filter_returns_correct_results(self, mock_get_airlock_requests, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"status": AirlockRequestStatus.InReview})
 
@@ -52,7 +52,7 @@ class TestRequestsThatDontRequireAdminRigths:
         assert len(response.json()) == 1
         assert response.json()[0]["status"] == AirlockRequestStatus.InReview
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "status": AirlockRequestStatus.InReview}])
+    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
     async def test_get_requests_with_airlock_manager_filter_returns_correct_results(self, mock_get_airlock_requests_for_airlock_manager, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
 

@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Optional, Tuple, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TRERole(StrEnum):
@@ -25,15 +25,14 @@ class AuthenticatedUser(BaseModel):
     in place (e.g. ``roles.append(...)``) after creation.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     id: str
     name: str
     email: Optional[str] = None
     roles: Tuple[str, ...] = Field(default_factory=tuple)
     audience: str = ""
     is_workspace_token: bool = False
-
-    class Config:
-        frozen = True
 
     def has_any_role(self, *roles: Union[TRERole, WorkspaceAccessRole]) -> bool:
         """Return *True* if the user holds at least one of *roles*."""

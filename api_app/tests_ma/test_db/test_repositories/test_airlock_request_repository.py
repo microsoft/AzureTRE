@@ -114,6 +114,16 @@ async def test_get_airlock_request_by_id(airlock_request_repo):
     assert actual_service == airlock_request
 
 
+async def test_get_airlock_request_by_id_accepts_legacy_request_without_type(airlock_request_repo):
+    airlock_request = airlock_request_mock().model_dump()
+    airlock_request.pop("type")
+    airlock_request_repo.read_item_by_id = AsyncMock(return_value=airlock_request)
+
+    actual_service = await airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
+
+    assert actual_service.type is None
+
+
 async def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such_request_id(airlock_request_repo):
     airlock_request_repo.read_item_by_id = AsyncMock()
     airlock_request_repo.read_item_by_id.side_effect = CosmosResourceNotFoundError
@@ -122,13 +132,37 @@ async def test_get_airlock_request_by_id_raises_entity_does_not_exist_if_no_such
         await airlock_request_repo.get_airlock_request_by_id(AIRLOCK_REQUEST_ID)
 
 
+async def test_update_airlock_request_item_accepts_dict_updated_by(airlock_request_repo):
+    original_request = airlock_request_mock(status=SUBMITTED)
+    new_request = airlock_request_mock(status=IN_REVIEW)
+    updated_by = {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "name": "Test User",
+        "email": "test@example.com",
+        "roles": ["WorkspaceOwner"],
+        "roleAssignments": []
+    }
+
+    airlock_request_repo.upsert_item_with_etag = AsyncMock()
+
+    updated_request = await airlock_request_repo.update_airlock_request_item(
+        original_request=original_request,
+        new_request=new_request,
+        updated_by=updated_by,
+        request_properties={"previousStatus": SUBMITTED}
+    )
+
+    assert updated_request.updatedBy == updated_by
+    airlock_request_repo.upsert_item_with_etag.assert_called_once()
+
+
 async def test_create_airlock_request_item_creates_an_airlock_request_with_the_right_values(sample_airlock_request_input, airlock_request_repo):
     airlock_request_item_to_create = sample_airlock_request_input
-    created_by_user = {'id': 'test_user_id'}
+    created_by_user = create_test_user()  # Use proper User object instead of dict
     airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_item_to_create, WORKSPACE_ID, created_by_user)
 
     assert airlock_request.workspaceId == WORKSPACE_ID
-    assert airlock_request.createdBy['id'] == 'test_user_id'
+    assert airlock_request.createdBy["id"] == created_by_user.id
 
 
 @pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
