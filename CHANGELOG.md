@@ -3,6 +3,9 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Update JSON Schema version to Draft 2020-12 ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
+
+BUG FIXES:
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
@@ -39,7 +42,6 @@ BUG FIXES:
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
 * Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
-* Update JSON Schema version to Draft 2020-12 ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 * Pin MKDocs to v1 to prevent incompatible upgrade. ([#5009](https://github.com/microsoft/AzureTRE/issues/5009))
 
 COMPONENTS:
