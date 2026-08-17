@@ -56,8 +56,11 @@ updates:
         update-types: ["version-update:semver-patch"]
     open-pull-requests-limit: 0
 
+  # Dependabot only parses files named Dockerfile; Dockerfile.tmpl base images
+  # are not scanned and require a separate tool such as Renovate or Trivy.
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "**/*"
     schedule:
       interval: "monthly"
     ignore:
