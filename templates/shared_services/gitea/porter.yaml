@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-gitea
-version: 1.2.3
+version: 1.2.4
 description: "A Gitea shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -23,6 +23,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 parameters:
   - name: tre_id
     type: string
