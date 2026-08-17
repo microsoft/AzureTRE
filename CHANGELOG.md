@@ -4,6 +4,9 @@
 
 ENHANCEMENTS:
 
+BUG FIXES:
+* Pin `starlette` in the API `requirements.txt` as it is imported directly in `main.py` (`API` 0.26.6) ([#5036](https://github.com/microsoft/AzureTRE/issues/5036))
+
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
