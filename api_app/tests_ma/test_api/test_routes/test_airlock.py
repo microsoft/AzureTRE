@@ -217,6 +217,23 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
         assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
 
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request")
+    async def test_post_submit_applies_pending_scan_result(self, update_mock, _, app, client):
+        submitted = sample_airlock_request_object(status=AirlockRequestStatus.Submitted)
+        submitted.pendingScanResult = {"new_status": "in_review", "status_message": None}
+        in_review = sample_airlock_request_object(status=AirlockRequestStatus.InReview)
+        update_mock.side_effect = [submitted, in_review]
+
+        response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.InReview
+        assert update_mock.call_count == 2
+        _, kwargs = update_mock.call_args
+        assert kwargs["new_status"] == AirlockRequestStatus.InReview
+        assert kwargs["pending_scan_result"] is None
+
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
     async def test_post_submit_airlock_request_if_request_not_found_returns_404(self, _, app, client):
         response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))

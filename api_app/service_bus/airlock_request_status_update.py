@@ -103,20 +103,33 @@ class AirlockStatusUpdater():
         try:
             step_result_data = step_result_message.data
             airlock_request_id = step_result_data.request_id
-            current_status = step_result_data.completed_step
+            # The airlock state whose processing just finished. StepResults are keyed by the state being
+            # left, not the mechanism: the malware scan is the gate on the Submitted state, so when it
+            # completes the processor reports completed_step="submitted" and new_status="in_review"/blocked.
+            completed_step = step_result_data.completed_step
             new_status = AirlockRequestStatus(step_result_data.new_status) if step_result_data.new_status else None
             status_message = step_result_data.status_message
             request_files = step_result_data.request_files
             # Find the airlock request by id
             airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
-            # Validate that the airlock request status is the same as current status
-            if airlock_request.status == current_status:
+            # Apply the transition only if the request is currently at the step that just completed.
+            if airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
                 await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
                 result = True
+            elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status == AirlockRequestStatus.Draft:
+                # v2: the malware scan completes the "submitted" step, but it runs on the Draft upload, so its
+                # verdict can arrive before the user submits. Store it on the request (applied on submission)
+                # and complete the message rather than dead-lettering a step that doesn't match the status yet.
+                logger.info(f"Storing early scan verdict for request {airlock_request_id} while still in draft.")
+                await self.airlock_request_repo.update_airlock_request(
+                    original_request=airlock_request,
+                    updated_by=airlock_request.updatedBy,
+                    pending_scan_result={"new_status": new_status.value if new_status else None, "status_message": status_message})
+                result = True
             else:
-                logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, current_status, airlock_request.status))
+                logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))
         except HTTPException as e:
             if e.status_code == 404:
                 # Marking as true as this message will never succeed anyways and should be removed from the queue.
@@ -124,7 +137,7 @@ class AirlockStatusUpdater():
                 logger.exception(strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id))
             if e.status_code == 400:
                 result = True
-                logger.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, current_status, new_status))
+                logger.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, completed_step, new_status))
             if e.status_code == 503:
                 logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
         except Exception:

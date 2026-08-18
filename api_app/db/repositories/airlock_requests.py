@@ -19,6 +19,9 @@ from resources import strings
 from db.repositories.base import BaseRepository
 from services.logging import logger
 
+# Sentinel so callers can distinguish "leave unchanged" from "clear" (None) for optional fields.
+_UNSET = object()
+
 
 class AirlockRequestRepository(BaseRepository):
     @classmethod
@@ -195,7 +198,8 @@ class AirlockRequestRepository(BaseRepository):
             request_files: Optional[List[AirlockFile]] = None,
             status_message: Optional[str] = None,
             airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
+            review_user_resource: Optional[AirlockReviewUserResource] = None,
+            pending_scan_result=_UNSET) -> AirlockRequest:
         updated_request = self._build_updated_request(
             original_request=original_request,
             new_status=new_status,
@@ -203,6 +207,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
+            pending_scan_result=pending_scan_result,
             updated_by=updated_by)
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
@@ -252,12 +257,16 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
+            pending_scan_result=_UNSET,
             updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
             self._validate_status_update(current_status=original_request.status, new_status=new_status)
             updated_request.status = new_status
+
+        if pending_scan_result is not _UNSET:
+            updated_request.pendingScanResult = pending_scan_result
 
         if status_message is not None:
             updated_request.statusMessage = status_message

@@ -39,7 +39,7 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Extract request id
-    storage_account_name, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    _, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage
@@ -52,18 +52,9 @@ def main(msg: func.ServiceBusMessage,
         new_status = constants.STAGE_BLOCKING_INPROGRESS
         status_message = verdict
 
-    # v2 consolidated storage: the blob is scanned on the Draft upload, i.e. before submission.
-    # Persist the verdict on the container so submission can apply it. Only emit a StepResult now
-    # if the request has already been submitted (marked by StatusChangedQueueTrigger); otherwise
-    # emitting a 'submitted' step against a Draft request would be rejected and could dead-letter.
-    if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in storage_account_name:
-        from shared_code.blob_operations_metadata import merge_container_metadata
-        metadata = merge_container_metadata(storage_account_name, request_id, {constants.METADATA_SCAN_RESULT: verdict})
-        if metadata.get(constants.METADATA_AWAITING_SUBMIT) != "true":
-            logging.info(f'Request {request_id}: scan verdict persisted on container, awaiting submission before completing step.')
-            return
-
-    # Send the event to indicate this step is done (and to request a new status change)
+    # Send the event to indicate this step is done (and to request a new status change).
+    # In v2 the blob is scanned on the Draft upload, so this may arrive before the request is
+    # submitted; the API stores the verdict and applies it on submission (see airlock_request_status_update).
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),

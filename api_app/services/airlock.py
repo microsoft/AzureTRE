@@ -26,7 +26,7 @@ from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
-from db.repositories.airlock_requests import AirlockRequestRepository
+from db.repositories.airlock_requests import AirlockRequestRepository, _UNSET
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 
@@ -338,6 +338,7 @@ async def update_and_publish_event_airlock_request(
     status_message: Optional[str] = None,
     airlock_review: Optional[AirlockReview] = None,
     review_user_resource: Optional[AirlockReviewUserResource] = None,
+    pending_scan_result=_UNSET,
 ) -> AirlockRequest:
     try:
         logger.debug(f"Updating airlock request item: {airlock_request.id}")
@@ -348,7 +349,8 @@ async def update_and_publish_event_airlock_request(
             request_files=request_files,
             status_message=status_message,
             airlock_review=airlock_review,
-            review_user_resource=review_user_resource)
+            review_user_resource=review_user_resource,
+            pending_scan_result=pending_scan_result)
     except Exception as e:
         logger.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself

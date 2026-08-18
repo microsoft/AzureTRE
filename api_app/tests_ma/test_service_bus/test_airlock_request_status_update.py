@@ -5,6 +5,7 @@ import time
 
 from mock import AsyncMock, patch
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
+from db.repositories.airlock_requests import _UNSET
 from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
@@ -130,7 +131,8 @@ async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_r
         request_files=None,
         status_message=None,
         airlock_review=None,
-        review_user_resource=None)
+        review_user_resource=None,
+        pending_scan_result=_UNSET)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
 
@@ -188,7 +190,7 @@ async def test_when_updating_and_state_store_exception_error_is_logged(logging_m
 async def test_when_updating_and_current_status_differs_from_status_in_state_store_error_is_logged(logging_mock, airlock_request_repo, _):
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
 
-    expected_airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
+    expected_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
     airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
@@ -197,6 +199,29 @@ async def test_when_updating_and_current_status_differs_from_status_in_state_sto
     assert complete_message is False
     expected_error_message = strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(test_sb_step_result_message["data"]["request_id"], test_sb_step_result_message["data"]["completed_step"], expected_airlock_request.status)
     logging_mock.assert_called_once_with(expected_error_message)
+
+
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+@patch('services.logging.logger.error')
+async def test_early_scan_result_for_draft_request_is_stored_and_message_completed(logging_mock, airlock_request_repo, _):
+    # v2: the scan verdict can arrive while the request is still in draft. It should be stored on the
+    # request (to apply on submission) and the message completed, not dead-lettered.
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
+
+    expected_airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
+    airlock_request_repo.return_value.update_airlock_request.return_value = expected_airlock_request
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    airlock_request_repo.return_value.update_airlock_request.assert_called_once_with(
+        original_request=expected_airlock_request,
+        updated_by=expected_airlock_request.updatedBy,
+        pending_scan_result={"new_status": test_sb_step_result_message["data"]["new_status"], "status_message": None})
+    logging_mock.assert_not_called()
 
 
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
