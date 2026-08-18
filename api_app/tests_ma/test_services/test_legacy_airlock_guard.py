@@ -84,3 +84,6 @@ async def test_run_legacy_airlock_migration_guard_blocks_on_v1_dependencies(mock
             patch("services.legacy_airlock_guard.config.BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS", new=True):
         with pytest.raises(RuntimeError):
             await run_legacy_airlock_migration_guard()
+    # backfill runs in-process before the check (no dependency on the external db-migrate)
+    ws_repo.set_default_airlock_version_for_legacy_workspaces.assert_awaited_once()
+    req_repo.set_default_airlock_version_for_legacy_requests.assert_awaited_once()

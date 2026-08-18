@@ -72,6 +72,13 @@ async def run_legacy_airlock_migration_guard() -> None:
     workspace_repo = await WorkspaceRepository.create()
     request_repo = await AirlockRequestRepository.create()
 
+    # Backfill airlock_version on pre-v2 workspaces/requests first, so the guard evaluates real
+    # persisted versions instead of treating every missing value as v1, and so it isn't a startup
+    # deadlock: the backfill runs in-process here rather than depending on the external db-migrate
+    # call (which needs the API to already be healthy).
+    await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
+    await request_repo.set_default_airlock_version_for_legacy_requests()
+
     v1_workspace_ids = await workspace_repo.get_active_v1_workspace_ids()
     v1_in_flight_request_ids = await request_repo.get_in_flight_v1_airlock_request_ids()
 
