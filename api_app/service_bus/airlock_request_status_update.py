@@ -128,6 +128,16 @@ class AirlockStatusUpdater():
                     updated_by=airlock_request.updatedBy,
                     pending_scan_result={"new_status": new_status.value if new_status else None, "status_message": status_message})
                 result = True
+            elif request_files:
+                # The file-enumeration result can arrive after the request has already advanced (e.g. an
+                # early scan verdict applied on submission moved it straight to in_review). Persist the
+                # files without a status transition rather than dead-lettering them.
+                logger.info(f"Persisting request files for {airlock_request_id} without a status change (current status '{airlock_request.status}').")
+                await self.airlock_request_repo.update_airlock_request(
+                    original_request=airlock_request,
+                    updated_by=airlock_request.updatedBy,
+                    request_files=request_files)
+                result = True
             else:
                 logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))
         except HTTPException as e:

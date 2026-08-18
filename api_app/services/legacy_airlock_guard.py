@@ -35,7 +35,8 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
 
     Changing the version transitions the workspace between the v1 and v2 airlock storage
     modules; the previous version's storage accounts are destroyed, which would strand any
-    in-flight request stamped with the old version.
+    request whose data still lives there (in-flight requests, and completed ones such as
+    approved imports that remain link-accessible).
 
     Raises ValueError so the API returns HTTP 400.
     """
@@ -48,16 +49,17 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     if new_version == current_version:
         return
 
-    in_flight_request_ids = await request_repo.get_in_flight_airlock_request_ids_for_workspace(workspace.id)
-    if in_flight_request_ids:
+    request_ids = await request_repo.get_data_retaining_airlock_request_ids_for_workspace(workspace.id)
+    if request_ids:
         logger.warning(
-            "Blocked airlock_version change %s->%s for workspace %s due to %d in-flight airlock request(s)",
-            current_version, new_version, workspace.id, len(in_flight_request_ids)
+            "Blocked airlock_version change %s->%s for workspace %s due to %d airlock request(s) with retained data",
+            current_version, new_version, workspace.id, len(request_ids)
         )
         raise ValueError(
             f"Cannot change airlock_version from {current_version} to {new_version} while "
-            f"{len(in_flight_request_ids)} in-flight airlock request(s) exist in this workspace. "
-            f"Complete, cancel or revoke them first. Request ids: {_truncate_ids(in_flight_request_ids)}"
+            f"{len(request_ids)} airlock request(s) with retained data exist in this workspace "
+            f"(the previous version's storage accounts, and their approved-import links/data, would be destroyed). "
+            f"Export or remove them first. Request ids: {_truncate_ids(request_ids)}"
         )
 
 

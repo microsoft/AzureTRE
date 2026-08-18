@@ -246,10 +246,33 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         # Should have two calls: one for request files report, one for in_review transition
         assert step_result.set.call_count == 2
-        # The second call should be the in_review step result
+        # The second call should be the in_review step result and carry the enumerated files
         second_call_event = step_result.set.call_args_list[1][0][0]
         assert second_call_event.get_json()["completed_step"] == constants.STAGE_SUBMITTED
         assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
+        assert second_call_event.get_json()["request_files"] == [{"name": "test.txt", "size": 100}]
+
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[])
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
+    def test_v2_submit_rejects_zero_files(self, mock_blob_svc, mock_get_files):
+        """V2 submit with no files should fail the request (metadata submit no longer copies to enforce this)."""
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
+        message = _mock_service_bus_message(body=message_body)
+        step_result = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+        assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
+
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "a.txt", "size": 1}, {"name": "b.txt", "size": 2}])
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
+    def test_v2_submit_rejects_multiple_files(self, mock_blob_svc, mock_get_files):
+        """V2 submit with more than one file should fail the request."""
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
+        message = _mock_service_bus_message(body=message_body)
+        step_result = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+        assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
 
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)

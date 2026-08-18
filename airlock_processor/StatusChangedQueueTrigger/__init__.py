@@ -84,6 +84,12 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     if new_status == constants.STAGE_SUBMITTED:
+        # v2 metadata submit no longer copies data (which used to enforce the single-file rule),
+        # so validate the file count before advancing the container to import-in-progress.
+        if not request_files:
+            raise NoFilesInRequestException(constants.NO_FILES_IN_REQUEST_MESSAGE)
+        if len(request_files) > 1:
+            raise TooManyFilesInRequestException(constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
         set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
@@ -122,10 +128,13 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         raise
                     if not enable_malware_scanning:
                         logging.info(f'Request {req_id}: Malware scanning disabled, skipping to in_review')
+                        # Single event carries both the in_review transition and the enumerated files,
+                        # so request_files is persisted even though this overwrites the file-report event
+                        # on the single-value output binding.
                         stepResultEvent.set(
                             func.EventGridOutputEvent(
                                 id=str(uuid.uuid4()),
-                                data={"completed_step": constants.STAGE_SUBMITTED, "new_status": constants.STAGE_IN_REVIEW, "request_id": req_id},
+                                data={"completed_step": constants.STAGE_SUBMITTED, "new_status": constants.STAGE_IN_REVIEW, "request_id": req_id, "request_files": request_files},
                                 subject=req_id,
                                 event_type="Airlock.StepResult",
                                 event_time=datetime.datetime.now(datetime.UTC),

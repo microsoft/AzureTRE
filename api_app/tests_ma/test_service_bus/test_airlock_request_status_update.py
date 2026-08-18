@@ -239,3 +239,37 @@ async def test_when_updating_and_status_update_is_illegal_error_is_logged(sb_cli
     assert complete_message is True
     expected_error_message = strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(test_sb_step_result_message_with_invalid_status["data"]["request_id"], test_sb_step_result_message_with_invalid_status["data"]["completed_step"], test_sb_step_result_message_with_invalid_status["data"]["new_status"])
     logging_mock.assert_called_once_with(expected_error_message)
+
+
+test_sb_step_result_message_with_files = {
+    "id": EVENT_ID,
+    "subject": "main",
+    "data": {
+        "completed_step": "submitted",
+        "request_id": AIRLOCK_REQUEST_ID,
+        "request_files": [{"name": "test.txt", "size": 5}]
+    },
+    "eventType": "bla",
+    "eventTime": "test message",
+    "topic": ""
+}
+
+
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_file_enumeration_persisted_even_when_status_already_advanced(airlock_request_repo, _):
+    # An early scan verdict applied on submission can move the request to in_review before the
+    # asynchronous file-enumeration result arrives; the files must still be persisted, not dead-lettered.
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_files)
+    request = sample_airlock_request(AirlockRequestStatus.InReview)
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = request
+    airlock_request_repo.return_value.update_airlock_request = AsyncMock()
+
+    updater = AirlockStatusUpdater()
+    await updater.init_repos()
+    complete_message = await updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    airlock_request_repo.return_value.update_airlock_request.assert_awaited_once()
+    persisted_files = airlock_request_repo.return_value.update_airlock_request.call_args.kwargs["request_files"]
+    assert persisted_files is not None and len(persisted_files) == 1

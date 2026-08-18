@@ -143,9 +143,11 @@ resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
 }
 
 # API Identity - restricted access using ABAC to specific stages and private endpoints
-# API accesses via processor PE and can access import-external, import-in-progress, export-approved.
-# import-in-progress is required so the API-issued user-delegation SAS lets a review VM read
-# an import that is InReview (its v2 container stage is import-in-progress).
+# API can access import-external and export-approved (public, user-facing stages) plus
+# import-in-progress, but only via private link: the account is publicly reachable for
+# import-external uploads, so requiring isPrivateLink on import-in-progress stops a leaked
+# review SAS from being replayed through the public endpoint (review VMs read it via their
+# workspace private endpoint).
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
@@ -168,10 +170,14 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
         StringEquals 'import-external'
       OR
       @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
-        StringEquals 'import-in-progress'
-      OR
-      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
         StringEquals 'export-approved'
+      OR
+      (
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+          StringEquals 'import-in-progress'
+        AND
+        @Environment[Microsoft.Network/isPrivateLink] BoolEquals true
+      )
     )
   EOT
 }

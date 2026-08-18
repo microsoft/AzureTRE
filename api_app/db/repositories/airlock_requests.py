@@ -95,6 +95,17 @@ class AirlockRequestRepository(BaseRepository):
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
 
+    async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Any request that isn't Cancelled may still have data in the workspace's per-stage (v1)
+        # storage (approved imports especially); cancelled requests have their containers deleted.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND c.status != @cancelled"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)},
+            {"name": "@cancelled", "value": AirlockRequestStatus.Cancelled.value}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
+
     async def get_in_flight_v1_airlock_request_ids(self) -> List[str]:
         query = (
             "SELECT c.id FROM c WHERE "
