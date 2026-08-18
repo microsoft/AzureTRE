@@ -1,6 +1,8 @@
+import asyncio
 from datetime import datetime, timedelta, UTC
 from services.logging import logger
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException, status
 from core import config, credentials
@@ -152,6 +154,56 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
 
 def get_account_url(account_name: str) -> str:
     return f"https://{account_name}.blob.{STORAGE_ENDPOINT}/"
+
+
+def _delete_container(account_name: str, container_name: str, credential) -> bool:
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=credential)
+    try:
+        blob_service_client.get_container_client(container_name).delete_container()
+        return True
+    except ResourceNotFoundError:
+        return False
+
+
+async def delete_workspace_airlock_containers(workspace: Workspace, airlock_request_repo: AirlockRequestRepository) -> None:
+    """Delete the airlock containers belonging to a workspace's requests.
+
+    Airlock v2 keeps request data in the shared core and global storage accounts, which outlive the
+    workspace, so uninstalling a workspace would otherwise strand its containers (including approved
+    imports) in shared storage with nothing left to reference them. Cancelled requests are excluded
+    because their containers are already deleted when they are cancelled.
+
+    Failures are logged rather than raised: an inaccessible container must not block deleting the
+    workspace, but the request ids are reported so the leftovers can be cleaned up.
+    """
+    request_ids = await airlock_request_repo.get_data_retaining_airlock_request_ids_for_workspace(workspace.id)
+    if not request_ids:
+        return
+
+    core_account = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(config.TRE_ID)
+    global_account = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID)
+    signer_client_id = workspace.properties.get("airlock_signer_client_id", "")
+
+    deleted = 0
+    failed = []
+    for request_id in request_ids:
+        # A request's container can be in either consolidated account depending on the stage it
+        # reached, so try both rather than inferring from the current status.
+        for account_name in (core_account, global_account):
+            # The global account's role assignment is held by the workspace's signer, not the API identity.
+            credential = (credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
+                          if signer_client_id and account_name == global_account
+                          else credentials.get_credential())
+            try:
+                if await asyncio.to_thread(_delete_container, account_name, request_id, credential):
+                    deleted += 1
+            except Exception:
+                logger.exception(f"Failed deleting airlock container {request_id} from {account_name}")
+                failed.append(request_id)
+
+    logger.info(f"Deleted {deleted} airlock container(s) for workspace {workspace.id}")
+    if failed:
+        logger.error(f"Could not delete airlock containers for workspace {workspace.id}, request ids: {sorted(set(failed))}")
 
 
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,

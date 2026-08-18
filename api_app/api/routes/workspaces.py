@@ -15,6 +15,7 @@ from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
 from services.legacy_airlock_guard import ensure_airlock_version_change_allowed, ensure_workspace_airlock_version_supported
+from services.airlock import delete_workspace_airlock_containers
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import WorkspaceAuth, WorkspaceRole
@@ -163,8 +164,11 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
-async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> OperationInResponse:
     if await delete_validation(workspace, workspace_repo):
+        # Airlock containers live in shared storage that outlives the workspace, so remove them here
+        # rather than leaving them stranded once the workspace resources are gone.
+        await delete_workspace_airlock_containers(workspace, airlock_request_repo)
         operation = await send_uninstall_message(
             resource=workspace,
             resource_repo=workspace_repo,

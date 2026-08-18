@@ -872,3 +872,60 @@ def test_sas_token_uses_default_credential_when_no_signer(mock_credentials, mock
 
     mock_credentials.get_credential.assert_called_once()
     mock_credentials.get_airlock_signer_credential.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.credentials")
+@patch("services.airlock.BlobServiceClient")
+async def test_delete_workspace_airlock_containers_deletes_from_both_accounts(mock_bsc, _mock_credentials):
+    from services.airlock import delete_workspace_airlock_containers
+    from resources import constants
+    from core import config
+
+    workspace = MagicMock()
+    workspace.id = WORKSPACE_ID
+    workspace.properties = {"airlock_signer_client_id": "signer-client-id"}
+    repo = AsyncMock()
+    repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
+
+    await delete_workspace_airlock_containers(workspace, repo)
+
+    # The container may be in either consolidated account, so both are attempted.
+    urls = [c.kwargs["account_url"] for c in mock_bsc.call_args_list]
+    assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(config.TRE_ID) in u for u in urls)
+    assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID) in u for u in urls)
+    assert mock_bsc.return_value.get_container_client.return_value.delete_container.call_count == 2
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.credentials")
+@patch("services.airlock.BlobServiceClient")
+async def test_delete_workspace_airlock_containers_noop_without_requests(mock_bsc, _mock_credentials):
+    from services.airlock import delete_workspace_airlock_containers
+
+    workspace = MagicMock()
+    workspace.id = WORKSPACE_ID
+    workspace.properties = {}
+    repo = AsyncMock()
+    repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = []
+
+    await delete_workspace_airlock_containers(workspace, repo)
+
+    mock_bsc.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.credentials")
+@patch("services.airlock.BlobServiceClient")
+async def test_delete_workspace_airlock_containers_does_not_raise_on_failure(mock_bsc, _mock_credentials):
+    from services.airlock import delete_workspace_airlock_containers
+
+    workspace = MagicMock()
+    workspace.id = WORKSPACE_ID
+    workspace.properties = {}
+    repo = AsyncMock()
+    repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
+    mock_bsc.return_value.get_container_client.return_value.delete_container.side_effect = Exception("boom")
+
+    # Cleanup problems must not block deleting the workspace.
+    await delete_workspace_airlock_containers(workspace, repo)
