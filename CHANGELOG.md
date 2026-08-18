@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Show the roles held by the signed-in user in the UI user menu, for both the TRE and the current workspace, so that a hidden feature can be told apart from a role assignment that has not taken effect ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**

@@ -5,7 +5,13 @@ import { UserMenu } from "./UserMenu";
 import { NotificationPanel } from "./notifications/NotificationPanel";
 import config from "../../config.json";
 
-export const TopNav: React.FunctionComponent = () => {
+interface TopNavProps {
+  // Passed through to the user menu, which sits outside the WorkspaceContext
+  // provider and so cannot read the workspace roles itself.
+  workspaceRoles?: Array<string>;
+}
+
+export const TopNav: React.FunctionComponent<TopNavProps> = (props: TopNavProps) => {
   return (
     <>
       <div className={contentClass}>
@@ -29,7 +35,7 @@ export const TopNav: React.FunctionComponent = () => {
             <NotificationPanel />
           </Stack.Item>
           <Stack.Item grow>
-            <UserMenu />
+            <UserMenu workspaceRoles={props.workspaceRoles} />
           </Stack.Item>
         </Stack>
       </div>
