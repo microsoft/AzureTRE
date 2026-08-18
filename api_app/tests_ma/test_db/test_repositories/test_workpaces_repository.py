@@ -176,7 +176,7 @@ async def test_create_workspace_item_persists_default_airlock_version_when_omitt
 @patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 @patch('core.config.RESOURCE_LOCATION', "useast2")
 @patch('core.config.TRE_ID', "9876")
-async def test_create_workspace_item_defaults_manual_auth_to_airlock_v1(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+async def test_create_workspace_item_defaults_manual_auth_to_airlock_v2(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties.pop("airlock_version", None)
     workspace_to_create.properties["auth_type"] = "Manual"
@@ -187,8 +187,8 @@ async def test_create_workspace_item_defaults_manual_auth_to_airlock_v1(mock_is_
 
     workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
-    # Manual auth has no per-workspace app-registration signer, so it defaults to v1 (not v2).
-    assert workspace.properties["airlock_version"] == 1
+    # The per-workspace signer is created regardless of auth mode, so manual auth also defaults to v2.
+    assert workspace.properties["airlock_version"] == 2
 
 
 @pytest.mark.asyncio

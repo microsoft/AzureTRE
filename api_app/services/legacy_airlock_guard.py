@@ -2,6 +2,7 @@ from core import config
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.resource import Resource
 from models.schemas.resource import ResourcePatch
+from resources import constants
 from services.logging import logger
 
 
@@ -12,13 +13,9 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
 
 
 def ensure_workspace_airlock_version_supported(properties: dict) -> None:
-    """Validate the requested airlock_version is deployable for this workspace and deployment.
+    """Validate the airlock version a workspace would deploy with is actually supported.
 
-    - Airlock v2 (consolidated storage) relies on a per-workspace Entra app-registration SAS signer,
-      which is only created in automatic auth mode. In manual auth mode the workspace would fall back
-      to the shared core API identity on the shared global account, which cannot carry per-workspace
-      isolation conditions and collides across workspaces, so v2 is not supported.
-    - Airlock v1 (legacy per-stage storage) only works when core legacy airlock is enabled.
+    Airlock v1 (legacy per-stage storage) only works when core legacy airlock is enabled.
 
     Raises ValueError so the API returns HTTP 400.
     """
@@ -27,19 +24,14 @@ def ensure_workspace_airlock_version_supported(properties: dict) -> None:
     if not properties.get("enable_airlock", True):
         return
 
-    airlock_version = properties.get("airlock_version")
-
-    # Only an explicit v2 request is blocked on manual auth; manual workspaces otherwise default to v1.
-    if airlock_version == 2 and properties.get("auth_type") == "Manual":
-        raise ValueError(
-            "Airlock version 2 requires automatic app registration (auth_type=Automatic). "
-            "Manual-auth workspaces must use airlock_version=1."
-        )
+    # Apply the same default as workspace creation, so an omitted version is validated against the
+    # version that would actually be persisted and deployed.
+    airlock_version = properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)
 
     if not config.ENABLE_LEGACY_AIRLOCK and airlock_version == 1:
         raise ValueError(
-            "Cannot create a workspace with airlock_version=1 because legacy airlock is disabled "
-            "in core (enable_legacy_airlock=false). Use airlock_version=2."
+            "Cannot use airlock_version=1 because legacy airlock is disabled in core "
+            "(enable_legacy_airlock=false). Use airlock_version=2."
         )
 
 

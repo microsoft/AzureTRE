@@ -9,6 +9,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 import resources.strings as strings
+from resources import constants
 from core import config, credentials
 from azure.core.exceptions import HttpResponseError
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
@@ -142,12 +143,10 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
-        # Persist the airlock storage version explicitly so it is never absent from the stored document
-        # (the legacy backfill only stamps records with no airlock_version, so a missing value must
-        # reliably mean a genuinely pre-v2 workspace). v2 needs the per-workspace app-registration SAS
-        # signer, which only exists in automatic auth mode, so manual-auth workspaces default to v1.
-        default_airlock_version = 2 if auto_app_registration_param["register_aad_application"] else 1
-        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", default_airlock_version)}
+        # Persist the airlock storage version explicitly so it is never absent from the stored document:
+        # the legacy backfill only stamps records with no airlock_version, so a missing value must
+        # reliably mean a genuinely pre-v2 workspace.
+        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)}
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.

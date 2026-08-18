@@ -27,8 +27,3 @@ variable "workspace_id" {
   type        = string
   description = "The workspace ID used for ABAC conditions on global workspace storage"
 }
-variable "register_aad_application" {
-  type        = bool
-  default     = false
-  description = "Whether TRE is permitted to create Entra ID objects. When true, a per-workspace airlock SAS signer app registration is created and used to sign user-delegation SAS (enabling per-workspace ABAC isolation). When false, the shared core API identity signs SAS instead."
-}

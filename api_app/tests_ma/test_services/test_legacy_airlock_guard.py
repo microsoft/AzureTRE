@@ -67,11 +67,10 @@ def test_ensure_workspace_airlock_version_supported_blocks_v1_when_enable_airloc
             ensure_workspace_airlock_version_supported({"airlock_version": 1})
 
 
-def test_ensure_workspace_airlock_version_supported_blocks_v2_on_manual_auth():
-    # v2 needs the per-workspace app-registration signer, only created in automatic auth mode.
+def test_ensure_workspace_airlock_version_supported_allows_v2_on_manual_auth():
+    # The per-workspace signer is created for every workspace, so manual auth supports v2 too.
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=True):
-        with pytest.raises(ValueError):
-            ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Manual"})
+        ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Manual"})
 
 
 def test_ensure_workspace_airlock_version_supported_allows_v2_on_automatic_auth():
@@ -79,7 +78,7 @@ def test_ensure_workspace_airlock_version_supported_allows_v2_on_automatic_auth(
         ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Automatic"})
 
 
-def test_ensure_workspace_airlock_version_supported_allows_manual_auth_when_version_unspecified():
-    # Manual + unspecified version is fine here; it defaults to v1 at creation time.
-    with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=True):
+def test_ensure_workspace_airlock_version_supported_blocks_unspecified_version_when_legacy_disabled_is_v2_safe():
+    # An omitted version resolves to v2 regardless of auth type, so it is allowed when legacy is off.
+    with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=False):
         ensure_workspace_airlock_version_supported({"enable_airlock": True, "auth_type": "Manual"})

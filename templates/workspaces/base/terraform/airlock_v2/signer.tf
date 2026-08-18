@@ -15,16 +15,17 @@
 # any stored secret. The signer's client_id is surfaced as a workspace output and
 # read at signing time.
 #
-# This requires TRE to be able to create Entra objects (register_aad_application).
-# When that is not permitted, signing falls back to the shared core API identity.
+# The signer is created for every workspace, including manual-auth ones: it is always
+# created and owned by TRE and needs no directory reads, consent grants or role
+# assignments, so the Application Administrator's unconditional
+# Application.ReadWrite.OwnedBy is sufficient (unlike the workspace app registration,
+# which reads/writes objects TRE does not own and therefore needs the broader grants).
 
 locals {
-  create_airlock_signer = var.register_aad_application
-  aad_issuer            = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+  aad_issuer = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
 }
 
 resource "azuread_application" "airlock_signer" {
-  count        = local.create_airlock_signer ? 1 : 0
   display_name = "airlock-signer-${var.short_workspace_id}"
   owners       = [data.azuread_client_config.current.object_id]
 
@@ -32,8 +33,7 @@ resource "azuread_application" "airlock_signer" {
 }
 
 resource "azuread_service_principal" "airlock_signer" {
-  count     = local.create_airlock_signer ? 1 : 0
-  client_id = azuread_application.airlock_signer[0].client_id
+  client_id = azuread_application.airlock_signer.client_id
   owners    = [data.azuread_client_config.current.object_id]
 
   feature_tags {
@@ -45,8 +45,7 @@ resource "azuread_service_principal" "airlock_signer" {
 
 # Allow the core API managed identity to federate as this workspace's signer.
 resource "azuread_application_federated_identity_credential" "api" {
-  count          = local.create_airlock_signer ? 1 : 0
-  application_id = azuread_application.airlock_signer[0].id
+  application_id = azuread_application.airlock_signer.id
   display_name   = "api-mi"
   description    = "Allows the core API managed identity to mint airlock SAS as this workspace's signer"
   audiences      = ["api://AzureADTokenExchange"]
