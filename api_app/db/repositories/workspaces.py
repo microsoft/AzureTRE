@@ -65,13 +65,6 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
-    async def get_active_v1_workspace_ids(self) -> List[str]:
-        query, parameters = WorkspaceRepository.active_workspaces_query_string()
-        query += " AND (NOT IS_DEFINED(c.properties.airlock_version) OR c.properties.airlock_version = @airlockVersion)"
-        parameters.append({'name': '@airlockVersion', 'value': 1})
-        workspaces = await self.query(query=query, parameters=parameters)
-        return [workspace["id"] for workspace in workspaces]
-
     async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
         # Pre-existing workspaces predate the airlock_version property and use v1 (legacy) storage.
         # The API now defaults new requests to v2, so stamp existing workspaces with v1 to preserve routing.

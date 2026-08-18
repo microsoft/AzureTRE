@@ -224,6 +224,7 @@ module "resource_processor_vmss_porter" {
   auto_grant_workspace_consent                     = var.auto_grant_workspace_consent
   enable_airlock_malware_scanning                  = var.enable_airlock_malware_scanning
   airlock_malware_scan_result_topic_name           = module.airlock_resources.airlock_malware_scan_result_topic_name
+  enable_legacy_airlock                            = var.enable_legacy_airlock
   firewall_policy_id                               = module.firewall.firewall_policy_id
 
   depends_on = [

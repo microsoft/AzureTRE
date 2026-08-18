@@ -82,6 +82,25 @@ class TestV2BlobCreated():
 
         step_result.set.assert_not_called()
 
+    @patch("shared_code.blob_operations_metadata.get_container_metadata", return_value={"stage": constants.STAGE_IMPORT_REJECTED, "workspace_id": "ws01"})
+    @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
+    def test_v2_rejected_stage_does_not_emit_step_result(self, mock_get_blob_info, mock_get_metadata):
+        """Rejected/blocked v2 transitions are same-account metadata updates handled in
+        StatusChangedQueueTrigger and create no blob, so a stray BlobCreated for those stages
+        must not emit a duplicate terminal StepResult (that would also dead-letter on the
+        original upload's missing copied_from)."""
+        topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlockgtre123"
+        request_id = "req-005"
+        mock_get_blob_info.return_value = ("stalairlockgtre123", request_id, "test.txt")
+
+        step_result = MagicMock()
+        deletion_event = MagicMock()
+
+        msg = _make_service_bus_message(topic, request_id)
+        main(msg=msg, stepResultEvent=step_result, dataDeletionEvent=deletion_event)
+
+        step_result.set.assert_not_called()
+
     @patch("shared_code.blob_operations_metadata.get_container_metadata", side_effect=Exception("not found"))
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
     def test_v2_metadata_read_failure_reraises(self, mock_get_blob_info, mock_get_metadata):

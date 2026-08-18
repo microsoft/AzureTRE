@@ -11,14 +11,17 @@ from shared_code import constants, parsers
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
-# Mapping from v2 container metadata stage to (completed_step, new_status)
+# Mapping from v2 container metadata stage to (completed_step, new_status).
+# Only genuine cross-account approval copies belong here: import approval copies core ->
+# workspace-global, and export approval copies workspace-global -> core, so each creates a blob
+# and fires a BlobCreated event we must complete. Rejected/blocked v2 transitions are same-account
+# metadata updates that emit their StepResult in StatusChangedQueueTrigger and create no blob, so
+# a BlobCreated for those stages could only be a delayed/duplicate event from the original upload
+# (which has no "copied_from") — including them would emit a duplicate terminal transition and
+# dead-letter on send_delete_event. They are intentionally excluded.
 V2_STAGE_COMPLETION_MAP = {
     constants.STAGE_IMPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
-    constants.STAGE_IMPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
-    constants.STAGE_IMPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
     constants.STAGE_EXPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
-    constants.STAGE_EXPORT_REJECTED: (constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_REJECTED),
-    constants.STAGE_EXPORT_BLOCKED: (constants.STAGE_BLOCKING_INPROGRESS, constants.STAGE_BLOCKED_BY_SCAN),
 }
 
 
@@ -94,6 +97,11 @@ def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], js
     blob_client = get_blob_client_from_blob_info(
         *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
     blob_metadata = blob_client.get_blob_properties()["metadata"]
+    if "copied_from" not in blob_metadata:
+        # Only copies carry copied_from. An original (uploaded) blob has none, so there is no source
+        # container to clean up — skip rather than raising a KeyError that would dead-letter.
+        logging.info(f"Blob for request {request_id} has no copied_from metadata; skipping data deletion event.")
+        return
     copied_from = json.loads(blob_metadata["copied_from"])
     logging.info(f"copied from history: {copied_from}")
 

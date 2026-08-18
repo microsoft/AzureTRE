@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-airlock-import-review
-version: 1.6.0
+version: 1.6.1
 description: "A workspace to do Airlock Data Import Reviews for Azure TRE"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -129,7 +129,7 @@ parameters:
   - name: enable_legacy_airlock
     type: boolean
     default: true
-    description: "Provision connectivity to the legacy (v1) stalimip import-in-progress storage account. Should match the core enable_legacy_airlock setting."
+    description: "Provision connectivity to the legacy (v1) stalimip import-in-progress storage account. Automatically propagated from the core enable_legacy_airlock setting by the resource processor; the default only applies to manual/local deployments."
   - name: delete_backups_on_uninstall
     type: boolean
     default: false
