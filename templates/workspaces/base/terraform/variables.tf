@@ -178,16 +178,14 @@ variable "enable_dns_policy" {
   default     = false
 }
 
-# tflint-ignore: terraform_unused_declarations
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false
-  description = "Enable Airlock malware scanning for the workspace. Passed by porter bundle but no longer used in workspace terraform after airlock consolidation."
+  description = "Enable Airlock malware scanning for the workspace. Only used by the legacy (v1) airlock module; v2 scanning is configured on the consolidated core accounts."
 }
 
-# tflint-ignore: terraform_unused_declarations
 variable "airlock_malware_scan_result_topic_name" {
   type        = string
-  description = "The name of the topic to publish scan results to. Passed by porter bundle but no longer used in workspace terraform after airlock consolidation."
+  description = "The name of the topic to publish scan results to. Only used by the legacy (v1) airlock module."
   default     = null
 }

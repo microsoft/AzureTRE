@@ -58,7 +58,7 @@ output "workspace_airlock_managers_group_id" {
 }
 
 # Client id of the per-workspace airlock SAS signer app registration (airlock v2 only).
-# Empty when airlock v2 is disabled or Entra object creation is not permitted.
+# Empty when airlock v2 is not in use; the signer itself is always created for v2 workspaces.
 output "airlock_signer_client_id" {
   value = var.enable_airlock && var.airlock_version >= 2 ? module.airlock_v2[0].airlock_signer_client_id : ""
 }

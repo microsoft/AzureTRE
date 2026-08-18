@@ -137,7 +137,7 @@
           "airlock_version": {
             "type": "integer",
             "title": "Airlock Version",
-            "description": "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage. Leave unset to let the API choose based on auth type (automatic -> 2, manual -> 1); v2 requires automatic app registration.",
+            "description": "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage. Leave unset to use the default (2). Version 1 requires legacy airlock to be enabled in core.",
             "enum": [
               1,
               2
