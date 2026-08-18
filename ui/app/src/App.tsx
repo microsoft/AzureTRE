@@ -90,7 +90,7 @@ export const App: React.FunctionComponent = () => {
                   />
                   <Stack styles={stackStyles} className="tre-root">
                     <Stack.Item grow className="tre-top-nav">
-                      <TopNav />
+                      <TopNav workspaceRoles={workspaceRoles} />
                     </Stack.Item>
                     <Stack.Item grow={100} className="tre-body">
                       <GenericErrorBoundary>

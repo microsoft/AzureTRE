@@ -36,6 +36,8 @@ When the user navigates into a Workspace, the client will request an access toke
 Workspace app registrations may be reused across multiple workspaces in development scenarios.
 From this access token we can find the Workspace-level roles the user is in (`WorkspaceOwner` / `WorkspaceResearcher`). These are in turn used to show/hide features of the UI.
 
+The roles from both token types are also shown to the user in the user menu in the top navigation bar, under `TRE roles` and `Workspace roles`. The workspace section only appears on a workspace route, and shows `None assigned` when the user holds no role in that workspace, which is the case for a `TREAdmin` viewing a workspace they are not a member of. The menu reads the same role claims that `SecuredByRole` gates on, so what it shows always matches what the UI lets the user do.
+
 ### React Contexts
 The React Context API is a clean way to handle a limited amount of global state, and is used for a few scenarios in this project:
 - TRE Roles Context: A context provides details of the base TRE roles a user is in, which can be consumed anywhere throughout the app
