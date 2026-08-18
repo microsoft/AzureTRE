@@ -9,6 +9,9 @@ The legacy airlock architecture uses **separate storage accounts for each stage*
 
 To use the legacy architecture, explicitly set `airlock_version: 1` in your workspace properties (new workspaces default to `2`) and ensure `enable_legacy_airlock: true` is set in your `config.yaml`.
 
+!!! important "Manual-auth workspaces require v1"
+    Airlock v2 (consolidated storage) relies on a per-workspace Entra **app registration** as its SAS signer, which is only created when the workspace uses **automatic** app registration (`auth_type: Automatic`). Workspaces created with **manual** authentication (`auth_type: Manual`) therefore only support **airlock v1** and default to it automatically; requesting `airlock_version: 2` on a manual-auth workspace is rejected (HTTP 400). Manual-auth workspaces consequently require `enable_legacy_airlock: true` in core.
+
 ## Storage Accounts
 
 ### Core (TRE-level)

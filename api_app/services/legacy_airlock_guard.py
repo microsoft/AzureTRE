@@ -12,17 +12,31 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
 
 
 def ensure_workspace_airlock_version_supported(properties: dict) -> None:
-    """Block creating a legacy (airlock_version=1) workspace when core legacy airlock is
-    disabled (v2-only). Fails fast before deployment instead of deploying a workspace
-    whose airlock would be non-functional (the core v1 storage accounts do not exist).
+    """Validate the requested airlock_version is deployable for this workspace and deployment.
+
+    - Airlock v2 (consolidated storage) relies on a per-workspace Entra app-registration SAS signer,
+      which is only created in automatic auth mode. In manual auth mode the workspace would fall back
+      to the shared core API identity on the shared global account, which cannot carry per-workspace
+      isolation conditions and collides across workspaces, so v2 is not supported.
+    - Airlock v1 (legacy per-stage storage) only works when core legacy airlock is enabled.
 
     Raises ValueError so the API returns HTTP 400.
     """
-    if config.ENABLE_LEGACY_AIRLOCK:
-        return
     if not properties:
         return
-    if properties.get("enable_airlock") and properties.get("airlock_version") == 1:
+    if not properties.get("enable_airlock", True):
+        return
+
+    airlock_version = properties.get("airlock_version")
+
+    # Only an explicit v2 request is blocked on manual auth; manual workspaces otherwise default to v1.
+    if airlock_version == 2 and properties.get("auth_type") == "Manual":
+        raise ValueError(
+            "Airlock version 2 requires automatic app registration (auth_type=Automatic). "
+            "Manual-auth workspaces must use airlock_version=1."
+        )
+
+    if not config.ENABLE_LEGACY_AIRLOCK and airlock_version == 1:
         raise ValueError(
             "Cannot create a workspace with airlock_version=1 because legacy airlock is disabled "
             "in core (enable_legacy_airlock=false). Use airlock_version=2."

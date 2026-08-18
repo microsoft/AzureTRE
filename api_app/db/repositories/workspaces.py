@@ -67,7 +67,9 @@ class WorkspaceRepository(ResourceRepository):
 
     async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
         # Pre-existing workspaces predate the airlock_version property and use v1 (legacy) storage.
-        # The API now defaults new requests to v2, so stamp existing workspaces with v1 to preserve routing.
+        # Stamp them with v1 to preserve routing. New workspaces persist airlock_version explicitly on
+        # creation (create_workspace_item), so an absent value reliably identifies a genuinely pre-v2
+        # workspace and this backfill will not touch v2 workspaces even if it is re-run.
         query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
         parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
         migrated = []
@@ -140,6 +142,13 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
+        # Persist the airlock storage version explicitly so it is never absent from the stored document
+        # (the legacy backfill only stamps records with no airlock_version, so a missing value must
+        # reliably mean a genuinely pre-v2 workspace). v2 needs the per-workspace app-registration SAS
+        # signer, which only exists in automatic auth mode, so manual-auth workspaces default to v1.
+        default_airlock_version = 2 if auto_app_registration_param["register_aad_application"] else 1
+        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", default_airlock_version)}
+
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
@@ -147,6 +156,7 @@ class WorkspaceRepository(ResourceRepository):
                                     **address_spaces_param,
                                     **auto_app_registration_param,
                                     **workspace_owner_param,
+                                    **airlock_version_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 

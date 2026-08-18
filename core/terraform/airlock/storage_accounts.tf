@@ -176,7 +176,7 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
         @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
           StringEquals 'import-in-progress'
         AND
-        @Environment[Microsoft.Network/isPrivateLink] BoolEquals true
+        @Environment[isPrivateLink] BoolEquals true
       )
     )
   EOT
