@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 3.10.0
+version: 3.10.1
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -132,9 +132,10 @@ parameters:
     default: true
   - name: airlock_version
     type: integer
-    default: 2
+    default: 1
     description: "Airlock storage version: 1 = legacy per-stage storage accounts, 2
-      = consolidated metadata-based storage"
+      = consolidated metadata-based storage. Defaults to 1 as a safe fallback for direct
+      Porter installs; the API always passes an explicit value (automatic auth -> 2, manual -> 1)."
   - name: arm_environment
     type: string
   - name: enable_cmk_encryption
