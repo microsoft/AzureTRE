@@ -69,11 +69,12 @@ def sample_workspace_with_review_config():
         resourcePath="test")
 
 
-def sample_airlock_request(status=AirlockRequestStatus.Draft):
+def sample_airlock_request(status=AirlockRequestStatus.Draft, airlock_version=2):
     airlock_request = AirlockRequest(
         id=AIRLOCK_REQUEST_ID,
         workspaceId=WORKSPACE_ID,
         type=AirlockRequestType.Import,
+        airlock_version=airlock_version,
         reviewUserResources={"user-guid-here": sample_airlock_user_resource_object()},
         files=[AirlockFile(
             name="data.txt",
@@ -103,10 +104,10 @@ def sample_airlock_user_resource_object():
     )
 
 
-def sample_status_changed_event(new_status="draft", previous_status=None, review_workspace_id=None):
+def sample_status_changed_event(new_status="draft", previous_status=None, review_workspace_id=None, airlock_version=2):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID, review_workspace_id=review_workspace_id).model_dump(mode="json"),
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID, review_workspace_id=review_workspace_id, airlock_version=airlock_version).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )

@@ -240,8 +240,9 @@ class AirlockRequestRepository(BaseRepository):
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
             pending_scan_result=_UNSET) -> AirlockRequest:
-        updated_request = self._build_updated_request(
-            original_request=original_request,
+        # Kept as a single dict so the retry below cannot silently drop fields, which previously lost
+        # the pending scan result when a submission raced an early scan verdict.
+        update_fields = dict(
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
@@ -249,12 +250,13 @@ class AirlockRequestRepository(BaseRepository):
             review_user_resource=review_user_resource,
             pending_scan_result=pending_scan_result,
             updated_by=updated_by)
+        updated_request = self._build_updated_request(original_request=original_request, **update_fields)
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
-            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
+            updated_request = self._build_updated_request(original_request=original_request, **update_fields)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response

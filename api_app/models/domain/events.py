@@ -41,4 +41,4 @@ class StatusChangedData(AzureTREModel):
     type: str
     workspace_id: str
     review_workspace_id: Optional[str] = None
-    airlock_version: int = 2
+    airlock_version: int = 1

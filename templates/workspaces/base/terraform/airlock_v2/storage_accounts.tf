@@ -68,6 +68,20 @@ resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" 
         AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write'})
         AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/add/action'})
         AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/read'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/write'})
+        AND !(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/delete'})
+      )
+      OR
+      (
+        (
+          ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/read'}
+          OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/write'}
+          OR ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/delete'}
+        )
+        AND
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:workspace_id]
+          StringEquals '${var.workspace_id}'
       )
       OR
       (

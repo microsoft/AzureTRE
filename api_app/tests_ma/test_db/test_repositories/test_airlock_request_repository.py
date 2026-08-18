@@ -481,3 +481,20 @@ async def test_set_default_airlock_version_for_legacy_requests_backfills_only_mi
     assert migrated == ["req-legacy"]
     assert requests[0]["airlock_version"] == 1
     airlock_request_repo.update_item_dict.assert_awaited_once_with(requests[0])
+
+
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.get_airlock_request_by_id", return_value=airlock_request_mock(status=DRAFT))
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.update_airlock_request_item")
+async def test_update_airlock_request_retry_preserves_all_update_fields(update_item_mock, _, airlock_request_repo):
+    # An ETag conflict rebuilds the update from the refetched request; dropping fields here previously
+    # lost an early scan verdict when a submission raced it, leaving the request stuck in Submitted.
+    update_item_mock.side_effect = [CosmosAccessConditionFailedError, None]
+    verdict = {"new_status": "in_review", "status_message": None}
+
+    await airlock_request_repo.update_airlock_request(
+        original_request=airlock_request_mock(status=DRAFT),
+        updated_by=create_test_user(),
+        pending_scan_result=verdict)
+
+    retried_request = update_item_mock.call_args_list[1].args[1]
+    assert retried_request.pendingScanResult == verdict

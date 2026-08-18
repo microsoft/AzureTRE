@@ -41,8 +41,9 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
-        # Migration backfills existing workspaces to v1 before v2 becomes the default.
-        airlock_version = workspace.properties.get("airlock_version", 2)
+        # New workspaces persist an explicit airlock_version, so a missing property means the workspace
+        # predates v2 and has not been stamped by the migration yet - it still has v1 infrastructure.
+        airlock_version = workspace.properties.get("airlock_version", 1)
         airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user, airlock_version=airlock_version)
         await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
         allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
