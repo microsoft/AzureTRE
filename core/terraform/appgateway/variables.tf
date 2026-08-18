@@ -41,8 +41,3 @@ variable "encryption_key_versionless_id" {
 variable "deployer_principal_id" {
   type = string
 }
-
-variable "airlock_core_storage_fqdn" {
-  type        = string
-  description = "FQDN of the consolidated core airlock storage account for App Gateway backend"
-}
