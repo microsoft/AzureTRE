@@ -233,11 +233,8 @@ class ResourceRepository(BaseRepository):
 
     @staticmethod
     def _matches_if_condition(if_schema: dict, state: dict) -> bool:
-        """
-        Returns True if the resource state satisfies the JSON Schema 'if' condition.
-        Evaluates 'const' and 'enum' constraints on top-level properties only.
-        """
-        if not if_schema or not isinstance(if_schema, dict):
+        """Return whether state satisfies the JSON Schema condition."""
+        if not isinstance(if_schema, dict):
             return False
         if not isinstance(state, dict):
             return False
@@ -337,9 +334,17 @@ class ResourceRepository(BaseRepository):
             # allOf branches in the target template (evaluated against the post-patch state).
             # Without this, unevaluatedProperties:false schemas reject the upgrade payload because
             # stale fields from the old active branch are still present in resource.properties.
-            post_patch_props = {**resource.properties}
+            def _deep_merge_dicts(base: dict, patch: dict) -> dict:
+                for key, value in patch.items():
+                    if isinstance(value, dict) and isinstance(base.get(key), dict):
+                        _deep_merge_dicts(base[key], value)
+                    else:
+                        base[key] = copy.deepcopy(value)
+                return base
+
+            post_patch_props = copy.deepcopy(resource.properties)
             if resource_patch.properties:
-                self._deep_dict_update(post_patch_props, resource_patch.properties)
+                _deep_merge_dicts(post_patch_props, resource_patch.properties)
 
             for condition in enriched_target_template.get("allOf", []):
                 if not isinstance(condition, dict) or "if" not in condition:
