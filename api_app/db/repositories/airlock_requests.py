@@ -63,6 +63,17 @@ class AirlockRequestRepository(BaseRepository):
     def airlock_requests_query():
         return 'SELECT * FROM c'
 
+    async def set_default_airlock_version_for_legacy_requests(self) -> List[str]:
+        # Requests created before airlock v2 predate the airlock_version field and hold their data in
+        # legacy storage. The model now defaults missing values to v2, so stamp existing requests with v1.
+        query = 'SELECT * FROM c WHERE NOT IS_DEFINED(c.airlock_version)'
+        migrated = []
+        for request in await self.query(query=query):
+            request['airlock_version'] = 1
+            await self.update_item_dict(request)
+            migrated.append(request['id'])
+        return migrated
+
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 
         # Define valid transitions

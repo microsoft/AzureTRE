@@ -88,6 +88,7 @@ module "airlock_v2" {
   tre_workspace_tags     = local.tre_workspace_tags
   ws_resource_group_name = azurerm_resource_group.ws.name
   services_subnet_id     = module.network.services_subnet_id
+  vnet_id                = module.network.vnet_id
   short_workspace_id     = local.short_workspace_id
   workspace_id           = var.tre_resource_id
   arm_environment        = var.arm_environment

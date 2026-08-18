@@ -21,17 +21,43 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
 
   lifecycle { ignore_changes = [tags] }
 
-  private_dns_zone_group {
-    name                 = "private-dns-zone-group-sa-airlock-ws-global"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.blobcore.id]
-  }
-
   private_service_connection {
     name                           = "psc-sa-airlock-ws-global-${var.short_workspace_id}"
     private_connection_resource_id = data.azurerm_storage_account.sa_airlock_workspace_global.id
     is_manual_connection           = false
     subresource_names              = ["Blob"]
   }
+}
+
+# The global workspace storage account is shared by every workspace but has a single hostname,
+# so all workspace private endpoints would collide in the shared core blob DNS zone (last-writer-wins).
+# Instead give each workspace a more-qualified zone (accountname.privatelink.blob...) linked only to its
+# VNet: Azure resolves via the most-specific zone, so the account resolves to THIS workspace's endpoint.
+resource "azurerm_private_dns_zone" "airlock_workspace_global" {
+  name                = "${local.airlock_workspace_global_storage_name}.${data.azurerm_private_dns_zone.blobcore.name}"
+  resource_group_name = var.ws_resource_group_name
+  tags                = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "airlock_workspace_global" {
+  name                  = "vnl-airlock-ws-global-${var.short_workspace_id}"
+  resource_group_name   = var.ws_resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.airlock_workspace_global.name
+  virtual_network_id    = var.vnet_id
+  registration_enabled  = false
+  tags                  = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_a_record" "airlock_workspace_global" {
+  name                = "@"
+  zone_name           = azurerm_private_dns_zone.airlock_workspace_global.name
+  resource_group_name = var.ws_resource_group_name
+  ttl                 = 10
+  records             = [azurerm_private_endpoint.airlock_workspace_pe.private_service_connection[0].private_ip_address]
 }
 
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {

@@ -39,7 +39,15 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Extract request id
-    _, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    account_name, request_id, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+
+    # On-upload scanning also fires for the approval/rejection copy into the destination account.
+    # Those blobs carry "copied_from" metadata and belong to a request that is already past Submitted,
+    # so their result would fail status matching and dead-letter. Only the original upload gates submission.
+    blob_client = blob_operations.get_blob_client_from_blob_info(account_name, request_id, blob_name)
+    if "copied_from" in blob_client.get_blob_properties()["metadata"]:
+        logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
+        return
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage

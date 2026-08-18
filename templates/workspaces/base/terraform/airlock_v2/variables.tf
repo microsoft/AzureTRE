@@ -10,6 +10,9 @@ variable "ws_resource_group_name" {
 variable "services_subnet_id" {
   type = string
 }
+variable "vnet_id" {
+  type = string
+}
 variable "short_workspace_id" {
   type = string
 }

@@ -3,6 +3,7 @@ from auth.rbac import require_tre_admin
 from resources import strings
 from models.schemas.migrations import Migration, MigrationOutList
 from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.airlock_requests import AirlockRequestRepository
 from services.logging import logger
 
 migrations_core_router = APIRouter(dependencies=[Depends(require_tre_admin)])
@@ -29,6 +30,13 @@ async def migrate_database():
         migrated_ids = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
         logger.info(f"Set default airlock_version=1 on {len(migrated_ids)} legacy workspace(s).")
         migrations.append(Migration(issueNumber="5048", status=f"Set airlock_version=1 on {len(migrated_ids)} legacy workspace(s)"))
+
+        # Stamp in-flight airlock requests created before v2 with airlock_version=1 so their status
+        # events keep routing to the legacy storage where their data already exists.
+        airlock_request_repo = await AirlockRequestRepository.create()
+        migrated_request_ids = await airlock_request_repo.set_default_airlock_version_for_legacy_requests()
+        logger.info(f"Set default airlock_version=1 on {len(migrated_request_ids)} legacy airlock request(s).")
+        migrations.append(Migration(issueNumber="5048", status=f"Set airlock_version=1 on {len(migrated_request_ids)} legacy airlock request(s)"))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:

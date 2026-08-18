@@ -469,3 +469,15 @@ async def test_get_airlock_requests_for_airlock_manager_argument_compatibility(
             assert isinstance(result, list), f"Test case {i} should return a list"
         except TypeError as e:
             pytest.fail(f"Test case {i} failed with TypeError: {str(e)}. Parameters: {test_kwargs}")
+
+
+async def test_set_default_airlock_version_for_legacy_requests_backfills_only_missing(airlock_request_repo):
+    requests = [{"id": "req-legacy", "status": "draft"}]
+    airlock_request_repo.query = AsyncMock(return_value=requests)
+    airlock_request_repo.update_item_dict = AsyncMock()
+
+    migrated = await airlock_request_repo.set_default_airlock_version_for_legacy_requests()
+
+    assert migrated == ["req-legacy"]
+    assert requests[0]["airlock_version"] == 1
+    airlock_request_repo.update_item_dict.assert_awaited_once_with(requests[0])

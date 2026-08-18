@@ -21,6 +21,11 @@ STAGE_EXPORT_APPROVED = "export-approved"
 STAGE_EXPORT_REJECTED = "export-rejected"
 STAGE_EXPORT_BLOCKED = "export-blocked"
 
+# Stages a request has reached a final decision at. A late/duplicate "submitted" event
+# (e.g. the scan verdict applied at submit races the submitted transition) must not revert these.
+TERMINAL_STAGES = [STAGE_IMPORT_APPROVED, STAGE_IMPORT_REJECTED, STAGE_IMPORT_BLOCKED,
+                   STAGE_EXPORT_APPROVED, STAGE_EXPORT_REJECTED, STAGE_EXPORT_BLOCKED]
+
 # Legacy storage account names (for backwards compatibility)
 # These will be removed after migration is complete
 # Import

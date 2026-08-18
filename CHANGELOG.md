@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Make Airlock v2 (consolidated metadata-based storage) the default for new airlock requests, retaining legacy per-stage storage behind `enable_legacy_airlock` (defaults to `true`; the sample config sets `false`). Pre-existing workspaces are backfilled with `airlock_version=1` by a DB migration so their requests keep routing to legacy storage, and the review-VM SAS, legacy import account naming, malware scan verdict handling on submit, cross-subscription workspace planning, and metadata-read failure handling are corrected. See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock). (`core` 0.18.1, `api` 0.26.6, `airlock-processor` 0.8.14, `tre-workspace-base` 3.9.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Make Airlock v2 (consolidated metadata-based storage) the default for new airlock requests, retaining legacy per-stage storage behind `enable_legacy_airlock` (defaults to `true`; the sample config sets `false`). Pre-existing workspaces and in-flight requests are backfilled with `airlock_version=1` by a DB migration so they keep routing to legacy storage; each workspace resolves the shared global airlock account to its own private endpoint via a workspace-scoped DNS zone, and the review-VM SAS, legacy import account naming, malware scan verdict handling on submit, cross-subscription workspace planning, and metadata-read failure handling are corrected. See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock). (`core` 0.18.1, `api` 0.26.7, `airlock-processor` 0.8.15, `tre-workspace-base` 3.9.2) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 BUG FIXES:
 ## (0.29.0) (August 14, 2026)
