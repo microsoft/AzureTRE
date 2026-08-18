@@ -3,12 +3,9 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Make Airlock v2 (consolidated metadata-based storage) the default for new airlock requests, retaining legacy per-stage storage behind `enable_legacy_airlock` (defaults to `true`; the sample config sets `false`). Pre-existing workspaces are backfilled with `airlock_version=1` by a DB migration so their requests keep routing to legacy storage, and the review-VM SAS, legacy import account naming, malware scan verdict handling on submit, cross-subscription workspace planning, and metadata-read failure handling are corrected. See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock). (`core` 0.18.1, `api` 0.26.6, `airlock-processor` 0.8.14, `tre-workspace-base` 3.9.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 BUG FIXES:
-* Airlock v2: grant the API identity ABAC access to `import-in-progress` containers on the consolidated core storage account so the user-delegation SAS issued for an in-review import can be read by the review VM (previously 403). (`core` 0.18.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Airlock v2: default new airlock requests to v2 (consolidated) storage in the API and backfill pre-existing workspaces with `airlock_version=1` via a DB migration so their requests keep routing to legacy storage. `enable_legacy_airlock` now defaults to `true` in config schema (sample config sets `false`). (`api` 0.26.6) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Airlock v2: do not let a review workspace id change the legacy (v1) import-in-progress account name; re-raise container metadata read failures in `BlobCreatedTrigger` so stuck requests dead-letter visibly; persist the on-upload malware scan verdict and apply it on submission. (`airlock-processor` 0.8.14) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Airlock v2: use the core provider alias for the shared workspace-global storage data source so cross-subscription workspaces can plan; correct the async Event Grid copy-completion architecture docs. (`tre-workspace-base` 3.9.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
