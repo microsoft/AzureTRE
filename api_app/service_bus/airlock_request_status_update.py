@@ -7,7 +7,7 @@ from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnect
 from fastapi import HTTPException
 from pydantic import ValidationError, TypeAdapter
 
-from api.dependencies.airlock import get_airlock_request_by_id_from_path
+from api.dependencies.airlock import get_airlock_request_by_id
 from services.airlock import update_and_publish_event_airlock_request
 from services.logging import logger, tracer
 from db.repositories.workspaces import WorkspaceRepository
@@ -109,7 +109,7 @@ class AirlockStatusUpdater():
             status_message = step_result_data.status_message
             request_files = step_result_data.request_files
             # Find the airlock request by id
-            airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
+            airlock_request = await get_airlock_request_by_id(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
             if airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
