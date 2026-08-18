@@ -124,8 +124,11 @@ def _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataD
     try:
         metadata = get_container_metadata(storage_account_name, request_id)
     except Exception:
-        logging.warning(f"Could not read container metadata for request {request_id} on {storage_account_name}, skipping")
-        return
+        # Do not swallow: acking without emitting a StepResult would leave the request stuck
+        # in approval_in_progress. Re-raise so the Service Bus trigger retries and, if the fault
+        # persists, dead-letters visibly.
+        logging.exception(f"Could not read container metadata for request {request_id} on {storage_account_name}")
+        raise
 
     stage = metadata.get('stage', '')
     logging.info(f"V2 BlobCreated for request {request_id}: stage={stage}, account={storage_account_name}")

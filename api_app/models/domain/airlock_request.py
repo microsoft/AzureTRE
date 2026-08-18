@@ -114,7 +114,7 @@ class AirlockRequest(AzureTREModel):
     reviews: Optional[List[AirlockReview]] = None
     etag: Optional[str] = Field(None, title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field(default_factory=dict, title="User resources created for Airlock Reviews")
-    airlock_version: int = Field(default=1, title="Airlock version", description="1 = legacy per-stage storage, 2 = consolidated metadata-based storage")
+    airlock_version: int = Field(default=2, title="Airlock version", description="1 = legacy per-stage storage, 2 = consolidated metadata-based storage")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @field_validator("etag", mode="before")

@@ -20,7 +20,7 @@ class RequestProperties(BaseModel):
     type: str
     workspace_id: str
     review_workspace_id: Optional[str] = None
-    airlock_version: int = 1
+    airlock_version: int = 2
 
 
 class ContainersCopyMetadata:
@@ -124,7 +124,17 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                                 event_time=datetime.datetime.now(datetime.UTC),
                                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
                     else:
-                        logging.info(f'Request {req_id}: Malware scanning enabled, waiting for scan result')
+                        # In v2 the blob is scanned on upload during Draft, so the verdict may already be
+                        # persisted on the container metadata. Apply it now; otherwise mark the container as
+                        # awaiting submission so ScanResultTrigger completes the step when the verdict lands.
+                        from shared_code.blob_operations_metadata import get_container_metadata, merge_container_metadata
+                        metadata = get_container_metadata(source_account, req_id)
+                        scan_result = metadata.get(constants.METADATA_SCAN_RESULT)
+                        if scan_result:
+                            _emit_scan_step_result(stepResultEvent, req_id, scan_result)
+                        else:
+                            logging.info(f'Request {req_id}: Scan result not yet available, marking awaiting submission')
+                            merge_container_metadata(source_account, req_id, {constants.METADATA_AWAITING_SUBMIT: "true"})
                 elif new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                     # Terminal transitions: emit StepResult immediately since no BlobCreated event will fire
                     final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
@@ -156,6 +166,25 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
+
+
+def _emit_scan_step_result(stepResultEvent: func.Out[func.EventGridOutputEvent], req_id: str, scan_result: str):
+    # Translate a persisted malware scan verdict into the appropriate submitted-step result.
+    if scan_result == constants.NO_THREATS:
+        new_status = constants.STAGE_IN_REVIEW
+        status_message = None
+    else:
+        new_status = constants.STAGE_BLOCKING_INPROGRESS
+        status_message = scan_result
+    logging.info(f'Request {req_id}: Applying persisted scan verdict, moving to {new_status}')
+    stepResultEvent.set(
+        func.EventGridOutputEvent(
+            id=str(uuid.uuid4()),
+            data={"completed_step": constants.STAGE_SUBMITTED, "new_status": new_status, "request_id": req_id, "status_message": status_message},
+            subject=req_id,
+            event_type="Airlock.StepResult",
+            event_time=datetime.datetime.now(datetime.UTC),
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
 
 def extract_properties(msg: func.ServiceBusMessage) -> RequestProperties:
@@ -236,9 +265,10 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            # Import submit: copy to review workspace storage, or tre_id for legacy compatibility
-            dest_id = review_workspace_id if review_workspace_id else tre_id
-            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + dest_id
+            # Legacy (v1) import submit always copies to the single core import-in-progress
+            # account (stalimip${TRE_ID}). review_workspace_id is a v2-only concept and must
+            # not change the v1 account name.
+            return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id
         elif new_status == constants.STAGE_REJECTION_INPROGRESS:

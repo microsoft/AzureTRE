@@ -1,5 +1,6 @@
 import json
 from mock import MagicMock, patch
+import pytest
 
 import azure.functions as func
 
@@ -83,8 +84,9 @@ class TestV2BlobCreated():
 
     @patch("shared_code.blob_operations_metadata.get_container_metadata", side_effect=Exception("not found"))
     @patch("BlobCreatedTrigger.get_blob_info_from_topic_and_subject")
-    def test_v2_metadata_read_failure_skips_gracefully(self, mock_get_blob_info, mock_get_metadata):
-        """If container metadata can't be read, log warning and return without error."""
+    def test_v2_metadata_read_failure_reraises(self, mock_get_blob_info, mock_get_metadata):
+        """If container metadata can't be read, re-raise so the message retries/dead-letters
+        rather than silently leaving the request stuck in approval_in_progress."""
         topic = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/stalairlockgtre123"
         request_id = "req-004"
         mock_get_blob_info.return_value = ("stalairlockgtre123", request_id, "test.txt")
@@ -93,6 +95,7 @@ class TestV2BlobCreated():
         deletion_event = MagicMock()
 
         msg = _make_service_bus_message(topic, request_id)
-        main(msg=msg, stepResultEvent=step_result, dataDeletionEvent=deletion_event)
+        with pytest.raises(Exception):
+            main(msg=msg, stepResultEvent=step_result, dataDeletionEvent=deletion_event)
 
         step_result.set.assert_not_called()

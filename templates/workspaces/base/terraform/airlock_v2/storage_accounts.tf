@@ -4,6 +4,7 @@
 
 # Data source to reference the global workspace storage account
 data "azurerm_storage_account" "sa_airlock_workspace_global" {
+  provider            = azurerm.core
   name                = local.airlock_workspace_global_storage_name
   resource_group_name = local.core_resource_group_name
 }

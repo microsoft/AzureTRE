@@ -60,3 +60,8 @@ STEP_RESULT_EVENT_DATA_VERSION = "1.0"
 DATA_DELETION_EVENT_DATA_VERSION = "1.0"
 
 NO_THREATS = "No threats found"
+
+# v2 consolidated storage: malware scan runs on the Draft upload (before submit), so its verdict
+# is persisted on the container metadata and applied when the request is submitted.
+METADATA_SCAN_RESULT = "malware_scan_result"
+METADATA_AWAITING_SUBMIT = "awaiting_submit_scan_result"

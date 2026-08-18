@@ -144,6 +144,26 @@ def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]
         raise
 
 
+def merge_container_metadata(account_name: str, request_id: str, updates: Dict[str, str]) -> Dict[str, str]:
+    # Merge additional metadata keys onto a container without altering its stage.
+    container_name = request_id
+    blob_service_client = BlobServiceClient(
+        account_url=get_account_url(account_name),
+        credential=get_credential()
+    )
+    container_client = blob_service_client.get_container_client(container_name)
+
+    try:
+        properties = container_client.get_container_properties()
+        metadata = properties.metadata.copy() if properties.metadata else {}
+        metadata.update(updates)
+        container_client.set_container_metadata(metadata)
+        return metadata
+    except ResourceNotFoundError:
+        logging.error(f"Container {request_id} not found in account {account_name}")
+        raise
+
+
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
     source_blob_service_client = BlobServiceClient(
         account_url=get_account_url(storage_account_name),

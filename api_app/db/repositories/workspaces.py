@@ -65,6 +65,18 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
+    async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
+        # Pre-existing workspaces predate the airlock_version property and use v1 (legacy) storage.
+        # The API now defaults new requests to v2, so stamp existing workspaces with v1 to preserve routing.
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
+        parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
+        migrated = []
+        for workspace in await self.query(query=query, parameters=parameters):
+            workspace['properties']['airlock_version'] = 1
+            await self.update_item_dict(workspace)
+            migrated.append(workspace['id'])
+        return migrated
+
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
 

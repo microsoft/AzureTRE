@@ -7,7 +7,7 @@ def get_storage_account_name_for_request(
     status: AirlockRequestStatus,
     tre_id: str,
     short_workspace_id: str,
-    airlock_version: int = 1
+    airlock_version: int = 2
 ) -> str:
     if airlock_version >= 2:
         # Global workspace storage - all workspaces use same account

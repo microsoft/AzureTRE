@@ -414,3 +414,18 @@ async def test_is_workspace_storage_account_available_when_check_times_out(mock_
         await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_set_default_airlock_version_backfills_only_missing(workspace_repo):
+    workspaces = [
+        {"id": "ws-legacy", "resourceType": "workspace", "properties": {"display_name": "legacy"}},
+    ]
+    workspace_repo.query = AsyncMock(return_value=workspaces)
+    workspace_repo.update_item_dict = AsyncMock()
+
+    migrated = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
+
+    assert migrated == ["ws-legacy"]
+    assert workspaces[0]["properties"]["airlock_version"] == 1
+    workspace_repo.update_item_dict.assert_awaited_once_with(workspaces[0])

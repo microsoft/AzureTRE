@@ -122,7 +122,7 @@ class TestFileEnumeration():
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_called_with_correct_storage_account(self, mock_get_request_files):
         source_storage_account_for_submitted_stage = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + 'ws1'
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\", \"airlock_version\":1  }}"
         message = _mock_service_bus_message(body=message_body)
         request_properties = extract_properties(message)
         get_request_files(request_properties)
@@ -142,13 +142,14 @@ class TestFilesDeletion():
 class TestImportSubmitUsesReviewWorkspaceId():
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_submit_destination_uses_review_workspace_id(self):
+        # review_workspace_id is a v2-only concept and must NOT change the legacy (v1) account name.
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
             short_workspace_id="ws01",
             review_workspace_id="rw01"
         )
-        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "rw01"
+        assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
 
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_submit_destination_falls_back_to_tre_id_when_no_review_workspace_id(self):
@@ -176,7 +177,7 @@ class TestImportApproval():
     @patch("StatusChangedQueueTrigger.blob_operations.create_container")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_approval_copies_data_in_legacy_mode(self, mock_create_container, mock_copy_data):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"approval_in_progress\" ,\"previous_status\":\"in_review\" , \"type\":\"import\", \"workspace_id\":\"ws01\"  }}"
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"approval_in_progress\" ,\"previous_status\":\"in_review\" , \"type\":\"import\", \"workspace_id\":\"ws01\", \"airlock_version\":1  }}"
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         mock_create_container.assert_called_once()

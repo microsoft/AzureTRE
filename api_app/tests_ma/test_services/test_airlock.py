@@ -106,7 +106,7 @@ def sample_airlock_user_resource_object():
 def sample_status_changed_event(new_status="draft", previous_status=None, review_workspace_id=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:], review_workspace_id=review_workspace_id).model_dump(mode="json"),
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID, review_workspace_id=review_workspace_id).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -471,7 +471,7 @@ async def test_update_and_publish_event_includes_review_workspace_id_for_import(
                                                                                 airlock_request_repo_mock):
     airlock_request_mock = sample_airlock_request()
     updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
-    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft", review_workspace_id=REVIEW_WORKSPACE_ID[-4:])
+    status_changed_event_mock = sample_status_changed_event(new_status="submitted", previous_status="draft", review_workspace_id=REVIEW_WORKSPACE_ID)
     airlock_request_repo_mock.update_airlock_request = AsyncMock(return_value=updated_airlock_request_mock)
     event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
     event_grid_sender_client_mock.send = AsyncMock()
@@ -485,7 +485,7 @@ async def test_update_and_publish_event_includes_review_workspace_id_for_import(
 
     actual_status_changed_event = event_grid_sender_client_mock.send.await_args_list[0].args[0][0]
     assert actual_status_changed_event.data == status_changed_event_mock.data
-    assert actual_status_changed_event.data["review_workspace_id"] == REVIEW_WORKSPACE_ID[-4:]
+    assert actual_status_changed_event.data["review_workspace_id"] == REVIEW_WORKSPACE_ID
 
 
 @pytest.mark.asyncio

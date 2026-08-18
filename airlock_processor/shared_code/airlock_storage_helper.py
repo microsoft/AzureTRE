@@ -2,7 +2,7 @@ import os
 from shared_code import constants
 
 
-def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str, airlock_version: int = 1) -> str:
+def get_storage_account_name_for_request(request_type: str, status: str, short_workspace_id: str, airlock_version: int = 2) -> str:
     tre_id = os.environ.get("TRE_ID", "")
 
     if airlock_version >= 2:

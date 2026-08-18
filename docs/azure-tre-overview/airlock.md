@@ -163,7 +163,7 @@ For any airlock process, there is data movement either **into** a TRE workspace 
 
 All other transitions — draft→submitted, submitted→in-review, in-review→rejected/blocked — update metadata only with no data movement.
 
-Cross-account copies are performed **synchronously** by the `StatusChangedQueueTrigger`: it initiates the server-side copy, waits (polls) for it to complete, then emits the `StepResult` (and a data-deletion event for the source container) directly. This avoids relying on a `BlobCreated` EventGrid event to signal completion — such events can fire on empty-container/metadata writes before the copy finishes, and the default-deny workspace-global account can block the metadata reads needed to interpret them, which could otherwise leave requests stuck in `approval_in_progress`.
+Cross-account copies are performed **asynchronously** via Event Grid: the `StatusChangedQueueTrigger` creates the destination container (with stage metadata) and initiates the server-side copy with `start_copy_from_url`, then returns without polling. When the copy completes, the destination account raises a `BlobCreated` Event Grid event. The `BlobCreatedTrigger` reads the destination container's `stage` metadata to determine the completed step, then emits the `StepResult` (and a data-deletion event for the source container). This mirrors the v1 pattern of using a `BlobCreated` event to signal copy completion, and keeps the request-processing message short-lived rather than blocking on large transfers.
 
 ### Import Data Flow
 
