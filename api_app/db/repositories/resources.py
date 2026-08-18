@@ -239,7 +239,11 @@ class ResourceRepository(BaseRepository):
         """
         if not if_schema or not isinstance(if_schema, dict):
             return False
+        if not isinstance(state, dict):
+            return False
         for key, cond in if_schema.get("properties", {}).items():
+            if key not in state:
+                return False
             if not isinstance(cond, dict):
                 continue
             state_val = state.get(key)
@@ -335,7 +339,7 @@ class ResourceRepository(BaseRepository):
             # stale fields from the old active branch are still present in resource.properties.
             post_patch_props = {**resource.properties}
             if resource_patch.properties:
-                post_patch_props.update(resource_patch.properties)
+                self._deep_dict_update(post_patch_props, resource_patch.properties)
 
             for condition in enriched_target_template.get("allOf", []):
                 if not isinstance(condition, dict) or "if" not in condition:

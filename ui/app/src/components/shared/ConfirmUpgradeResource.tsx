@@ -129,8 +129,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         const val = getNestedValue(formData, key);
         if (val !== undefined) {
           setNestedValue(updatedNewVals, key, val, formData);
-        } else if (isPropertyRequiredInState(templateSchema, key, formData)) {
-          setNestedValue(updatedNewVals, key, "", formData);
+        } else {
+          const propSchema = getSchemaProperty(templateSchema, key);
+          if (isPropertyRequiredInState(templateSchema, key, formData) && propSchema?.default !== undefined) {
+            setNestedValue(updatedNewVals, key, propSchema.default, formData);
+          }
         }
       }
     });
@@ -470,6 +473,48 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     }
   };
 
+  const combinedState = useMemo(
+    () => mergePropertyValues(props.resource.properties, newPropertyValues),
+    [props.resource.properties, newPropertyValues],
+  );
+
+  const isUpgradeDisabled = useMemo(() => {
+    if (!selectedVersion || loadingSchema || formHasErrors) return true;
+    if (newPropertiesToFill.length === 0) return false;
+
+    return newPropertiesToFill.some((key) => {
+      if (!isKeyActiveInTemplate(newTemplateSchema, key, combinedState)) {
+        return false;
+      }
+      const valInState = getNestedValue(combinedState, key);
+      const valInNew = getNestedValue(newPropertyValues, key);
+      const propSchema = getSchemaProperty(newTemplateSchema, key);
+
+      if (
+        propSchema?.enum &&
+        valInState !== undefined &&
+        valInState !== null &&
+        valInState !== "" &&
+        !propSchema.enum.includes(valInState)
+      ) {
+        return true;
+      }
+
+      return (
+        isPropertyRequiredInState(newTemplateSchema, key, combinedState) &&
+        (valInNew === "" || valInNew === undefined || valInNew === null)
+      );
+    });
+  }, [
+    combinedState,
+    formHasErrors,
+    loadingSchema,
+    newPropertiesToFill,
+    newPropertyValues,
+    newTemplateSchema,
+    selectedVersion,
+  ]);
+
   // Use buildReducedSchema to include all new properties (including hidden ones)
   // Hidden properties will be rendered but not shown due to tre-hidden CSS class
   const reducedSchemaProperties = newTemplateSchema ? buildReducedSchema(newTemplateSchema, allNewProperties) : null;
@@ -596,7 +641,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                     liveOmit={false}
                     omitExtraData={false}
                     schema={finalSchema}
-                    formData={mergePropertyValues(props.resource.properties, newPropertyValues)}
+                    formData={combinedState}
                     uiSchema={uiSchema}
                     validator={validator}
                     onChange={(e) => {
@@ -624,46 +669,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                 }}
                 selectedKey={selectedVersion}
               />
-              <PrimaryButton
-                disabled={
-                  !selectedVersion ||
-                  loadingSchema ||
-                  formHasErrors ||
-                  (newPropertiesToFill.length > 0 &&
-                    (() => {
-                      const combinedState = mergePropertyValues(props.resource.properties, newPropertyValues);
-                      return newPropertiesToFill.some((key) => {
-                        if (!isKeyActiveInTemplate(newTemplateSchema, key, combinedState)) {
-                          return false;
-                        }
-                        const valInState = getNestedValue(combinedState, key);
-                        const valInNew = getNestedValue(newPropertyValues, key);
-                        const propSchema = getSchemaProperty(newTemplateSchema, key);
-
-                        // Check if an enum value that IS present is invalid.
-                        // Do NOT block when the value is absent — the required-field check below handles that.
-                        if (
-                          propSchema &&
-                          propSchema.enum &&
-                          valInState !== undefined &&
-                          valInState !== null &&
-                          valInState !== "" &&
-                          !propSchema.enum.includes(valInState)
-                        ) {
-                          return true;
-                        }
-
-                        // Check if required field is empty
-                        if (isPropertyRequiredInState(newTemplateSchema, key, combinedState)) {
-                          return valInNew === "" || valInNew === undefined || valInNew === null;
-                        }
-                        return false;
-                      });
-                    })())
-                }
-                text="Upgrade"
-                onClick={() => upgradeCall()}
-              />
+              <PrimaryButton disabled={isUpgradeDisabled} text="Upgrade" onClick={() => upgradeCall()} />
             </DialogFooter>
           </>
         )}

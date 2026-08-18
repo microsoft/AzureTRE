@@ -194,6 +194,21 @@ def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
     ).dict(exclude_none=True)
 
 
+def test_matches_if_condition_requires_referenced_properties(resource_repo):
+    assert not resource_repo._matches_if_condition(
+        {"properties": {"selector": {"const": "A"}}},
+        {},
+    )
+    assert not resource_repo._matches_if_condition(
+        {"properties": {"selector": {"enum": [None, "A"]}}},
+        {},
+    )
+    assert resource_repo._matches_if_condition(
+        {"properties": {"selector": {"const": None}}},
+        {"selector": None},
+    )
+
+
 @pytest.mark.asyncio
 @patch("db.repositories.resources.ResourceRepository._get_enriched_template")
 @patch("db.repositories.resources.ResourceRepository._validate_resource_parameters", return_value=None)

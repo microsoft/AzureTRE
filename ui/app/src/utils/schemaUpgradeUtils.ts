@@ -26,7 +26,7 @@ export const getAllPropertyKeys = (properties: any, prefix = "", data: any = und
       }
     } else if (value && typeof value === "object" && "properties" in value) {
       // Include the object container itself so required-object detection works, then recurse into children.
-      // Arrays-of-objects are treated as atomic leaves (getNestedValue/setNestedValue don't support array-index traversal).
+      // Array item properties are traversed with indexed paths such as "items.0.value".
       keys.push(prefix + key);
       keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + ".", currentData));
     } else {
