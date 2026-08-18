@@ -840,3 +840,35 @@ def test_authenticated_user_with_empty_email_persists_and_builds_notification():
 
     assert notification.created_by.email == ""
     assert notification.updated_by.email == ""
+
+
+@patch("services.airlock.generate_container_sas", return_value="sas")
+@patch("services.airlock.BlobServiceClient")
+@patch("services.airlock.credentials")
+def test_sas_token_uses_signer_credential_for_global_account(mock_credentials, mock_bsc, _mock_gen_sas):
+    from services.airlock import get_airlock_request_container_sas_token
+    from resources import constants
+    from core import config
+    global_account = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID)
+    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
+
+    get_airlock_request_container_sas_token(request, global_account, signer_client_id="signer-client-id")
+
+    mock_credentials.get_airlock_signer_credential.assert_called_once()
+    mock_credentials.get_credential.assert_not_called()
+
+
+@patch("services.airlock.generate_container_sas", return_value="sas")
+@patch("services.airlock.BlobServiceClient")
+@patch("services.airlock.credentials")
+def test_sas_token_uses_default_credential_when_no_signer(mock_credentials, mock_bsc, _mock_gen_sas):
+    from services.airlock import get_airlock_request_container_sas_token
+    from resources import constants
+    from core import config
+    core_account = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(config.TRE_ID)
+    request = sample_airlock_request(status=AirlockRequestStatus.Approved)
+
+    get_airlock_request_container_sas_token(request, core_account, signer_client_id="")
+
+    mock_credentials.get_credential.assert_called_once()
+    mock_credentials.get_airlock_signer_credential.assert_not_called()

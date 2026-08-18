@@ -1,3 +1,5 @@
+data "azuread_client_config" "current" {}
+
 data "azurerm_user_assigned_identity" "api_id" {
   provider            = azurerm.core
   name                = "id-api-${var.tre_id}"

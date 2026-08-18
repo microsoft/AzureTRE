@@ -13,6 +13,8 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.airlock_requests import AirlockRequestRepository
+from services.legacy_airlock_guard import ensure_airlock_version_change_allowed
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import WorkspaceAuth, WorkspaceRole
@@ -128,8 +130,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
-async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
+        await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
             await cascaded_update_resource(resource_patch, workspace, user, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)
@@ -151,6 +154,8 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

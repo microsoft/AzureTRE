@@ -113,9 +113,20 @@ def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace
             return constants.STORAGE_ACCOUNT_NAME_EXPORT_BLOCKED.format(short_workspace_id)
 
 
-def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, account_name: str):
+def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, account_name: str, signer_client_id: str = ""):
+    # The shared workspace-global airlock account uses a per-workspace signer (app registration)
+    # so that the per-workspace ABAC condition is enforced and a leaked SAS cannot be replayed
+    # from another workspace. Requests on the core account keep using the API identity, which
+    # holds the core-account role assignment. When no signer is available (v1, or Entra object
+    # creation disabled) we fall back to the API identity.
+    global_account_name = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID)
+    if signer_client_id and account_name == global_account_name:
+        credential = credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
+    else:
+        credential = credentials.get_credential()
+
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
-                                            credential=credentials.get_credential())
+                                            credential=credential)
 
     start = datetime.now(UTC) - timedelta(minutes=15)
     expiry = datetime.now(UTC) + timedelta(hours=config.AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS)
@@ -123,7 +134,7 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
     try:
         udk = blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
     except Exception:
-        raise Exception(f"Failed getting user delegation key, has the API identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
+        raise Exception(f"Failed getting user delegation key, has the signing identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
 
     required_permission = get_required_permission(airlock_request)
 
@@ -196,7 +207,8 @@ def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace)
         # v1: Resolve per-stage storage account
         account_name = get_account_by_request(airlock_request, workspace)
 
-    return get_airlock_request_container_sas_token(airlock_request, account_name)
+    signer_client_id = workspace.properties.get("airlock_signer_client_id", "") if airlock_request.airlock_version >= 2 else ""
+    return get_airlock_request_container_sas_token(airlock_request, account_name, signer_client_id)
 
 
 async def create_review_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,

@@ -81,21 +81,23 @@ module "airlock" {
 }
 
 module "airlock_v2" {
-  count                  = var.enable_airlock && var.airlock_version >= 2 ? 1 : 0
-  source                 = "./airlock_v2"
-  location               = var.location
-  tre_id                 = var.tre_id
-  tre_workspace_tags     = local.tre_workspace_tags
-  ws_resource_group_name = azurerm_resource_group.ws.name
-  services_subnet_id     = module.network.services_subnet_id
-  vnet_id                = module.network.vnet_id
-  short_workspace_id     = local.short_workspace_id
-  workspace_id           = var.tre_resource_id
-  arm_environment        = var.arm_environment
+  count                    = var.enable_airlock && var.airlock_version >= 2 ? 1 : 0
+  source                   = "./airlock_v2"
+  location                 = var.location
+  tre_id                   = var.tre_id
+  tre_workspace_tags       = local.tre_workspace_tags
+  ws_resource_group_name   = azurerm_resource_group.ws.name
+  services_subnet_id       = module.network.services_subnet_id
+  workspace_vnet_id        = module.network.vnet_id
+  register_aad_application = var.register_aad_application
+  short_workspace_id       = local.short_workspace_id
+  workspace_id             = var.tre_resource_id
+  arm_environment          = var.arm_environment
 
   providers = {
     azurerm      = azurerm
     azurerm.core = azurerm.core
+    azuread      = azuread
   }
 
   depends_on = [

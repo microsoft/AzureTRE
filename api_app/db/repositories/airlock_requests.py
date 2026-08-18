@@ -24,6 +24,15 @@ _UNSET = object()
 
 
 class AirlockRequestRepository(BaseRepository):
+    FINAL_AIRLOCK_STATUSES = [
+        AirlockRequestStatus.Approved,
+        AirlockRequestStatus.Rejected,
+        AirlockRequestStatus.Blocked,
+        AirlockRequestStatus.Cancelled,
+        AirlockRequestStatus.Failed,
+        AirlockRequestStatus.Revoked
+    ]
+
     @classmethod
     async def create(cls):
         cls = AirlockRequestRepository()
@@ -73,6 +82,18 @@ class AirlockRequestRepository(BaseRepository):
             await self.update_item_dict(request)
             migrated.append(request['id'])
         return migrated
+
+    async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        query = (
+            "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId "
+            "AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        )
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)},
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
 
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 

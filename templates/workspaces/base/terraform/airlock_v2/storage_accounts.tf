@@ -45,7 +45,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "airlock_workspace_glob
   name                  = "vnl-airlock-ws-global-${var.short_workspace_id}"
   resource_group_name   = var.ws_resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.airlock_workspace_global.name
-  virtual_network_id    = var.vnet_id
+  virtual_network_id    = var.workspace_vnet_id
   registration_enabled  = false
   tags                  = var.tre_workspace_tags
 
@@ -61,12 +61,20 @@ resource "azurerm_private_dns_a_record" "airlock_workspace_global" {
 }
 
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
+  provider = azurerm.core
+
   # Use a deterministic name per workspace to avoid conflicts when multiple
   # workspaces assign the same role on the same global storage account.
+  # The principal is the per-workspace SAS signer service principal when Entra
+  # object creation is enabled (register_aad_application); otherwise it falls back
+  # to the shared core API identity. Because distinct signer principals produce
+  # distinct (principal, role, scope) tuples, multiple workspaces can each hold
+  # their own conditioned assignment on the shared global account without collision.
   name                 = uuidv5("url", "${data.azurerm_storage_account.sa_airlock_workspace_global.id}-${var.workspace_id}-blob-data-contributor")
   scope                = data.azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = data.azurerm_user_assigned_identity.api_id.principal_id
+  principal_id         = var.register_aad_application ? azuread_service_principal.airlock_signer[0].object_id : data.azurerm_user_assigned_identity.api_id.principal_id
+  principal_type       = "ServicePrincipal"
 
   condition_version = "2.0"
   condition         = <<-EOT
