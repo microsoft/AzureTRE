@@ -1,7 +1,7 @@
 # Per-workspace signers prevent role collisions and bind SAS access to each private endpoint.
 
 locals {
-  aad_issuer = "https://login.microsoftonline.com/${data.azuread_client_config.current.tenant_id}/v2.0"
+  aad_issuer = "${module.terraform_azurerm_environment_configuration.active_directory_endpoint}/${data.azuread_client_config.current.tenant_id}/v2.0"
 }
 
 resource "azuread_application" "airlock_signer" {

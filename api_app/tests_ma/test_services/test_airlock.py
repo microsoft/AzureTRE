@@ -883,7 +883,7 @@ async def test_delete_workspace_airlock_containers_deletes_from_both_accounts(mo
 
     workspace = MagicMock()
     workspace.id = WORKSPACE_ID
-    workspace.properties = {"airlock_signer_client_id": "signer-client-id"}
+    workspace.properties = {"airlock_signer_client_id": "signer-client-id", "airlock_version": 2}
     repo = AsyncMock()
     repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
 
@@ -903,7 +903,7 @@ async def test_delete_workspace_airlock_containers_noop_without_requests(mock_bs
 
     workspace = MagicMock()
     workspace.id = WORKSPACE_ID
-    workspace.properties = {}
+    workspace.properties = {"airlock_version": 2}
     repo = AsyncMock()
     repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = []
 
@@ -915,14 +915,30 @@ async def test_delete_workspace_airlock_containers_noop_without_requests(mock_bs
 @pytest.mark.asyncio
 @patch("services.airlock.credentials")
 @patch("services.airlock.BlobServiceClient")
+async def test_delete_workspace_airlock_containers_skips_legacy_workspace(mock_bsc, _mock_credentials):
+    from services.airlock import delete_workspace_airlock_containers
+
+    workspace = MagicMock()
+    workspace.id = WORKSPACE_ID
+    workspace.properties = {"airlock_version": 1}
+    repo = AsyncMock()
+
+    await delete_workspace_airlock_containers(workspace, repo)
+
+    repo.get_data_retaining_airlock_request_ids_for_workspace.assert_not_called()
+    mock_bsc.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.credentials")
+@patch("services.airlock.BlobServiceClient")
 async def test_delete_workspace_airlock_containers_does_not_raise_on_failure(mock_bsc, _mock_credentials):
     from services.airlock import delete_workspace_airlock_containers
 
     workspace = MagicMock()
     workspace.id = WORKSPACE_ID
-    workspace.properties = {}
+    workspace.properties = {"airlock_version": 2}
     repo = AsyncMock()
     repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
     mock_bsc.return_value.get_container_client.return_value.delete_container.side_effect = Exception("boom")
-
     await delete_workspace_airlock_containers(workspace, repo)

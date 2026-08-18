@@ -70,9 +70,15 @@ variable "enable_airlock" {
 }
 
 variable "airlock_version" {
-  type        = number
-  default     = 2
+  type = number
+  # Defaults to legacy so a direct terraform run never destroys v1 storage.
+  default     = 1
   description = "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage."
+
+  validation {
+    condition     = contains([1, 2], var.airlock_version)
+    error_message = "airlock_version must be 1 (legacy per-stage storage accounts) or 2 (consolidated metadata-based storage)."
+  }
 }
 
 variable "aad_redirect_uris_b64" {
