@@ -1,6 +1,7 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* Set `enable_legacy_airlock` explicitly in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release; set `false` to opt out of legacy per-stage airlock storage now (and avoid being affected by that default change), or `true` to keep it. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
 * Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new requests. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`), and pre-existing workspaces/requests are stamped `airlock_version=1` via `POST /migrations` to keep routing to it. Each workspace resolves the shared global airlock account to its own private endpoint (workspace-scoped DNS zone) and signs SAS with a per-workspace signer identity, so workspaces no longer collide on the shared-account role assignment and a leaked SAS can't be replayed cross-workspace. v2 requires automatic app registration, so manual-auth workspaces use v1. Changing a workspace's `airlock_version` is blocked while it has retained-data requests. See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock). (`core` 0.18.5, `api` 0.27.6, `airlock-processor` 0.8.18, `tre-workspace-base` 3.10.1, `tre-workspace-airlock-import-review` 1.6.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))

@@ -39,13 +39,10 @@ tre:
   enable_airlock_malware_scanning: true
   # Airlock defaults to v2 (consolidated) storage. Legacy v1 per-stage storage accounts are
   # only needed for workspaces still using airlock_version=1. The global default is `true`;
-  # this will change to `false` in a future release, so set it explicitly if you rely on legacy airlock.
+  # this will change to `false` in a future release, so set it explicitly to `true` if you rely on legacy airlock.
   # WARNING: setting this to false and redeploying core permanently deletes the core v1 airlock
   # storage accounts (stalimex/stalimip/stalimrej/stalimblocked/stalexapp) and any data still in
-  # them, in the same apply that switches the API to v2-only. Ensure no active airlock_version=1
-  # workspaces or in-flight v1 requests remain first (run POST /migrations to stamp airlock_version
-  # on pre-v2 records). Switching a workspace's airlock_version while it holds requests with
-  # retained data is blocked by the API.
+  # them will be DELETED.
   enable_legacy_airlock: false
 
   # Set to true if want to ensure users have an email address before airlock request is created
