@@ -11,14 +11,7 @@ from shared_code import constants, parsers
 from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_client_from_blob_info
 
 
-# Mapping from v2 container metadata stage to (completed_step, new_status).
-# Only genuine cross-account approval copies belong here: import approval copies core ->
-# workspace-global, and export approval copies workspace-global -> core, so each creates a blob
-# and fires a BlobCreated event we must complete. Rejected/blocked v2 transitions are same-account
-# metadata updates that emit their StepResult in StatusChangedQueueTrigger and create no blob, so
-# a BlobCreated for those stages could only be a delayed/duplicate event from the original upload
-# (which has no "copied_from") — including them would emit a duplicate terminal transition and
-# dead-letter on send_delete_event. They are intentionally excluded.
+# Only cross-account approval copies complete through BlobCreated events.
 V2_STAGE_COMPLETION_MAP = {
     constants.STAGE_IMPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
     constants.STAGE_EXPORT_APPROVED: (constants.STAGE_APPROVAL_INPROGRESS, constants.STAGE_APPROVED),
@@ -37,12 +30,10 @@ def main(msg: func.ServiceBusMessage,
     topic = json_body["topic"]
     request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
 
-    # Check if this event is from a v2 consolidated storage account
     if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in topic or constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL in topic:
         _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent)
         return
 
-    # Legacy v1 handling below
     # message originated from in-progress blob creation
     if constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS in topic or constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS in topic:
         try:
@@ -98,8 +89,6 @@ def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], js
         *get_blob_info_from_topic_and_subject(topic=json_body["topic"], subject=json_body["subject"]))
     blob_metadata = blob_client.get_blob_properties()["metadata"]
     if "copied_from" not in blob_metadata:
-        # Only copies carry copied_from. An original (uploaded) blob has none, so there is no source
-        # container to clean up — skip rather than raising a KeyError that would dead-letter.
         logging.info(f"Blob for request {request_id} has no copied_from metadata; skipping data deletion event.")
         return
     copied_from = json.loads(blob_metadata["copied_from"])
@@ -119,12 +108,6 @@ def send_delete_event(dataDeletionEvent: func.Out[func.EventGridOutputEvent], js
 
 
 def _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent):
-    """Handle BlobCreated events from v2 consolidated storage accounts.
-
-    In v2, cross-account copies (e.g., import approval: core → workspace-global)
-    fire BlobCreated events. Container metadata determines the stage and appropriate
-    step result, matching the v1 pattern where BlobCreatedTrigger signals copy completion.
-    """
     storage_account_name, _, _ = get_blob_info_from_topic_and_subject(
         topic=json_body["topic"], subject=json_body["subject"])
 
@@ -132,9 +115,7 @@ def _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataD
     try:
         metadata = get_container_metadata(storage_account_name, request_id)
     except Exception:
-        # Do not swallow: acking without emitting a StepResult would leave the request stuck
-        # in approval_in_progress. Re-raise so the Service Bus trigger retries and, if the fault
-        # persists, dead-letters visibly.
+        # Retry rather than acknowledge without a StepResult.
         logging.exception(f"Could not read container metadata for request {request_id} on {storage_account_name}")
         raise
 
@@ -154,9 +135,6 @@ def _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataD
                 event_time=datetime.datetime.now(datetime.UTC),
                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
 
-        # Send delete event for the source container (same as v1)
         send_delete_event(dataDeletionEvent, json_body, request_id)
     else:
-        # Non-terminal stages (e.g., import-external from user upload, export-internal)
-        # are not copy completions — ignore them
         logging.info(f"V2 BlobCreated for non-terminal stage '{stage}' on request {request_id}, no action needed")

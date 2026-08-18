@@ -37,12 +37,7 @@ tre:
   resource_processor_vmss_sku: Standard_B2s
   enable_swagger: true
   enable_airlock_malware_scanning: true
-  # Airlock defaults to v2 (consolidated) storage. Legacy v1 per-stage storage accounts are
-  # only needed for workspaces still using airlock_version=1. The global default is `true`;
-  # this will change to `false` in a future release, so set it explicitly to `true` if you rely on legacy airlock.
-  # WARNING: setting this to false and redeploying core permanently deletes the core v1 airlock
-  # storage accounts (stalimex/stalimip/stalimrej/stalimblocked/stalexapp) and any data still in
-  # them will be DELETED.
+  # WARNING: Disabling legacy airlock deletes all v1 storage accounts and their data on core redeployment.
   enable_legacy_airlock: false
 
   # Set to true if want to ensure users have an email address before airlock request is created

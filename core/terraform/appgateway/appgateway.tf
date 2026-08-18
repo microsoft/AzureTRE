@@ -90,11 +90,6 @@ resource "azurerm_application_gateway" "agw" {
     fqdns = [var.api_fqdn]
   }
 
-  # Backend pool with the airlock core storage account.
-  # Only core storage needs public App Gateway access for:
-  # - import-external: user uploads
-  # - import-in-progress: airlock manager review
-  # - export-approved: user downloads
   backend_address_pool {
     name  = local.airlock_core_backend_pool_name
     fqdns = [var.airlock_core_storage_fqdn]
@@ -123,8 +118,6 @@ resource "azurerm_application_gateway" "agw" {
     pick_host_name_from_backend_address = true
   }
 
-  # Backend settings for airlock core storage.
-  # Pass through query string for SAS token authentication
   backend_http_settings {
     name                                = local.airlock_core_http_setting_name
     cookie_based_affinity               = "Disabled"
@@ -157,8 +150,6 @@ resource "azurerm_application_gateway" "agw" {
     }
   }
 
-  # Health probe for airlock core storage.
-  # Uses the blob service endpoint to check storage health
   probe {
     name                                      = local.airlock_core_probe_name
     pick_host_name_from_backend_http_settings = true
@@ -248,8 +239,6 @@ resource "azurerm_application_gateway" "agw" {
       rewrite_rule_set_name      = "security-headers-rewrite-rule"
     }
 
-    # Route airlock core storage traffic
-    # Path: /airlock-storage/{container}/{blob} → /{container}/{blob}
     path_rule {
       name                       = "airlock-storage"
       paths                      = ["/airlock-storage/*"]
@@ -260,7 +249,6 @@ resource "azurerm_application_gateway" "agw" {
 
   }
 
-  # Rewrite rule set for airlock storage - strips /airlock-storage prefix
   rewrite_rule_set {
     name = "airlock-storage-rewrite"
 

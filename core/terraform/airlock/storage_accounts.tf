@@ -14,8 +14,6 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   allow_nested_items_to_be_public  = false
   public_network_access_enabled    = true
 
-  # Important! we rely on the fact that the blob created events are issued when the creation of the blobs are done.
-  # This is true ONLY when Hierarchical Namespace is DISABLED
   is_hns_enabled = false
 
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
@@ -37,14 +35,7 @@ resource "azurerm_storage_account" "sa_airlock_core" {
     }
   }
 
-  # Core storage is publicly accessible for user-facing stages (import-draft, export-approved)
-  # matching the original sa_import_external / sa_export_approved security model.
-  # Security is enforced by:
-  #   - ABAC conditions on role assignments (API restricted to import-external + export-approved stages)
-  #   - User delegation SAS tokens (inherit ABAC restrictions of the signing identity)
-  #   - SAS tokens are only generated for publicly-accessible stages
-  # Internal stages (in-progress, rejected, blocked) are protected by ABAC even though
-  # the storage account allows public network access.
+  # ABAC limits public access to user-facing stages and requires Private Link for import-in-progress.
   network_rules {
     default_action = "Allow"
     bypass         = ["AzureServices"]
@@ -58,7 +49,6 @@ resource "azurerm_storage_account" "sa_airlock_core" {
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-# Enable Airlock Malware Scanning on Consolidated Core Storage Account
 resource "azapi_resource_action" "enable_defender_for_storage_core" {
   count       = var.enable_malware_scanning ? 1 : 0
   type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
@@ -83,8 +73,6 @@ resource "azapi_resource_action" "enable_defender_for_storage_core" {
   }
 }
 
-# Private Endpoint #1: From Airlock Storage Subnet (Processor Access)
-# For airlock processor to access all stages
 resource "azurerm_private_endpoint" "stg_airlock_core_pe_processor" {
   name                = "pe-stg-airlock-processor-${var.tre_id}"
   location            = var.location
@@ -133,29 +121,18 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_blob_created" {
 }
 
 
-# Role Assignments for Consolidated Core Storage Account
-
-# Airlock Processor Identity - needs access to all containers (no restrictions)
 resource "azurerm_role_assignment" "airlock_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-# API Identity - restricted access using ABAC to specific stages and private endpoints
-# API can access import-external and export-approved (public, user-facing stages) plus
-# import-in-progress, but only via private link: the account is publicly reachable for
-# import-external uploads, so requiring isPrivateLink on import-in-progress stops a leaked
-# review SAS from being replayed through the public endpoint (review VMs read it via their
-# workspace private endpoint).
+# Blob access is stage-limited; import-in-progress also requires Private Link.
 resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_core.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.api_principal_id
 
-  # ABAC condition: Restrict blob operations to specific stages only
-  # Logic: Allow if (action is NOT a blob operation) OR (action is blob operation AND stage matches)
-  # This allows container operations (list, etc.) while restricting blob read/write/delete to allowed stages
   condition_version = "2.0"
   condition         = <<-EOT
     (
@@ -271,7 +248,6 @@ resource "azurerm_eventgrid_system_topic" "airlock_workspace_global_blob_created
   lifecycle { ignore_changes = [tags] }
 }
 
-# Role Assignment for Global Workspace EventGrid System Topic
 resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_global_blob_created" {
   scope                = var.airlock_servicebus.id
   role_definition_name = "Azure Service Bus Data Sender"
@@ -282,7 +258,6 @@ resource "azurerm_role_assignment" "servicebus_sender_airlock_workspace_global_b
   ]
 }
 
-# Private Endpoint for workspace global storage (processor access via private endpoint, not service endpoint)
 resource "azurerm_private_endpoint" "stg_airlock_workspace_global_pe_processor" {
   name                = "pe-stg-airlock-ws-global-${var.tre_id}"
   location            = var.location
@@ -292,11 +267,6 @@ resource "azurerm_private_endpoint" "stg_airlock_workspace_global_pe_processor" 
 
   lifecycle { ignore_changes = [tags] }
 
-  private_dns_zone_group {
-    name                 = "pdzg-stg-airlock-ws-global-${var.tre_id}"
-    private_dns_zone_ids = [var.blob_core_dns_zone_id]
-  }
-
   private_service_connection {
     name                           = "psc-stg-airlock-ws-global-${var.tre_id}"
     private_connection_resource_id = azurerm_storage_account.sa_airlock_workspace_global.id
@@ -305,15 +275,40 @@ resource "azurerm_private_endpoint" "stg_airlock_workspace_global_pe_processor" 
   }
 }
 
-# Airlock Processor Identity - needs access to all workspace containers (no restrictions)
+# Keep core DNS authoritative when workspaces create account-specific zones.
+resource "azurerm_private_dns_zone" "airlock_workspace_global" {
+  name                = "${local.airlock_workspace_global_storage_name}.${data.azurerm_private_dns_zone.blobcore.name}"
+  resource_group_name = var.resource_group_name
+  tags                = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "airlock_workspace_global" {
+  name                  = "airlock-ws-global-corelink"
+  resource_group_name   = var.resource_group_name
+  private_dns_zone_name = azurerm_private_dns_zone.airlock_workspace_global.name
+  virtual_network_id    = var.core_vnet_id
+  tags                  = var.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_a_record" "airlock_workspace_global" {
+  name                = "@"
+  zone_name           = azurerm_private_dns_zone.airlock_workspace_global.name
+  resource_group_name = var.resource_group_name
+  ttl                 = 10
+  records             = [azurerm_private_endpoint.stg_airlock_workspace_global_pe_processor.private_service_connection[0].private_ip_address]
+}
+
 resource "azurerm_role_assignment" "airlock_workspace_global_blob_data_contributor" {
   scope                = azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-# API Identity - needs Storage Blob Delegator to generate user delegation SAS tokens.
-# Blob-level access is controlled by ABAC-conditioned role assignments in workspace terraform.
+# Blob access is enforced by workspace ABAC role assignments.
 resource "azurerm_role_assignment" "api_workspace_global_blob_delegator" {
   scope                = azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Delegator"

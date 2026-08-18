@@ -1,12 +1,8 @@
 locals {
   version = replace(replace(replace(data.local_file.airlock_processor_version.content, "__version__ = \"", ""), "\"", ""), "\n", "")
 
-  # Consolidated core airlock storage account
-  # STorage AirLock consolidated
   airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
 
-  # Global Workspace Airlock Storage Account - shared by all workspaces
-  # STorage AirLock Global - all workspace stages for all workspaces
   airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
 
   # Due to the following issue and Azure not liking delete and immediate recreate under the same name,
@@ -32,14 +28,12 @@ locals {
   data_deletion_eventgrid_subscription_name  = "evgs-airlock-data-deletion"
   scan_result_eventgrid_subscription_name    = "evgs-airlock-scan-result"
 
-  # Legacy (v1) per-stage storage account names - only used when enable_legacy_airlock = true
   import_external_storage_name    = lower(replace("stalimex${var.tre_id}", "-", ""))
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
   import_rejected_storage_name    = lower(replace("stalimrej${var.tre_id}", "-", ""))
   import_blocked_storage_name     = lower(replace("stalimblocked${var.tre_id}", "-", ""))
   export_approved_storage_name    = lower(replace("stalexapp${var.tre_id}", "-", ""))
 
-  # Legacy (v1) eventgrid topic/subscription names
   import_inprogress_sys_topic_name = "evgt-airlock-import-in-progress-${local.topic_name_suffix}"
   import_rejected_sys_topic_name   = "evgt-airlock-import-rejected-${local.topic_name_suffix}"
   import_blocked_sys_topic_name    = "evgt-airlock-import-blocked-${local.topic_name_suffix}"
@@ -50,7 +44,6 @@ locals {
   import_blocked_eventgrid_subscription_name    = "evgs-airlock-import-blocked-blob-created"
   export_approved_eventgrid_subscription_name   = "evgs-airlock-export-approved-blob-created"
 
-  # Legacy (v1) role assignment lists
   airlock_sa_blob_data_contributor = var.enable_legacy_airlock ? [
     azurerm_storage_account.sa_import_external[0].id,
     azurerm_storage_account.sa_import_in_progress[0].id,

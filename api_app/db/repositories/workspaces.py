@@ -67,10 +67,7 @@ class WorkspaceRepository(ResourceRepository):
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
-        # Pre-existing workspaces predate the airlock_version property and use v1 (legacy) storage.
-        # Stamp them with v1 to preserve routing. New workspaces persist airlock_version explicitly on
-        # creation (create_workspace_item), so an absent value reliably identifies a genuinely pre-v2
-        # workspace and this backfill will not touch v2 workspaces even if it is re-run.
+        # Missing versions identify workspaces that require legacy storage routing.
         query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
         parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
         migrated = []
@@ -143,9 +140,7 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
-        # Persist the airlock storage version explicitly so it is never absent from the stored document:
-        # the legacy backfill only stamps records with no airlock_version, so a missing value must
-        # reliably mean a genuinely pre-v2 workspace.
+        # Explicit versions keep new workspaces out of the legacy backfill.
         airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)}
 
         # we don't want something in the input to overwrite the system parameters,

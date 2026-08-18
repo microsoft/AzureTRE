@@ -20,8 +20,7 @@ class RequestProperties(BaseModel):
     type: str
     workspace_id: str
     review_workspace_id: Optional[str] = None
-    # Default to legacy (v1) when absent: only StatusChanged messages emitted by a pre-v2 API lack this
-    # field, and those are legacy requests. New API events always include the explicit version.
+    # Versionless events are pre-v2 and therefore legacy.
     airlock_version: int = 1
 
 
@@ -60,7 +59,6 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     logging.info('Processing request with id %s. new status is "%s", type is "%s"', req_id, new_status, request_type)
 
-    # Check if using metadata-based stage management (v2) or legacy per-stage accounts (v1)
     use_metadata = request_properties.airlock_version >= 2
 
     if new_status == constants.STAGE_DRAFT:
@@ -84,8 +82,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         return
 
     if new_status == constants.STAGE_SUBMITTED:
-        # v2 metadata submit no longer copies data (which used to enforce the single-file rule),
-        # so validate the file count before advancing the container to import-in-progress.
+        # v2 submit does not copy, so enforce the single-file rule explicitly.
         if not request_files:
             raise NoFilesInRequestException(constants.NO_FILES_IN_REQUEST_MESSAGE)
         if len(request_files) > 1:
@@ -94,23 +91,18 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     if (is_require_data_copy(new_status)):
         if use_metadata:
-            # Metadata mode: Update container stage instead of copying
             from shared_code.blob_operations_metadata import update_container_stage, create_container_with_metadata
 
-            # For import submit, use review_workspace_id so data goes to review workspace storage
             effective_ws_id = ws_id
             if new_status == constants.STAGE_SUBMITTED and request_type.lower() == constants.IMPORT_TYPE and request_properties.review_workspace_id:
                 effective_ws_id = request_properties.review_workspace_id
 
-            # Get the storage account (might change from core to workspace or vice versa)
             source_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id, airlock_version=request_properties.airlock_version)
             dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id, airlock_version=request_properties.airlock_version)
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
             if source_account == dest_account:
-                # Same storage account - just update metadata. The scan verdict applied at submit can
-                # reach a terminal stage before this transition arrives; the skip is evaluated under
-                # the same ETag as the write so a concurrent update can't revert it to in-progress.
+                # The ETag couples the terminal-stage check to the write.
                 skip_stages = constants.TERMINAL_STAGES if new_status == constants.STAGE_SUBMITTED else None
                 logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
                 if not update_container_stage(source_account, req_id, new_stage, changed_by='system',
@@ -118,9 +110,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                     logging.info(f'Request {req_id}: container already at a terminal stage, ignoring late submitted transition')
                     return
 
-                # In v2, same-account transitions don't fire BlobCreated events.
-                # For SUBMITTED, v1 relies on BlobCreatedTrigger to handle the malware scanning gate
-                # (skip to in_review when scanning is disabled). We handle this inline for v2.
+                # Same-account v2 transitions must emit completion directly.
                 if new_status == constants.STAGE_SUBMITTED:
                     try:
                         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -129,9 +119,6 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         raise
                     if not enable_malware_scanning:
                         logging.info(f'Request {req_id}: Malware scanning disabled, skipping to in_review')
-                        # Single event carries both the in_review transition and the enumerated files,
-                        # so request_files is persisted even though this overwrites the file-report event
-                        # on the single-value output binding.
                         stepResultEvent.set(
                             func.EventGridOutputEvent(
                                 id=str(uuid.uuid4()),
@@ -141,12 +128,9 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                                 event_time=datetime.datetime.now(datetime.UTC),
                                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
                     else:
-                        # The blob was scanned on the Draft upload. If the verdict already arrived it
-                        # will have been stored on the request by the API and applied on submission;
-                        # otherwise the ScanResultTrigger completes this step when the verdict lands.
+                        # A draft scan verdict may already have been applied on submission.
                         logging.info(f'Request {req_id}: Malware scanning enabled, scan result gates the move to in_review')
                 elif new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
-                    # Terminal transitions: emit StepResult immediately since no BlobCreated event will fire
                     final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
                     logging.info(f'Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}')
                     stepResultEvent.set(
@@ -158,15 +142,11 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                             event_time=datetime.datetime.now(datetime.UTC),
                             data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
             else:
-                # Different storage account (e.g., core → workspace on import approval,
-                # workspace → core on export approval) - need to copy.
-                # BlobCreatedTrigger will fire when the copy completes and emit the StepResult,
-                # matching the v1 async pattern for large data transfers.
+                # BlobCreatedTrigger reports cross-account copy completion.
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
                 create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
                 blob_operations.copy_data(source_account, dest_account, req_id)
         else:
-            # Legacy mode: Copy data between storage accounts
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
             review_ws_id = request_properties.review_workspace_id
             containers_metadata = get_source_dest_for_copy(new_status=new_status, previous_status=previous_status, request_type=request_type, short_workspace_id=ws_id, review_workspace_id=review_ws_id)
@@ -256,9 +236,7 @@ def get_storage_account_destination_for_copy(new_status: str, request_type: str,
 
     if request_type == constants.IMPORT_TYPE:
         if new_status == constants.STAGE_SUBMITTED:
-            # Legacy (v1) import submit always copies to the single core import-in-progress
-            # account (stalimip${TRE_ID}). review_workspace_id is a v2-only concept and must
-            # not change the v1 account name.
+            # review_workspace_id must not affect the v1 account.
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + tre_id
         elif new_status == constants.STAGE_APPROVAL_INPROGRESS:
             return constants.STORAGE_ACCOUNT_NAME_IMPORT_APPROVED + short_workspace_id

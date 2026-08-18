@@ -103,25 +103,20 @@ class AirlockStatusUpdater():
         try:
             step_result_data = step_result_message.data
             airlock_request_id = step_result_data.request_id
-            # The airlock state whose processing just finished. StepResults are keyed by the state being
-            # left, not the mechanism: the malware scan is the gate on the Submitted state, so when it
-            # completes the processor reports completed_step="submitted" and new_status="in_review"/blocked.
+            # Scan results complete the Submitted step regardless of when scanning ran.
             completed_step = step_result_data.completed_step
             new_status = AirlockRequestStatus(step_result_data.new_status) if step_result_data.new_status else None
             status_message = step_result_data.status_message
             request_files = step_result_data.request_files
             # Find the airlock request by id
             airlock_request = await get_airlock_request_by_id_from_path(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
-            # Apply the transition only if the request is currently at the step that just completed.
             if airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
                 await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
                 result = True
             elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status == AirlockRequestStatus.Draft:
-                # v2: the malware scan completes the "submitted" step, but it runs on the Draft upload, so its
-                # verdict can arrive before the user submits. Store it on the request (applied on submission)
-                # and complete the message rather than dead-lettering a step that doesn't match the status yet.
+                # Defer scan verdicts that arrive before submission.
                 logger.info(f"Storing early scan verdict for request {airlock_request_id} while still in draft.")
                 await self.airlock_request_repo.update_airlock_request(
                     original_request=airlock_request,
@@ -129,9 +124,7 @@ class AirlockStatusUpdater():
                     pending_scan_result={"new_status": new_status.value if new_status else None, "status_message": status_message})
                 result = True
             elif request_files:
-                # The file-enumeration result can arrive after the request has already advanced (e.g. an
-                # early scan verdict applied on submission moved it straight to in_review). Persist the
-                # files without a status transition rather than dead-lettering them.
+                # Persist file results that race with a status transition.
                 logger.info(f"Persisting request files for {airlock_request_id} without a status change (current status '{airlock_request.status}').")
                 await self.airlock_request_repo.update_airlock_request(
                     original_request=airlock_request,
@@ -139,9 +132,7 @@ class AirlockStatusUpdater():
                     request_files=request_files)
                 result = True
             elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
-                # v2 scans the Draft upload, so a verdict routinely arrives after the request reached a
-                # final state (e.g. the draft was cancelled, or submission failed file validation).
-                # Complete the message instead of retrying it until it dead-letters.
+                # Complete stale verdicts instead of retrying them to dead-letter.
                 logger.info(f"Discarding stale scan verdict for request {airlock_request_id} in final status '{airlock_request.status}'.")
                 result = True
             else:

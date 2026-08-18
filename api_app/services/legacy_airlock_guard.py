@@ -13,19 +13,12 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
 
 
 def ensure_workspace_airlock_version_supported(properties: dict) -> None:
-    """Validate the airlock version a workspace would deploy with is actually supported.
-
-    Airlock v1 (legacy per-stage storage) only works when core legacy airlock is enabled.
-
-    Raises ValueError so the API returns HTTP 400.
-    """
+    """Reject unsupported airlock versions."""
     if not properties:
         return
     if not properties.get("enable_airlock", True):
         return
 
-    # Apply the same default as workspace creation, so an omitted version is validated against the
-    # version that would actually be persisted and deployed.
     airlock_version = properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)
 
     if not config.ENABLE_LEGACY_AIRLOCK and airlock_version == 1:
@@ -36,15 +29,7 @@ def ensure_workspace_airlock_version_supported(properties: dict) -> None:
 
 
 async def ensure_airlock_version_change_allowed(workspace: Resource, resource_patch: ResourcePatch, request_repo: AirlockRequestRepository) -> None:
-    """Block changing a workspace's airlock_version while it has in-flight airlock requests.
-
-    Changing the version transitions the workspace between the v1 and v2 airlock storage
-    modules; the previous version's storage accounts are destroyed, which would strand any
-    request whose data still lives there (in-flight requests, and completed ones such as
-    approved imports that remain link-accessible).
-
-    Raises ValueError so the API returns HTTP 400.
-    """
+    """Reject version changes while airlock requests retain data."""
     if not resource_patch.properties:
         return
     new_version = resource_patch.properties.get("airlock_version")

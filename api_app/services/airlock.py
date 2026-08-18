@@ -76,10 +76,8 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
 
 def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
     if airlock_request.type == constants.IMPORT_TYPE:
-        # Only import Draft (external upload) is publicly accessible via App GW/SAS
         return airlock_request.status == AirlockRequestStatus.Draft
     else:
-        # Only export Approved is publicly accessible via App GW/SAS
         return airlock_request.status == AirlockRequestStatus.Approved
 
 
@@ -116,11 +114,7 @@ def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace
 
 
 def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, account_name: str, signer_client_id: str = ""):
-    # The shared workspace-global airlock account uses a per-workspace signer (app registration)
-    # so that the per-workspace ABAC condition is enforced and a leaked SAS cannot be replayed
-    # from another workspace. Requests on the core account keep using the API identity, which
-    # holds the core-account role assignment. When no signer is available (v1, or Entra object
-    # creation disabled) we fall back to the API identity.
+    # Workspace-global SAS tokens use the workspace signer for ABAC isolation.
     global_account_name = constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID)
     if signer_client_id and account_name == global_account_name:
         credential = credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
@@ -147,7 +141,6 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
                                    start=start,
                                    expiry=expiry)
 
-    # Return standard blob storage URL format
     return "https://{}.blob.{}/{}?{}" \
         .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
 
@@ -166,16 +159,7 @@ def _delete_container(account_name: str, container_name: str, credential) -> boo
 
 
 async def delete_workspace_airlock_containers(workspace: Workspace, airlock_request_repo: AirlockRequestRepository) -> None:
-    """Delete the airlock containers belonging to a workspace's requests.
-
-    Airlock v2 keeps request data in the shared core and global storage accounts, which outlive the
-    workspace, so uninstalling a workspace would otherwise strand its containers (including approved
-    imports) in shared storage with nothing left to reference them. Cancelled requests are excluded
-    because their containers are already deleted when they are cancelled.
-
-    Failures are logged rather than raised: an inaccessible container must not block deleting the
-    workspace, but the request ids are reported so the leftovers can be cleaned up.
-    """
+    """Delete shared containers without blocking workspace deletion on failures."""
     request_ids = await airlock_request_repo.get_data_retaining_airlock_request_ids_for_workspace(workspace.id)
     if not request_ids:
         return
@@ -187,10 +171,9 @@ async def delete_workspace_airlock_containers(workspace: Workspace, airlock_requ
     deleted = 0
     failed = []
     for request_id in request_ids:
-        # A request's container can be in either consolidated account depending on the stage it
-        # reached, so try both rather than inferring from the current status.
+        # Status does not identify which shared account holds the container.
         for account_name in (core_account, global_account):
-            # The global account's role assignment is held by the workspace's signer, not the API identity.
+            # Workspace-global access uses the workspace signer.
             credential = (credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
                           if signer_client_id and account_name == global_account
                           else credentials.get_credential())
@@ -243,8 +226,6 @@ def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace)
     validate_request_status(airlock_request)
 
     if airlock_request.airlock_version >= 2:
-        # v2: Resolve correct storage account (core or workspace-global) based on stage
-        # Network rules enforce public vs private access — SAS is always generated
         from services.airlock_storage_helper import get_storage_account_name_for_request
         tre_id = config.TRE_ID
         short_workspace_id = workspace.id[-4:]
@@ -256,7 +237,6 @@ def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace)
             airlock_version=airlock_request.airlock_version
         )
     else:
-        # v1: Resolve per-stage storage account
         account_name = get_account_by_request(airlock_request, workspace)
 
     signer_client_id = workspace.properties.get("airlock_signer_client_id", "") if airlock_request.airlock_version >= 2 else ""

@@ -41,11 +41,7 @@ def main(msg: func.ServiceBusMessage,
     # Extract request id
     account_name, request_id, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
 
-    # In v2 (consolidated accounts) on-upload scanning also fires for the approval/rejection copy
-    # into the destination account; those blobs carry "copied_from" metadata and belong to a request
-    # already past Submitted, so their result would fail status matching and dead-letter. Suppress
-    # only for the consolidated accounts — in v1 the submit copy into stalimip IS the scan that gates
-    # submitted->in_review, so it must still emit a StepResult.
+    # Consolidated destination copies must not emit duplicate scan results.
     if account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE):
         blob_client = blob_operations.get_blob_client_from_blob_info(account_name, request_id, blob_name)
         if "copied_from" in blob_client.get_blob_properties()["metadata"]:
@@ -63,9 +59,7 @@ def main(msg: func.ServiceBusMessage,
         new_status = constants.STAGE_BLOCKING_INPROGRESS
         status_message = verdict
 
-    # Send the event to indicate this step is done (and to request a new status change).
-    # In v2 the blob is scanned on the Draft upload, so this may arrive before the request is
-    # submitted; the API stores the verdict and applies it on submission (see airlock_request_status_update).
+    # Draft scans can complete before submission; the API defers the verdict.
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),

@@ -19,7 +19,6 @@ from resources import strings
 from db.repositories.base import BaseRepository
 from services.logging import logger
 
-# Sentinel so callers can distinguish "leave unchanged" from "clear" (None) for optional fields.
 _UNSET = object()
 
 
@@ -73,8 +72,7 @@ class AirlockRequestRepository(BaseRepository):
         return 'SELECT * FROM c'
 
     async def set_default_airlock_version_for_legacy_requests(self) -> List[str]:
-        # Requests created before airlock v2 predate the airlock_version field and hold their data in
-        # legacy storage. The model now defaults missing values to v2, so stamp existing requests with v1.
+        # Missing versions identify requests that require legacy storage routing.
         query = 'SELECT * FROM c WHERE NOT IS_DEFINED(c.airlock_version)'
         migrated = []
         for request in await self.query(query=query):
@@ -96,8 +94,7 @@ class AirlockRequestRepository(BaseRepository):
         return [request["id"] for request in requests]
 
     async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
-        # Any request that isn't Cancelled may still have data in the workspace's per-stage (v1)
-        # storage (approved imports especially); cancelled requests have their containers deleted.
+        # Legacy non-cancelled requests may retain data in per-stage storage.
         query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND c.status != @cancelled"
         parameters = [
             {"name": "@workspaceId", "value": str(workspace_id)},

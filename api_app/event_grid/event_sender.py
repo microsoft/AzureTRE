@@ -17,8 +17,7 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
     request_type = airlock_request.type.value
     short_workspace_id = airlock_request.workspaceId[-4:]
 
-    # For v2, container metadata must match ABAC conditions which use the full workspace ID.
-    # For v1, storage account names include the short (4-char) workspace ID.
+    # V2 ABAC uses full workspace IDs; legacy account names use short IDs.
     workspace_id_for_event = airlock_request.workspaceId if airlock_request.airlock_version >= 2 else short_workspace_id
 
     review_workspace_id = None

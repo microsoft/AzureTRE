@@ -1,6 +1,3 @@
-# Legacy (v1) EventGrid system topics and subscriptions for per-stage storage accounts
-# These are only deployed when enable_legacy_airlock = true
-
 resource "azurerm_eventgrid_system_topic" "import_inprogress_blob_created" {
   count               = var.enable_legacy_airlock ? 1 : 0
   name                = local.import_inprogress_sys_topic_name
@@ -139,7 +136,6 @@ resource "azurerm_role_assignment" "servicebus_sender_export_approved_blob_creat
   ]
 }
 
-# Legacy EventGrid subscriptions for per-stage storage accounts
 resource "azurerm_eventgrid_event_subscription" "import_inprogress_blob_created" {
   count = var.enable_legacy_airlock ? 1 : 0
   name  = local.import_inprogress_eventgrid_subscription_name

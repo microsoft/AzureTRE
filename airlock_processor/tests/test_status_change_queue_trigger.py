@@ -142,7 +142,6 @@ class TestFilesDeletion():
 class TestImportSubmitUsesReviewWorkspaceId():
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_submit_destination_uses_review_workspace_id(self):
-        # review_workspace_id is a v2-only concept and must NOT change the legacy (v1) account name.
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
@@ -213,21 +212,17 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_import_approval_copies_data_without_step_result(self, mock_blob_svc, mock_copy_data):
-        """V2 import approval triggers cross-account copy but does NOT emit StepResult directly.
-        BlobCreatedTrigger handles completion signaling asynchronously."""
         message_body = '{ "data": { "request_id":"123","new_status":"approval_in_progress","previous_status":"in_review","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         mock_copy_data.assert_called_once()
-        # StepResult should NOT be emitted — BlobCreatedTrigger handles this
         step_result.set.assert_not_called()
 
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_export_approval_copies_data_without_step_result(self, mock_blob_svc, mock_copy_data):
-        """V2 export approval triggers cross-account copy but does NOT emit StepResult directly."""
         message_body = '{ "data": { "request_id":"123","new_status":"approval_in_progress","previous_status":"in_review","type":"export","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -239,14 +234,11 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc, mock_get_files):
-        """V2 submit with malware scanning disabled should emit StepResult to skip to in_review."""
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
-        # Should have two calls: one for request files report, one for in_review transition
         assert step_result.set.call_count == 2
-        # The second call should be the in_review step result and carry the enumerated files
         second_call_event = step_result.set.call_args_list[1][0][0]
         assert second_call_event.get_json()["completed_step"] == constants.STAGE_SUBMITTED
         assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
@@ -256,7 +248,6 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_submit_rejects_zero_files(self, mock_blob_svc, mock_get_files):
-        """V2 submit with no files should fail the request (metadata submit no longer copies to enforce this)."""
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -267,7 +258,6 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_submit_rejects_multiple_files(self, mock_blob_svc, mock_get_files):
-        """V2 submit with more than one file should fail the request."""
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -277,12 +267,10 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
     def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(self, mock_blob_svc):
-        """V2 submit with malware scanning enabled should NOT emit in_review — Defender handles it."""
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
-        # Only one call: request files report (not in_review)
         assert step_result.set.call_count == 1
 
     @patch("shared_code.blob_operations_metadata.update_container_stage", return_value=False)
@@ -290,16 +278,10 @@ class TestV2MetadataMode():
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
     def test_v2_late_submit_does_not_revert_terminal_stage(self, mock_blob_svc, mock_get_files, mock_update_stage):
-        """A late/duplicate submitted event must not move a container out of a terminal (blocked) stage.
-
-        The guard is evaluated inside update_container_stage under the same ETag as the write, so the
-        trigger passes the terminal stages to skip and stops when the update reports it was skipped.
-        """
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
 
         assert mock_update_stage.call_args.kwargs["skip_if_stage_in"] == constants.TERMINAL_STAGES
-        # Only the request-files report; the skipped update must not advance the request to in_review.
         assert step_result.set.call_count == 1

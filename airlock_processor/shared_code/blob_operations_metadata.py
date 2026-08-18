@@ -37,7 +37,6 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
             credential=get_credential()
         )
 
-        # Prepare initial metadata
         metadata = {
             "stage": stage,
             "stage_history": stage,
@@ -52,7 +51,6 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
         if created_by:
             metadata["created_by"] = created_by
 
-        # Create container with metadata
         container_client = blob_service_client.get_container_client(container_name)
         container_client.create_container(metadata=metadata)
 
@@ -66,15 +64,7 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
                            changed_by: str = None, additional_metadata: Dict[str, str] = None,
                            skip_if_stage_in: Optional[List[str]] = None,
                            max_attempts: int = 5) -> bool:
-    """Update the container's stage metadata, conditional on the metadata not having changed since
-    it was read. Returns False if the update was skipped because the container is already at one of
-    skip_if_stage_in.
-
-    Status messages for a request can be processed concurrently, and the stage drives the storage
-    ABAC conditions, so a lost update could leave a blocked request's container exposed at a
-    reviewable stage. Reading and writing under the same ETag makes the guard and the write atomic;
-    a concurrent writer causes a 412 and we re-evaluate against the new state.
-    """
+    """Update stage metadata with optimistic concurrency."""
     container_name = request_id
     blob_service_client = BlobServiceClient(
         account_url=get_account_url(account_name),

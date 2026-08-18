@@ -1,8 +1,3 @@
-# Legacy (v1) per-stage storage accounts for airlock
-# These are only deployed when enable_legacy_airlock = true
-# Required for workspaces using airlock_version = 1
-
-# 'External' storage account - drop location for import
 resource "azurerm_storage_account" "sa_import_external" {
   count                            = var.enable_legacy_airlock ? 1 : 0
   name                             = local.import_external_storage_name
@@ -66,7 +61,6 @@ resource "azurerm_private_endpoint" "stg_import_external_pe" {
   }
 }
 
-# 'Approved' export
 resource "azurerm_storage_account" "sa_export_approved" {
   count                            = var.enable_legacy_airlock ? 1 : 0
   name                             = local.export_approved_storage_name
@@ -130,7 +124,6 @@ resource "azurerm_private_endpoint" "stg_export_approved_pe" {
   }
 }
 
-# 'In-Progress' storage account
 resource "azurerm_storage_account" "sa_import_in_progress" {
   count                            = var.enable_legacy_airlock ? 1 : 0
   name                             = local.import_in_progress_storage_name
@@ -176,7 +169,6 @@ resource "azurerm_storage_account" "sa_import_in_progress" {
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-# Enable Airlock Malware Scanning on legacy in-progress storage
 resource "azapi_resource_action" "enable_defender_for_storage" {
   count       = var.enable_legacy_airlock && var.enable_malware_scanning ? 1 : 0
   type        = "Microsoft.Security/defenderForStorageSettings@2022-12-01-preview"
@@ -224,7 +216,6 @@ resource "azurerm_private_endpoint" "stg_import_inprogress_pe" {
   }
 }
 
-# 'Rejected' storage account
 resource "azurerm_storage_account" "sa_import_rejected" {
   count                            = var.enable_legacy_airlock ? 1 : 0
   name                             = local.import_rejected_storage_name
@@ -294,7 +285,6 @@ resource "azurerm_private_endpoint" "stg_import_rejected_pe" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# 'Blocked' storage account
 resource "azurerm_storage_account" "sa_import_blocked" {
   count                            = var.enable_legacy_airlock ? 1 : 0
   name                             = local.import_blocked_storage_name
@@ -364,7 +354,6 @@ resource "azurerm_private_endpoint" "stg_import_blocked_pe" {
   lifecycle { ignore_changes = [tags] }
 }
 
-# Legacy role assignments for v1 per-stage storage accounts
 resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
   count                = var.enable_legacy_airlock ? length(local.airlock_sa_blob_data_contributor) : 0
   scope                = local.airlock_sa_blob_data_contributor[count.index]

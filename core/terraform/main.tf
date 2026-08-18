@@ -130,9 +130,6 @@ module "appgateway" {
   app_gateway_sku            = var.app_gateway_sku
   deployer_principal_id      = data.azurerm_client_config.current.object_id
 
-  # Airlock core storage backend configuration for public access via App Gateway
-  # Only core storage needs public access (import uploads, in-progress review, export downloads)
-  # Workspace storage is accessed internally via private endpoints from within workspaces
   airlock_core_storage_fqdn = module.airlock_resources.airlock_core_storage_fqdn
 
   enable_cmk_encryption         = var.enable_cmk_encryption
@@ -169,6 +166,7 @@ module "airlock_resources" {
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
   blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
+  core_vnet_id                          = module.network.core_vnet_id
   file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id

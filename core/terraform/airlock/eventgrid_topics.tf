@@ -312,9 +312,6 @@ resource "azurerm_eventgrid_event_subscription" "scan_result" {
   ]
 }
 
-# Unified EventGrid Event Subscription for ALL Core Blob Created Events
-# This single subscription handles ALL 5 core stages: import-external, import-in-progress,
-# import-rejected, import-blocked, export-approved
 resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   name  = "airlock-blob-created-${var.tre_id}"
   scope = azurerm_storage_account.sa_airlock_core.id
@@ -325,7 +322,6 @@ resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
     type = "SystemAssigned"
   }
 
-  # Include all blob created events - airlock processor will check container metadata for routing
   included_event_types = ["Microsoft.Storage.BlobCreated"]
 
   depends_on = [
@@ -334,10 +330,6 @@ resource "azurerm_eventgrid_event_subscription" "airlock_blob_created" {
   ]
 }
 
-# EventGrid Event Subscription for workspace-global storage account (v2)
-# Routes BlobCreated events to the same service bus topic as core.
-# BlobCreatedTrigger reads container metadata to determine the stage and emit StepResult
-# when cross-account copies complete (e.g., import approval: core → workspace-global).
 resource "azurerm_eventgrid_event_subscription" "airlock_workspace_global_blob_created" {
   name  = "airlock-blob-created-global-${var.tre_id}"
   scope = azurerm_storage_account.sa_airlock_workspace_global.id

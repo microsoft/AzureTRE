@@ -5,11 +5,9 @@ WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
 
-# Consolidated storage account names (metadata-based approach)
-STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"  # Consolidated core account
-STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg"  # Global workspace account for all workspaces
+STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"
+STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg"
 
-# Stage metadata values for container metadata
 STAGE_IMPORT_EXTERNAL = "import-external"
 STAGE_IMPORT_IN_PROGRESS = "import-in-progress"
 STAGE_IMPORT_APPROVED = "import-approved"
@@ -21,13 +19,11 @@ STAGE_EXPORT_APPROVED = "export-approved"
 STAGE_EXPORT_REJECTED = "export-rejected"
 STAGE_EXPORT_BLOCKED = "export-blocked"
 
-# Stages a request has reached a final decision at. A late/duplicate "submitted" event
-# (e.g. the scan verdict applied at submit races the submitted transition) must not revert these.
+# Late events must not revert terminal stages.
 TERMINAL_STAGES = [STAGE_IMPORT_APPROVED, STAGE_IMPORT_REJECTED, STAGE_IMPORT_BLOCKED,
                    STAGE_EXPORT_APPROVED, STAGE_EXPORT_REJECTED, STAGE_EXPORT_BLOCKED]
 
-# Legacy storage account names (for backwards compatibility)
-# These will be removed after migration is complete
+# Retained for legacy workspace compatibility.
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex"
 STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS = "stalimip"

@@ -10,27 +10,20 @@ def get_storage_account_name_for_request(
     airlock_version: int = 2
 ) -> str:
     if airlock_version >= 2:
-        # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
             if status in [AirlockRequestStatus.Draft, AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
-                # Core import stages
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
             elif status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
-                # Global workspace storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)
             elif status in [AirlockRequestStatus.Rejected, AirlockRequestStatus.RejectionInProgress,
                             AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
-                # These are in core storage
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
-        else:  # export
+        else:
             if status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
-                # Export approved in core
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(tre_id)
-            else:  # Draft, Submitted, InReview, Rejected, Blocked, etc.
-                # Global workspace storage
+            else:
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)
     else:
-        # Legacy mode - return original separate account names
         if request_type == constants.IMPORT_TYPE:
             if status == AirlockRequestStatus.Draft:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL.format(tre_id)
@@ -42,7 +35,7 @@ def get_storage_account_name_for_request(
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED.format(tre_id)
             elif status in [AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED.format(tre_id)
-        else:  # export
+        else:
             if status == AirlockRequestStatus.Draft:
                 return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL.format(short_workspace_id)
             elif status in [AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
@@ -67,7 +60,7 @@ def get_stage_from_status(request_type: str, status: AirlockRequestStatus) -> st
             return constants.STAGE_IMPORT_REJECTED
         elif status in [AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
             return constants.STAGE_IMPORT_BLOCKED
-    else:  # export
+    else:
         if status == AirlockRequestStatus.Draft:
             return constants.STAGE_EXPORT_INTERNAL
         elif status in [AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview]:
@@ -79,5 +72,4 @@ def get_stage_from_status(request_type: str, status: AirlockRequestStatus) -> st
         elif status in [AirlockRequestStatus.Blocked, AirlockRequestStatus.BlockingInProgress]:
             return constants.STAGE_EXPORT_BLOCKED
 
-    # Default fallback
     return "unknown"

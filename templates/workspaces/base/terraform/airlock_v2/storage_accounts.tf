@@ -1,17 +1,10 @@
-# Global Workspace Storage with workspace_id ABAC
-# This file replaces storage_accounts.tf to use the global workspace storage account
-# created in core infrastructure instead of creating a per-workspace account
-
-# Data source to reference the global workspace storage account
 data "azurerm_storage_account" "sa_airlock_workspace_global" {
   provider            = azurerm.core
   name                = local.airlock_workspace_global_storage_name
   resource_group_name = local.core_resource_group_name
 }
 
-# Private Endpoint for this workspace to access the global storage account
-# Each workspace needs its own PE for network isolation
-# ABAC will restrict this PE to only access containers with matching workspace_id
+# ABAC restricts each private endpoint to containers for its workspace.
 resource "azurerm_private_endpoint" "airlock_workspace_pe" {
   name                = "pe-sa-airlock-ws-global-${var.short_workspace_id}"
   location            = var.location
@@ -29,10 +22,7 @@ resource "azurerm_private_endpoint" "airlock_workspace_pe" {
   }
 }
 
-# The global workspace storage account is shared by every workspace but has a single hostname,
-# so all workspace private endpoints would collide in the shared core blob DNS zone (last-writer-wins).
-# Instead give each workspace a more-qualified zone (accountname.privatelink.blob...) linked only to its
-# VNet: Azure resolves via the most-specific zone, so the account resolves to THIS workspace's endpoint.
+# Per-workspace qualified zones prevent shared-hostname DNS collisions.
 resource "azurerm_private_dns_zone" "airlock_workspace_global" {
   name                = "${local.airlock_workspace_global_storage_name}.${data.azurerm_private_dns_zone.blobcore.name}"
   resource_group_name = var.ws_resource_group_name
@@ -63,11 +53,7 @@ resource "azurerm_private_dns_a_record" "airlock_workspace_global" {
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
   provider = azurerm.core
 
-  # Use a deterministic name per workspace to avoid conflicts when multiple
-  # workspaces assign the same role on the same global storage account.
-  # Each workspace signs with its own signer principal, so the (principal, role,
-  # scope) tuples stay distinct and every workspace can hold its own conditioned
-  # assignment on the shared global account without collision.
+  # Deterministic IDs prevent role-assignment collisions on the shared account.
   name                 = uuidv5("url", "${data.azurerm_storage_account.sa_airlock_workspace_global.id}-${var.workspace_id}-blob-data-contributor")
   scope                = data.azurerm_storage_account.sa_airlock_workspace_global.id
   role_definition_name = "Storage Blob Data Contributor"

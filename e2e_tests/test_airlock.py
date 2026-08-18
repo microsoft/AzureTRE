@@ -155,4 +155,3 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     LOGGER.info("Review VM has started deletion successfully")
 
     # EXPORT FLOW
-    # We can't test the export flow as we can't fully create an export request without special networking setup

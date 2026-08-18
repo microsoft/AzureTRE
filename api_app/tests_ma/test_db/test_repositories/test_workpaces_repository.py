@@ -165,8 +165,6 @@ async def test_create_workspace_item_persists_default_airlock_version_when_omitt
 
     workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
-    # airlock_version must be persisted (default 2 for automatic auth) so the legacy backfill never
-    # mistakes a new v2 workspace for a pre-v2 one.
     assert workspace.properties["airlock_version"] == 2
 
 
@@ -187,7 +185,6 @@ async def test_create_workspace_item_defaults_manual_auth_to_airlock_v2(mock_is_
 
     workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
 
-    # The per-workspace signer is created regardless of auth mode, so manual auth also defaults to v2.
     assert workspace.properties["airlock_version"] == 2
 
 

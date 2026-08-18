@@ -6,25 +6,19 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
     tre_id = os.environ.get("TRE_ID", "")
 
     if airlock_version >= 2:
-        # Global workspace storage - all workspaces use same account
         if request_type == constants.IMPORT_TYPE:
             if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW,
                           constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,
                           constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
-                # ALL core import stages in stalairlock
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
-            else:  # Approved, approval in progress
-                # Global workspace storage
+            else:
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL + tre_id
-        else:  # export
+        else:
             if status in [constants.STAGE_APPROVED, constants.STAGE_APPROVAL_INPROGRESS]:
-                # Export approved in core
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE + tre_id
-            else:  # Draft, submitted, in-review, rejected, blocked
-                # Global workspace storage
+            else:
                 return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL + tre_id
     else:
-        # Legacy mode
         if request_type == constants.IMPORT_TYPE:
             if status == constants.STAGE_DRAFT:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL + tre_id
@@ -37,7 +31,7 @@ def get_storage_account_name_for_request(request_type: str, status: str, short_w
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_REJECTED + tre_id
             elif status == constants.STAGE_BLOCKED_BY_SCAN:
                 return constants.STORAGE_ACCOUNT_NAME_IMPORT_BLOCKED + tre_id
-        else:  # export
+        else:
             if status == constants.STAGE_DRAFT:
                 return constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + short_workspace_id
             elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW, constants.STAGE_APPROVAL_INPROGRESS,
@@ -63,7 +57,7 @@ def get_stage_from_status(request_type: str, status: str) -> str:
             return constants.STAGE_IMPORT_REJECTED
         elif status in [constants.STAGE_BLOCKED_BY_SCAN, constants.STAGE_BLOCKING_INPROGRESS]:
             return constants.STAGE_IMPORT_BLOCKED
-    else:  # export
+    else:
         if status == constants.STAGE_DRAFT:
             return constants.STAGE_EXPORT_INTERNAL
         elif status in [constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW]:

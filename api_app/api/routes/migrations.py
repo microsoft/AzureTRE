@@ -24,15 +24,13 @@ async def migrate_database():
         # and this folder:
         # https://github.com/microsoft/AzureTRE/tree/v0.22.0/api_app/db/migrations
 
-        # Stamp pre-existing (pre airlock v2) workspaces with airlock_version=1 so their
-        # airlock requests keep routing to legacy storage now the API defaults to v2.
+        # Preserve legacy storage routing for pre-v2 workspaces.
         workspace_repo = await WorkspaceRepository.create()
         migrated_ids = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
         logger.info(f"Set default airlock_version=1 on {len(migrated_ids)} legacy workspace(s).")
         migrations.append(Migration(issueNumber="5048", status=f"Set airlock_version=1 on {len(migrated_ids)} legacy workspace(s)"))
 
-        # Stamp in-flight airlock requests created before v2 with airlock_version=1 so their status
-        # events keep routing to the legacy storage where their data already exists.
+        # Preserve legacy storage routing for in-flight pre-v2 requests.
         airlock_request_repo = await AirlockRequestRepository.create()
         migrated_request_ids = await airlock_request_repo.set_default_airlock_version_for_legacy_requests()
         logger.info(f"Set default airlock_version=1 on {len(migrated_request_ids)} legacy airlock request(s).")

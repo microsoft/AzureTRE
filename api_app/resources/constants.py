@@ -5,16 +5,12 @@ WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
 
-# Airlock storage version applied when a workspace does not specify one (2 = consolidated storage).
-# Shared by the create-time guard and the workspace repository so the validated version is always
-# the one that gets persisted and deployed.
+# New workspaces default to consolidated storage.
 DEFAULT_AIRLOCK_VERSION = 2
 
-# Consolidated storage account names (metadata-based approach)
-STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock{}"  # Consolidated core account
-STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg{}"  # Global workspace account for all workspaces
+STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock{}"
+STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg{}"
 
-# Stage values for container metadata
 STAGE_IMPORT_EXTERNAL = "import-external"
 STAGE_IMPORT_IN_PROGRESS = "import-in-progress"
 STAGE_IMPORT_APPROVED = "import-approved"
@@ -26,8 +22,7 @@ STAGE_EXPORT_APPROVED = "export-approved"
 STAGE_EXPORT_REJECTED = "export-rejected"
 STAGE_EXPORT_BLOCKED = "export-blocked"
 
-# Legacy storage account names (for backwards compatibility during migration)
-# These will be removed after migration is complete
+# Retained during legacy storage migration.
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex{}"
 STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS = "stalimip{}"

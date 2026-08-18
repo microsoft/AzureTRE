@@ -166,8 +166,7 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository))) -> OperationInResponse:
     if await delete_validation(workspace, workspace_repo):
-        # Airlock containers live in shared storage that outlives the workspace, so remove them here
-        # rather than leaving them stranded once the workspace resources are gone.
+        # Shared storage outlives the workspace, so remove its containers first.
         await delete_workspace_airlock_containers(workspace, airlock_request_repo)
         operation = await send_uninstall_message(
             resource=workspace,

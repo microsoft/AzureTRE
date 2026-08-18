@@ -41,8 +41,7 @@ async def create_draft_request(airlock_request_input: AirlockRequestInCreate, us
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
-        # Default to v2 (consolidated) storage. Pre-existing v1 workspaces are
-        # backfilled with airlock_version=1 by a DB migration at upgrade time.
+        # Migration backfills existing workspaces to v1 before v2 becomes the default.
         airlock_version = workspace.properties.get("airlock_version", 2)
         airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user, airlock_version=airlock_version)
         await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
@@ -95,8 +94,7 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
                                 workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
     updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
                                                                      new_status=AirlockRequestStatus.Submitted)
-    # If the malware scan verdict already arrived while the request was in draft (v2 scans on upload),
-    # apply it now and clear the stored result.
+    # Apply a scan verdict that raced ahead of submission.
     if updated_request.pendingScanResult and updated_request.pendingScanResult.get("new_status"):
         pending = updated_request.pendingScanResult
         updated_request = await update_and_publish_event_airlock_request(

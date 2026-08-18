@@ -681,7 +681,6 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
 def test_get_airlock_container_link_v2_resolves_correct_account_for_approved_import(mock_sas, mock_validate_user, mock_validate_status):
     from services.airlock import get_airlock_container_link
 
-    # v2 Import Approved should resolve to workspace-global storage account
     request = sample_airlock_request(status=AirlockRequestStatus.Approved)
     request.type = AirlockRequestType.Import
     request.airlock_version = 2
@@ -690,9 +689,8 @@ def test_get_airlock_container_link_v2_resolves_correct_account_for_approved_imp
     result = get_airlock_container_link(request, None, workspace)
 
     assert result == "https://stalairlockgtest.blob.core.windows.net/container?sas"
-    # Should have called SAS generation with the workspace-global account
     mock_sas.assert_called_once()
-    account_name = mock_sas.call_args[0][1]  # second positional arg
+    account_name = mock_sas.call_args[0][1]
     assert account_name.startswith("stalairlockg")
 
 
@@ -890,7 +888,6 @@ async def test_delete_workspace_airlock_containers_deletes_from_both_accounts(mo
 
     await delete_workspace_airlock_containers(workspace, repo)
 
-    # The container may be in either consolidated account, so both are attempted.
     urls = [c.kwargs["account_url"] for c in mock_bsc.call_args_list]
     assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(config.TRE_ID) in u for u in urls)
     assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID) in u for u in urls)
@@ -927,5 +924,4 @@ async def test_delete_workspace_airlock_containers_does_not_raise_on_failure(moc
     repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
     mock_bsc.return_value.get_container_client.return_value.delete_container.side_effect = Exception("boom")
 
-    # Cleanup problems must not block deleting the workspace.
     await delete_workspace_airlock_containers(workspace, repo)

@@ -171,8 +171,6 @@ class TestUpdateContainerStage:
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch("shared_code.blob_operations_metadata.get_credential")
     def test_reevaluates_skip_after_a_concurrent_update(self, mock_get_credential, mock_blob_service_client):
-        # A concurrent writer moves the container to a terminal stage between the read and the write:
-        # the conditional write fails and the retry must then honour the skip rather than overwrite it.
         mock_container_client = MagicMock()
         first = MagicMock(metadata={'stage': 'import-external'}, etag='"etag-1"')
         second = MagicMock(metadata={'stage': 'import-blocked'}, etag='"etag-2"')
