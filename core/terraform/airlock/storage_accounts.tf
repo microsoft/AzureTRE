@@ -108,12 +108,12 @@ resource "azurerm_private_endpoint" "stg_airlock_core_pe_processor" {
 }
 
 resource "azurerm_eventgrid_system_topic" "airlock_blob_created" {
-  name                   = "evgt-airlock-blob-created-${var.tre_id}"
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_airlock_core.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_core_tags
+  name                = "evgt-airlock-blob-created-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_airlock_core.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
+  tags                = var.tre_core_tags
 
   identity {
     type = "SystemAssigned"
@@ -251,12 +251,12 @@ resource "azapi_resource_action" "enable_defender_for_storage_workspace_global" 
 
 
 resource "azurerm_eventgrid_system_topic" "airlock_workspace_global_blob_created" {
-  name                   = "evgt-airlock-blob-created-global-${var.tre_id}"
-  location               = var.location
-  resource_group_name    = var.resource_group_name
-  source_arm_resource_id = azurerm_storage_account.sa_airlock_workspace_global.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-  tags                   = var.tre_core_tags
+  name                = "evgt-airlock-blob-created-global-${var.tre_id}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  source_resource_id  = azurerm_storage_account.sa_airlock_workspace_global.id
+  topic_type          = "Microsoft.Storage.StorageAccounts"
+  tags                = var.tre_core_tags
 
   identity {
     type = "SystemAssigned"

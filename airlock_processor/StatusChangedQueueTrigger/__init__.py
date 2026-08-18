@@ -20,7 +20,9 @@ class RequestProperties(BaseModel):
     type: str
     workspace_id: str
     review_workspace_id: Optional[str] = None
-    airlock_version: int = 2
+    # Default to legacy (v1) when absent: only StatusChanged messages emitted by a pre-v2 API lack this
+    # field, and those are legacy requests. New API events always include the explicit version.
+    airlock_version: int = 1
 
 
 class ContainersCopyMetadata:

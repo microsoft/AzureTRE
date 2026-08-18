@@ -1,4 +1,6 @@
+from core import config
 from db.repositories.airlock_requests import AirlockRequestRepository
+from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import Resource
 from models.schemas.resource import ResourcePatch
 from services.logging import logger
@@ -8,6 +10,24 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
     if len(resource_ids) <= limit:
         return resource_ids
     return resource_ids[:limit]
+
+
+def ensure_workspace_airlock_version_supported(properties: dict) -> None:
+    """Block creating a legacy (airlock_version=1) workspace when core legacy airlock is
+    disabled (v2-only). Fails fast before deployment instead of deploying a workspace
+    whose airlock would be non-functional (the core v1 storage accounts do not exist).
+
+    Raises ValueError so the API returns HTTP 400.
+    """
+    if config.ENABLE_LEGACY_AIRLOCK:
+        return
+    if not properties:
+        return
+    if properties.get("enable_airlock") and properties.get("airlock_version") == 1:
+        raise ValueError(
+            "Cannot create a workspace with airlock_version=1 because legacy airlock is disabled "
+            "in core (enable_legacy_airlock=false). Use airlock_version=2."
+        )
 
 
 async def ensure_airlock_version_change_allowed(workspace: Resource, resource_patch: ResourcePatch, request_repo: AirlockRequestRepository) -> None:
@@ -38,4 +58,39 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
             f"Cannot change airlock_version from {current_version} to {new_version} while "
             f"{len(in_flight_request_ids)} in-flight airlock request(s) exist in this workspace. "
             f"Complete, cancel or revoke them first. Request ids: {_truncate_ids(in_flight_request_ids)}"
+        )
+
+
+async def run_legacy_airlock_migration_guard() -> None:
+    """At startup, warn (or block) when legacy airlock is disabled but active v1 workspaces or
+    in-flight v1 requests still exist, since disabling legacy airlock removes the v1 storage
+    accounts their data lives in.
+    """
+    if config.ENABLE_LEGACY_AIRLOCK:
+        return
+
+    workspace_repo = await WorkspaceRepository.create()
+    request_repo = await AirlockRequestRepository.create()
+
+    v1_workspace_ids = await workspace_repo.get_active_v1_workspace_ids()
+    v1_in_flight_request_ids = await request_repo.get_in_flight_v1_airlock_request_ids()
+
+    if not (v1_workspace_ids or v1_in_flight_request_ids):
+        logger.info("Legacy airlock migration guard check passed. enable_legacy_airlock=false and no active v1 dependencies were found")
+        return
+
+    warning_message = (
+        "Legacy airlock migration guard detected active v1 dependencies while enable_legacy_airlock=false. "
+        "Disabling legacy airlock can remove v1 storage accounts and cause data loss"
+    )
+    logger.warning(
+        "%s | v1_workspace_count=%d v1_in_flight_request_count=%d v1_workspace_ids=%s v1_in_flight_request_ids=%s",
+        warning_message, len(v1_workspace_ids), len(v1_in_flight_request_ids),
+        _truncate_ids(v1_workspace_ids), _truncate_ids(v1_in_flight_request_ids)
+    )
+
+    if config.BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS:
+        raise RuntimeError(
+            f"{warning_message}. Set ENABLE_LEGACY_AIRLOCK=true, finish migration to airlock_version=2, "
+            "or set BLOCK_DISABLE_LEGACY_AIRLOCK_IF_V1_EXISTS=false to continue with warning-only behavior"
         )

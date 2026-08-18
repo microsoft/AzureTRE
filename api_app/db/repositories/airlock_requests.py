@@ -95,6 +95,19 @@ class AirlockRequestRepository(BaseRepository):
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
 
+    async def get_in_flight_v1_airlock_request_ids(self) -> List[str]:
+        query = (
+            "SELECT c.id FROM c WHERE "
+            "(NOT IS_DEFINED(c.airlock_version) OR c.airlock_version = @airlockVersion) "
+            "AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        )
+        parameters = [
+            {"name": "@airlockVersion", "value": 1},
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
+
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 
         # Define valid transitions

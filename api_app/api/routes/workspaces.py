@@ -14,7 +14,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
-from services.legacy_airlock_guard import ensure_airlock_version_change_allowed
+from services.legacy_airlock_guard import ensure_airlock_version_change_allowed, ensure_workspace_airlock_version_supported
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType
 from models.domain.workspace import WorkspaceAuth, WorkspaceRole
@@ -100,6 +100,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
+        ensure_workspace_airlock_version_supported(workspace_create.properties)
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")

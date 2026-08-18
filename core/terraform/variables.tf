@@ -180,6 +180,12 @@ variable "enable_legacy_airlock" {
   description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1."
 }
 
+variable "block_disable_legacy_airlock_if_v1_exists" {
+  type        = bool
+  default     = true
+  description = "When enable_legacy_airlock=false, block API startup if active v1 workspaces or in-flight v1 airlock requests still exist (prevents data loss). Set false for warning-only behaviour."
+}
+
 variable "enable_airlock_email_check" {
   type        = bool
   default     = false

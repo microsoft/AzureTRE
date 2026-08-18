@@ -41,3 +41,21 @@ def test_copied_blob_is_suppressed(mock_get_blob_client):
     main(msg=_make_message(), outputEvent=output_event)
 
     output_event.set.assert_not_called()
+
+
+@patch.dict("os.environ", {"ENABLE_MALWARE_SCANNING": "true"})
+@patch("ScanResultTrigger.blob_operations.get_blob_client_from_blob_info")
+def test_v1_copied_blob_still_emits(mock_get_blob_client):
+    # In v1 the submit copy into stalimip carries copied_from but IS the scan that gates the
+    # submitted transition, so it must not be suppressed (only consolidated accounts are).
+    mock_get_blob_client.return_value = _blob_client({"copied_from": '["container-prev"]'})
+    blob_uri = "https://stalimiptre123.blob.core.windows.net/req-001/test.txt"
+    body = json.dumps({"data": {"blobUri": blob_uri, "scanResultType": constants.NO_THREATS}}).encode("utf-8")
+    msg = MagicMock(spec=func.ServiceBusMessage)
+    msg.get_body.return_value = body
+    output_event = MagicMock()
+
+    main(msg=msg, outputEvent=output_event)
+
+    output_event.set.assert_called_once()
+    mock_get_blob_client.assert_not_called()

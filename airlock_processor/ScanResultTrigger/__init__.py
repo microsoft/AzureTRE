@@ -41,13 +41,16 @@ def main(msg: func.ServiceBusMessage,
     # Extract request id
     account_name, request_id, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
 
-    # On-upload scanning also fires for the approval/rejection copy into the destination account.
-    # Those blobs carry "copied_from" metadata and belong to a request that is already past Submitted,
-    # so their result would fail status matching and dead-letter. Only the original upload gates submission.
-    blob_client = blob_operations.get_blob_client_from_blob_info(account_name, request_id, blob_name)
-    if "copied_from" in blob_client.get_blob_properties()["metadata"]:
-        logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
-        return
+    # In v2 (consolidated accounts) on-upload scanning also fires for the approval/rejection copy
+    # into the destination account; those blobs carry "copied_from" metadata and belong to a request
+    # already past Submitted, so their result would fail status matching and dead-letter. Suppress
+    # only for the consolidated accounts — in v1 the submit copy into stalimip IS the scan that gates
+    # submitted->in_review, so it must still emit a StepResult.
+    if account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE):
+        blob_client = blob_operations.get_blob_client_from_blob_info(account_name, request_id, blob_name)
+        if "copied_from" in blob_client.get_blob_properties()["metadata"]:
+            logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
+            return
 
     # If clean, we can continue and move the request to the review stage
     # Otherwise, move the request to the blocked stage
