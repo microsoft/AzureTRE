@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError
+from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, HttpResponseError, ResourceModifiedError
 
 from shared_code.blob_operations_metadata import (
     get_account_url,
@@ -134,6 +135,57 @@ class TestUpdateContainerStage:
         assert updated_metadata['stage'] == "import-in-progress"
         assert "import-in-progress" in updated_metadata['stage_history']
         assert 'last_stage_change' in updated_metadata
+
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch("shared_code.blob_operations_metadata.get_credential")
+    def test_writes_conditionally_on_the_etag_it_read(self, mock_get_credential, mock_blob_service_client):
+        mock_container_client = MagicMock()
+        mock_properties = MagicMock()
+        mock_properties.metadata = {'stage': 'import-external'}
+        mock_properties.etag = '"etag-1"'
+        mock_container_client.get_container_properties.return_value = mock_properties
+        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
+
+        assert update_container_stage("storageaccount", "request-123", "import-in-progress") is True
+
+        kwargs = mock_container_client.set_container_metadata.call_args.kwargs
+        assert kwargs['etag'] == '"etag-1"'
+        assert kwargs['match_condition'] == MatchConditions.IfNotModified
+
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch("shared_code.blob_operations_metadata.get_credential")
+    def test_skips_update_when_already_at_a_skipped_stage(self, mock_get_credential, mock_blob_service_client):
+        mock_container_client = MagicMock()
+        mock_properties = MagicMock()
+        mock_properties.metadata = {'stage': 'import-blocked'}
+        mock_container_client.get_container_properties.return_value = mock_properties
+        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
+
+        result = update_container_stage(
+            "storageaccount", "request-123", "import-in-progress",
+            skip_if_stage_in=["import-blocked", "import-rejected"])
+
+        assert result is False
+        mock_container_client.set_container_metadata.assert_not_called()
+
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch("shared_code.blob_operations_metadata.get_credential")
+    def test_reevaluates_skip_after_a_concurrent_update(self, mock_get_credential, mock_blob_service_client):
+        # A concurrent writer moves the container to a terminal stage between the read and the write:
+        # the conditional write fails and the retry must then honour the skip rather than overwrite it.
+        mock_container_client = MagicMock()
+        first = MagicMock(metadata={'stage': 'import-external'}, etag='"etag-1"')
+        second = MagicMock(metadata={'stage': 'import-blocked'}, etag='"etag-2"')
+        mock_container_client.get_container_properties.side_effect = [first, second]
+        mock_container_client.set_container_metadata.side_effect = ResourceModifiedError("conflict")
+        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
+
+        result = update_container_stage(
+            "storageaccount", "request-123", "import-in-progress",
+            skip_if_stage_in=["import-blocked"])
+
+        assert result is False
+        assert mock_container_client.set_container_metadata.call_count == 1
 
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch("shared_code.blob_operations_metadata.get_credential")

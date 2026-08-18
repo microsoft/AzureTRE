@@ -1,9 +1,10 @@
 import os
 import logging
 from datetime import datetime, UTC
-from typing import Dict
+from typing import Dict, List, Optional
 
-from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, ResourceModifiedError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import HttpResponseError
@@ -62,54 +63,73 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
 
 
 def update_container_stage(account_name: str, request_id: str, new_stage: str,
-                           changed_by: str = None, additional_metadata: Dict[str, str] = None) -> None:
-    try:
-        container_name = request_id
-        blob_service_client = BlobServiceClient(
-            account_url=get_account_url(account_name),
-            credential=get_credential()
-        )
-        container_client = blob_service_client.get_container_client(container_name)
+                           changed_by: str = None, additional_metadata: Dict[str, str] = None,
+                           skip_if_stage_in: Optional[List[str]] = None,
+                           max_attempts: int = 5) -> bool:
+    """Update the container's stage metadata, conditional on the metadata not having changed since
+    it was read. Returns False if the update was skipped because the container is already at one of
+    skip_if_stage_in.
 
-        # Get current metadata
+    Status messages for a request can be processed concurrently, and the stage drives the storage
+    ABAC conditions, so a lost update could leave a blocked request's container exposed at a
+    reviewable stage. Reading and writing under the same ETag makes the guard and the write atomic;
+    a concurrent writer causes a 412 and we re-evaluate against the new state.
+    """
+    container_name = request_id
+    blob_service_client = BlobServiceClient(
+        account_url=get_account_url(account_name),
+        credential=get_credential()
+    )
+    container_client = blob_service_client.get_container_client(container_name)
+
+    for attempt in range(1, max_attempts + 1):
         try:
             properties = container_client.get_container_properties()
-            metadata = properties.metadata.copy()
         except ResourceNotFoundError:
             logging.error(f"Container {request_id} not found in account {account_name}")
             raise
 
-        # Track old stage for logging
+        metadata = properties.metadata.copy()
         old_stage = metadata.get('stage', 'unknown')
 
-        # Update stage metadata
-        metadata['stage'] = new_stage
+        if skip_if_stage_in and old_stage in skip_if_stage_in:
+            logging.info(
+                f"Container {request_id} already at stage '{old_stage}', not moving it to '{new_stage}'"
+            )
+            return False
 
-        # Update stage history
+        metadata['stage'] = new_stage
         stage_history = metadata.get('stage_history', old_stage)
         metadata['stage_history'] = f"{stage_history},{new_stage}"
-
-        # Update timestamp
         metadata['last_stage_change'] = datetime.now(UTC).isoformat()
-
-        # Track who made the change
         if changed_by:
             metadata['last_changed_by'] = changed_by
-
-        # Add any additional metadata (e.g., scan results)
         if additional_metadata:
             metadata.update(additional_metadata)
 
-        # Apply the updated metadata
-        container_client.set_container_metadata(metadata)
+        try:
+            container_client.set_container_metadata(
+                metadata,
+                etag=properties.etag,
+                match_condition=MatchConditions.IfNotModified
+            )
+        except ResourceModifiedError:
+            logging.warning(
+                f"Container {request_id} metadata changed concurrently (attempt {attempt}/{max_attempts}), retrying"
+            )
+            continue
+        except HttpResponseError as e:
+            logging.error(f"Failed to update container metadata: {str(e)}")
+            raise
 
         logging.info(
             f"Updated container {request_id} from stage '{old_stage}' to '{new_stage}' in account {account_name}"
         )
+        return True
 
-    except HttpResponseError as e:
-        logging.error(f"Failed to update container metadata: {str(e)}")
-        raise
+    raise HttpResponseError(
+        message=f"Could not update stage for container {request_id} after {max_attempts} attempts due to concurrent updates"
+    )
 
 
 def get_container_stage(account_name: str, request_id: str) -> str:

@@ -224,6 +224,26 @@ async def test_early_scan_result_for_draft_request_is_stored_and_message_complet
     logging_mock.assert_not_called()
 
 
+@pytest.mark.parametrize("final_status", [AirlockRequestStatus.Cancelled, AirlockRequestStatus.Failed, AirlockRequestStatus.Blocked])
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+@patch('services.logging.logger.error')
+async def test_scan_result_for_final_request_is_discarded_not_dead_lettered(logging_mock, airlock_request_repo, _, final_status):
+    # v2 scans the draft upload, so a verdict routinely arrives after the request reached a final
+    # state (e.g. the draft was cancelled). The message must be completed rather than retried.
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
+
+    expected_airlock_request = sample_airlock_request(final_status)
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    airlock_request_repo.return_value.update_airlock_request.assert_not_called()
+    logging_mock.assert_not_called()
+
+
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.exception')

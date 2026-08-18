@@ -285,14 +285,21 @@ class TestV2MetadataMode():
         # Only one call: request files report (not in_review)
         assert step_result.set.call_count == 1
 
-    @patch("shared_code.blob_operations_metadata.update_container_stage")
-    @patch("shared_code.blob_operations_metadata.get_container_stage", return_value=constants.STAGE_IMPORT_BLOCKED)
+    @patch("shared_code.blob_operations_metadata.update_container_stage", return_value=False)
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_late_submit_does_not_revert_terminal_stage(self, mock_blob_svc, mock_get_files, mock_get_stage, mock_update_stage):
-        """A late/duplicate submitted event must not move a container out of a terminal (blocked) stage."""
+    def test_v2_late_submit_does_not_revert_terminal_stage(self, mock_blob_svc, mock_get_files, mock_update_stage):
+        """A late/duplicate submitted event must not move a container out of a terminal (blocked) stage.
+
+        The guard is evaluated inside update_container_stage under the same ETag as the write, so the
+        trigger passes the terminal stages to skip and stops when the update reports it was skipped.
+        """
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
-        mock_update_stage.assert_not_called()
+        step_result = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+
+        assert mock_update_stage.call_args.kwargs["skip_if_stage_in"] == constants.TERMINAL_STAGES
+        # Only the request-files report; the skipped update must not advance the request to in_review.
+        assert step_result.set.call_count == 1

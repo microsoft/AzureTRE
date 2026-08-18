@@ -138,6 +138,12 @@ class AirlockStatusUpdater():
                     updated_by=airlock_request.updatedBy,
                     request_files=request_files)
                 result = True
+            elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
+                # v2 scans the Draft upload, so a verdict routinely arrives after the request reached a
+                # final state (e.g. the draft was cancelled, or submission failed file validation).
+                # Complete the message instead of retrying it until it dead-letters.
+                logger.info(f"Discarding stale scan verdict for request {airlock_request_id} in final status '{airlock_request.status}'.")
+                result = True
             else:
                 logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))
         except HTTPException as e:

@@ -95,7 +95,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     if (is_require_data_copy(new_status)):
         if use_metadata:
             # Metadata mode: Update container stage instead of copying
-            from shared_code.blob_operations_metadata import update_container_stage, create_container_with_metadata, get_container_stage
+            from shared_code.blob_operations_metadata import update_container_stage, create_container_with_metadata
 
             # For import submit, use review_workspace_id so data goes to review workspace storage
             effective_ws_id = ws_id
@@ -108,14 +108,15 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
             if source_account == dest_account:
-                # Same storage account - just update metadata
-                if new_status == constants.STAGE_SUBMITTED and get_container_stage(source_account, req_id) in constants.TERMINAL_STAGES:
-                    # The scan verdict applied at submit can reach a terminal stage before this transition;
-                    # don't revert it back to in-progress.
+                # Same storage account - just update metadata. The scan verdict applied at submit can
+                # reach a terminal stage before this transition arrives; the skip is evaluated under
+                # the same ETag as the write so a concurrent update can't revert it to in-progress.
+                skip_stages = constants.TERMINAL_STAGES if new_status == constants.STAGE_SUBMITTED else None
+                logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
+                if not update_container_stage(source_account, req_id, new_stage, changed_by='system',
+                                              skip_if_stage_in=skip_stages):
                     logging.info(f'Request {req_id}: container already at a terminal stage, ignoring late submitted transition')
                     return
-                logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
-                update_container_stage(source_account, req_id, new_stage, changed_by='system')
 
                 # In v2, same-account transitions don't fire BlobCreated events.
                 # For SUBMITTED, v1 relies on BlobCreatedTrigger to handle the malware scanning gate
