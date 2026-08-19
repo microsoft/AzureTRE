@@ -98,8 +98,12 @@ resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" 
           @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
             StringEquals 'export-internal'
           OR
-          @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
-            StringEquals 'export-in-progress'
+          (
+            ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'}
+            AND
+            @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+              StringEquals 'export-in-progress'
+          )
         )
       )
     )
