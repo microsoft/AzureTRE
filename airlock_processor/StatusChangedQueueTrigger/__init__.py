@@ -66,7 +66,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             from shared_code.blob_operations_metadata import create_container_with_metadata
             account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status)
             stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
-            create_container_with_metadata(account_name, req_id, stage, workspace_id=ws_id, request_type=request_type)
+            draft_container = airlock_storage_helper.get_container_name_for_request(req_id, new_status)
+            create_container_with_metadata(account_name, draft_container, stage, workspace_id=ws_id, request_type=request_type)
         else:
             account_name = get_storage_account(status=constants.STAGE_DRAFT, request_type=request_type, short_workspace_id=ws_id)
             blob_operations.create_container(account_name, req_id)
@@ -75,9 +76,11 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     if new_status == constants.STAGE_CANCELLED:
         if use_metadata:
             storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status)
+            container_name = airlock_storage_helper.get_container_name_for_request(req_id, previous_status)
         else:
             storage_account_name = get_storage_account(previous_status, request_type, ws_id)
-        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
+            container_name = req_id
+        container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=container_name)
         set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_properties, container_url=container_to_delete_url)
         return
 
@@ -97,16 +100,19 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
             if source_account == dest_account:
-                # The ETag couples the terminal-stage check to the write.
-                skip_stages = constants.TERMINAL_STAGES if new_status == constants.STAGE_SUBMITTED else None
-                logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
-                if not update_container_stage(source_account, req_id, new_stage, changed_by='system',
-                                              skip_if_stage_in=skip_stages):
-                    logging.info(f'Request {req_id}: container already at a terminal stage, ignoring late submitted transition')
-                    return
-
-                # Same-account v2 transitions must emit completion directly.
                 if new_status == constants.STAGE_SUBMITTED:
+                    # Copy out of the draft container and delete it, so any SAS already issued
+                    # is revoked structurally rather than by an eventually-consistent condition.
+                    draft_container = airlock_storage_helper.get_container_name_for_request(req_id, previous_status)
+                    if not blob_operations.container_exists(source_account, draft_container):
+                        logging.info(f'Request {req_id}: draft container already sealed, ignoring duplicate submitted message')
+                        return
+                    logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
+                    create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
+                    blob_operations.copy_data(source_account, dest_account, req_id,
+                                              source_container=draft_container, destination_container=req_id)
+                    blob_operations.delete_container(source_account, draft_container)
+
                     try:
                         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
                     except KeyError:
@@ -123,11 +129,17 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                                 event_time=datetime.datetime.now(datetime.UTC),
                                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
                     else:
-                        # Reported only once the stage change has locked the container, so the request
-                        # cannot become reviewable while the researcher can still write to it.
                         logging.info(f'Request {req_id}: Malware scanning enabled, scan result gates the move to in_review')
                         set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
-                elif new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
+                    return
+
+                # The ETag couples the terminal-stage check to the write.
+                logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
+                if not update_container_stage(source_account, req_id, new_stage, changed_by='system'):
+                    logging.info(f'Request {req_id}: container already at a terminal stage, ignoring late transition')
+                    return
+
+                if new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                     final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
                     logging.info(f'Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}')
                     stepResultEvent.set(

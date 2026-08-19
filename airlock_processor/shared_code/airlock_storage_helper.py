@@ -2,6 +2,18 @@ import os
 from shared_code import constants
 
 
+def get_container_name_for_request(request_id: str, status: str) -> str:
+    if status == constants.STAGE_DRAFT:
+        return f"{request_id}{constants.DRAFT_CONTAINER_SUFFIX}"
+    return request_id
+
+
+def get_request_id_from_container_name(container_name: str) -> str:
+    if container_name.endswith(constants.DRAFT_CONTAINER_SUFFIX):
+        return container_name[:-len(constants.DRAFT_CONTAINER_SUFFIX)]
+    return container_name
+
+
 def get_storage_account_name_for_request(request_type: str, status: str) -> str:
     # v1 routing lives in StatusChangedQueueTrigger.get_storage_account.
     tre_id = os.environ.get("TRE_ID", "")

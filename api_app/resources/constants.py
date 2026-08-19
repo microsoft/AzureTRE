@@ -7,6 +7,7 @@ EXPORT_TYPE = "export"
 
 # New workspaces default to consolidated storage.
 DEFAULT_AIRLOCK_VERSION = 2
+DRAFT_CONTAINER_SUFFIX = "-draft"
 
 STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock{}"
 STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg{}"

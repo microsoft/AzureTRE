@@ -61,3 +61,6 @@ STEP_RESULT_EVENT_DATA_VERSION = "1.0"
 DATA_DELETION_EVENT_DATA_VERSION = "1.0"
 
 NO_THREATS = "No threats found"
+
+# Draft data lives in its own container so submission can delete it, revoking any SAS already issued.
+DRAFT_CONTAINER_SUFFIX = "-draft"

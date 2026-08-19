@@ -19,6 +19,7 @@ from models.schemas.resource import ResourcePatch
 from typing import Tuple, List, Optional, Union
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
+from services.airlock_storage_helper import get_container_name_for_request
 from services.authentication import get_aad_service
 
 from resources import strings, constants
@@ -133,8 +134,9 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
         raise Exception(f"Failed getting user delegation key, has the signing identity been granted 'Storage Blob Data Contributor' access to the storage account {account_name}?")
 
     required_permission = get_required_permission(airlock_request)
+    container_name = get_container_name_for_request(airlock_request.id, airlock_request.status) if airlock_request.airlock_version >= 2 else airlock_request.id
 
-    token = generate_container_sas(container_name=airlock_request.id,
+    token = generate_container_sas(container_name=container_name,
                                    account_name=account_name,
                                    user_delegation_key=udk,
                                    permission=required_permission,
@@ -142,7 +144,7 @@ def get_airlock_request_container_sas_token(airlock_request: AirlockRequest, acc
                                    expiry=expiry)
 
     return "https://{}.blob.{}/{}?{}" \
-        .format(account_name, STORAGE_ENDPOINT, airlock_request.id, token)
+        .format(account_name, STORAGE_ENDPOINT, container_name, token)
 
 
 def get_account_url(account_name: str) -> str:
@@ -175,18 +177,20 @@ async def delete_workspace_airlock_containers(workspace: Workspace, airlock_requ
     deleted = 0
     failed = []
     for request_id in request_ids:
-        # Status does not identify which shared account holds the container.
-        for account_name in (core_account, global_account):
-            # Workspace-global access uses the workspace signer.
-            credential = (credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
-                          if signer_client_id and account_name == global_account
-                          else credentials.get_credential())
-            try:
-                if await asyncio.to_thread(_delete_container, account_name, request_id, credential):
-                    deleted += 1
-            except Exception:
-                logger.exception(f"Failed deleting airlock container {request_id} from {account_name}")
-                failed.append(request_id)
+        # A request may still be in draft, so both container names are candidates.
+        for container_name in (request_id, f"{request_id}{constants.DRAFT_CONTAINER_SUFFIX}"):
+            # Status does not identify which shared account holds the container.
+            for account_name in (core_account, global_account):
+                # Workspace-global access uses the workspace signer.
+                credential = (credentials.get_airlock_signer_credential(signer_client_id, config.AAD_TENANT_ID)
+                              if signer_client_id and account_name == global_account
+                              else credentials.get_credential())
+                try:
+                    if await asyncio.to_thread(_delete_container, account_name, container_name, credential):
+                        deleted += 1
+                except Exception:
+                    logger.exception(f"Failed deleting airlock container {container_name} from {account_name}")
+                    failed.append(request_id)
 
     logger.info(f"Deleted {deleted} airlock container(s) for workspace {workspace.id}")
     if failed:

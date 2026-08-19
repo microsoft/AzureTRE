@@ -231,15 +231,21 @@ class TestV2MetadataMode():
         mock_copy_data.assert_called_once()
         step_result.set.assert_not_called()
 
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc, mock_get_files):
+    def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
-        # Scanning disabled reports files and the transition in one event, so nothing is left stale.
+        # The draft container is copied out and removed before the request can be reported as reviewable.
+        mock_copy.assert_called_once()
+        assert mock_copy.call_args.kwargs["source_container"] == "123-draft"
+        mock_delete.assert_called_once_with("stalairlocktre-id", "123-draft")
         assert step_result.set.call_count == 1
         second_call_event = step_result.set.call_args_list[0][0][0]
         assert second_call_event.get_json()["completed_step"] == constants.STAGE_SUBMITTED
@@ -275,16 +281,19 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         assert step_result.set.call_count == 1
 
-    @patch("shared_code.blob_operations_metadata.update_container_stage", return_value=False)
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=False)
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_late_submit_does_not_revert_terminal_stage(self, mock_blob_svc, mock_get_files, mock_update_stage):
+    def test_v2_duplicate_submit_is_ignored_once_sealed(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
 
-        assert mock_update_stage.call_args.kwargs["skip_if_stage_in"] == constants.TERMINAL_STAGES
-        # A late submit on a terminal container must not report files either, or the result dead-letters.
+        # Service Bus is at-least-once, so a redelivered submit must not copy or report again.
+        mock_copy.assert_not_called()
+        mock_delete.assert_not_called()
         assert step_result.set.call_count == 0

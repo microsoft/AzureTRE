@@ -146,10 +146,16 @@ resource "azurerm_role_assignment" "api_core_blob_data_contributor" {
       @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
         StringEquals 'import-external'
       OR
-      @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
-        StringEquals 'export-approved'
+      (
+        ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'}
+        AND
+        @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
+          StringEquals 'export-approved'
+      )
       OR
       (
+        ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'}
+        AND
         @Resource[Microsoft.Storage/storageAccounts/blobServices/containers/metadata:stage]
           StringEquals 'import-in-progress'
         AND

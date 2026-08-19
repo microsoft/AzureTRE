@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
@@ -34,6 +34,22 @@ def create_container(account_name: str, request_id: str):
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
+def container_exists(account_name: str, container_name: str) -> bool:
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=get_credential())
+    return blob_service_client.get_container_client(container_name).exists()
+
+
+def delete_container(account_name: str, container_name: str):
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=get_credential())
+    try:
+        blob_service_client.delete_container(container_name)
+        logging.info(f'Deleted container {container_name} from {account_name}.')
+    except ResourceNotFoundError:
+        logging.info(f'Container {container_name} already absent from {account_name}.')
+
+
 def get_request_files(account_name: str, request_id: str) -> list:
     files = []
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
@@ -45,9 +61,11 @@ def get_request_files(account_name: str, request_id: str) -> list:
     return files
 
 
-def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
+def copy_data(source_account_name: str, destination_account_name: str, request_id: str,
+              source_container: str = None, destination_container: str = None):
     credential = get_credential()
-    container_name = request_id
+    container_name = source_container or request_id
+    dest_container_name = destination_container or request_id
 
     source_blob_service_client = BlobServiceClient(account_url=get_account_url(source_account_name),
                                                    credential=credential)
@@ -93,7 +111,7 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     # Copy files
     dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),
                                                  credential=credential)
-    copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
+    copied_blob = dest_blob_service_client.get_blob_client(dest_container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url, metadata=metadata)
 
     try:

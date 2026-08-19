@@ -5,7 +5,7 @@ import datetime
 import uuid
 import json
 import os
-from shared_code import constants, blob_operations, parsers
+from shared_code import constants, blob_operations, parsers, airlock_storage_helper
 
 
 def main(msg: func.ServiceBusMessage,
@@ -38,11 +38,12 @@ def main(msg: func.ServiceBusMessage,
         raise e
 
     # Extract request id
-    account_name, request_id, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    account_name, container_name, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    request_id = airlock_storage_helper.get_request_id_from_container_name(container_name)
 
     # Consolidated destination copies must not emit duplicate scan results.
     if account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE):
-        blob_client = blob_operations.get_blob_client_from_blob_info(account_name, request_id, blob_name)
+        blob_client = blob_operations.get_blob_client_from_blob_info(account_name, container_name, blob_name)
         if "copied_from" in blob_client.get_blob_properties()["metadata"]:
             logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
             return

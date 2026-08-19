@@ -1,5 +1,6 @@
 from models.domain.airlock_request import AirlockRequestStatus
-from services.airlock_storage_helper import get_storage_account_name_for_request
+import pytest
+from services.airlock_storage_helper import get_storage_account_name_for_request, get_container_name_for_request
 from resources import constants
 
 
@@ -125,3 +126,15 @@ class TestABACStageConstants:
 
     def test_export_blocked_stage_constant_value(self):
         assert constants.STAGE_EXPORT_BLOCKED == "export-blocked"
+
+
+class TestGetContainerNameForRequest:
+
+    def test_draft_uses_its_own_container(self):
+        assert get_container_name_for_request("req-1", AirlockRequestStatus.Draft) == "req-1-draft"
+
+    @pytest.mark.parametrize("status", [
+        AirlockRequestStatus.Submitted, AirlockRequestStatus.InReview,
+        AirlockRequestStatus.Approved, AirlockRequestStatus.Rejected, AirlockRequestStatus.Blocked])
+    def test_sealed_stages_use_the_request_id(self, status):
+        assert get_container_name_for_request("req-1", status) == "req-1"

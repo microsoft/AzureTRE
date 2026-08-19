@@ -892,7 +892,10 @@ async def test_delete_workspace_airlock_containers_deletes_from_both_accounts(mo
     urls = [c.kwargs["account_url"] for c in mock_bsc.call_args_list]
     assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE.format(config.TRE_ID) in u for u in urls)
     assert any(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(config.TRE_ID) in u for u in urls)
-    assert mock_bsc.return_value.get_container_client.return_value.delete_container.call_count == 2
+    # Both accounts, and both the sealed and draft container names.
+    containers = [c.args[0] for c in mock_bsc.return_value.get_container_client.call_args_list]
+    assert "req-1" in containers and "req-1-draft" in containers
+    assert mock_bsc.return_value.get_container_client.return_value.delete_container.call_count == 4
 
 
 @pytest.mark.asyncio
