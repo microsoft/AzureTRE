@@ -50,10 +50,10 @@ def delete_container(account_name: str, container_name: str):
         logging.info(f'Container {container_name} already absent from {account_name}.')
 
 
-def get_request_files(account_name: str, request_id: str) -> list:
+def get_request_files(account_name: str, request_id: str, container_name: str = None) -> list:
     files = []
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
-    container_client = blob_service_client.get_container_client(container=request_id)
+    container_client = blob_service_client.get_container_client(container=container_name or request_id)
 
     for blob in container_client.list_blobs():
         files.append({"name": blob.name, "size": blob.size})

@@ -127,7 +127,18 @@ class TestFileEnumeration():
         message = _mock_service_bus_message(body=message_body)
         request_properties = extract_properties(message)
         get_request_files(request_properties)
-        mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id)
+        mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id, container_name=None)
+
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
+    def test_get_request_files_enumerates_the_draft_container_for_v2(self, mock_get_request_files):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\", \"airlock_version\":2  }}"
+        message = _mock_service_bus_message(body=message_body)
+        request_properties = extract_properties(message)
+        get_request_files(request_properties)
+        # v2 holds pre-submission data in a separate draft container, so enumerating the
+        # request-id container would find nothing and fail the request before validation runs.
+        assert mock_get_request_files.call_args.kwargs["container_name"] == "123-draft"
 
 
 class TestFilesDeletion():

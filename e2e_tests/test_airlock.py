@@ -76,6 +76,21 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
     return request_id, container_url
 
 
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_draft_container_is_sealed_after_submit(setup_test_workspace, verify):
+    """A SAS handed out while the request was in Draft must stop working once it is submitted,
+    otherwise a researcher could alter the data after it has been scanned and reviewed."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    _, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    # Submission copies the data out and deletes the draft container, so the old SAS resolves to nothing.
+    with pytest.raises(ResourceNotFoundError):
+        await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
 async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
@@ -125,6 +140,11 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     # Create a review VM
     admin_token = await get_admin_token(verify)
     import_workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=import_review_workspace_id, verify=verify)
+
+    # The request belongs to the research workspace, so it must not be reachable by id through
+    # another workspace the caller happens to have access to.
+    await get_request(f'/api/workspaces/{import_review_workspace_id}/requests/{request_id}', import_workspace_owner_token, verify, 404)
+
     user_resource_path, user_resource_id = await post_resource(
         payload={},
         endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
