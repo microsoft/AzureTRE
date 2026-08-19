@@ -243,7 +243,6 @@ async def test_submission_failure_overrides_early_promotion_to_in_review(logging
     }
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(failure_message)
 
-    # A pending scan verdict moves the request to in_review at submission, ahead of file validation.
     expected_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
     airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
     workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()

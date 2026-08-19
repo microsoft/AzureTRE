@@ -163,7 +163,9 @@ For any airlock process, there is data movement either **into** a TRE workspace 
 
 All other transitions — draft→submitted, submitted→in-review, in-review→rejected/blocked — update metadata only with no data movement.
 
-Cross-account copies are performed **asynchronously** via Event Grid: the `StatusChangedQueueTrigger` creates the destination container (with stage metadata) and initiates the server-side copy with `start_copy_from_url`, then returns without polling. When the copy completes, the destination account raises a `BlobCreated` Event Grid event. The `BlobCreatedTrigger` reads the destination container's `stage` metadata to determine the completed step, then emits the `StepResult` (and a data-deletion event for the source container). This mirrors the v1 pattern of using a `BlobCreated` event to signal copy completion, and keeps the request-processing message short-lived rather than blocking on large transfers.
+Cross-account copies are performed **asynchronously** via Event Grid: the `StatusChangedQueueTrigger` creates the destination container (with stage metadata) and initiates the server-side copy with `start_copy_from_url`, then returns without polling. When the copy completes, the destination account raises a `BlobCreated` Event Grid event.
+
+The `BlobCreatedTrigger` reads the destination container's `stage` metadata to determine the completed step, then emits the `StepResult` (and a data-deletion event for the source container). This mirrors the v1 pattern of using a `BlobCreated` event to signal copy completion, and keeps the request-processing message short-lived rather than blocking on large transfers.
 
 ### Import Data Flow
 
@@ -374,7 +376,8 @@ The TRE API exposes the following airlock endpoints:
 
 The **Airlock Processor** is a set of Azure Functions that handle the events created throughout the airlock process:
 
-- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly. For cross-account transitions (approval), it performs a synchronous server-side copy (waiting for completion) and then emits the StepResult and source data-deletion events itself.
+- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly.
+    For cross-account transitions (approval), it performs a synchronous server-side copy (waiting for completion) and then emits the StepResult and source data-deletion events itself.
 - **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). It handles the legacy (v1) per-stage flow. For v2 consolidated accounts these events are ignored, because completion is signalled synchronously by the StatusChangedQueueTrigger.
 - **ScanResultTrigger** — Consumes malware scan results from Microsoft Defender for Storage. If threats are found, emits a StepResult to block the request. If clean, emits a StepResult to advance to in-review.
 - **DataDeletionTrigger** — Cleans up source containers after data has been copied to the destination.

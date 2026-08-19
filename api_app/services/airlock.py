@@ -160,8 +160,7 @@ def _delete_container(account_name: str, container_name: str, credential) -> boo
 
 async def delete_workspace_airlock_containers(workspace: Workspace, airlock_request_repo: AirlockRequestRepository) -> None:
     """Delete shared containers without blocking workspace deletion on failures."""
-    # v1 containers live in the legacy core accounts; the version-change guard means a v2
-    # workspace cannot still hold data-retaining v1 requests.
+    # Version changes cannot leave v1 data attached to a v2 workspace.
     if workspace.properties.get("airlock_version", 1) < 2:
         return
 

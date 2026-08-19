@@ -126,8 +126,7 @@ class AirlockStatusUpdater():
             elif (completed_step == AirlockRequestStatus.Submitted
                   and new_status == AirlockRequestStatus.Failed
                   and airlock_request.status == AirlockRequestStatus.InReview):
-                # An early scan verdict promotes to in_review on submission, before file validation
-                # has run, so the validation failure has to win.
+                # Submission validation overrides an early scan promotion.
                 logger.info(f"Applying submission failure to request {airlock_request_id} already promoted to in_review.")
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)

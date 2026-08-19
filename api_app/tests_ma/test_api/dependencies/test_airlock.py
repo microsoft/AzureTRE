@@ -31,8 +31,6 @@ async def test_returns_request_belonging_to_the_workspace_in_the_path():
 
 
 async def test_rejects_request_belonging_to_another_workspace():
-    # Authorisation is evaluated against the workspace in the path, so a request from a different
-    # workspace must not be reachable by supplying its id.
     repo = AsyncMock()
     repo.get_airlock_request_by_id.return_value = _request(OTHER_WORKSPACE_ID)
 

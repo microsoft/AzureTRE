@@ -240,8 +240,7 @@ class AirlockRequestRepository(BaseRepository):
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
             pending_scan_result=_UNSET) -> AirlockRequest:
-        # Kept as a single dict so the retry below cannot silently drop fields, which previously lost
-        # the pending scan result when a submission raced an early scan verdict.
+        # Preserve every field when rebuilding after an ETag conflict.
         update_fields = dict(
             new_status=new_status,
             request_files=request_files,
