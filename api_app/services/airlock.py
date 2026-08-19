@@ -386,7 +386,7 @@ async def update_and_publish_event_airlock_request(
     status_message: Optional[str] = None,
     airlock_review: Optional[AirlockReview] = None,
     review_user_resource: Optional[AirlockReviewUserResource] = None,
-    pending_scan_result=_UNSET,
+    scan_result=_UNSET,
 ) -> AirlockRequest:
     try:
         logger.debug(f"Updating airlock request item: {airlock_request.id}")
@@ -398,7 +398,7 @@ async def update_and_publish_event_airlock_request(
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
-            pending_scan_result=pending_scan_result)
+            scan_result=scan_result)
     except Exception as e:
         logger.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself

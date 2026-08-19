@@ -132,7 +132,7 @@ async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_r
         status_message=None,
         airlock_review=None,
         review_user_resource=None,
-        pending_scan_result=_UNSET)
+        scan_result=_UNSET)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
 
@@ -201,11 +201,26 @@ async def test_when_updating_and_current_status_differs_from_status_in_state_sto
     logging_mock.assert_called_once_with(expected_error_message)
 
 
+test_sb_scan_result_message = {
+    "id": EVENT_ID,
+    "subject": "main",
+    "data": {
+        "completed_step": "submitted",
+        "request_id": AIRLOCK_REQUEST_ID,
+        "scan_result": {"clean": True, "message": None}
+    },
+    "eventType": "bla",
+    "eventTime": "test message",
+    "topic": ""
+}
+
+
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
 @patch('services.logging.logger.error')
-async def test_early_scan_result_for_draft_request_is_stored_and_message_completed(logging_mock, airlock_request_repo, _):
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message)
+async def test_scan_result_for_draft_request_is_recorded_without_status_change(logging_mock, airlock_request_repo, _, update_and_publish_mock):
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_scan_result_message)
 
     expected_airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
     airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
@@ -218,41 +233,74 @@ async def test_early_scan_result_for_draft_request_is_stored_and_message_complet
     airlock_request_repo.return_value.update_airlock_request.assert_called_once_with(
         original_request=expected_airlock_request,
         updated_by=expected_airlock_request.updatedBy,
-        pending_scan_result={"new_status": test_sb_step_result_message["data"]["new_status"], "status_message": None})
+        scan_result={"clean": True, "message": None})
+    update_and_publish_mock.assert_not_called()
     logging_mock.assert_not_called()
 
 
 @patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-@patch('services.logging.logger.error')
-async def test_submission_failure_overrides_early_promotion_to_in_review(logging_mock, airlock_request_repo, workspace_repo, update_and_publish_mock):
-    failure_message = {
-        "id": EVENT_ID,
-        "subject": "main",
-        "data": {
-            "completed_step": "submitted",
-            "new_status": "failed",
-            "request_id": AIRLOCK_REQUEST_ID,
-            "status_message": "Request contains more than one file.",
-            "request_files": [{"name": "one.txt", "size": 4}, {"name": "two.txt", "size": 4}]
-        },
-        "eventType": "bla",
-        "eventTime": "test message",
-        "topic": ""
-    }
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(failure_message)
+async def test_verdict_arriving_after_file_validation_completes_submission(airlock_request_repo, workspace_repo, update_and_publish_mock):
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_scan_result_message)
 
-    expected_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
-    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
+    submitted = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned.scanResult = {"clean": True, "message": None}
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = submitted
+    airlock_request_repo.return_value.update_airlock_request.return_value = scanned
     workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
+
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.Failed
-    logging_mock.assert_not_called()
+    assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.InReview
+
+
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_file_validation_arriving_after_verdict_completes_submission(airlock_request_repo, workspace_repo, update_and_publish_mock):
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_files)
+
+    scanned = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned.scanResult = {"clean": True, "message": None}
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = scanned
+    workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
+    update_and_publish_mock.return_value = scanned
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.InReview
+
+
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_malicious_verdict_blocks_a_validated_submission(airlock_request_repo, workspace_repo, update_and_publish_mock):
+    message = json.loads(json.dumps(test_sb_scan_result_message))
+    message["data"]["scan_result"] = {"clean": False, "message": "Malicious"}
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message)
+
+    submitted = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned.scanResult = {"clean": False, "message": "Malicious"}
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = submitted
+    airlock_request_repo.return_value.update_airlock_request.return_value = scanned
+    workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.BlockingInProgress
+    assert update_and_publish_mock.call_args.kwargs["status_message"] == "Malicious"
 
 
 @pytest.mark.parametrize("final_status", [AirlockRequestStatus.Cancelled, AirlockRequestStatus.Failed, AirlockRequestStatus.Blocked])
@@ -302,21 +350,3 @@ test_sb_step_result_message_with_files = {
     "eventTime": "test message",
     "topic": ""
 }
-
-
-@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
-@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
-async def test_file_enumeration_persisted_even_when_status_already_advanced(airlock_request_repo, _):
-    service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_files)
-    request = sample_airlock_request(AirlockRequestStatus.InReview)
-    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = request
-    airlock_request_repo.return_value.update_airlock_request = AsyncMock()
-
-    updater = AirlockStatusUpdater()
-    await updater.init_repos()
-    complete_message = await updater.process_message(service_bus_received_message_mock)
-
-    assert complete_message is True
-    airlock_request_repo.return_value.update_airlock_request.assert_awaited_once()
-    persisted_files = airlock_request_repo.return_value.update_airlock_request.call_args.kwargs["request_files"]
-    assert persisted_files is not None and len(persisted_files) == 1

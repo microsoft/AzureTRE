@@ -94,14 +94,6 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
                                 workspace=Depends(get_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
     updated_request = await update_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace,
                                                                      new_status=AirlockRequestStatus.Submitted)
-    # Apply a scan verdict that raced ahead of submission.
-    if updated_request.pendingScanResult and updated_request.pendingScanResult.get("new_status"):
-        pending = updated_request.pendingScanResult
-        updated_request = await update_and_publish_event_airlock_request(
-            updated_request, airlock_request_repo, user, workspace,
-            new_status=AirlockRequestStatus(pending["new_status"]),
-            status_message=pending.get("status_message"),
-            pending_scan_result=None)
     allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
     return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 

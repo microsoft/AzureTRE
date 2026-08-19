@@ -34,6 +34,31 @@ def test_original_upload_emits_step_result(mock_get_blob_client):
 
 @patch.dict("os.environ", {"ENABLE_MALWARE_SCANNING": "true"})
 @patch("ScanResultTrigger.blob_operations.get_blob_client_from_blob_info")
+def test_verdict_is_reported_as_a_fact_not_a_status(mock_get_blob_client):
+    mock_get_blob_client.return_value = _blob_client({})
+    output_event = MagicMock()
+
+    main(msg=_make_message(), outputEvent=output_event)
+
+    data = output_event.set.call_args.args[0].get_json()
+    assert data["scan_result"] == {"clean": True, "message": None}
+    assert "new_status" not in data
+
+
+@patch.dict("os.environ", {"ENABLE_MALWARE_SCANNING": "true"})
+@patch("ScanResultTrigger.blob_operations.get_blob_client_from_blob_info")
+def test_malicious_verdict_carries_the_reason(mock_get_blob_client):
+    mock_get_blob_client.return_value = _blob_client({})
+    output_event = MagicMock()
+
+    main(msg=_make_message(verdict="Malicious"), outputEvent=output_event)
+
+    data = output_event.set.call_args.args[0].get_json()
+    assert data["scan_result"] == {"clean": False, "message": "Malicious"}
+
+
+@patch.dict("os.environ", {"ENABLE_MALWARE_SCANNING": "true"})
+@patch("ScanResultTrigger.blob_operations.get_blob_client_from_blob_info")
 def test_copied_blob_is_suppressed(mock_get_blob_client):
     mock_get_blob_client.return_value = _blob_client({"copied_from": '["container-prev"]'})
     output_event = MagicMock()

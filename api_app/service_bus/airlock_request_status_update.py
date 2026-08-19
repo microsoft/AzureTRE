@@ -94,6 +94,25 @@ class AirlockStatusUpdater():
 
             return complete_message
 
+    async def _complete_submission_if_ready(self, airlock_request):
+        """A submitted request advances only once file validation and the scan verdict are both in."""
+        if airlock_request.status != AirlockRequestStatus.Submitted:
+            return
+        if not airlock_request.files or airlock_request.scanResult is None:
+            return
+
+        if airlock_request.scanResult.get("clean"):
+            new_status, status_message = AirlockRequestStatus.InReview, None
+        else:
+            new_status, status_message = AirlockRequestStatus.BlockingInProgress, airlock_request.scanResult.get("message")
+
+        logger.info(f"Completing submission for request {airlock_request.id} with status '{new_status}'.")
+        workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
+        await update_and_publish_event_airlock_request(
+            airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo,
+            updated_by=airlock_request.updatedBy, workspace=workspace,
+            new_status=new_status, status_message=status_message)
+
     async def update_status_in_database(self, step_result_message: StepResultStatusUpdateMessage):
         """
         Updates an airlock request and with the new status from step_result message contents.
@@ -103,48 +122,34 @@ class AirlockStatusUpdater():
         try:
             step_result_data = step_result_message.data
             airlock_request_id = step_result_data.request_id
-            # Scan results complete the Submitted step regardless of when scanning ran.
             completed_step = step_result_data.completed_step
             new_status = AirlockRequestStatus(step_result_data.new_status) if step_result_data.new_status else None
             status_message = step_result_data.status_message
             request_files = step_result_data.request_files
+            scan_result = step_result_data.scan_result
             # Find the airlock request by id
             airlock_request = await get_airlock_request_by_id(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
-            if airlock_request.status == completed_step:
+            if scan_result is not None:
+                # A verdict is a fact about the data, so it is recorded whatever the current status.
+                airlock_request = await self.airlock_request_repo.update_airlock_request(
+                    original_request=airlock_request,
+                    updated_by=airlock_request.updatedBy,
+                    scan_result=scan_result)
+                result = True
+            elif airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
-                await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
+                airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
                 result = True
-            elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status == AirlockRequestStatus.Draft:
-                # Defer scan verdicts that arrive before submission.
-                logger.info(f"Storing early scan verdict for request {airlock_request_id} while still in draft.")
-                await self.airlock_request_repo.update_airlock_request(
-                    original_request=airlock_request,
-                    updated_by=airlock_request.updatedBy,
-                    pending_scan_result={"new_status": new_status.value if new_status else None, "status_message": status_message})
-                result = True
-            elif (completed_step == AirlockRequestStatus.Submitted
-                  and new_status == AirlockRequestStatus.Failed
-                  and airlock_request.status == AirlockRequestStatus.InReview):
-                # Submission validation overrides an early scan promotion.
-                logger.info(f"Applying submission failure to request {airlock_request_id} already promoted to in_review.")
-                workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
-                await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
-                result = True
-            elif request_files:
-                # Persist file results that race with a status transition.
-                logger.info(f"Persisting request files for {airlock_request_id} without a status change (current status '{airlock_request.status}').")
-                await self.airlock_request_repo.update_airlock_request(
-                    original_request=airlock_request,
-                    updated_by=airlock_request.updatedBy,
-                    request_files=request_files)
-                result = True
-            elif completed_step == AirlockRequestStatus.Submitted and airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
-                # Complete stale verdicts instead of retrying them to dead-letter.
-                logger.info(f"Discarding stale scan verdict for request {airlock_request_id} in final status '{airlock_request.status}'.")
-                result = True
+            elif airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
+                logger.info(f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'.")
+                return True
             else:
                 logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))
+                return result
+
+            await self._complete_submission_if_ready(airlock_request)
+
         except HTTPException as e:
             if e.status_code == 404:
                 # Marking as true as this message will never succeed anyways and should be removed from the queue.

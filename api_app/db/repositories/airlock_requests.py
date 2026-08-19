@@ -239,7 +239,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[str] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
-            pending_scan_result=_UNSET) -> AirlockRequest:
+            scan_result=_UNSET) -> AirlockRequest:
         # Preserve every field when rebuilding after an ETag conflict.
         update_fields = dict(
             new_status=new_status,
@@ -247,7 +247,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
-            pending_scan_result=pending_scan_result,
+            scan_result=scan_result,
             updated_by=updated_by)
         updated_request = self._build_updated_request(original_request=original_request, **update_fields)
         try:
@@ -298,7 +298,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
-            pending_scan_result=_UNSET,
+            scan_result=_UNSET,
             updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
@@ -306,8 +306,8 @@ class AirlockRequestRepository(BaseRepository):
             self._validate_status_update(current_status=original_request.status, new_status=new_status)
             updated_request.status = new_status
 
-        if pending_scan_result is not _UNSET:
-            updated_request.pendingScanResult = pending_scan_result
+        if scan_result is not _UNSET:
+            updated_request.scanResult = scan_result
 
         if status_message is not None:
             updated_request.statusMessage = status_message

@@ -492,7 +492,7 @@ async def test_update_airlock_request_retry_preserves_all_update_fields(update_i
     await airlock_request_repo.update_airlock_request(
         original_request=airlock_request_mock(status=DRAFT),
         updated_by=create_test_user(),
-        pending_scan_result=verdict)
+        scan_result=verdict)
 
     retried_request = update_item_mock.call_args_list[1].args[1]
-    assert retried_request.pendingScanResult == verdict
+    assert retried_request.scanResult == verdict
