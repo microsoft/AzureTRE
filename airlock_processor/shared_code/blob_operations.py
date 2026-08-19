@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import re
+import time
 from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
@@ -10,6 +11,9 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
+
+COPY_TIMEOUT_SECONDS = 300
+COPY_POLL_INTERVAL_SECONDS = 2
 
 
 def get_account_url(account_name: str) -> str:
@@ -119,6 +123,17 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                      copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
+
+    # An async copy still reads from the source, so the caller must not delete it until this settles.
+    copy_status = copy.get("copy_status")
+    waited_seconds = 0
+    while copy_status == "pending" and waited_seconds < COPY_TIMEOUT_SECONDS:
+        time.sleep(COPY_POLL_INTERVAL_SECONDS)
+        waited_seconds += COPY_POLL_INTERVAL_SECONDS
+        copy_status = copied_blob.get_blob_properties().copy.status
+
+    if copy_status != "success":
+        raise Exception(f"Copy of '{source_blob.blob_name}' did not complete: status '{copy_status}' after {waited_seconds}s")
 
 
 def get_credential() -> DefaultAzureCredential:

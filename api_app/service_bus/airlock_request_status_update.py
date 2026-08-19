@@ -129,8 +129,11 @@ class AirlockStatusUpdater():
             scan_result = step_result_data.scan_result
             # Find the airlock request by id
             airlock_request = await get_airlock_request_by_id(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
-            if scan_result is not None:
-                # A verdict is a fact about the data, so it is recorded whatever the current status.
+            if airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
+                logger.info(f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'.")
+                return True
+            elif scan_result is not None:
+                # A verdict is a fact about the data, so it is recorded in any non-final status.
                 airlock_request = await self.airlock_request_repo.update_airlock_request(
                     original_request=airlock_request,
                     updated_by=airlock_request.updatedBy,
@@ -141,8 +144,9 @@ class AirlockStatusUpdater():
                 # update to new status and send to event grid
                 airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
                 result = True
-            elif airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
-                logger.info(f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'.")
+            elif airlock_request.status == new_status:
+                # Redelivery of a result that was already applied. Retrying forever would dead-letter a valid message.
+                logger.info(f"Step result for request {airlock_request_id} already applied, acknowledging duplicate.")
                 return True
             else:
                 logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))

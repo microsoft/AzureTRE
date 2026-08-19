@@ -104,14 +104,18 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                     # Copy out of the draft container and delete it, so any SAS already issued
                     # is revoked structurally rather than by an eventually-consistent condition.
                     draft_container = airlock_storage_helper.get_container_name_for_request(req_id, previous_status)
-                    if not blob_operations.container_exists(source_account, draft_container):
-                        logging.info(f'Request {req_id}: draft container already sealed, ignoring duplicate submitted message')
-                        return
-                    logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
-                    create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
-                    blob_operations.copy_data(source_account, dest_account, req_id,
-                                              source_container=draft_container, destination_container=req_id)
-                    blob_operations.delete_container(source_account, draft_container)
+                    if blob_operations.container_exists(source_account, draft_container):
+                        logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
+                        create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
+                        blob_operations.copy_data(source_account, dest_account, req_id,
+                                                  source_container=draft_container, destination_container=req_id)
+                        blob_operations.delete_container(source_account, draft_container)
+                    elif blob_operations.container_exists(dest_account, req_id):
+                        # A redelivery after the draft was deleted but before the result was published:
+                        # the data is already sealed, so resume by re-emitting the completion event.
+                        logging.info(f'Request {req_id}: already sealed, re-emitting the submission result')
+                    else:
+                        raise Exception(f'Request {req_id}: neither the draft nor the sealed container exists, cannot complete submission')
 
                     try:
                         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -322,6 +326,9 @@ def get_request_files(request_properties: RequestProperties):
     if use_metadata:
         storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_properties.type, request_properties.previous_status)
         container_name = airlock_storage_helper.get_container_name_for_request(request_properties.request_id, request_properties.previous_status)
+        # On a redelivery the draft is already sealed away, so enumerate the submitted copy instead.
+        if not blob_operations.container_exists(storage_account_name, container_name):
+            container_name = request_properties.request_id
     else:
         storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id, container_name=container_name)
