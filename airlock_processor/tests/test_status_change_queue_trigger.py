@@ -89,9 +89,10 @@ class TestDataCopyProperties():
 class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_request_files")
     @patch("StatusChangedQueueTrigger.get_request_files")
-    @patch("StatusChangedQueueTrigger.is_require_data_copy", return_value=False)
+    @patch("StatusChangedQueueTrigger.blob_operations.create_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_get_request_files_should_be_called_on_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_request_files):
+    def test_get_request_files_should_be_called_on_submit_stage(self, _, __, mock_get_request_files, mock_set_output_event_to_report_request_files):
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())

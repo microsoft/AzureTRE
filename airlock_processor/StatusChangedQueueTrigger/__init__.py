@@ -64,7 +64,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
     if new_status == constants.STAGE_DRAFT:
         if use_metadata:
             from shared_code.blob_operations_metadata import create_container_with_metadata
-            account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, ws_id, airlock_version=request_properties.airlock_version)
+            account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status)
             stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
             create_container_with_metadata(account_name, req_id, stage, workspace_id=ws_id, request_type=request_type)
         else:
@@ -74,7 +74,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
 
     if new_status == constants.STAGE_CANCELLED:
         if use_metadata:
-            storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id, airlock_version=request_properties.airlock_version)
+            storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status)
         else:
             storage_account_name = get_storage_account(previous_status, request_type, ws_id)
         container_to_delete_url = blob_operations.get_blob_url(account_name=storage_account_name, container_name=req_id)
@@ -92,12 +92,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
         if use_metadata:
             from shared_code.blob_operations_metadata import update_container_stage, create_container_with_metadata
 
-            effective_ws_id = ws_id
-            if new_status == constants.STAGE_SUBMITTED and request_type.lower() == constants.IMPORT_TYPE and request_properties.review_workspace_id:
-                effective_ws_id = request_properties.review_workspace_id
-
-            source_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status, ws_id, airlock_version=request_properties.airlock_version)
-            dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status, effective_ws_id, airlock_version=request_properties.airlock_version)
+            source_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, previous_status)
+            dest_account = airlock_storage_helper.get_storage_account_name_for_request(request_type, new_status)
             new_stage = airlock_storage_helper.get_stage_from_status(request_type, new_status)
 
             if source_account == dest_account:
@@ -145,10 +141,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             else:
                 # BlobCreatedTrigger reports cross-account copy completion.
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
-                create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
+                create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
                 blob_operations.copy_data(source_account, dest_account, req_id)
-                if new_status == constants.STAGE_SUBMITTED:
-                    set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
         else:
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
             review_ws_id = request_properties.review_workspace_id
@@ -159,9 +153,6 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             if new_status == constants.STAGE_SUBMITTED:
                 set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
         return
-
-    if new_status == constants.STAGE_SUBMITTED:
-        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
@@ -316,9 +307,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 def get_request_files(request_properties: RequestProperties):
     use_metadata = request_properties.airlock_version >= 2
     if use_metadata:
-        storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(
-            request_properties.type, request_properties.previous_status, request_properties.workspace_id,
-            airlock_version=request_properties.airlock_version)
+        storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_properties.type, request_properties.previous_status)
     else:
         storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id)

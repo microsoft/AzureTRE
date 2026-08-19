@@ -71,16 +71,6 @@ class AirlockRequestRepository(BaseRepository):
     def airlock_requests_query():
         return 'SELECT * FROM c'
 
-    async def set_default_airlock_version_for_legacy_requests(self) -> List[str]:
-        # Missing versions identify requests that require legacy storage routing.
-        query = 'SELECT * FROM c WHERE NOT IS_DEFINED(c.airlock_version)'
-        migrated = []
-        for request in await self.query(query=query):
-            request['airlock_version'] = 1
-            await self.update_item_dict(request)
-            migrated.append(request['id'])
-        return migrated
-
     async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
         query = (
             "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId "

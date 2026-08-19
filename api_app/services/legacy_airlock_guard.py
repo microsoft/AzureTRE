@@ -12,14 +12,15 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
     return resource_ids[:limit]
 
 
-def ensure_workspace_airlock_version_supported(properties: dict) -> None:
-    """Reject unsupported airlock versions."""
+def ensure_workspace_airlock_version_supported(properties: dict, default_version: int = constants.DEFAULT_AIRLOCK_VERSION) -> None:
+    """Reject unsupported airlock versions. Existing workspaces predate v2, so callers
+    validating one must pass default_version=1."""
     if not properties:
         return
     if not properties.get("enable_airlock", True):
         return
 
-    airlock_version = properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)
+    airlock_version = properties.get("airlock_version", default_version)
 
     if not config.ENABLE_LEGACY_AIRLOCK and airlock_version == 1:
         raise ValueError(

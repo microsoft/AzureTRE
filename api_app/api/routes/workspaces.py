@@ -135,7 +135,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
         await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
-        ensure_workspace_airlock_version_supported({**workspace.properties, **(resource_patch.properties or {})})
+        ensure_workspace_airlock_version_supported({**workspace.properties, **(resource_patch.properties or {})}, default_version=1)
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
             await cascaded_update_resource(resource_patch, workspace, user, force_version_update, resource_template_repo=resource_template_repo, resource_history_repo=resource_history_repo, resource_repo=workspace_repo)

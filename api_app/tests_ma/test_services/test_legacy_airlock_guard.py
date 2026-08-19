@@ -66,6 +66,17 @@ def test_ensure_workspace_airlock_version_supported_blocks_v1_when_enable_airloc
             ensure_workspace_airlock_version_supported({"airlock_version": 1})
 
 
+def test_unstamped_workspace_is_treated_as_v2_on_create():
+    with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=False):
+        ensure_workspace_airlock_version_supported({"enable_airlock": True})
+
+
+def test_unstamped_workspace_is_treated_as_v1_when_validating_an_existing_one():
+    with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=False):
+        with pytest.raises(ValueError):
+            ensure_workspace_airlock_version_supported({"enable_airlock": True}, default_version=1)
+
+
 def test_ensure_workspace_airlock_version_supported_allows_v2_on_manual_auth():
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=True):
         ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Manual"})
