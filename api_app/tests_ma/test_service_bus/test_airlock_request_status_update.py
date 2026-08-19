@@ -222,6 +222,40 @@ async def test_early_scan_result_for_draft_request_is_stored_and_message_complet
     logging_mock.assert_not_called()
 
 
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+@patch('services.logging.logger.error')
+async def test_submission_failure_overrides_early_promotion_to_in_review(logging_mock, airlock_request_repo, workspace_repo, update_and_publish_mock):
+    failure_message = {
+        "id": EVENT_ID,
+        "subject": "main",
+        "data": {
+            "completed_step": "submitted",
+            "new_status": "failed",
+            "request_id": AIRLOCK_REQUEST_ID,
+            "status_message": "Request contains more than one file.",
+            "request_files": [{"name": "one.txt", "size": 4}, {"name": "two.txt", "size": 4}]
+        },
+        "eventType": "bla",
+        "eventTime": "test message",
+        "topic": ""
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(failure_message)
+
+    # A pending scan verdict moves the request to in_review at submission, ahead of file validation.
+    expected_airlock_request = sample_airlock_request(AirlockRequestStatus.InReview)
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = expected_airlock_request
+    workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.Failed
+    logging_mock.assert_not_called()
+
+
 @pytest.mark.parametrize("final_status", [AirlockRequestStatus.Cancelled, AirlockRequestStatus.Failed, AirlockRequestStatus.Blocked])
 @patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
 @patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
