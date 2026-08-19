@@ -122,22 +122,6 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
     )
 
 
-def get_container_stage(account_name: str, request_id: str) -> str:
-    container_name = request_id
-    blob_service_client = BlobServiceClient(
-        account_url=get_account_url(account_name),
-        credential=get_credential()
-    )
-    container_client = blob_service_client.get_container_client(container_name)
-
-    try:
-        properties = container_client.get_container_properties()
-        return properties.metadata.get('stage', 'unknown')
-    except ResourceNotFoundError:
-        logging.error(f"Container {request_id} not found in account {account_name}")
-        raise
-
-
 def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]:
     container_name = request_id
     blob_service_client = BlobServiceClient(
@@ -151,46 +135,4 @@ def get_container_metadata(account_name: str, request_id: str) -> Dict[str, str]
         return properties.metadata
     except ResourceNotFoundError:
         logging.error(f"Container {request_id} not found in account {account_name}")
-        raise
-
-
-def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
-    source_blob_service_client = BlobServiceClient(
-        account_url=get_account_url(storage_account_name),
-        credential=get_credential()
-    )
-    source_container_client = source_blob_service_client.get_container_client(container_name)
-    return source_container_client.get_blob_client(blob_name)
-
-
-def get_request_files(account_name: str, request_id: str) -> list:
-    files = []
-    blob_service_client = BlobServiceClient(
-        account_url=get_account_url(account_name),
-        credential=get_credential()
-    )
-    container_client = blob_service_client.get_container_client(container=request_id)
-
-    for blob in container_client.list_blobs():
-        files.append({"name": blob.name, "size": blob.size})
-
-    return files
-
-
-def delete_container_by_request_id(account_name: str, request_id: str) -> None:
-    try:
-        container_name = request_id
-        blob_service_client = BlobServiceClient(
-            account_url=get_account_url(account_name),
-            credential=get_credential()
-        )
-        container_client = blob_service_client.get_container_client(container_name)
-        container_client.delete_container()
-
-        logging.info(f"Deleted container {request_id} from account {account_name}")
-
-    except ResourceNotFoundError:
-        logging.warning(f"Container {request_id} not found in account {account_name}, may have been already deleted")
-    except HttpResponseError as e:
-        logging.error(f"Failed to delete container: {str(e)}")
         raise

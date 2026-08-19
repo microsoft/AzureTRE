@@ -71,18 +71,6 @@ class AirlockRequestRepository(BaseRepository):
     def airlock_requests_query():
         return 'SELECT * FROM c'
 
-    async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
-        query = (
-            "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId "
-            "AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
-        )
-        parameters = [
-            {"name": "@workspaceId", "value": str(workspace_id)},
-            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
-        ]
-        requests = await self.query(query=query, parameters=parameters)
-        return [request["id"] for request in requests]
-
     async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
         # Legacy non-cancelled requests may retain data in per-stage storage.
         query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND c.status != @cancelled"

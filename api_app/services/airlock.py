@@ -232,13 +232,10 @@ def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace)
     if airlock_request.airlock_version >= 2:
         from services.airlock_storage_helper import get_storage_account_name_for_request
         tre_id = config.TRE_ID
-        short_workspace_id = workspace.id[-4:]
         account_name = get_storage_account_name_for_request(
             request_type=airlock_request.type.value,
             status=airlock_request.status,
-            tre_id=tre_id,
-            short_workspace_id=short_workspace_id,
-            airlock_version=airlock_request.airlock_version
+            tre_id=tre_id
         )
     else:
         account_name = get_account_by_request(airlock_request, workspace)

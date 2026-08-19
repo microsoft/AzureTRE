@@ -9,10 +9,7 @@ from shared_code.blob_operations_metadata import (
     get_storage_endpoint_suffix,
     create_container_with_metadata,
     update_container_stage,
-    get_container_stage,
-    get_container_metadata,
-    get_request_files,
-    delete_container_by_request_id
+    get_container_metadata
 )
 
 
@@ -283,54 +280,6 @@ class TestUpdateContainerStage:
             )
 
 
-class TestGetContainerStage:
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_returns_stage_from_metadata(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_properties = MagicMock()
-        mock_properties.metadata = {'stage': 'import-in-progress'}
-        mock_container_client.get_container_properties.return_value = mock_properties
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        stage = get_container_stage(
-            account_name="storageaccount",
-            request_id="request-123"
-        )
-
-        assert stage == "import-in-progress"
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_returns_unknown_when_stage_missing(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_properties = MagicMock()
-        mock_properties.metadata = {}
-        mock_container_client.get_container_properties.return_value = mock_properties
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        stage = get_container_stage(
-            account_name="storageaccount",
-            request_id="request-123"
-        )
-
-        assert stage == "unknown"
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_raises_when_container_not_found(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_container_client.get_container_properties.side_effect = ResourceNotFoundError("Container not found")
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        with pytest.raises(ResourceNotFoundError):
-            get_container_stage(
-                account_name="storageaccount",
-                request_id="nonexistent-request"
-            )
-
-
 class TestGetContainerMetadata:
 
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
@@ -368,88 +317,6 @@ class TestGetContainerMetadata:
             get_container_metadata(
                 account_name="storageaccount",
                 request_id="nonexistent-request"
-            )
-
-
-class TestGetRequestFiles:
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_returns_list_of_files(self, mock_get_credential, mock_blob_service_client):
-        mock_blob1 = MagicMock()
-        mock_blob1.name = "data.csv"
-        mock_blob1.size = 1024
-
-        mock_blob2 = MagicMock()
-        mock_blob2.name = "readme.txt"
-        mock_blob2.size = 256
-
-        mock_container_client = MagicMock()
-        mock_container_client.list_blobs.return_value = [mock_blob1, mock_blob2]
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        files = get_request_files(
-            account_name="storageaccount",
-            request_id="request-123"
-        )
-
-        assert len(files) == 2
-        assert files[0] == {"name": "data.csv", "size": 1024}
-        assert files[1] == {"name": "readme.txt", "size": 256}
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_returns_empty_list_when_no_files(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_container_client.list_blobs.return_value = []
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        files = get_request_files(
-            account_name="storageaccount",
-            request_id="request-123"
-        )
-
-        assert files == []
-
-
-class TestDeleteContainerByRequestId:
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_deletes_container(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        delete_container_by_request_id(
-            account_name="storageaccount",
-            request_id="request-123"
-        )
-
-        mock_container_client.delete_container.assert_called_once()
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_handles_container_not_found(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_container_client.delete_container.side_effect = ResourceNotFoundError("Container not found")
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        delete_container_by_request_id(
-            account_name="storageaccount",
-            request_id="nonexistent-request"
-        )
-
-    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
-    @patch("shared_code.blob_operations_metadata.get_credential")
-    def test_raises_on_http_error(self, mock_get_credential, mock_blob_service_client):
-        mock_container_client = MagicMock()
-        mock_container_client.delete_container.side_effect = HttpResponseError("Service Error")
-        mock_blob_service_client.return_value.get_container_client.return_value = mock_container_client
-
-        with pytest.raises(HttpResponseError):
-            delete_container_by_request_id(
-                account_name="storageaccount",
-                request_id="request-123"
             )
 
 
