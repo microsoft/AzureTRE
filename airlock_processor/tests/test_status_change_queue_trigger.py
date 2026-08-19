@@ -238,8 +238,9 @@ class TestV2MetadataMode():
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
-        assert step_result.set.call_count == 2
-        second_call_event = step_result.set.call_args_list[1][0][0]
+        # Scanning disabled reports files and the transition in one event, so nothing is left stale.
+        assert step_result.set.call_count == 1
+        second_call_event = step_result.set.call_args_list[0][0][0]
         assert second_call_event.get_json()["completed_step"] == constants.STAGE_SUBMITTED
         assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
         assert second_call_event.get_json()["request_files"] == [{"name": "test.txt", "size": 100}]
@@ -284,4 +285,5 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
 
         assert mock_update_stage.call_args.kwargs["skip_if_stage_in"] == constants.TERMINAL_STAGES
-        assert step_result.set.call_count == 1
+        # A late submit on a terminal container must not report files either, or the result dead-letters.
+        assert step_result.set.call_count == 0

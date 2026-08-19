@@ -87,7 +87,6 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             raise NoFilesInRequestException(constants.NO_FILES_IN_REQUEST_MESSAGE)
         if len(request_files) > 1:
             raise TooManyFilesInRequestException(constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE)
-        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     if (is_require_data_copy(new_status)):
         if use_metadata:
@@ -128,8 +127,10 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                                 event_time=datetime.datetime.now(datetime.UTC),
                                 data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
                     else:
-                        # A draft scan verdict may already have been applied on submission.
+                        # Reported only once the stage change has locked the container, so the request
+                        # cannot become reviewable while the researcher can still write to it.
                         logging.info(f'Request {req_id}: Malware scanning enabled, scan result gates the move to in_review')
+                        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
                 elif new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                     final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN
                     logging.info(f'Request {req_id}: Emitting StepResult for terminal transition {new_status} -> {final_status}')
@@ -146,6 +147,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                 logging.info(f'Request {req_id}: Copying from {source_account} to {dest_account}')
                 create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=effective_ws_id, request_type=request_type)
                 blob_operations.copy_data(source_account, dest_account, req_id)
+                if new_status == constants.STAGE_SUBMITTED:
+                    set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
         else:
             logging.info('Request with id %s. requires data copy between storage accounts', req_id)
             review_ws_id = request_properties.review_workspace_id
@@ -153,7 +156,12 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
             blob_operations.create_container(containers_metadata.dest_account_name, req_id)
             blob_operations.copy_data(containers_metadata.source_account_name,
                                       containers_metadata.dest_account_name, req_id)
+            if new_status == constants.STAGE_SUBMITTED:
+                set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
         return
+
+    if new_status == constants.STAGE_SUBMITTED:
+        set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
 
     # Other statuses which do not require data copy are dismissed as we don't need to do anything...
 
