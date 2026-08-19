@@ -371,3 +371,20 @@ async def test_duplicate_step_result_already_applied_is_acknowledged(logging_moc
     assert complete_message is True
     airlock_request_repo.return_value.update_airlock_request.assert_not_called()
     logging_mock.assert_not_called()
+
+
+@pytest.mark.parametrize("malformed", [{"clean": "false"}, {"clean": "true"}, {"clean": None}, {}])
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_malformed_scan_verdict_does_not_advance_request(airlock_request_repo, _, update_and_publish_mock, malformed):
+    # A non-boolean verdict must never be read as clean.
+    request = sample_airlock_request(AirlockRequestStatus.Submitted)
+    request.files = [AirlockFile(name="test.txt", size=100)]
+    request.scanResult = malformed
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    await airlockStatusUpdater._complete_submission_if_ready(request)
+
+    update_and_publish_mock.assert_not_called()

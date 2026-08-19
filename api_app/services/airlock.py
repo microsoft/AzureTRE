@@ -75,13 +75,6 @@ def get_required_permission(airlock_request: AirlockRequest) -> ContainerSasPerm
         return ContainerSasPermissions(read=True, list=True)
 
 
-def is_publicly_accessible_stage(airlock_request: AirlockRequest) -> bool:
-    if airlock_request.type == constants.IMPORT_TYPE:
-        return airlock_request.status == AirlockRequestStatus.Draft
-    else:
-        return airlock_request.status == AirlockRequestStatus.Approved
-
-
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     """Resolve storage account name for v1 (legacy per-stage) airlock requests."""
     tre_id = config.TRE_ID

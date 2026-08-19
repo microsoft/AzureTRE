@@ -1,6 +1,8 @@
 import os
 from unittest.mock import patch
 
+import pytest
+
 from shared_code.airlock_storage_helper import (
     get_storage_account_name_for_request,
     get_stage_from_status
@@ -154,3 +156,9 @@ class TestGetStorageAccountNameForRequestConsolidated:
         def test_export_blocked_uses_workspace_global_storage(self):
             account = get_storage_account_name_for_request(constants.EXPORT_TYPE, constants.STAGE_BLOCKED_BY_SCAN)
             assert account == "stalairlockgtre123"
+
+
+def test_unknown_request_type_raises_rather_than_defaulting_to_export():
+    # A typo must fail closed instead of quietly selecting the workspace-global account.
+    with pytest.raises(ValueError, match="Unknown airlock request type"):
+        get_storage_account_name_for_request("imprt", constants.STAGE_DRAFT)

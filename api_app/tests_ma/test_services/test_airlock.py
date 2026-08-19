@@ -4,7 +4,7 @@ import pytest_asyncio
 import time
 from resources import strings
 from services.airlock import validate_user_allowed_to_access_storage_account, get_required_permission, \
-    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, revoke_request, is_publicly_accessible_stage
+    validate_request_status, cancel_request, delete_review_user_resource, check_email_exists, revoke_request
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReview, AirlockReviewDecision, AirlockActions, AirlockReviewUserResource
 from tests_ma.test_api.conftest import create_workspace_owner_user, create_workspace_researcher_user, get_required_roles
 from mock import AsyncMock, patch, MagicMock
@@ -260,48 +260,6 @@ def test_get_required_permission_return_read_and_write_permissions_for_draft_req
     assert permissions.delete is True
     assert permissions.list is True
     assert permissions.read is True
-
-
-def test_is_publicly_accessible_stage_import_draft_is_public():
-    airlock_request = sample_airlock_request(AirlockRequestStatus.Draft)
-    assert is_publicly_accessible_stage(airlock_request) is True
-
-
-@pytest.mark.parametrize('airlock_status',
-                         [AirlockRequestStatus.Submitted,
-                          AirlockRequestStatus.InReview,
-                          AirlockRequestStatus.ApprovalInProgress,
-                          AirlockRequestStatus.Approved,
-                          AirlockRequestStatus.RejectionInProgress,
-                          AirlockRequestStatus.Rejected,
-                          AirlockRequestStatus.Cancelled,
-                          AirlockRequestStatus.BlockingInProgress,
-                          AirlockRequestStatus.Blocked])
-def test_is_publicly_accessible_stage_import_non_draft_is_not_public(airlock_status):
-    airlock_request = sample_airlock_request(airlock_status)
-    assert is_publicly_accessible_stage(airlock_request) is False
-
-
-def test_is_publicly_accessible_stage_export_approved_is_public():
-    airlock_request = sample_airlock_request(AirlockRequestStatus.Approved)
-    airlock_request.type = AirlockRequestType.Export
-    assert is_publicly_accessible_stage(airlock_request) is True
-
-
-@pytest.mark.parametrize('airlock_status',
-                         [AirlockRequestStatus.Draft,
-                          AirlockRequestStatus.Submitted,
-                          AirlockRequestStatus.InReview,
-                          AirlockRequestStatus.ApprovalInProgress,
-                          AirlockRequestStatus.RejectionInProgress,
-                          AirlockRequestStatus.Rejected,
-                          AirlockRequestStatus.Cancelled,
-                          AirlockRequestStatus.BlockingInProgress,
-                          AirlockRequestStatus.Blocked])
-def test_is_publicly_accessible_stage_export_non_approved_is_not_public(airlock_status):
-    airlock_request = sample_airlock_request(airlock_status)
-    airlock_request.type = AirlockRequestType.Export
-    assert is_publicly_accessible_stage(airlock_request) is False
 
 
 @pytest.mark.asyncio

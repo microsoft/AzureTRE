@@ -101,10 +101,15 @@ class AirlockStatusUpdater():
         if not airlock_request.files or airlock_request.scanResult is None:
             return
 
-        if airlock_request.scanResult.get("clean"):
+        clean = airlock_request.scanResult.get("clean")
+        if clean is True:
             new_status, status_message = AirlockRequestStatus.InReview, None
-        else:
+        elif clean is False:
             new_status, status_message = AirlockRequestStatus.BlockingInProgress, airlock_request.scanResult.get("message")
+        else:
+            # A malformed verdict must never be read as clean, so leave the request where it is.
+            logger.error(f"Request {airlock_request.id} has a malformed scan verdict, not advancing: {airlock_request.scanResult}")
+            return
 
         logger.info(f"Completing submission for request {airlock_request.id} with status '{new_status}'.")
         workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)

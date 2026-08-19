@@ -19,10 +19,6 @@ STAGE_EXPORT_APPROVED = "export-approved"
 STAGE_EXPORT_REJECTED = "export-rejected"
 STAGE_EXPORT_BLOCKED = "export-blocked"
 
-# Late events must not revert terminal stages.
-TERMINAL_STAGES = [STAGE_IMPORT_APPROVED, STAGE_IMPORT_REJECTED, STAGE_IMPORT_BLOCKED,
-                   STAGE_EXPORT_APPROVED, STAGE_EXPORT_REJECTED, STAGE_EXPORT_BLOCKED]
-
 # Retained for legacy workspace compatibility.
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex"

@@ -18,6 +18,10 @@ def get_storage_account_name_for_request(request_type: str, status: str) -> str:
     # v1 routing lives in StatusChangedQueueTrigger.get_storage_account.
     tre_id = os.environ.get("TRE_ID", "")
 
+    if request_type not in (constants.IMPORT_TYPE, constants.EXPORT_TYPE):
+        # Falling through to the export layout would silently place data in the wrong account.
+        raise ValueError(f"Unknown airlock request type '{request_type}'")
+
     if request_type == constants.IMPORT_TYPE:
         if status in [constants.STAGE_DRAFT, constants.STAGE_SUBMITTED, constants.STAGE_IN_REVIEW,
                       constants.STAGE_REJECTED, constants.STAGE_REJECTION_INPROGRESS,

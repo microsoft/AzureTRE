@@ -73,7 +73,14 @@ async def test_v2_import_approve_flow(setup_test_workspace, verify):
         m = re.match(r'https://[^/]+/([^?]+)', url)
         return m.group(1) if m else None
 
-    assert extract_container_name(container_url) == request_id
+    # The link handed out in Draft points at the draft container, which submission seals away.
+    assert extract_container_name(container_url) == f"{request_id}-draft"
+
+    approved_link = await get_request(
+        f'/api{workspace_path}/requests/{request_id}/link',
+        workspace_owner_token, verify, 200
+    )
+    assert extract_container_name(approved_link["containerUrl"]) == request_id
 
 
 @pytest.mark.timeout(35 * 60)
