@@ -123,6 +123,15 @@ async function getCommandFromComment({ core, context, github }) {
           break;
         }
 
+      case "/test-airlock":
+        {
+          const runTests = await handleTestCommand({ core, github }, parts, "airlock tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-airlock";
+          }
+          break;
+        }
+
       case "/test-force-approve":
         {
           command = "test-force-approve";

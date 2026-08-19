@@ -151,6 +151,66 @@ async def test_submit_with_multiple_files_is_rejected(setup_test_workspace, veri
     await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "more than 1 file")
 
 
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_cancelled_request_reaches_terminal_state(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+
+    request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/cancel', workspace_owner_token, verify, 200)
+    assert request_result["airlockRequest"]["status"] == airlock_strings.CANCELLED_STATUS
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_rejected_request_reaches_terminal_state(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    payload = {"approval": "False", "decisionExplanation": "rejected by the e2e test"}
+    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_container_link_is_refused_once_request_leaves_draft(setup_test_workspace, verify):
+    """Data must be immutable once submitted, so the API should stop handing out a writable link."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    payload = {"approval": "False", "decisionExplanation": "rejected so the data is no longer reachable"}
+    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+    await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 400)
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_client_supplied_airlock_version_is_ignored(setup_test_workspace, verify):
+    """The storage layout is decided by the workspace, not by the caller."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    workspace = await get_resource(f"/api{workspace_path}", workspace_owner_token, verify)
+    expected_version = workspace["workspace"]["properties"].get("airlock_version", 1)
+
+    payload = {
+        "type": airlock_strings.IMPORT,
+        "businessJustification": "some business justification",
+        "airlock_version": 1 if expected_version != 1 else 2,
+    }
+    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    assert request_result["airlockRequest"]["airlock_version"] == expected_version
+
+
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
 async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
