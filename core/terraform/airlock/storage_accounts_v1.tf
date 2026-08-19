@@ -367,3 +367,69 @@ resource "azurerm_role_assignment" "api_sa_data_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.api_principal_id
 }
+
+# These resources predate the enable_legacy_airlock toggle; preserve their state addresses.
+moved {
+  from = azurerm_storage_account.sa_import_external
+  to   = azurerm_storage_account.sa_import_external[0]
+}
+
+moved {
+  from = azurerm_private_endpoint.stg_import_external_pe
+  to   = azurerm_private_endpoint.stg_import_external_pe[0]
+}
+
+moved {
+  from = azurerm_storage_account.sa_export_approved
+  to   = azurerm_storage_account.sa_export_approved[0]
+}
+
+moved {
+  from = azurerm_private_endpoint.stg_export_approved_pe
+  to   = azurerm_private_endpoint.stg_export_approved_pe[0]
+}
+
+moved {
+  from = azurerm_storage_account.sa_import_in_progress
+  to   = azurerm_storage_account.sa_import_in_progress[0]
+}
+
+moved {
+  from = azapi_resource_action.enable_defender_for_storage
+  to   = azapi_resource_action.enable_defender_for_storage[0]
+}
+
+moved {
+  from = azurerm_private_endpoint.stg_import_inprogress_pe
+  to   = azurerm_private_endpoint.stg_import_inprogress_pe[0]
+}
+
+moved {
+  from = azurerm_storage_account.sa_import_rejected
+  to   = azurerm_storage_account.sa_import_rejected[0]
+}
+
+moved {
+  from = azurerm_private_endpoint.stg_import_rejected_pe
+  to   = azurerm_private_endpoint.stg_import_rejected_pe[0]
+}
+
+moved {
+  from = azurerm_storage_account.sa_import_blocked
+  to   = azurerm_storage_account.sa_import_blocked[0]
+}
+
+moved {
+  from = azurerm_private_endpoint.stg_import_blocked_pe
+  to   = azurerm_private_endpoint.stg_import_blocked_pe[0]
+}
+
+moved {
+  from = azurerm_role_assignment.airlock_blob_data_contributor
+  to   = azurerm_role_assignment.airlock_blob_data_contributor[0]
+}
+
+moved {
+  from = azurerm_role_assignment.api_sa_data_contributor
+  to   = azurerm_role_assignment.api_sa_data_contributor[0]
+}

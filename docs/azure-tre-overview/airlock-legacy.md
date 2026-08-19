@@ -126,4 +126,4 @@ To upgrade a workspace from the legacy architecture:
 !!! warning
     Setting `enable_legacy_airlock: false` and redeploying core **permanently deletes the core v1 airlock storage accounts** (`stalimex`, `stalimip`, `stalimrej`, `stalimblocked`, `stalexapp`) and any data still in them. Terraform destroys them in the same apply that switches the API to v2-only.
 
-    Before disabling, ensure no active `airlock_version=1` workspaces or in-flight v1 requests remain, and run `POST /migrations` so pre-v2 workspaces and requests are stamped with `airlock_version=1` (keeping them routed to legacy storage). Switching a workspace's `airlock_version` while it holds requests with retained data is blocked by the API (returns HTTP 400).
+    Before disabling, ensure no active `airlock_version=1` workspaces or in-flight v1 requests remain. Workspaces and requests created before v2 have no stored `airlock_version` and are treated as version 1 on read, so they continue to route to legacy storage without any migration step. Switching a workspace's `airlock_version` while it holds requests with retained data is blocked by the API (returns HTTP 400).

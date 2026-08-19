@@ -203,3 +203,64 @@ resource "azurerm_eventgrid_event_subscription" "export_approved_blob_created" {
     azurerm_role_assignment.servicebus_sender_export_approved_blob_created
   ]
 }
+
+# These resources predate the enable_legacy_airlock toggle; preserve their state addresses.
+moved {
+  from = azurerm_eventgrid_system_topic.import_inprogress_blob_created
+  to   = azurerm_eventgrid_system_topic.import_inprogress_blob_created[0]
+}
+
+moved {
+  from = azurerm_role_assignment.servicebus_sender_import_inprogress_blob_created
+  to   = azurerm_role_assignment.servicebus_sender_import_inprogress_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_system_topic.import_rejected_blob_created
+  to   = azurerm_eventgrid_system_topic.import_rejected_blob_created[0]
+}
+
+moved {
+  from = azurerm_role_assignment.servicebus_sender_import_rejected_blob_created
+  to   = azurerm_role_assignment.servicebus_sender_import_rejected_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_system_topic.import_blocked_blob_created
+  to   = azurerm_eventgrid_system_topic.import_blocked_blob_created[0]
+}
+
+moved {
+  from = azurerm_role_assignment.servicebus_sender_import_blocked_blob_created
+  to   = azurerm_role_assignment.servicebus_sender_import_blocked_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_system_topic.export_approved_blob_created
+  to   = azurerm_eventgrid_system_topic.export_approved_blob_created[0]
+}
+
+moved {
+  from = azurerm_role_assignment.servicebus_sender_export_approved_blob_created
+  to   = azurerm_role_assignment.servicebus_sender_export_approved_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_event_subscription.import_inprogress_blob_created
+  to   = azurerm_eventgrid_event_subscription.import_inprogress_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_event_subscription.import_rejected_blob_created
+  to   = azurerm_eventgrid_event_subscription.import_rejected_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_event_subscription.import_blocked_blob_created
+  to   = azurerm_eventgrid_event_subscription.import_blocked_blob_created[0]
+}
+
+moved {
+  from = azurerm_eventgrid_event_subscription.export_approved_blob_created
+  to   = azurerm_eventgrid_event_subscription.export_approved_blob_created[0]
+}
