@@ -2,7 +2,7 @@ import os
 import pytest
 import asyncio
 import logging
-
+from httpx import AsyncClient
 from azure.core.exceptions import ResourceNotFoundError
 
 from airlock.request import post_request, get_request, upload_blob_using_sas, delete_blob_using_sas, wait_for_status
@@ -209,6 +209,26 @@ async def test_client_supplied_airlock_version_is_ignored(setup_test_workspace, 
     }
     request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
     assert request_result["airlockRequest"]["airlock_version"] == expected_version
+
+
+@pytest.mark.timeout(50 * 60)
+@pytest.mark.airlock
+async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_test_workspace, verify):
+    """Submitted data sits on the in-progress account, which is gated on private link,
+    so a valid SAS for it must still be refused when presented from outside the vnet."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    base, sas = request_result["containerUrl"].split("?")
+    blob_url = f"{base}/{BLOB_NAME}?{sas}"
+
+    async with AsyncClient(timeout=30.0, verify=verify) as client:
+        public_response = await client.get(blob_url)
+
+    assert public_response.status_code == 403, f"in-progress data was readable from the public internet: {public_response.status_code}"
 
 
 @pytest.mark.timeout(50 * 60)
