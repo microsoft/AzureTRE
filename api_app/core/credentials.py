@@ -15,8 +15,20 @@ from azure.identity.aio import (
     ChainedTokenCredential as ChainedTokenCredentialASync,
 )
 
-# Workload-identity token-exchange audience.
-TOKEN_EXCHANGE_AUDIENCE = "api://AzureADTokenExchange/.default"  # nosec B105 - token exchange audience, not a secret
+# Workload-identity token-exchange audience. Sovereign clouds use their own audience,
+# and it must match the audience on the workspace signer's federated credential.
+
+
+def _token_exchange_audience() -> str:
+    host = urlparse(AAD_AUTHORITY_URL).netloc.lower()
+    if host.endswith(".us"):
+        return "api://AzureADTokenExchangeUSGov/.default"
+    if host.endswith(".cn"):
+        return "api://AzureADTokenExchangeChina/.default"
+    return "api://AzureADTokenExchange/.default"
+
+
+TOKEN_EXCHANGE_AUDIENCE = _token_exchange_audience()  # nosec B105 - token exchange audience, not a secret
 
 
 def get_credential() -> TokenCredential:

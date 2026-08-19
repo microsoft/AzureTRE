@@ -41,12 +41,11 @@ def main(msg: func.ServiceBusMessage,
     account_name, container_name, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
     request_id = airlock_storage_helper.get_request_id_from_container_name(container_name)
 
-    # Consolidated destination copies must not emit duplicate scan results.
-    if account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE):
-        blob_client = blob_operations.get_blob_client_from_blob_info(account_name, container_name, blob_name)
-        if "copied_from" in blob_client.get_blob_properties()["metadata"]:
-            logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
-            return
+    # Consolidated destination copies must not emit duplicate scan results. The container name
+    # identifies the original upload, so the source blob is not read - it may already be sealed away.
+    if account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE) and not container_name.endswith(constants.DRAFT_CONTAINER_SUFFIX):
+        logging.info(f'Scan result for copied blob in request {request_id} ignored; only the original upload gates submission.')
+        return
 
     # The verdict is reported as a fact; the API decides the status once submission is validated.
     outputEvent.set(
