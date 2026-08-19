@@ -255,14 +255,25 @@ export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
 
   const prunedProperties: Record<string, any> = Object.create(null);
   const prunedRequired: string[] = [];
+  const activeKeySet = new Set(activeKeys);
+  const matchingSubKeysByProperty = new Map<string, string[]>();
+
+  for (const activeKey of activeKeys) {
+    const separatorIndex = activeKey.indexOf(".");
+    if (separatorIndex === -1) continue;
+
+    const propName = activeKey.slice(0, separatorIndex);
+    const subKey = activeKey.slice(separatorIndex + 1);
+    const matchingSubKeys = matchingSubKeysByProperty.get(propName) ?? [];
+    matchingSubKeys.push(subKey);
+    matchingSubKeysByProperty.set(propName, matchingSubKeys);
+  }
 
   for (const [propName, propSchema] of Object.entries(schemaNode.properties)) {
     if (partGuard(propName)) continue;
 
-    const exactMatch = activeKeys.includes(propName);
-    const matchingSubKeys = activeKeys
-      .filter((k) => k.startsWith(propName + "."))
-      .map((k) => k.slice(propName.length + 1));
+    const exactMatch = activeKeySet.has(propName);
+    const matchingSubKeys = matchingSubKeysByProperty.get(propName) ?? [];
 
     if (exactMatch || matchingSubKeys.length > 0) {
       if (

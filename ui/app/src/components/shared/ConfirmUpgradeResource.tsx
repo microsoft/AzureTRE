@@ -436,7 +436,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     props.resource.resourceType,
     props.resource.templateName,
     props.resource.templateVersion,
-    props.resource.resourcePath,
     props.parentWorkspaceService?.id,
     props.parentWorkspaceService?.templateName,
     workspaceCtx.workspace?.id,

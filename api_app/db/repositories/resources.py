@@ -634,9 +634,11 @@ class ResourceRepository(BaseRepository):
             1. Explicitly marked updateable: true in the template schema on the property itself
                OR on any of its ancestor objects (top-level or via allOf clauses).
             2. Introduced as a new property path during a template upgrade.
-            3. Referenced as a pipeline property in the template's install/upgrade pipeline.
-            4. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
-            5. Absent from the persisted resource and required by the active target schema during an upgrade.
+            3. Retains its existing value from the resource during an upgrade (data preservation of untouched fields).
+            4. Absent from the persisted resource and required by the active target schema during an upgrade.
+
+            Pipeline properties are retained and validated as part of the upgrade, but are not
+            user-modifiable through a PATCH.
             """
             schema_path = ".".join(part for part in prop_path.split(".") if not part.isdigit())
             prop_def = get_prop_schema(enriched_template, schema_path)
@@ -693,7 +695,8 @@ class ResourceRepository(BaseRepository):
             leaf_props = self._get_leaf_properties(resource_patch.properties)
             for prop_path, prop_val in leaf_props:
                 if not is_leaf_allowed(prop_path, prop_val):
-                    if prop_path in target_template_properties:
+                    schema_path = ".".join(part for part in prop_path.split(".") if not part.isdigit())
+                    if schema_path in target_template_properties:
                         raise ValidationError(f"Property '{prop_path}' is not updateable.")
                     else:
                         raise ValidationError(f"Property '{prop_path}' is unexpected.")
