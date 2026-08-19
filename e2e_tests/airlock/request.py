@@ -73,6 +73,19 @@ async def upload_blob_using_sas(file_path: str, sas_url: str):
         return response
 
 
+async def delete_blob_using_sas(file_path: str, sas_url: str):
+    parsed_sas_url = urlparse(sas_url)
+    container_name = parsed_sas_url.path.lstrip("/")
+    storage_account_url = f"{parsed_sas_url.scheme}://{parsed_sas_url.netloc}/"
+    file_name = os.path.basename(file_path)
+
+    blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
+    LOGGER.info(f"deleting [{file_name}] from container [{blob_url}]")
+
+    client = BlobClient.from_blob_url(blob_url)
+    client.delete_blob()
+
+
 async def wait_for_status(
     request_status: str, workspace_owner_token, workspace_path, request_id, verify
 ):

@@ -5,7 +5,7 @@ import logging
 
 from azure.core.exceptions import ResourceNotFoundError
 
-from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
+from airlock.request import post_request, get_request, upload_blob_using_sas, delete_blob_using_sas, wait_for_status
 from resources.resource import get_resource, post_resource
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
@@ -17,6 +17,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 LOGGER = logging.getLogger(__name__)
 BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
+SECOND_BLOB_FILE_PATH = "./test_airlock_second_sample.txt"
 
 
 async def submit_airlock_import_request(workspace_path: str, workspace_owner_token: str, verify: bool):
@@ -89,6 +90,65 @@ async def test_draft_container_is_sealed_after_submit(setup_test_workspace, veri
     # Submission copies the data out and deletes the draft container, so the old SAS resolves to nothing.
     with pytest.raises(ResourceNotFoundError):
         await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+
+async def create_draft_import_request_with_file(workspace_path: str, workspace_owner_token: str, verify: bool):
+    payload = {
+        "type": airlock_strings.IMPORT,
+        "businessJustification": "some business justification"
+    }
+    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    request_id = request_result["airlockRequest"]["id"]
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    container_url = request_result["containerUrl"]
+
+    # Container creation is asynchronous, so a successful upload is what confirms it exists.
+    for _ in range(20):
+        try:
+            await asyncio.sleep(5)
+            upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+            if "etag" in upload_response:
+                return request_id, container_url
+        except ResourceNotFoundError:
+            await asyncio.sleep(30)
+    raise Exception("Draft container was not created in time")
+
+
+async def submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, expected_message):
+    await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.FAILED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}', workspace_owner_token, verify, 200)
+    assert expected_message in request_result["airlockRequest"]["statusMessage"]
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_submit_with_no_files_is_rejected(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+    await delete_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+    await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "did not contain any files")
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_submit_with_multiple_files_is_rejected(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+
+    # upload_blob_using_sas names the blob after the file, so a second distinct name is needed.
+    with open(SECOND_BLOB_FILE_PATH, "w") as second_file:
+        second_file.write("a second file in the same request")
+    await upload_blob_using_sas(SECOND_BLOB_FILE_PATH, container_url)
+
+    await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "more than 1 file")
 
 
 @pytest.mark.timeout(50 * 60)
