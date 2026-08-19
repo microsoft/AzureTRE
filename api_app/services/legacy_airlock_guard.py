@@ -30,7 +30,7 @@ def ensure_workspace_airlock_version_supported(properties: dict, default_version
 
 
 async def ensure_airlock_version_change_allowed(workspace: Resource, resource_patch: ResourcePatch, request_repo: AirlockRequestRepository) -> None:
-    """Reject version changes while airlock requests retain data."""
+    """Reject version changes while airlock requests are still in flight."""
     if not resource_patch.properties:
         return
     new_version = resource_patch.properties.get("airlock_version")
@@ -40,15 +40,15 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     if new_version == current_version:
         return
 
-    request_ids = await request_repo.get_data_retaining_airlock_request_ids_for_workspace(workspace.id)
+    request_ids = await request_repo.get_in_flight_airlock_request_ids_for_workspace(workspace.id)
     if request_ids:
         logger.warning(
-            "Blocked airlock_version change %s->%s for workspace %s due to %d airlock request(s) with retained data",
+            "Blocked airlock_version change %s->%s for workspace %s due to %d in-flight airlock request(s)",
             current_version, new_version, workspace.id, len(request_ids)
         )
         raise ValueError(
             f"Cannot change airlock_version from {current_version} to {new_version} while "
-            f"{len(request_ids)} airlock request(s) with retained data exist in this workspace "
-            f"(the previous version's storage accounts, and their approved-import links/data, would be destroyed). "
-            f"Export or remove them first. Request ids: {_truncate_ids(request_ids)}"
+            f"{len(request_ids)} airlock request(s) are still in progress in this workspace "
+            f"(their data would be left behind in the previous version's storage). "
+            f"Let them complete or cancel them first. Request ids: {_truncate_ids(request_ids)}"
         )

@@ -19,27 +19,27 @@ def _workspace(airlock_version=None):
 async def test_ensure_airlock_version_change_allowed_noop_when_version_unchanged():
     request_repo = AsyncMock()
     await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 1}), request_repo)
-    request_repo.get_data_retaining_airlock_request_ids_for_workspace.assert_not_called()
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_noop_when_no_version_in_patch():
     request_repo = AsyncMock()
     await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"display_name": "x"}), request_repo)
-    request_repo.get_data_retaining_airlock_request_ids_for_workspace.assert_not_called()
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_permits_change_when_no_in_flight():
     request_repo = AsyncMock()
-    request_repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = []
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.return_value = []
     await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo)
 
 
 @pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_blocks_upgrade_with_in_flight_requests():
     request_repo = AsyncMock()
-    request_repo.get_data_retaining_airlock_request_ids_for_workspace.return_value = ["req-1"]
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.return_value = ["req-1"]
     with pytest.raises(ValueError):
         await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo)
 

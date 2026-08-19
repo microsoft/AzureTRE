@@ -81,6 +81,17 @@ class AirlockRequestRepository(BaseRepository):
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
 
+    async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Requests in a final state keep their data but will never move between stages,
+        # so only in-flight requests block a change of storage layout.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)},
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
+
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 
         # Define valid transitions

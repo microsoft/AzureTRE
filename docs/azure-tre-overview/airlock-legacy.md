@@ -114,16 +114,16 @@ The following diagram shows the legacy airlock flow with data copies between sto
 To upgrade a workspace from the legacy architecture:
 
 1. Ensure core is deployed with the current codebase (`enable_legacy_airlock: true` to keep legacy infrastructure alongside the new accounts).
-2. Let any in-flight requests complete, then cancel or delete the rest: the API rejects an `airlock_version` change while the workspace holds requests that still retain data (HTTP 400).
+2. Let any in-flight requests complete or cancel them: the API rejects an `airlock_version` change while the workspace holds requests that are still in progress (HTTP 400). Requests in a final state do not block the change.
 3. Update the workspace `airlock_version` property to `2`.
 4. Redeploy the workspace — this switches from the legacy airlock terraform module to the consolidated module.
 5. New airlock requests will use the consolidated storage accounts.
 6. Once all workspaces are migrated and no legacy requests are in-flight, set `enable_legacy_airlock: false` in `config.yaml` and redeploy core to remove the legacy storage accounts.
 
 !!! note
-    Each request has `airlock_version` stamped at creation time, so a request always keeps using the storage it was created against. A workspace cannot be switched to v2 while any of its requests still retain data, so drain them before changing the version.
+    Each request has `airlock_version` stamped at creation time, so a request always keeps using the storage it was created against. A workspace cannot be switched to v2 while any of its requests are still in progress, so drain them before changing the version. Data belonging to already-completed requests stays in the storage it was created against.
 
 !!! warning
     Setting `enable_legacy_airlock: false` and redeploying core **permanently deletes the core v1 airlock storage accounts** (`stalimex`, `stalimip`, `stalimrej`, `stalimblocked`, `stalexapp`) and any data still in them. Terraform destroys them in the same apply that switches the API to v2-only.
 
-    Before disabling, ensure no active `airlock_version=1` workspaces or in-flight v1 requests remain. Workspaces and requests created before v2 have no stored `airlock_version` and are treated as version 1 on read, so they continue to route to legacy storage without any migration step. Switching a workspace's `airlock_version` while it holds requests with retained data is blocked by the API (returns HTTP 400).
+    Before disabling, ensure no active `airlock_version=1` workspaces or in-flight v1 requests remain. Workspaces and requests created before v2 have no stored `airlock_version` and are treated as version 1 on read, so they continue to route to legacy storage without any migration step. Switching a workspace's `airlock_version` while it holds in-progress requests is blocked by the API (returns HTTP 400).

@@ -484,3 +484,15 @@ async def test_update_airlock_request_retry_preserves_all_update_fields(update_i
 
     retried_request = update_item_mock.call_args_list[1].args[1]
     assert retried_request.scanResult == verdict
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.query", return_value=[])
+async def test_get_in_flight_requests_excludes_every_final_status(query_mock, airlock_request_repo):
+    """Final states never move between stages, so they must not block a change of storage layout."""
+    await airlock_request_repo.get_in_flight_airlock_request_ids_for_workspace(WORKSPACE_ID)
+
+    final_statuses = query_mock.call_args.kwargs["parameters"][1]["value"]
+    assert set(final_statuses) == {status.value for status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES}
+    assert AirlockRequestStatus.Rejected.value in final_statuses
+    assert AirlockRequestStatus.Approved.value in final_statuses
