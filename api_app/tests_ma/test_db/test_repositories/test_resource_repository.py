@@ -4,7 +4,7 @@ import uuid
 import pytest
 import pytest_asyncio
 from mock import patch, MagicMock
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from jsonschema.exceptions import ValidationError
 from resources import strings
@@ -25,6 +25,10 @@ from models.schemas.workspace import WorkspaceInCreate
 
 
 RESOURCE_ID = str(uuid.uuid4())
+
+
+def parse_obj_as(model_type, value):
+    return TypeAdapter(model_type).validate_python(value)
 
 
 @pytest_asyncio.fixture
@@ -100,7 +104,7 @@ def sample_resource_template() -> ResourceTemplate:
                                     'updateable': True
                                 }
                             },
-                            actions=[]).dict(exclude_none=True)
+                            actions=[]).model_dump(exclude_none=True)
 
 
 def sample_nested_template() -> ResourceTemplate:
@@ -139,7 +143,7 @@ def sample_nested_template() -> ResourceTemplate:
             }
         },
         customActions=[]
-    ).dict(exclude_none=True)
+    ).model_dump(exclude_none=True)
 
 
 def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
@@ -191,7 +195,7 @@ def sample_resource_template_with_new_property(version: str = "0.2.0") -> dict:
             }
         },
         actions=[]
-    ).dict(exclude_none=True)
+    ).model_dump(exclude_none=True)
 
 
 def test_matches_if_condition_requires_referenced_properties(resource_repo):
@@ -221,7 +225,7 @@ async def test_validate_input_against_template_returns_template_version_if_templ
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, [])
 
@@ -258,9 +262,10 @@ async def test_validate_input_against_template_raises_value_error_if_payload_is_
         current=True,
         required=["display_name"],
         properties={},
-        customActions=[]).dict()
+        customActions=[]).model_dump()
 
     # the enrich template method does this
+    template_dict["allOf"] = None
     template_dict.pop("allOf")
 
     enriched_template_mock.return_value = template_dict
@@ -284,7 +289,7 @@ async def test_validate_input_against_template_raises_if_user_does_not_have_requ
                                                            required=[],
                                                            authorizedRoles=["missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     with pytest.raises(UserNotAuthorizedToUseTemplate):
         _ = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
@@ -303,7 +308,7 @@ async def test_validate_input_against_template_valid_if_user_has_only_one_role(_
                                                            required=[],
                                                            authorizedRoles=["test_role", "missing_role"],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_role", "another_role"])
 
@@ -323,7 +328,7 @@ async def test_validate_input_against_template_valid_if_required_roles_set_is_em
                                                            current=True,
                                                            required=[],
                                                            properties={},
-                                                           customActions=[]).dict()
+                                                           customActions=[]).model_dump()
 
     template = await resource_repo.validate_input_against_template("template1", workspace_input, ResourceType.Workspace, ["test_user_role"])
 
@@ -421,7 +426,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource = sample_resource()
     expected_resource.properties['display_name'] = 'updated name'
     expected_resource.resourceVersion = 1
-    expected_resource.user = user
+    expected_resource.user = user.model_dump()
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
     await resource_repo.patch_resource(resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
@@ -433,7 +438,7 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.resourceVersion = 2
     expected_resource.properties['display_name'] = "updated name 2"
     expected_resource.isEnabled = False
-    expected_resource.user = user
+    expected_resource.user = user.model_dump()
 
     await resource_repo.patch_resource(new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE)
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
@@ -663,7 +668,7 @@ async def test_validate_patch_rejects_system_properties_modification_during_upgr
     template_repo = MagicMock()
     template_repo.get_template_by_name_and_version = AsyncMock(return_value=new_template)
     template_repo.enrich_template = MagicMock(side_effect=lambda t, is_update=False: {
-        **t.dict(),
+        **t.model_dump(),
         'system_properties': {'tre_id': {'type': 'string'}}
     })
 
@@ -736,7 +741,7 @@ async def test_validate_patch_allows_retained_system_properties_with_unevaluated
     template_repo = MagicMock()
     template_repo.get_template_by_name_and_version = AsyncMock(return_value=new_template)
     template_repo.enrich_template = MagicMock(side_effect=lambda t, is_update=False: {
-        **t.dict(exclude_none=True),
+        **t.model_dump(exclude_none=True),
         'unevaluatedProperties': False,
         'system_properties': {'tre_id': {'type': 'string'}}
     })
@@ -1411,7 +1416,7 @@ async def test_patch_resource_passes_parent_service_name_for_user_resources(enri
     template_repo.enrich_template = enrich_template_mock
 
     user = create_test_user()
-    resource_dict = sample_resource().dict()
+    resource_dict = sample_resource().model_dump()
     resource_dict['resourceType'] = ResourceType.UserResource
     resource_dict['parentWorkspaceServiceId'] = 'parent-service-id'
     resource_dict['templateVersion'] = '0.1.0'

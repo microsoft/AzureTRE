@@ -20,7 +20,7 @@ from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from pydantic import UUID4, parse_obj_as
+from pydantic import UUID4, TypeAdapter
 
 
 class ResourceRepository(BaseRepository):
@@ -47,8 +47,41 @@ class ResourceRepository(BaseRepository):
         return query, parameters
 
     @staticmethod
+    def _normalize_template_schema(resource_template: dict) -> dict:
+        normalized_template = copy.deepcopy(resource_template)
+
+        def normalize_node(node, is_root=False):
+            if isinstance(node, dict):
+                schema_id = node.get("$id")
+                if not is_root and isinstance(schema_id, str) and schema_id.partition("#")[2]:
+                    node.pop("$id", None)
+
+                if node.get("const", object()) is None:
+                    schema_type = node.get("type")
+                    type_allows_null = (
+                        schema_type is None
+                        or schema_type == "null"
+                        or (isinstance(schema_type, list) and "null" in schema_type)
+                    )
+                    enum_values = node.get("enum")
+                    enum_allows_null = not isinstance(enum_values, list) or None in enum_values
+
+                    if not type_allows_null or not enum_allows_null:
+                        node.pop("const", None)
+
+                for value in node.values():
+                    normalize_node(value)
+            elif isinstance(node, list):
+                for value in node:
+                    normalize_node(value)
+
+        normalize_node(normalized_template, is_root=True)
+        return normalized_template
+
+    @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
-        validate(instance=resource_input["properties"], schema=resource_template)
+        normalized_template = ResourceRepository._normalize_template_schema(resource_template)
+        validate(instance=resource_input["properties"], schema=normalized_template)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = await ResourceTemplateRepository.create()
@@ -70,15 +103,15 @@ class ResourceRepository(BaseRepository):
         resource = await self.get_resource_dict_by_id(resource_id)
 
         if resource["resourceType"] == ResourceType.SharedService:
-            return parse_obj_as(SharedService, resource)
+            return TypeAdapter(SharedService).validate_python(resource)
         if resource["resourceType"] == ResourceType.Workspace:
-            return parse_obj_as(Workspace, resource)
+            return TypeAdapter(Workspace).validate_python(resource)
         if resource["resourceType"] == ResourceType.WorkspaceService:
-            return parse_obj_as(WorkspaceService, resource)
+            return TypeAdapter(WorkspaceService).validate_python(resource)
         if resource["resourceType"] == ResourceType.UserResource:
-            return parse_obj_as(UserResource, resource)
+            return TypeAdapter(UserResource).validate_python(resource)
 
-        return parse_obj_as(Resource, resource)
+        return TypeAdapter(Resource).validate_python(resource)
 
     async def get_active_resource_by_template_name(self, template_name: str) -> Resource:
         query = "SELECT TOP 1 * FROM c WHERE c.templateName = @templateName AND c.deploymentStatus != @deletedStatus AND c.deploymentStatus != @failedStatus"
@@ -90,7 +123,7 @@ class ResourceRepository(BaseRepository):
         resources = await self.query(query=query, parameters=parameters)
         if not resources:
             raise EntityDoesNotExist
-        return parse_obj_as(Resource, resources[0])
+        return TypeAdapter(Resource).validate_python(resources[0])
 
     async def validate_input_against_template(self, template_name: str, resource_input, resource_type: ResourceType, user_roles: Optional[List[str]] = None, parent_template_name: Optional[str] = None) -> ResourceTemplate:
         try:
@@ -107,9 +140,9 @@ class ResourceRepository(BaseRepository):
             if len(set(template["authorizedRoles"]).intersection(set(user_roles))) == 0:
                 raise UserNotAuthorizedToUseTemplate(f"User not authorized to use template {template_name}")
 
-        self._validate_resource_parameters(resource_input.dict(), template)
+        self._validate_resource_parameters(resource_input.model_dump(), template)
 
-        return parse_obj_as(ResourceTemplate, template)
+        return TypeAdapter(ResourceTemplate).validate_python(template)
 
     def _get_all_property_keys_from_template(self, resource_template: Any, prefix: str = "") -> set:
         """
@@ -121,7 +154,7 @@ class ResourceRepository(BaseRepository):
         from being misidentified as new.
         """
         if hasattr(resource_template, "dict"):
-            template_dict = resource_template.dict()
+            template_dict = resource_template.model_dump()
         elif isinstance(resource_template, dict):
             template_dict = resource_template
         else:
@@ -338,7 +371,7 @@ class ResourceRepository(BaseRepository):
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
-        resource.user = user
+        resource.user = user.model_dump() if hasattr(user, "model_dump") else user
         resource.updatedWhen = self.get_timestamp()
 
         if resource_patch.isEnabled is not None:
@@ -741,7 +774,7 @@ class ResourceRepository(BaseRepository):
 
         _adjust_required(update_template)
 
-        validation_input = resource_patch.dict()
+        validation_input = resource_patch.model_dump()
         validation_input["properties"] = merged_properties
 
         self._validate_resource_parameters(validation_input, update_template)
