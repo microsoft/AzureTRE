@@ -8,7 +8,12 @@
 export const partGuard = (part: string): boolean =>
   part === "__proto__" || part === "constructor" || part === "prototype";
 
-export const clonePropertyValues = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+export const clonePropertyValues = <T>(value: T): T => {
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+  return JSON.parse(JSON.stringify(value)) as T;
+};
 
 // Utility to get all property keys from template schema's properties object recursively, flattening nested if needed
 export const getAllPropertyKeys = (properties: any, prefix = "", data: any = undefined): string[] => {

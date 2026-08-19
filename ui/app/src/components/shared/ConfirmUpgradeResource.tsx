@@ -111,11 +111,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     styles: dialogStyles,
   };
 
-  // Template GET endpoints (templateGetPath) always use TRE API authentication,
-  // even for UserResource templates, because they use paths like:
-  // /workspace-service-templates/{name} (not /workspaces/{id}/...)
-  const templateUsesWsAuth = false;
-
   // However, the actual resource instance upgrade operation (PATCH) uses workspace auth
   // for WorkspaceService and UserResource instances
   const instanceUsesWsAuth =
@@ -196,6 +191,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
             err.status = 400;
             setApiError(err);
             setRequestLoadingState(LoadingState.Error);
+            setLoadingSchema(false);
             return;
           }
         }
@@ -206,6 +202,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         err.status = 400;
         setApiError(err);
         setRequestLoadingState(LoadingState.Error);
+        setLoadingSchema(false);
         return;
       }
       default:
@@ -215,6 +212,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
         err.status = 400;
         setApiError(err);
         setRequestLoadingState(LoadingState.Error);
+        setLoadingSchema(false);
         return;
     }
 
@@ -254,13 +252,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
 
         let fetchUrl = `${activeTemplateGetPath}/${props.resource.templateName}?version=${selectedVersion}`;
 
-        const newTemplate = await apiCall(
-          fetchUrl,
-          HttpMethod.Get,
-          templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
-          undefined,
-          ResultType.JSON,
-        );
+        const newTemplate = await apiCall(fetchUrl, HttpMethod.Get, undefined, undefined, ResultType.JSON);
         if (didCancel) return;
 
         // Reuse cached current template if available to avoid redundant network calls
@@ -271,7 +263,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
           currentTemplate = await apiCall(
             `${activeTemplateGetPath}/${props.resource.templateName}?version=${props.resource.templateVersion}`,
             HttpMethod.Get,
-            templateUsesWsAuth ? workspaceCtx.workspaceApplicationIdURI : undefined,
+            undefined,
             undefined,
             ResultType.JSON,
           );
@@ -662,7 +654,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
                 onChange={(event, option) => {
                   if (option) {
                     setSelectedVersion(option.text);
-                    setLoadingSchema(true);
                     setFormHasErrors(false);
                   }
                 }}
