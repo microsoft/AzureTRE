@@ -13,7 +13,6 @@ BUG FIXES:
 * Remove incorrect Terraform `moved` blocks for the legacy airlock role assignments and Defender action, which already used `count` on `main` (moving an unindexed address to `[0]` was a no-op at best and misleading) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Raise a clear error when an Event Grid topic/subject or blob URL can't be parsed, and fix a malformed log statement, so unexpected airlock scan/blob events are diagnosable instead of failing with an opaque `NoneType` error (`airlock-processor` 0.8.30) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Allow cancelling an airlock request while it is in `Submitted`, so a request awaiting review (or stranded there by a lost status event) can be withdrawn instead of blocking `airlock_version` migration ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
