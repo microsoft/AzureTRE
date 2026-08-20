@@ -266,9 +266,9 @@
         "properties": {
           "owner_id": {
             "type": "string",
-            "title": "Owner ID",
-            "description": "Enter the Object ID of the user you want to assign this VM to.",
-            "default": false,
+            "title": "Owner",
+            "description": "Select the user you want to assign this VM to.",
+            "minLength": 1,
             "updateable": false
           }
         },
@@ -281,6 +281,9 @@
   "uiSchema": {
     "admin_username": {
       "classNames": "tre-hidden"
+    },
+    "owner_id": {
+      "ui:widget": "WorkspaceUserPicker"
     }
   }
 }

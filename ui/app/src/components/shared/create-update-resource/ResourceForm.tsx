@@ -10,6 +10,11 @@ import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
 import validator from "@rjsf/validator-ajv8";
+import { WorkspaceUserPickerWidget } from "./WorkspaceUserPickerWidget";
+
+const widgets = {
+  WorkspaceUserPicker: WorkspaceUserPickerWidget,
+};
 
 interface ResourceFormProps {
   templateName: string;
@@ -18,6 +23,7 @@ interface ResourceFormProps {
   updateResource?: Resource;
   onCreateResource: (operation: Operation) => void;
   workspaceApplicationIdURI?: string;
+  workspaceId?: string;
 }
 
 export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
@@ -164,6 +170,8 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
                 schema={template}
                 formData={formData}
                 uiSchema={uiSchema}
+                widgets={widgets}
+                formContext={{ workspaceId: props.workspaceId, workspaceApplicationIdURI: props.workspaceApplicationIdURI }}
                 validator={validator}
                 onSubmit={(e: any) => createUpdateResource(e.formData)}
               />

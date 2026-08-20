@@ -75,6 +75,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
   let templateGetPath;
 
   let workspaceApplicationIdURI = undefined;
+  let workspaceId = undefined;
   switch (props.resourceType) {
     case ResourceType.Workspace:
       templateListPath = ApiEndpoint.WorkspaceTemplates;
@@ -91,7 +92,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
     case ResourceType.UserResource:
       if (props.parentResource) {
         // If we are creating a user resource, parent resource must have a workspaceId
-        const workspaceId = (props.parentResource as WorkspaceService).workspaceId;
+        workspaceId = (props.parentResource as WorkspaceService).workspaceId;
         templateListPath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
         templateGetPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${props.parentResource.templateName}/${ApiEndpoint.UserResourceTemplates}`;
         workspaceApplicationIdURI = props.workspaceApplicationIdURI;
@@ -159,6 +160,7 @@ export const CreateUpdateResource: React.FunctionComponent<CreateUpdateResourceP
           resourcePath={resourcePath}
           onCreateResource={resourceCreating}
           workspaceApplicationIdURI={props.workspaceApplicationIdURI}
+          workspaceId={workspaceId}
           updateResource={props.updateResource}
         />
       );

@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Add user picker for 'Assign to user' option in Guacamole Windows and Linux VM create forms ([#5053](https://github.com/microsoft/AzureTRE/issues/5053))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
