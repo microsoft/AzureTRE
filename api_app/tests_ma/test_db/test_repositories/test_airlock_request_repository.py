@@ -496,3 +496,13 @@ async def test_get_in_flight_requests_excludes_every_final_status(query_mock, ai
     assert set(final_statuses) == {status.value for status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES}
     assert AirlockRequestStatus.Rejected.value in final_statuses
     assert AirlockRequestStatus.Approved.value in final_statuses
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.airlock_requests.AirlockRequestRepository.query", return_value=[])
+async def test_data_retaining_query_includes_cancelled_requests(query_mock, airlock_request_repo):
+    """Workspace-deletion cleanup must cover cancelled requests whose async container deletion may have failed."""
+    await airlock_request_repo.get_data_retaining_airlock_request_ids_for_workspace(WORKSPACE_ID)
+
+    query = query_mock.call_args.kwargs["query"]
+    assert "status" not in query

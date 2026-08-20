@@ -72,11 +72,12 @@ class AirlockRequestRepository(BaseRepository):
         return 'SELECT * FROM c'
 
     async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
-        # Legacy non-cancelled requests may retain data in per-stage storage.
-        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND c.status != @cancelled"
+        # Any request may still have a container, including cancelled ones whose async deletion
+        # failed or has not completed. Cleanup is idempotent (missing containers are ignored),
+        # so return every request to avoid orphaning data when the workspace is deleted.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId"
         parameters = [
-            {"name": "@workspaceId", "value": str(workspace_id)},
-            {"name": "@cancelled", "value": AirlockRequestStatus.Cancelled.value}
+            {"name": "@workspaceId", "value": str(workspace_id)}
         ]
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
