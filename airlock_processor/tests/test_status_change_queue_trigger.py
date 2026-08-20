@@ -298,6 +298,24 @@ class TestV2MetadataMode():
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
+    def test_v2_submit_with_scanning_disabled_carries_files_with_the_transition(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
+        # With scanning off, BlobCreatedTrigger also advances the request but carries no files,
+        # so this event must carry them or the race can leave the request with no file metadata.
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
+        message = _mock_service_bus_message(body=message_body)
+        step_result = MagicMock()
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+
+        data = step_result.set.call_args.args[0].get_json()
+        assert data["new_status"] == constants.STAGE_IN_REVIEW
+        assert data["request_files"] == [{"name": "test.txt", "size": 100}]
+
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: not container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
