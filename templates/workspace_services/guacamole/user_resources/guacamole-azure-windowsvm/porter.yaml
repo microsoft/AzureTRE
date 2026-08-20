@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 3.0.1
+version: 3.0.2
 description: "An Azure TRE User Resource Template for Guacamole (Windows 11 or Windows Server 2025)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -48,11 +48,13 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
   # Credentials for interacting with the AAD Auth tenant
   - name: auth_client_id
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
     env: AUTH_CLIENT_SECRET
+    sensitive: true
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
 
