@@ -154,16 +154,25 @@ def get_credential() -> DefaultAzureCredential:
 
 def get_blob_info_from_topic_and_subject(topic: str, subject: str):
     # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/<reosurce_group_name>/providers/Microsoft.Storage/storageAccounts/<storage_account_name>"
-    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic).group(1)
+    account_match = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic)
+    if account_match is None:
+        raise ValueError(f"Could not parse storage account name from Event Grid topic: '{topic}'")
+    storage_account_name = account_match.group(1)
     # Example of a subject: "/blobServices/default/containers/<container_guid>/blobs/<blob_name>"
-    container_name, blob_name = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject).groups()
+    subject_match = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject)
+    if subject_match is None:
+        raise ValueError(f"Could not parse container and blob name from Event Grid subject: '{subject}'")
+    container_name, blob_name = subject_match.groups()
 
     return storage_account_name, container_name, blob_name
 
 
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
-    return re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url).groups()
+    url_match = re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url)
+    if url_match is None:
+        raise ValueError(f"Could not parse account, container and blob name from blob URL: '{blob_url}'")
+    return url_match.groups()
 
 
 def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:

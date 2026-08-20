@@ -34,7 +34,7 @@ def main(msg: func.ServiceBusMessage,
         blob_uri = json_body["data"]["blobUri"]
         verdict = json_body["data"]["scanResultType"]
     except KeyError as e:
-        logging.error("body was not as expected {}", e)
+        logging.error("body was not as expected: %s", e)
         raise e
 
     # Extract request id
