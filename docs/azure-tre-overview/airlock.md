@@ -109,7 +109,7 @@ The Airlock allows a TRE user to start the `import` or `export` process to a giv
 5. **Approved**: The Airlock request has been approved. Data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is available in the TRE workspace and can be accessed by the requestor from within the workspace.
 6. **Rejection In-progress**: The Airlock request has been rejected, however data movement is still ongoing.
 7. **Rejected**: The Airlock request has been rejected. The data was rejected manually by the Airlock Manager.
-8. **Cancelled**: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is allowed while the request is not actively moving data — that is, in **Draft**, **Submitted**, or **In-Review** state.
+8. **Cancelled**: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is allowed while the request is not actively moving data — that is, in **Draft** or **In-Review** state.
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.
 
@@ -128,7 +128,6 @@ graph TD
   I:::temporary-->K((Approved))
   J:::temporary-->L((Rejected))
   B-->|Request Canceled| X((Canceled))
-  C-->|Request Canceled| X
   G-->|Request Canceled| X
   H-->|Request Canceled| X
   classDef temporary stroke-dasharray: 5 5
