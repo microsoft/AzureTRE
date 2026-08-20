@@ -11,6 +11,7 @@ from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.operation import Status
 from models.domain.resource import ResourceType
+from models.domain.resource_template import Property
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
 
@@ -160,6 +161,7 @@ async def test_create_workspace_item_persists_default_airlock_version_when_omitt
     workspace_to_create.properties["auth_type"] = "Automatic"
     mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
     mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
@@ -180,6 +182,7 @@ async def test_create_workspace_item_defaults_manual_auth_to_airlock_v2(mock_is_
     workspace_to_create.properties["auth_type"] = "Manual"
     mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
     mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
@@ -199,6 +202,27 @@ async def test_create_workspace_item_preserves_explicit_airlock_version(mock_is_
     workspace_to_create.properties["airlock_version"] = 1
     mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
     mock_is_workspace_storage_account_available.return_value.return_value = False
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 1
+
+
+@pytest.mark.asyncio
+@patch('db.repositories.workspaces.generate_new_cidr')
+@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+async def test_create_workspace_item_defaults_legacy_template_to_airlock_v1(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+    # A template that does not declare airlock_version is legacy (v1) and must not be stamped v2.
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties.pop("airlock_version", None)
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties.pop("airlock_version", None)
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 

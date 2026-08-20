@@ -101,8 +101,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
-        ensure_workspace_airlock_version_supported(workspace_create.properties)
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
+        # Validate the resolved (template-derived) airlock version rather than the raw request.
+        ensure_workspace_airlock_version_supported(workspace.properties, default_version=1)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

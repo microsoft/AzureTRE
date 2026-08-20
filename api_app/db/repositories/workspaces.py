@@ -141,8 +141,14 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
-        # Explicit versions keep new workspaces out of the legacy backfill.
-        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", constants.DEFAULT_AIRLOCK_VERSION)}
+        # Derive airlock_version from the template: a template that doesn't declare it is legacy (v1) and
+        # must not be stamped v2, which would route airlock to consolidated storage it never provisioned.
+        if "airlock_version" in template.properties:
+            template_default = template.properties["airlock_version"].default
+            default_airlock_version = template_default if template_default is not None else constants.DEFAULT_AIRLOCK_VERSION
+        else:
+            default_airlock_version = 1
+        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", default_airlock_version)}
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.

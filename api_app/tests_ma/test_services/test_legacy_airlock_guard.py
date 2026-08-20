@@ -66,9 +66,11 @@ def test_ensure_workspace_airlock_version_supported_blocks_v1_when_enable_airloc
             ensure_workspace_airlock_version_supported({"airlock_version": 1})
 
 
-def test_unstamped_workspace_is_treated_as_v2_on_create():
+def test_unstamped_workspace_defaults_to_v1_legacy():
+    # A missing airlock_version defaults to legacy (v1), so it is blocked when legacy is disabled.
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=False):
-        ensure_workspace_airlock_version_supported({"enable_airlock": True})
+        with pytest.raises(ValueError):
+            ensure_workspace_airlock_version_supported({"enable_airlock": True})
 
 
 def test_unstamped_workspace_is_treated_as_v1_when_validating_an_existing_one():
@@ -87,9 +89,10 @@ def test_ensure_workspace_airlock_version_supported_allows_v2_on_automatic_auth(
         ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Automatic"})
 
 
-def test_ensure_workspace_airlock_version_supported_blocks_unspecified_version_when_legacy_disabled_is_v2_safe():
+def test_unspecified_version_with_manual_auth_defaults_to_v1_and_is_blocked_when_legacy_disabled():
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=False):
-        ensure_workspace_airlock_version_supported({"enable_airlock": True, "auth_type": "Manual"})
+        with pytest.raises(ValueError):
+            ensure_workspace_airlock_version_supported({"enable_airlock": True, "auth_type": "Manual"})
 
 
 @pytest.mark.asyncio

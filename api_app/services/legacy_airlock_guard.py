@@ -2,7 +2,6 @@ from core import config
 from db.repositories.airlock_requests import AirlockRequestRepository
 from models.domain.resource import Resource
 from models.schemas.resource import ResourcePatch
-from resources import constants
 from services.logging import logger
 
 
@@ -12,9 +11,8 @@ def _truncate_ids(resource_ids: list[str], limit: int = 25) -> list[str]:
     return resource_ids[:limit]
 
 
-def ensure_workspace_airlock_version_supported(properties: dict, default_version: int = constants.DEFAULT_AIRLOCK_VERSION) -> None:
-    """Reject unsupported airlock versions. Existing workspaces predate v2, so callers
-    validating one must pass default_version=1."""
+def ensure_workspace_airlock_version_supported(properties: dict, default_version: int = 1) -> None:
+    """Reject unsupported airlock versions. A missing airlock_version means legacy (v1)."""
     if not properties:
         return
     if not properties.get("enable_airlock", True):
