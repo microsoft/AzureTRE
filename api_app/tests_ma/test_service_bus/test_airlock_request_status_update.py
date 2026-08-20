@@ -411,3 +411,26 @@ async def test_late_file_result_is_persisted_not_discarded(airlock_request_repo,
     assert complete_message is True
     persisted = airlock_request_repo.return_value.update_airlock_request.call_args.kwargs["request_files"]
     assert persisted[0].name == "test.txt"
+
+
+@patch('service_bus.airlock_request_status_update.update_and_publish_event_airlock_request')
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_file_only_result_does_not_republish_a_status_event(airlock_request_repo, _, update_and_publish_mock):
+    # A file-only result (new_status None) must be acknowledged as a fact, never re-published as a transition.
+    message = json.loads(json.dumps(test_sb_step_result_message))
+    message["data"]["new_status"] = None
+    message["data"]["request_files"] = [{"name": "test.txt", "size": 100}]
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message)
+
+    request = sample_airlock_request(AirlockRequestStatus.Submitted)
+    request.files = []
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = request
+    airlock_request_repo.return_value.update_airlock_request.return_value = request
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    update_and_publish_mock.assert_not_called()

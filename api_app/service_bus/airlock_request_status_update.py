@@ -154,6 +154,10 @@ class AirlockStatusUpdater():
                     updated_by=airlock_request.updatedBy,
                     scan_result=scan_result)
                 result = True
+            elif new_status is None:
+                # A file-only result carries no transition; the facts above are enough. Acknowledge it
+                # without republishing, which previously risked a submitted -> submitted event loop.
+                result = True
             elif airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
