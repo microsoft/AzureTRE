@@ -2,7 +2,6 @@ import logging
 import datetime
 import uuid
 import json
-import re
 import os
 
 import azure.functions as func
@@ -28,7 +27,8 @@ def main(msg: func.ServiceBusMessage,
 
     json_body = json.loads(body)
     topic = json_body["topic"]
-    request_id = re.search(r'/blobServices/default/containers/(.*?)/blobs', json_body["subject"]).group(1)
+    # Parse through the shared helper so a malformed topic/subject raises a clear ValueError.
+    _, request_id, _ = get_blob_info_from_topic_and_subject(topic=topic, subject=json_body["subject"])
 
     if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in topic or constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL in topic:
         _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent)

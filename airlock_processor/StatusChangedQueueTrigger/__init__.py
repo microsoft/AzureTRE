@@ -332,6 +332,10 @@ def get_request_files(request_properties: RequestProperties):
         # On a redelivery the draft is already sealed away, so enumerate the submitted copy instead.
         if not blob_operations.container_exists(storage_account_name, container_name):
             container_name = request_properties.request_id
+            # Neither container present means there is no data to submit; fail cleanly rather than
+            # letting a ResourceNotFoundError escape to Service Bus retry/dead-letter (stuck in Submitted).
+            if not blob_operations.container_exists(storage_account_name, container_name):
+                raise NoDataInRequestException(f'Request {request_properties.request_id}: neither the draft nor the sealed container exists, cannot enumerate request files')
     else:
         storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id, container_name=container_name)

@@ -64,7 +64,7 @@ async def upload_blob_using_sas(file_path: str, sas_url: str):
         _, file_ext = os.path.splitext(file_name)
 
         blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
-        LOGGER.info(f"uploading [{file_name}] to container [{blob_url}]")
+        LOGGER.info(f"uploading [{file_name}] to container [{storage_account_url}{container_name}]")
 
         client = BlobClient.from_blob_url(blob_url)
         with open(file_name, 'rb') as data:
@@ -80,7 +80,7 @@ async def delete_blob_using_sas(file_path: str, sas_url: str):
     file_name = os.path.basename(file_path)
 
     blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
-    LOGGER.info(f"deleting [{file_name}] from container [{blob_url}]")
+    LOGGER.info(f"deleting [{file_name}] from container [{storage_account_url}{container_name}]")
 
     client = BlobClient.from_blob_url(blob_url)
     client.delete_blob()
