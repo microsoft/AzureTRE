@@ -7,7 +7,7 @@ import os
 import uuid
 import json
 
-from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
+from exceptions import NoFilesInRequestException, TooManyFilesInRequestException, NoDataInRequestException
 
 from shared_code import blob_operations, constants, airlock_storage_helper, parsers
 from pydantic import BaseModel, TypeAdapter
@@ -46,8 +46,14 @@ def main(msg: func.ServiceBusMessage, stepResultEvent: func.Out[func.EventGridOu
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
     except TooManyFilesInRequestException:
         set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.TOO_MANY_FILES_IN_REQUEST_MESSAGE, request_files=request_files)
+    except NoDataInRequestException:
+        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.NO_DATA_IN_REQUEST_MESSAGE, request_files=request_files)
     except Exception:
-        set_output_event_to_report_failure(stepResultEvent, request_properties, failure_reason=constants.UNKNOWN_REASON_MESSAGE, request_files=request_files)
+        # Only the deterministic validation failures above should fail the request. Anything else may be
+        # transient (throttling, identity propagation, DNS, copy polling), so let it escape to be retried
+        # by Service Bus and dead-lettered after maxDeliveryCount, rather than silently failing the request.
+        logging.exception("Unexpected error processing airlock request; leaving message for Service Bus retry")
+        raise
 
 
 def handle_status_changed(request_properties: RequestProperties, stepResultEvent: func.Out[func.EventGridOutputEvent], dataDeletionEvent: func.Out[func.EventGridOutputEvent], request_files):
@@ -115,7 +121,7 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         # the data is already sealed, so resume by re-emitting the completion event.
                         logging.info(f'Request {req_id}: already sealed, re-emitting the submission result')
                     else:
-                        raise Exception(f'Request {req_id}: neither the draft nor the sealed container exists, cannot complete submission')
+                        raise NoDataInRequestException(f'Request {req_id}: neither the draft nor the sealed container exists, cannot complete submission')
 
                     try:
                         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -137,11 +143,8 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                         set_output_event_to_report_request_files(stepResultEvent, request_properties, request_files)
                     return
 
-                # The ETag couples the terminal-stage check to the write.
                 logging.info(f'Request {req_id}: Updating container stage to {new_stage} (no copy needed)')
-                if not update_container_stage(source_account, req_id, new_stage, changed_by='system'):
-                    logging.info(f'Request {req_id}: container already at a terminal stage, ignoring late transition')
-                    return
+                update_container_stage(source_account, req_id, new_stage, changed_by='system')
 
                 if new_status in [constants.STAGE_REJECTION_INPROGRESS, constants.STAGE_BLOCKING_INPROGRESS]:
                     final_status = constants.STAGE_REJECTED if new_status == constants.STAGE_REJECTION_INPROGRESS else constants.STAGE_BLOCKED_BY_SCAN

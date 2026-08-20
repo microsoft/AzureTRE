@@ -112,12 +112,14 @@ class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_failure")
     @patch("StatusChangedQueueTrigger.get_request_files")
     @patch("StatusChangedQueueTrigger.handle_status_changed", side_effect=Exception)
-    def test_get_request_files_should_be_called_when_failing_during_submit_stage(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
+    def test_transient_error_during_submit_propagates_for_retry(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
+        # A non-deterministic error must escape so Service Bus retries it, rather than failing the request.
         message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)
-        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+        with pytest.raises(Exception):
+            main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert mock_get_request_files.called
-        assert mock_set_output_event_to_report_failure.called
+        mock_set_output_event_to_report_failure.assert_not_called()
 
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
@@ -286,15 +288,20 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
 
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 1}])
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(self, mock_blob_svc, _):
+    def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(self, mock_blob_svc, _, mock_copy, mock_delete, mock_files):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+        # Scanning is enabled, so the seal emits only a files result and leaves the in_review move to the scan verdict.
         assert step_result.set.call_count == 1
+        assert step_result.set.call_args.args[0].get_json().get("new_status") != constants.STAGE_IN_REVIEW
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")

@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, UTC
-from typing import Dict, List, Optional
+from typing import Dict
 
 from azure.core import MatchConditions
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, ResourceModifiedError
@@ -62,7 +62,6 @@ def create_container_with_metadata(account_name: str, request_id: str, stage: st
 
 def update_container_stage(account_name: str, request_id: str, new_stage: str,
                            changed_by: str = None, additional_metadata: Dict[str, str] = None,
-                           skip_if_stage_in: Optional[List[str]] = None,
                            max_attempts: int = 5) -> bool:
     """Update stage metadata with optimistic concurrency."""
     container_name = request_id
@@ -81,12 +80,6 @@ def update_container_stage(account_name: str, request_id: str, new_stage: str,
 
         metadata = properties.metadata.copy()
         old_stage = metadata.get('stage', 'unknown')
-
-        if skip_if_stage_in and old_stage in skip_if_stage_in:
-            logging.info(
-                f"Container {request_id} already at stage '{old_stage}', not moving it to '{new_stage}'"
-            )
-            return False
 
         metadata['stage'] = new_stage
         stage_history = metadata.get('stage_history', old_stage)

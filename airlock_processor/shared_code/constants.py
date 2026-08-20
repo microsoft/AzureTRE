@@ -51,6 +51,7 @@ STAGE_FAILED = "failed"
 NO_FILES_IN_REQUEST_MESSAGE = "Request did not contain any files."
 TOO_MANY_FILES_IN_REQUEST_MESSAGE = "Request contained more than 1 file."
 UNKNOWN_REASON_MESSAGE = "Request failed due to an unknown reason."
+NO_DATA_IN_REQUEST_MESSAGE = "Request data could not be found in storage."
 
 # Event Grid
 STEP_RESULT_EVENT_DATA_VERSION = "1.0"
