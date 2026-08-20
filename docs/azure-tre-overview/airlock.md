@@ -94,7 +94,7 @@ graph TB
 
 **Key design principles:**
 
-- **Metadata over movement** — Most stage transitions simply update container metadata, providing near-instant transitions. Data is only physically copied when crossing the core/workspace boundary (once per request).
+- **Metadata over movement** — In-account stage transitions (submitted→in-review, in-review→rejected/blocked) simply update container metadata, providing near-instant transitions. Data is physically copied in only two places: when a request is **submitted** the writable draft container is *sealed* (its file is copied into an immutable request-id container and the draft is deleted, structurally revoking the researcher's SAS), and again on **approval** when data crosses the core/workspace boundary.
 - **ABAC security** — Azure Attribute-Based Access Control conditions restrict which stages each identity can access on the storage account, enforced at the Azure RBAC layer.
 - **Shared infrastructure** — All workspaces share the same workspace storage account, with network isolation via per-workspace private endpoints and ABAC conditions filtering by `workspace_id`.
 
@@ -109,7 +109,7 @@ The Airlock allows a TRE user to start the `import` or `export` process to a giv
 5. **Approved**: The Airlock request has been approved. Data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is available in the TRE workspace and can be accessed by the requestor from within the workspace.
 6. **Rejection In-progress**: The Airlock request has been rejected, however data movement is still ongoing.
 7. **Rejected**: The Airlock request has been rejected. The data was rejected manually by the Airlock Manager.
-8. **Cancelled**: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
+8. **Cancelled**: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is allowed while the request is not actively moving data — that is, in **Draft**, **Submitted**, or **In-Review** state.
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.
 
@@ -128,6 +128,7 @@ graph TD
   I:::temporary-->K((Approved))
   J:::temporary-->L((Rejected))
   B-->|Request Canceled| X((Canceled))
+  C-->|Request Canceled| X
   G-->|Request Canceled| X
   H-->|Request Canceled| X
   classDef temporary stroke-dasharray: 5 5
@@ -140,7 +141,7 @@ For import, the container is created in core storage (`stalairlock`) with metada
 
 The user uploads a file using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10).
 
-The user submits the request (TRE API call), which updates the container metadata to the next stage. The airlock request is now in state **Submitted**.
+The user submits the request (TRE API call). On submission the processor **seals** the draft: it copies the draft container's file into a new, immutable container named after the request ID (with `stage=import-in-progress` / `export-in-progress`) and deletes the writable draft container (`<request-id>-draft`). This structurally revokes the researcher's upload SAS, so the data under review can no longer be modified. The airlock request is now in state **Submitted**.
 
 If enabled, malware scanning is started using Microsoft Defender for Storage
 (see [Microsoft Defender for Storage documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction)).
@@ -156,16 +157,14 @@ The Airlock Manager manually reviews the data using tools available in the TRE w
 
 For any airlock process, there is data movement either **into** a TRE workspace (import) or **from** a TRE workspace (export). The data movement guarantees that data is automatically verified for security flaws and manually reviewed before being placed inside or taken outside the TRE Workspace.
 
-**Metadata-based stage management** means most transitions are near-instantaneous metadata updates. Data is only physically copied when it crosses the core/workspace boundary:
+**Metadata-based stage management** means most transitions are near-instantaneous metadata updates. Data is physically copied in only two places:
 
-- **Import approved**: Core storage → Workspace storage (1 server-side copy per import)
-- **Export approved**: Workspace storage → Core storage (1 server-side copy per export)
+- **On submit (seal)**: the writable draft container (`<request-id>-draft`) is copied into a new immutable `<request-id>` container on the *same* account and the draft is deleted. This revokes the researcher's upload SAS structurally, so content under review cannot be altered.
+- **On approval (boundary crossing)**: Core storage → Workspace storage for imports, Workspace storage → Core storage for exports (one server-side copy).
 
-All other transitions — draft→submitted, submitted→in-review, in-review→rejected/blocked — update metadata only with no data movement.
+All other transitions — submitted→in-review, in-review→rejected/blocked — update metadata only, with no data movement.
 
-Cross-account copies are performed **asynchronously** via Event Grid: the `StatusChangedQueueTrigger` creates the destination container (with stage metadata) and initiates the server-side copy with `start_copy_from_url`, then returns without polling. When the copy completes, the destination account raises a `BlobCreated` Event Grid event.
-
-The `BlobCreatedTrigger` reads the destination container's `stage` metadata to determine the completed step, then emits the `StepResult` (and a data-deletion event for the source container). This mirrors the v1 pattern of using a `BlobCreated` event to signal copy completion, and keeps the request-processing message short-lived rather than blocking on large transfers.
+The cross-account approval copy is driven by the `StatusChangedQueueTrigger`: it creates the destination container (with stage metadata) and starts a server-side copy with `start_copy_from_url`, waiting for it to finish (and aborting, so the Service Bus message retries, if it exceeds the copy timeout). Completion is signalled by a `BlobCreated` Event Grid event on the destination account: the `BlobCreatedTrigger` maps the destination approval stage to the completed step (`V2_STAGE_COMPLETION_MAP`) and emits the `StepResult` that advances the request to **Approved**, plus a data-deletion event for the source container.
 
 ### Import Data Flow
 
@@ -187,11 +186,11 @@ graph LR
     end
 
     data -- "Upload via SAS" --> A
-    A -. "Submitted - metadata only" .-> B
+    A == "Submitted - seal (copy + delete draft)" ==> B
     B -. "Threat found - metadata only" .-> D
     B -. "Clean scan - metadata only" .-> review{"Review"}
     review -. "Rejected - metadata only" .-> C
-    review == "Approved - DATA COPY" ==> E
+    review == "Approved - cross-account copy" ==> E
 
     style External fill:#444,stroke:#333,color:#fff
     style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
@@ -204,7 +203,7 @@ graph LR
     style E fill:#2d8a2d,stroke:#1a5c1a,color:#fff
     style review fill:#6b5900,stroke:#4a3d00,color:#fff
 ```
-> Import data flow. Dashed lines = metadata-only transitions. Thick line = the only data copy (on approval). Hexagons = container metadata stages.
+> Import data flow. Dashed lines = metadata-only transitions. Thick lines = data copies: the submit *seal* (same-account, deletes the writable draft) and the cross-account copy on approval. Hexagons = container metadata stages.
 
 ### Export Data Flow
 
@@ -226,11 +225,11 @@ graph LR
     end
 
     data -- "Upload via PE" --> A
-    A -. "Submitted - metadata only" .-> B
+    A == "Submitted - seal (copy + delete draft)" ==> B
     B -. "Threat found - metadata only" .-> D
     B -. "Clean scan - metadata only" .-> review{"Review"}
     review -. "Rejected - metadata only" .-> C
-    review == "Approved - DATA COPY" ==> E
+    review == "Approved - cross-account copy" ==> E
 
     style Workspace fill:#1a5c1a,stroke:#0d330d,color:#fff
     style WorkspaceStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
@@ -243,7 +242,7 @@ graph LR
     style E fill:#2d8a2d,stroke:#1a5c1a,color:#fff
     style review fill:#6b5900,stroke:#4a3d00,color:#fff
 ```
-> Export data flow. Dashed lines = metadata-only transitions. Thick line = the only data copy (on approval). Hexagons = container metadata stages.
+> Export data flow. Dashed lines = metadata-only transitions. Thick lines = data copies: the submit *seal* (same-account, deletes the writable draft) and the cross-account copy on approval. Hexagons = container metadata stages.
 
 ## Security Scan
 
@@ -376,13 +375,12 @@ The TRE API exposes the following airlock endpoints:
 
 The **Airlock Processor** is a set of Azure Functions that handle the events created throughout the airlock process:
 
-- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, metadata updates, and cross-account data copies. For same-account transitions (most stages), it updates container metadata directly.
-    For cross-account transitions (approval), it performs a synchronous server-side copy (waiting for completion) and then emits the StepResult and source data-deletion events itself.
-- **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). It handles the legacy (v1) per-stage flow. For v2 consolidated accounts these events are ignored, because completion is signalled synchronously by the StatusChangedQueueTrigger.
+- **StatusChangedQueueTrigger** — Consumes status change events from the Service Bus queue and orchestrates container creation, sealing, metadata updates, and cross-account data copies. On **submit** it seals the draft (copies `<request-id>-draft` into an immutable `<request-id>` container and deletes the draft). For same-account transitions (in-review→rejected/blocked) it updates container metadata directly. For the cross-account approval copy it creates the destination container and runs a server-side copy, waiting for it to finish (aborting and letting the message retry on timeout).
+- **BlobCreatedTrigger** — Fires when a blob appears in a storage account (via EventGrid → Service Bus). For the v1 per-stage flow it signals each stage's copy completion. For v2 it handles **only** the cross-account approval copies (`V2_STAGE_COMPLETION_MAP`): when the copied blob lands in the approved container it emits the `StepResult` advancing the request to **Approved** and a data-deletion event for the source. Other v2 completions are emitted directly by the StatusChangedQueueTrigger.
 - **ScanResultTrigger** — Consumes malware scan results from Microsoft Defender for Storage. If threats are found, emits a StepResult to block the request. If clean, emits a StepResult to advance to in-review.
 - **DataDeletionTrigger** — Cleans up source containers after data has been copied to the destination.
 
-This event-driven design keeps stage transitions responsive: same-account transitions are metadata-only, while the less frequent cross-account approval copies are performed and confirmed synchronously by the StatusChangedQueueTrigger before the request advances to its final state.
+This event-driven design keeps stage transitions responsive: same-account transitions are metadata-only (except the submit seal, a fast same-account copy that deletes the draft), while the less frequent cross-account approval copy is confirmed via a `BlobCreated` event before the request advances to **Approved**.
 
 ## Airlock Flow
 
