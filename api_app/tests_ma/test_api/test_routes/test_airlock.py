@@ -184,6 +184,12 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
+    @patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", False)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={"airlock_version": 1}))
+    async def test_post_airlock_request_on_v1_workspace_with_legacy_disabled_returns_400(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
     async def test_post_airlock_request_with_enable_airlock_property_missing_returns_201(self, _, __, app, client, sample_airlock_request_input_data):

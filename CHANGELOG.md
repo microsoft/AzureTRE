@@ -10,6 +10,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 BUG FIXES:
+* Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Allow cancelling an airlock request while it is in `Submitted`, so a request awaiting review (or stranded there by a lost status event) can be withdrawn instead of blocking `airlock_version` migration ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
