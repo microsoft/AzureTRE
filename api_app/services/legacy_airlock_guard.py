@@ -40,6 +40,15 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     if new_version == current_version:
         return
 
+    if new_version < current_version:
+        # Downgrading destroys the v2 signer and conditioned role assignments that guard existing
+        # shared containers, with no path to re-grant access to data created under v2.
+        logger.warning("Blocked airlock_version downgrade %s->%s for workspace %s", current_version, new_version, workspace.id)
+        raise ValueError(
+            f"Cannot change airlock_version from {current_version} to {new_version}: downgrading is not "
+            f"supported because it removes access to data created under the newer version."
+        )
+
     request_ids = await request_repo.get_in_flight_airlock_request_ids_for_workspace(workspace.id)
     if request_ids:
         logger.warning(

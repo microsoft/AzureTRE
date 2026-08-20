@@ -133,6 +133,14 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         copy_status = copied_blob.get_blob_properties().copy.status
 
     if copy_status != "success":
+        if copy_status == "pending":
+            # Abort the copy so a late completion cannot recreate the destination after we fail,
+            # which would otherwise leave orphaned data once the source is deleted.
+            try:
+                copied_blob.abort_copy(copy["copy_id"])
+                logging.warning(f"Aborted still-pending copy of '{source_blob.blob_name}' after {waited_seconds}s")
+            except Exception as abort_error:
+                logging.error(f"Failed aborting pending copy of '{source_blob.blob_name}': {abort_error}")
         raise Exception(f"Copy of '{source_blob.blob_name}' did not complete: status '{copy_status}' after {waited_seconds}s")
 
 
