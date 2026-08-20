@@ -62,7 +62,7 @@ class TestBlobOperations():
 
             dest_blob_client_mock = MagicMock()
             dest_blob_client_mock.bla = "bla"
-            dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "status"})
+            dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "success"})
 
             # Set source blob mock
             mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
@@ -78,7 +78,75 @@ class TestBlobOperations():
             # Check that copied_from field was set correctly in the metadata
             dest_blob_client_mock.start_copy_from_url.assert_called_with(f"{source_url}?sas", metadata=dest_metadata)
 
-    def test_get_blob_url_should_return_blob_url(self):
+    @patch("shared_code.blob_operations.time.sleep")
+    @patch("shared_code.blob_operations.BlobServiceClient")
+    @patch("shared_code.blob_operations.generate_container_sas", return_value="sas")
+    def test_copy_data_waits_for_pending_copy(self, _, mock_blob_service_client, __):
+        # The caller deletes the source immediately afterwards, so returning while the copy is
+        # still pending would abort it and lose the data.
+        source_url = f"http://storageacct.blob.{get_storage_endpoint_suffix()}/container/blob"
+        source_blob_client_mock = MagicMock()
+        source_blob_client_mock.url = source_url
+        source_blob_client_mock.get_blob_properties = MagicMock(return_value={"metadata": {}})
+
+        dest_blob_client_mock = MagicMock()
+        dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "pending"})
+        dest_blob_client_mock.get_blob_properties = MagicMock(side_effect=[
+            MagicMock(copy=MagicMock(status="pending")),
+            MagicMock(copy=MagicMock(status="success"))])
+
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
+        mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
+
+        copy_data("source_acc", "dest_acc", "req_id")
+
+        assert dest_blob_client_mock.get_blob_properties.call_count == 2
+
+    @patch("shared_code.blob_operations.time.sleep")
+    @patch("shared_code.blob_operations.BlobServiceClient")
+    @patch("shared_code.blob_operations.generate_container_sas", return_value="sas")
+    def test_copy_data_raises_if_copy_never_succeeds(self, _, mock_blob_service_client, __):
+        source_url = f"http://storageacct.blob.{get_storage_endpoint_suffix()}/container/blob"
+        source_blob_client_mock = MagicMock()
+        source_blob_client_mock.url = source_url
+        source_blob_client_mock.get_blob_properties = MagicMock(return_value={"metadata": {}})
+
+        dest_blob_client_mock = MagicMock()
+        dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "failed"})
+
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
+        mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
+
+        with pytest.raises(Exception, match="did not complete"):
+            copy_data("source_acc", "dest_acc", "req_id")
+
+    @patch("shared_code.blob_operations.time.sleep")
+    @patch("shared_code.blob_operations.BlobServiceClient")
+    @patch("shared_code.blob_operations.generate_container_sas", return_value="sas")
+    def test_copy_data_aborts_a_copy_still_pending_at_timeout(self, _, mock_blob_service_client, __):
+        # A late completion after we have failed the request would recreate the destination and orphan data.
+        source_url = f"http://storageacct.blob.{get_storage_endpoint_suffix()}/container/blob"
+        source_blob_client_mock = MagicMock()
+        source_blob_client_mock.url = source_url
+        source_blob_client_mock.get_blob_properties = MagicMock(return_value={"metadata": {}})
+
+        dest_blob_client_mock = MagicMock()
+        dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "pending"})
+        dest_blob_client_mock.get_blob_properties = MagicMock(return_value=MagicMock(copy=MagicMock(status="pending")))
+
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
+        mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
+
+        with pytest.raises(Exception, match="did not complete"):
+            copy_data("source_acc", "dest_acc", "req_id")
+        dest_blob_client_mock.abort_copy.assert_called_once_with("123")
+
         account_name = "account"
         container_name = "container"
         blob_name = "blob"

@@ -1,8 +1,24 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
+Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Existing workspaces upgrade in place and stay on `airlock_version=1` (a minor, non-destructive `tre-workspace-base`
+  upgrade to `2.11.0`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
+See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+
+BUG FIXES:
+* Derive a new workspace's `airlock_version` from its template rather than always defaulting to 2, so a workspace created from a legacy (pre-v2) template is correctly stamped `airlock_version=1` instead of being marked v2 while deploying v1 storage. The version guard now validates the resolved value, and the "missing means legacy (1)" default is applied consistently ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Remove incorrect Terraform `moved` blocks for the legacy airlock role assignments and Defender action, which already used `count` on `main` (moving an unindexed address to `[0]` was a no-op at best and misleading) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Raise a clear error when an Event Grid topic/subject or blob URL can't be parsed (including the BlobCreated trigger), and fix a malformed log statement, so unexpected airlock scan/blob events are diagnosable instead of failing with an opaque `NoneType` error (`airlock-processor` 0.8.31) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Fail an airlock submission cleanly with `NoDataInRequestException` when neither the draft nor the sealed container exists, instead of raising `ResourceNotFoundError` that leaves the request retrying/dead-lettered while stuck in `Submitted` (`airlock-processor` 0.8.31) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Stop logging the full blob URL (including the SAS query string) in the airlock E2E upload/delete helpers, so short-lived read/write/delete credentials aren't exposed in test logs ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**

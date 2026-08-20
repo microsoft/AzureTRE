@@ -5,7 +5,7 @@ import datetime
 import uuid
 import json
 import os
-from shared_code import constants, blob_operations, parsers
+from shared_code import constants, blob_operations, parsers, airlock_storage_helper
 
 
 def main(msg: func.ServiceBusMessage,
@@ -14,7 +14,6 @@ def main(msg: func.ServiceBusMessage,
     logging.info("Python ServiceBus queue trigger processed message - Malware scan result arrived!")
     body = msg.get_body().decode('utf-8')
     logging.info(f'Python ServiceBus queue trigger processed message: {body}')
-    status_message = None
 
     try:
         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -35,28 +34,26 @@ def main(msg: func.ServiceBusMessage,
         blob_uri = json_body["data"]["blobUri"]
         verdict = json_body["data"]["scanResultType"]
     except KeyError as e:
-        logging.error("body was not as expected {}", e)
+        logging.error("body was not as expected: %s", e)
         raise e
 
     # Extract request id
-    _, request_id, _ = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    account_name, container_name, blob_name = blob_operations.get_blob_info_from_blob_url(blob_url=blob_uri)
+    request_id = airlock_storage_helper.get_request_id_from_container_name(container_name)
 
-    # If clean, we can continue and move the request to the review stage
-    # Otherwise, move the request to the blocked stage
-    completed_step = constants.STAGE_SUBMITTED
-    if verdict == constants.NO_THREATS:
-        logging.info(f'No malware were found in request id {request_id}, moving to {constants.STAGE_IN_REVIEW} stage')
-        new_status = constants.STAGE_IN_REVIEW
-    else:
-        logging.info(f'Malware was found in request id {request_id}, moving to {constants.STAGE_BLOCKING_INPROGRESS} stage')
-        new_status = constants.STAGE_BLOCKING_INPROGRESS
-        status_message = verdict
+    # The draft container stays writable until submission, so its verdict may describe content that
+    # was later replaced. Only the sealed copy's verdict describes the data actually under review.
+    # Only v2 creates -draft containers, so the suffix identifies them without depending on account names.
+    if container_name.endswith(constants.DRAFT_CONTAINER_SUFFIX):
+        logging.info(f'Scan result for draft blob in request {request_id} ignored; the submitted copy gates review.')
+        return
 
-    # Send the event to indicate this step is done (and to request a new status change)
+    # The verdict is reported as a fact; the API decides the status once submission is validated.
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": completed_step, "new_status": new_status, "request_id": request_id, "status_message": status_message},
+            data={"completed_step": constants.STAGE_SUBMITTED, "request_id": request_id,
+                  "scan_result": {"clean": verdict == constants.NO_THREATS, "message": None if verdict == constants.NO_THREATS else verdict}},
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.now(datetime.UTC),

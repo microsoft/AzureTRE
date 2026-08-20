@@ -526,6 +526,14 @@ test-e2e-backups: ## 🧪 Run E2E backup tests
 	$(call target_title, "Running E2E backup tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=backups
 
+# Description: Run E2E airlock tests
+# # The E2E airlock tests include:
+# # - tests marked with the `airlock` selector that verify airlock import/export flows and their access controls
+# Example: make test-e2e-airlock
+test-e2e-airlock: ## 🧪 Run E2E airlock tests
+	$(call target_title, "Running E2E airlock tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=airlock
+
 # Description: Run E2E tests with custom selector
 # Arguments: SELECTOR - the selector to run the tests with
 # Example: make test-e2e-custom SELECTOR=smoke

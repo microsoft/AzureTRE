@@ -2,11 +2,10 @@ import os
 import pytest
 import asyncio
 import logging
-
+from httpx import AsyncClient
 from azure.core.exceptions import ResourceNotFoundError
-from azure.storage.blob import ContainerClient
 
-from airlock.request import post_request, get_request, upload_blob_using_sas, wait_for_status
+from airlock.request import post_request, get_request, upload_blob_using_sas, delete_blob_using_sas, wait_for_status
 from resources.resource import get_resource, post_resource
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
@@ -18,6 +17,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 LOGGER = logging.getLogger(__name__)
 BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
+SECOND_BLOB_FILE_PATH = "./test_airlock_second_sample.txt"
 
 
 async def submit_airlock_import_request(workspace_path: str, workspace_owner_token: str, verify: bool):
@@ -77,6 +77,160 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
     return request_id, container_url
 
 
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_draft_container_is_sealed_after_submit(setup_test_workspace, verify):
+    """A SAS handed out while the request was in Draft must stop working once it is submitted,
+    otherwise a researcher could alter the data after it has been scanned and reviewed."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    _, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    # Submission copies the data out and deletes the draft container, so the old SAS resolves to nothing.
+    with pytest.raises(ResourceNotFoundError):
+        await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+
+async def create_draft_import_request_with_file(workspace_path: str, workspace_owner_token: str, verify: bool):
+    payload = {
+        "type": airlock_strings.IMPORT,
+        "businessJustification": "some business justification"
+    }
+    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    request_id = request_result["airlockRequest"]["id"]
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    container_url = request_result["containerUrl"]
+
+    # Container creation is asynchronous, so a successful upload is what confirms it exists.
+    for _ in range(20):
+        try:
+            await asyncio.sleep(5)
+            upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+            if "etag" in upload_response:
+                return request_id, container_url
+        except ResourceNotFoundError:
+            await asyncio.sleep(30)
+    raise Exception("Draft container was not created in time")
+
+
+async def submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, expected_message):
+    await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.FAILED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}', workspace_owner_token, verify, 200)
+    assert expected_message in request_result["airlockRequest"]["statusMessage"]
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_submit_with_no_files_is_rejected(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+    await delete_blob_using_sas(BLOB_FILE_PATH, container_url)
+
+    await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "did not contain any files")
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_submit_with_multiple_files_is_rejected(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+
+    # upload_blob_using_sas names the blob after the file, so a second distinct name is needed.
+    with open(SECOND_BLOB_FILE_PATH, "w") as second_file:
+        second_file.write("a second file in the same request")
+    await upload_blob_using_sas(SECOND_BLOB_FILE_PATH, container_url)
+
+    await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "more than 1 file")
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_cancelled_request_reaches_terminal_state(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+
+    request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/cancel', workspace_owner_token, verify, 200)
+    assert request_result["airlockRequest"]["status"] == airlock_strings.CANCELLED_STATUS
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_rejected_request_reaches_terminal_state(setup_test_workspace, verify):
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    payload = {"approval": "False", "decisionExplanation": "rejected by the e2e test"}
+    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_container_link_is_refused_once_request_leaves_draft(setup_test_workspace, verify):
+    """Data must be immutable once submitted, so the API should stop handing out a writable link."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    payload = {"approval": "False", "decisionExplanation": "rejected so the data is no longer reachable"}
+    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
+
+    await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 400)
+
+
+@pytest.mark.timeout(30 * 60)
+@pytest.mark.airlock
+async def test_client_supplied_airlock_version_is_ignored(setup_test_workspace, verify):
+    """The storage layout is decided by the workspace, not by the caller."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    workspace = await get_resource(f"/api{workspace_path}", workspace_owner_token, verify)
+    expected_version = workspace["workspace"]["properties"].get("airlock_version", 1)
+
+    payload = {
+        "type": airlock_strings.IMPORT,
+        "businessJustification": "some business justification",
+        "airlock_version": 1 if expected_version != 1 else 2,
+    }
+    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    assert request_result["airlockRequest"]["airlock_version"] == expected_version
+
+
+@pytest.mark.timeout(50 * 60)
+@pytest.mark.airlock
+async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_test_workspace, verify):
+    """Submitted data sits on the in-progress account, which is gated on private link,
+    so a valid SAS for it must still be refused when presented from outside the vnet."""
+    workspace_path, workspace_id = setup_test_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+
+    request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+
+    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    base, sas = request_result["containerUrl"].split("?")
+    blob_url = f"{base}/{BLOB_NAME}?{sas}"
+
+    async with AsyncClient(timeout=30.0, verify=verify) as client:
+        public_response = await client.get(blob_url)
+
+    assert public_response.status_code == 403, f"in-progress data was readable from the public internet: {public_response.status_code}"
+
+
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
 async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
@@ -126,6 +280,11 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     # Create a review VM
     admin_token = await get_admin_token(verify)
     import_workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=import_review_workspace_id, verify=verify)
+
+    # The request belongs to the research workspace, so it must not be reachable by id through
+    # another workspace the caller happens to have access to.
+    await get_request(f'/api/workspaces/{import_review_workspace_id}/requests/{request_id}', import_workspace_owner_token, verify, 404)
+
     user_resource_path, user_resource_id = await post_resource(
         payload={},
         endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
@@ -156,70 +315,3 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     LOGGER.info("Review VM has started deletion successfully")
 
     # EXPORT FLOW
-    # We can't test teh export flow as we can't fully create an export request without special networking setup
-
-
-@pytest.mark.airlock
-@pytest.mark.extended
-@pytest.mark.timeout(35 * 60)
-async def test_airlock_flow(setup_test_workspace, verify) -> None:
-    # 1. Get the workspace set up
-    workspace_path, workspace_id = setup_test_workspace
-    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
-
-    # 2. create and submit airlock request
-    request_id, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
-
-    # 3. approve request
-    LOGGER.info("Approving airlock request")
-    payload = {
-        "approval": "True",
-        "decisionExplanation": "the reason why this request was approved/rejected"
-    }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
-    assert request_result["airlockRequest"]["reviews"][0]["decisionExplanation"] == "the reason why this request was approved/rejected"
-
-    await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
-
-    # 4. check the file has been deleted from the source
-    # NOTE: We should really be checking that the file is deleted from in progress location too,
-    # but doing that will require setting up network access to in-progress storage account
-    try:
-        container_client = ContainerClient.from_container_url(container_url=container_url)
-        # We expect the container to eventually be deleted too, but sometimes this async operation takes some time.
-        # Checking that at least there are no blobs within the container
-        for _ in container_client.list_blobs():
-            container_url_without_sas = container_url.split("?")[0]
-            assert False, f"The source blob in container {container_url_without_sas} should be deleted"
-    except ResourceNotFoundError:
-        # Expecting this exception
-        pass
-
-    # 5. get a link to the blob in the approved location.
-    # For a full E2E we should try to download it, but can't without special networking setup.
-    # So at the very least we check that we get the link for it.
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    container_url = request_result["containerUrl"]
-
-    # 6. create airlock export request
-    LOGGER.info("Creating airlock export request")
-    justification = "another business justification"
-    payload = {
-        "type": airlock_strings.EXPORT,
-        "businessJustification": justification
-    }
-
-    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
-
-    assert request_result["airlockRequest"]["type"] == airlock_strings.EXPORT
-    assert request_result["airlockRequest"]["businessJustification"] == justification
-    assert request_result["airlockRequest"]["status"] == airlock_strings.DRAFT_STATUS
-
-    request_id = request_result["airlockRequest"]["id"]
-
-    # 7. get container link
-    LOGGER.info("Getting airlock request container URL")
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
-    container_url = request_result["containerUrl"]
-    # we can't test any more the export flow since we don't have the network
-    # access to upload the file from within the workspace.

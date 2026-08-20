@@ -438,6 +438,17 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test-airlock'`, () => {
+        test(`should set command to 'run-tests-airlock'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-airlock',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-airlock');
+        });
+      });
+
       describe(`for '/test-backups'`, () => {
         test(`should set command to 'run-tests-backups'`, async () => {
           const context = createCommentContext({

@@ -2,14 +2,18 @@ import os
 import logging
 import json
 import re
+import time
 from datetime import datetime, timedelta, UTC
 from typing import Tuple
 
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import ContainerSasPermissions, generate_container_sas, BlobServiceClient
 
 from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
+
+COPY_TIMEOUT_SECONDS = 300
+COPY_POLL_INTERVAL_SECONDS = 2
 
 
 def get_account_url(account_name: str) -> str:
@@ -34,10 +38,26 @@ def create_container(account_name: str, request_id: str):
         logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
 
 
-def get_request_files(account_name: str, request_id: str) -> list:
+def container_exists(account_name: str, container_name: str) -> bool:
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=get_credential())
+    return blob_service_client.get_container_client(container_name).exists()
+
+
+def delete_container(account_name: str, container_name: str):
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
+                                            credential=get_credential())
+    try:
+        blob_service_client.delete_container(container_name)
+        logging.info(f'Deleted container {container_name} from {account_name}.')
+    except ResourceNotFoundError:
+        logging.info(f'Container {container_name} already absent from {account_name}.')
+
+
+def get_request_files(account_name: str, request_id: str, container_name: str = None) -> list:
     files = []
     blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
-    container_client = blob_service_client.get_container_client(container=request_id)
+    container_client = blob_service_client.get_container_client(container=container_name or request_id)
 
     for blob in container_client.list_blobs():
         files.append({"name": blob.name, "size": blob.size})
@@ -45,9 +65,11 @@ def get_request_files(account_name: str, request_id: str) -> list:
     return files
 
 
-def copy_data(source_account_name: str, destination_account_name: str, request_id: str):
+def copy_data(source_account_name: str, destination_account_name: str, request_id: str,
+              source_container: str = None, destination_container: str = None):
     credential = get_credential()
-    container_name = request_id
+    container_name = source_container or request_id
+    dest_container_name = destination_container or request_id
 
     source_blob_service_client = BlobServiceClient(account_url=get_account_url(source_account_name),
                                                    credential=credential)
@@ -93,7 +115,7 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     # Copy files
     dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),
                                                  credential=credential)
-    copied_blob = dest_blob_service_client.get_blob_client(container_name, source_blob.blob_name)
+    copied_blob = dest_blob_service_client.get_blob_client(dest_container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url, metadata=metadata)
 
     try:
@@ -101,6 +123,25 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                      copy["copy_status"])
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
+
+    # An async copy still reads from the source, so the caller must not delete it until this settles.
+    copy_status = copy.get("copy_status")
+    waited_seconds = 0
+    while copy_status == "pending" and waited_seconds < COPY_TIMEOUT_SECONDS:
+        time.sleep(COPY_POLL_INTERVAL_SECONDS)
+        waited_seconds += COPY_POLL_INTERVAL_SECONDS
+        copy_status = copied_blob.get_blob_properties().copy.status
+
+    if copy_status != "success":
+        if copy_status == "pending":
+            # Abort the copy so a late completion cannot recreate the destination after we fail,
+            # which would otherwise leave orphaned data once the source is deleted.
+            try:
+                copied_blob.abort_copy(copy["copy_id"])
+                logging.warning(f"Aborted still-pending copy of '{source_blob.blob_name}' after {waited_seconds}s")
+            except Exception as abort_error:
+                logging.error(f"Failed aborting pending copy of '{source_blob.blob_name}': {abort_error}")
+        raise Exception(f"Copy of '{source_blob.blob_name}' did not complete: status '{copy_status}' after {waited_seconds}s")
 
 
 def get_credential() -> DefaultAzureCredential:
@@ -113,16 +154,25 @@ def get_credential() -> DefaultAzureCredential:
 
 def get_blob_info_from_topic_and_subject(topic: str, subject: str):
     # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/<reosurce_group_name>/providers/Microsoft.Storage/storageAccounts/<storage_account_name>"
-    storage_account_name = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic).group(1)
+    account_match = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic)
+    if account_match is None:
+        raise ValueError(f"Could not parse storage account name from Event Grid topic: '{topic}'")
+    storage_account_name = account_match.group(1)
     # Example of a subject: "/blobServices/default/containers/<container_guid>/blobs/<blob_name>"
-    container_name, blob_name = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject).groups()
+    subject_match = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject)
+    if subject_match is None:
+        raise ValueError(f"Could not parse container and blob name from Event Grid subject: '{subject}'")
+    container_name, blob_name = subject_match.groups()
 
     return storage_account_name, container_name, blob_name
 
 
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
-    return re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url).groups()
+    url_match = re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url)
+    if url_match is None:
+        raise ValueError(f"Could not parse account, container and blob name from blob URL: '{blob_url}'")
+    return url_match.groups()
 
 
 def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
