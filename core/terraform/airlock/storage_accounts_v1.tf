@@ -395,11 +395,6 @@ moved {
 }
 
 moved {
-  from = azapi_resource_action.enable_defender_for_storage
-  to   = azapi_resource_action.enable_defender_for_storage[0]
-}
-
-moved {
   from = azurerm_private_endpoint.stg_import_inprogress_pe
   to   = azurerm_private_endpoint.stg_import_inprogress_pe[0]
 }
@@ -422,14 +417,4 @@ moved {
 moved {
   from = azurerm_private_endpoint.stg_import_blocked_pe
   to   = azurerm_private_endpoint.stg_import_blocked_pe[0]
-}
-
-moved {
-  from = azurerm_role_assignment.airlock_blob_data_contributor
-  to   = azurerm_role_assignment.airlock_blob_data_contributor[0]
-}
-
-moved {
-  from = azurerm_role_assignment.api_sa_data_contributor
-  to   = azurerm_role_assignment.api_sa_data_contributor[0]
 }
