@@ -5,7 +5,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
-* Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new requests. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`), and pre-existing workspaces/requests are treated as `airlock_version=1` on read so they keep routing to it.
+* Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1` so they keep routing to legacy storage.
 See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 

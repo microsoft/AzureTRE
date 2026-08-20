@@ -66,6 +66,18 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
+    async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
+        # The bundle now defaults to v2, so pre-v2 workspaces must be stamped v1 explicitly
+        # or a later redeploy would migrate them - and destroy their legacy storage.
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
+        parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
+        migrated = []
+        for workspace in await self.query(query=query, parameters=parameters):
+            workspace['properties']['airlock_version'] = 1
+            await self.update_item_dict(workspace)
+            migrated.append(workspace['id'])
+        return migrated
+
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
 
