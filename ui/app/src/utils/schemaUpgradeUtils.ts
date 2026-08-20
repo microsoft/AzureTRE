@@ -15,6 +15,16 @@ export const clonePropertyValues = <T>(value: T): T => {
   return JSON.parse(JSON.stringify(value)) as T;
 };
 
+const getAllPropertyKeysFromSchemaNode = (schema: any, prefix = "", data: any = undefined): string[] => {
+  if (!schema || typeof schema !== "object") return [];
+  let keys = getAllPropertyKeys(schema.properties, prefix, data);
+  for (const condition of schema.allOf ?? []) {
+    keys = keys.concat(getAllPropertyKeysFromSchemaNode(condition?.then, prefix, data));
+    keys = keys.concat(getAllPropertyKeysFromSchemaNode(condition?.else, prefix, data));
+  }
+  return keys;
+};
+
 // Utility to get all property keys from template schema's properties object recursively, flattening nested if needed
 export const getAllPropertyKeys = (properties: any, prefix = "", data: any = undefined): string[] => {
   if (!properties) return [];
@@ -26,14 +36,16 @@ export const getAllPropertyKeys = (properties: any, prefix = "", data: any = und
       keys.push(prefix + key);
       if (Array.isArray(currentData) && (value as any).items.properties) {
         currentData.forEach((_item: any, index: number) => {
-          keys = keys.concat(getAllPropertyKeys((value as any).items.properties, `${prefix + key}.${index}.`, _item));
+          keys = keys.concat(
+            getAllPropertyKeysFromSchemaNode((value as any).items, `${prefix + key}.${index}.`, _item),
+          );
         });
       }
     } else if (value && typeof value === "object" && "properties" in value) {
       // Include the object container itself so required-object detection works, then recurse into children.
       // Array item properties are traversed with indexed paths such as "items.0.value".
       keys.push(prefix + key);
-      keys = keys.concat(getAllPropertyKeys((value as any)["properties"], prefix + key + ".", currentData));
+      keys = keys.concat(getAllPropertyKeysFromSchemaNode(value, prefix + key + ".", currentData));
     } else {
       keys.push(prefix + key);
     }
@@ -395,19 +407,7 @@ export const extractConditionalBlocks = (schema: any, newKeys: string[]) => {
 // Helper to extract all property keys from template properties and allOf conditionals
 export const getAllPropertyKeysFromTemplate = (template: any, data: any = undefined): string[] => {
   if (!template) return [];
-  let keys = getAllPropertyKeys(template.properties, "", data);
-
-  if (template.allOf) {
-    template.allOf.forEach((condition: any) => {
-      if (condition.then && condition.then.properties) {
-        keys = keys.concat(getAllPropertyKeys(condition.then.properties, "", data));
-      }
-      if (condition.else && condition.else.properties) {
-        keys = keys.concat(getAllPropertyKeys(condition.else.properties, "", data));
-      }
-    });
-  }
-  return [...new Set(keys)];
+  return [...new Set(getAllPropertyKeysFromSchemaNode(template, "", data))];
 };
 
 // Include properties from branches controlled by any of the supplied keys so a selector change can activate them.

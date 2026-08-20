@@ -445,6 +445,23 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
 
 
 @pytest.mark.asyncio
+@patch('db.repositories.resources.ResourceRepository.validate_patch')
+async def test_patch_resource_replaces_same_length_array_on_ordinary_update(validate_patch_mock, resource_repo, resource_history_repo):
+    resource_repo.update_item_with_etag = AsyncMock(return_value=None)
+    resource_history_repo.create_resource_history_item = AsyncMock()
+    resource = sample_resource()
+    resource.properties['items'] = [{'name': 'old', 'optional': 'retained-only-by-old-value'}]
+    patch = ResourcePatch(properties={'items': [{'name': 'new'}]})
+
+    await resource_repo.patch_resource(
+        resource, patch, None, 'some-etag', None, resource_history_repo,
+        create_test_user(), strings.RESOURCE_ACTION_UPDATE
+    )
+
+    assert resource.properties['items'] == [{'name': 'new'}]
+
+
+@pytest.mark.asyncio
 async def test_validate_patch_with_good_fields_passes(resource_repo):
     """
     Make sure that patch is valid when updateable fields are included

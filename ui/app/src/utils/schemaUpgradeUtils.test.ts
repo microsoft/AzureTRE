@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   extractConditionalBlocks,
+  getAllPropertyKeysFromTemplate,
   isPropertyRequiredInState,
   pruneSchemaNode,
   setNestedValue,
@@ -82,5 +83,24 @@ describe("schema upgrade utilities", () => {
     setNestedValue(result, "items.0.new_field", "kept", formData, targetSchema);
 
     expect(result).toEqual({ items: [{ new_field: "kept" }] });
+  });
+
+  it("discovers properties in nested conditional branches", () => {
+    const schema = {
+      properties: {
+        parent: {
+          type: "object",
+          properties: { selector: { type: "string" } },
+          allOf: [
+            {
+              if: { properties: { selector: { const: "enabled" } } },
+              then: { properties: { conditional: { type: "string" } } },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(getAllPropertyKeysFromTemplate(schema)).toContain("parent.conditional");
   });
 });

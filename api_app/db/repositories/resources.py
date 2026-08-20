@@ -387,6 +387,44 @@ class ResourceRepository(BaseRepository):
             else:
                 target[k] = v
 
+    def _remove_inactive_branch_properties(self, schema: dict, state: Any):
+        if not isinstance(schema, dict) or not isinstance(state, dict):
+            return
+
+        schema_properties = schema.get("properties", {})
+        for condition in schema.get("allOf", []):
+            if not isinstance(condition, dict) or "if" not in condition:
+                continue
+            matches_if = self._matches_if_condition(condition["if"], state)
+            active_branch = condition.get("then", {}) if matches_if else condition.get("else", {})
+            inactive_branch = condition.get("else", {}) if matches_if else condition.get("then", {})
+            active_props = set((active_branch or {}).get("properties", {}).keys())
+            inactive_props = set((inactive_branch or {}).get("properties", {}).keys())
+            top_level_props = set(schema_properties.keys())
+            for prop_key in inactive_props - active_props - top_level_props:
+                state.pop(prop_key, None)
+
+        schemas_by_property = {}
+        if isinstance(schema_properties, dict):
+            schemas_by_property.update(schema_properties)
+        for condition in schema.get("allOf", []):
+            if not isinstance(condition, dict):
+                continue
+            for clause in ("then", "else"):
+                branch = condition.get(clause)
+                if isinstance(branch, dict) and isinstance(branch.get("properties"), dict):
+                    schemas_by_property.update(branch["properties"])
+
+        for prop_key, prop_schema in schemas_by_property.items():
+            if prop_key not in state or not isinstance(prop_schema, dict):
+                continue
+            prop_state = state[prop_key]
+            if isinstance(prop_state, list) and isinstance(prop_schema.get("items"), dict):
+                for item in prop_state:
+                    self._remove_inactive_branch_properties(prop_schema["items"], item)
+            else:
+                self._remove_inactive_branch_properties(prop_schema, prop_state)
+
     async def patch_resource(self, resource: Resource, resource_patch: ResourcePatch, resource_template: ResourceTemplate, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, resource_action: str, force_version_update: bool = False) -> Tuple[Resource, ResourceTemplate]:
         await resource_history_repo.create_resource_history_item(resource)
         # now update the resource props
@@ -398,8 +436,10 @@ class ResourceRepository(BaseRepository):
             resource.isEnabled = resource_patch.isEnabled
 
         new_template = None
+        is_template_upgrade = False
         if resource_patch.templateVersion is not None:
             new_template = await self.validate_template_version_patch(resource, resource_patch, resource_template_repo, resource_template, force_version_update)
+            is_template_upgrade = resource_template is not None and new_template.version != resource_template.version
 
             current_template_properties = self._get_all_property_keys_from_template(resource_template)
             enriched_current_template = resource_template_repo.enrich_template(resource_template, is_update=True)
@@ -465,27 +505,12 @@ class ResourceRepository(BaseRepository):
 
             # After schema-based removal, also strip fields that belong exclusively to inactive
             # allOf branches in the target template (evaluated against the post-patch state).
-            # Without this, unevaluatedProperties:false schemas reject the upgrade payload because
-            # stale fields from the old active branch are still present in resource.properties.
             post_patch_props = copy.deepcopy(resource.properties)
             if resource_patch.properties:
                 post_patch_props = self._deep_merge_dicts(post_patch_props, resource_patch.properties)
 
-            for condition in enriched_target_template.get("allOf", []):
-                if not isinstance(condition, dict) or "if" not in condition:
-                    continue
-                matches_if = self._matches_if_condition(condition["if"], post_patch_props)
-                active_branch = condition.get("then", {}) if matches_if else condition.get("else", {})
-                inactive_branch = condition.get("else", {}) if matches_if else condition.get("then", {})
-
-                inactive_props = set((inactive_branch or {}).get("properties", {}).keys())
-                active_props = set((active_branch or {}).get("properties", {}).keys())
-                top_level_props = set(enriched_target_template.get("properties", {}).keys())
-
-                # Only remove props that are *exclusive* to the inactive branch
-                exclusive_inactive = inactive_props - active_props - top_level_props
-                for prop_key in exclusive_inactive:
-                    resource.properties.pop(prop_key, None)
+            self._remove_inactive_branch_properties(enriched_target_template, post_patch_props)
+            self._remove_inactive_branch_properties(enriched_target_template, resource.properties)
 
             resource.templateVersion = resource_patch.templateVersion
 
@@ -494,7 +519,10 @@ class ResourceRepository(BaseRepository):
 
             # if we're here then we're valid - update the props + persist if present
             if resource_patch.properties is not None and len(resource_patch.properties) > 0:
-                self._deep_dict_update(resource.properties, resource_patch.properties)
+                if is_template_upgrade:
+                    self._deep_dict_update(resource.properties, resource_patch.properties)
+                else:
+                    resource.properties.update(resource_patch.properties)
 
         await self.update_item_with_etag(resource, etag)
         return resource, new_template if new_template is not None else resource_template
