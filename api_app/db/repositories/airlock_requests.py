@@ -105,6 +105,7 @@ class AirlockRequestRepository(BaseRepository):
             AirlockRequestStatus.Submitted: {
                 AirlockRequestStatus.InReview,
                 AirlockRequestStatus.BlockingInProgress,
+                AirlockRequestStatus.Cancelled,
                 AirlockRequestStatus.Failed
             },
             AirlockRequestStatus.InReview: {
