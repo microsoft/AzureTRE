@@ -388,3 +388,26 @@ async def test_malformed_scan_verdict_does_not_advance_request(airlock_request_r
     await airlockStatusUpdater._complete_submission_if_ready(request)
 
     update_and_publish_mock.assert_not_called()
+
+
+@patch('service_bus.airlock_request_status_update.WorkspaceRepository.create')
+@patch('service_bus.airlock_request_status_update.AirlockRequestRepository.create')
+async def test_late_file_result_is_persisted_not_discarded(airlock_request_repo, _):
+    # With scanning disabled the destination BlobCreated event can advance the request first,
+    # so the file enumeration arrives afterwards and must not be thrown away.
+    message = json.loads(json.dumps(test_sb_step_result_message))
+    message["data"]["request_files"] = [{"name": "test.txt", "size": 100}]
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message)
+
+    already_advanced = sample_airlock_request(AirlockRequestStatus.InReview)
+    already_advanced.files = []
+    airlock_request_repo.return_value.get_airlock_request_by_id.return_value = already_advanced
+    airlock_request_repo.return_value.update_airlock_request.return_value = already_advanced
+
+    airlockStatusUpdater = AirlockStatusUpdater()
+    await airlockStatusUpdater.init_repos()
+    complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    persisted = airlock_request_repo.return_value.update_airlock_request.call_args.kwargs["request_files"]
+    assert persisted[0].name == "test.txt"

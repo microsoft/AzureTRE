@@ -137,7 +137,17 @@ class AirlockStatusUpdater():
             if airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
                 logger.info(f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'.")
                 return True
-            elif scan_result is not None:
+
+            # File enumeration is a fact about the data and can arrive after the transition it
+            # accompanied, so record it regardless of the current status rather than discarding it.
+            if request_files and not airlock_request.files:
+                airlock_request = await self.airlock_request_repo.update_airlock_request(
+                    original_request=airlock_request,
+                    updated_by=airlock_request.updatedBy,
+                    request_files=request_files)
+                result = True
+
+            if scan_result is not None:
                 # A verdict is a fact about the data, so it is recorded in any non-final status.
                 airlock_request = await self.airlock_request_repo.update_airlock_request(
                     original_request=airlock_request,
