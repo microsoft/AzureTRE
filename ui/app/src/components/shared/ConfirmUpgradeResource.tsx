@@ -123,11 +123,11 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       if (isKeyActiveInTemplate(templateSchema, key, formData)) {
         const val = getNestedValue(formData, key);
         if (val !== undefined) {
-          setNestedValue(updatedNewVals, key, val, formData);
+          setNestedValue(updatedNewVals, key, val, formData, templateSchema);
         } else {
           const propSchema = getSchemaProperty(templateSchema, key);
           if (isPropertyRequiredInState(templateSchema, key, formData) && propSchema?.default !== undefined) {
-            setNestedValue(updatedNewVals, key, propSchema.default, formData);
+            setNestedValue(updatedNewVals, key, propSchema.default, formData, templateSchema);
           }
         }
       }
@@ -140,6 +140,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     let didCancel = false;
 
     if (!selectedVersion) {
+      setLoadingSchema(false);
       setAllNewProperties([]);
       setNewPropertiesToFill([]);
       setNewPropertyValues({});
@@ -147,6 +148,8 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
       setRemovedProperties([]);
       return;
     }
+
+    setLoadingSchema(true);
 
     // Construct API path for templates of specified resourceType
     // Usually, the GET path would be `${templateGetPath}/${selectedTemplate}`, but there's an exception for user resources
@@ -217,7 +220,6 @@ export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps
     }
 
     const fetchNewTemplateSchema = async () => {
-      setLoadingSchema(true);
       setApiError(null);
       setRequestLoadingState(LoadingState.Ok);
       try {

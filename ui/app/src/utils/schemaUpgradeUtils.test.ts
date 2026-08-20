@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { extractConditionalBlocks, isPropertyRequiredInState, pruneSchemaNode } from "./schemaUpgradeUtils";
+import {
+  extractConditionalBlocks,
+  isPropertyRequiredInState,
+  pruneSchemaNode,
+  setNestedValue,
+} from "./schemaUpgradeUtils";
 
 describe("schema upgrade utilities", () => {
   it("evaluates required properties in the matching allOf branch", () => {
@@ -60,5 +65,22 @@ describe("schema upgrade utilities", () => {
     const schema = { allOf: [conditional] };
 
     expect(extractConditionalBlocks(schema, ["new_property"])).toEqual({ allOf: [conditional] });
+  });
+
+  it("keeps only target schema fields when cloning an upgrade array", () => {
+    const result: Record<string, any> = {};
+    const formData = { items: [{ old_field: "removed", new_field: "kept" }] };
+    const targetSchema = {
+      properties: {
+        items: {
+          type: "array",
+          items: { type: "object", properties: { new_field: { type: "string" } } },
+        },
+      },
+    };
+
+    setNestedValue(result, "items.0.new_field", "kept", formData, targetSchema);
+
+    expect(result).toEqual({ items: [{ new_field: "kept" }] });
   });
 });

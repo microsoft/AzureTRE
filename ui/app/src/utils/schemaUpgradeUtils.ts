@@ -56,10 +56,27 @@ export const getNestedValue = (obj: any, path: string): any => {
 };
 
 // Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
-export const setNestedValue = (obj: any, path: string, value: any, source?: any): void => {
+const cloneArrayValuesForSchema = (value: any[], schema: any): any[] => {
+  if (!schema?.items || !Array.isArray(value)) return clonePropertyValues(value);
+
+  return value.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item) || !schema.items.properties) {
+      return clonePropertyValues(item);
+    }
+    const filteredItem: Record<string, any> = {};
+    for (const key of Object.keys(schema.items.properties)) {
+      if (partGuard(key) || item[key] === undefined) continue;
+      filteredItem[key] = clonePropertyValues(item[key]);
+    }
+    return filteredItem;
+  });
+};
+
+export const setNestedValue = (obj: any, path: string, value: any, source?: any, sourceSchema?: any): void => {
   const parts = path.split(".");
   let current = obj;
   let currentSource = source;
+  let currentSchema = sourceSchema;
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i];
     if (partGuard(part)) {
@@ -67,10 +84,13 @@ export const setNestedValue = (obj: any, path: string, value: any, source?: any)
     }
     const sourceValue = currentSource && typeof currentSource === "object" ? currentSource[part] : undefined;
     if (!(part in current) || typeof current[part] !== "object" || current[part] === null) {
-      current[part] = Array.isArray(sourceValue) ? clonePropertyValues(sourceValue) : {};
+      current[part] = Array.isArray(sourceValue)
+        ? cloneArrayValuesForSchema(sourceValue, currentSchema?.properties?.[part] ?? currentSchema?.items)
+        : {};
     }
     current = current[part];
     currentSource = sourceValue;
+    currentSchema = currentSchema?.properties?.[part] ?? currentSchema?.items;
   }
   const lastPart = parts[parts.length - 1];
   if (!partGuard(lastPart)) {

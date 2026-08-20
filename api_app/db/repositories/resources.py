@@ -356,6 +356,17 @@ class ResourceRepository(BaseRepository):
         for key, value in patch.items():
             if isinstance(value, dict) and isinstance(result.get(key), dict):
                 result[key] = ResourceRepository._deep_merge_dicts(result[key], value)
+            elif (
+                isinstance(value, list)
+                and isinstance(result.get(key), list)
+                and len(value) == len(result[key])
+                and all(isinstance(item, dict) for item in value)
+                and all(isinstance(item, dict) for item in result[key])
+            ):
+                result[key] = [
+                    ResourceRepository._deep_merge_dicts(current_item, patch_item)
+                    for current_item, patch_item in zip(result[key], value)
+                ]
             else:
                 result[key] = copy.deepcopy(value)
         return result
@@ -364,6 +375,15 @@ class ResourceRepository(BaseRepository):
         for k, v in patch.items():
             if isinstance(v, dict) and isinstance(target.get(k), dict):
                 self._deep_dict_update(target[k], v)
+            elif (
+                isinstance(v, list)
+                and isinstance(target.get(k), list)
+                and len(v) == len(target[k])
+                and all(isinstance(item, dict) for item in v)
+                and all(isinstance(item, dict) for item in target[k])
+            ):
+                for current_item, patch_item in zip(target[k], v):
+                    self._deep_dict_update(current_item, patch_item)
             else:
                 target[k] = v
 
