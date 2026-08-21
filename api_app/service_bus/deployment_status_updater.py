@@ -165,18 +165,10 @@ class DeploymentStatusUpdater():
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
-            if (step_to_update.resourceType == ResourceType.Workspace
-                    and step_to_update.resourceAction == RequestAction.Upgrade
-                    and operation.action == RequestAction.UnInstall):
-                if not await self._finalize_pending_workspace_address_space(resource_to_persist, operation):
-                    return False
-
             if (step_to_update.templateStepId == "main"
                     and operation.action == RequestAction.UnInstall
                     and step_to_update.resourceType == ResourceType.WorkspaceService):
-                cleanup_succeeded = await self._finalize_workspace_address_space(resource_to_persist, operation) \
-                    if is_last_step else await self._mark_workspace_address_space_pending(resource_to_persist, operation)
-                if not cleanup_succeeded:
+                if not await self._finalize_workspace_address_space(resource_to_persist, operation):
                     return False
 
             # more steps in the op to do?
@@ -221,37 +213,6 @@ class DeploymentStatusUpdater():
 
         return result
 
-    async def _mark_workspace_address_space_pending(self, resource_to_persist: dict, operation: Operation) -> bool:
-        address_to_hold = resource_to_persist.get("properties", {}).get("address_space")
-        parent_workspace_id = resource_to_persist.get("workspaceId")
-        if not address_to_hold or not parent_workspace_id:
-            return True
-
-        def update_properties(workspace):
-            pending_address_spaces = workspace.properties.get("pending_address_spaces", [])
-            if address_to_hold not in pending_address_spaces:
-                pending_address_spaces.append(address_to_hold)
-            return {"pending_address_spaces": pending_address_spaces}
-
-        return await self._patch_workspace_address_spaces(parent_workspace_id, update_properties, operation)
-
-    async def _finalize_pending_workspace_address_space(self, workspace_resource: dict, operation: Operation) -> bool:
-        main_step = next((step for step in operation.steps if step.templateStepId == "main"), None)
-        if main_step is None:
-            return True
-
-        workspace_service = await self.resource_repo.get_resource_dict_by_id(uuid.UUID(main_step.resourceId))
-        address_to_free = workspace_service.get("properties", {}).get("address_space")
-        if not address_to_free:
-            return True
-
-        def update_properties(workspace):
-            address_spaces = [address for address in workspace.properties.get("address_spaces", []) if address != address_to_free]
-            pending_address_spaces = [address for address in workspace.properties.get("pending_address_spaces", []) if address != address_to_free]
-            return {"address_spaces": address_spaces, "pending_address_spaces": pending_address_spaces}
-
-        return await self._patch_workspace_address_spaces(workspace_resource["id"], update_properties, operation)
-
     async def _finalize_workspace_address_space(self, resource_to_persist: dict, operation: Operation) -> bool:
         address_to_free = resource_to_persist.get("properties", {}).get("address_space")
         parent_workspace_id = resource_to_persist.get("workspaceId")
@@ -260,8 +221,7 @@ class DeploymentStatusUpdater():
 
         def update_properties(workspace):
             address_spaces = [address for address in workspace.properties.get("address_spaces", []) if address != address_to_free]
-            pending_address_spaces = [address for address in workspace.properties.get("pending_address_spaces", []) if address != address_to_free]
-            return {"address_spaces": address_spaces, "pending_address_spaces": pending_address_spaces}
+            return {"address_spaces": address_spaces}
 
         return await self._patch_workspace_address_spaces(parent_workspace_id, update_properties, operation)
 

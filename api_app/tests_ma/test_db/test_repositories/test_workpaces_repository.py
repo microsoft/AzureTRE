@@ -268,10 +268,7 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
     workspace_with_both.properties["address_spaces"] = ["10.1.7.0/24", "10.1.8.0/24"]
     workspace_with_both.properties["address_space"] = "10.1.7.0/24"
 
-    workspace_with_pending_address_space = copy.deepcopy(workspace)
-    workspace_with_pending_address_space.properties["pending_address_spaces"] = ["10.1.8.0/24"]
-
-    get_active_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both, workspace_with_pending_address_space]
+    get_active_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both]
     workspace_to_create = basic_workspace_request
     address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 

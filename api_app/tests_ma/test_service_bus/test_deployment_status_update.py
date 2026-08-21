@@ -392,6 +392,63 @@ async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource
     sb_sender_client().get_queue_sender().send_messages.assert_not_called()
 
 
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.update_resource_for_step')
+async def test_workspace_address_space_is_not_finalized_before_main_uninstall(
+        update_resource_for_step, send_deployment_message):
+    workspace_id = uuid.UUID(test_sb_message["id"])
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=str(workspace_id),
+        resourcePath=f'/workspaces/{workspace_id}',
+        action=RequestAction.UnInstall,
+        steps=[
+            OperationStep(
+                id="workspace-upgrade",
+                templateStepId="workspace-upgrade",
+                resourceId=str(workspace_id),
+                resourceType=ResourceType.Workspace,
+                resourceAction=RequestAction.Upgrade,
+                status=Status.Updating,
+                sourceTemplateResourceId=str(workspace_id)),
+            OperationStep(
+                id="main",
+                templateStepId="main",
+                resourceId=str(uuid.uuid4()),
+                resourceType=ResourceType.WorkspaceService,
+                resourceAction=RequestAction.UnInstall,
+                status=Status.Deleting,
+                sourceTemplateResourceId=str(workspace_id))
+        ])
+    resource = create_sample_workspace_object(str(workspace_id))
+    resource.properties = {"address_space": "10.1.8.0/24"}
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = resource
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = resource.model_dump()
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.resource_template_repo = AsyncMock()
+    status_updater.resource_history_repo = AsyncMock()
+    update_resource_for_step.return_value = MagicMock(
+        id=uuid.uuid4(),
+        get_resource_request_message_payload=MagicMock(return_value={}))
+
+    message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python({
+        **test_sb_message,
+        "stepId": "workspace-upgrade",
+        "status": Status.Updated,
+    })
+
+    with patch.object(status_updater, "_finalize_workspace_address_space", new_callable=AsyncMock) as finalize:
+        assert await status_updater.update_status_in_database(message) is True
+
+    finalize.assert_not_awaited()
+    send_deployment_message.assert_awaited_once()
+
+
 async def test_convert_outputs_to_dict():
     # Test case 1: Empty list of outputs
     outputs_list = []

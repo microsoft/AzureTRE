@@ -199,7 +199,6 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.get_active_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
-        networks = networks + [x.properties.get("pending_address_spaces", []) for x in workspaces]
         networks = [i for s in networks for i in s if i is not None]
 
         new_address_space = generate_new_cidr(networks, cidr_netmask)
