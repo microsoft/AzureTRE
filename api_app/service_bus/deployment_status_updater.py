@@ -36,6 +36,7 @@ class DeploymentStatusUpdater():
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
         self.resource_repo = await ResourceRepository.create()
+        self.workspace_repo = await WorkspaceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
@@ -156,7 +157,8 @@ class DeploymentStatusUpdater():
             # (such as a trailing workspace upgrade step), so Cosmos DB state is updated before the next step
             # queries the workspace document.
             if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
-                await self._free_workspace_address_space(resource_to_persist, operation)
+                if not await self._free_workspace_address_space(resource_to_persist, operation):
+                    return False
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -200,30 +202,30 @@ class DeploymentStatusUpdater():
 
         return result
 
-    async def _free_workspace_address_space(self, resource_to_persist: dict, operation: Operation):
+    async def _free_workspace_address_space(self, resource_to_persist: dict, operation: Operation) -> bool:
         """
         Frees any allocated address space owned by a WorkspaceService resource after a successful uninstall main step.
         Updates the parent Workspace document in Cosmos DB so that subsequent pipeline steps (e.g., workspace upgrade)
         or future operations rely on the updated address_spaces property.
         """
-        if resource_to_persist.get("resourceType") != ResourceType.WorkspaceService:
-            return
+        resource_type = resource_to_persist.get("resourceType")
+        if resource_type not in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value):
+            return True
 
         address_to_free = resource_to_persist.get("properties", {}).get("address_space")
         parent_workspace_id = resource_to_persist.get("workspaceId")
         resource_id = resource_to_persist.get("id")
 
         if not address_to_free or not parent_workspace_id:
-            return
+            return True
 
         try:
-            workspace_repo = await WorkspaceRepository.create()
             for attempt in range(MAX_CLEANUP_RETRIES):
                 try:
-                    workspace = await workspace_repo.get_workspace_by_id(parent_workspace_id)
+                    workspace = await self.workspace_repo.get_workspace_by_id(parent_workspace_id)
                     workspace_address_spaces = workspace.properties.get("address_spaces", [])
                     if address_to_free not in workspace_address_spaces:
-                        break
+                        return True
                     new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
                     workspace_patch = ResourcePatch()
                     workspace_patch.properties = {"address_spaces": new_address_spaces}
@@ -231,7 +233,7 @@ class DeploymentStatusUpdater():
                     # Note: patch_workspace with force_version_update=False updates the Cosmos DB record only;
                     # it does not trigger an independent deployment operation. Infrastructure updates (Terraform)
                     # are driven by the trailing workspace upgrade step in the uninstall pipeline.
-                    await workspace_repo.patch_workspace(
+                    await self.workspace_repo.patch_workspace(
                         workspace,
                         workspace_patch,
                         workspace.etag,
@@ -241,13 +243,16 @@ class DeploymentStatusUpdater():
                         False
                     )
                     logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
-                    break
+                    return True
                 except CosmosAccessConditionFailedError:
                     if attempt == MAX_CLEANUP_RETRIES - 1:
                         raise
                     logger.warning(f"ETag conflict when freeing workspace address space after successful uninstall. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
         except Exception as e:
             logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after uninstalling {resource_id}: {e}", exc_info=True)
+            return False
+
+        return False
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()

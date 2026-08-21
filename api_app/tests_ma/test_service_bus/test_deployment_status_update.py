@@ -162,7 +162,7 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 async def test_process_message_sets_span_attributes(resource_repo, operation_repo, _, __, tracer_mock):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
-    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo.return_value.get_operation_by_id.return_value = operation
@@ -480,7 +480,7 @@ async def test_workspace_service_uninstall_frees_address_space(
     # Mock resource dict representation returned by get_resource_dict_by_id
     workspace_service_dict = {
         "id": workspace_service_id,
-        "resourceType": ResourceType.WorkspaceService,
+        "resourceType": ResourceType.WorkspaceService.value,
         "workspaceId": parent_workspace_id,
         "properties": {
             "address_space": address_space
@@ -713,8 +713,8 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     await status_updater.init_repos()
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    # Note: complete_message is still True because we caught the exception in the outer block and logged it.
-    assert complete_message is True
+    # Cleanup failure must abandon the message so the operation can retry before progressing.
+    assert complete_message is False
     # Assert get_workspace_by_id and patch_workspace called max_retries = 3 times
     assert workspace_repo.get_workspace_by_id.call_count == 3
     assert workspace_repo.patch_workspace.call_count == 3
