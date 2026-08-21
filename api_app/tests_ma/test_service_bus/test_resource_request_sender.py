@@ -168,7 +168,7 @@ async def test_multi_step_document_retries(
     )
 
     # simulate an etag mismatch
-    resource_repo.patch_resource.side_effect = CosmosAccessConditionFailedError
+    resource_repo.patch_resource.side_effect = CosmosAccessConditionFailedError()
 
     num_retries = 5
     try:

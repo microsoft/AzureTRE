@@ -370,6 +370,13 @@
       },
       {
         "stepId": "main"
+      },
+      {
+        "stepId": "address-space-cleanup",
+        "stepTitle": "Upgrade to ensure workspace is aware of address space removal",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
       }
     ]
   }

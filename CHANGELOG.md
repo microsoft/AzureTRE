@@ -4,6 +4,9 @@
 
 ENHANCEMENTS:
 
+BUG FIXES:
+* `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
+
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))

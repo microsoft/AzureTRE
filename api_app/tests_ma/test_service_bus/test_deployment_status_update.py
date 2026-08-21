@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import json
 from unittest.mock import MagicMock, ANY
@@ -132,12 +133,13 @@ async def test_receiving_bad_json_logs_error(logging_mock, payload):
     assert error_message.startswith(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __):
+async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
     resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
@@ -154,12 +156,38 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
     logging_mock.assert_not_called()
 
 
+@patch('service_bus.deployment_status_updater.tracer')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_process_message_sets_span_attributes(resource_repo, operation_repo, _, __, workspace_repo, tracer_mock):
+    expected_workspace = create_sample_workspace_object(test_sb_message["id"])
+    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
+
+    operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
+    operation_repo.return_value.get_operation_by_id.return_value = operation
+
+    mock_span = MagicMock()
+    tracer_mock.start_as_current_span.return_value.__enter__.return_value = mock_span
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    await status_updater.process_message(ServiceBusReceivedMessageMock(test_sb_message))
+
+    mock_span.set_attribute.assert_any_call("step_id", test_sb_message["stepId"])
+    mock_span.set_attribute.assert_any_call("operation_id", test_sb_message["operationId"])
+    mock_span.set_attribute.assert_any_call("status", test_sb_message["status"])
+
+
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = EntityDoesNotExist
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -174,12 +202,13 @@ async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock
     logging_mock.assert_called_once_with(expected_error_message)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_when_updating_and_state_store_exception(logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_and_state_store_exception(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = Exception
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -193,12 +222,13 @@ async def test_when_updating_and_state_store_exception(logging_mock, resource_re
     assert complete_message is False
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___):
+async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___, workspace_repo):
     updated_message = test_sb_message
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"
@@ -225,11 +255,12 @@ async def test_state_transitions_from_deployed_to_deleted(resource_repo, operati
     operations_repo_mock.return_value.update_item.assert_called_once_with(expected_operation)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo, _, __):
+async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo, _, __, workspace_repo):
     received_message = test_sb_message_with_outputs
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -262,11 +293,12 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
     resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_properties_dont_change_with_no_outputs(resource_repo, operations_repo, _, __):
+async def test_properties_dont_change_with_no_outputs(resource_repo, operations_repo, _, __, workspace_repo):
     received_message = test_sb_message
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -288,13 +320,14 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
     resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.update_resource_for_step')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, workspace_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -343,12 +376,13 @@ async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_r
     sb_sender_client().get_queue_sender().send_messages.assert_called_once()
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource_repo, operations_repo, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource_repo, operations_repo, _, __, workspace_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -413,3 +447,510 @@ async def test_convert_outputs_to_dict():
         'list2': ['one', 'two']
     }
     assert status_updater.convert_outputs_to_dict(deployment_status_update_message.outputs) == expected_result
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_workspace_service_uninstall_frees_address_space(
+    resource_repo,
+    operations_repo_mock,
+    _,
+    __,
+    ___,
+    workspace_repo_mock,
+    send_deployment_message_mock
+):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    message_dict = {
+        "operationId": OPERATION_ID,
+        "stepId": "random-uuid",
+        "id": workspace_service_id,
+        "status": Status.Deleted,
+        "message": "uninstall succeeded",
+        "correlation_id": "test_correlation_id"
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
+
+    # Mock the operation showing RequestAction.UnInstall
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operations_repo_mock.return_value.get_operation_by_id.return_value = operation
+
+    # Mock WorkspaceService resource returned by get_resource_by_id
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.deploymentStatus = None
+    resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
+
+    # Mock resource dict representation returned by get_resource_dict_by_id
+    workspace_service_dict = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService.value,
+        "workspaceId": parent_workspace_id,
+        "properties": {
+            "address_space": address_space
+        }
+    }
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
+
+    # Mock parent workspace containing the address space to free
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+
+    workspace_repo = AsyncMock()
+    workspace_repo.get_workspace_by_id.return_value = parent_workspace
+    workspace_repo_mock.return_value = workspace_repo
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    send_deployment_message_mock.assert_called_once()
+    workspace_repo.patch_workspace.assert_not_called()
+    await status_updater._free_workspace_address_space(operation)
+    workspace_repo.patch_workspace.assert_called_once()
+    called_args = workspace_repo.patch_workspace.call_args[0]
+    assert called_args[0] == parent_workspace
+    assert called_args[1].properties == {"address_spaces": ["10.0.0.0/22"]}
+    assert called_args[2] == "parent-workspace-etag"
+
+
+async def test_workspace_service_uninstall_frees_address_space_from_root_main_step():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    child_resource_id = "69b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.Deleted
+    operation.steps.insert(0, OperationStep(
+        id="child-main",
+        templateStepId="main",
+        resourceId=child_resource_id,
+        resourceType=ResourceType.UserResource,
+        resourceAction=RequestAction.UnInstall
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.resource_template_repo = AsyncMock()
+    status_updater.resource_history_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": [address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+    status_updater.workspace_repo.get_workspace_by_id.return_value = parent_workspace
+
+    assert await status_updater._free_workspace_address_space(operation) is True
+    status_updater.resource_repo.get_resource_dict_by_id.assert_awaited_once_with(workspace_service_id)
+    status_updater.workspace_repo.patch_workspace.assert_awaited_once()
+
+
+async def test_workspace_service_uninstall_does_not_free_address_space_if_root_main_failed():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.DeletingFailed
+    operation.steps.append(OperationStep(
+        id="address-space-cleanup",
+        templateStepId="address-space-cleanup",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        status=Status.Updated
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.workspace_repo = AsyncMock()
+
+    assert await status_updater._free_workspace_address_space(operation) is True
+    status_updater.resource_repo.get_resource_dict_by_id.assert_not_awaited()
+    status_updater.workspace_repo.patch_workspace.assert_not_awaited()
+
+
+@pytest.mark.parametrize("missing_property", ["address_space", "workspaceId"])
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_workspace_service_uninstall_does_not_free_address_space_if_missing(
+    resource_repo,
+    operations_repo_mock,
+    _,
+    __,
+    ___,
+    workspace_repo_mock,
+    missing_property
+):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    message_dict = {
+        "operationId": OPERATION_ID,
+        "stepId": "random-uuid",
+        "id": workspace_service_id,
+        "status": Status.Deleted,
+        "message": "uninstall succeeded",
+        "correlation_id": "test_correlation_id"
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operations_repo_mock.return_value.get_operation_by_id.return_value = operation
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.deploymentStatus = None
+    resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
+
+    workspace_service_dict = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {
+            "address_space": address_space
+        }
+    }
+    if missing_property == "address_space":
+        del workspace_service_dict["properties"]["address_space"]
+    elif missing_property == "workspaceId":
+        del workspace_service_dict["workspaceId"]
+
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
+
+    workspace_repo = AsyncMock()
+    workspace_repo_mock.return_value = workspace_repo
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    workspace_repo.patch_workspace.assert_not_called()
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_workspace_service_uninstall_frees_address_space_with_retry_on_etag_conflict(
+    resource_repo,
+    operations_repo_mock,
+    _,
+    __,
+    ___,
+    workspace_repo_mock,
+    send_deployment_message_mock
+):
+    from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    message_dict = {
+        "operationId": OPERATION_ID,
+        "stepId": "random-uuid",
+        "id": workspace_service_id,
+        "status": Status.Deleted,
+        "message": "uninstall succeeded",
+        "correlation_id": "test_correlation_id"
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
+
+    # Mock the operation showing RequestAction.UnInstall
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operations_repo_mock.return_value.get_operation_by_id.return_value = operation
+
+    # Mock WorkspaceService resource returned by get_resource_by_id
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.deploymentStatus = None
+    resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
+
+    # Mock resource dict representation returned by get_resource_dict_by_id
+    workspace_service_dict = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {
+            "address_space": address_space
+        }
+    }
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
+
+    # Mock parent workspace containing the address space to free
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+
+    workspace_repo = AsyncMock()
+    workspace_repo.get_workspace_by_id.return_value = parent_workspace
+
+    # First attempt raises CosmosAccessConditionFailedError, second succeeds
+    workspace_repo.patch_workspace.side_effect = [CosmosAccessConditionFailedError(), None]
+    workspace_repo_mock.return_value = workspace_repo
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+    send_deployment_message_mock.assert_called_once()
+    await status_updater._free_workspace_address_space(operation)
+    # One read prepares the synthetic upgrade, then two reads cover the retry.
+    assert workspace_repo.get_workspace_by_id.call_count == 3
+    # Assert patch_workspace called twice
+    assert workspace_repo.patch_workspace.call_count == 2
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+@patch('service_bus.deployment_status_updater.logger')
+async def test_workspace_service_uninstall_logs_error_after_max_retries(
+    logging_mock,
+    resource_repo,
+    operations_repo_mock,
+    _,
+    __,
+    ___,
+    workspace_repo_mock,
+    send_deployment_message_mock
+):
+    from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    message_dict = {
+        "operationId": OPERATION_ID,
+        "stepId": "random-uuid",
+        "id": workspace_service_id,
+        "status": Status.Deleted,
+        "message": "uninstall succeeded",
+        "correlation_id": "test_correlation_id"
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
+
+    # Mock the operation showing RequestAction.UnInstall
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operations_repo_mock.return_value.get_operation_by_id.return_value = operation
+
+    # Mock WorkspaceService resource returned by get_resource_by_id
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.deploymentStatus = None
+    resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
+
+    # Mock resource dict representation returned by get_resource_dict_by_id
+    workspace_service_dict = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {
+            "address_space": address_space
+        }
+    }
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
+
+    # Mock parent workspace containing the address space to free
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+
+    workspace_repo = AsyncMock()
+    workspace_repo.get_workspace_by_id.return_value = parent_workspace
+
+    # All attempts raise CosmosAccessConditionFailedError
+    workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
+    workspace_repo_mock.return_value = workspace_repo
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    # The uninstall message is complete; cleanup is deferred to the upgrade step.
+    assert complete_message is True
+    send_deployment_message_mock.assert_called_once()
+    workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
+    complete_message = await status_updater._free_workspace_address_space(operation)
+    assert complete_message is False
+    # Assert get_workspace_by_id and patch_workspace called max_retries = 3 times
+    assert workspace_repo.get_workspace_by_id.call_count == 4
+    assert workspace_repo.patch_workspace.call_count == 3
+    # Assert we logged the final failure using the module's logger
+    logging_mock.error.assert_called_once()
+    assert "[ADDRESS_SPACE_CLEANUP_FAILED]" in logging_mock.error.call_args[0][0]
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.update_resource_for_step')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
+@patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+@patch('service_bus.deployment_status_updater.OperationRepository.create')
+@patch('service_bus.deployment_status_updater.ResourceRepository.create')
+async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_next_step(
+    resource_repo,
+    operations_repo_mock,
+    _,
+    __,
+    ___,
+    workspace_repo_mock,
+    update_resource_for_step_mock,
+    send_deployment_message_mock
+):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    call_order = []
+
+    # Create a 2-step uninstall operation (step 1: main, step 2: workspace upgrade)
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleting
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId="address-space-cleanup",
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        steps=[step1, step2]
+    )
+    operations_repo_mock.return_value.get_operation_by_id.return_value = operation
+
+    message_dict = {
+        "operationId": OPERATION_ID,
+        "stepId": "step-1",
+        "id": workspace_service_id,
+        "status": Status.Deleted,
+        "message": "uninstall succeeded",
+        "correlation_id": "test_correlation_id"
+    }
+    service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.deploymentStatus = None
+    resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
+
+    workspace_service_dict = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {
+            "address_space": address_space
+        }
+    }
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
+
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+
+    workspace_repo = AsyncMock()
+    workspace_repo.get_workspace_by_id.return_value = parent_workspace
+
+    async def mock_patch_workspace(*args, **kwargs):
+        call_order.append("patch_workspace")
+        return parent_workspace, MagicMock()
+
+    workspace_repo.patch_workspace = AsyncMock(side_effect=mock_patch_workspace)
+    workspace_repo_mock.return_value = workspace_repo
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.id = parent_workspace_id
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_for_step_mock.return_value = resource_to_send_mock
+
+    async def mock_send_deployment_message(*args, **kwargs):
+        call_order.append("send_deployment_message")
+
+    send_deployment_message_mock.side_effect = mock_send_deployment_message
+
+    status_updater = DeploymentStatusUpdater()
+    await status_updater.init_repos()
+    complete_message = await status_updater.process_message(service_bus_received_message_mock)
+
+    assert complete_message is True
+
+    # The address remains reserved while the workspace upgrade is queued.
+    assert call_order == ["send_deployment_message"]
+
+    upgrade_message = ServiceBusReceivedMessageMock({
+        "operationId": OPERATION_ID,
+        "stepId": "step-2",
+        "id": parent_workspace_id,
+        "status": Status.Updated,
+        "message": "workspace upgrade succeeded",
+        "correlation_id": "test_correlation_id"
+    })
+    complete_message = await status_updater.process_message(upgrade_message)
+
+    assert complete_message is True
+    assert call_order == ["send_deployment_message", "patch_workspace"]
+
+
+@patch("service_bus.deployment_status_updater.config")
+@patch("service_bus.deployment_status_updater.credentials")
+@patch("service_bus.deployment_status_updater.logger")
+async def test_receive_messages_handles_credential_context_failure(logger_mock, credentials_mock, config_mock):
+    config_mock.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE = "test_namespace"
+    config_mock.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE = "test_queue"
+    config_mock.SERVICE_BUS_MAX_WAIT_TIME = 10
+
+    # Simulate exception when entering credential context manager
+    credentials_mock.get_credential_async_context.side_effect = Exception("Credential error")
+
+    status_updater = DeploymentStatusUpdater()
+
+    # Run receive_messages in a task and cancel after one loop iteration
+    task = asyncio.create_task(status_updater.receive_messages())
+    await asyncio.sleep(0.1)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    logger_mock.exception.assert_called_with("Unexpected error in deployment status receiver loop")

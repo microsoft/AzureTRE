@@ -6,7 +6,7 @@ import time
 from pydantic import ValidationError, TypeAdapter
 
 from api.routes.resource_helpers import get_timestamp
-from models.domain.resource import Output
+from models.domain.resource import Output, ResourceType
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -21,6 +21,12 @@ from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+from db.repositories.workspaces import WorkspaceRepository
+from models.schemas.resource import ResourcePatch
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+
+
+MAX_CLEANUP_RETRIES = 3
 
 
 class DeploymentStatusUpdater():
@@ -30,6 +36,7 @@ class DeploymentStatusUpdater():
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
         self.resource_repo = await ResourceRepository.create()
+        self.workspace_repo = await WorkspaceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
@@ -40,60 +47,48 @@ class DeploymentStatusUpdater():
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
             polling_count = 0
-
             while True:
+                complete_message = True
                 try:
-                    current_time = time.time()
-                    polling_count += 1
-                    # Log a heartbeat message every 60 seconds to show the service is still working
-                    if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
-                        last_heartbeat_time = current_time
-                        polling_count = 0
-
                     async with credentials.get_credential_async_context() as credential:
-                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+                        async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
+                            logger.debug("Creating Deployment Status receiver session")
+                            async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=config.SERVICE_BUS_MAX_WAIT_TIME, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                                async with AutoLockRenewer() as renewer:
+                                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
 
-                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
-                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                            async with AutoLockRenewer() as renewer:
-                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                                async for msg in receiver:
-                                    complete_message = await self.process_message(msg)
-                                    if complete_message:
-                                        await receiver.complete_message(msg)
-                                    else:
-                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                        await receiver.abandon_message(msg)
-                            logger.info(f"Closing session: {receiver.session.session_id}")
+                                    async for msg in receiver:
+                                        complete_message = await self.process_message(msg)
+                                        if complete_message:
+                                            await receiver.complete_message(msg)
+                                        else:
+                                            await receiver.abandon_message(msg)
+
+                                polling_count = 0
 
                 except OperationTimeoutError:
-                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                    polling_count += 1
+                    # log a heartbeat every ~5 minutes when queue is idle (max_wait_time is usually ~10s)
+                    if time.time() - last_heartbeat_time > 300:
+                        logger.info(f"Deployment status updater polling... (idle checks: {polling_count})")
+                        last_heartbeat_time = time.time()
+                except ServiceBusConnectionError as e:
+                    logger.warning(f"Service Bus connection error in deployment status updater, will retry: {e}")
+                    await asyncio.sleep(5)
+                except Exception:
+                    logger.exception("Unexpected error in deployment status receiver loop")
+                    await asyncio.sleep(5)
 
-                except ServiceBusConnectionError:
-                    # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
-
-                except Exception as e:
-                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
-                    logger.exception(f"Unknown exception. Will retry - {e}")
-
-    async def process_message(self, msg):
+    async def process_message(self, msg) -> bool:
         complete_message = False
-        message = ""
-
         with tracer.start_as_current_span("process_message") as current_span:
             try:
                 message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(json.loads(str(msg)))
 
-                current_span.set_attribute("step_id", message.stepId)
-                current_span.set_attribute("operation_id", message.operationId)
-                current_span.set_attribute("status", message.status)
+                current_span.set_attribute("step_id", str(message.stepId))
+                current_span.set_attribute("operation_id", str(message.operationId))
+                current_span.set_attribute("status", str(message.status))
 
-                logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
                 complete_message = await self.update_status_in_database(message)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")
             except (json.JSONDecodeError, ValidationError):
@@ -157,6 +152,23 @@ class DeploymentStatusUpdater():
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
+            # Keep the address space reserved until Azure has applied the workspace update.
+            if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
+                if self._is_workspace_service_with_address_space(resource_to_persist) and not self._has_workspace_upgrade_step(operation, current_step_index):
+                    operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
+                    is_last_step = False
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+
+            # A workspace upgrade is the point at which the address space is no longer
+            # in use by Azure, so it can be released for a future allocation.
+            if (step_to_update.templateStepId == "address-space-cleanup"
+                    and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+                    and step_to_update.resourceAction == RequestAction.Upgrade
+                    and step_to_update.is_success()
+                    and operation.action == RequestAction.UnInstall):
+                if not await self._free_workspace_address_space(operation):
+                    return False
+
             # more steps in the op to do?
             if is_last_step is False:
                 assert current_step_index < (len(operation.steps) - 1)
@@ -165,17 +177,23 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
-                    resource_to_send = await update_resource_for_step(
-                        operation_step=next_step,
-                        resource_repo=self.resource_repo,
-                        resource_template_repo=self.resource_template_repo,
-                        resource_history_repo=self.resource_history_repo,
-                        root_resource=None,
-                        step_resource=parent_resource,
-                        resource_to_update_id=next_step.resourceId,
-                        primary_action=operation.action,
-                        user=operation.user)
+                    if next_step.templateStepId == "address-space-cleanup":
+                        resource_to_send = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
+                    else:
+                        parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
+                        resource_to_send = await update_resource_for_step(
+                            operation_step=next_step,
+                            resource_repo=self.resource_repo,
+                            resource_template_repo=self.resource_template_repo,
+                            resource_history_repo=self.resource_history_repo,
+                            root_resource=None,
+                            step_resource=parent_resource,
+                            resource_to_update_id=next_step.resourceId,
+                            primary_action=operation.action,
+                            user=operation.user)
+
+                    if next_step.templateStepId == "address-space-cleanup":
+                        await self.operations_repo.update_item(operation)
 
                     # create + send the message
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
@@ -198,6 +216,88 @@ class DeploymentStatusUpdater():
             logger.exception("Failed to update status")
 
         return result
+
+    def _is_workspace_service_with_address_space(self, resource: dict) -> bool:
+        return (resource.get("resourceType") in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value)
+                and bool(resource.get("properties", {}).get("address_space"))
+                and bool(resource.get("workspaceId")))
+
+    def _has_workspace_upgrade_step(self, operation: Operation, current_step_index: int) -> bool:
+        return any(
+            step.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+            and step.resourceAction == RequestAction.Upgrade
+            for step in operation.steps[current_step_index + 1:]
+        )
+
+    def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
+        return OperationStep(
+            id=str(uuid.uuid4()),
+            templateStepId="address-space-cleanup",
+            stepTitle="Update workspace address spaces",
+            resourceId=resource["workspaceId"],
+            resourceTemplateName="",
+            resourceType=ResourceType.Workspace,
+            resourceAction=RequestAction.Upgrade,
+            status=Status.AwaitingUpdate,
+            sourceTemplateResourceId=resource["id"]
+        )
+
+    async def _free_workspace_address_space(self, operation: Operation) -> bool:
+        """
+        Frees the address space owned by the uninstalled WorkspaceService after
+        the corresponding workspace upgrade has succeeded.
+        """
+        main_step = next(
+            (step for step in operation.steps
+             if step.templateStepId == "main"
+             and step.resourceId == operation.resourceId
+             and step.is_success()),
+            None
+        )
+        if main_step is None:
+            return True
+        resource_to_persist = await self.resource_repo.get_resource_dict_by_id(main_step.resourceId)
+        address_to_free = resource_to_persist.get("properties", {}).get("address_space")
+        parent_workspace_id = resource_to_persist.get("workspaceId")
+        resource_id = resource_to_persist.get("id")
+
+        if not address_to_free or not parent_workspace_id:
+            return True
+
+        try:
+            for attempt in range(MAX_CLEANUP_RETRIES):
+                try:
+                    workspace = await self.workspace_repo.get_workspace_by_id(parent_workspace_id)
+                    workspace_address_spaces = workspace.properties.get("address_spaces", [])
+                    if address_to_free not in workspace_address_spaces:
+                        return True
+                    new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
+                    workspace_patch = ResourcePatch()
+                    workspace_patch.properties = {"address_spaces": new_address_spaces}
+
+                    # Note: patch_workspace with force_version_update=False updates the Cosmos DB record only;
+                    # it does not trigger an independent deployment operation. Infrastructure updates (Terraform)
+                    # are driven by the trailing workspace upgrade step in the uninstall pipeline.
+                    await self.workspace_repo.patch_workspace(
+                        workspace,
+                        workspace_patch,
+                        workspace.etag,
+                        self.resource_template_repo,
+                        self.resource_history_repo,
+                        operation.user,
+                        False
+                    )
+                    logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful workspace upgrade for {resource_id}")
+                    return True
+                except CosmosAccessConditionFailedError:
+                    if attempt == MAX_CLEANUP_RETRIES - 1:
+                        raise
+                    logger.warning(f"ETag conflict when freeing workspace address space after successful workspace upgrade. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+        except Exception as e:
+            logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after upgrading the workspace for {resource_id}: {e}", exc_info=True)
+            return False
+
+        return False
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()

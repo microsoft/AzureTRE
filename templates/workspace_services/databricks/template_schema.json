@@ -76,7 +76,9 @@
                   "name": "databricks",
                   "description": "Communication with Azure Databricks dependancies.",
                   "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
-                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_addresses": [
+                    "AzureDatabricks"
+                  ],
                   "destination_ports": [
                     "443"
                   ],
@@ -112,9 +114,15 @@
                   "name": "AzureAD",
                   "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": ["AzureActiveDirectory"],
-                  "destination_ports": ["*"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }
@@ -210,7 +218,9 @@
                   "name": "databricks",
                   "description": "Communication with Azure Databricks dependancies.",
                   "source_addresses": "{{ resource.properties.databricks_address_prefixes }}",
-                  "destination_addresses": [ "AzureDatabricks"],
+                  "destination_addresses": [
+                    "AzureDatabricks"
+                  ],
                   "destination_ports": [
                     "443"
                   ],
@@ -246,9 +256,15 @@
                   "name": "AzureAD",
                   "description": "AAD access",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": ["AzureActiveDirectory"],
-                  "destination_ports": ["*"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "AzureActiveDirectory"
+                  ],
+                  "destination_ports": [
+                    "*"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 }
               ]
             }
@@ -350,6 +366,13 @@
       },
       {
         "stepId": "main"
+      },
+      {
+        "stepId": "address-space-cleanup",
+        "stepTitle": "Upgrade to ensure workspace is aware of address space removal",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
       }
     ]
   }
