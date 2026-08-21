@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
