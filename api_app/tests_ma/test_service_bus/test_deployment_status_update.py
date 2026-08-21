@@ -514,6 +514,42 @@ async def test_workspace_service_uninstall_frees_address_space(
     assert called_args[2] == "parent-workspace-etag"
 
 
+async def test_workspace_service_uninstall_frees_address_space_from_root_main_step():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    child_resource_id = "69b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps.insert(0, OperationStep(
+        id="child-main",
+        templateStepId="main",
+        resourceId=child_resource_id,
+        resourceType=ResourceType.UserResource,
+        resourceAction=RequestAction.UnInstall
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.resource_template_repo = AsyncMock()
+    status_updater.resource_history_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    parent_workspace = create_sample_workspace_object(parent_workspace_id)
+    parent_workspace.properties = {"address_spaces": [address_space]}
+    parent_workspace.etag = "parent-workspace-etag"
+    status_updater.workspace_repo.get_workspace_by_id.return_value = parent_workspace
+
+    assert await status_updater._free_workspace_address_space(operation) is True
+    status_updater.resource_repo.get_resource_dict_by_id.assert_awaited_once_with(workspace_service_id)
+    status_updater.workspace_repo.patch_workspace.assert_awaited_once()
+
+
 @pytest.mark.parametrize("missing_property", ["address_space", "workspaceId"])
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')

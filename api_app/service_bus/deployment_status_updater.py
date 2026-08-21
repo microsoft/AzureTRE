@@ -246,7 +246,11 @@ class DeploymentStatusUpdater():
         Frees the address space owned by the uninstalled WorkspaceService after
         the corresponding workspace upgrade has succeeded.
         """
-        main_step = next((step for step in operation.steps if step.templateStepId == "main"), None)
+        main_step = next(
+            (step for step in operation.steps
+             if step.templateStepId == "main" and step.resourceId == operation.resourceId),
+            None
+        )
         if main_step is None:
             return True
         resource_to_persist = await self.resource_repo.get_resource_dict_by_id(main_step.resourceId)
