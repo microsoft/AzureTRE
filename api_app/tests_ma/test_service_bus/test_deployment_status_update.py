@@ -133,12 +133,13 @@ async def test_receiving_bad_json_logs_error(logging_mock, payload):
     assert error_message.startswith(strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __):
+async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
     resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
@@ -156,11 +157,12 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
 
 
 @patch('service_bus.deployment_status_updater.tracer')
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_process_message_sets_span_attributes(resource_repo, operation_repo, _, __, tracer_mock):
+async def test_process_message_sets_span_attributes(resource_repo, operation_repo, _, __, workspace_repo, tracer_mock):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
     resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
@@ -179,12 +181,13 @@ async def test_process_message_sets_span_attributes(resource_repo, operation_rep
     mock_span.set_attribute.assert_any_call("status", test_sb_message["status"])
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = EntityDoesNotExist
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -199,12 +202,13 @@ async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock
     logging_mock.assert_called_once_with(expected_error_message)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('services.logging.logger.exception')
-async def test_when_updating_and_state_store_exception(logging_mock, resource_repo, operation_repo, _, __):
+async def test_when_updating_and_state_store_exception(logging_mock, resource_repo, operation_repo, _, __, workspace_repo):
     resource_repo.return_value.get_resource_dict_by_id.side_effect = Exception
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
@@ -218,12 +222,13 @@ async def test_when_updating_and_state_store_exception(logging_mock, resource_re
     assert complete_message is False
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___):
+async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___, workspace_repo):
     updated_message = test_sb_message
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"
@@ -250,11 +255,12 @@ async def test_state_transitions_from_deployed_to_deleted(resource_repo, operati
     operations_repo_mock.return_value.update_item.assert_called_once_with(expected_operation)
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo, _, __):
+async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo, _, __, workspace_repo):
     received_message = test_sb_message_with_outputs
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -287,11 +293,12 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
     resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_properties_dont_change_with_no_outputs(resource_repo, operations_repo, _, __):
+async def test_properties_dont_change_with_no_outputs(resource_repo, operations_repo, _, __, workspace_repo):
     received_message = test_sb_message
     received_message["status"] = Status.Deployed
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -313,13 +320,14 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
     resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.update_resource_for_step')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_repo, operations_repo, update_resource_for_step, _, __, workspace_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_1_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
@@ -368,12 +376,13 @@ async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_r
     sb_sender_client().get_queue_sender().send_messages.assert_called_once()
 
 
+@patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
 @patch('service_bus.helpers.ServiceBusClient')
-async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource_repo, operations_repo, _, __, multi_step_operation, user_resource_multi, basic_shared_service):
+async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource_repo, operations_repo, _, __, workspace_repo, multi_step_operation, user_resource_multi, basic_shared_service):
     received_message = test_sb_message_multi_step_3_complete
     received_message["status"] = Status.Updated
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(received_message)
