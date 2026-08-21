@@ -68,21 +68,18 @@ export const getNestedValue = (obj: any, path: string): any => {
 };
 
 // Utility to set a nested value in an object using a dotted path (e.g. "parent.sibling")
-const cloneArrayValuesForSchema = (value: any[], schema: any): any[] => {
-  if (!schema?.items || !Array.isArray(value)) return clonePropertyValues(value);
-
-  return value.map((item) => {
-    if (!item || typeof item !== "object" || Array.isArray(item) || !schema.items.properties) {
-      return clonePropertyValues(item);
-    }
-    const filteredItem: Record<string, any> = {};
-    for (const key of Object.keys(schema.items.properties)) {
-      if (partGuard(key) || item[key] === undefined) continue;
-      filteredItem[key] = clonePropertyValues(item[key]);
-    }
-    return filteredItem;
-  });
+const cloneValueForSchema = (value: any, schema: any): any => {
+  if (Array.isArray(value)) return value.map((item) => cloneValueForSchema(item, schema?.items));
+  if (!value || typeof value !== "object" || !schema?.properties) return clonePropertyValues(value);
+  const result: Record<string, any> = {};
+  for (const key of Object.keys(schema.properties)) {
+    if (partGuard(key) || value[key] === undefined) continue;
+    result[key] = cloneValueForSchema(value[key], schema.properties[key]);
+  }
+  return result;
 };
+
+const cloneArrayValuesForSchema = (value: any[], schema: any): any[] => cloneValueForSchema(value, schema);
 
 export const setNestedValue = (obj: any, path: string, value: any, source?: any, sourceSchema?: any): void => {
   const parts = path.split(".");
@@ -162,24 +159,21 @@ export const getSchemaPropertyFromProperties = (properties: any, path: string): 
 
 // Utility to get schema property from template (both properties and allOf) using a dotted path
 export const getSchemaProperty = (template: any, path: string): any => {
-  if (!template) return null;
-
-  let prop = getSchemaPropertyFromProperties(template.properties, path);
-  if (prop) return prop;
-
-  if (template.allOf) {
-    for (const condition of template.allOf) {
-      if (condition.then && condition.then.properties) {
-        prop = getSchemaPropertyFromProperties(condition.then.properties, path);
-        if (prop) return prop;
-      }
-      if (condition.else && condition.else.properties) {
-        prop = getSchemaPropertyFromProperties(condition.else.properties, path);
-        if (prop) return prop;
-      }
+  const find = (schema: any, parts: string[]): any => {
+    if (!schema || parts.length === 0) return null;
+    const [part, ...remainingParts] = parts;
+    if (!partGuard(part) && !/^\d+$/.test(part) && schema.properties?.[part]) {
+      const property = schema.properties[part];
+      return remainingParts.length === 0 ? property : find(property, remainingParts);
     }
-  }
-  return null;
+    if (/^\d+$/.test(part) && schema.items) return find(schema.items, remainingParts);
+    for (const condition of schema.allOf ?? []) {
+      const result = find(condition?.then, parts) || find(condition?.else, parts);
+      if (result) return result;
+    }
+    return null;
+  };
+  return find(template, path.split("."));
 };
 
 // Utility to get nested uiSchema object using a dotted path
@@ -379,8 +373,6 @@ export const collectConditionalKeys = (entry: any): string[] => {
     }
   };
   collect(entry.if);
-  collect(entry.then);
-  collect(entry.else);
   return [...new Set(keys)];
 };
 
@@ -451,25 +443,18 @@ export const getTopLevelKeysFromTemplate = (template: any): string[] => {
 
 // Helper to determine if a property key is defined on an active branch of the template for the given state
 export const isKeyActiveInTemplate = (template: any, path: string, state: any): boolean => {
-  if (!template) return false;
-  // If property is defined in top-level properties, it's active
-  if (getSchemaPropertyFromProperties(template.properties, path)) {
-    return true;
-  }
-  // If property is defined in allOf, check matching branch
-  if (template.allOf) {
-    for (const condition of template.allOf) {
-      const matchesIf = matchesIfCondition(condition.if, state);
-      if (matchesIf && condition.then && condition.then.properties) {
-        if (getSchemaPropertyFromProperties(condition.then.properties, path)) {
-          return true;
-        }
-      } else if (!matchesIf && condition.else && condition.else.properties) {
-        if (getSchemaPropertyFromProperties(condition.else.properties, path)) {
-          return true;
-        }
-      }
+  const find = (schema: any, parts: string[], currentState: any): boolean => {
+    if (!schema || parts.length === 0) return false;
+    const [part, ...remainingParts] = parts;
+    if (!partGuard(part) && !/^\d+$/.test(part) && schema.properties?.[part]) {
+      return remainingParts.length === 0 || find(schema.properties[part], remainingParts, currentState?.[part]);
     }
-  }
-  return false;
+    if (/^\d+$/.test(part) && schema.items) return find(schema.items, remainingParts, currentState?.[Number(part)]);
+    for (const condition of schema.allOf ?? []) {
+      const branch = matchesIfCondition(condition?.if, currentState) ? condition?.then : condition?.else;
+      if (find(branch, parts, currentState)) return true;
+    }
+    return false;
+  };
+  return find(template, path.split("."), state);
 };

@@ -520,7 +520,7 @@ class ResourceRepository(BaseRepository):
             # if we're here then we're valid - update the props + persist if present
             if resource_patch.properties is not None and len(resource_patch.properties) > 0:
                 if is_template_upgrade:
-                    self._deep_dict_update(resource.properties, resource_patch.properties)
+                    resource.properties = post_patch_props
                 else:
                     resource.properties.update(resource_patch.properties)
 
@@ -724,17 +724,7 @@ class ResourceRepository(BaseRepository):
             prop_def = self._get_property_schema(enriched_template, schema_path)
             # Allow if this leaf OR any ancestor object is marked updateable: true
             is_updateable = (prop_def.get("updateable", False) is True if prop_def else False) or has_updateable_parent(schema_path)
-            is_new_on_upgrade = (
-                is_upgrade
-                and schema_path in target_template_properties
-                and schema_path not in old_template_properties
-            )
-
-            if is_updateable or is_new_on_upgrade:
-                return True
-
-            if current_properties is not None and is_upgrade:
-                has_existing, existing_val = self._get_nested_value(current_properties, prop_path)
+            if current_properties is not None and is_upgrade and not is_updateable:
                 array_parts = prop_path.split(".")
                 array_index = next((i for i, part in enumerate(array_parts) if part.isdigit()), None)
                 if array_index is not None:
@@ -747,6 +737,17 @@ class ResourceRepository(BaseRepository):
                         or len(patch_array) != len(current_array)
                     ):
                         return False
+            is_new_on_upgrade = (
+                is_upgrade
+                and schema_path in target_template_properties
+                and schema_path not in old_template_properties
+            )
+
+            if is_updateable or is_new_on_upgrade:
+                return True
+
+            if current_properties is not None and is_upgrade:
+                has_existing, existing_val = self._get_nested_value(current_properties, prop_path)
                 if has_existing and existing_val == prop_val:
                     return True
 

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   extractConditionalBlocks,
   getAllPropertyKeysFromTemplate,
+  getSchemaProperty,
+  isKeyActiveInTemplate,
   isPropertyRequiredInState,
   pruneSchemaNode,
   setNestedValue,
@@ -58,14 +60,14 @@ describe("schema upgrade utilities", () => {
     });
   });
 
-  it("extracts conditionals when a referenced key appears only in required", () => {
+  it("does not extract conditionals when a new key is only declared in a branch", () => {
     const conditional = {
       if: { properties: { selector: { const: "enabled" } } },
       then: { required: ["new_property"] },
     };
     const schema = { allOf: [conditional] };
 
-    expect(extractConditionalBlocks(schema, ["new_property"])).toEqual({ allOf: [conditional] });
+    expect(extractConditionalBlocks(schema, ["new_property"])).toEqual({ allOf: [] });
   });
 
   it("keeps only target schema fields when cloning an upgrade array", () => {
@@ -102,5 +104,51 @@ describe("schema upgrade utilities", () => {
     };
 
     expect(getAllPropertyKeysFromTemplate(schema)).toContain("parent.conditional");
+  });
+
+  it("resolves nested conditional properties and active branches", () => {
+    const schema = {
+      properties: {
+        parent: {
+          type: "object",
+          properties: { selector: { type: "string" } },
+          allOf: [
+            {
+              if: { properties: { selector: { const: "enabled" } } },
+              then: { properties: { conditional: { type: "string" } } },
+              else: { properties: { other: { type: "string" } } },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(getSchemaProperty(schema, "parent.conditional")).toEqual({ type: "string" });
+    expect(isKeyActiveInTemplate(schema, "parent.conditional", { parent: { selector: "enabled" } })).toBe(true);
+    expect(isKeyActiveInTemplate(schema, "parent.conditional", { parent: { selector: "disabled" } })).toBe(false);
+  });
+
+  it("recursively filters nested array item values by the target schema", () => {
+    const result: Record<string, any> = {};
+    const formData = {
+      items: [{ nested: { kept: "yes", removed: "no" }, removed: "no" }],
+    };
+    const targetSchema = {
+      properties: {
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              nested: { type: "object", properties: { kept: { type: "string" } } },
+            },
+          },
+        },
+      },
+    };
+
+    setNestedValue(result, "items.0.nested.kept", "yes", formData, targetSchema);
+
+    expect(result).toEqual({ items: [{ nested: { kept: "yes" } }] });
   });
 });
