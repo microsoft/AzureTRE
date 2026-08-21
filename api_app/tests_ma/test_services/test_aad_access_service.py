@@ -4,8 +4,7 @@ from mock import call, patch
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
 from models.domain.workspace import Workspace, WorkspaceRole
-from services.aad_authentication import AzureADAuthorization, compare_versions, GRAPH_REQUEST_TIMEOUT
-from services.access_service import AuthConfigValidationError, UserRoleAssignmentError
+from services.aad_authentication import AzureADAuthorization, AuthConfigValidationError, UserRoleAssignmentError, compare_versions, GRAPH_REQUEST_TIMEOUT
 
 MOCK_MICROSOFT_GRAPH_URL = "https://graph.microsoft.com"
 
@@ -816,9 +815,9 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
     # Mock the response of the get request
     request_get_mock_response = {
         "value": [
-            Role(id=1, displayName="Airlock Manager", type=AssignmentType.APP_ROLE).dict(),
-            Role(id=2, displayName="Workspace Researcher", type=AssignmentType.APP_ROLE).dict(),
-            Role(id=3, displayName="Workspace Owner", type=AssignmentType.APP_ROLE).dict(),
+            Role(id=1, displayName="Airlock Manager", type=AssignmentType.APP_ROLE).model_dump(),
+            Role(id=2, displayName="Workspace Researcher", type=AssignmentType.APP_ROLE).model_dump(),
+            Role(id=3, displayName="Workspace Owner", type=AssignmentType.APP_ROLE).model_dump(),
         ]
     }
     ms_graph_query_mock.return_value = request_get_mock_response

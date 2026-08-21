@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-databricks-private-auth
-version: 0.1.14
+version: 0.1.15
 description: "An Azure TRE shared service for Azure Databricks authentication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -15,6 +15,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: tre_id
