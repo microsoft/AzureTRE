@@ -530,6 +530,7 @@ async def test_workspace_service_uninstall_frees_address_space_from_root_main_st
     address_space = "10.1.0.0/22"
 
     operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.Deleted
     operation.steps.insert(0, OperationStep(
         id="child-main",
         templateStepId="main",
@@ -557,6 +558,30 @@ async def test_workspace_service_uninstall_frees_address_space_from_root_main_st
     assert await status_updater._free_workspace_address_space(operation) is True
     status_updater.resource_repo.get_resource_dict_by_id.assert_awaited_once_with(workspace_service_id)
     status_updater.workspace_repo.patch_workspace.assert_awaited_once()
+
+
+async def test_workspace_service_uninstall_does_not_free_address_space_if_root_main_failed():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.DeletingFailed
+    operation.steps.append(OperationStep(
+        id="address-space-cleanup",
+        templateStepId="address-space-cleanup",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        status=Status.Updated
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.workspace_repo = AsyncMock()
+
+    assert await status_updater._free_workspace_address_space(operation) is True
+    status_updater.resource_repo.get_resource_dict_by_id.assert_not_awaited()
+    status_updater.workspace_repo.patch_workspace.assert_not_awaited()
 
 
 @pytest.mark.parametrize("missing_property", ["address_space", "workspaceId"])
@@ -823,7 +848,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
         resourceId=parent_workspace_id,
         resourceType=ResourceType.Workspace,
         resourceAction=RequestAction.Upgrade,
-        templateStepId="workspace-upgrade",
+        templateStepId="address-space-cleanup",
         sourceTemplateResourceId=parent_workspace_id,
         status=Status.AwaitingUpdate
     )

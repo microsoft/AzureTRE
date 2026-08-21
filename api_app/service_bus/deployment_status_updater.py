@@ -161,7 +161,8 @@ class DeploymentStatusUpdater():
 
             # A workspace upgrade is the point at which the address space is no longer
             # in use by Azure, so it can be released for a future allocation.
-            if (step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+            if (step_to_update.templateStepId == "address-space-cleanup"
+                    and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
                     and step_to_update.resourceAction == RequestAction.Upgrade
                     and step_to_update.is_success()
                     and operation.action == RequestAction.UnInstall):
@@ -248,7 +249,9 @@ class DeploymentStatusUpdater():
         """
         main_step = next(
             (step for step in operation.steps
-             if step.templateStepId == "main" and step.resourceId == operation.resourceId),
+             if step.templateStepId == "main"
+             and step.resourceId == operation.resourceId
+             and step.is_success()),
             None
         )
         if main_step is None:
