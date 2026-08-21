@@ -1,4 +1,4 @@
-.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image tre-deploy tre-destroy letsencrypt
+.PHONY: bootstrap-init mgmt-deploy mgmt-destroy build-api-image push-api-image tre-deploy tre-destroy letsencrypt docs
 .DEFAULT_GOAL := help
 
 SHELL:=/bin/bash
@@ -264,6 +264,14 @@ lint: ## 🧹 Lint all files
 # Example: make lint-docs
 lint-docs:
 	LINTER_REGEX_INCLUDE='./docs/.*\|./mkdocs.yml' $(MAKE) lint
+
+# Description: Documentation helper target
+# Single target `make docs` will install deps and serve the site locally (default). Set MODE=build for build-only mode.
+# Example: make docs            -> installs deps and serves site locally
+# Example: make docs MODE=build -> installs deps and builds site only
+docs: ## Install docs deps and build/serve the MkDocs site
+	@bash ./devops/scripts/docs.sh $(MODE)
+
 
 # Description: Build the bundle with Porter.
 # # check-params is called at the end since it needs the bundle image,

@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Add `make docs` to build and preview documentation ([#5007](https://github.com/microsoft/AzureTRE/issues/5007))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**

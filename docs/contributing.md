@@ -28,4 +28,29 @@
 
   * [Report an Issue or Make a Suggestion](https://github.com/microsoft/AzureTRE/issues/new/choose)
 
+## Building and Serving Documentation Locally
+
+To preview and test changes to the documentation site locally:
+
+* **Serve documentation locally (default)**:
+  ```bash
+  make docs
+  ```
+  This installs required dependencies, selects the first available port (starting at `8000`), and starts the local MkDocs server.
+
+  You can also specify a custom port:
+  ```bash
+  PORT=8100 make docs
+  ```
+
+* **Build documentation (build-only)**:
+  ```bash
+  make docs MODE=build
+  ```
+
+* **Lint documentation files**:
+  ```bash
+  make lint-docs
+  ```
+
 Thanks! :heart: :heart: :heart:
