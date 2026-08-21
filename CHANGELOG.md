@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Allow new template properties to be specified during template upgrades. Remove Template properties that no longer exist. ([#4783](https://github.com/microsoft/AzureTRE/pull/4783))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
