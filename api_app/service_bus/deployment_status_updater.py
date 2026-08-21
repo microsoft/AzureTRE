@@ -152,12 +152,20 @@ class DeploymentStatusUpdater():
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
-            # If the 'main' step succeeded for an uninstall operation, free any allocated address space
-            # owned by a WorkspaceService resource. MUST be executed BEFORE preparing/enqueuing any next step
-            # (such as a trailing workspace upgrade step), so Cosmos DB state is updated before the next step
-            # queries the workspace document.
+            # Keep the address space reserved until Azure has applied the workspace update.
             if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
-                if not await self._free_workspace_address_space(resource_to_persist, operation):
+                if self._is_workspace_service_with_address_space(resource_to_persist) and not self._has_workspace_upgrade_step(operation, current_step_index):
+                    operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
+                    is_last_step = False
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+
+            # A workspace upgrade is the point at which the address space is no longer
+            # in use by Azure, so it can be released for a future allocation.
+            if (step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+                    and step_to_update.resourceAction == RequestAction.Upgrade
+                    and step_to_update.is_success()
+                    and operation.action == RequestAction.UnInstall):
+                if not await self._free_workspace_address_space(operation):
                     return False
 
             # more steps in the op to do?
@@ -168,17 +176,23 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
-                    resource_to_send = await update_resource_for_step(
-                        operation_step=next_step,
-                        resource_repo=self.resource_repo,
-                        resource_template_repo=self.resource_template_repo,
-                        resource_history_repo=self.resource_history_repo,
-                        root_resource=None,
-                        step_resource=parent_resource,
-                        resource_to_update_id=next_step.resourceId,
-                        primary_action=operation.action,
-                        user=operation.user)
+                    if next_step.templateStepId == "address-space-cleanup":
+                        resource_to_send = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
+                    else:
+                        parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
+                        resource_to_send = await update_resource_for_step(
+                            operation_step=next_step,
+                            resource_repo=self.resource_repo,
+                            resource_template_repo=self.resource_template_repo,
+                            resource_history_repo=self.resource_history_repo,
+                            root_resource=None,
+                            step_resource=parent_resource,
+                            resource_to_update_id=next_step.resourceId,
+                            primary_action=operation.action,
+                            user=operation.user)
+
+                    if next_step.templateStepId == "address-space-cleanup":
+                        await self.operations_repo.update_item(operation)
 
                     # create + send the message
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
@@ -202,16 +216,40 @@ class DeploymentStatusUpdater():
 
         return result
 
-    async def _free_workspace_address_space(self, resource_to_persist: dict, operation: Operation) -> bool:
-        """
-        Frees any allocated address space owned by a WorkspaceService resource after a successful uninstall main step.
-        Updates the parent Workspace document in Cosmos DB so that subsequent pipeline steps (e.g., workspace upgrade)
-        or future operations rely on the updated address_spaces property.
-        """
-        resource_type = resource_to_persist.get("resourceType")
-        if resource_type not in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value):
-            return True
+    def _is_workspace_service_with_address_space(self, resource: dict) -> bool:
+        return (resource.get("resourceType") in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value)
+                and bool(resource.get("properties", {}).get("address_space"))
+                and bool(resource.get("workspaceId")))
 
+    def _has_workspace_upgrade_step(self, operation: Operation, current_step_index: int) -> bool:
+        return any(
+            step.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+            and step.resourceAction == RequestAction.Upgrade
+            for step in operation.steps[current_step_index + 1:]
+        )
+
+    def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
+        return OperationStep(
+            id=str(uuid.uuid4()),
+            templateStepId="address-space-cleanup",
+            stepTitle="Update workspace address spaces",
+            resourceId=resource["workspaceId"],
+            resourceTemplateName="",
+            resourceType=ResourceType.Workspace,
+            resourceAction=RequestAction.Upgrade,
+            status=Status.AwaitingUpdate,
+            sourceTemplateResourceId=resource["id"]
+        )
+
+    async def _free_workspace_address_space(self, operation: Operation) -> bool:
+        """
+        Frees the address space owned by the uninstalled WorkspaceService after
+        the corresponding workspace upgrade has succeeded.
+        """
+        main_step = next((step for step in operation.steps if step.templateStepId == "main"), None)
+        if main_step is None:
+            return True
+        resource_to_persist = await self.resource_repo.get_resource_dict_by_id(main_step.resourceId)
         address_to_free = resource_to_persist.get("properties", {}).get("address_space")
         parent_workspace_id = resource_to_persist.get("workspaceId")
         resource_id = resource_to_persist.get("id")
@@ -242,14 +280,14 @@ class DeploymentStatusUpdater():
                         operation.user,
                         False
                     )
-                    logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful uninstall of {resource_id}")
+                    logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful workspace upgrade for {resource_id}")
                     return True
                 except CosmosAccessConditionFailedError:
                     if attempt == MAX_CLEANUP_RETRIES - 1:
                         raise
-                    logger.warning(f"ETag conflict when freeing workspace address space after successful uninstall. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+                    logger.warning(f"ETag conflict when freeing workspace address space after successful workspace upgrade. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
         except Exception as e:
-            logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after uninstalling {resource_id}: {e}", exc_info=True)
+            logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after upgrading the workspace for {resource_id}: {e}", exc_info=True)
             return False
 
         return False

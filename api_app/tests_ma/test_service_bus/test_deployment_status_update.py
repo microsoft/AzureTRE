@@ -440,6 +440,7 @@ async def test_convert_outputs_to_dict():
     assert status_updater.convert_outputs_to_dict(deployment_status_update_message.outputs) == expected_result
 
 
+@patch('service_bus.deployment_status_updater.send_deployment_message')
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
@@ -452,7 +453,8 @@ async def test_workspace_service_uninstall_frees_address_space(
     _,
     __,
     ___,
-    workspace_repo_mock
+    workspace_repo_mock,
+    send_deployment_message_mock
 ):
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
@@ -502,6 +504,9 @@ async def test_workspace_service_uninstall_frees_address_space(
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
+    send_deployment_message_mock.assert_called_once()
+    workspace_repo.patch_workspace.assert_not_called()
+    await status_updater._free_workspace_address_space(operation)
     workspace_repo.patch_workspace.assert_called_once()
     called_args = workspace_repo.patch_workspace.call_args[0]
     assert called_args[0] == parent_workspace
@@ -572,6 +577,7 @@ async def test_workspace_service_uninstall_does_not_free_address_space_if_missin
     workspace_repo.patch_workspace.assert_not_called()
 
 
+@patch('service_bus.deployment_status_updater.send_deployment_message')
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
@@ -584,7 +590,8 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     _,
     __,
     ___,
-    workspace_repo_mock
+    workspace_repo_mock,
+    send_deployment_message_mock
 ):
     from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
@@ -639,12 +646,15 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    # Assert get_workspace_by_id called twice due to retry
-    assert workspace_repo.get_workspace_by_id.call_count == 2
+    send_deployment_message_mock.assert_called_once()
+    await status_updater._free_workspace_address_space(operation)
+    # One read prepares the synthetic upgrade, then two reads cover the retry.
+    assert workspace_repo.get_workspace_by_id.call_count == 3
     # Assert patch_workspace called twice
     assert workspace_repo.patch_workspace.call_count == 2
 
 
+@patch('service_bus.deployment_status_updater.send_deployment_message')
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
@@ -659,7 +669,8 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     _,
     __,
     ___,
-    workspace_repo_mock
+    workspace_repo_mock,
+    send_deployment_message_mock
 ):
     from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
@@ -713,10 +724,14 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     await status_updater.init_repos()
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    # Cleanup failure must abandon the message so the operation can retry before progressing.
+    # The uninstall message is complete; cleanup is deferred to the upgrade step.
+    assert complete_message is True
+    send_deployment_message_mock.assert_called_once()
+    workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
+    complete_message = await status_updater._free_workspace_address_space(operation)
     assert complete_message is False
     # Assert get_workspace_by_id and patch_workspace called max_retries = 3 times
-    assert workspace_repo.get_workspace_by_id.call_count == 3
+    assert workspace_repo.get_workspace_by_id.call_count == 4
     assert workspace_repo.patch_workspace.call_count == 3
     # Assert we logged the final failure using the module's logger
     logging_mock.error.assert_called_once()
@@ -830,7 +845,22 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    assert call_order == ["patch_workspace", "send_deployment_message"]
+
+    # The address remains reserved while the workspace upgrade is queued.
+    assert call_order == ["send_deployment_message"]
+
+    upgrade_message = ServiceBusReceivedMessageMock({
+        "operationId": OPERATION_ID,
+        "stepId": "step-2",
+        "id": parent_workspace_id,
+        "status": Status.Updated,
+        "message": "workspace upgrade succeeded",
+        "correlation_id": "test_correlation_id"
+    })
+    complete_message = await status_updater.process_message(upgrade_message)
+
+    assert complete_message is True
+    assert call_order == ["send_deployment_message", "patch_workspace"]
 
 
 @patch("service_bus.deployment_status_updater.config")
