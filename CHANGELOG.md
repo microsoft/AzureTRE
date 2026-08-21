@@ -3,6 +3,9 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Update JSON Schema version to Draft 2020-12 ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
+
+BUG FIXES:
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
