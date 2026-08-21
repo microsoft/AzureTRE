@@ -14,13 +14,20 @@ from service_bus.helpers import send_deployment_message, update_resource_for_ste
 from azure.servicebus import NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from db.repositories.operations import OperationRepository
+from db.repositories.workspaces import WorkspaceRepository
 from core import config, credentials
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
+from models.domain.resource import ResourceType
+from models.schemas.resource import ResourcePatch
 from resources import strings
 from services.logging import logger, tracer
+
+
+MAX_CLEANUP_RETRIES = 3
 
 
 class DeploymentStatusUpdater():
@@ -30,6 +37,7 @@ class DeploymentStatusUpdater():
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
         self.resource_repo = await ResourceRepository.create()
+        self.workspace_repo = await WorkspaceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
@@ -157,6 +165,20 @@ class DeploymentStatusUpdater():
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
+            if (step_to_update.resourceType == ResourceType.Workspace
+                    and step_to_update.resourceAction == RequestAction.Upgrade
+                    and operation.action == RequestAction.UnInstall):
+                if not await self._finalize_pending_workspace_address_space(resource_to_persist, operation):
+                    return False
+
+            if (step_to_update.templateStepId == "main"
+                    and operation.action == RequestAction.UnInstall
+                    and step_to_update.resourceType == ResourceType.WorkspaceService):
+                cleanup_succeeded = await self._finalize_workspace_address_space(resource_to_persist, operation) \
+                    if is_last_step else await self._mark_workspace_address_space_pending(resource_to_persist, operation)
+                if not cleanup_succeeded:
+                    return False
+
             # more steps in the op to do?
             if is_last_step is False:
                 assert current_step_index < (len(operation.steps) - 1)
@@ -198,6 +220,76 @@ class DeploymentStatusUpdater():
             logger.exception("Failed to update status")
 
         return result
+
+    async def _mark_workspace_address_space_pending(self, resource_to_persist: dict, operation: Operation) -> bool:
+        address_to_hold = resource_to_persist.get("properties", {}).get("address_space")
+        parent_workspace_id = resource_to_persist.get("workspaceId")
+        if not address_to_hold or not parent_workspace_id:
+            return True
+
+        def update_properties(workspace):
+            pending_address_spaces = workspace.properties.get("pending_address_spaces", [])
+            if address_to_hold not in pending_address_spaces:
+                pending_address_spaces.append(address_to_hold)
+            return {"pending_address_spaces": pending_address_spaces}
+
+        return await self._patch_workspace_address_spaces(parent_workspace_id, update_properties, operation)
+
+    async def _finalize_pending_workspace_address_space(self, workspace_resource: dict, operation: Operation) -> bool:
+        main_step = next((step for step in operation.steps if step.templateStepId == "main"), None)
+        if main_step is None:
+            return True
+
+        workspace_service = await self.resource_repo.get_resource_dict_by_id(uuid.UUID(main_step.resourceId))
+        address_to_free = workspace_service.get("properties", {}).get("address_space")
+        if not address_to_free:
+            return True
+
+        def update_properties(workspace):
+            address_spaces = [address for address in workspace.properties.get("address_spaces", []) if address != address_to_free]
+            pending_address_spaces = [address for address in workspace.properties.get("pending_address_spaces", []) if address != address_to_free]
+            return {"address_spaces": address_spaces, "pending_address_spaces": pending_address_spaces}
+
+        return await self._patch_workspace_address_spaces(workspace_resource["id"], update_properties, operation)
+
+    async def _finalize_workspace_address_space(self, resource_to_persist: dict, operation: Operation) -> bool:
+        address_to_free = resource_to_persist.get("properties", {}).get("address_space")
+        parent_workspace_id = resource_to_persist.get("workspaceId")
+        if not address_to_free or not parent_workspace_id:
+            return True
+
+        def update_properties(workspace):
+            address_spaces = [address for address in workspace.properties.get("address_spaces", []) if address != address_to_free]
+            pending_address_spaces = [address for address in workspace.properties.get("pending_address_spaces", []) if address != address_to_free]
+            return {"address_spaces": address_spaces, "pending_address_spaces": pending_address_spaces}
+
+        return await self._patch_workspace_address_spaces(parent_workspace_id, update_properties, operation)
+
+    async def _patch_workspace_address_spaces(self, workspace_id: str, update_properties, operation: Operation) -> bool:
+        try:
+            for attempt in range(MAX_CLEANUP_RETRIES):
+                try:
+                    workspace = await self.workspace_repo.get_workspace_by_id(workspace_id)
+                    workspace_patch = ResourcePatch()
+                    workspace_patch.properties = update_properties(workspace)
+                    await self.workspace_repo.patch_workspace(
+                        workspace,
+                        workspace_patch,
+                        workspace.etag,
+                        self.resource_template_repo,
+                        self.resource_history_repo,
+                        operation.user,
+                        False)
+                    return True
+                except CosmosAccessConditionFailedError:
+                    if attempt == MAX_CLEANUP_RETRIES - 1:
+                        raise
+                    logger.warning(f"ETag conflict updating workspace address space state. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+        except Exception:
+            logger.exception(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to update address space state for workspace {workspace_id}")
+            return False
+
+        return False
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()
