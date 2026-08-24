@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Add option to Destroy Service Bus to reduce costs when using make `tre-stop`. This also stops function apps and web apps in core rg to prevent excessive error logs due to the missing service bus. ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
+* Add an option to destroy the Service Bus to reduce costs when using `make tre-stop`. This also stops Function Apps and Web Apps in the core RG to prevent excessive error logs due to the missing Service Bus. ([#3953](https://github.com/microsoft/AzureTRE/issues/3953))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
