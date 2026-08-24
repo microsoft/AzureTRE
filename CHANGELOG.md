@@ -4,6 +4,9 @@
 
 ENHANCEMENTS:
 
+BUG FIXES:
+* Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
 * Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
