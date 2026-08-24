@@ -113,6 +113,8 @@ async def test_create_user_resource_template_item_calls_create_item_with_the_cor
         customActions=input_user_resource_template.customActions,
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current,
+        schema_uri=input_user_resource_template.json_schema["$schema"],
+        schema_id=input_user_resource_template.json_schema["$id"],
         parentWorkspaceService="parent_service_template_name"
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
