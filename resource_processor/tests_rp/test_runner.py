@@ -120,6 +120,22 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
 
 
 @pytest.mark.asyncio
+async def test_default_credentials_closes_real_credential_on_exception(mock_service_bus_client):
+    mock_credential = AsyncMock()
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_service_bus_client.return_value.__aenter__.return_value = mock_service_bus_client_instance
+
+    with patch("vmss_porter.runner.DefaultAzureCredential", return_value=mock_credential), \
+            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+        config = {"vmss_msi_id": "test_msi_id", "service_bus_namespace": "test_namespace"}
+
+        with pytest.raises(Exception, match="Test Exception"):
+            await runner(0, config)
+
+    mock_credential.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 @patch("vmss_porter.runner.invoke_porter_action", return_value=True)
 async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer):
     mock_service_bus_client_instance = mock_service_bus_client.return_value

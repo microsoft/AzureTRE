@@ -70,7 +70,7 @@ class AirlockStatusUpdater():
                                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                                     await receiver.abandon_message(msg)
 
-                                    await asyncio.sleep(1)
+                                    await asyncio.sleep(10)
 
                                 except OperationTimeoutError:
                                     # Timeout occurred whilst connecting - this is expected and indicates no messages are available

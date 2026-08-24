@@ -33,8 +33,10 @@ async def default_credentials(msi_id):
     Context manager which yields the default credentials.
     """
     credential = DefaultAzureCredential(managed_identity_client_id=msi_id) if msi_id else DefaultAzureCredential()
-    yield credential
-    await credential.close()
+    try:
+        yield credential
+    finally:
+        await credential.close()
 
 
 async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):

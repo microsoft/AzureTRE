@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 import pytest
 import time
 
-from mock import AsyncMock, patch
+from mock import AsyncMock, MagicMock, patch
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
@@ -102,6 +102,112 @@ class ServiceBusReceivedMessageMock:
 
     def __str__(self):
         return self.message
+
+
+class StopReceiveMessages(BaseException):
+    pass
+
+
+def service_bus_client_context():
+    client = MagicMock()
+    client.__aenter__ = AsyncMock(return_value=client)
+    client.__aexit__ = AsyncMock(return_value=False)
+    return client
+
+
+def credential_context():
+    context = MagicMock()
+    context.__aenter__ = AsyncMock(return_value=MagicMock())
+    context.__aexit__ = AsyncMock(return_value=False)
+    return context
+
+
+def queue_receiver_context():
+    receiver = MagicMock()
+    receiver.__aenter__ = AsyncMock(return_value=receiver)
+    receiver.__aexit__ = AsyncMock(return_value=False)
+    receiver.receive_messages = AsyncMock(return_value=[])
+    return receiver
+
+
+async def run_receive_messages_with_mocks(service_bus_client, time_values, client_side_effect=None):
+    updater = AirlockStatusUpdater()
+    credential = credential_context()
+    receiver = queue_receiver_context()
+    service_bus_client.get_queue_receiver.return_value = receiver
+
+    with patch("service_bus.airlock_request_status_update.credentials.get_credential_async_context", return_value=credential), \
+            patch("service_bus.airlock_request_status_update.ServiceBusClient", return_value=service_bus_client, side_effect=client_side_effect), \
+            patch("service_bus.airlock_request_status_update.time.time", side_effect=time_values), \
+            patch("service_bus.airlock_request_status_update.asyncio.sleep", new_callable=AsyncMock):
+        await updater.receive_messages()
+
+
+async def test_receive_messages_reuses_client_for_multiple_polls():
+    service_bus_client = service_bus_client_context()
+    time_call_count = 0
+    client_call_count = 0
+
+    def time_after_two_polls():
+        nonlocal time_call_count
+        time_call_count += 1
+        return 0 if time_call_count <= 5 else 3601
+
+    def create_client(*args, **kwargs):
+        nonlocal client_call_count
+        client_call_count += 1
+        if client_call_count == 1:
+            return service_bus_client
+        raise StopReceiveMessages()
+
+    with pytest.raises(StopReceiveMessages):
+        await run_receive_messages_with_mocks(service_bus_client, time_after_two_polls, create_client)
+
+    assert service_bus_client.get_queue_receiver.call_count == 2
+    service_bus_client.__aenter__.assert_awaited_once()
+    service_bus_client.__aexit__.assert_awaited_once()
+
+
+async def test_receive_messages_closes_client_before_hourly_recreation():
+    first_client = service_bus_client_context()
+
+    def create_client(*args, **kwargs):
+        if create_client.called:
+            raise StopReceiveMessages()
+        create_client.called = True
+        return first_client
+
+    create_client.called = False
+
+    with pytest.raises(StopReceiveMessages):
+        with patch("service_bus.airlock_request_status_update.credentials.get_credential_async_context", return_value=credential_context()), \
+                patch("service_bus.airlock_request_status_update.ServiceBusClient", side_effect=create_client), \
+                patch("service_bus.airlock_request_status_update.time.time", side_effect=[0, 0, 0, 3601]), \
+                patch("service_bus.airlock_request_status_update.asyncio.sleep", new_callable=AsyncMock):
+            first_client.get_queue_receiver.return_value = queue_receiver_context()
+            await AirlockStatusUpdater().receive_messages()
+
+    first_client.__aexit__.assert_awaited_once()
+    assert first_client.get_queue_receiver.call_count == 1
+
+
+async def test_receive_messages_closes_client_after_receiver_failure():
+    service_bus_client = service_bus_client_context()
+    service_bus_client.get_queue_receiver.side_effect = RuntimeError("receiver failed")
+    client_call_count = 0
+
+    def create_client(*args, **kwargs):
+        nonlocal client_call_count
+        client_call_count += 1
+        if client_call_count == 1:
+            return service_bus_client
+        raise StopReceiveMessages()
+
+    with pytest.raises(StopReceiveMessages):
+        await run_receive_messages_with_mocks(service_bus_client, lambda: 0, create_client)
+
+    service_bus_client.__aenter__.assert_awaited_once()
+    service_bus_client.__aexit__.assert_awaited_once()
 
 
 @patch("event_grid.helpers.EventGridPublisherClient")
