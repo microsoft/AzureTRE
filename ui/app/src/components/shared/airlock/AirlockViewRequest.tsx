@@ -50,9 +50,9 @@ interface AirlockViewRequestProps {
   onUpdateRequest: (requests: AirlockRequest) => void;
 }
 
-export const AirlockViewRequest: React.FunctionComponent<
-  AirlockViewRequestProps
-> = (props: AirlockViewRequestProps) => {
+export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps> = (
+  props: AirlockViewRequestProps,
+) => {
   const { requestId } = useParams();
   const [request, setRequest] = useState<AirlockRequest>();
   const [hideSubmitDialog, setHideSubmitDialog] = useState(true);
@@ -88,13 +88,7 @@ export const AirlockViewRequest: React.FunctionComponent<
       setRequest(req);
     }
     console.log(req);
-  }, [
-    apiCall,
-    requestId,
-    props.requests,
-    workspaceCtx.workspace.id,
-    workspaceCtx.workspaceApplicationIdURI,
-  ]);
+  }, [apiCall, requestId, props.requests, workspaceCtx.workspace.id, workspaceCtx.workspaceApplicationIdURI]);
 
   const dismissPanel = useCallback(() => navigate("../"), [navigate]);
 
@@ -152,7 +146,7 @@ export const AirlockViewRequest: React.FunctionComponent<
           `${ApiEndpoint.Workspaces}/${request.workspaceId}/${ApiEndpoint.AirlockRequests}/${request.id}/${ApiEndpoint.AirlockRevoke}`,
           HttpMethod.Post,
           workspaceCtx.workspaceApplicationIdURI,
-          { reason: revokeReason }
+          { reason: revokeReason },
         );
         props.onUpdateRequest(response.airlockRequest);
         setHideRevokeDialog(true);
@@ -175,22 +169,17 @@ export const AirlockViewRequest: React.FunctionComponent<
           {request.status === AirlockRequestStatus.Draft && (
             <div style={{ marginTop: "10px", marginBottom: "10px" }}>
               <MessageBar>
-                This request is currently in draft. Add a file to the request's
-                storage container and submit when ready.
+                This request is currently in draft. Add a file to the request's storage container and submit when ready.
               </MessageBar>
             </div>
           )}
           {request.statusMessage && (
             <div style={{ marginTop: "10px", marginBottom: "10px" }}>
-              <MessageBar messageBarType={MessageBarType.error}>
-                {request.statusMessage}
-              </MessageBar>
+              <MessageBar messageBarType={MessageBarType.error}>{request.statusMessage}</MessageBar>
             </div>
           )}
           <div style={{ textAlign: "end" }}>
-            {request.allowedUserActions?.includes(
-              AirlockRequestAction.Cancel,
-            ) && (
+            {request.allowedUserActions?.includes(AirlockRequestAction.Cancel) && (
               <DefaultButton
                 onClick={() => {
                   setSubmitError(false);
@@ -201,9 +190,7 @@ export const AirlockViewRequest: React.FunctionComponent<
                 Cancel request
               </DefaultButton>
             )}
-            {request.allowedUserActions?.includes(
-              AirlockRequestAction.Submit,
-            ) && (
+            {request.allowedUserActions?.includes(AirlockRequestAction.Submit) && (
               <PrimaryButton
                 onClick={() => {
                   setSubmitError(false);
@@ -213,16 +200,10 @@ export const AirlockViewRequest: React.FunctionComponent<
                 Submit
               </PrimaryButton>
             )}
-            {request.allowedUserActions?.includes(
-              AirlockRequestAction.Review,
-            ) && (
-              <PrimaryButton onClick={() => setReviewIsOpen(true)}>
-                Review
-              </PrimaryButton>
+            {request.allowedUserActions?.includes(AirlockRequestAction.Review) && (
+              <PrimaryButton onClick={() => setReviewIsOpen(true)}>Review</PrimaryButton>
             )}
-            {request.allowedUserActions?.includes(
-              AirlockRequestAction.Revoke,
-            ) && (
+            {request.allowedUserActions?.includes(AirlockRequestAction.Revoke) && (
               <DefaultButton
                 onClick={() => {
                   setRevokeError(false);
@@ -244,9 +225,7 @@ export const AirlockViewRequest: React.FunctionComponent<
   return (
     <>
       <Panel
-        headerText={
-          request && request.title ? request.title : "View airlock request"
-        }
+        headerText={request && request.title ? request.title : "View airlock request"}
         isOpen={true}
         isLightDismiss={true}
         onDismiss={dismissPanel}
@@ -273,27 +252,16 @@ export const AirlockViewRequest: React.FunctionComponent<
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Creator</b>
               </Stack.Item>
               <Stack.Item styles={stackItemStyles}>
-                <Persona
-                  size={PersonaSize.size32}
-                  text={request.createdBy?.name}
-                />
+                <Persona size={PersonaSize.size32} text={request.createdBy?.name} />
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Type</b>
               </Stack.Item>
@@ -302,11 +270,7 @@ export const AirlockViewRequest: React.FunctionComponent<
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Status</b>
               </Stack.Item>
@@ -315,11 +279,7 @@ export const AirlockViewRequest: React.FunctionComponent<
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Workspace</b>
               </Stack.Item>
@@ -328,11 +288,7 @@ export const AirlockViewRequest: React.FunctionComponent<
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Created</b>
               </Stack.Item>
@@ -341,11 +297,7 @@ export const AirlockViewRequest: React.FunctionComponent<
               </Stack.Item>
             </Stack>
 
-            <Stack
-              horizontal
-              horizontalAlign="space-between"
-              styles={underlineStackStyles}
-            >
+            <Stack horizontal horizontalAlign="space-between" styles={underlineStackStyles}>
               <Stack.Item styles={stackItemStyles}>
                 <b>Updated</b>
               </Stack.Item>
@@ -366,28 +318,20 @@ export const AirlockViewRequest: React.FunctionComponent<
             </Stack>
             {AirlockFilesLinkValidStatus.includes(request.status) && (
               <>
-                <Stack
-                  style={{ marginTop: "20px" }}
-                  styles={underlineStackStyles}
-                >
+                <Stack style={{ marginTop: "20px" }} styles={underlineStackStyles}>
                   <Stack.Item styles={stackItemStyles}>
                     <b>Files</b>
                   </Stack.Item>
                 </Stack>
                 <AirlockRequestFilesSection
                   request={request}
-                  workspaceApplicationIdURI={
-                    workspaceCtx.workspaceApplicationIdURI
-                  }
+                  workspaceApplicationIdURI={workspaceCtx.workspaceApplicationIdURI}
                 />
               </>
             )}
             {request.reviews && request.reviews.length > 0 && (
               <>
-                <Stack
-                  style={{ marginTop: "20px", marginBottom: "20px" }}
-                  styles={underlineStackStyles}
-                >
+                <Stack style={{ marginTop: "20px", marginBottom: "20px" }} styles={underlineStackStyles}>
                   <Stack.Item styles={stackItemStyles}>
                     <b>Reviews</b>
                   </Stack.Item>
@@ -395,11 +339,7 @@ export const AirlockViewRequest: React.FunctionComponent<
                 <Stack tokens={stackTokens}>
                   {request.reviews.map((review, i) => {
                     return (
-                      <DocumentCard
-                        key={i}
-                        aria-label="Review"
-                        type={DocumentCardType.compact}
-                      >
+                      <DocumentCard key={i} aria-label="Review" type={DocumentCardType.compact}>
                         <DocumentCardDetails>
                           <DocumentCardActivity
                             activity={moment.unix(review.dateCreated).fromNow()}
@@ -410,43 +350,24 @@ export const AirlockViewRequest: React.FunctionComponent<
                               },
                             ]}
                           />
-                          <DocumentCardTitle
-                            title={review.decisionExplanation}
-                            shouldTruncate
-                            showAsSecondaryTitle
-                          />
+                          <DocumentCardTitle title={review.decisionExplanation} shouldTruncate showAsSecondaryTitle />
                         </DocumentCardDetails>
                         <div style={{ margin: 10 }}>
-                          {review.reviewDecision ===
-                            AirlockReviewDecision.Approved && (
+                          {review.reviewDecision === AirlockReviewDecision.Approved && (
                             <>
-                              <FontIcon
-                                aria-label="Approved"
-                                iconName="Completed"
-                                className={approvedIcon}
-                              />
+                              <FontIcon aria-label="Approved" iconName="Completed" className={approvedIcon} />
                               Approved
                             </>
                           )}
-                          {review.reviewDecision ===
-                            AirlockReviewDecision.Rejected && (
+                          {review.reviewDecision === AirlockReviewDecision.Rejected && (
                             <>
-                              <FontIcon
-                                aria-label="Rejected"
-                                iconName="ErrorBadge"
-                                className={rejectedIcon}
-                              />
+                              <FontIcon aria-label="Rejected" iconName="ErrorBadge" className={rejectedIcon} />
                               Rejected
                             </>
                           )}
-                          {review.reviewDecision ===
-                            AirlockReviewDecision.Revoked && (
+                          {review.reviewDecision === AirlockReviewDecision.Revoked && (
                             <>
-                              <FontIcon
-                                aria-label="Revoked"
-                                iconName="StatusCircleBlock2"
-                                className={revokedIcon}
-                              />
+                              <FontIcon aria-label="Revoked" iconName="StatusCircleBlock2" className={revokedIcon} />
                               Revoked
                             </>
                           )}
@@ -460,12 +381,7 @@ export const AirlockViewRequest: React.FunctionComponent<
           </>
         ) : (
           <div style={{ marginTop: "70px" }}>
-            <Spinner
-              label="Loading..."
-              ariaLive="assertive"
-              labelPosition="top"
-              size={SpinnerSize.large}
-            />
+            <Spinner label="Loading..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
           </div>
         )}
         <Dialog
@@ -476,18 +392,12 @@ export const AirlockViewRequest: React.FunctionComponent<
           }}
           dialogContentProps={{
             title: "Submit request?",
-            subText:
-              "Make sure you have uploaded your file to the request's storage account before submitting.",
+            subText: "Make sure you have uploaded your file to the request's storage account before submitting.",
           }}
         >
           {submitError && <ExceptionLayout e={apiError} />}
           {submitting ? (
-            <Spinner
-              label="Submitting..."
-              ariaLive="assertive"
-              labelPosition="top"
-              size={SpinnerSize.large}
-            />
+            <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
           ) : (
             <DialogFooter>
               <DefaultButton
@@ -514,19 +424,10 @@ export const AirlockViewRequest: React.FunctionComponent<
         >
           {submitError && <ExceptionLayout e={apiError} />}
           {submitting ? (
-            <Spinner
-              label="Cancelling..."
-              ariaLive="assertive"
-              labelPosition="top"
-              size={SpinnerSize.large}
-            />
+            <Spinner label="Cancelling..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
           ) : (
             <DialogFooter>
-              <DefaultButton
-                onClick={cancelRequest}
-                text="Cancel Request"
-                styles={destructiveButtonStyles}
-              />
+              <DefaultButton onClick={cancelRequest} text="Cancel Request" styles={destructiveButtonStyles} />
               <DefaultButton
                 onClick={() => {
                   setHideCancelDialog(true);
@@ -546,17 +447,13 @@ export const AirlockViewRequest: React.FunctionComponent<
           }}
           dialogContentProps={{
             title: "Revoke Airlock Request?",
-            subText: "Are you sure you want to revoke this approved airlock request? This will prevent new download links from being generated, but existing links will remain valid until they expire.",
+            subText:
+              "Are you sure you want to revoke this approved airlock request? This will prevent new download links from being generated, but existing links will remain valid until they expire.",
           }}
         >
           {revokeError && <ExceptionLayout e={apiError} />}
           {revoking ? (
-            <Spinner
-              label="Revoking..."
-              ariaLive="assertive"
-              labelPosition="top"
-              size={SpinnerSize.large}
-            />
+            <Spinner label="Revoking..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
           ) : (
             <>
               <TextField

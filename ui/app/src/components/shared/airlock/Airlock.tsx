@@ -38,17 +38,14 @@ import { useAccount, useMsal } from "@azure/msal-react";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
 
 export const Airlock: React.FunctionComponent = () => {
-  const [airlockRequests, setAirlockRequests] = useState(
-    [] as AirlockRequest[],
-  );
+  const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
   const [requestColumns, setRequestColumns] = useState([] as IColumn[]);
   const [orderBy, setOrderBy] = useState("updatedWhen");
   const [orderAscending, setOrderAscending] = useState(false);
   const [filters, setFilters] = useState(new Map<string, string>());
   const [showMyRequestsOnly, setShowMyRequestsOnly] = useState(false);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [contextMenuProps, setContextMenuProps] =
-    useState<IContextualMenuProps>();
+  const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -83,10 +80,7 @@ export const Airlock: React.FunctionComponent = () => {
 
         // Map the inner requests and the allowed user actions to state
         requests = result.airlockRequests.map(
-          (r: {
-            airlockRequest: AirlockRequest;
-            allowedUserActions: Array<AirlockRequestAction>;
-          }) => {
+          (r: { airlockRequest: AirlockRequest; allowedUserActions: Array<AirlockRequestAction> }) => {
             const request = r.airlockRequest;
             request.allowedUserActions = r.allowedUserActions;
             return request;
@@ -104,14 +98,7 @@ export const Airlock: React.FunctionComponent = () => {
       setApiError(err);
       setLoadingState(LoadingState.Error);
     }
-  }, [
-    apiCall,
-    workspaceCtx.workspace,
-    workspaceCtx.workspaceApplicationIdURI,
-    filters,
-    orderBy,
-    orderAscending,
-  ]);
+  }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI, filters, orderBy, orderAscending]);
 
   // Fetch new requests on first load and whenever filters/orderBy selection changes
   useEffect(() => {
@@ -131,18 +118,13 @@ export const Airlock: React.FunctionComponent = () => {
 
   // Open a context menu in the requests list for filtering and sorting
   const openContextMenu = useCallback(
-    (
-      column: IColumn,
-      ev: React.MouseEvent<HTMLElement>,
-      options: Array<string>,
-    ) => {
+    (column: IColumn, ev: React.MouseEvent<HTMLElement>, options: Array<string>) => {
       const filterOptions = options.map((option) => {
         return {
           key: option,
           name: option,
           canCheck: true,
-          checked:
-            filters?.has(column.key) && filters.get(column.key) === option,
+          checked: filters?.has(column.key) && filters.get(column.key) === option,
           onClick: () => {
             // Set filter or unset if already selected
             setFilters((f) => {
@@ -188,10 +170,7 @@ export const Airlock: React.FunctionComponent = () => {
 
   // Set the columns on initial render
   useEffect(() => {
-    const orderByColumn = (
-      ev: React.MouseEvent<HTMLElement>,
-      column: IColumn,
-    ) => {
+    const orderByColumn = (ev: React.MouseEvent<HTMLElement>, column: IColumn) => {
       orderRequests(column);
     };
 
@@ -204,27 +183,12 @@ export const Airlock: React.FunctionComponent = () => {
         isIconOnly: true,
         onRender: (request: AirlockRequest) => {
           if (request.status === AirlockRequestStatus.Draft) {
-            return (
-              <Icon
-                iconName="FolderOpen"
-                style={{ verticalAlign: "bottom", fontSize: 14 }}
-              />
-            );
+            return <Icon iconName="FolderOpen" style={{ verticalAlign: "bottom", fontSize: 14 }} />;
           } else if (request.files?.length > 0 && request.files[0].name) {
             const fileType = request.files[0].name.split(".").pop();
-            return (
-              <Icon
-                {...getFileTypeIconProps({ extension: fileType })}
-                style={{ verticalAlign: "bottom" }}
-              />
-            );
+            return <Icon {...getFileTypeIconProps({ extension: fileType })} style={{ verticalAlign: "bottom" }} />;
           } else {
-            return (
-              <Icon
-                iconName="Page"
-                style={{ verticalAlign: "bottom", fontSize: 14 }}
-              />
-            );
+            return <Icon iconName="Page" style={{ verticalAlign: "bottom", fontSize: 14 }} />;
           }
         },
       },
@@ -244,9 +208,7 @@ export const Airlock: React.FunctionComponent = () => {
         minWidth: 150,
         maxWidth: 200,
         isResizable: true,
-        onRender: (request: AirlockRequest) => (
-          <Persona size={PersonaSize.size24} text={request.createdBy?.name} />
-        ),
+        onRender: (request: AirlockRequest) => <Persona size={PersonaSize.size24} text={request.createdBy?.name} />,
       },
       {
         key: "type",
@@ -259,12 +221,9 @@ export const Airlock: React.FunctionComponent = () => {
         columnActionsMode: ColumnActionsMode.hasDropdown,
         isSorted: orderBy === "type",
         isSortedDescending: !orderAscending,
-        onColumnClick: (ev, column) =>
-          openContextMenu(column, ev, Object.values(AirlockRequestType)),
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestType)),
         onColumnContextMenu: (column, ev) =>
-          column &&
-          ev &&
-          openContextMenu(column, ev, Object.values(AirlockRequestType)),
+          column && ev && openContextMenu(column, ev, Object.values(AirlockRequestType)),
         isFiltered: filters.has("type"),
       },
       {
@@ -277,12 +236,9 @@ export const Airlock: React.FunctionComponent = () => {
         columnActionsMode: ColumnActionsMode.hasDropdown,
         isSorted: orderBy === "status",
         isSortedDescending: !orderAscending,
-        onColumnClick: (ev, column) =>
-          openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+        onColumnClick: (ev, column) => openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         onColumnContextMenu: (column, ev) =>
-          column &&
-          ev &&
-          openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
+          column && ev && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         isFiltered: filters.has("status"),
         onRender: (request: AirlockRequest) => request.status.replace("_", " "),
       },
@@ -297,9 +253,7 @@ export const Airlock: React.FunctionComponent = () => {
         isSorted: orderBy === "createdTime",
         isSortedDescending: !orderAscending,
         onRender: (request: AirlockRequest) => {
-          return (
-            <span>{moment.unix(request.createdWhen).format("DD/MM/YYYY")}</span>
-          );
+          return <span>{moment.unix(request.createdWhen).format("DD/MM/YYYY")}</span>;
         },
         onColumnClick: orderByColumn,
       },
@@ -387,7 +341,11 @@ export const Airlock: React.FunctionComponent = () => {
       {apiError && <ExceptionLayout e={apiError} />}
       <div className="tre-resource-panel" style={{ padding: "0px" }}>
         <ShimmeredDetailsList
-          items={showMyRequestsOnly && account ? airlockRequests.filter(r => r.createdBy?.id === account.localAccountId.split(".")[0]) : airlockRequests}
+          items={
+            showMyRequestsOnly && account
+              ? airlockRequests.filter((r) => r.createdBy?.id === account.localAccountId.split(".")[0])
+              : airlockRequests
+          }
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
@@ -396,39 +354,23 @@ export const Airlock: React.FunctionComponent = () => {
           enableShimmer={loadingState === LoadingState.Loading}
         />
         {contextMenuProps && <ContextualMenu {...contextMenuProps} />}
-        {airlockRequests.length === 0 &&
-          loadingState !== LoadingState.Loading && (
-            <div
-              style={{ textAlign: "center", padding: "50px 10px 100px 10px" }}
-            >
-              <h4>No requests found</h4>
-              {filters.size > 0 ? (
-                <small>
-                  There are no requests matching your selected filter(s).
-                </small>
-              ) : (
-                <small>
-                  Looks like there are no airlock requests yet. Create a new
-                  request to get started.
-                </small>
-              )}
-            </div>
-          )}
+        {airlockRequests.length === 0 && loadingState !== LoadingState.Loading && (
+          <div style={{ textAlign: "center", padding: "50px 10px 100px 10px" }}>
+            <h4>No requests found</h4>
+            {filters.size > 0 ? (
+              <small>There are no requests matching your selected filter(s).</small>
+            ) : (
+              <small>Looks like there are no airlock requests yet. Create a new request to get started.</small>
+            )}
+          </div>
+        )}
       </div>
 
       <Routes>
-        <Route
-          path="new"
-          element={<AirlockNewRequest onCreateRequest={handleNewRequest} />}
-        />
+        <Route path="new" element={<AirlockNewRequest onCreateRequest={handleNewRequest} />} />
         <Route
           path=":requestId"
-          element={
-            <AirlockViewRequest
-              requests={airlockRequests}
-              onUpdateRequest={getAirlockRequests}
-            />
-          }
+          element={<AirlockViewRequest requests={airlockRequests} onUpdateRequest={getAirlockRequests} />}
         />
       </Routes>
     </>

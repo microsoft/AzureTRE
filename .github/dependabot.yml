@@ -56,8 +56,11 @@ updates:
         update-types: ["version-update:semver-patch"]
     open-pull-requests-limit: 0
 
+  # Dependabot's Docker manager detects Dockerfile and Containerfile substrings,
+  # so Dockerfile.tmpl base images are included by this repository-wide glob.
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "**/*"
     schedule:
       interval: "monthly"
     ignore:

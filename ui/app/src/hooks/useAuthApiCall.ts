@@ -1,7 +1,4 @@
-import {
-  AuthenticationResult,
-  InteractionRequiredAuthError,
-} from "@azure/msal-browser";
+import { AuthenticationResult, InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useAccount } from "@azure/msal-react";
 import { useCallback } from "react";
 import { APIError } from "../models/exceptions";
@@ -66,8 +63,7 @@ export const useAuthApiCall = () => {
         return;
       }
 
-      const applicationIdURI =
-        workspaceApplicationIdURI || config.treApplicationId;
+      const applicationIdURI = workspaceApplicationIdURI || config.treApplicationId;
       let tokenResponse = {} as AuthenticationResult;
       let tokenRequest = {
         scopes: [`${applicationIdURI}/user_impersonation`],
@@ -106,8 +102,7 @@ export const useAuthApiCall = () => {
 
       // default to JSON unless otherwise told
       resultType = resultType || ResultType.JSON;
-      config.debug &&
-        console.log(`Calling ${method} on authenticated api: ${endpoint}`);
+      config.debug && console.log(`Calling ${method} on authenticated api: ${endpoint}`);
 
       // set the headers for auth + http method
       const opts: RequestInit = {

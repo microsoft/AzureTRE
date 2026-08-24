@@ -25,7 +25,6 @@
       "updateable": true
     },
     "os_image": {
-      "$id": "#/properties/os_image",
       "type": "string",
       "title": "Windows image",
       "description": "Select Windows image to use for VM",
@@ -42,7 +41,6 @@
       "default": ""
     },
     "vm_size": {
-      "$id": "#/properties/vm_size",
       "type": "string",
       "title": "VM Size",
       "description": "Select size of VM",
@@ -56,14 +54,48 @@
       "updateable": true
     },
     "shared_storage_access": {
-      "$id": "#/properties/shared_storage_access",
       "type": "boolean",
       "title": "Shared storage",
       "default": true,
       "description": "Enable access to shared storage"
     },
+    "install_azure_cli": {
+      "type": "boolean",
+      "title": "Install Azure CLI",
+      "description": "Install Azure CLI.",
+      "default": true
+    },
+    "install_vscode": {
+      "type": "boolean",
+      "title": "Install Visual Studio Code",
+      "description": "Install Visual Studio Code.",
+      "default": true
+    },
+    "install_storage_explorer": {
+      "type": "boolean",
+      "title": "Install Azure Storage Explorer",
+      "description": "Install Azure Storage Explorer.",
+      "default": true
+    },
+    "install_git": {
+      "type": "boolean",
+      "title": "Install Git",
+      "description": "Install Git for Windows.",
+      "default": true
+    },
+    "install_python_tools": {
+      "type": "boolean",
+      "title": "Install Python tools (Miniforge + JupyterLab)",
+      "description": "Install Miniforge and JupyterLab.",
+      "default": true
+    },
+    "install_r_tools": {
+      "type": "boolean",
+      "title": "Install R tools (R + RStudio)",
+      "description": "Install R and RStudio Desktop.",
+      "default": true
+    },
     "enable_shutdown_schedule": {
-      "$id": "#/properties/enable_shutdown_schedule",
       "type": "boolean",
       "title": "Enable Shutdown Schedule",
       "default": false,

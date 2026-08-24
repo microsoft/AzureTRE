@@ -16,9 +16,7 @@ interface SharedServiceItemProps {
   readonly?: boolean;
 }
 
-export const SharedServiceItem: React.FunctionComponent<
-  SharedServiceItemProps
-> = (props: SharedServiceItemProps) => {
+export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> = (props: SharedServiceItemProps) => {
   const { sharedServiceId } = useParams();
   const [sharedService, setSharedService] = useState({} as SharedService);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
@@ -35,10 +33,7 @@ export const SharedServiceItem: React.FunctionComponent<
   useEffect(() => {
     const getData = async () => {
       try {
-        let ss = await apiCall(
-          `${ApiEndpoint.SharedServices}/${sharedServiceId}`,
-          HttpMethod.Get,
-        );
+        let ss = await apiCall(`${ApiEndpoint.SharedServices}/${sharedServiceId}`, HttpMethod.Get);
         setSharedService(ss.sharedService);
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
@@ -54,11 +49,7 @@ export const SharedServiceItem: React.FunctionComponent<
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader
-            resource={sharedService}
-            latestUpdate={latestUpdate}
-            readonly={props.readonly}
-          />
+          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} readonly={props.readonly} />
           <ResourceBody resource={sharedService} readonly={props.readonly} />
         </>
       );
@@ -67,12 +58,7 @@ export const SharedServiceItem: React.FunctionComponent<
     default:
       return (
         <div style={{ marginTop: "20px" }}>
-          <Spinner
-            label="Loading Shared Service"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading Shared Service" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }

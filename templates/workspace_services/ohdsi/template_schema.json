@@ -28,7 +28,6 @@
       "updateable": true
     },
     "address_space": {
-      "$id": "#/properties/address_space",
       "type": "string",
       "title": "Address space",
       "description": "Address space for PostgreSQL's subnet"
