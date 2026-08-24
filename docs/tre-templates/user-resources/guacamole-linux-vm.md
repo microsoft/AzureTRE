@@ -12,7 +12,7 @@ It blocks all inbound and outbound traffic to the internet and allows only RDP c
 ## Notes
 
 - Nexus is a prerequisite of installing the Linux VMs given the additional commands in the bootstrap scripts.
-- In production we recommend using VM images to avoid transient issues downloading and installing packages. The included user resource templates for VMs with bootstrap scripts should only be used for trial/demonstration purposes. More info can be found [here](./custom.md).
+- In production we recommend using VM images to avoid transient issues downloading and installing packages. The included user resource templates for VMs with bootstrap scripts should only be used for trial/demonstration purposes. More info can be found in the [custom templates documentation](./custom.md).
 - Snap (app store for linux via [snapcraft.io](https://snapcraft.io)) hasn't been configured to work via the nexus proxy
 
 ## Modifying the DPI of the Linux VM display

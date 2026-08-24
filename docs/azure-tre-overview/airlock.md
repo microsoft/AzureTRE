@@ -35,7 +35,7 @@ The Airlock allows a TRE user to start the `import` or `export` process to a giv
 5. **Approved**: The Airlock request has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace, it can be accessed by the requestor from within the workspace.
 6. **Rejection In-progress**: The Airlock request has been rejected, however data movement is still ongoing.
 7. **Rejected**: The Airlock request has been rejected. The data in the process was rejected manually by the Airlock Manager.
-8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancelation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
+8. **Cancelled**: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancellation is only allowed when the request is not actively changing (i.e. **Draft** or **In-Review** state).
 9. **Blocking In-progress**: The Airlock request has been blocked, however data movement is still ongoing.
 10. **Blocked By Scan**: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.
 
@@ -66,13 +66,13 @@ This storage location is external for import (`stalimex`) or internal for export
 The user will be able to upload a file to the provided storage location, using any tool of their preference: [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) or [AzCopy](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10) which is a command line tool.
 
 The user Submits the request (TRE API call) starting the data movement (to the `stalimip` - import in-progress or `stalexip` - export in-progress). The airlock request is now in state **Submitted**.
-If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in details [here](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction).
+If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in detail in the [Microsoft Defender for Storage documentation](https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction).
 In the case that security flaws are found, the request state becomes **Blocking In-progress** while the data is moved to blocked storage  (either import blocked `stalimblocked` or export blocked `stalexblocked`). In this case, the request is finalized with the state **Blocked By Scan**.
 If the Security Scanning does not identify any security flaws, the request state becomes **In-Review**. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).
 
 > The Security Scanning can be disabled, changing the request state from **Submitted** straight to **In-Review**.
 
-The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock proces, though a TRE API call.
+The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to *Approve* or *Reject* the airlock process, through a TRE API call.
 At this point, the request will change state to either **Approval In-progress** or **Rejection In-progress**, while the data movement occurs moving afterwards to **Approved** or **Rejected** accordingly. The data will now be in the final storage destination: `stalexapp` - export approved  or `stalimapp` - import approved.
 With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.
 
@@ -91,7 +91,7 @@ Considering that the Airlock requests may require large data movements, the oper
 
 ## Security Scan
 
-The identified data in a airlock proces, will be submited to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
+The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state **In-progress**, and accessible to the Workspace Owner.
 
 > * The Security scan will be optional, behind a feature flag enabled by a script
 > * The outcome of the security scan will be either the in-progress (`stalexip`) storage or blocked (`stalexblocked`)
@@ -188,9 +188,10 @@ Workspace:
 In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:
 
 | Method | Endpoint | Description |
-|---|---|---|
+| --- | --- | --- |
 | `POST` | `/api/workspaces/{workspace_id}/requests` | Create an Airlock request (in **Draft**) |
-| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to access an Airlock Request | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submits an Airlock request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link` | Get the url and token to access an Airlock Request |
+| `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit` | Submits an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/review` | Reviews an Airlock request |
 | `POST` | `/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel` | Cancels an Airlock request |
 

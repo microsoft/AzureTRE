@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.7.3
+version: 0.7.6
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -15,6 +15,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: tre_id
@@ -156,7 +157,7 @@ start:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Select the Azure subscription"
       arguments:
@@ -199,7 +200,7 @@ stop:
         - login
       flags:
         identity:
-        username: ${ bundle.credentials.azure_client_id }
+        client-id: ${ bundle.credentials.azure_client_id }
   - az:
       description: "Select the Azure subscription"
       arguments:

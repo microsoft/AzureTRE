@@ -438,6 +438,32 @@ describe('getCommandFromComment', () => {
         });
       });
 
+      describe(`for '/test-backups'`, () => {
+        test(`should set command to 'run-tests-backups'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-backups');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+          });
+        });
+      });
+
       describe(`for '/test-extended' for external PR (i.e. without commit SHA specified)`, () => {
         test(`should set command to 'none'`, async () => {
           const context = createCommentContext({

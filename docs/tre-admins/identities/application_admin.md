@@ -8,8 +8,8 @@ This application does not have any roles defined.
 
 ## Microsoft Graph Permissions
 
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
+| Name | Type* | Admin consent required | TRE usage |
+| --- | -- | ----- | --------- |
 | Application.ReadWrite.OwnedBy | Application | Yes | This user has `Application.ReadWrite.OwnedBy` as a minimum permission for it to function. If the tenant is managed by a customer administrator, then this user must be added to the **Owners** of every workspace that is created. This will allow TRE to manage the Microsoft Entra ID Application. This will be a manual process for the Tenant Admin. |
 | Application.ReadWrite.All | Application | Yes | This permission is required to create workspace applications and administer any applications in the tenant. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. There will be no need for the Tenant Admin to manually create workspace applications in the Tenant. |
 | Directory.Read.All | Application | Yes | This permission is required to read User details from Microsoft Entra ID. This is needed if the Microsoft Entra ID Administrator has delegated Microsoft Entra ID administrative operations to the TRE. |
@@ -38,5 +38,5 @@ This user is currently only used from the Porter bundles hosted on the Resource 
 
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|APPLICATION_ADMIN_CLIENT_ID|The Client Id|`./config.yaml`|
-|APPLICATION_ADMIN_CLIENT_SECRET|The client secret|`./config.yaml`|
+| APPLICATION_ADMIN_CLIENT_ID | The Client Id | `./config.yaml` |
+| APPLICATION_ADMIN_CLIENT_SECRET | The client secret | `./config.yaml` |

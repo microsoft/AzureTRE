@@ -28,18 +28,18 @@ jobs:
     steps:
       - name: Upload Event File
         # this step is required to publish test results from forks
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: Event File
           path: ${{ github.event_path }}
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       - name: Filter changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
           filters: |
@@ -98,9 +98,30 @@ jobs:
           steps.filter.outputs.ui_app_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
+      - name: Setup Node.js
+        if: |
+          (steps.filter.outputs.ui_app == 'true'
+          || github.event_name == 'workflow_dispatch')
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "24"
+
+      - name: "Test: UI"
+        if: |
+          (steps.filter.outputs.ui_app == 'true'
+          || github.event_name == 'workflow_dispatch')
+        working-directory: ui/app
+        run: |
+          mkdir -p ../../test-results
+          npm install
+          cp src/config.source.json src/config.json
+          if ! npm test -- run --reporter=junit --outputFile=../../test-results/ui-junit.xml; then
+            touch ../../test-results/ui_tests_failed
+          fi
+
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       # Unit Tests are executed by calling the 'test-results' target in the
       # Dockerfile's. Test runner exit codes must be swallowed (and kept) so we
@@ -112,7 +133,7 @@ jobs:
         if: |
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -123,7 +144,7 @@ jobs:
 
       - name: "Check pytest failure file existence"
         id: check_api_test_result
-        uses: andstor/file-existence-action@v3
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
           files: "test-results/pytest_api_unit_failed"
 
@@ -132,7 +153,7 @@ jobs:
           (steps.filter.outputs.api == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_api_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./api_app/
           file: ./api_app/Dockerfile
@@ -143,7 +164,7 @@ jobs:
         if: |
           (steps.filter.outputs.resource_processor == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./resource_processor
           file: ./resource_processor/vmss_porter/Dockerfile
@@ -154,7 +175,7 @@ jobs:
         if: |
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -165,7 +186,7 @@ jobs:
 
       - name: "Check maven failure file existence"
         id: check_maven_test_result
-        uses: andstor/file-existence-action@v3
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
           files: "test-results/guacamole_package_failed"
 
@@ -174,7 +195,7 @@ jobs:
           (steps.filter.outputs.guacamole_server == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_maven_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./templates/workspace_services/guacamole/guacamole-server
           file: ./templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile
@@ -185,7 +206,7 @@ jobs:
         if: |
           (steps.filter.outputs.gitea == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./templates/shared_services/gitea/docker
           file: ./templates/shared_services/gitea/docker/Dockerfile
@@ -202,7 +223,7 @@ jobs:
         if: |
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
@@ -213,7 +234,7 @@ jobs:
 
       - name: "Check pytest failure file existence"
         id: check_airlock_processor_test_result
-        uses: andstor/file-existence-action@v3
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3.1.0
         with:
           files: "test-results/pytest_airlock_processor_unit_failed"
 
@@ -222,7 +243,7 @@ jobs:
           (steps.filter.outputs.airlock_processor == 'true'
           || github.event_name == 'workflow_dispatch')
           && steps.check_airlock_processor_test_result.outputs.files_exists == 'false'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./airlock_processor/
           file: ./airlock_processor/Dockerfile
@@ -231,7 +252,7 @@ jobs:
 
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: test-results
           path: test-results

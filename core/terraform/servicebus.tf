@@ -126,9 +126,8 @@ resource "azurerm_monitor_diagnostic_setting" "sb" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 
   lifecycle { ignore_changes = [log_analytics_destination_type] }

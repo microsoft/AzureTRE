@@ -1,6 +1,6 @@
 import pytest
 
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 
 
@@ -12,7 +12,7 @@ async def test_frw_validation_error_format(app):
     def route_for_test(param: int) -> None:  # pragma: no cover
         pass
 
-    async with AsyncClient(base_url="http://testserver", app=app) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
         response = await client.get("/wrong_path/asd")
 
     assert response.status_code == HTTP_422_UNPROCESSABLE_CONTENT

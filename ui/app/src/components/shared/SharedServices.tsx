@@ -15,21 +15,16 @@ interface SharedServiceProps {
   readonly?: boolean;
 }
 
-export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
-  props: SharedServiceProps,
-) => {
+export const SharedServices: React.FunctionComponent<SharedServiceProps> = (props: SharedServiceProps) => {
   const createFormCtx = useContext(CreateUpdateResourceContext);
-  const [sharedServices, setSharedServices] = useState(
-    [] as Array<SharedService>,
-  );
+  const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
 
   useEffect(() => {
     const getSharedServices = async () => {
       try {
-        const ss = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get))
-          .sharedServices;
+        const ss = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices;
         setSharedServices(ss);
         setLoadingState(LoadingState.Ok);
       } catch (err) {
@@ -76,8 +71,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
                       onClick={() => {
                         createFormCtx.openCreateForm({
                           resourceType: ResourceType.SharedService,
-                          onAdd: (r: Resource) =>
-                            addSharedService(r as SharedService),
+                          onAdd: (r: Resource) => addSharedService(r as SharedService),
                         });
                       }}
                     />
@@ -89,12 +83,8 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
           <Stack.Item>
             <ResourceCardList
               resources={sharedServices}
-              updateResource={(r: Resource) =>
-                updateSharedService(r as SharedService)
-              }
-              removeResource={(r: Resource) =>
-                removeSharedService(r as SharedService)
-              }
+              updateResource={(r: Resource) => updateSharedService(r as SharedService)}
+              removeResource={(r: Resource) => removeSharedService(r as SharedService)}
               emptyText="This TRE has no shared services."
               readonly={props.readonly}
             />
@@ -110,12 +100,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (
     default:
       return (
         <div style={{ marginTop: "20px" }}>
-          <Spinner
-            label="Loading Shared Services"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading Shared Services" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }

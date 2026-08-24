@@ -35,7 +35,7 @@ jobs:
 
           artifacts_url=${{ github.event.workflow_run.artifacts_url }}
 
-          gh api "$artifacts_url" -q '.artifacts[] | [.name, .archive_download_url] | @tsv' | while read -r artifact
+          gh api "$artifacts_url" -q '.artifacts[] | select(.name | endswith(".dockerbuild") | not) | [.name, .archive_download_url] | @tsv' | while read -r artifact
           do
             IFS=$'\t' read -r name url <<< "$artifact"
             gh api "$url" > "$name.zip"
@@ -43,7 +43,7 @@ jobs:
           done
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: artifacts/Event File/event.json
@@ -54,7 +54,7 @@ jobs:
       # The following step is the catch situations where the tests didn't run at all.
       - name: Check failure files
         run: |
-          if compgen -G "artifacts/**/pytest*failed" > /dev/null; then
+          if compgen -G "artifacts/**/*failed" > /dev/null; then
             echo "Tests failure file(s) exist. Some tests have failed or didn't run at all! \
               Check the artifacts for details."
             exit 1
@@ -65,7 +65,7 @@ jobs:
       # If prHeadSha is specified then explicity mark the checks for that SHA
       - name: Report check status
         if: github.event.workflow_run.head_sha != ''
-        uses: LouisBrunner/checks-action@v2.0.0
+        uses: LouisBrunner/checks-action@dfcbcf801bff1ea7f1414824fc28f2cd697b35da # v3.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job

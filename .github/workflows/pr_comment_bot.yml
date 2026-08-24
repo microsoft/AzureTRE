@@ -20,7 +20,7 @@ jobs:
     # - the comment is on a PR
     # - the commenting user has write permissions (i.e. is OWNER or COLLABORATOR)
     if: ${{ github.event.issue.pull_request }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
       checks: write
@@ -35,14 +35,14 @@ jobs:
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       # Determine whether the comment is a command
       - id: check_command
         name: Check for a command using GitHub script
-        uses: actions/github-script@v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const script = require('./.github/scripts/build.js')
@@ -62,7 +62,7 @@ jobs:
       # and will have to send it "manually"
       - name: Bypass E2E check-runs status
         if: ${{ steps.check_command.outputs.command == 'test-force-approve' }}
-        uses: LouisBrunner/checks-action@v2.0.0
+        uses: LouisBrunner/checks-action@dfcbcf801bff1ea7f1414824fc28f2cd697b35da # v3.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # the name must be identical to the one received by the real job
@@ -76,6 +76,7 @@ jobs:
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       pull-requests: write
     environment: CICD
@@ -83,15 +84,17 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
@@ -113,6 +116,7 @@ jobs:
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchRefId != '' }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: read
       pull-requests: write
     environment: CICD
@@ -120,15 +124,17 @@ jobs:
     steps:
       # Ensure we have the script files
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
 
       # Perform az login for destroy env script to be able to run
       - name: Azure Login
-        uses: azure/login@v2
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           environment: ${{ (vars.AZURE_ENVIRONMENT != '' && vars.AZURE_ENVIRONMENT) || 'AzureCloud' }}
 
       - name: Run deployment cleanup
@@ -152,10 +158,12 @@ jobs:
       needs.pr_comment.outputs.command == 'run-tests' ||
       needs.pr_comment.outputs.command == 'run-tests-extended' ||
       needs.pr_comment.outputs.command == 'run-tests-extended-aad' ||
-      needs.pr_comment.outputs.command == 'run-tests-shared-services'
+      needs.pr_comment.outputs.command == 'run-tests-shared-services' ||
+      needs.pr_comment.outputs.command == 'run-tests-backups'
     name: Deploy PR
     uses: ./.github/workflows/deploy_tre_reusable.yml
     permissions:
+      id-token: write
       checks: write
       contents: read
       pull-requests: write
@@ -167,14 +175,17 @@ jobs:
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
         (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended_aad') ||
         (needs.pr_comment.outputs.command == 'run-tests-shared-services' && 'shared_services') ||
+        (needs.pr_comment.outputs.command == 'run-tests-backups' && 'backups') ||
         (needs.pr_comment.outputs.command == 'run-tests' && '') }}
       environmentName: CICD
       E2E_TESTS_NUMBER_PROCESSES: 1
       DEVCONTAINER_TAG: ${{ needs.pr_comment.outputs.prRefId }}
     secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
       ACR_NAME: ${{ format('tre{0}', needs.pr_comment.outputs.prRefId) }}
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS}}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}

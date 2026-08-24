@@ -93,6 +93,12 @@ resource "azurerm_role_assignment" "keyvault_nexus_role" {
   principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
 }
 
+resource "azurerm_role_assignment" "acr_pull_nexus_role" {
+  scope                = data.azurerm_container_registry.mgmt_acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.nexus_msi.principal_id
+}
+
 resource "azurerm_linux_virtual_machine" "nexus" {
   name                            = "nexus-${var.tre_id}"
   resource_group_name             = local.core_resource_group_name
@@ -107,12 +113,15 @@ resource "azurerm_linux_virtual_machine" "nexus" {
   secure_boot_enabled             = true
   vtpm_enabled                    = true
 
-  custom_data = data.template_cloudinit_config.nexus_config.rendered
+  custom_data = data.cloudinit_config.nexus_config.rendered
 
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
+  # custom_data is ignored so that changes to the Nexus repository configuration are
+  # applied to the running VM via the configure_nexus_repos run command rather than
+  # by destroying and recreating the VM.
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, custom_data] }
 
   source_image_reference {
     publisher = "Canonical"
@@ -167,7 +176,7 @@ resource "azurerm_disk_encryption_set" "nexus_disk_encryption" {
   }
 }
 
-data "template_cloudinit_config" "nexus_config" {
+data "cloudinit_config" "nexus_config" {
   gzip          = true
   base64_encode = true
 
@@ -176,21 +185,7 @@ data "template_cloudinit_config" "nexus_config" {
     # Important: merge_type must be defined on each part, contrary to what cloud-init docs say about a "stack" aproach
     merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
     content_type = "text/cloud-config"
-    content      = data.template_file.nexus_bootstrapping.rendered
-  }
-
-  part {
-    content_type = "text/cloud-config"
-    merge_type   = "list(append)+dict(no_replace,recurse_list)+str()"
-    content = jsonencode({
-      write_files = [
-        for file in fileset("${path.module}/../scripts/nexus_repos_config", "*") : {
-          content     = file("${path.module}/../scripts/nexus_repos_config/${file}")
-          path        = "/etc/nexus-data/scripts/nexus_repos_config/${file}"
-          permissions = "0744"
-        }
-      ]
-    })
+    content      = local.nexus_bootstrapping_content
   }
 
   part {
@@ -199,17 +194,7 @@ data "template_cloudinit_config" "nexus_config" {
     content = jsonencode({
       write_files = [
         {
-          content     = file("${path.module}/../scripts/configure_nexus_repos.sh")
-          path        = "/etc/nexus-data/scripts/configure_nexus_repos.sh"
-          permissions = "0744"
-        },
-        {
-          content     = file("${path.module}/../scripts/nexus_realms_config.json")
-          path        = "/etc/nexus-data/scripts/nexus_realms_config.json"
-          permissions = "0744"
-        },
-        {
-          content     = data.template_file.configure_nexus_ssl.rendered
+          content     = local.configure_nexus_ssl_content
           path        = "/etc/cron.daily/configure_nexus_ssl"
           permissions = "0755"
         },
@@ -233,20 +218,41 @@ data "template_cloudinit_config" "nexus_config" {
   }
 }
 
-data "template_file" "nexus_bootstrapping" {
-  template = file("${path.module}/cloud-config.yaml")
-  vars = {
+locals {
+  nexus_bootstrapping_content = templatefile("${path.module}/cloud-config.yaml", {
     NEXUS_ADMIN_PASSWORD = random_password.nexus_admin_password.result
-  }
-}
+    MSI_ID               = azurerm_user_assigned_identity.nexus_msi.client_id
+    ACR_NAME             = data.azurerm_container_registry.mgmt_acr.name
+    NEXUS_IMAGE_TAG      = var.nexus_image_tag
+  })
 
-data "template_file" "configure_nexus_ssl" {
-  template = file("${path.module}/../scripts/configure_nexus_ssl.sh")
-  vars = {
+  configure_nexus_ssl_content = templatefile("${path.module}/../scripts/configure_nexus_ssl.sh", {
     MSI_ID        = azurerm_user_assigned_identity.nexus_msi.id
     VAULT_NAME    = data.azurerm_key_vault.kv.name
     SSL_CERT_NAME = data.azurerm_key_vault_certificate.nexus_cert.name
-  }
+  })
+
+  nexus_repos_config_dir   = "${path.module}/../scripts/nexus_repos_config"
+  nexus_repos_config_files = fileset(local.nexus_repos_config_dir, "*.json")
+  nexus_realms_config_file = "${path.module}/../scripts/nexus_realms_config.json"
+  configure_nexus_script   = "${path.module}/../scripts/configure_nexus_repos.sh"
+  deploy_nexus_script      = "${path.module}/../scripts/deploy_nexus_container.sh"
+
+  # Re-executed by the configure_nexus_repos run command whenever this content
+  # changes, applying repository and image changes to the running VM.
+  configure_nexus_repos_content = templatefile("${path.module}/configure_nexus_repos_wrapper.sh", {
+    VAULT_NAME      = data.azurerm_key_vault.kv.name
+    ACR_NAME        = data.azurerm_container_registry.mgmt_acr.name
+    NEXUS_IMAGE_TAG = var.nexus_image_tag
+    MSI_ID          = azurerm_user_assigned_identity.nexus_msi.client_id
+    REPO_CONFIG_FILES = {
+      for file in local.nexus_repos_config_files :
+      file => base64encode(file("${local.nexus_repos_config_dir}/${file}"))
+    }
+    REALMS_CONFIG    = base64encode(file(local.nexus_realms_config_file))
+    CONFIGURE_SCRIPT = base64encode(file(local.configure_nexus_script))
+    DEPLOY_SCRIPT    = base64encode(file(local.deploy_nexus_script))
+  })
 }
 
 resource "azurerm_virtual_machine_extension" "keyvault" {
@@ -254,7 +260,7 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
   name                       = "${azurerm_linux_virtual_machine.nexus.name}-KeyVault"
   publisher                  = "Microsoft.Azure.KeyVault"
   type                       = "KeyVaultForLinux"
-  type_handler_version       = "2.0"
+  type_handler_version       = "3.5"
   auto_upgrade_minor_version = true
   tags                       = local.tre_shared_service_tags
 
@@ -271,6 +277,55 @@ resource "azurerm_virtual_machine_extension" "keyvault" {
       "msiClientId" : azurerm_user_assigned_identity.nexus_msi.client_id
     }
   })
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_virtual_machine_extension" "cloud_init_wait" {
+  virtual_machine_id         = azurerm_linux_virtual_machine.nexus.id
+  name                       = "${azurerm_linux_virtual_machine.nexus.name}-CloudInitWait"
+  publisher                  = "Microsoft.Azure.Extensions"
+  type                       = "CustomScript"
+  type_handler_version       = "2.1"
+  auto_upgrade_minor_version = true
+  tags                       = local.tre_shared_service_tags
+
+  protected_settings = jsonencode({
+    "commandToExecute" : "cloud-init status --wait && cloud-init status | grep -q 'status: done' || (echo 'Cloud-init failed'; exit 1)"
+  })
+
+  depends_on = [
+    azurerm_virtual_machine_extension.keyvault
+  ]
+
+  timeouts {
+    create = "30m"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_virtual_machine_run_command" "configure_nexus_repos" {
+  name               = "ConfigureNexusRepos"
+  location           = data.azurerm_resource_group.rg.location
+  virtual_machine_id = azurerm_linux_virtual_machine.nexus.id
+  tags               = local.tre_shared_service_tags
+
+  # The script embeds the repository configuration and is re-executed whenever it
+  # changes, so modified/added repositories are applied to the running VM without
+  # recreating it.
+  source {
+    script = local.configure_nexus_repos_content
+  }
+
+  depends_on = [
+    azurerm_virtual_machine_extension.cloud_init_wait
+  ]
+
+  timeouts {
+    create = "30m"
+    update = "30m"
+  }
 
   lifecycle { ignore_changes = [tags] }
 }

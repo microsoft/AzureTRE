@@ -9,10 +9,11 @@ resource "azurerm_virtual_network" "ws" {
 }
 
 resource "azurerm_subnet" "host" {
-  name                 = local.host_subnet_name
-  resource_group_name  = local.resource_group_name
-  virtual_network_name = azurerm_virtual_network.ws.name
-  address_prefixes     = [local.host_subnet_address_space]
+  name                            = local.host_subnet_name
+  resource_group_name             = local.resource_group_name
+  virtual_network_name            = azurerm_virtual_network.ws.name
+  address_prefixes                = [local.host_subnet_address_space]
+  default_outbound_access_enabled = false
 
   delegation {
     name = "db-host-vnet-integration"
@@ -29,10 +30,11 @@ resource "azurerm_subnet" "host" {
 }
 
 resource "azurerm_subnet" "container" {
-  name                 = local.container_subnet_name
-  resource_group_name  = local.resource_group_name
-  virtual_network_name = azurerm_virtual_network.ws.name
-  address_prefixes     = [local.container_subnet_address_space]
+  name                            = local.container_subnet_name
+  resource_group_name             = local.resource_group_name
+  virtual_network_name            = azurerm_virtual_network.ws.name
+  address_prefixes                = [local.container_subnet_address_space]
+  default_outbound_access_enabled = false
 
   delegation {
     name = "db-container-vnet-integration"

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-unrestricted
-version: 0.13.6
+version: 0.14.1
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -12,6 +12,7 @@ credentials:
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
     env: AUTH_CLIENT_SECRET
+    sensitive: true
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
   # Credentials for interacting with Azure
@@ -23,6 +24,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: tre_id
@@ -94,6 +96,7 @@ parameters:
       when you create the ws application"
   - name: client_secret
     type: string
+    sensitive: true
     description:
       "The client secret of the workspace in the identity provider. This value is typically provided to you
       when you create the ws application"
@@ -125,7 +128,7 @@ parameters:
   - name: aad_redirect_uris
     type: string
     description: "List of redirect URIs in {name:value} format"
-    default: "W10="  # b64 for []
+    default: "W10=" # b64 for []
   - name: app_service_plan_sku
     type: string
     description: "The SKU used when deploying an Azure App Service Plan"
@@ -137,6 +140,10 @@ parameters:
     type: boolean
     default: true
     description: "Enable backups for the workspace, including the vm's & shared storage."
+  - name: delete_backups_on_uninstall
+    type: boolean
+    default: false
+    description: "When deleting the workspace, also delete the backups (Recovery Services Vault and its recovery points). When false the vault and its resource group are retained so the backed up data is kept."
   - name: enable_dns_policy
     type: boolean
     default: false
@@ -367,6 +374,21 @@ upgrade:
         register-aad-application: "${ bundle.parameters.register_aad_application }"
 
 uninstall:
+  - exec:
+      description: "Handle backup resources before tearing down the workspace"
+      command: ./remove_backup.sh
+      arguments:
+        - ${ bundle.parameters.tfstate_resource_group_name }
+        - ${ bundle.parameters.tfstate_storage_account_name }
+        - ${ bundle.parameters.tfstate_container_name }
+        - ${ bundle.parameters.tre_id }
+        - ${ bundle.parameters.id }
+        - ${ bundle.parameters.enable_backup }
+        - ${ bundle.parameters.delete_backups_on_uninstall }
+        - ${ bundle.parameters.workspace_subscription_id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
   - terraform:
       description: "Tear down workspace"
       vars:

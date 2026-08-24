@@ -8,7 +8,7 @@ All traffic has to be explicitly allowed by the Application Gateway or the Firew
 
 [![Architecture overview](../assets/archtecture-overview.png)](../assets/archtecture-overview.png)
 
-The Azure resources outside the network boundries of the Azure TRE are Microsoft Entra ID, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
+The Azure resources outside the network boundaries of the Azure TRE are Microsoft Entra ID, Microsoft Graph and TRE Management. TRE Management are resources used during deployment.
 
 The Azure TRE core plane consists of two groups of components:
 
@@ -38,7 +38,7 @@ The Composition Service is responsible for managing and mutating Workspaces and 
 | --- | --- |
 | [TRE API](../tre-developers/api.md) | An API responsible for performing all operations on Workspaces and managing Workspace Templates. |
 | Configuration Store | Keeping the state of Workspaces and Workspace Templates. The store uses [Cosmos DB (SQL)](https://docs.microsoft.com/en-us/azure/cosmos-db/introduction). |
-| Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components.  |
+| Service Bus | [Azure Service Bus](https://docs.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview) responsible for reliable delivery of messages between components. |
 | [Resource Processor](../tre-developers/resource-processor.md) | Responsible for starting the process of mutating a Workspace via a Workspace Template. |
 
 A Workspace is an instance of a Workspace Template. A Workspace Template is implemented as a [Porter](https://porter.sh/) bundle - read more about [Authoring workspaces templates](../tre-workspace-authors/authoring-workspace-templates.md).

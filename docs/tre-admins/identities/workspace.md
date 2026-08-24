@@ -12,11 +12,12 @@ Access to workspaces is also controlled using app registrations - one per worksp
 | Airlock Manager | Provides airlock managers access to the Workspace and ability to review airlock requests. | Users/Groups,Applications | `AirlockManager` |
 
 ## Microsoft Graph Permissions
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
-|email|Delegated|No|Used to read the user's email address when creating TRE resources|
-|openid|Delegated|No|Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information.|
-|profile|Delegated|No|Used to read the user's profile when creating TRE resources|
+
+| Name | Type* | Admin consent required | TRE usage |
+| --- | -- | ----- | --------- |
+| email | Delegated | No | Used to read the user's email address when creating TRE resources |
+| openid | Delegated | No | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. |
+| profile | Delegated | No | Used to read the user's profile when creating TRE resources |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
@@ -58,10 +59,11 @@ Example on how to run the script:
 If you do not wish to grant the Automation App permission to your workspace, just remove the `--automation-clientid` from the command.
 
 ## Environment Variables
+
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|WORKSPACE_API_CLIENT_ID|The Client Id|`./config.yaml`|
-|WORKSPACE_API_CLIENT_SECRET|The client secret|`./config.yaml`|
+| WORKSPACE_API_CLIENT_ID | The Client Id | `./config.yaml` |
+| WORKSPACE_API_CLIENT_SECRET | The client secret | `./config.yaml` |
 
 ## Comments
 When the Workspace Microsoft Entra ID app is registered by running `make auth`, the `Workspace Scope Id` is the same as the Client Id. When the Workspace Microsoft Entra ID app is created by the base workspace, the `Workspace Scope Id` will be in this format `api://<TRE_ID>_ws_<WORKSPACE_SHORT_IDENTIFIER>`

@@ -28,9 +28,12 @@ load_environment_config() {
 
 ensure_automation_login() {
   if [[ -n "${TF_IN_AUTOMATION:-}" ]]; then
-    az cloud set --name "${AZURE_ENVIRONMENT}"
-    az login --service-principal -u "${ARM_CLIENT_ID}" -p "${ARM_CLIENT_SECRET}" --tenant "${ARM_TENANT_ID}"
-    az account set -s "${ARM_SUBSCRIPTION_ID}"
+    if [[ -n "${ARM_CLIENT_SECRET:-}" ]]; then
+      echo "Warning: Using classic service principal authentication."
+      az cloud set --name "${AZURE_ENVIRONMENT}"
+      az login --service-principal -u "${ARM_CLIENT_ID}" -p "${ARM_CLIENT_SECRET}" --tenant "${ARM_TENANT_ID}"
+      az account set -s "${ARM_SUBSCRIPTION_ID}"
+    fi
   fi
 }
 
@@ -45,16 +48,14 @@ set_account_context() {
   SUB_ID_VALUE="$(az account show --query id -o tsv)"
   TENANT_ID_VALUE="$(az account show --query tenantId -o tsv)"
 
-  export SUB_NAME="${subscription_name}"
   export SUB_ID="${SUB_ID_VALUE}"
   export TENANT_ID="${TENANT_ID_VALUE}"
 
   export ARM_STORAGE_USE_AZUREAD=true
   export ARM_USE_AZUREAD=true
-  export ARM_USE_OIDC=true
 
   echo -e "\e[34m»»» 🔨 \e[96mAzure details from logged on user \e[0m"
-  echo -e "\e[34m»»»   • \e[96mSubscription: \e[33m${SUB_NAME}\e[0m"
+  echo -e "\e[34m»»»   • \e[96mSubscription: \e[33m${subscription_name}\e[0m"
   echo -e "\e[34m»»»   • \e[96mTenant:       \e[33m${TENANT_ID}\e[0m\n"
 }
 

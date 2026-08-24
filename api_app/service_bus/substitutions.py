@@ -8,11 +8,11 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
     properties = {}
     parent_ws_dict = {}
     parent_ws_svc_dict = {}
-    primary_resource_dict = primary_resource.dict()
+    primary_resource_dict = primary_resource.model_dump()
     if primary_parent_workspace is not None:
-        parent_ws_dict = primary_parent_workspace.dict()
+        parent_ws_dict = primary_parent_workspace.model_dump()
     if primary_parent_workspace_svc is not None:
-        parent_ws_svc_dict = primary_parent_workspace_svc.dict()
+        parent_ws_svc_dict = primary_parent_workspace_svc.model_dump()
 
     if template_step is None or template_step.properties is None:
         return properties
@@ -151,6 +151,8 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
         if isinstance(prop_to_get, dict) or isinstance(prop_to_get, list):
             return prop_to_get
         else:
+            if val == "{{" + t + "}}":
+                return prop_to_get
             val = val.replace("{{" + t + "}}", str(prop_to_get))
 
     return val

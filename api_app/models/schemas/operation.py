@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 from models.domain.operation import Operation
 
 
@@ -16,7 +16,8 @@ def get_sample_operation(operation_id: str) -> dict:
         "updatedWhen": 1642611942.423857,
         "steps": [
             {
-                "stepId": "main",
+                "id": "7d96130f-b323-4b95-8351-a05e943d51a2",
+                "templateStepId": "main",
                 "stepTitle": "deployment for main",
                 "resourceId": "933ad738-7265-4b5f-9eae-a1a62928772e",
                 "resourceTemplateName": "tre-workspace-base",
@@ -31,24 +32,20 @@ def get_sample_operation(operation_id: str) -> dict:
 
 class OperationInResponse(BaseModel):
     operation: Operation
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "operation": get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132")
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "operation": get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132")
         }
+    })
 
 
 class OperationInList(BaseModel):
-    operations: List[Operation] = Field([], title="Operations")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "operations": [
-                    get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"),
-                    get_sample_operation("640488fe-9408-4b9f-a239-3b03bc0c5df0")
-                ]
-            }
+    operations: List[Operation] = Field(default_factory=list, title="Operations")
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "operations": [
+                get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"),
+                get_sample_operation("640488fe-9408-4b9f-a239-3b03bc0c5df0")
+            ]
         }
+    })

@@ -1,6 +1,6 @@
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from resources import strings
 from db.repositories.resources_history import ResourceHistoryRepository
 from service_bus.substitutions import substitute_properties
@@ -68,7 +68,7 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
     if not parent_template.pipeline:
         return step_resource
 
-    parent_template_pipeline_dict = parent_template.pipeline.dict()
+    parent_template_pipeline_dict = parent_template.pipeline.model_dump()
 
     # if action not defined as a pipeline, custom action, no need to continue with substitutions.
     if primary_action not in parent_template_pipeline_dict:
@@ -76,14 +76,20 @@ async def update_resource_for_step(operation_step: OperationStep, resource_repo:
 
     pipeline_primary_action = parent_template_pipeline_dict[primary_action]
     is_first_main_step = pipeline_primary_action and len(pipeline_primary_action) == 1 and pipeline_primary_action[0]['stepId'] == 'main'
-    if not pipeline_primary_action or is_first_main_step:
+
+    if not pipeline_primary_action:
         return step_resource
+
+    if is_first_main_step:
+        single_step = pipeline_primary_action[0]
+        if not single_step.get('properties'):
+            return step_resource
 
     # get the template step
     template_step = None
     for step in parent_template_pipeline_dict[primary_action]:
         if step["stepId"] == operation_step.templateStepId:
-            template_step = parse_obj_as(PipelineStep, step)
+            template_step = TypeAdapter(PipelineStep).validate_python(step)
             if (template_step.resourceAction is None and primary_action == strings.RESOURCE_ACTION_INSTALL):
                 template_step.resourceAction = strings.RESOURCE_ACTION_INSTALL
             break

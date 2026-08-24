@@ -2,7 +2,7 @@
 
 In general, a shared service should be installed by using the UI or API directly once its bundle has been registered on the system.
 
-As part of this quickstart, you will need to install the Nexus shared service, as you will be subsequently deploying Guacamole VMs that depend on public package respositories to bootstrap. Due to the TRE's Firewall blocking public access, Nexus will proxy these package repositories and make them available within the TRE for the VMs to consume.
+As part of this quickstart, you will need to install the Nexus shared service, as you will be subsequently deploying Guacamole VMs that depend on public package repositories to bootstrap. Due to the TRE's Firewall blocking public access, Nexus will proxy these package repositories and make them available within the TRE for the VMs to consume.
 
 ## Deploy & configure Nexus service
 
@@ -46,9 +46,12 @@ This will deploy the infrastructure required for Nexus, then start the service a
 
 You can optionally go to the Nexus web interface by visiting `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/` in the jumpbox and signing in with the username `admin` and the password secret located in your core keyvault, with the key `nexus-admin-password`. Here you should be able to see all of the configured repositories and you can use the UI to manage settings etc.
 
-Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted. If you wish to permanently add new repositories or alter existing ones, modify the JSON files within the `./nexus_repos_config` directory and redeploy.
+Just bear in mind that if this service is redeployed any changes made in the Nexus UI won't be persisted.
+If you wish to permanently add, alter or remove repositories, modify the JSON files within the `./nexus_repos_config` directory and upgrade the shared service.
+On upgrade the updated configuration is copied to the existing Nexus VM and re-applied via the Nexus API, so the VM does not need to be recreated.
+Note that deleting a JSON file does not remove the corresponding repository from a running Nexus instance; remove it via the Nexus UI or API as well.
 
-You can view further information on the Nexus shared service [here](../../tre-templates/shared-services/nexus.md).
+You can view further information on the [Nexus shared service documentation](../../tre-templates/shared-services/nexus.md).
 
 ## (Optional) Install Gitea and configure repositories
 
@@ -88,7 +91,7 @@ From a virtual machine within a workspace:
 - Command line: ```git clone https://gitea-<TRE_ID>.azurewebsites.net/giteaadmin/<NameOfrepository>```
 - Gitea Web Interface: ```https://gitea-<TRE_ID>.azurewebsites.net/```
 
-More info on the Gitea shared service is available [here](../../tre-templates/shared-services/gitea.md).
+More info on the Gitea shared service is available in the [Gitea shared service documentation](../../tre-templates/shared-services/gitea.md).
 
 ## Next steps
 

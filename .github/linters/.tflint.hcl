@@ -1,10 +1,12 @@
 config {
-  module = true
+  call_module_type = "local"
   force = false
 }
 
 plugin "azurerm" {
     enabled = true
+    version = "0.30.0"
+    source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 
 rule "terraform_unused_declarations" {
@@ -29,4 +31,12 @@ rule "terraform_naming_convention" {
 
 rule "terraform_standard_module_structure" {
   enabled = true
+}
+
+rule "terraform_required_version" {
+  enabled = false
+}
+
+rule "azurerm_resources_missing_prevent_destroy" {
+  enabled = false
 }

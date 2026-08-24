@@ -14,10 +14,10 @@ from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
 from models.schemas.airlock_request import AirlockRequestWithAllowedUserActions
 from models.schemas.resource import ResourcePatch
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Union
 from models.schemas.user_resource import UserResourceInCreate
 from services.azure_resource_status import get_azure_resource_status
-from services.authentication import get_access_service
+from services.authentication import get_aad_service
 
 from resources import strings, constants
 
@@ -272,14 +272,19 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
 
-    access_service = get_access_service()
-    role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
+    try:
+        access_service = get_aad_service()
+        role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
+    except Exception:
+        logger.exception("Failed to retrieve workspace role assignments from Microsoft Graph")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR)
+
     if config.ENABLE_AIRLOCK_EMAIL_CHECK:
         check_email_exists(role_assignment_details)
 
     try:
         logger.debug(f"Saving airlock request item: {airlock_request.id}")
-        airlock_request.updatedBy = user
+        airlock_request.updatedBy = user.model_dump()
         airlock_request.updatedWhen = get_timestamp()
         await airlock_request_repo.save_item(airlock_request)
     except Exception:
@@ -290,22 +295,23 @@ async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=airlock_request, previous_status=None)
         await send_airlock_notification_event(airlock_request, workspace, role_assignment_details)
-    except Exception:
+    except Exception as e:
         await airlock_request_repo.delete_item(airlock_request.id)
         logger.exception("Failed sending status_changed message")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_PUBLISH_FAILED.format(e))
 
 
 async def update_and_publish_event_airlock_request(
-        airlock_request: AirlockRequest,
-        airlock_request_repo: AirlockRequestRepository,
-        updated_by: User,
-        workspace: Workspace,
-        new_status: Optional[AirlockRequestStatus] = None,
-        request_files: Optional[List[AirlockFile]] = None,
-        status_message: Optional[str] = None,
-        airlock_review: Optional[AirlockReview] = None,
-        review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
+    airlock_request: AirlockRequest,
+    airlock_request_repo: AirlockRequestRepository,
+    updated_by: Union[User, dict],
+    workspace: Workspace,
+    new_status: Optional[AirlockRequestStatus] = None,
+    request_files: Optional[List[AirlockFile]] = None,
+    status_message: Optional[str] = None,
+    airlock_review: Optional[AirlockReview] = None,
+    review_user_resource: Optional[AirlockReviewUserResource] = None,
+) -> AirlockRequest:
     try:
         logger.debug(f"Updating airlock request item: {airlock_request.id}")
         updated_airlock_request = await airlock_request_repo.update_airlock_request(
@@ -329,15 +335,20 @@ async def update_and_publish_event_airlock_request(
         return updated_airlock_request
 
     try:
+        access_service = get_aad_service()
+        role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
+    except Exception:
+        logger.exception("Failed to retrieve workspace role assignments from Microsoft Graph")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.GRAPH_ROLE_ASSIGNMENT_ERROR)
+
+    try:
         logger.debug(f"Sending status changed event for airlock request item: {airlock_request.id}")
         await send_status_changed_event(airlock_request=updated_airlock_request, previous_status=airlock_request.status)
-        access_service = get_access_service()
-        role_assignment_details = access_service.get_workspace_user_emails_by_role_assignment(workspace)
         await send_airlock_notification_event(updated_airlock_request, workspace, role_assignment_details)
         return updated_airlock_request
-    except Exception:
+    except Exception as e:
         logger.exception("Failed sending status_changed message")
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_GENERAL_ERROR_MESSAGE)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=strings.EVENT_GRID_PUBLISH_FAILED.format(e))
 
 
 def get_timestamp() -> float:

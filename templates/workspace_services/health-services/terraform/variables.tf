@@ -33,20 +33,24 @@ variable "deploy_dicom" {
   description = "Indicates if DICOM should be created in the Azure Health Data Services Workspace."
 }
 
-variable "auth_tenant_id" {
+variable "workspace_owners_group_id" {
   type        = string
-  description = "Used to authenticate into the AAD Tenant to get app role members"
+  description = "Object ID of the workspace owners AAD group"
+
+  validation {
+    condition     = length(trimspace(var.workspace_owners_group_id)) > 0
+    error_message = "workspace_owners_group_id must be provided; Entra ID workspace groups are required."
+  }
 }
 
-variable "auth_client_id" {
+variable "workspace_researchers_group_id" {
   type        = string
-  description = "Used to authenticate into the AAD Tenant to get app role members"
-}
+  description = "Object ID of the workspace researchers AAD group"
 
-variable "auth_client_secret" {
-  type        = string
-  sensitive   = true
-  description = "Used to authenticate into the AAD Tenant to get app role members"
+  validation {
+    condition     = length(trimspace(var.workspace_researchers_group_id)) > 0
+    error_message = "workspace_researchers_group_id must be provided; Entra ID workspace groups are required."
+  }
 }
 
 variable "arm_environment" {

@@ -10,12 +10,13 @@ This identity is used by any public facing client application so that user imper
 This application does not have any roles defined.
 
 ## Permissions
-| Name | Type* | Admin consent required |  TRE usage |
-| --- | -- | -----| --------- |
-|offline_access|Delegated|No|Allows the app to see and update the data you gave it access to, even when users are not currently using the app. |
-|openid|Delegated|No|Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information.|
-|TRE API/user_impersonation|Delegated|No|Flow the authenticated user to the TRE API when needed.|
-|Workspace API/user_impersonation|Delegated|No|Flow the authenticated user to the Workspace API when needed.|
+
+| Name | Type* | Admin consent required | TRE usage |
+| --- | -- | ----- | --------- |
+| offline_access | Delegated | No | Allows the app to see and update the data you gave it access to, even when users are not currently using the app. |
+| openid | Delegated | No | Allows users to sign in to the app with their work or school accounts and allows the app to see basic user profile information. |
+| TRE API/user_impersonation | Delegated | No | Flow the authenticated user to the TRE API when needed. |
+| Workspace API/user_impersonation | Delegated | No | Flow the authenticated user to the Workspace API when needed. |
 
 '*' See the difference between [delegated and application permission](https://docs.microsoft.com/graph/auth/auth-concepts#delegated-and-application-permissions) types. See [Microsoft Graph permissions reference](https://docs.microsoft.com/graph/permissions-reference) for more details.
 
@@ -49,7 +50,8 @@ The following Redirect URIs will be added to the application
 * `http://localhost:8000/docs/oauth2-redirect` - For local testing
 
 ## Environment Variables
+
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
-|SWAGGER_UI_CLIENT_ID|The Client Id|`./config.yaml`|
+| SWAGGER_UI_CLIENT_ID | The Client Id | `./config.yaml` |
 

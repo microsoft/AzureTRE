@@ -20,6 +20,7 @@ resource "azurerm_linux_web_app" "guacamole" {
   webdeploy_publish_basic_authentication_enabled = false
   tags                                           = local.workspace_service_tags
   public_network_access_enabled                  = var.is_exposed_externally
+  vnet_image_pull_enabled                        = true
 
   site_config {
     http2_enabled                                 = true
@@ -94,32 +95,6 @@ resource "azurerm_linux_web_app" "guacamole" {
   ]
 }
 
-resource "azapi_update_resource" "guac_vnet_container_pull_routing" {
-  resource_id = azurerm_linux_web_app.guacamole.id
-  type        = "Microsoft.Web/sites@2022-09-01"
-
-  body = {
-    properties = {
-      vnetImagePullEnabled : true
-    }
-  }
-
-  depends_on = [
-    azurerm_linux_web_app.guacamole
-  ]
-}
-
-resource "azapi_resource_action" "restart_guac_webapp" {
-  type        = "Microsoft.Web/sites@2022-09-01"
-  resource_id = azurerm_linux_web_app.guacamole.id
-  method      = "POST"
-  action      = "restart"
-
-  depends_on = [
-    azapi_update_resource.guac_vnet_container_pull_routing
-  ]
-}
-
 resource "azurerm_monitor_diagnostic_setting" "guacamole" {
   name                       = "diag-${var.tre_id}"
   target_resource_id         = azurerm_linux_web_app.guacamole.id
@@ -132,9 +107,8 @@ resource "azurerm_monitor_diagnostic_setting" "guacamole" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 

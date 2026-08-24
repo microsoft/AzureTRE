@@ -16,9 +16,7 @@ interface ResourceCardListProps {
   usersCache?: Map<string, CachedUser>; // ownerId -> user info mapping
 }
 
-export const ResourceCardList: React.FunctionComponent<
-  ResourceCardListProps
-> = (props: ResourceCardListProps) => {
+export const ResourceCardList: React.FunctionComponent<ResourceCardListProps> = (props: ResourceCardListProps) => {
   return (
     <>
       {props.resources.length > 0 ? (
@@ -28,15 +26,9 @@ export const ResourceCardList: React.FunctionComponent<
               <Stack.Item key={r.id} style={gridItemStyles}>
                 <ResourceCard
                   resource={r}
-                  selectResource={(resource: Resource) =>
-                    props.selectResource && props.selectResource(resource)
-                  }
-                  onUpdate={(resource: Resource) =>
-                    props.updateResource(resource)
-                  }
-                  onDelete={(resource: Resource) =>
-                    props.removeResource(resource)
-                  }
+                  selectResource={(resource: Resource) => props.selectResource && props.selectResource(resource)}
+                  onUpdate={(resource: Resource) => props.updateResource(resource)}
+                  onDelete={(resource: Resource) => props.removeResource(resource)}
                   itemId={i}
                   readonly={props.readonly}
                   isExposedExternally={

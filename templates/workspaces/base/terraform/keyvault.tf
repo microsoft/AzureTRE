@@ -1,12 +1,12 @@
 resource "azurerm_key_vault" "kv" {
-  name                      = local.keyvault_name
-  location                  = azurerm_resource_group.ws.location
-  resource_group_name       = azurerm_resource_group.ws.name
-  sku_name                  = "standard"
-  enable_rbac_authorization = true
-  purge_protection_enabled  = true
-  tenant_id                 = data.azurerm_client_config.core.tenant_id
-  tags                      = local.tre_workspace_tags
+  name                       = local.keyvault_name
+  location                   = azurerm_resource_group.ws.location
+  resource_group_name        = azurerm_resource_group.ws.name
+  sku_name                   = "standard"
+  rbac_authorization_enabled = true
+  purge_protection_enabled   = true
+  tenant_id                  = data.azurerm_client_config.core.tenant_id
+  tags                       = local.tre_workspace_tags
 
   network_acls {
     bypass         = "AzureServices"
@@ -54,9 +54,8 @@ resource "azurerm_monitor_diagnostic_setting" "kv" {
     }
   }
 
-  metric {
+  enabled_metric {
     category = "AllMetrics"
-    enabled  = true
   }
 }
 

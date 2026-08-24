@@ -1,6 +1,6 @@
 # AzureTRE Deployment repo
 
-AzureTRE has an OSS deployment repository which you can find [here.](https://github.com/microsoft/AzureTRE-Deployment)
+AzureTRE has an OSS deployment repository which you can find in the [AzureTRE Deployment GitHub repository.](https://github.com/microsoft/AzureTRE-Deployment)
 It contains all the required tooling to develop your custom templates and deploy the Azure TRE:
 
 - Github Actions implementing AzureTRE automation, including running deployments to Azure
@@ -25,7 +25,7 @@ To get started with AzureTRE follow the next steps:
 ## Clone the Azure TRE Deployment git repository
 
 !!! tip
-    If using Windows please clone the repository to a Linux file system, i.e. to `/xxx` rather than `c:\`, for example within Windows Subsytem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <https://github.com/microsoft/AzureTRE/issues/1395>
+    If using Windows please clone the repository to a Linux file system, i.e. to `/xxx` rather than `c:\`, for example within Windows Subsystem for Linux. If you clone the repository to a Windows file system you will likely hit issues with file permissions as described in this issue: <https://github.com/microsoft/AzureTRE/issues/1395>
 
   ```cmd
   git clone https://github.com/<your_username>/AzureTRE-Deployment.git

@@ -67,7 +67,7 @@ Example pipeline step:
 There are two main types of rule collections in Azure TRE:
 
 | Collection Type | Description |
-|-----------------|-------------|
+| ----------------- | ------------- |
 | `network_rule_collections` | Controls traffic based on source, destination, protocol, and port |
 | `rule_collections` | Application-level rules controlling traffic to specific FQDNs |
 
@@ -76,7 +76,7 @@ There are two main types of rule collections in Azure TRE:
 Network rule collections control traffic at the network level and are configured with the following properties:
 
 | Property | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `name` | Unique identifier for the rule collection |
 | `action` | Action to take (Allow/Deny) |
 | `rules` | Array of individual network rules |
@@ -84,7 +84,7 @@ Network rule collections control traffic at the network level and are configured
 Each network rule has the following structure:
 
 | Property | Description | Example |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `name` | Rule name | "AzureMachineLearning" |
 | `description` | Human-readable description | "Azure Machine Learning rules" |
 | `source_addresses` | Origin of traffic | "{{ resource.properties.aml_subnet_address_prefixes }}" |
@@ -97,7 +97,7 @@ Each network rule has the following structure:
 Application rule collections control traffic at the application level and are configured with the following properties:
 
 | Property | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `name` | Unique identifier for the rule collection |
 | `action` | Action to take (Allow/Deny) |
 | `rules` | Array of individual application rules |
@@ -105,7 +105,7 @@ Application rule collections control traffic at the application level and are co
 Each application rule has the following structure:
 
 | Property | Description | Example |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `name` | Rule name | "AzureML_client" |
 | `description` | Human-readable description | "AzureML rules" |
 | `source_addresses` | Origin of traffic | "{{ resource.properties.workspace_address_spaces }}" |
@@ -117,7 +117,7 @@ Each application rule has the following structure:
 When modifying rule collections, you can specify how the rules should be applied:
 
 | Operation | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | `replace` | Replace existing rules that match the specified criteria, typically used in `install` and `upgrade` steps |
 | `remove` | Remove rules that match the specified criteria, typically used in `uninstall` steps |
 
@@ -160,7 +160,7 @@ This is controlled by the `arraySubstitutionAction` property:
 Firewall rules often use template variables to dynamically set values:
 
 | Variable Pattern | Description | Example |
-|------------------|-------------|---------|
+| ------------------ | ------------- | --------- |
 | `{{ resource.id }}` | The resource ID | Used in rule collection names |
 | `{{ resource.properties.x }}` | Resource-specific properties | Address spaces, FQDNs |
 

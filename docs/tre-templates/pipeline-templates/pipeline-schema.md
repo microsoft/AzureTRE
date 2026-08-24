@@ -31,6 +31,17 @@ It's possible to refer to properties from the primary resource (the resource tha
 
 The syntax is `{{ resource.propertyName }}`. For example: `"{{ resource.properties.display_name }}"`.
 
+### Accessing Parent Resource Properties
+It's also possible to access properties from the parent resources. This is useful when a resource needs information from its container (e.g. a user resource needing the workspace service's address space).
+
+| Resource Type | Available References | Description |
+| --- | --- | --- |
+| User Resource | `{{ resource.parent.properties... }}` | Properties of the **Workspace Service** |
+| User Resource | `{{ resource.parent.parent.properties... }}` | Properties of the **Workspace** |
+| Workspace Service | `{{ resource.parent.properties... }}` | Properties of the **Workspace** |
+| Workspace | N/A | Workspaces do not have parents in this context |
+| Shared Service | N/A | Shared Services do not have parents in this context |
+
 Example pipeline in `template_schema.json`:
 The below example references 2 properties from the primary resource to be used in updating the firewall shared service.
 

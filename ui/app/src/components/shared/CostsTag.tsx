@@ -1,15 +1,10 @@
 import { Stack, Shimmer, TooltipHost, Icon } from "@fluentui/react";
-import { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { CostsContext } from "../../contexts/CostsContext";
 import { LoadingState } from "../../models/loadingState";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
-import {
-  useAuthApiCall,
-  HttpMethod,
-  ResultType,
-} from "../../hooks/useAuthApiCall";
-import { ApiEndpoint } from "../../models/apiEndpoints";
+import { useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { ResourceType } from "../../models/resourceType";
 
 interface CostsTagProps {
@@ -17,23 +12,19 @@ interface CostsTagProps {
   resourceType?: ResourceType;
 }
 
-export const CostsTag: React.FunctionComponent<CostsTagProps> = (
-  props: CostsTagProps,
-) => {
+export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTagProps) => {
   const costsCtx = useContext(CostsContext);
   const workspaceCtx = useContext(WorkspaceContext);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
-  const [formattedCost, setFormattedCost] = useState<string | undefined>(
-    undefined,
-  );
+  const [formattedCost, setFormattedCost] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     async function fetchCostData() {
       let costs: CostResource[] = [];
-      if (workspaceCtx.costs.length > 0) {
+      if (workspaceCtx.costs?.length > 0) {
         costs = workspaceCtx.costs;
-      } else if (costsCtx.costs.length > 0) {
+      } else if (costsCtx.costs?.length > 0) {
         costs = costsCtx.costs;
       }
 
@@ -41,7 +32,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
         return cost.id === props.resourceId;
       });
 
-      if (resourceCosts && resourceCosts.costs.length > 0) {
+      if (resourceCosts && resourceCosts?.costs?.length > 0) {
         const formattedCost = new Intl.NumberFormat(undefined, {
           style: "currency",
           currency: resourceCosts?.costs[0].currency,
@@ -54,13 +45,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
       setLoadingState(LoadingState.Ok);
     }
     fetchCostData();
-  }, [
-    apiCall,
-    props.resourceId,
-    workspaceCtx.costs,
-    costsCtx.costs,
-    workspaceCtx.workspace.id,
-  ]);
+  }, [apiCall, props.resourceId, workspaceCtx.costs, costsCtx.costs, workspaceCtx.workspace.id]);
 
   // Generate tooltip content based on resource type and cost availability
   const getTooltipContent = () => {
@@ -69,24 +54,25 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
     }
 
     let baseMessage = "Month-to-date costs";
-    
+
     if (props.resourceType === ResourceType.Workspace) {
       baseMessage += " (includes all workspace services and user resources)";
     }
-    
+
     return baseMessage;
   };
 
+  const showShimmer =
+    loadingState === LoadingState.Loading || (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
-      {loadingState === LoadingState.Loading ? (
-        <Shimmer />
+      {showShimmer ? (
+        <Shimmer data-testid="shimmer" />
       ) : (
         <>
           {formattedCost ? (
-            <TooltipHost content={getTooltipContent()}>
-              {formattedCost}
-            </TooltipHost>
+            <TooltipHost content={getTooltipContent()}>{formattedCost}</TooltipHost>
           ) : (
             <TooltipHost content={getTooltipContent()}>
               <Icon iconName="Clock" />
