@@ -169,7 +169,7 @@ letsencrypt:
 
 # Description: Start the TRE Service.
 # # This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service,
-# # starting billing of both services.
+# # starting billing of both services. If the Service Bus was deleted, use make deploy-core to recreate it.
 # Example: make tre-start
 tre-start: ## ⏩ Start the TRE Service
 	$(call target_title, "Starting TRE") \
@@ -177,7 +177,9 @@ tre-start: ## ⏩ Start the TRE Service
 	&& ${MAKEFILE_DIR}/devops/scripts/control_tre.sh start
 
 # Description: Stop the TRE Service.
+# Arguments: DELETE_SERVICE_BUS - if set to true, the service bus will also be deleted to save costs.
 # # This will deallocate the Azure Firewall public IP and stop the Azure Application Gateway service, stopping billing of both services.
+# # A subsequent make deploy-core will recreate a deleted Service Bus and start the TRE.
 # Example: make tre-stop
 tre-stop: ## ⛔ Stop the TRE Service
 	$(call target_title, "Stopping TRE") \
