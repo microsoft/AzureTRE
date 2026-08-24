@@ -75,11 +75,11 @@ Similarly to `tre_id`, `workspace_id` is used in the resource names of the works
 All the values for the required parameters will be provided by the deployment runner.
 
 Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle.
-This file follows the [JSON schema standard](https://json-schema.org/) Draft 2020-12 (`https://json-schema.org/draft/2020-12/schema`) and can be used by a user interface to generate a UI for the user to input the parameters.
+This file follows the [JSON schema standard](https://json-schema.org/) Draft 2020-12 (`https://json-schema.org/draft/2020-12/schema`) for the subset supported by Azure TRE and can be used by a user interface to generate a UI for the user to input the parameters.
 
 ### JSON Schema Version Standard
 
-Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 2020-12** specification:
+Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 2020-12** dialect for the keywords supported by the template registration and validation APIs:
 
 ```json
 {
@@ -87,7 +87,7 @@ Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 
 }
 ```
 
-Draft 2020-12 is supported by the API schema validation engine and is the recommended JSON Schema version for Azure TRE templates.
+The API preserves the root `$schema`, `$id`, and `$defs` keywords during registration. Other Draft 2020-12 keywords should be used only where supported by the template model and validation engine.
 
 !!! note
     **`$id` is not required on individual properties or subschemas.** Properties defined under "properties" are natively addressable by standard JSON Pointer (e.g. `#/properties/property_name`).
