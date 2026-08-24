@@ -18,7 +18,8 @@ from models.domain.workspace_service import WorkspaceService
 from models.domain.workspace import Workspace
 from models.domain.operation import Operation
 from resources import strings
-from services.authentication import get_current_workspace_owner_or_researcher_user, get_current_workspace_owner_or_researcher_user_or_airlock_manager, get_current_airlock_manager_user
+from auth.rbac import require_workspace_owner_or_researcher, require_workspace_owner_or_researcher_or_airlock_manager, require_airlock_manager
+pytestmark = pytest.mark.asyncio
 
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
@@ -34,14 +35,16 @@ AIRLOCK_REVIEW_ID = "11bd2526-054b-4305-a7f9-63a2d6d2a80c"
 def sample_airlock_request_input_data():
     return {
         "type": "import",
-        "businessJustification": "some business justification"
+        "title": "a request title",
+        "businessJustification": "some business justification",
+        "properties": {}
     }
 
 
 @pytest.fixture
 def sample_airlock_review_input_data():
     return {
-        "reviewDecision": "approved",
+        "approval": True,
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
 
@@ -130,25 +133,13 @@ def create_test_user_with_roles(roles):
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @pytest.fixture(autouse=True, scope="class")
     def log_in_with_researcher_user(self, app, researcher_user):
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = researcher_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = researcher_user
-        with patch(
-            "api.routes.airlock.AirlockRequestRepository.create_airlock_request_item",
-            return_value=sample_airlock_request_object(),
-        ), patch(
-            "api.routes.workspaces.OperationRepository.resource_has_deployed_operation"
-        ), patch(
-            "api.routes.airlock.AirlockRequestRepository.save_item"
-        ), patch(
-            "api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"
-        ), patch(
-            "services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment",
-            return_value={
-                "WorkspaceResearcher": ["researcher@outlook.com"],
-                "WorkspaceOwner": ["owner@outlook.com"],
-                "AirlockManager": ["manager@outlook.com"],
-            },
-        ):
+        app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
+        with patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
+                patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
+                patch("api.routes.airlock.AirlockRequestRepository.save_item"), \
+                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"), \
+                patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]}):
             yield
         app.dependency_overrides = {}
 
@@ -319,18 +310,12 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 class TestAirlockRoutesThatRequireAirlockManagerRights():
     @pytest.fixture(autouse=True, scope="class")
     def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
-        app.dependency_overrides[get_current_airlock_manager_user] = airlock_manager_user
-        app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = airlock_manager_user
-        with patch(
-            "services.airlock.AirlockRequestRepository.create_airlock_request_item",
-            return_value=sample_airlock_request_object(),
-        ), patch(
-            "api.routes.workspaces.OperationRepository.resource_has_deployed_operation"
-        ), patch(
-            "services.airlock.AirlockRequestRepository.save_item"
-        ), patch(
-            "api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"
-        ):
+        app.dependency_overrides[require_airlock_manager] = airlock_manager_user
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = airlock_manager_user
+        with patch("services.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
+                patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
+                patch("services.airlock.AirlockRequestRepository.save_item"), \
+                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"):
             yield
         app.dependency_overrides = {}
 
@@ -487,13 +472,12 @@ class TestAirlockRoutesPermissions():
     @pytest.fixture()
     def log_in_with_user(self, app):
         def inner(user):
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user] = user
-            app.dependency_overrides[get_current_airlock_manager_user] = user
-            app.dependency_overrides[get_current_workspace_owner_or_researcher_user_or_airlock_manager] = user
+            app.dependency_overrides[require_workspace_owner_or_researcher] = user
+            app.dependency_overrides[require_airlock_manager] = user
+            app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = user
         return inner
 
-
-    @pytest.mark.parametrize("role", (role for role in get_required_roles(endpoint=create_draft_request)))
+    @pytest.mark.parametrize("role", list(get_required_roles(endpoint=create_draft_request)))
     @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(WORKSPACE_ID))
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Draft))

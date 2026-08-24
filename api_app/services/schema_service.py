@@ -38,7 +38,7 @@ def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
 
 
 def enrich_template(original_template, extra_properties, is_update: bool = False, is_workspace_scope: bool = True) -> dict:
-    template = original_template.dict(exclude_none=True)
+    template = original_template.model_dump(exclude_none=True)
 
     all_required = [definition[0] for definition in extra_properties] + [template["required"]]
     all_properties = [definition[1] for definition in extra_properties] + [template["properties"]]
@@ -60,10 +60,6 @@ def enrich_template(original_template, extra_properties, is_update: bool = False
                         for prop in conditional_property[condition]["properties"].values():
                             if not prop.get("updateable", False):
                                 prop["readOnly"] = True
-
-    # if there is an 'allOf' property which is empty, the validator fails - so remove the key
-    if "allOf" in template and template["allOf"] is None:
-        template.pop("allOf")
 
     if is_workspace_scope:
         id_field = "workspace_id"

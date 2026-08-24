@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  DefaultPalette,
-  IStackStyles,
-  MessageBar,
-  MessageBarType,
-  Stack,
-} from "@fluentui/react";
+import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
 import "./App.scss";
 import { TopNav } from "./components/shared/TopNav";
 import { Routes, Route } from "react-router-dom";
@@ -32,13 +26,9 @@ export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
   const [selectedWorkspace, setSelectedWorkspace] = useState({} as Workspace);
   const [workspaceRoles, setWorkspaceRoles] = useState([] as Array<string>);
-  const [workspaceCosts, setWorkspaceCosts] = useState(
-    [] as Array<CostResource>,
-  );
+  const [workspaceCosts, setWorkspaceCosts] = useState([] as Array<CostResource>);
   const [costs, setCosts] = useState([] as Array<CostResource>);
-  const [costsLoadingState, setCostsLoadingState] = useState(
-    LoadingState.Loading,
-  );
+  const [costsLoadingState, setCostsLoadingState] = useState(LoadingState.Loading);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [createFormResource, setCreateFormResource] = useState({
     resourceType: ResourceType.Workspace,
@@ -72,9 +62,7 @@ export const App: React.FunctionComponent = () => {
         <Route
           path="*"
           element={
-            <MsalAuthenticationTemplate
-              interactionType={InteractionType.Redirect}
-            >
+            <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
               <AppRolesContext.Provider
                 value={{
                   roles: appRoles,
@@ -85,9 +73,7 @@ export const App: React.FunctionComponent = () => {
               >
                 <CreateUpdateResourceContext.Provider
                   value={{
-                    openCreateForm: (
-                      createFormResource: CreateFormResource,
-                    ) => {
+                    openCreateForm: (createFormResource: CreateFormResource) => {
                       setCreateFormResource(createFormResource);
                       setCreateFormOpen(true);
                     },
@@ -99,9 +85,7 @@ export const App: React.FunctionComponent = () => {
                     resourceType={createFormResource.resourceType}
                     parentResource={createFormResource.resourceParent}
                     onAddResource={createFormResource.onAdd}
-                    workspaceApplicationIdURI={
-                      createFormResource.workspaceApplicationIdURI
-                    }
+                    workspaceApplicationIdURI={createFormResource.workspaceApplicationIdURI}
                     updateResource={createFormResource.updateResource}
                   />
                   <Stack styles={stackStyles} className="tre-root">
@@ -141,8 +125,7 @@ export const App: React.FunctionComponent = () => {
                                     setWorkspace: (w: Workspace) => {
                                       setSelectedWorkspace(w);
                                     },
-                                    workspaceApplicationIdURI:
-                                      selectedWorkspace.properties?.scope_id,
+                                    workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id,
                                   }}
                                 >
                                   <WorkspaceProvider />
@@ -166,15 +149,11 @@ export const App: React.FunctionComponent = () => {
           path="/logout"
           element={
             <div className="tre-logout-message">
-              <MessageBar
-                messageBarType={MessageBarType.success}
-                isMultiline={true}
-              >
+              <MessageBar messageBarType={MessageBarType.success} isMultiline={true}>
                 <h2>You are logged out.</h2>
                 <p>
-                  You are now logged out of the Azure TRE portal. Please ensure that you
-                  also log out and close all browser windows for other TRE services,
-                  such as virtual machines, that you might have open.
+                  You are now logged out of the Azure TRE portal. Please ensure that you also log out and close all
+                  browser windows for other TRE services, such as virtual machines, that you might have open.
                 </p>
               </MessageBar>
             </div>

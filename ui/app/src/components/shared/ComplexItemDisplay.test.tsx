@@ -5,13 +5,13 @@ import { ComplexPropertyModal } from "./ComplexItemDisplay";
 
 // Mock FluentUI components using centralized utility with the newly added Modal component
 vi.mock("@fluentui/react", () => {
-  const mocks = createPartialFluentUIMock(['Link', 'Modal', 'IconButton', 'getTheme', 'FontWeights', 'mergeStyleSets']);
+  const mocks = createPartialFluentUIMock(["Link", "Modal", "IconButton", "getTheme", "FontWeights", "mergeStyleSets"]);
   return {
     ...mocks,
     IIconProps: {},
     IconNames: {
-      Cancel: 'Cancel',
-    }
+      Cancel: "Cancel",
+    },
   };
 });
 
@@ -88,11 +88,13 @@ describe("ComplexPropertyModal Component", () => {
     expect(screen.getByText("nestedObject:")).toBeInTheDocument();
 
     // Find expand/collapse buttons for nested objects
-    const expandButtons = screen.getAllByTestId("icon-button").filter(
-      (button) =>
-        button.getAttribute("data-icon-name") === "ChevronDown" ||
-        button.getAttribute("data-icon-name") === "ChevronUp"
-    );
+    const expandButtons = screen
+      .getAllByTestId("icon-button")
+      .filter(
+        (button) =>
+          button.getAttribute("data-icon-name") === "ChevronDown" ||
+          button.getAttribute("data-icon-name") === "ChevronUp",
+      );
 
     expect(expandButtons.length).toBeGreaterThan(0);
   });
@@ -104,18 +106,18 @@ describe("ComplexPropertyModal Component", () => {
     fireEvent.click(screen.getByTestId("fluent-link"));
 
     // Find a chevron down button (collapsed state)
-    const chevronDownButton = screen.getAllByTestId("icon-button").find(
-      (button) => button.getAttribute("data-icon-name") === "ChevronDown"
-    );
+    const chevronDownButton = screen
+      .getAllByTestId("icon-button")
+      .find((button) => button.getAttribute("data-icon-name") === "ChevronDown");
 
     if (chevronDownButton) {
       // Click to expand
       fireEvent.click(chevronDownButton);
 
       // Should now have chevron up button (expanded state)
-      const chevronUpButton = screen.getAllByTestId("icon-button").find(
-        (button) => button.getAttribute("data-icon-name") === "ChevronUp"
-      );
+      const chevronUpButton = screen
+        .getAllByTestId("icon-button")
+        .find((button) => button.getAttribute("data-icon-name") === "ChevronUp");
       expect(chevronUpButton).toBeInTheDocument();
     }
   });
@@ -184,7 +186,7 @@ describe("ComplexPropertyModal Component", () => {
       0: "zero",
       1: "one",
       2: "two",
-      regularKey: "regular value"
+      regularKey: "regular value",
     };
 
     render(<ComplexPropertyModal val={numericKeyData} title="Numeric Keys Modal" />);

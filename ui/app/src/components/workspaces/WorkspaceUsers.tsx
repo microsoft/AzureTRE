@@ -12,11 +12,20 @@ import { LoadingState } from "../../models/loadingState";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 
-import { CommandBarButton, DefaultButton, Dialog, DialogFooter, getTheme, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import {
+  CommandBarButton,
+  DefaultButton,
+  Dialog,
+  DialogFooter,
+  getTheme,
+  Spinner,
+  SpinnerSize,
+  Stack,
+} from "@fluentui/react";
 import { useNavigate, Route, Routes } from "react-router-dom";
 import { destructiveButtonStyles } from "../../styles";
 import { WorkSpaceUsersAssignNew } from "./WorkspaceUsersAssignNew";
-import config from "../../config.json"
+import config from "../../config.json";
 
 interface IUser {
   id: string;
@@ -74,14 +83,16 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     const expectedMinor = parseInt(expectedVersion[1]);
 
     // Base template version 2.2.0 is the minimum required
-    return (major > expectedMajor || (major === expectedMajor && minor >= expectedMinor));
-  }
+    return major > expectedMajor || (major === expectedMajor && minor >= expectedMinor);
+  };
 
   const allowUserManagement = useMemo(() => {
-    return isTreAdmin
-      && isTemplateVersionValid()
-      && config.userManagementEnabled
-      && (workspace.properties["create_aad_groups"] === "true" || workspace.properties["create_aad_groups"] === true);
+    return (
+      isTreAdmin &&
+      isTemplateVersionValid() &&
+      config.userManagementEnabled &&
+      (workspace.properties["create_aad_groups"] === "true" || workspace.properties["create_aad_groups"] === true)
+    );
   }, [isTreAdmin, workspace, isTemplateVersionValid]);
 
   const getUsers = useCallback(async () => {
@@ -111,9 +122,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
             roles: user.roles,
           })),
         )
-        .sort((a: { role: any }, b: { role: any }) =>
-          a.role.id.localeCompare(b.role.id),
-        );
+        .sort((a: { role: any }, b: { role: any }) => a.role.id.localeCompare(b.role.id));
 
       setState({ users, apiError: undefined, loadingState: LoadingState.Ok });
     } catch (err: any) {
@@ -126,7 +135,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
   const addedAssignment = async () => {
     navigate(-1);
     await getUsers();
-  }
+  };
 
   useEffect(() => {
     getUsers();
@@ -137,16 +146,17 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     try {
       setDeassigning(true);
 
-      await apiCall(`${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUserRole?.user_id}&role_id=${selectedUserRole?.role.id}`,
-        HttpMethod.Delete, "");
+      await apiCall(
+        `${ApiEndpoint.Workspaces}/${workspace.id}/${ApiEndpoint.Users}/assign?user_id=${selectedUserRole?.user_id}&role_id=${selectedUserRole?.role.id}`,
+        HttpMethod.Delete,
+        "",
+      );
 
       await getUsers();
-
 
       setSelectedUserRole(undefined);
       setHideCancelDialog(true);
       setDeassigning(false);
-
     } catch (err: any) {
       err.userMessage = "Error deassigning user";
       setApiError(err);
@@ -160,14 +170,14 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     const groups: any = [];
     let currentIndex = 0;
 
-    state.users.forEach(user => {
+    state.users.forEach((user) => {
       if (!groupMap[user.role.id]) {
         groupMap[user.role.id] = {
           count: 0,
           key: user.role.id,
           name: user.role.displayName,
           startIndex: currentIndex,
-          level: 0
+          level: 0,
         };
 
         groups.push(groupMap[user.role.id]);
@@ -184,28 +194,31 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
     const s = new Selection({
       onSelectionChanged: () => {
         setSelectedUserRole(s.getSelection()[0] as IUser);
-      }
+      },
     });
     s.setItems(state.users, true);
     return s;
   }, [state.users]);
 
-  const columns: IColumn[] = useMemo(() => [
-    {
-      key: "name",
-      name: "Name",
-      fieldName: "name",
-      minWidth: 150,
-      onRender: (item: IUser) => (
-        <Persona
-          text={item.displayName}
-          secondaryText={item.userPrincipalName}
-          size={PersonaSize.size40}
-          imageAlt={item.displayName}
-        />
-      )
-    }
-  ], []);
+  const columns: IColumn[] = useMemo(
+    () => [
+      {
+        key: "name",
+        name: "Name",
+        fieldName: "name",
+        minWidth: 150,
+        onRender: (item: IUser) => (
+          <Persona
+            text={item.displayName}
+            secondaryText={item.userPrincipalName}
+            size={PersonaSize.size40}
+            imageAlt={item.displayName}
+          />
+        ),
+      },
+    ],
+    [],
+  );
 
   const onRenderCell = React.useCallback(
     (nestingDepth?: number, item?: IUser, itemIndex?: number, group?: IGroup): React.ReactNode => (
@@ -228,7 +241,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
         <Stack.Item>
           <Stack horizontal horizontalAlign="space-between">
             <h1 style={{ marginBottom: 0, marginRight: 30 }}>Users</h1>
-            {allowUserManagement &&
+            {allowUserManagement && (
               <Stack horizontal horizontalAlign="start">
                 <CommandBarButton
                   iconProps={{ iconName: "add" }}
@@ -236,8 +249,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
                   style={{ background: "none", color: theme.palette.themePrimary }}
                   onClick={() => navigate("new")}
                 />
-                {
-                  selectedUserRole &&
+                {selectedUserRole && (
                   <CommandBarButton
                     iconProps={{ iconName: "delete" }}
                     text="De-assign"
@@ -247,58 +259,62 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
                       setHideCancelDialog(false);
                     }}
                   />
-                }
+                )}
               </Stack>
-            }
+            )}
           </Stack>
         </Stack.Item>
       </Stack>
       {state.apiError && <ExceptionLayout e={state.apiError} />}
       <div className="tre-resource-panel" style={{ padding: "0px" }}>
-        {!loadingUsers && <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none} >
-          <GroupedList
-            items={state.users}
-            onRenderCell={onRenderCell}
-            selectionMode={SelectionMode.none}
-            selection={selection}
-            groups={groups}
-            compact={false}
-          />
-        </SelectionZone>
-        }
+        {!loadingUsers && (
+          <SelectionZone selection={selection} selectionMode={isTreAdmin ? SelectionMode.single : SelectionMode.none}>
+            <GroupedList
+              items={state.users}
+              onRenderCell={onRenderCell}
+              selectionMode={SelectionMode.none}
+              selection={selection}
+              groups={groups}
+              compact={false}
+            />
+          </SelectionZone>
+        )}
       </div>
-      {
-        loadingUsers && <Stack>
+      {loadingUsers && (
+        <Stack>
           <Stack.Item style={{ paddingTop: "10px", paddingBottom: "10px" }}>
             <Spinner />
           </Stack.Item>
         </Stack>
-      }
+      )}
       <Dialog
         hidden={hideCancelDialog}
-        onDismiss={() => { setHideCancelDialog(true); }}
+        onDismiss={() => {
+          setHideCancelDialog(true);
+        }}
         dialogContentProps={{
           title: "De-assign Role?",
           subText: `Are you sure you want to remove ${selectedUserRole?.displayName} from the ${selectedUserRole?.role.displayName} Role?`,
         }}
       >
-        {
-          deassignmentError && <ExceptionLayout e={apiError} />
-        }
-        {
-          deassigning
-            ? <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
-            : <DialogFooter>
-              <DefaultButton onClick={deassignUser} text="De-assign User" styles={destructiveButtonStyles} />
-              <DefaultButton onClick={() => { setHideCancelDialog(true); }} text="Back" />
-            </DialogFooter>
-        }
+        {deassignmentError && <ExceptionLayout e={apiError} />}
+        {deassigning ? (
+          <Spinner label="Submitting..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
+        ) : (
+          <DialogFooter>
+            <DefaultButton onClick={deassignUser} text="De-assign User" styles={destructiveButtonStyles} />
+            <DefaultButton
+              onClick={() => {
+                setHideCancelDialog(true);
+              }}
+              text="Back"
+            />
+          </DialogFooter>
+        )}
       </Dialog>
 
       <Routes>
-        <Route path="new" element={
-          <WorkSpaceUsersAssignNew onAssignUser={addedAssignment} />
-        } />
+        <Route path="new" element={<WorkSpaceUsersAssignNew onAssignUser={addedAssignment} />} />
       </Routes>
     </>
   );

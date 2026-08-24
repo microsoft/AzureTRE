@@ -4,7 +4,7 @@ from mock import patch
 
 from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
 from resources import strings
-from services.authentication import get_current_tre_user_or_tre_admin
+from auth.rbac import require_tre_user_or_admin
 
 
 pytestmark = pytest.mark.asyncio
@@ -13,10 +13,9 @@ pytestmark = pytest.mark.asyncio
 class TestRequestsThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
     def log_in_with_non_admin_user(self, app, non_admin_user):
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            app.dependency_overrides[get_current_tre_user_or_tre_admin] = non_admin_user
-            yield
-            app.dependency_overrides = {}
+        app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
+        yield
+        app.dependency_overrides = {}
 
     # [GET] /requests/ - get_requests
     @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[])
@@ -42,7 +41,7 @@ class TestRequestsThatDontRequireAdminRigths:
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "status": AirlockRequestStatus.InReview}])
+    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
     async def test_get_requests_with_status_filter_returns_correct_results(self, mock_get_airlock_requests, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"status": AirlockRequestStatus.InReview})
 
@@ -53,7 +52,7 @@ class TestRequestsThatDontRequireAdminRigths:
         assert len(response.json()) == 1
         assert response.json()[0]["status"] == AirlockRequestStatus.InReview
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "status": AirlockRequestStatus.InReview}])
+    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
     async def test_get_requests_with_airlock_manager_filter_returns_correct_results(self, mock_get_airlock_requests_for_airlock_manager, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
 
