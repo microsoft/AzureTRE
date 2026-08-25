@@ -5,7 +5,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
-* Configure Bandit to ignore assert in tests. ([#5057](https://github.com/microsoft/AzureTRE/issues/5057))
+* Configure Bandit to ignore test directories. ([#5057](https://github.com/microsoft/AzureTRE/issues/5057))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
