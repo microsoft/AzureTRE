@@ -81,6 +81,9 @@ class AirlockStatusUpdater():
                     logger.info("Unknown Service Bus connection error. Will retry...")
                     await asyncio.sleep(10)
 
+                except asyncio.CancelledError:
+                    raise
+
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                     logger.exception(f"Unknown exception. Will retry - {e}")

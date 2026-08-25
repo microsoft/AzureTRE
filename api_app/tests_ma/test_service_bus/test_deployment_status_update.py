@@ -14,6 +14,12 @@ from models.domain.workspace import Workspace
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from tests_ma.test_service_bus.test_helpers import (
+    StopReceiveMessages,
+    credential_context,
+    queue_receiver_context,
+    service_bus_client_context,
+)
 
 
 pytestmark = pytest.mark.asyncio
@@ -78,36 +84,9 @@ class ServiceBusReceivedMessageMock:
         return self.message
 
 
-class StopReceiveMessages(BaseException):
-    pass
-
-
-def service_bus_client_context():
-    client = MagicMock()
-    client.__aenter__ = AsyncMock(return_value=client)
-    client.__aexit__ = AsyncMock(return_value=False)
-    return client
-
-
-def credential_context():
-    context = MagicMock()
-    context.__aenter__ = AsyncMock(return_value=MagicMock())
-    context.__aexit__ = AsyncMock(return_value=False)
-    return context
-
-
-def queue_receiver_context():
-    receiver = MagicMock()
-    receiver.__aenter__ = AsyncMock(return_value=receiver)
-    receiver.__aexit__ = AsyncMock(return_value=False)
-    receiver.session.session_id = "test_session_id"
-    receiver.__aiter__.return_value = []
-    return receiver
-
-
 async def run_receive_messages_with_mocks(service_bus_client, time_values, client_side_effect=None):
     credential = credential_context()
-    receiver = queue_receiver_context()
+    receiver = queue_receiver_context(session=True, iterate=True)
     service_bus_client.get_queue_receiver.return_value = receiver
     renewer = MagicMock()
 

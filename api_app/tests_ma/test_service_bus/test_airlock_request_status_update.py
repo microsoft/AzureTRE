@@ -3,13 +3,19 @@ from fastapi import HTTPException, status
 import pytest
 import time
 
-from mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
 from models.domain.events import AirlockNotificationUserData, AirlockFile
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
 from db.errors import EntityDoesNotExist
 from resources import strings
+from tests_ma.test_service_bus.test_helpers import (
+    StopReceiveMessages,
+    credential_context,
+    queue_receiver_context,
+    service_bus_client_context,
+)
 
 WORKSPACE_ID = "abc000d3-82da-4bfc-b6e9-9a7853ef753e"
 AIRLOCK_REQUEST_ID = "5dbc15ae-40e1-49a5-834b-595f59d626b7"
@@ -104,36 +110,10 @@ class ServiceBusReceivedMessageMock:
         return self.message
 
 
-class StopReceiveMessages(BaseException):
-    pass
-
-
-def service_bus_client_context():
-    client = MagicMock()
-    client.__aenter__ = AsyncMock(return_value=client)
-    client.__aexit__ = AsyncMock(return_value=False)
-    return client
-
-
-def credential_context():
-    context = MagicMock()
-    context.__aenter__ = AsyncMock(return_value=MagicMock())
-    context.__aexit__ = AsyncMock(return_value=False)
-    return context
-
-
-def queue_receiver_context():
-    receiver = MagicMock()
-    receiver.__aenter__ = AsyncMock(return_value=receiver)
-    receiver.__aexit__ = AsyncMock(return_value=False)
-    receiver.receive_messages = AsyncMock(return_value=[])
-    return receiver
-
-
 async def run_receive_messages_with_mocks(service_bus_client, time_values, client_side_effect=None):
     updater = AirlockStatusUpdater()
     credential = credential_context()
-    receiver = queue_receiver_context()
+    receiver = queue_receiver_context(receive_messages=True)
     service_bus_client.get_queue_receiver.return_value = receiver
 
     with patch("service_bus.airlock_request_status_update.credentials.get_credential_async_context", return_value=credential), \
