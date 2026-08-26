@@ -58,6 +58,9 @@
           "-W ignore::DeprecationWarning"
         ],
         "python.testing.cwd": "${workspaceFolder}",
+        "bandit.args": [
+          "--config=${workspaceFolder}/pyproject.toml"
+        ],
         "files.associations": {
           "*.terraform": "terraform"
         },
