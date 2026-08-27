@@ -3837,10 +3837,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-sha" class="md-nav__link">
+  <a href="#test-sha-skip_deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test [&lt;sha&gt;]
+        /test [&lt;sha&gt;] [skip_deployment]
       
     </span>
   </a>
@@ -3848,10 +3848,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-extended-sha-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
+  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test-extended [&lt;sha&gt;] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
+        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
       
     </span>
   </a>
@@ -4590,10 +4590,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-sha" class="md-nav__link">
+  <a href="#test-sha-skip_deployment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test [&lt;sha&gt;]
+        /test [&lt;sha&gt;] [skip_deployment]
       
     </span>
   </a>
@@ -4601,10 +4601,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-extended-sha-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
+  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test-extended [&lt;sha&gt;] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
+        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
       
     </span>
   </a>
@@ -4685,11 +4685,13 @@
 <p>These commands can only be run when commented by a user who is identified as a repo collaborator (see <a href="#granting-access-to-run-commands">granting access to run commands</a>)</p>
 <h3 id="help"><code>/help</code></h3>
 <p>This command will cause the pr-comment-bot to respond with a comment listing the available commands.</p>
-<h3 id="test-sha"><code>/test [&lt;sha&gt;]</code></h3>
+<h3 id="test-sha-skip_deployment"><code>/test [&lt;sha&gt;] [skip_deployment]</code></h3>
 <p>This command runs the build, deploy, and smoke tests for a PR.</p>
 <p>For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), <code>/test</code> is sufficient.</p>
 <p>For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use <code>/test &lt;sha&gt;</code> where <code>&lt;sha&gt;</code> is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).</p>
+<p>If the PR validation environment is already deployed, add <code>skip_deployment</code> to skip the build and deployment jobs and run the smoke tests against the existing environment. For PRs from forks, include both the SHA and <code>skip_deployment</code>, for example <code>/test &lt;sha&gt; skip_deployment</code>.</p>
+<p>The <code>skip_deployment</code> flag is only supported by <code>/test</code> and <code>/test-extended</code>.</p>
 <p><strong>IMPORTANT</strong></p>
 <p>This command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, ensure that there are no changes in the PR that could have unintended consequences (e.g. leak secrets or perform undesirable operations in the testing subscription).</p>
@@ -4698,12 +4700,14 @@ Before running tests on a PR, ensure that there are no changes in the PR that co
 - modifications to the Makefile
 - modifications to scripts
 - new python packages being installed</p>
-<h3 id="test-extended-sha-test-extended-aad-sha-test-shared-services-sha"><code>/test-extended [&lt;sha&gt;]</code> / <code>/test-extended-aad [&lt;sha&gt;]</code>/ <code>/test-shared-services [&lt;sha&gt;]</code></h3>
+<h3 id="test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha"><code>/test-extended [&lt;sha&gt;] [skip_deployment]</code> / <code>/test-extended-aad [&lt;sha&gt;]</code>/ <code>/test-shared-services [&lt;sha&gt;]</code></h3>
 <p>This command runs the build, deploy, and smoke &amp; extended / shared services tests for a PR.</p>
 <p>For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), <code>/test-extended</code> is sufficient.</p>
 <p>If a change has been made which would affect any of the core shared services, make sure you run <code>/test-shared-services</code>.</p>
 <p>For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use <code>/test-extended &lt;sha&gt;</code> where <code>&lt;sha&gt;</code> is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).</p>
+<p>If the PR validation environment is already deployed, add <code>skip_deployment</code> to <code>/test-extended</code> to skip the build and deployment jobs and run the smoke and extended tests against the existing environment. For PRs from forks, include both the SHA and <code>skip_deployment</code>, for example <code>/test-extended &lt;sha&gt; skip_deployment</code>.</p>
+<p>The <code>skip_deployment</code> flag is not supported by <code>/test-extended-aad</code> or <code>/test-shared-services</code>.</p>
 <p><strong>IMPORTANT</strong></p>
 <p>As with <code>/test</code>, this command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, run the same checks on the PR code as for <code>/test</code>.</p>

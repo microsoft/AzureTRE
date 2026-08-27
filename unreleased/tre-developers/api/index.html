@@ -4863,7 +4863,7 @@ make setup-local-debugging
 <p>To find logs in LogAnalytics, go to your resource group, then to LogAnalytics instance, which is named like <code>log-${TRE_ID}</code>.</p>
 <p>There, you can run a query like</p>
 <div class="highlight"><pre><span></span><code>AppTraces 
-| where AppRoleName == &quot;api&quot;
+| where AppRoleName == "api"
 | order by TimeGenerated desc 
 </code></pre></div>
 <h3 id="api-logs-using-deployment-center">API logs using deployment center</h3>
@@ -4892,7 +4892,7 @@ make deploy-core
 <p>To start using it, click Authorize button, then click Authorize (leave the field <code>client_secret</code> empty). See screenshot:</p>
 <p><a href="../../assets/api_swagger_ui_authorize.png"><img alt="Swagger UI Authorize" src="../../assets/api_swagger_ui_authorize.png" /></a></p>
 <p>If you see an error message saying something like:</p>
-<div class="highlight"><pre><span></span><code>The redirect URI &#39;https://tanyagts8.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect&#39; specified in the request does not match the redirect URIs configured for the application &#39;558602a8-764a-453c-8efa-4dc3ddd61570&#39;.
+<div class="highlight"><pre><span></span><code>The redirect URI 'https://tanyagts8.westeurope.cloudapp.azure.com/api/docs/oauth2-redirect' specified in the request does not match the redirect URIs configured for the application '558602a8-764a-453c-8efa-4dc3ddd61570'.
 </code></pre></div>
 <p>Then you'll need to update the redirect URI (see below).</p>
 <p>Otherwise, after you sign in on Azure Portal, the lock icon on Authorize button should look "locked". Then you can start executing queries.</p>
@@ -4916,21 +4916,21 @@ There, go to Redirect URL and add the URL given to you by the error message (it 
 <h3 id="investigating-apihealth-response">Investigating /api/health response</h3>
 <p>The endpoint <code>/api/health</code> tracks health of not only API, but other components of the system too, and can help to narrow down any problems with your deployment:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;services&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"services"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cosmos DB&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OK&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">      </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Cosmos DB"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Service Bus&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;OK&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span>
+<span class="w">      </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Service Bus"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
 <span class="w">    </span><span class="p">},</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;service&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Resource Processor&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Not OK&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Resource Processor is not responding&quot;</span>
+<span class="w">      </span><span class="nt">"service"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Resource Processor"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Not OK"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Resource Processor is not responding"</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>

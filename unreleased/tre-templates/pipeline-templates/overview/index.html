@@ -4576,30 +4576,30 @@
 <h3 id="example">Example</h3>
 <p>Consider the following <code>template_schema.json</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;$schema&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;http://json-schema.org/draft-07/schema&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;$id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-dev-vm/template_schema.json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"$schema"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://json-schema.org/draft-07/schema"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"$id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-dev-vm/template_schema.json"</span><span class="p">,</span>
 <span class="w">  </span><span class="err">...</span>
-<span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;install&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="err">...</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"pipeline"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"install"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6d2d7eb7-984e-4330-bd3c-c7ec98658402&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Update the firewall name&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-shared-service-firewall&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"6d2d7eb7-984e-4330-bd3c-c7ec98658402"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"stepTitle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Update the firewall name"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceTemplateName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tre-shared-service-firewall"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shared-service"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"upgrade"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A new name here!&quot;</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"display_name"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A new name here!"</span>
 <span class="w">        </span><span class="p">}]</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"main"</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2fe8a6a7-2c27-4c49-8773-127df8a48b4e&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2fe8a6a7-2c27-4c49-8773-127df8a48b4e"</span><span class="p">,</span>
 <span class="w">        </span><span class="err">...</span>
 <span class="w">      </span><span class="p">}</span>
 <span class="w">    </span><span class="p">]</span>

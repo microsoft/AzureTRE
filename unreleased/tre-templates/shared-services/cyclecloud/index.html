@@ -4585,15 +4585,15 @@ az<span class="w"> </span>vm<span class="w"> </span>image<span class="w"> </span
 <li>Under <em>cloud init</em>, paste the below script, with the appropriate values for TRE ID and Region into each of the nodes to ensure the package mirror is used.</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/bin/sh</span>
-<span class="nv">TRE_ID</span><span class="o">=</span><span class="s2">&quot;mrtredemo2&quot;</span>
-<span class="nv">REGION</span><span class="o">=</span><span class="s2">&quot;westeurope&quot;</span>
+<span class="nv">TRE_ID</span><span class="o">=</span><span class="s2">"mrtredemo2"</span>
+<span class="nv">REGION</span><span class="o">=</span><span class="s2">"westeurope"</span>
 
-ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;s/mirrorlist/# mirrorlist/g&#39;</span>
-ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s,# baseurl=https://repo.almalinux.org/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/almalinux/,g&quot;</span>
+ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/mirrorlist/# mirrorlist/g'</span>
+ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">"s,# baseurl=https://repo.almalinux.org/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/almalinux/,g"</span>
 
 yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>epel-release
-ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;s/metalink/# metalink/g&#39;</span>
-ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;s,#baseurl=https://download.example/pub/epel/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/fedoraproject/pub/epel/,g&quot;</span>
+ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'s/metalink/# metalink/g'</span>
+ls<span class="w"> </span>/etc/yum.repos.d/*.repo<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s2">"s,#baseurl=https://download.example/pub/epel/,baseurl=https://nexus-</span><span class="nv">$TRE_ID</span><span class="s2">.</span><span class="nv">$REGION</span><span class="s2">.cloudapp.azure.com/repository/fedoraproject/pub/epel/,g"</span>
 
 yum<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>python3<span class="w"> </span>python3-pip
 

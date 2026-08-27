@@ -4580,7 +4580,7 @@ If this option is not selected the workspace will be able to make DNS requests t
 <h2 id="logging">Logging</h2>
 <p>When DNS security policy in enabled all DNS requests are logged to the Log Analytics workspace.</p>
 <p>The following KQL query can be use to list DNS requests that have been blocked.</p>
-<div class="highlight"><pre><span></span><code><span class="n">DNSQueryLogs</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">ResolverPolicyRuleAction</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s">&quot;None&quot;</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">ResponseCode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="mi">2</span>
+<div class="highlight"><pre><span></span><code><span class="n">DNSQueryLogs</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">ResolverPolicyRuleAction</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s">"None"</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">ResponseCode</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="mi">2</span>
 </code></pre></div>
 
 

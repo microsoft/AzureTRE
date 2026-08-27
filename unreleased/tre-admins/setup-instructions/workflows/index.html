@@ -4732,7 +4732,7 @@ az account set --subscription &lt;subscription ID&gt;
 <p>Create a service principal</p>
 <p>A service principal needs to be created to authorize CI/CD workflows to provision resources for the TRE workspaces and workspace services.</p>
 <p>Create a main service principal with "<strong>Owner</strong>" role:</p>
-<div class="highlight"><pre><span></span><code>az ad sp create-for-rbac --name &quot;sp-aztre-cicd&quot; --role Owner --scopes /subscriptions/&lt;subscription_id&gt;
+<div class="highlight"><pre><span></span><code>az ad sp create-for-rbac --name "sp-aztre-cicd" --role Owner --scopes /subscriptions/&lt;subscription_id&gt;
 </code></pre></div>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
@@ -4746,12 +4746,12 @@ az account set --subscription &lt;subscription ID&gt;
 </code></pre></div>
 <p>Where <code>credential.json</code> contains (replace <code>OWNER</code>, <code>REPO</code>, and <code>ENVIRONMENT</code> with your values):</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GitHubActions&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;issuer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://token.actions.githubusercontent.com&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;subject&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;repo:OWNER/REPO:environment:ENVIRONMENT&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GitHub Actions OIDC for Azure TRE&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;audiences&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="s2">&quot;api://AzureADTokenExchange&quot;</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GitHubActions"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"issuer"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://token.actions.githubusercontent.com"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"subject"</span><span class="p">:</span><span class="w"> </span><span class="s2">"repo:OWNER/REPO:environment:ENVIRONMENT"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"GitHub Actions OIDC for Azure TRE"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"audiences"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">"api://AzureADTokenExchange"</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div>

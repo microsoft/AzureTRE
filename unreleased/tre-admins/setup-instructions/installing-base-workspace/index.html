@@ -4625,11 +4625,11 @@
 </div>
 <p>As explained in the <a href="../../auth/">auth guide</a>, every workspace has a corresponding app registration which if you haven't run <code>make auth</code>; can be created using the helper script <code>./devops/scripts/aad/create_workspace_application.sh</code>. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="w">  </span>./devops/scripts/aad/create_workspace_application.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2"> - workspace 1&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2"> - workspace 1"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--admin-consent<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--ux-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SWAGGER_UI_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--automation-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">TEST_ACCOUNT_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--application-admin-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION_ADMIN_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span>--ux-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">SWAGGER_UI_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--automation-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">TEST_ACCOUNT_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--application-admin-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">APPLICATION_ADMIN_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span>
 </code></pre></div>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
@@ -4639,14 +4639,14 @@
 <h3 id="create-workspace-using-the-api">Create workspace using the API</h3>
 <p>Go to <code>https://&lt;azure_tre_fqdn&gt;/api/docs</code> and use POST <code>/api/workspaces</code> with the sample body to create a base workspace.</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;templateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-workspace-base&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;display_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;manual-from-swagger&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;workspace for team X&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;client_id&quot;</span><span class="p">:</span><span class="s2">&quot;&lt;WORKSPACE_API_CLIENT_ID&gt;&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;client_secret&quot;</span><span class="p">:</span><span class="s2">&quot;&lt;WORKSPACE_API_CLIENT_SECRET&gt;&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;address_space_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;medium&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;workspace_subscription_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;OPTIONAL AZURE SUBSCRIPTION ID&gt;&quot;</span>
+<span class="w">  </span><span class="nt">"templateName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tre-workspace-base"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"display_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"manual-from-swagger"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"workspace for team X"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"client_id"</span><span class="p">:</span><span class="s2">"&lt;WORKSPACE_API_CLIENT_ID&gt;"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"client_secret"</span><span class="p">:</span><span class="s2">"&lt;WORKSPACE_API_CLIENT_SECRET&gt;"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"address_space_size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"medium"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"workspace_subscription_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;OPTIONAL AZURE SUBSCRIPTION ID&gt;"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>

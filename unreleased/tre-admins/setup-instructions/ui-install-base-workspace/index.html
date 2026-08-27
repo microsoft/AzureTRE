@@ -4615,11 +4615,11 @@
 <h2 id="creating-an-application-client-for-base-workspace">Creating an Application Client for base workspace</h2>
 <p>As explained in the <a href="../../auth/">auth guide</a>, every workspace has a corresponding app registration which if you haven't run <code>make auth</code>; can be created using the helper script <code>./devops/scripts/aad/create_workspace_application.sh</code>. For example:</p>
 <div class="highlight"><pre><span></span><code><span class="w">  </span>./devops/scripts/aad/create_workspace_application.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--name<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2"> - workspace 1&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--name<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2"> - workspace 1"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--admin-consent<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--ux-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SWAGGER_UI_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--automation-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">TEST_ACCOUNT_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--application-admin-clientid<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">APPLICATION_ADMIN_CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="w">    </span>--ux-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">SWAGGER_UI_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--automation-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">TEST_ACCOUNT_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--application-admin-clientid<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">APPLICATION_ADMIN_CLIENT_ID</span><span class="si">}</span><span class="s2">"</span>
 </code></pre></div>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>

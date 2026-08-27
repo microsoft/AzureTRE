@@ -4490,12 +4490,12 @@ To update one of these templates (or to create a new template based on these fol
 <p>In <code>porter.yaml</code>, the <code>custom</code> section contains a couple of sub-sections (shown below)</p>
 <div class="highlight"><pre><span></span><code><span class="nt">custom</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">vm_sizes</span><span class="p">:</span>
-<span class="w">    </span><span class="s">&quot;2</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">8GB</span><span class="nv"> </span><span class="s">RAM&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D2s_v5</span>
-<span class="w">    </span><span class="s">&quot;4</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">16GB</span><span class="nv"> </span><span class="s">RAM&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D4s_v5</span>
-<span class="w">    </span><span class="s">&quot;8</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">32GB</span><span class="nv"> </span><span class="s">RAM&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D8s_v5</span>
-<span class="w">    </span><span class="s">&quot;16</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">64GB</span><span class="nv"> </span><span class="s">RAM&quot;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D16s_v5</span>
+<span class="w">    </span><span class="s">"2</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">8GB</span><span class="nv"> </span><span class="s">RAM"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D2s_v5</span>
+<span class="w">    </span><span class="s">"4</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">16GB</span><span class="nv"> </span><span class="s">RAM"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D4s_v5</span>
+<span class="w">    </span><span class="s">"8</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">32GB</span><span class="nv"> </span><span class="s">RAM"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D8s_v5</span>
+<span class="w">    </span><span class="s">"16</span><span class="nv"> </span><span class="s">CPU</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">64GB</span><span class="nv"> </span><span class="s">RAM"</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Standard_D16s_v5</span>
 <span class="w">  </span><span class="nt">image_options</span><span class="p">:</span>
-<span class="w">    </span><span class="s">&quot;Ubuntu</span><span class="nv"> </span><span class="s">22.04</span><span class="nv"> </span><span class="s">LTS&quot;</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="s">"Ubuntu</span><span class="nv"> </span><span class="s">22.04</span><span class="nv"> </span><span class="s">LTS"</span><span class="p p-Indicator">:</span>
 <span class="w">      </span><span class="nt">source_image_reference</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">publisher</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">canonical</span>
 <span class="w">        </span><span class="nt">offer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0001-com-ubuntu-server-jammy</span>
@@ -4504,7 +4504,7 @@ To update one of these templates (or to create a new template based on these fol
 <span class="w">        </span><span class="nt">apt_sku</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">22.04</span>
 <span class="w">      </span><span class="nt">install_ui</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">conda_config</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<span class="w">    </span><span class="c1"># &quot;Custom Image From Gallery&quot;:</span>
+<span class="w">    </span><span class="c1"># "Custom Image From Gallery":</span>
 <span class="w">    </span><span class="c1">#   source_image_name: your-image</span>
 <span class="w">    </span><span class="c1">#   install_ui: true</span>
 <span class="w">    </span><span class="c1">#   conda_config: true</span>
@@ -4541,7 +4541,7 @@ To update one of these templates (or to create a new template based on these fol
 <p>When specifying images using <code>source_image_name</code>, the image must be stored in an <a href="https://learn.microsoft.com/en-us/azure/virtual-machines/azure-compute-gallery">image gallery</a>.
 To enable reusing built user resource templates across environments where the image may vary, the image gallery is configured via the <code>RP_BUNDLE_VALUES</code> environment variable when deploying the TRE.
 The <code>RP_BUNDLE_VALUES</code> variable is a JSON object, and the <code>image_gallery_id</code> property within it identifies the image gallery that contains the images specified by <code>source_image_name</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">RP_BUNDLE_VALUES</span><span class="o">=</span><span class="err">&#39;</span><span class="o">{</span><span class="s2">&quot;image_gallery_id&quot;</span>:<span class="w"> </span><span class="s2">&quot;/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/&lt;your-rg&gt;/providers/Microsoft.Compute/galleries/&lt;your-gallery-name&gt;&quot;</span><span class="o">}</span>
+<div class="highlight"><pre><span></span><code><span class="nv">RP_BUNDLE_VALUES</span><span class="o">=</span><span class="err">'</span><span class="o">{</span><span class="s2">"image_gallery_id"</span>:<span class="w"> </span><span class="s2">"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/&lt;your-rg&gt;/providers/Microsoft.Compute/galleries/&lt;your-gallery-name&gt;"</span><span class="o">}</span>
 </code></pre></div>
 
 

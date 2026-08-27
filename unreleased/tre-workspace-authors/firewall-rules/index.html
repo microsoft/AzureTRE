@@ -4726,35 +4726,35 @@
 <p>Please see <a href="../../tre-templates/pipeline-templates/overview/">Pipeline Templates Overview</a> for more information on the pipeline structure.</p>
 <p>Example pipeline step:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;260421b3-7308-491f-b531-e007cdc0ff46&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Add network firewall rules&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-shared-service-firewall&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w">  </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"260421b3-7308-491f-b531-e007cdc0ff46"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"stepTitle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Add network firewall rules"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resourceTemplateName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tre-shared-service-firewall"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resourceType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shared-service"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"resourceAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"upgrade"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">          </span><span class="p">{</span>
-<span class="w">            </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;network_rule_collections&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
-<span class="w">            </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">              </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"network_rule_collections"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"arraySubstitutionAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"replace"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"arrayMatchField"</span><span class="p">:</span><span class="w"> </span><span class="s2">"name"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nrc_svc_{{ resource.id }}_azureml"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">                </span><span class="p">{</span>
-<span class="w">                  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;AzureMachineLearning&quot;</span>
+<span class="w">                  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"AzureMachineLearning"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Azure Machine Learning rules"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"source_addresses"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{{ resource.properties.aml_subnet_address_prefixes }}"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"destination_addresses"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"AzureMachineLearning"</span>
 <span class="w">                  </span><span class="p">],</span>
-<span class="w">                  </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;443&quot;</span><span class="p">,</span>
-<span class="w">                    </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span>
-<span class="w">                    </span><span class="s2">&quot;18881&quot;</span>
+<span class="w">                  </span><span class="nt">"destination_ports"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"443"</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">"8787"</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">"18881"</span>
 <span class="w">                  </span><span class="p">],</span>
-<span class="w">                  </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;TCP&quot;</span>
+<span class="w">                  </span><span class="nt">"protocols"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"TCP"</span>
 <span class="w">                  </span><span class="p">]</span>
 <span class="w">                </span><span class="p">},</span>
 <span class="w">               </span><span class="c1">// More property values defined here as needed.</span>
@@ -4934,28 +4934,28 @@
 </table>
 <p>This is controlled by the <code>arraySubstitutionAction</code> property:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;network_rule_collections&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">              </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"network_rule_collections"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"arraySubstitutionAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"replace"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"arrayMatchField"</span><span class="p">:</span><span class="w"> </span><span class="s2">"name"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nrc_svc_{{ resource.id }}_azureml"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">                </span><span class="p">{</span>
-<span class="w">                  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;AzureMachineLearning&quot;</span>
+<span class="w">                  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"AzureMachineLearning"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Azure Machine Learning rules"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"source_addresses"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{{ resource.properties.aml_subnet_address_prefixes }}"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"destination_addresses"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"AzureMachineLearning"</span>
 <span class="w">                  </span><span class="p">],</span>
-<span class="w">                  </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;443&quot;</span><span class="p">,</span>
-<span class="w">                    </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span>
-<span class="w">                    </span><span class="s2">&quot;18881&quot;</span>
+<span class="w">                  </span><span class="nt">"destination_ports"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"443"</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">"8787"</span><span class="p">,</span>
+<span class="w">                    </span><span class="s2">"18881"</span>
 <span class="w">                  </span><span class="p">],</span>
-<span class="w">                  </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">                    </span><span class="s2">&quot;TCP&quot;</span>
+<span class="w">                  </span><span class="nt">"protocols"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                    </span><span class="s2">"TCP"</span>
 <span class="w">                  </span><span class="p">]</span>
 <span class="w">                </span><span class="p">},</span>
 <span class="w">               </span><span class="c1">// More property values defined here as needed.</span>
@@ -4989,16 +4989,16 @@
 <h3 id="example-rule-collection">Example Rule Collection</h3>
 <p>Below is an example of a network rule collection for Azure Machine Learning:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nrc_svc_{{ resource.id }}_azureml&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nrc_svc_{{ resource.id }}_azureml"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Azure Machine Learning rules&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.aml_subnet_address_prefixes }}&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;destination_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;AzureMachineLearning&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;destination_ports&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;443&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;8787&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;18881&quot;</span><span class="p">],</span>
-<span class="w">      </span><span class="nt">&quot;protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;TCP&quot;</span><span class="p">]</span>
+<span class="w">      </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"AzureMachineLearning"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Azure Machine Learning rules"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"source_addresses"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{{ resource.properties.aml_subnet_address_prefixes }}"</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"destination_addresses"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"AzureMachineLearning"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"destination_ports"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"443"</span><span class="p">,</span><span class="w"> </span><span class="s2">"8787"</span><span class="p">,</span><span class="w"> </span><span class="s2">"18881"</span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"protocols"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"TCP"</span><span class="p">]</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>

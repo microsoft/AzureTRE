@@ -5058,9 +5058,9 @@ tre<span class="w"> </span>workspace<span class="w"> </span>567f17d6-1abb-450f-9
 <p>For example, you can use HEREDOC syntax to describe the JSON payload over multiple lines:</p>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt; EOF | tre workspaces new --definition-file -</span>
 <span class="s">{</span>
-<span class="s">  &quot;templateName&quot;: &quot;my-workspace&quot;,</span>
-<span class="s">  &quot;properties&quot;: {</span>
-<span class="s">    &quot;display_name&quot;: $DISPLAY_NAME,</span>
+<span class="s">  "templateName": "my-workspace",</span>
+<span class="s">  "properties": {</span>
+<span class="s">    "display_name": $DISPLAY_NAME,</span>
 <span class="s">    ...</span>
 <span class="s">  }</span>
 <span class="s">}</span>
@@ -5077,7 +5077,7 @@ tre<span class="w"> </span>workspace<span class="w"> </span>567f17d6-1abb-450f-9
 <span class="nv">WORKSPACE_ID</span><span class="o">=</span>__ADD_ID_HERE__
 
 <span class="c1"># Create the airlock request - change the justification as appropriate</span>
-<span class="nv">request</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>airlock-requests<span class="w"> </span>new<span class="w"> </span>--type<span class="w"> </span>import<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Ant&quot;</span><span class="w"> </span>--justification<span class="w"> </span><span class="s2">&quot;It&#39;s import-ant&quot;</span><span class="w"> </span>--output<span class="w"> </span>json<span class="k">)</span>
+<span class="nv">request</span><span class="o">=</span><span class="k">$(</span>tre<span class="w"> </span>workspace<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span>airlock-requests<span class="w"> </span>new<span class="w"> </span>--type<span class="w"> </span>import<span class="w"> </span>--title<span class="w"> </span><span class="s2">"Ant"</span><span class="w"> </span>--justification<span class="w"> </span><span class="s2">"It's import-ant"</span><span class="w"> </span>--output<span class="w"> </span>json<span class="k">)</span>
 <span class="nv">request_id</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="nv">$request</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.airlockRequest.id<span class="k">)</span>
 
 <span class="c1"># Get the storage upload URL</span>

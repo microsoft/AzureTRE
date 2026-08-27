@@ -4619,23 +4619,23 @@
 <p>For a working example, see <code>./templates/shared-services/sonatype-nexus-vm/template_schema.json</code>.</p>
 </blockquote>
 <h2 id="schema">Schema</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;install&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="c1">// &lt;-- [install | upgrade | uninstall]</span>
+<div class="highlight"><pre><span></span><code><span class="nt">"pipeline"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"install"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="c1">// &lt;-- [install | upgrade | uninstall]</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a unique string value here&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Friendly description of the step here - will be displayed in the UI&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name of the resource template to update&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// only required for shared_service targets</span>
-<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// [ shared-service | user-resource | workspace-service | workspace ]</span>
-<span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- currently only upgrade supported</span>
-<span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"a unique string value here"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"stepTitle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Friendly description of the step here - will be displayed in the UI"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceTemplateName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"name of the resource template to update"</span><span class="p">,</span><span class="w"> </span><span class="c1">// only required for shared_service targets</span>
+<span class="w">        </span><span class="nt">"resourceType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shared-service"</span><span class="p">,</span><span class="w"> </span><span class="c1">// [ shared-service | user-resource | workspace-service | workspace ]</span>
+<span class="w">        </span><span class="nt">"resourceAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"upgrade"</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- currently only upgrade supported</span>
+<span class="w">        </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A new name here!&quot;</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"display_name"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A new name here!"</span>
 <span class="w">        </span><span class="p">}]</span>
 <span class="w">      </span><span class="p">},</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="w"> </span><span class="c1">// &lt;-- deployment of the VM resource</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"main"</span><span class="w"> </span><span class="c1">// &lt;-- deployment of the VM resource</span>
 <span class="w">      </span><span class="p">},</span>
 </code></pre></div>
 <h2 id="substituting-resource-property-values">Substituting Resource Property Values</h2>
@@ -4681,28 +4681,28 @@
 </table>
 <p>Example pipeline in <code>template_schema.json</code>:
 The below example references 2 properties from the primary resource to be used in updating the firewall shared service.</p>
-<div class="highlight"><pre><span></span><code><span class="nt">&quot;pipeline&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;upgrade&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<div class="highlight"><pre><span></span><code><span class="nt">"pipeline"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"upgrade"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">      </span><span class="p">{</span>
-<span class="w">        </span><span class="nt">&quot;stepId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1234567-87654-2345-6543&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;stepTitle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Update a firewall rule&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceTemplateName&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tre-shared-service-firewall&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;resourceType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;shared-service&quot;</span><span class="p">,</span><span class="w"> </span>
-<span class="w">        </span><span class="nt">&quot;resourceAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;upgrade&quot;</span><span class="p">,</span>
-<span class="w">        </span><span class="nt">&quot;arraySubstitutionAction&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;replace&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- [append | remove | replace]</span>
-<span class="w">        </span><span class="nt">&quot;arrayMatchField&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- name of the field in the array object to match on, for remove / replace</span>
-<span class="w">        </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="nt">"stepId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1234567-87654-2345-6543"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"stepTitle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Update a firewall rule"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceTemplateName"</span><span class="p">:</span><span class="w"> </span><span class="s2">"tre-shared-service-firewall"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"resourceType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shared-service"</span><span class="p">,</span><span class="w"> </span>
+<span class="w">        </span><span class="nt">"resourceAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"upgrade"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"arraySubstitutionAction"</span><span class="p">:</span><span class="w"> </span><span class="s2">"replace"</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- [append | remove | replace]</span>
+<span class="w">        </span><span class="nt">"arrayMatchField"</span><span class="p">:</span><span class="w"> </span><span class="s2">"name"</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- name of the field in the array object to match on, for remove / replace</span>
+<span class="w">        </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">        </span><span class="p">{</span>
-<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rule_collections&quot;</span><span class="p">,</span>
-<span class="w">          </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- More on array types below</span>
-<span class="w">          </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// &lt;-- value can be string or object</span>
-<span class="w">              </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-firewall-rule-collection&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
-<span class="w">              </span><span class="nt">&quot;rules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"rule_collections"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="c1">// &lt;-- More on array types below</span>
+<span class="w">          </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// &lt;-- value can be string or object</span>
+<span class="w">              </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my-firewall-rule-collection"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Allow"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"rules"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">                </span><span class="p">{</span>
-<span class="w">                  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-rules&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;target_fqdns&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.fqdns_list }}&quot;</span><span class="p">,</span>
-<span class="w">                  </span><span class="nt">&quot;source_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{{ resource.properties.address_prefixes }}&quot;</span>
+<span class="w">                  </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"my-rules"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"target_fqdns"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{{ resource.properties.fqdns_list }}"</span><span class="p">,</span>
+<span class="w">                  </span><span class="nt">"source_addresses"</span><span class="p">:</span><span class="w"> </span><span class="s2">"{{ resource.properties.address_prefixes }}"</span>
 <span class="w">                </span><span class="p">}</span>
 <span class="w">              </span><span class="p">]</span>
 <span class="w">          </span><span class="p">}</span>
