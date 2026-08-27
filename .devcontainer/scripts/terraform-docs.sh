@@ -19,5 +19,5 @@ mkdir -p "$INSTALL_DIR"
 mv /tmp/terraform-docs "$INSTALL_DIR"
 rm -f /tmp/tfdocs.tar.gz
 
-echo -e "\n\e[34m»»» 💾 \e[32mInstalled to: \e[33m$(which $CMD)"
-echo -e "\e[34m»»» 💡 \e[32mVersion details: \e[39m$($CMD --version)"
+echo -e "\n\e[34m»»» 💾 \e[32mInstalled to: \e[33m$(command -v \"$CMD\")"
+echo -e "\e[34m»»» 💡 \e[32mVersion details: \e[39m$(\"$CMD\" --version)"
