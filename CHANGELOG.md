@@ -7,6 +7,7 @@ ENHANCEMENTS:
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Pin `starlette` in the API `requirements.txt` as it is imported directly in `main.py` (`API` 0.26.7) ([#5036](https://github.com/microsoft/AzureTRE/issues/5036))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 
 ## (0.29.0) (August 14, 2026)
