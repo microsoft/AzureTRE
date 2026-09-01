@@ -25,12 +25,14 @@ echo /usr/sbin/gdm3 > /etc/X11/default-display-manager
 
 ## Python 3.8 and Jupyter
 sudo apt install -y jupyter-notebook microsoft-edge-dev
+# Edge adds a direct packages.microsoft.com apt source (.list or deb822 .sources) unreachable from the locked workspace network; remove it so later apt updates use Nexus only
+sudo rm -f /etc/apt/sources.list.d/microsoft-edge*
 
 ## VS Code
 echo "init_vm.sh: VS Code"
 echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
 sudo apt install -y code
-sudo apt install -y gvfs-bin || true
+sudo apt install -y gvfs
 
 echo "init_vm.sh: Folders"
 sudo mkdir -p /opt/vscode/user-data
