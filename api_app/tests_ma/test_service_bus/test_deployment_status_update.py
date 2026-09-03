@@ -514,6 +514,9 @@ async def test_workspace_service_uninstall_frees_address_space(
 
     assert complete_message is True
     send_deployment_message_mock.assert_called_once()
+    sent_payload = json.loads(send_deployment_message_mock.call_args.kwargs["content"])
+    assert sent_payload["parameters"]["address_spaces"] == ["10.0.0.0/22"]
+    assert parent_workspace.properties["address_spaces"] == ["10.0.0.0/22", address_space]
     workspace_repo.patch_workspace.assert_not_called()
     await status_updater._free_workspace_address_space(operation)
     workspace_repo.patch_workspace.assert_called_once()
@@ -568,7 +571,7 @@ async def test_workspace_service_uninstall_does_not_free_address_space_if_root_m
     operation.steps[0].status = Status.DeletingFailed
     operation.steps.append(OperationStep(
         id="address-space-cleanup",
-        templateStepId="address-space-cleanup",
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
         resourceId=parent_workspace_id,
         resourceType=ResourceType.Workspace,
         resourceAction=RequestAction.Upgrade,
@@ -847,6 +850,7 @@ async def test_address_space_cleanup_failure_is_persisted_before_message_redeliv
     assert operation.steps[-1].status == Status.UpdatingFailed
     assert "will be retried" in operation.steps[-1].message
     assert status_updater.operations_repo.update_item.await_args_list[-1].args[0] == operation
+    assert status_updater.resource_repo.update_item.await_args_list[-1].args[0].deploymentStatus == Status.UpdatingFailed
 
 
 async def test_unrelated_workspace_upgrade_does_not_suppress_address_space_cleanup():
@@ -880,7 +884,7 @@ async def test_unrelated_workspace_upgrade_does_not_suppress_address_space_clean
 @patch("service_bus.deployment_status_updater.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
 @patch('service_bus.deployment_status_updater.OperationRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceRepository.create')
-async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_next_step(
+async def test_workspace_service_uninstall_defers_address_space_cleanup_until_workspace_upgrade_succeeds(
     resource_repo,
     operations_repo_mock,
     _,
@@ -895,6 +899,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
     address_space = "10.1.0.0/22"
 
     call_order = []
+    sent_payloads = []
 
     # Create a 2-step uninstall operation (step 1: main, step 2: workspace upgrade)
     step1 = OperationStep(
@@ -912,7 +917,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
         resourceId=parent_workspace_id,
         resourceType=ResourceType.Workspace,
         resourceAction=RequestAction.Upgrade,
-        templateStepId="address-space-cleanup",
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
         sourceTemplateResourceId=parent_workspace_id,
         status=Status.AwaitingUpdate
     )
@@ -959,6 +964,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
 
     async def mock_patch_workspace(*args, **kwargs):
         call_order.append("patch_workspace")
+        parent_workspace.properties = kwargs.get("workspace_patch", args[1] if len(args) > 1 else None).properties
         return parent_workspace, MagicMock()
 
     workspace_repo.patch_workspace = AsyncMock(side_effect=mock_patch_workspace)
@@ -971,6 +977,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
 
     async def mock_send_deployment_message(*args, **kwargs):
         call_order.append("send_deployment_message")
+        sent_payloads.append(json.loads(kwargs["content"]))
 
     send_deployment_message_mock.side_effect = mock_send_deployment_message
 
@@ -980,8 +987,11 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
 
     assert complete_message is True
 
-    # The address remains reserved while the workspace upgrade is queued.
+    # The address remains reserved while the workspace upgrade is queued,
+    # but the deployment message sent to Terraform excludes the target address space.
     assert call_order == ["send_deployment_message"]
+    assert sent_payloads[0]["parameters"]["address_spaces"] == ["10.0.0.0/22"]
+    assert parent_workspace.properties["address_spaces"] == ["10.0.0.0/22", address_space]
 
     upgrade_message = ServiceBusReceivedMessageMock({
         "operationId": OPERATION_ID,
@@ -995,6 +1005,7 @@ async def test_workspace_service_uninstall_frees_address_space_before_enqueuing_
 
     assert complete_message is True
     assert call_order == ["send_deployment_message", "patch_workspace"]
+    assert parent_workspace.properties["address_spaces"] == ["10.0.0.0/22"]
 
 
 @patch("service_bus.deployment_status_updater.config")
@@ -1018,3 +1029,45 @@ async def test_receive_messages_handles_credential_context_failure(logger_mock, 
         await task
 
     logger_mock.exception.assert_called_with("Unexpected error in deployment status receiver loop")
+
+
+async def test_workspace_upgrade_failure_does_not_free_address_space():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.Deleted
+    operation.steps.append(OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updating
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = MagicMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = create_sample_workspace_object(parent_workspace_id).model_dump()
+    status_updater.workspace_repo = AsyncMock()
+
+    failed_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.UpdatingFailed,
+        message="workspace upgrade failed"
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space") as free_mock:
+        complete_message = await status_updater.update_status_in_database(failed_message)
+
+    assert complete_message is True
+    free_mock.assert_not_called()
+    assert operation.steps[-1].status == Status.UpdatingFailed
+    assert operation.status == Status.DeletingFailed

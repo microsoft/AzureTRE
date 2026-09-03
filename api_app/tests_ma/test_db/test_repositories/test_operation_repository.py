@@ -9,6 +9,7 @@ from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
+from resources import strings
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 
 RESOURCE_ID = str(uuid.uuid4())
@@ -80,7 +81,7 @@ async def test_create_operation_steps_excludes_address_space_cleanup_for_cascade
             "uninstall": [
                 {"stepId": "main"},
                 {
-                    "stepId": "address-space-cleanup",
+                    "stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
                     "stepTitle": "Upgrade workspace",
                     "resourceType": ResourceType.Workspace,
                     "resourceAction": RequestAction.Upgrade,

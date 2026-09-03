@@ -1,7 +1,9 @@
 import asyncio
+import copy
 import json
 import uuid
 import time
+from typing import Optional, Tuple
 
 from pydantic import ValidationError, TypeAdapter
 
@@ -123,7 +125,7 @@ class DeploymentStatusUpdater():
                         is_last_step = True
 
             if step_to_update is None:
-                raise f"Error finding step {message.stepId} in operation {message.operationId}"
+                raise Exception(f"Error finding step {message.stepId} in operation {message.operationId}")
 
             # update the step status
             step_to_update.status = message.status
@@ -162,6 +164,7 @@ class DeploymentStatusUpdater():
                 operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
                 is_last_step = False
                 await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                await self.operations_repo.update_item(operation)
 
             # A workspace upgrade is the point at which the address space is no longer
             # in use by Azure, so it can be released for a future allocation.
@@ -176,6 +179,9 @@ class DeploymentStatusUpdater():
                 step_to_update.message = cleanup_failure_message
                 await self.update_overall_operation_status(operation, step_to_update, is_last_step)
                 await self.operations_repo.update_item(operation)
+                resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                resource_to_update.deploymentStatus = step_to_update.status
+                await self.resource_repo.update_item(resource_to_update)
                 return False
 
             # more steps in the op to do?
@@ -187,7 +193,16 @@ class DeploymentStatusUpdater():
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
                     if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
-                        resource_to_send = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
+                        workspace = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
+                        resource_to_send = copy.deepcopy(workspace)
+                        cleanup_details = await self._get_address_cleanup_details(operation)
+                        if cleanup_details:
+                            address_to_free, _, _ = cleanup_details
+                            workspace_address_spaces = resource_to_send.properties.get("address_spaces", [])
+                            if address_to_free and isinstance(workspace_address_spaces, list):
+                                resource_to_send.properties["address_spaces"] = [
+                                    a for a in workspace_address_spaces if a != address_to_free
+                                ]
                     else:
                         parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
                         resource_to_send = await update_resource_for_step(
@@ -250,11 +265,7 @@ class DeploymentStatusUpdater():
             sourceTemplateResourceId=resource["id"]
         )
 
-    async def _free_workspace_address_space(self, operation: Operation) -> bool:
-        """
-        Frees the address space owned by the uninstalled WorkspaceService after
-        the corresponding workspace upgrade has succeeded.
-        """
+    async def _get_address_cleanup_details(self, operation: Operation) -> Optional[Tuple[str, str, str]]:
         main_step = next(
             (step for step in operation.steps
              if step.templateStepId == "main"
@@ -263,14 +274,27 @@ class DeploymentStatusUpdater():
             None
         )
         if main_step is None:
-            return True
+            return None
         resource_to_persist = await self.resource_repo.get_resource_dict_by_id(main_step.resourceId)
         address_to_free = resource_to_persist.get("properties", {}).get("address_space")
         parent_workspace_id = resource_to_persist.get("workspaceId")
         resource_id = resource_to_persist.get("id")
 
         if not address_to_free or not parent_workspace_id:
+            return None
+
+        return address_to_free, parent_workspace_id, resource_id
+
+    async def _free_workspace_address_space(self, operation: Operation) -> bool:
+        """
+        Frees the address space owned by the uninstalled WorkspaceService after
+        the corresponding workspace upgrade has succeeded.
+        """
+        cleanup_details = await self._get_address_cleanup_details(operation)
+        if cleanup_details is None:
             return True
+
+        address_to_free, parent_workspace_id, resource_id = cleanup_details
 
         try:
             for attempt in range(MAX_CLEANUP_RETRIES):
@@ -325,9 +349,9 @@ class DeploymentStatusUpdater():
 
             # pipeline failed - update the primary resource (from the main step) as failed too
             main_step = None
-            for i, step in enumerate(operation.steps):
-                if step.templateStepId == "main":
-                    main_step = step
+            for op_step in operation.steps:
+                if op_step.templateStepId == "main":
+                    main_step = op_step
                     break
 
             if main_step:
