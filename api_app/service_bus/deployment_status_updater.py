@@ -30,6 +30,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 
 MAX_CLEANUP_RETRIES = 3
+MAX_CLEANUP_DELIVERY_COUNT = 10
 
 
 class AddressSpaceConflictError(Exception):
@@ -98,7 +99,10 @@ class DeploymentStatusUpdater():
                 current_span.set_attribute("operation_id", str(message.operationId))
                 current_span.set_attribute("status", str(message.status))
 
-                complete_message = await self.update_status_in_database(message)
+                delivery_count = getattr(msg, "delivery_count", 1)
+                is_final_delivery = delivery_count >= MAX_CLEANUP_DELIVERY_COUNT
+
+                complete_message = await self.update_status_in_database(message, is_final_delivery=is_final_delivery)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")
             except (json.JSONDecodeError, ValidationError):
                 logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
@@ -107,7 +111,7 @@ class DeploymentStatusUpdater():
 
         return complete_message
 
-    async def update_status_in_database(self, message: DeploymentStatusUpdateMessage):
+    async def update_status_in_database(self, message: DeploymentStatusUpdateMessage, is_final_delivery: bool = False):
         """
         Get the operation the message references, and find the step within the operation that is to be updated
         Update the status of the step. If it's a single step operation, copy the status into the operation status. If it's a multi step,
@@ -195,15 +199,37 @@ class DeploymentStatusUpdater():
                     return True
 
                 if not freed:
-                    cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
-                    step_to_update.status = Status.Updating
-                    step_to_update.message = cleanup_failure_message
-                    operation.status = Status.PipelineRunning
-                    await self.operations_repo.update_item(operation)
-                    resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
-                    resource_to_update.deploymentStatus = step_to_update.status
-                    await self.resource_repo.update_item(resource_to_update)
-                    return False
+                    if is_final_delivery:
+                        cleanup_failure_message = f"Address space cleanup failed after {MAX_CLEANUP_DELIVERY_COUNT} delivery attempts. Marking operation as failed to unblock workspace."
+                        logger.error(f"[ADDRESS_SPACE_CLEANUP_MAX_DELIVERIES] {cleanup_failure_message}")
+                        step_to_update.status = Status.UpdatingFailed
+                        step_to_update.message = cleanup_failure_message
+                        await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                        await self.operations_repo.update_item(operation)
+                        resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                        resource_to_update.deploymentStatus = step_to_update.status
+                        await self.resource_repo.update_item(resource_to_update)
+                        main_step = next(
+                            (op_step for op_step in operation.steps
+                             if op_step.templateStepId == "main"
+                             and op_step.resourceId == operation.resourceId),
+                            None
+                        )
+                        if main_step:
+                            primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                            primary_resource.deploymentStatus = Status.DeletingFailed
+                            await self.resource_repo.update_item(primary_resource)
+                        return True
+                    else:
+                        cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
+                        step_to_update.status = Status.Updating
+                        step_to_update.message = cleanup_failure_message
+                        operation.status = Status.PipelineRunning
+                        await self.operations_repo.update_item(operation)
+                        resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                        resource_to_update.deploymentStatus = step_to_update.status
+                        await self.resource_repo.update_item(resource_to_update)
+                        return False
                 else:
                     step_to_update.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
 
@@ -254,7 +280,20 @@ class DeploymentStatusUpdater():
                         resource_to_send = copy.deepcopy(workspace)
                         cleanup_details = await self._get_address_cleanup_details(operation)
                         if cleanup_details:
-                            address_to_free = cleanup_details[0]
+                            address_to_free, parent_workspace_id, service_resource_id, _ = cleanup_details
+                            # Validate active-service ownership before enqueueing this upgrade
+                            workspace_services_repo = getattr(self, "workspace_services_repo", None)
+                            if workspace_services_repo is None:
+                                from db.repositories.workspace_services import WorkspaceServiceRepository
+                                workspace_services_repo = await WorkspaceServiceRepository.create()
+
+                            active_services = await workspace_services_repo.get_active_workspace_services_for_workspace(parent_workspace_id)
+                            conflicting_services = [s for s in active_services if s.id != service_resource_id and s.properties.get("address_space") == address_to_free]
+                            if conflicting_services:
+                                raise AddressSpaceConflictError(
+                                    f"Address space {address_to_free} is allocated to active service {conflicting_services[0].id} in workspace {parent_workspace_id}."
+                                )
+
                             workspace_address_spaces = resource_to_send.properties.get("address_spaces", [])
                             if address_to_free and isinstance(workspace_address_spaces, list):
                                 resource_to_send.properties["address_spaces"] = [
@@ -280,8 +319,48 @@ class DeploymentStatusUpdater():
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                except AddressSpaceConflictError as e:
+                    logger.error(f"[ADDRESS_SPACE_CONFLICT] {e}")
+                    next_step.message = f"Terminal address space conflict: {e}"
+                    next_step.status = Status.UpdatingFailed
+                    await self.update_overall_operation_status(operation, next_step, is_last_step=True)
+                    await self.operations_repo.update_item(operation)
+                    main_step = next(
+                        (op_step for op_step in operation.steps
+                         if op_step.templateStepId == "main"
+                         and op_step.resourceId == operation.resourceId),
+                        None
+                    )
+                    if main_step:
+                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                        primary_resource.deploymentStatus = Status.DeletingFailed
+                        await self.resource_repo.update_item(primary_resource)
+                    return True
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        if is_final_delivery:
+                            next_step.message = f"Failed to enqueue address space cleanup after {MAX_CLEANUP_DELIVERY_COUNT} deliveries: {e}"
+                            next_step.status = Status.UpdatingFailed
+                            await self.update_overall_operation_status(operation, next_step, is_last_step=True)
+                            await self.operations_repo.update_item(operation)
+                            main_step = next(
+                                (op_step for op_step in operation.steps
+                                 if op_step.templateStepId == "main"
+                                 and op_step.resourceId == operation.resourceId),
+                                None
+                            )
+                            if main_step:
+                                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                                primary_resource.deploymentStatus = Status.DeletingFailed
+                                await self.resource_repo.update_item(primary_resource)
+                            return True
+                        else:
+                            next_step.status = Status.AwaitingUpdate
+                            next_step.message = f"Failed to enqueue address space cleanup, will retry: {e}"
+                            operation.status = Status.PipelineRunning
+                            await self.operations_repo.update_item(operation)
+                            return False
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
