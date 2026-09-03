@@ -262,6 +262,8 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         # check workspace has address_spaces property
         if not workspace.properties.get("address_spaces"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
+        if await operations_repo.resource_has_active_operation(workspace.id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
         workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
         workspace_patch = ResourcePatch()
         workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}

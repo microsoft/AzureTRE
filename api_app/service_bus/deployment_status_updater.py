@@ -172,17 +172,30 @@ class DeploymentStatusUpdater():
                     and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
                     and step_to_update.resourceAction == RequestAction.Upgrade
                     and step_to_update.is_success()
-                    and operation.action == RequestAction.UnInstall
-                    and not await self._free_workspace_address_space(operation)):
-                cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
-                step_to_update.status = Status.UpdatingFailed
-                step_to_update.message = cleanup_failure_message
-                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                await self.operations_repo.update_item(operation)
-                resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
-                resource_to_update.deploymentStatus = step_to_update.status
-                await self.resource_repo.update_item(resource_to_update)
-                return False
+                    and operation.action == RequestAction.UnInstall):
+                if not await self._free_workspace_address_space(operation):
+                    cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
+                    step_to_update.status = Status.UpdatingFailed
+                    step_to_update.message = cleanup_failure_message
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    await self.operations_repo.update_item(operation)
+                    resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                    resource_to_update.deploymentStatus = step_to_update.status
+                    await self.resource_repo.update_item(resource_to_update)
+                    return False
+                else:
+                    # Restore the primary resource to Deleted when cleanup succeeds
+                    main_step = next(
+                        (op_step for op_step in operation.steps
+                         if op_step.templateStepId == "main"
+                         and op_step.resourceId == operation.resourceId),
+                        None
+                    )
+                    if main_step:
+                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                        if primary_resource.deploymentStatus != Status.Deleted:
+                            primary_resource.deploymentStatus = Status.Deleted
+                            await self.resource_repo.update_item(primary_resource)
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -350,7 +363,7 @@ class DeploymentStatusUpdater():
             # pipeline failed - update the primary resource (from the main step) as failed too
             main_step = None
             for op_step in operation.steps:
-                if op_step.templateStepId == "main":
+                if op_step.templateStepId == "main" and op_step.resourceId == operation.resourceId:
                     main_step = op_step
                     break
 
@@ -362,6 +375,18 @@ class DeploymentStatusUpdater():
         if step.is_success() and is_last_step:
             operation.status = self.get_success_status_for_action(operation.action)
             operation.message = "Multi step pipeline completed successfully"
+
+            # pipeline succeeded - update the primary resource (from the main step) as succeeded too
+            main_step = None
+            for op_step in operation.steps:
+                if op_step.templateStepId == "main" and op_step.resourceId == operation.resourceId:
+                    main_step = op_step
+                    break
+
+            if main_step:
+                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                primary_resource.deploymentStatus = operation.status
+                await self.resource_repo.update_item(primary_resource)
 
     def get_success_status_for_action(self, action: RequestAction):
         status = Status.ActionSucceeded

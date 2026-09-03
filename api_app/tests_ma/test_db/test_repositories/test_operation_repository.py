@@ -104,3 +104,19 @@ async def test_create_operation_steps_excludes_address_space_cleanup_for_cascade
     )
 
     assert [step.templateStepId for step in operation.steps] == ["main"]
+
+
+async def test_resource_has_active_operation_returns_true_when_active_operation_exists(operations_repo):
+    operations_repo.query = AsyncMock(return_value=[{"id": "op-1"}])
+    result = await operations_repo.resource_has_active_operation("workspace-123")
+    assert result is True
+    operations_repo.query.assert_called_once()
+    query_str = operations_repo.query.call_args[1]["query"] if "query" in operations_repo.query.call_args[1] else operations_repo.query.call_args[0][0]
+    assert "workspace-123" in query_str
+    assert "ARRAY_CONTAINS" in query_str
+
+
+async def test_resource_has_active_operation_returns_false_when_no_active_operation_exists(operations_repo):
+    operations_repo.query = AsyncMock(return_value=[])
+    result = await operations_repo.resource_has_active_operation("workspace-123")
+    assert result is False

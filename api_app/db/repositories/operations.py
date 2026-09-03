@@ -197,3 +197,18 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0
+
+    async def resource_has_active_operation(self, resource_id: str) -> bool:
+        active_statuses = (
+            Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
+            Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
+            Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
+        )
+        status_filter = ", ".join(f'"{s}"' for s in active_statuses)
+        query = (
+            self.operations_query()
+            + f' (c.resourceId = "{resource_id}" OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true))'
+            + f' AND c.status IN ({status_filter})'
+        )
+        operations = await self.query(query=query)
+        return len(operations) > 0

@@ -776,8 +776,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
-    async def test_post_workspace_services_creates_workspace_service_with_address_space(self, create_workspace_service_item_mock, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+    async def test_post_workspace_services_creates_workspace_service_with_address_space(self, create_workspace_service_item_mock, _, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
         etag = "some-etag-value"
         workspace = sample_workspace()
         workspace.properties["address_spaces"] = ["192.168.0.1/24"]
@@ -802,6 +803,23 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_creates_workspace_service_with_address_space_raises_409_if_workspace_has_active_operation(self, create_workspace_service_item_mock, _, get_workspace_mock, __, app, client, workspace_service_input, basic_workspace_service_template):
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"]: str = Field()
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")

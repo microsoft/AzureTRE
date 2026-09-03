@@ -1071,3 +1071,94 @@ async def test_workspace_upgrade_failure_does_not_free_address_space():
     free_mock.assert_not_called()
     assert operation.steps[-1].status == Status.UpdatingFailed
     assert operation.status == Status.DeletingFailed
+
+
+async def test_workspace_service_uninstall_address_space_cleanup_fail_then_succeed_restores_primary_resource():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updated
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded"
+    )
+
+    # 1. First attempt: cleanup fails after retries; message is abandoned for redelivery
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=False)):
+        result = await status_updater.update_status_in_database(cleanup_message)
+
+    assert result is False
+    assert step2.status == Status.UpdatingFailed
+    assert operation.status == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
+
+    # 2. Redelivery attempt: cleanup succeeds
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
+        result = await status_updater.update_status_in_database(cleanup_message)
+
+    assert result is True
+    assert step2.status == Status.Updated
+    assert operation.status == Status.Deleted
+    # Primary workspace service must be restored to Deleted, not left as DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
+    assert parent_workspace_mock.deploymentStatus == Status.Updated
