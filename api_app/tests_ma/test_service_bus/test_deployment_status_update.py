@@ -70,10 +70,11 @@ test_sb_message_multi_step_3_complete = {
 
 
 class ServiceBusReceivedMessageMock:
-    def __init__(self, message: dict):
+    def __init__(self, message: dict, delivery_count: int = 0):
         self.message = json.dumps(message)
         self.correlation_id = "test_correlation_id"
         self.session_id = "test_session_id"
+        self.delivery_count = delivery_count
 
     def __str__(self):
         return self.message
@@ -1763,3 +1764,24 @@ async def test_cleanup_failure_on_final_delivery_marks_failed_and_completes_mess
     assert operation.status == Status.DeletingFailed
     assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
     assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
+
+
+@pytest.mark.parametrize("delivery_count, expected_final", [
+    (0, False),
+    (1, False),
+    (8, False),
+    (9, True),
+    (10, True),
+    (None, False),
+])
+async def test_process_message_delivery_count_handling(delivery_count, expected_final):
+    status_updater = DeploymentStatusUpdater()
+    status_updater.update_status_in_database = AsyncMock(return_value=True)
+
+    msg = ServiceBusReceivedMessageMock(test_sb_message, delivery_count=delivery_count)
+
+    await status_updater.process_message(msg)
+
+    status_updater.update_status_in_database.assert_awaited_once()
+    _, kwargs = status_updater.update_status_in_database.call_args
+    assert kwargs.get("is_final_delivery") is expected_final

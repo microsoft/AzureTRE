@@ -31,6 +31,11 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 MAX_CLEANUP_RETRIES = 3
 MAX_CLEANUP_DELIVERY_COUNT = 10
+# Azure Service Bus default max delivery count is 10.
+# The AMQP delivery_count reported by ServiceBusReceivedMessage is zero-based:
+# attempt 1 has delivery_count = 0, and attempt 10 (the final processable attempt) has delivery_count = 9.
+# Waiting for delivery_count >= 10 would cause attempt 10 (count 9) to be abandoned into the dead-letter queue.
+FINAL_CLEANUP_DELIVERY_COUNT = MAX_CLEANUP_DELIVERY_COUNT - 1
 
 
 class AddressSpaceConflictError(Exception):
@@ -108,8 +113,9 @@ class DeploymentStatusUpdater():
                 current_span.set_attribute("operation_id", str(message.operationId))
                 current_span.set_attribute("status", str(message.status))
 
-                delivery_count = getattr(msg, "delivery_count", 1)
-                is_final_delivery = delivery_count >= MAX_CLEANUP_DELIVERY_COUNT
+                raw_delivery_count = getattr(msg, "delivery_count", 0)
+                delivery_count = raw_delivery_count if raw_delivery_count is not None else 0
+                is_final_delivery = delivery_count >= FINAL_CLEANUP_DELIVERY_COUNT
 
                 complete_message = await self.update_status_in_database(message, is_final_delivery=is_final_delivery)
                 logger.info(f"Update status in DB for {message.operationId} - {message.status}")
