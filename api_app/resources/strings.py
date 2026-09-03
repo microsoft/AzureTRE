@@ -181,6 +181,7 @@ RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
 RESOURCE_ACTION_INSTALL = "install"
 RESOURCE_ACTION_UPDATE = "upgrade"
 RESOURCE_ACTION_UNINSTALL = "uninstall"
+ADDRESS_SPACE_CLEANUP_STEP_ID = "address-space-cleanup"
 
 
 # Resource Action Status

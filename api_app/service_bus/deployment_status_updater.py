@@ -153,21 +153,30 @@ class DeploymentStatusUpdater():
             await self.resource_repo.update_item_dict(resource_to_persist)
 
             # Keep the address space reserved until Azure has applied the workspace update.
-            if step_to_update.templateStepId == "main" and step_to_update.is_success() and operation.action == RequestAction.UnInstall:
-                if self._is_workspace_service_with_address_space(resource_to_persist) and not self._has_workspace_upgrade_step(operation, current_step_index):
-                    operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
-                    is_last_step = False
-                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+            if (step_to_update.templateStepId == "main"
+                and step_to_update.resourceId == operation.resourceId
+                and step_to_update.is_success()
+                and operation.action == RequestAction.UnInstall
+                and self._is_workspace_service_with_address_space(resource_to_persist)
+                    and not self._has_workspace_upgrade_step(operation, current_step_index)):
+                operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
+                is_last_step = False
+                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
 
             # A workspace upgrade is the point at which the address space is no longer
             # in use by Azure, so it can be released for a future allocation.
-            if (step_to_update.templateStepId == "address-space-cleanup"
+            if (step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
                     and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
                     and step_to_update.resourceAction == RequestAction.Upgrade
                     and step_to_update.is_success()
-                    and operation.action == RequestAction.UnInstall):
-                if not await self._free_workspace_address_space(operation):
-                    return False
+                    and operation.action == RequestAction.UnInstall
+                    and not await self._free_workspace_address_space(operation)):
+                cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
+                step_to_update.status = Status.UpdatingFailed
+                step_to_update.message = cleanup_failure_message
+                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                await self.operations_repo.update_item(operation)
+                return False
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -177,7 +186,7 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    if next_step.templateStepId == "address-space-cleanup":
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
                         resource_to_send = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
                     else:
                         parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
@@ -192,7 +201,7 @@ class DeploymentStatusUpdater():
                             primary_action=operation.action,
                             user=operation.user)
 
-                    if next_step.templateStepId == "address-space-cleanup":
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
                         await self.operations_repo.update_item(operation)
 
                     # create + send the message
@@ -224,15 +233,14 @@ class DeploymentStatusUpdater():
 
     def _has_workspace_upgrade_step(self, operation: Operation, current_step_index: int) -> bool:
         return any(
-            step.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
-            and step.resourceAction == RequestAction.Upgrade
+            step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
             for step in operation.steps[current_step_index + 1:]
         )
 
     def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
         return OperationStep(
             id=str(uuid.uuid4()),
-            templateStepId="address-space-cleanup",
+            templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
             stepTitle="Update workspace address spaces",
             resourceId=resource["workspaceId"],
             resourceTemplateName="",

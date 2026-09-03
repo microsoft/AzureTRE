@@ -808,6 +808,70 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     assert "[ADDRESS_SPACE_CLEANUP_FAILED]" in logging_mock.error.call_args[0][0]
 
 
+async def test_address_space_cleanup_failure_is_persisted_before_message_redelivery():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.Deleted
+    operation.steps.append(OperationStep(
+        id="address-space-cleanup-step",
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        status=Status.Updating
+    ))
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = MagicMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = create_sample_workspace_object(parent_workspace_id).model_dump()
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.resource_template_repo = AsyncMock()
+    status_updater.resource_history_repo = AsyncMock()
+
+    message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="address-space-cleanup-step",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded"
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=False)):
+        complete_message = await status_updater.update_status_in_database(message)
+
+    assert complete_message is False
+    assert operation.steps[-1].status == Status.UpdatingFailed
+    assert "will be retried" in operation.steps[-1].message
+    assert status_updater.operations_repo.update_item.await_args_list[-1].args[0] == operation
+
+
+async def test_unrelated_workspace_upgrade_does_not_suppress_address_space_cleanup():
+    operation = create_sample_operation("workspace-service-id", RequestAction.UnInstall)
+    status_updater = DeploymentStatusUpdater()
+
+    operation.steps.append(OperationStep(
+        id="workspace-upgrade",
+        templateStepId="unrelated-upgrade",
+        resourceId="workspace-id",
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+    ))
+    assert status_updater._has_workspace_upgrade_step(operation, 0) is False
+
+    operation.steps.append(OperationStep(
+        id="address-space-cleanup",
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        resourceId="workspace-id",
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+    ))
+    assert status_updater._has_workspace_upgrade_step(operation, 0) is True
+
+
 @patch('service_bus.deployment_status_updater.send_deployment_message')
 @patch('service_bus.deployment_status_updater.update_resource_for_step')
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')

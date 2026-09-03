@@ -73,7 +73,8 @@ class OperationRepository(BaseRepository):
                 resource_repo=resource_repo,
                 resource_id=resource["id"],
                 status=status,
-                message=message
+                message=message,
+                is_cascade_operation=resource["id"] != resource_id
             )
 
             # if no pipeline is defined for this action, create a main step only
@@ -100,10 +101,12 @@ class OperationRepository(BaseRepository):
         await self.save_item(operation)
         return operation
 
-    async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str):
+    async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str, is_cascade_operation: bool = False):
         if "pipeline" in resource_template_dict and resource_template_dict["pipeline"] is not None:
             if action in resource_template_dict["pipeline"] and resource_template_dict["pipeline"][action] is not None:
                 for step in resource_template_dict["pipeline"][action]:
+                    if is_cascade_operation and step["stepId"] == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        continue
                     if step["stepId"] == "main":
                         steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
                     else:

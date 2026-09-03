@@ -1,10 +1,12 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 import uuid
 import pytest_asyncio
 import pytest
 from mock import patch
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.operation import Status
+from models.domain.request_action import RequestAction
+from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
@@ -65,3 +67,39 @@ async def test_create_operation_steps_from_multi_step_template(_, __, ___, resou
     )
 
     assert operation.model_dump() == expected_op.model_dump()
+
+
+async def test_create_operation_steps_excludes_address_space_cleanup_for_cascade(
+    resource_repo, test_user, operations_repo, basic_shared_service, resource_template_repo
+):
+    resource_template = MagicMock()
+    resource_template.model_dump.return_value = {
+        "name": "workspace-service",
+        "resourceType": ResourceType.WorkspaceService,
+        "pipeline": {
+            "uninstall": [
+                {"stepId": "main"},
+                {
+                    "stepId": "address-space-cleanup",
+                    "stepTitle": "Upgrade workspace",
+                    "resourceType": ResourceType.Workspace,
+                    "resourceAction": RequestAction.Upgrade,
+                },
+            ]
+        }
+    }
+    resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=resource_template)
+    operations_repo.save_item = AsyncMock()
+
+    operation = await operations_repo.create_operation_item(
+        resource_id="workspace-root",
+        resource_list=[{**basic_shared_service.__dict__, "id": "descendant-service"}],
+        action=RequestAction.UnInstall,
+        resource_path="/workspaces/workspace-root",
+        resource_version=0,
+        user=test_user,
+        resource_repo=resource_repo,
+        resource_template_repo=resource_template_repo
+    )
+
+    assert [step.templateStepId for step in operation.steps] == ["main"]
