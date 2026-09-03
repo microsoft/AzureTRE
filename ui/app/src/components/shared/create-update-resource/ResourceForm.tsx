@@ -65,13 +65,21 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: 
     let allProps = {} as any;
 
     const recurseTemplate = (templateFragment: any) => {
+      if (!templateFragment || typeof templateFragment !== "object") {
+        return;
+      }
+
       Object.keys(templateFragment).forEach((key) => {
         if (key === "properties") {
+          if (!templateFragment[key] || typeof templateFragment[key] !== "object") {
+            return;
+          }
+
           Object.keys(templateFragment[key]).forEach((prop) => {
             allProps[prop] = templateFragment[key][prop];
           });
         }
-        if (typeof templateFragment[key] === "object" && key !== "if") {
+        if (key !== "if" && templateFragment[key] && typeof templateFragment[key] === "object") {
           recurseTemplate(templateFragment[key]);
         }
       });

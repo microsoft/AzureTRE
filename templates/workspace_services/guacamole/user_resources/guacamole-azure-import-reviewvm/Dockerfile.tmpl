@@ -3,7 +3,27 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 
 # PORTER_INIT
 
+# The Terraform mixin mirrors providers at build time by running `terraform init`
+# on the copied terraform/ directory. That init reads the shared Windows VM
+# module referenced from windowsvm.tf, so the module must be present *before* the
+# mixin build steps run. It is copied here (without --link so the files are
+# materialised on the filesystem for the mixin RUN) from the windowsvm build
+# context declared in porter-build-context.env.
+# hadolint ignore=DL3022
+COPY --from=windowsvm ./terraform/vm ${BUNDLE_DIR}/terraform/vm
+
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}/
+
+# Share the reset_password.sh / delete_vm_extensions.sh helper scripts from the
+# standard Guacamole Windows VM so they are maintained in one place (the shared
+# Terraform module is copied in above, before the mixin build steps).
+# The build context is declared in porter-build-context.env.
+# ignoring hadolint DL3022; for details see https://github.com/hadolint/hadolint/issues/830
+#
+# hadolint ignore=DL3022
+COPY --from=windowsvm --link ./reset_password.sh ${BUNDLE_DIR}/reset_password.sh
+# hadolint ignore=DL3022
+COPY --from=windowsvm --link ./delete_vm_extensions.sh ${BUNDLE_DIR}/delete_vm_extensions.sh

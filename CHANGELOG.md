@@ -1,32 +1,84 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
-* Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 
 ENHANCEMENTS:
+* Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
+* Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
+* Added pre-commit hooks for file checks, ShellCheck, Markdown linting, Bandit security checks, and Terraform format/tflint/docs. ([#4986](https://github.com/microsoft/AzureTRE/issues/4986))
+
+BUG FIXES:
+* Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+
+## (0.29.0) (August 14, 2026)
+**BREAKING CHANGES**
+* Remove Windows 10 and dsvm image support from Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
+* <!-- markdownlint-disable-next-line MD013 -->
+* Add data science tooling (Azure CLI, VS Code, Storage Explorer, Git, Python/JupyterLab, R/RStudio) to Guacamole Windows VMs via a shared `vm_config.ps1` bootstrap pulled through Nexus. Existing `tre-service-guacamole-windowsvm`, `tre-service-guacamole-import-reviewvm`, and `tre-service-guacamole-export-reviewvm` resources **must not be upgraded** to these new versions — redeploy instead. Upgrade the Nexus shared service to `sonatype-nexus` 3.9.0 before deploying the new Windows VM templates to ensure the required proxy repositories are available. (`tre-service-guacamole-windowsvm` 3.0.0, `tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.0, `sonatype-nexus` 3.9.0) ([#4981](https://github.com/microsoft/AzureTRE/pull/4981))
+
+ENHANCEMENTS:
+* Upgrade FastAPI to 0.139.2, Starlette to 1.3.1, and compatible OpenTelemetry dependencies, with routing updates for newer FastAPI and Pydantic v2 compatibility.
+* Enable graceful upgrading of the Nexus shared service: modified or added repository configs and the container image (now `3.94.0`) are applied to the existing VM on upgrade without recreating it. Removed the non-functional `snapcraft` proxy (dead remote URL) and skip repositories left in a failed state so they don't block upgrades. (`sonatype-nexus` 3.10.0) ([#2721](https://github.com/microsoft/AzureTRE/issues/2721))
 * Specify default_outbound_access_enabled = false setting for all subnets ([#4757](https://github.com/microsoft/AzureTRE/pull/4757))
 * Pin all GitHub Actions workflow steps to full commit SHAs to prevent supply chain attacks plus update to latest releases ([#4886](https://github.com/microsoft/AzureTRE/pull/4886))
 * Add Windows Server 2025 image support to Guacamole. ([#4890](https://github.com/microsoft/AzureTRE/issues/4890))
 * Add support for setting resource processor VMSS SKU via environment variables ([#4936](https://github.com/microsoft/AzureTRE/issues/4936))
 * Exclude recovery service vaults from e2e tests ([#4920](https://github.com/microsoft/AzureTRE/issues/4920))
-* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`.
-* Update dependencies to address Dependabot security alerts: `aiohttp` to 3.14.1, `Pygments` to 2.20.0, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4950](https://github.com/microsoft/AzureTRE/issues/4950))
-* Added support for formatting UI code via `pre-commit` and fixed existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
-* Added pre-commit hooks for file checks, ShellCheck, Markdown linting, Bandit security checks, and Terraform format/tflint/docs. ([#4986](https://github.com/microsoft/AzureTRE/issues/4986))
-* Updated the version of `super-linter` used in the `build_validation_develop` workflow ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
+* Strengthen TRE API authentication with a layered `auth/` package (typed exceptions, `PyJWKClient`-backed token validation, immutable `AuthenticatedUser` model, composable RBAC factories), remove the redundant `AccessService` abstraction, and add Event Grid publish resilience with distinct Graph/publish failure reporting. ([#4989](https://github.com/microsoft/AzureTRE/pull/4989))
+* Add support for formatting UI code via `pre-commit` and fix existing formatting issues. ([#4955](https://github.com/microsoft/AzureTRE/issues/4955))
+* Update the version of `super-linter` used in the `build_validation_develop` workflow to 8.7.0 ([#4957](https://github.com/microsoft/AzureTRE/issues/4957))
+* Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 BUG FIXES:
+* Mark secret parameters in porter.yaml as `sensitive: true` to prevent secrets from appearing in debug logs ([#5011](https://github.com/microsoft/AzureTRE/issues/5011))
+* Ignore changes to `ip_tags` on public IP resources to unblock deployments where these tags are set by Azure policy. (`core` 0.16.17, `tre-shared-service-certs` 0.7.11) ([#5019](https://github.com/microsoft/AzureTRE/issues/5019))
+* Fix workspace deletion when backup is enabled for the base, unrestricted and airlock-import-review workspaces by adding a `delete_backups_on_uninstall` flag and a pre-teardown backup cleanup (`remove_backup.sh`) that stops protection and either deletes or retains the Recovery Services Vault, so deletion works with Azure secure-by-default soft delete ([#4962](https://github.com/microsoft/AzureTRE/issues/4962))
+* Fix Nexus shared service security: fetch admin password from Key Vault at runtime via managed identity (IMDS) instead of embedding it in the VM Run Command script content. Fix `deploy_nexus_container.sh` short-circuit path to fail loudly if the container does not start. (`sonatype-nexus` 3.10.0) ([#4983](https://github.com/microsoft/AzureTRE/pull/4983))
 * Fix UI TypeScript deprecation warning by updating `moduleResolution` to `bundler` in `tsconfig.json`. ([#4968](https://github.com/microsoft/AzureTRE/issues/4968))
 * Fix API timeout and name collision failures on workspace creation by checking storage account name availability and improved logging. ([#4946](https://github.com/microsoft/AzureTRE/pull/4946))
 * Fix error handling in airlock processor ([#4929](https://github.com/microsoft/AzureTRE/pull/4929))
 * Update allowed URLs in Nexus for letsencrypt ([#4899](https://github.com/microsoft/AzureTRE/pull/4899))
-* Fix dependabot high severity alerts for packages fast-uri, lodash, picomatch, immutable, minimatch, flatted and PyJWT
-* Fix dependabot high moderate alerts for packages aiohttp and pytest, pytest-asyncio
+* Update API, CLI, and UI dependencies to address high-severity Dependabot alerts, including `PyJWT`, `Vite`, `lodash`, `fast-uri`, `flatted`, `immutable`, and `minimatch`. ([#4914](https://github.com/microsoft/AzureTRE/issues/4914))
+* Update dependencies to address Dependabot security alerts: `aiohttp`, `pytest`, `pytest-asyncio`, `Pygments`, `esbuild`, `ws`, `js-yaml`, `@babel/core`, `flatted` (via vitest upgrade), and `react-router-dom`. ([#4915](https://github.com/microsoft/AzureTRE/issues/4915), [#4950](https://github.com/microsoft/AzureTRE/issues/4950))
 * Fix spelling in docs using codespell ([#4954](https://github.com/microsoft/AzureTRE/issues/4954))
 * Fix issues identified by flake8 ([#4958](https://github.com/microsoft/AzureTRE/issues/4958))
 * Replace deprecated yaspell with codespell and add pre-commit hook installer to devcontainer. ([#4953](https://github.com/microsoft/AzureTRE/issues/4953))
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
 * Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
+* Pin MKDocs to v1 to prevent incompatible upgrade. ([#5009](https://github.com/microsoft/AzureTRE/issues/5009))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.4 |
+| core | 0.16.17 |
+| ui | 0.8.31 |
+| tre-workspace-base | 2.10.1 |
+| tre-workspace-airlock-import-review | 0.16.1 |
+| tre-workspace-unrestricted | 0.14.1 |
+| tre-workspace-service-azuresql | 1.0.19 |
+| tre-service-guacamole-export-reviewvm | 2.0.2 |
+| tre-service-guacamole-import-reviewvm | 2.0.2 |
+| tre-service-guacamole-windowsvm | 3.0.2 |
+| tre-service-guacamole-linuxvm | 1.4.5 |
+| tre-service-guacamole | 0.14.4 |
+| tre-workspace-service-health | 0.3.7 |
+| tre-workspace-service-ohdsi | 0.3.9 |
+| tre-user-resource-aml-compute-instance | 0.5.13 |
+| tre-service-azureml | 1.1.6 |
+| tre-workspace-service-mysql | 1.0.14 |
+| tre-workspace-service-gitea | 1.3.5 |
+| tre-service-databricks | 1.0.18 |
+| tre-workspace-service-openai | 1.0.10 |
+| tre-shared-service-firewall | 1.6.2 |
+| tre-shared-service-sonatype-nexus | 3.10.2 |
+| tre-shared-service-databricks-private-auth | 0.1.15 |
+| tre-shared-service-admin-vm | 0.5.6 |
+| tre-shared-service-certs | 0.7.12 |
+| tre-shared-service-cyclecloud | 0.7.6 |
+| tre-shared-service-gitea | 1.2.4 |
+| tre-shared-service-airlock-notifier | 1.0.12 |
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

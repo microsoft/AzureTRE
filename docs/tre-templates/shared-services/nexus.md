@@ -72,6 +72,12 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | *.docker.io | Enables Nexus to "proxy" docker repos to use inside of workspaces. |
 | archive.ubuntu.com | Enables Nexus to "proxy" apt packages to use inside of workspaces. |
 | security.ubuntu.com | Enables Nexus to "proxy" apt packages to use inside of workspaces. |
+| azcliprod.blob.core.windows.net | Enables Nexus to "proxy" the Azure CLI Windows MSI installer for Windows VMs. |
+| update.code.visualstudio.com, vscode.download.prss.microsoft.com | Enables Nexus to "proxy" the Visual Studio Code Windows installer for Windows VMs. |
+| github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" the Azure Storage Explorer Windows installer (hosted on GitHub Releases) for Windows VMs. |
+| github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" Miniforge installers (hosted on GitHub Releases) for Windows VMs. |
+| cran.r-project.org | Enables Nexus to "proxy" CRAN R Windows installers for Windows VMs. |
+| download1.rstudio.org | Enables Nexus to "proxy" RStudio Windows installers for Windows VMs. |
 
 ## Current Repos
 
@@ -93,6 +99,13 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Microsoft Keys | raw | [https://packages.microsoft.com/keys/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-keys` | Provide access to Microsoft keys |
 | Microsoft Yum | yum | [https://packages.microsoft.com/yumrepos] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum` | Provide access to Microsoft Yum packages |
 | Microsoft Download | raw | [https://download.microsoft.com/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download` | Provide access to Microsoft Downloads |
+| Azure CLI | raw | [https://azcliprod.blob.core.windows.net/msi] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/azure-cli` | Provide access to the Azure CLI Windows MSI installer |
+| VS Code | raw | [https://update.code.visualstudio.com] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode` | Provide access to the Visual Studio Code Windows installer |
+| Storage Explorer | raw | [https://github.com/microsoft/AzureStorageExplorer/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/storage-explorer` | Provide access to the Azure Storage Explorer Windows installer |
+| Miniforge Download | raw | [https://github.com/conda-forge/miniforge/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/miniforge-download` | Provide access to Miniforge installers for Python/conda on Windows VMs |
+| CRAN R Download | raw | [https://cran.r-project.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/cran-r-download` | Provide access to CRAN R Windows installers |
+| R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to RStudio Windows installers |
+| Git Download | raw | [https://github.com/git-for-windows/git/releases/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/git-download` | Provide access to Git for Windows installers |
 | VS Code Extensions | raw | [https://marketplace.visualstudio.com/_apis/public/gallery/publishers/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/vscode-extensions/` | Provide access to VS Code extensions |
 
 ### Migrate from an existing V1 Nexus service (hosted on App Service)
