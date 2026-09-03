@@ -450,6 +450,7 @@ async def test_convert_outputs_to_dict():
 
 
 @patch('service_bus.deployment_status_updater.send_deployment_message')
+@patch('service_bus.deployment_status_updater.WorkspaceServiceRepository.create')
 @patch('service_bus.deployment_status_updater.WorkspaceRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
 @patch('service_bus.deployment_status_updater.ResourceTemplateRepository.create')
@@ -463,6 +464,7 @@ async def test_workspace_service_uninstall_frees_address_space(
     __,
     ___,
     workspace_repo_mock,
+    workspace_service_repo_mock,
     send_deployment_message_mock
 ):
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
@@ -507,6 +509,9 @@ async def test_workspace_service_uninstall_frees_address_space(
     workspace_repo = AsyncMock()
     workspace_repo.get_workspace_by_id.return_value = parent_workspace
     workspace_repo_mock.return_value = workspace_repo
+    workspace_service_repo = AsyncMock()
+    workspace_service_repo.get_active_workspace_services_for_workspace.return_value = []
+    workspace_service_repo_mock.return_value = workspace_service_repo
 
     status_updater = DeploymentStatusUpdater()
     await status_updater.init_repos()
@@ -847,10 +852,11 @@ async def test_address_space_cleanup_failure_is_persisted_before_message_redeliv
         complete_message = await status_updater.update_status_in_database(message)
 
     assert complete_message is False
-    assert operation.steps[-1].status == Status.UpdatingFailed
+    assert operation.steps[-1].status == Status.Updating
+    assert operation.status == Status.PipelineRunning
     assert "will be retried" in operation.steps[-1].message
     assert status_updater.operations_repo.update_item.await_args_list[-1].args[0] == operation
-    assert status_updater.resource_repo.update_item.await_args_list[-1].args[0].deploymentStatus == Status.UpdatingFailed
+    assert status_updater.resource_repo.update_item.await_args_list[-1].args[0].deploymentStatus == Status.Updating
 
 
 async def test_unrelated_workspace_upgrade_does_not_suppress_address_space_cleanup():
@@ -1147,10 +1153,9 @@ async def test_workspace_service_uninstall_address_space_cleanup_fail_then_succe
         result = await status_updater.update_status_in_database(cleanup_message)
 
     assert result is False
-    assert step2.status == Status.UpdatingFailed
-    assert operation.status == Status.DeletingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
-    assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
+    assert step2.status == Status.Updating
+    assert operation.status == Status.PipelineRunning
+    assert parent_workspace_mock.deploymentStatus == Status.Updating
 
     # 2. Redelivery attempt: cleanup succeeds
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
@@ -1214,7 +1219,7 @@ async def test_free_workspace_address_space_idempotent_on_redelivery():
     status_updater.workspace_repo.patch_workspace.assert_not_called()
 
 
-async def test_free_workspace_address_space_skips_when_address_owned_by_active_service():
+async def test_free_workspace_address_space_fails_when_address_owned_by_other_active_service():
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     new_active_service_id = "9999c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
@@ -1262,6 +1267,106 @@ async def test_free_workspace_address_space_skips_when_address_owned_by_active_s
     }
     status_updater.workspace_services_repo = AsyncMock()
     status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = [active_service_mock]
+    status_updater.workspace_repo = AsyncMock()
+
+    result = await status_updater._free_workspace_address_space(operation)
+
+    assert result is False
+    status_updater.workspace_repo.patch_workspace.assert_not_called()
+
+
+async def test_free_workspace_address_space_fails_closed_when_active_services_query_errors():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updated
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        steps=[step1, step2]
+    )
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.side_effect = Exception("DB error")
+    status_updater.workspace_repo = AsyncMock()
+
+    result = await status_updater._free_workspace_address_space(operation)
+
+    assert result is False
+    status_updater.workspace_repo.patch_workspace.assert_not_called()
+
+
+async def test_free_workspace_address_space_idempotent_when_marker_present():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updated
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        steps=[step1, step2]
+    )
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space, "address_space_freed": True}
+    }
     status_updater.workspace_repo = AsyncMock()
 
     result = await status_updater._free_workspace_address_space(operation)

@@ -151,9 +151,9 @@ class DeploymentStatusUpdater():
             if is_cleanup_step and step_to_update.is_success():
                 if not await self._free_workspace_address_space(operation):
                     cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
-                    step_to_update.status = Status.UpdatingFailed
+                    step_to_update.status = Status.Updating
                     step_to_update.message = cleanup_failure_message
-                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    operation.status = Status.PipelineRunning
                     await self.operations_repo.update_item(operation)
                     resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
                     resource_to_update.deploymentStatus = step_to_update.status
@@ -221,7 +221,7 @@ class DeploymentStatusUpdater():
                         resource_to_send = copy.deepcopy(workspace)
                         cleanup_details = await self._get_address_cleanup_details(operation)
                         if cleanup_details:
-                            address_to_free, _, _ = cleanup_details
+                            address_to_free = cleanup_details[0]
                             workspace_address_spaces = resource_to_send.properties.get("address_spaces", [])
                             if address_to_free and isinstance(workspace_address_spaces, list):
                                 resource_to_send.properties["address_spaces"] = [
@@ -289,7 +289,7 @@ class DeploymentStatusUpdater():
             sourceTemplateResourceId=resource["id"]
         )
 
-    async def _get_address_cleanup_details(self, operation: Operation) -> Optional[Tuple[str, str, str]]:
+    async def _get_address_cleanup_details(self, operation: Operation) -> Optional[Tuple[str, str, str, dict]]:
         main_step = next(
             (step for step in operation.steps
              if step.templateStepId == "main"
@@ -307,7 +307,7 @@ class DeploymentStatusUpdater():
         if not address_to_free or not parent_workspace_id:
             return None
 
-        return address_to_free, parent_workspace_id, resource_id
+        return address_to_free, parent_workspace_id, resource_id, resource_to_persist
 
     async def _free_workspace_address_space(self, operation: Operation) -> bool:
         """
@@ -318,37 +318,36 @@ class DeploymentStatusUpdater():
         if cleanup_details is None:
             return True
 
-        address_to_free, parent_workspace_id, resource_id = cleanup_details
+        address_to_free, parent_workspace_id, resource_id, service_dict = cleanup_details
 
         # Check if cleanup for this step was already completed (idempotency on redelivery)
         for step in operation.steps:
             if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS:
                 return True
 
-        # Check if address_to_free has been assigned to another active workspace service on this workspace
-        workspace_services_repo = getattr(self, "workspace_services_repo", None)
-        if workspace_services_repo is None:
-            try:
-                from db.repositories.workspace_services import WorkspaceServiceRepository
-                workspace_services_repo = await WorkspaceServiceRepository.create()
-            except Exception:
-                workspace_services_repo = None
-
-        if workspace_services_repo is not None:
-            try:
-                active_services = await workspace_services_repo.get_active_workspace_services_for_workspace(parent_workspace_id)
-                if any(s.id != resource_id and s.properties.get("address_space") == address_to_free for s in active_services):
-                    logger.info(f"Address space {address_to_free} is currently allocated to an active workspace service; skipping removal.")
-                    return True
-            except Exception as e:
-                logger.warning(f"Failed to check active workspace services during address space cleanup: {e}")
+        # Check if the uninstalled service already has the address_space_freed marker
+        if service_dict.get("properties", {}).get("address_space_freed"):
+            return True
 
         try:
+            # Check if address_to_free has been assigned to another active workspace service on this workspace (fail closed)
+            workspace_services_repo = getattr(self, "workspace_services_repo", None)
+            if workspace_services_repo is None:
+                from db.repositories.workspace_services import WorkspaceServiceRepository
+                workspace_services_repo = await WorkspaceServiceRepository.create()
+
+            active_services = await workspace_services_repo.get_active_workspace_services_for_workspace(parent_workspace_id)
+            if any(s.id != resource_id and s.properties.get("address_space") == address_to_free for s in active_services):
+                logger.error(f"[ADDRESS_SPACE_CONFLICT] Address space {address_to_free} is allocated to another active service in workspace {parent_workspace_id} but was removed from Azure during cleanup.")
+                return False
+
             for attempt in range(MAX_CLEANUP_RETRIES):
                 try:
                     workspace = await self.workspace_repo.get_workspace_by_id(parent_workspace_id)
                     workspace_address_spaces = workspace.properties.get("address_spaces", [])
                     if address_to_free not in workspace_address_spaces:
+                        service_dict["properties"]["address_space_freed"] = True
+                        await self.resource_repo.update_item_dict(service_dict)
                         return True
                     new_address_spaces = [a for a in workspace_address_spaces if a != address_to_free]
                     workspace_patch = ResourcePatch()
@@ -366,6 +365,8 @@ class DeploymentStatusUpdater():
                         operation.user,
                         False
                     )
+                    service_dict["properties"]["address_space_freed"] = True
+                    await self.resource_repo.update_item_dict(service_dict)
                     logger.info(f"Freed address space {address_to_free} from workspace {parent_workspace_id} after successful workspace upgrade for {resource_id}")
                     return True
                 except CosmosAccessConditionFailedError:

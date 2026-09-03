@@ -207,7 +207,9 @@ class OperationRepository(BaseRepository):
         status_filter = ", ".join(f'"{s}"' for s in active_statuses)
         query = (
             self.operations_query()
-            + f' (c.resourceId = "{resource_id}" OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true))'
+            + f' (c.resourceId = "{resource_id}"'
+            + f' OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true)'
+            + f' OR CONTAINS(c.resourcePath, "{resource_id}"))'
             + f' AND c.status IN ({status_filter})'
         )
         operations = await self.query(query=query)
