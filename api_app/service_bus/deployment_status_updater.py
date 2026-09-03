@@ -57,37 +57,46 @@ class DeploymentStatusUpdater():
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
             polling_count = 0
+
             while True:
-                complete_message = True
                 try:
+                    current_time = time.time()
+                    polling_count += 1
+                    # Log a heartbeat message every 60 seconds to show the service is still working
+                    if current_time - last_heartbeat_time >= 60:
+                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
+                        last_heartbeat_time = current_time
+                        polling_count = 0
+
                     async with credentials.get_credential_async_context() as credential:
-                        async with ServiceBusClient(fully_qualified_namespace=config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential=credential) as service_bus_client:
-                            logger.debug("Creating Deployment Status receiver session")
-                            async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=config.SERVICE_BUS_MAX_WAIT_TIME, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                                async with AutoLockRenewer() as renewer:
-                                    renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
 
-                                    async for msg in receiver:
-                                        complete_message = await self.process_message(msg)
-                                        if complete_message:
-                                            await receiver.complete_message(msg)
-                                        else:
-                                            await receiver.abandon_message(msg)
-
-                                polling_count = 0
+                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
+                            async with AutoLockRenewer() as renewer:
+                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                async for msg in receiver:
+                                    complete_message = await self.process_message(msg)
+                                    if complete_message:
+                                        await receiver.complete_message(msg)
+                                    else:
+                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                        await receiver.abandon_message(msg)
+                            logger.info(f"Closing session: {receiver.session.session_id}")
 
                 except OperationTimeoutError:
-                    polling_count += 1
-                    # log a heartbeat every ~5 minutes when queue is idle (max_wait_time is usually ~10s)
-                    if time.time() - last_heartbeat_time > 300:
-                        logger.info(f"Deployment status updater polling... (idle checks: {polling_count})")
-                        last_heartbeat_time = time.time()
-                except ServiceBusConnectionError as e:
-                    logger.warning(f"Service Bus connection error in deployment status updater, will retry: {e}")
-                    await asyncio.sleep(5)
-                except Exception:
-                    logger.exception("Unexpected error in deployment status receiver loop")
-                    await asyncio.sleep(5)
+                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+                    logger.debug("No sessions for this process. Will look again...")
+
+                except ServiceBusConnectionError:
+                    # Occasionally there will be a transient / network-level error in connecting to SB.
+                    logger.info("Unknown Service Bus connection error. Will retry...")
+
+                except Exception as e:
+                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
+                    logger.exception(f"Unknown exception. Will retry - {e}")
 
     async def process_message(self, msg) -> bool:
         complete_message = False
