@@ -1,3 +1,4 @@
+import copy
 from enum import StrEnum
 from typing import Optional, Union, List
 from pydantic import field_validator, BaseModel, Field
@@ -80,6 +81,12 @@ class Resource(AzureTREModel):
         return value
 
     def get_resource_request_message_payload(self, operation_id: str, step_id: str, action: RequestAction) -> dict:
+        parameters = copy.deepcopy(self.properties) if self.properties else {}
+        if self.resourceType == ResourceType.Workspace:
+            pending_removal = parameters.pop("address_spaces_pending_removal", [])
+            if pending_removal and "address_spaces" in parameters and isinstance(parameters["address_spaces"], list):
+                parameters["address_spaces"] = [a for a in parameters["address_spaces"] if a not in pending_removal]
+
         payload = {
             "operationId": operation_id,
             "stepId": step_id,
@@ -87,7 +94,7 @@ class Resource(AzureTREModel):
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,
-            "parameters": self.properties
+            "parameters": parameters
         }
 
         if self.resourceType == ResourceType.WorkspaceService:

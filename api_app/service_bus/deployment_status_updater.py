@@ -24,6 +24,7 @@ from models.domain.operation import DeploymentStatusUpdateMessage, Operation, Op
 from resources import strings
 from services.logging import logger, tracer
 from db.repositories.workspaces import WorkspaceRepository
+from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.schemas.resource import ResourcePatch
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
@@ -39,6 +40,7 @@ class DeploymentStatusUpdater():
         self.operations_repo = await OperationRepository.create()
         self.resource_repo = await ResourceRepository.create()
         self.workspace_repo = await WorkspaceRepository.create()
+        self.workspace_services_repo = await WorkspaceServiceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
@@ -132,6 +134,34 @@ class DeploymentStatusUpdater():
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
 
+            resource_id = uuid.UUID(step_to_update.resourceId)
+
+            # Is this the address space cleanup step?
+            is_cleanup_step = (
+                step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
+                and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
+                and step_to_update.resourceAction == RequestAction.Upgrade
+                and operation.action == RequestAction.UnInstall
+            )
+
+            # For the address space cleanup step, we MUST run cleanup before persisting the
+            # final successful operation status. This keeps the operation active in Cosmos DB
+            # (so resource_has_active_operation blocks new allocations and workspace updates)
+            # until the cleanup has been durably committed.
+            if is_cleanup_step and step_to_update.is_success():
+                if not await self._free_workspace_address_space(operation):
+                    cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
+                    step_to_update.status = Status.UpdatingFailed
+                    step_to_update.message = cleanup_failure_message
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    await self.operations_repo.update_item(operation)
+                    resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                    resource_to_update.deploymentStatus = step_to_update.status
+                    await self.resource_repo.update_item(resource_to_update)
+                    return False
+                else:
+                    step_to_update.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+
             # update the overall headline operation status
             await self.update_overall_operation_status(operation, step_to_update, is_last_step)
 
@@ -139,8 +169,6 @@ class DeploymentStatusUpdater():
             await self.operations_repo.update_item(operation)
 
             # copy the step status to the resource item, for convenience
-            resource_id = uuid.UUID(step_to_update.resourceId)
-
             resource = await self.resource_repo.get_resource_by_id(resource_id)
             resource.deploymentStatus = step_to_update.status
             await self.resource_repo.update_item(resource)
@@ -166,36 +194,19 @@ class DeploymentStatusUpdater():
                 await self.update_overall_operation_status(operation, step_to_update, is_last_step)
                 await self.operations_repo.update_item(operation)
 
-            # A workspace upgrade is the point at which the address space is no longer
-            # in use by Azure, so it can be released for a future allocation.
-            if (step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
-                    and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
-                    and step_to_update.resourceAction == RequestAction.Upgrade
-                    and step_to_update.is_success()
-                    and operation.action == RequestAction.UnInstall):
-                if not await self._free_workspace_address_space(operation):
-                    cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
-                    step_to_update.status = Status.UpdatingFailed
-                    step_to_update.message = cleanup_failure_message
-                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                    await self.operations_repo.update_item(operation)
-                    resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
-                    resource_to_update.deploymentStatus = step_to_update.status
-                    await self.resource_repo.update_item(resource_to_update)
-                    return False
-                else:
-                    # Restore the primary resource to Deleted when cleanup succeeds
-                    main_step = next(
-                        (op_step for op_step in operation.steps
-                         if op_step.templateStepId == "main"
-                         and op_step.resourceId == operation.resourceId),
-                        None
-                    )
-                    if main_step:
-                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                        if primary_resource.deploymentStatus != Status.Deleted:
-                            primary_resource.deploymentStatus = Status.Deleted
-                            await self.resource_repo.update_item(primary_resource)
+            if is_cleanup_step and step_to_update.is_success():
+                # Restore the primary resource to Deleted when cleanup succeeds
+                main_step = next(
+                    (op_step for op_step in operation.steps
+                     if op_step.templateStepId == "main"
+                     and op_step.resourceId == operation.resourceId),
+                    None
+                )
+                if main_step:
+                    primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                    if primary_resource.deploymentStatus != Status.Deleted:
+                        primary_resource.deploymentStatus = Status.Deleted
+                        await self.resource_repo.update_item(primary_resource)
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -308,6 +319,29 @@ class DeploymentStatusUpdater():
             return True
 
         address_to_free, parent_workspace_id, resource_id = cleanup_details
+
+        # Check if cleanup for this step was already completed (idempotency on redelivery)
+        for step in operation.steps:
+            if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS:
+                return True
+
+        # Check if address_to_free has been assigned to another active workspace service on this workspace
+        workspace_services_repo = getattr(self, "workspace_services_repo", None)
+        if workspace_services_repo is None:
+            try:
+                from db.repositories.workspace_services import WorkspaceServiceRepository
+                workspace_services_repo = await WorkspaceServiceRepository.create()
+            except Exception:
+                workspace_services_repo = None
+
+        if workspace_services_repo is not None:
+            try:
+                active_services = await workspace_services_repo.get_active_workspace_services_for_workspace(parent_workspace_id)
+                if any(s.id != resource_id and s.properties.get("address_space") == address_to_free for s in active_services):
+                    logger.info(f"Address space {address_to_free} is currently allocated to an active workspace service; skipping removal.")
+                    return True
+            except Exception as e:
+                logger.warning(f"Failed to check active workspace services during address space cleanup: {e}")
 
         try:
             for attempt in range(MAX_CLEANUP_RETRIES):

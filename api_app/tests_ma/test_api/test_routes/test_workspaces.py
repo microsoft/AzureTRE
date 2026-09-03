@@ -684,6 +684,30 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
 
+    # [PATCH] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_patch_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json={"isEnabled": False}, headers={"etag": "some-etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [DELETE] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_delete_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/invoke-action
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_invoke_action_on_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE, workspace_id=WORKSPACE_ID), params={"action": "restart"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
     # [DELETE] /workspaces/{workspace_id}
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -818,6 +842,45 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    async def test_post_workspace_services_raises_409_if_workspace_has_active_operation(self, _, get_workspace_mock, __, app, client, workspace_service_input):
+        get_workspace_mock.return_value = sample_workspace()
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_delete_workspace_service_raises_409_if_workspace_has_active_operation(self, _, __, ___, app, client):
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_patch_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json={"isEnabled": False}, headers={"etag": "etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_invoke_action_on_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), params={"action": "restart"})
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
 

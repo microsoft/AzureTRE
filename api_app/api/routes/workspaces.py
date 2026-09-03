@@ -129,6 +129,8 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -157,6 +159,8 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     if await delete_validation(workspace, workspace_repo):
         operation = await send_uninstall_message(
             resource=workspace,
@@ -175,6 +179,8 @@ async def delete_workspace(response: Response, user=Depends(require_tre_admin), 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def invoke_action_on_workspace(response: Response, action: str, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     operation = await send_custom_action_message(
         resource=workspace,
         resource_repo=workspace_repo,
@@ -243,6 +249,8 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     try:
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
@@ -262,8 +270,6 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         # check workspace has address_spaces property
         if not workspace.properties.get("address_spaces"):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
-        if await operations_repo.resource_has_active_operation(workspace.id):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
         workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
         workspace_patch = ResourcePatch()
         workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
@@ -290,6 +296,8 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner), Depends(get_workspace_by_id_from_path)])
 async def patch_workspace_service(resource_patch: ResourcePatch, response: Response, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace_service.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -316,6 +324,8 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def delete_workspace_service(response: Response, user=Depends(require_workspace_owner), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     if await delete_validation(workspace_service, workspace_service_repo):
         operation = await send_uninstall_message(
             resource=workspace_service,
@@ -334,6 +344,8 @@ async def delete_workspace_service(response: Response, user=Depends(require_work
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def invoke_action_on_workspace_service(response: Response, action: str, user=Depends(require_workspace_owner), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace_service.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     operation = await send_custom_action_message(
         resource=workspace_service,
         resource_repo=workspace_service_repo,

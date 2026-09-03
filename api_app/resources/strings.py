@@ -183,6 +183,7 @@ RESOURCE_ACTION_INSTALL = "install"
 RESOURCE_ACTION_UPDATE = "upgrade"
 RESOURCE_ACTION_UNINSTALL = "uninstall"
 ADDRESS_SPACE_CLEANUP_STEP_ID = "address-space-cleanup"
+ADDRESS_SPACE_CLEANUP_SUCCESS = "address_space_cleanup_success"
 
 
 # Resource Action Status
