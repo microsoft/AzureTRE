@@ -5,6 +5,7 @@
 ENHANCEMENTS:
 * Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
+* Added pre-commit hooks for file checks, ShellCheck, Markdown linting, Bandit security checks, and Terraform format/tflint/docs. ([#4986](https://github.com/microsoft/AzureTRE/issues/4986))
 
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
@@ -1270,8 +1271,8 @@ COMPONENTS:
 
       If this endpoint is not working in your deployment - include `enable_swagger` in your `config.yaml` (see the sample file), or temporarily activate it via the API resource on azure (named `api-YOUR_TRE-ID`) -> Configuration -> `ENABLE_SWAGGER` item.
       ![Update API setting](./docs/assets/firewall-policy-migrate2.png)
-  
-  
+
+
   :warning: Any custom rules you have added manually will be **lost** and you'll need to add them back after the upgrade has been completed.
 
 FEATURES:
