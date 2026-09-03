@@ -32,6 +32,11 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 MAX_CLEANUP_RETRIES = 3
 
 
+class AddressSpaceConflictError(Exception):
+    """Raised when address space cleanup encounters a terminal conflict with another active service."""
+    pass
+
+
 class DeploymentStatusUpdater():
     def __init__(self):
         pass
@@ -136,6 +141,23 @@ class DeploymentStatusUpdater():
 
             resource_id = uuid.UUID(step_to_update.resourceId)
 
+            # If this is the main step of an uninstall succeeding for a workspace service with an address space,
+            # ensure the trailing workspace upgrade fallback step is appended BEFORE calculating
+            # and persisting the main step's overall status. This ensures is_last_step is False
+            # and the operation is persisted as PipelineRunning continuously in Cosmos DB, eliminating any
+            # window where resource_has_active_operation sees the operation as Deleted.
+            if (
+                step_to_update.templateStepId == "main"
+                and step_to_update.resourceId == operation.resourceId
+                and step_to_update.is_success()
+                and operation.action == RequestAction.UnInstall
+                and not self._has_workspace_upgrade_step(operation, current_step_index)
+            ):
+                resource_dict = await self.resource_repo.get_resource_dict_by_id(resource_id)
+                if self._is_workspace_service_with_address_space(resource_dict):
+                    operation.steps.append(self._create_workspace_upgrade_step(resource_dict))
+                    is_last_step = False
+
             # Is this the address space cleanup step?
             is_cleanup_step = (
                 step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
@@ -149,7 +171,30 @@ class DeploymentStatusUpdater():
             # (so resource_has_active_operation blocks new allocations and workspace updates)
             # until the cleanup has been durably committed.
             if is_cleanup_step and step_to_update.is_success():
-                if not await self._free_workspace_address_space(operation):
+                try:
+                    freed = await self._free_workspace_address_space(operation)
+                except AddressSpaceConflictError as e:
+                    logger.error(f"[ADDRESS_SPACE_CONFLICT] {e}")
+                    step_to_update.status = Status.UpdatingFailed
+                    step_to_update.message = f"Terminal address space conflict: {e}"
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    await self.operations_repo.update_item(operation)
+                    resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
+                    resource_to_update.deploymentStatus = step_to_update.status
+                    await self.resource_repo.update_item(resource_to_update)
+                    main_step = next(
+                        (op_step for op_step in operation.steps
+                         if op_step.templateStepId == "main"
+                         and op_step.resourceId == operation.resourceId),
+                        None
+                    )
+                    if main_step:
+                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                        primary_resource.deploymentStatus = Status.DeletingFailed
+                        await self.resource_repo.update_item(primary_resource)
+                    return True
+
+                if not freed:
                     cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
                     step_to_update.status = Status.Updating
                     step_to_update.message = cleanup_failure_message
@@ -181,18 +226,6 @@ class DeploymentStatusUpdater():
             resource = await self.resource_repo.get_resource_dict_by_id(resource_id)
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
-
-            # Keep the address space reserved until Azure has applied the workspace update.
-            if (step_to_update.templateStepId == "main"
-                and step_to_update.resourceId == operation.resourceId
-                and step_to_update.is_success()
-                and operation.action == RequestAction.UnInstall
-                and self._is_workspace_service_with_address_space(resource_to_persist)
-                    and not self._has_workspace_upgrade_step(operation, current_step_index)):
-                operation.steps.append(self._create_workspace_upgrade_step(resource_to_persist))
-                is_last_step = False
-                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                await self.operations_repo.update_item(operation)
 
             if is_cleanup_step and step_to_update.is_success():
                 # Restore the primary resource to Deleted when cleanup succeeds
@@ -337,9 +370,11 @@ class DeploymentStatusUpdater():
                 workspace_services_repo = await WorkspaceServiceRepository.create()
 
             active_services = await workspace_services_repo.get_active_workspace_services_for_workspace(parent_workspace_id)
-            if any(s.id != resource_id and s.properties.get("address_space") == address_to_free for s in active_services):
-                logger.error(f"[ADDRESS_SPACE_CONFLICT] Address space {address_to_free} is allocated to another active service in workspace {parent_workspace_id} but was removed from Azure during cleanup.")
-                return False
+            conflicting_services = [s for s in active_services if s.id != resource_id and s.properties.get("address_space") == address_to_free]
+            if conflicting_services:
+                raise AddressSpaceConflictError(
+                    f"Address space {address_to_free} is allocated to active service {conflicting_services[0].id} in workspace {parent_workspace_id}."
+                )
 
             for attempt in range(MAX_CLEANUP_RETRIES):
                 try:
@@ -373,6 +408,8 @@ class DeploymentStatusUpdater():
                     if attempt == MAX_CLEANUP_RETRIES - 1:
                         raise
                     logger.warning(f"ETag conflict when freeing workspace address space after successful workspace upgrade. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+        except AddressSpaceConflictError:
+            raise
         except Exception as e:
             logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Failed to free workspace address space {address_to_free} for workspace {parent_workspace_id} after upgrading the workspace for {resource_id}: {e}", exc_info=True)
             return False
