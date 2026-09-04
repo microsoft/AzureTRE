@@ -31,10 +31,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 MAX_CLEANUP_RETRIES = 3
 MAX_CLEANUP_DELIVERY_COUNT = 10
-# Azure Service Bus default max delivery count is 10.
-# The AMQP delivery_count reported by ServiceBusReceivedMessage represents prior unsuccessful delivery attempts (0-based):
-# attempt 1 has delivery_count = 0, and attempt 10 (the final processable attempt) has delivery_count = 9.
-# Waiting for delivery_count >= 10 would cause attempt 10 (count 9) to be abandoned into the dead-letter queue.
+# 0-based: delivery_count counts prior unsuccessful delivery attempts before DLQ
 FINAL_CLEANUP_DELIVERY_COUNT = MAX_CLEANUP_DELIVERY_COUNT - 1
 
 
@@ -154,9 +151,7 @@ class DeploymentStatusUpdater():
             if step_to_update is None:
                 raise Exception(f"Error finding step {message.stepId} in operation {message.operationId}")
 
-            # If address space cleanup for this uninstall operation is already in a terminal state (completed or failed),
-            # the entire operation is already finalized. Ignore any delayed or duplicate messages for ANY step in this
-            # operation to prevent overwriting resources with stale status or reopening the operation.
+            # Ignore duplicate messages if uninstall cleanup is already terminal
             if (
                 operation.action == RequestAction.UnInstall
                 and self._is_cleanup_terminal(operation)
@@ -174,11 +169,7 @@ class DeploymentStatusUpdater():
 
             resource_id = uuid.UUID(step_to_update.resourceId)
 
-            # If this is the main step of an uninstall succeeding for a workspace service with an address space,
-            # ensure the trailing workspace upgrade fallback step is appended BEFORE calculating
-            # and persisting the main step's overall status. This ensures is_last_step is False
-            # and the operation is persisted as PipelineRunning continuously in Cosmos DB, eliminating any
-            # window where resource_has_active_operation sees the operation as Deleted.
+            # Ensure workspace upgrade step is appended before calculating overall status
             if (
                 step_to_update.templateStepId == "main"
                 and step_to_update.resourceId == operation.resourceId
@@ -200,10 +191,7 @@ class DeploymentStatusUpdater():
                 and is_last_step
             )
 
-            # For the address space cleanup step, we MUST run cleanup before persisting the
-            # final successful operation status. This keeps the operation active in Cosmos DB
-            # (so resource_has_active_operation blocks new allocations and workspace updates)
-            # until the cleanup has been durably committed.
+            # Run cleanup before marking the operation complete
             if is_cleanup_step and step_to_update.is_success():
                 try:
                     freed = await self._free_workspace_address_space(operation)
@@ -287,7 +275,6 @@ class DeploymentStatusUpdater():
                 await self.resource_repo.update_item_dict(resource_to_persist)
 
                 if is_cleanup_step and step_to_update.is_success():
-                    # Restore the primary resource to Deleted when cleanup succeeds
                     main_step = next(
                         (op_step for op_step in operation.steps
                          if op_step.templateStepId == "main"
@@ -306,7 +293,6 @@ class DeploymentStatusUpdater():
                 # update the overall headline operation status
                 await self.update_overall_operation_status(operation, step_to_update, is_last_step)
 
-                # save the operation with final status LAST, after all resource updates are committed
                 for attempt in range(MAX_CLEANUP_RETRIES):
                     try:
                         await self.operations_repo.update_item(operation)
@@ -329,7 +315,6 @@ class DeploymentStatusUpdater():
                 if is_cleanup_step and step_to_update.is_success():
                     logger.error(f"[CLEANUP_FINALIZATION_FAILED] Error in post-cleanup writes: {e}", exc_info=True)
                     if is_final_delivery:
-                        # Final delivery handling: must retry and verify all required resource and operation writes
                         workspace_persisted = False
                         try:
                             resource = await self.resource_repo.get_resource_by_id(resource_id)
@@ -420,7 +405,6 @@ class DeploymentStatusUpdater():
                         cleanup_details = await self._get_address_cleanup_details(operation)
                         if cleanup_details:
                             address_to_free, parent_workspace_id, service_resource_id, _ = cleanup_details
-                            # Validate active-service ownership before enqueueing this upgrade
                             workspace_services_repo = getattr(self, "workspace_services_repo", None)
                             if workspace_services_repo is None:
                                 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -508,7 +492,6 @@ class DeploymentStatusUpdater():
                     await self.operations_repo.update_item(operation)
                     return True
 
-                # Post-send persistence: send succeeded, now update operation status for cleanup step
                 if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
                     for attempt in range(MAX_CLEANUP_RETRIES):
                         try:
@@ -594,11 +577,7 @@ class DeploymentStatusUpdater():
         step_status: Status,
         step_message: str,
     ) -> Tuple[OperationStep, bool, int]:
-        """
-        Merges in-memory appended steps (e.g. dynamically appended cleanup step on legacy operations)
-        into the fresh operation reloaded from Cosmos DB during an ETag conflict retry.
-        Recomputes step_to_update, is_last_step, and current_step_index for fresh_op.
-        """
+        """Merge in-memory steps into fresh operation reloaded during ETag retry."""
         if fresh_op.steps is None:
             fresh_op.steps = []
 
@@ -700,10 +679,7 @@ class DeploymentStatusUpdater():
         return address_to_free, parent_workspace_id, resource_id, resource_to_persist
 
     async def _free_workspace_address_space(self, operation: Operation) -> bool:
-        """
-        Frees the address space owned by the uninstalled WorkspaceService after
-        the corresponding workspace upgrade has succeeded.
-        """
+        """Free address space from workspace after successful upgrade."""
         address_to_free = parent_workspace_id = resource_id = "<unknown>"
         try:
             cleanup_details = await self._get_address_cleanup_details(operation)
@@ -712,14 +688,12 @@ class DeploymentStatusUpdater():
 
             address_to_free, parent_workspace_id, resource_id, service_dict = cleanup_details
 
-            # Check if cleanup for this step was already completed (idempotency on redelivery)
             if self._is_cleanup_completed(operation):
                 return True
 
-            # Check if the uninstalled service already has the address_space_freed marker
             if service_dict.get("properties", {}).get("address_space_freed"):
                 return True
-            # Check if address_to_free has been assigned to another active workspace service on this workspace (fail closed)
+
             workspace_services_repo = getattr(self, "workspace_services_repo", None)
             if workspace_services_repo is None:
                 from db.repositories.workspace_services import WorkspaceServiceRepository
@@ -744,9 +718,7 @@ class DeploymentStatusUpdater():
                     workspace_patch = ResourcePatch()
                     workspace_patch.properties = {"address_spaces": new_address_spaces}
 
-                    # Note: patch_workspace with force_version_update=False updates the Cosmos DB record only;
-                    # it does not trigger an independent deployment operation. Infrastructure updates (Terraform)
-                    # are driven by the trailing workspace upgrade step in the uninstall pipeline.
+                    # Update address spaces in Cosmos DB without triggering deployment
                     await self.workspace_repo.patch_workspace(
                         workspace,
                         workspace_patch,
@@ -781,14 +753,14 @@ class DeploymentStatusUpdater():
             operation.message = step.message
             return
 
-        # If address space cleanup has completed for an uninstall, only finalize as Deleted if it is the last step and all steps succeeded
+        # Finalize as Deleted only when all steps including cleanup succeed
         if self._is_cleanup_completed(operation) and operation.action == RequestAction.UnInstall:
             if is_last_step and all(op_step.is_success() for op_step in operation.steps):
                 operation.status = Status.Deleted
                 operation.message = "Multi step pipeline completed successfully"
                 return
 
-        # If address space cleanup has failed terminally for an uninstall, do not reopen to PipelineRunning
+        # Do not reopen failed cleanup uninstall to PipelineRunning
         if self._is_cleanup_failed(operation) and operation.action == RequestAction.UnInstall:
             operation.status = Status.DeletingFailed
             operation.message = f"Multi step pipeline failed on step {strings.ADDRESS_SPACE_CLEANUP_STEP_ID}"

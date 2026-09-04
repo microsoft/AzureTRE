@@ -482,16 +482,13 @@ async def test_workspace_service_uninstall_frees_address_space(
     }
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
 
-    # Mock the operation showing RequestAction.UnInstall
     operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
     operations_repo_mock.return_value.get_operation_by_id.return_value = operation
 
-    # Mock WorkspaceService resource returned by get_resource_by_id
     workspace_service_mock = MagicMock()
     workspace_service_mock.deploymentStatus = None
     resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
 
-    # Mock resource dict representation returned by get_resource_dict_by_id
     workspace_service_dict = {
         "id": workspace_service_id,
         "resourceType": ResourceType.WorkspaceService.value,
@@ -502,7 +499,6 @@ async def test_workspace_service_uninstall_frees_address_space(
     }
     resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
 
-    # Mock parent workspace containing the address space to free
     parent_workspace = create_sample_workspace_object(parent_workspace_id)
     parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
     parent_workspace.etag = "parent-workspace-etag"
@@ -690,16 +686,13 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     }
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
 
-    # Mock the operation showing RequestAction.UnInstall
     operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
     operations_repo_mock.return_value.get_operation_by_id.return_value = operation
 
-    # Mock WorkspaceService resource returned by get_resource_by_id
     workspace_service_mock = MagicMock()
     workspace_service_mock.deploymentStatus = None
     resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
 
-    # Mock resource dict representation returned by get_resource_dict_by_id
     workspace_service_dict = {
         "id": workspace_service_id,
         "resourceType": ResourceType.WorkspaceService,
@@ -710,15 +703,12 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     }
     resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
 
-    # Mock parent workspace containing the address space to free
     parent_workspace = create_sample_workspace_object(parent_workspace_id)
     parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
     parent_workspace.etag = "parent-workspace-etag"
 
     workspace_repo = AsyncMock()
     workspace_repo.get_workspace_by_id.return_value = parent_workspace
-
-    # First attempt raises CosmosAccessConditionFailedError, second succeeds
     workspace_repo.patch_workspace.side_effect = [CosmosAccessConditionFailedError(), None]
     workspace_repo_mock.return_value = workspace_repo
 
@@ -731,9 +721,7 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
     assert complete_message is True
     send_deployment_message_mock.assert_called_once()
     await status_updater._free_workspace_address_space(operation)
-    # One read prepares the synthetic upgrade, then two reads cover the retry.
     assert workspace_repo.get_workspace_by_id.call_count == 3
-    # Assert patch_workspace called twice
     assert workspace_repo.patch_workspace.call_count == 2
 
 
@@ -771,16 +759,13 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     }
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(message_dict)
 
-    # Mock the operation showing RequestAction.UnInstall
     operation = create_sample_operation(workspace_service_id, RequestAction.UnInstall)
     operations_repo_mock.return_value.get_operation_by_id.return_value = operation
 
-    # Mock WorkspaceService resource returned by get_resource_by_id
     workspace_service_mock = MagicMock()
     workspace_service_mock.deploymentStatus = None
     resource_repo.return_value.get_resource_by_id.return_value = workspace_service_mock
 
-    # Mock resource dict representation returned by get_resource_dict_by_id
     workspace_service_dict = {
         "id": workspace_service_id,
         "resourceType": ResourceType.WorkspaceService,
@@ -791,15 +776,12 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     }
     resource_repo.return_value.get_resource_dict_by_id.return_value = workspace_service_dict
 
-    # Mock parent workspace containing the address space to free
     parent_workspace = create_sample_workspace_object(parent_workspace_id)
     parent_workspace.properties = {"address_spaces": ["10.0.0.0/22", address_space]}
     parent_workspace.etag = "parent-workspace-etag"
 
     workspace_repo = AsyncMock()
     workspace_repo.get_workspace_by_id.return_value = parent_workspace
-
-    # All attempts raise CosmosAccessConditionFailedError
     workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
     workspace_repo_mock.return_value = workspace_repo
 
@@ -809,16 +791,13 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
     status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
-    # The uninstall message is complete; cleanup is deferred to the upgrade step.
     assert complete_message is True
     send_deployment_message_mock.assert_called_once()
     workspace_repo.patch_workspace.side_effect = CosmosAccessConditionFailedError()
     complete_message = await status_updater._free_workspace_address_space(operation)
     assert complete_message is False
-    # Assert get_workspace_by_id and patch_workspace called max_retries = 3 times
     assert workspace_repo.get_workspace_by_id.call_count == 4
     assert workspace_repo.patch_workspace.call_count == 3
-    # Assert we logged the final failure using the module's logger
     logging_mock.error.assert_called_once()
     assert "[ADDRESS_SPACE_CLEANUP_FAILED]" in logging_mock.error.call_args[0][0]
 
@@ -1134,7 +1113,6 @@ async def test_workspace_service_uninstall_address_space_cleanup_fail_then_succe
         message="workspace upgrade succeeded"
     )
 
-    # 1. First attempt: cleanup fails after retries; message is abandoned for redelivery
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=False)):
         result = await status_updater.update_status_in_database(cleanup_message)
 
@@ -1143,14 +1121,12 @@ async def test_workspace_service_uninstall_address_space_cleanup_fail_then_succe
     assert operation.status == Status.PipelineRunning
     assert parent_workspace_mock.deploymentStatus == Status.Updating
 
-    # 2. Redelivery attempt: cleanup succeeds
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
         result = await status_updater.update_status_in_database(cleanup_message)
 
     assert result is True
     assert step2.status == Status.Updated
     assert operation.status == Status.Deleted
-    # Primary workspace service must be restored to Deleted, not left as DeletingFailed
     assert workspace_service_mock.deploymentStatus == Status.Deleted
     assert parent_workspace_mock.deploymentStatus == Status.Updated
 
@@ -1432,7 +1408,6 @@ async def test_terminal_address_space_conflict_marks_operation_and_resource_fail
     with patch.object(status_updater, "_free_workspace_address_space", side_effect=AddressSpaceConflictError("Conflict")):
         result = await status_updater.update_status_in_database(cleanup_message)
 
-    # Terminal conflict: completes message (returns True) so it is not endlessly retried
     assert result is True
     assert step2.status == Status.UpdatingFailed
     assert "Terminal address space conflict" in step2.message
@@ -1495,10 +1470,8 @@ async def test_legacy_template_appends_workspace_upgrade_step_before_persisting_
     result = await status_updater.update_status_in_database(main_message)
 
     assert result is True
-    # Verify fallback step was appended
     assert len(operation.steps) == 2
     assert operation.steps[1].templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
-    # Operation was never saved as Deleted; it was saved as PipelineRunning
     first_saved_op = status_updater.operations_repo.update_item.call_args_list[0].args[0]
     assert first_saved_op.status == Status.PipelineRunning
 
@@ -1562,9 +1535,7 @@ async def test_enqueue_cleanup_validates_ownership_and_aborts_before_azure_send(
 
     result = await status_updater.update_status_in_database(main_message)
 
-    # Completed so it does not redeliver endlessly
     assert result is True
-    # send_deployment_message was NOT called: Terraform was NOT told to remove the address from Azure
     send_deployment_message_mock.assert_not_called()
     assert operation.status == Status.DeletingFailed
     assert operation.steps[1].status == Status.UpdatingFailed
@@ -1626,7 +1597,6 @@ async def test_enqueue_cleanup_send_failure_abandons_message_for_retry(send_depl
 
     result = await status_updater.update_status_in_database(main_message, is_final_delivery=False)
 
-    # Abandons message so Service Bus redelivers and retries enqueue
     assert result is False
     assert operation.status == Status.PipelineRunning
     assert operation.steps[1].status == Status.AwaitingUpdate
@@ -1687,7 +1657,6 @@ async def test_enqueue_cleanup_send_failure_on_final_delivery_marks_failed(send_
 
     result = await status_updater.update_status_in_database(main_message, is_final_delivery=True)
 
-    # Completes message on final delivery so workspace is unblocked
     assert result is True
     assert operation.status == Status.DeletingFailed
     assert operation.steps[1].status == Status.UpdatingFailed
@@ -1766,7 +1735,6 @@ async def test_cleanup_failure_on_final_delivery_marks_failed_and_completes_mess
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=False)):
         result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=True)
 
-    # On final delivery, completes message and marks operation failed to unblock workspace
     assert result is True
     assert step2.status == Status.UpdatingFailed
     assert "delivery attempts" in step2.message
@@ -1855,7 +1823,6 @@ async def test_redelivered_main_status_does_not_rerun_completed_cleanup_or_fail_
     status_updater.workspace_repo = AsyncMock()
     status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
     status_updater.workspace_services_repo = AsyncMock()
-    # The address space has been reallocated to a new active service
     status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = [new_active_service_mock]
 
     redelivered_main_message = DeploymentStatusUpdateMessage(
@@ -1869,7 +1836,6 @@ async def test_redelivered_main_status_does_not_rerun_completed_cleanup_or_fail_
     result = await status_updater.update_status_in_database(redelivered_main_message)
 
     assert result is True
-    # Operation and resource must remain successfully Deleted, not failed or reopened
     assert operation.status == Status.Deleted
     assert step2.status == Status.Updated
     assert step2.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS
@@ -1949,12 +1915,7 @@ async def test_redelivered_main_status_skips_enqueue_when_cleanup_in_progress(se
 
 
 async def test_cleanup_redelivery_ignored_when_cleanup_already_terminal_success():
-    """
-    Addresses review comment 1:
-    Cleanup-status redeliveries are not idempotent after success. If a delayed duplicate
-    Updating or UpdatingFailed message arrives after the operation is Deleted, ignore it
-    to avoid writing stale status to the workspace resource.
-    """
+    """Delayed cleanup update after terminal success should be ignored."""
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
@@ -1993,7 +1954,6 @@ async def test_cleanup_redelivery_ignored_when_cleanup_already_terminal_success(
     status_updater.operations_repo.get_operation_by_id.return_value = operation
     status_updater.resource_repo = AsyncMock()
 
-    # Delayed / duplicate Updating message arrives for the cleanup step
     delayed_cleanup_message = DeploymentStatusUpdateMessage(
         operationId=OPERATION_ID,
         stepId="step-2",
@@ -2005,7 +1965,6 @@ async def test_cleanup_redelivery_ignored_when_cleanup_already_terminal_success(
     result = await status_updater.update_status_in_database(delayed_cleanup_message)
 
     assert result is True
-    # Verify no stale updates written to workspace resource or operation
     status_updater.resource_repo.update_item.assert_not_called()
     status_updater.resource_repo.update_item_dict.assert_not_called()
     status_updater.operations_repo.update_item.assert_not_called()
@@ -2016,12 +1975,7 @@ async def test_cleanup_redelivery_ignored_when_cleanup_already_terminal_success(
 
 @patch('service_bus.deployment_status_updater.send_deployment_message')
 async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send_deployment_message_mock):
-    """
-    Addresses review comment 3:
-    Redelivered main-step message reopening terminal cleanup failure: _is_cleanup_completed was false
-    for UpdatingFailed/DeletingFailed. Redelivery of the main-step message must not reset operation.status
-    from DeletingFailed back to PipelineRunning or re-enqueue cleanup.
-    """
+    """Redelivered main-step message should not reopen terminal cleanup failure."""
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     address_space = "10.1.0.0/22"
@@ -2087,7 +2041,6 @@ async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send
     result = await status_updater.update_status_in_database(redelivered_main_message)
 
     assert result is True
-    # Operation and resource must remain DeletingFailed, not reopened to PipelineRunning
     assert operation.status == Status.DeletingFailed
     assert step2.status == Status.UpdatingFailed
     assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
@@ -2096,11 +2049,7 @@ async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send
 
 
 async def test_cleanup_success_persists_workspace_and_primary_resource_before_operation_deleted():
-    """
-    Addresses review comment 2:
-    Keep the operation active (PipelineRunning) until all workspace and primary resource writes
-    are complete, persisting operation with final status (Deleted) last.
-    """
+    """Ensure operation is marked Deleted only after resource writes complete."""
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     address_space = "10.1.0.0/22"
@@ -2190,24 +2139,19 @@ async def test_cleanup_success_persists_workspace_and_primary_resource_before_op
     assert result is True
     assert operation.status == Status.Deleted
 
-    # Check that operations_repo.update_item with Status.Deleted was the LAST call
     assert len(call_order) >= 3
     op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
     assert len(op_update_calls) == 1
     op_update_index = op_update_calls[0]
     assert call_order[op_update_index] == ("operations_repo.update_item", Status.Deleted)
 
-    # All resource_repo calls must have occurred BEFORE operations_repo.update_item
     resource_calls = [i for i, call in enumerate(call_order) if call[0].startswith("resource_repo")]
     for r_idx in resource_calls:
         assert r_idx < op_update_index
 
 
 async def test_cleanup_conflict_persists_workspace_and_primary_resource_before_operation_failed():
-    """
-    Addresses review comment 2 (failure path):
-    In AddressSpaceConflictError, update workspace and primary resource before saving operation as DeletingFailed.
-    """
+    """On address space conflict, update resources before saving operation as DeletingFailed."""
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
@@ -2287,23 +2231,19 @@ async def test_cleanup_conflict_persists_workspace_and_primary_resource_before_o
     assert result is True
     assert operation.status == Status.DeletingFailed
 
-    # Verify operations_repo.update_item with Status.DeletingFailed was called AFTER resource updates
     op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
     assert len(op_update_calls) == 1
     op_update_index = op_update_calls[0]
     assert call_order[op_update_index] == ("operations_repo.update_item", Status.DeletingFailed)
 
     resource_calls = [i for i, call in enumerate(call_order) if call[0] == "resource_repo.update_item"]
-    assert len(resource_calls) == 2  # workspace and primary resource
+    assert len(resource_calls) == 2
     for r_idx in resource_calls:
         assert r_idx < op_update_index
 
 
 async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_before_operation_failed():
-    """
-    Addresses review comment 2 (final delivery failure path):
-    On final delivery cleanup failure, update workspace and primary resource before saving operation as DeletingFailed.
-    """
+    """On final delivery cleanup failure, update resources before saving operation as DeletingFailed."""
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
@@ -2383,14 +2323,13 @@ async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_be
     assert result is True
     assert operation.status == Status.DeletingFailed
 
-    # Verify operations_repo.update_item with Status.DeletingFailed was called AFTER resource updates
     op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
     assert len(op_update_calls) == 1
     op_update_index = op_update_calls[0]
     assert call_order[op_update_index] == ("operations_repo.update_item", Status.DeletingFailed)
 
     resource_calls = [i for i, call in enumerate(call_order) if call[0] == "resource_repo.update_item"]
-    assert len(resource_calls) == 2  # workspace and primary resource
+    assert len(resource_calls) == 2
     for r_idx in resource_calls:
         assert r_idx < op_update_index
 
@@ -2546,7 +2485,6 @@ async def test_redelivered_main_status_dispatches_and_subsequent_redelivery_skip
     )
     assert step2.status == Status.Updating
 
-    # Subsequent redelivery of main status message skips enqueueing because step2 is now Updating
     result2 = await status_updater.update_status_in_database(redelivered_main_message)
     assert result2 is True
     send_deployment_message_mock.assert_called_once()
@@ -2591,7 +2529,6 @@ async def test_delayed_earlier_step_message_ignored_when_cleanup_terminal():
     status_updater.operations_repo.get_operation_by_id.return_value = operation
     status_updater.resource_repo = AsyncMock()
 
-    # Delayed failure message arriving for step-1 after cleanup has already finalized the operation
     delayed_message = DeploymentStatusUpdateMessage(
         operationId=OPERATION_ID,
         stepId="step-1",
@@ -2820,7 +2757,6 @@ async def test_cleanup_failure_in_get_address_cleanup_details_on_final_delivery_
     status_updater.operations_repo.get_operation_by_id.return_value = operation
     status_updater.resource_repo = AsyncMock()
     status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
-    # Simulate Cosmos DB read failure when reading cleanup details
     status_updater._get_address_cleanup_details = AsyncMock(side_effect=Exception("Cosmos read error"))
 
     cleanup_message = DeploymentStatusUpdateMessage(
@@ -2890,7 +2826,6 @@ async def test_cleanup_step_with_trailing_step_does_not_prematurely_finalize_as_
     status_updater.operations_repo = AsyncMock()
     status_updater.resource_repo = AsyncMock()
 
-    # When step2 completes but is not the last step in the operation
     await status_updater.update_overall_operation_status(operation, step2, is_last_step=False)
 
     assert operation.status == Status.PipelineRunning
@@ -3223,7 +3158,6 @@ async def test_etag_conflict_retry_merges_legacy_synthetic_cleanup_step(send_dep
     status_updater = DeploymentStatusUpdater()
     status_updater.operations_repo = AsyncMock()
 
-    # When get_operation_by_id is called on retry, it returns a 1-step operation as still stored in Cosmos DB
     def mock_get_op(op_id):
         return copy.deepcopy(legacy_op)
 
@@ -3265,14 +3199,11 @@ async def test_etag_conflict_retry_merges_legacy_synthetic_cleanup_step(send_dep
     result = await status_updater.update_status_in_database(main_message)
 
     assert result is True
-    # Verify retry occurred
     assert attempt_count >= 2
-    # On the 2nd attempt, the merged operation must have 2 steps and status PipelineRunning
     second_saved_op = saved_operations[1]
     assert len(second_saved_op.steps) == 2
     assert second_saved_op.status == Status.PipelineRunning
     assert second_saved_op.steps[1].templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
-    # send_deployment_message must have been called for the cleanup step (no AssertionError!)
     send_deployment_message_mock.assert_called_once()
 
 
@@ -3326,7 +3257,6 @@ async def test_cleanup_post_write_failure_on_final_delivery_dead_letters_when_te
     status_updater = DeploymentStatusUpdater()
     status_updater.operations_repo = AsyncMock()
     status_updater.operations_repo.get_operation_by_id.return_value = operation
-    # All attempts to write operation fail (including the final-delivery write)
     status_updater.operations_repo.update_item.side_effect = CosmosAccessConditionFailedError()
 
     status_updater.resource_repo = AsyncMock()
@@ -3345,7 +3275,6 @@ async def test_cleanup_post_write_failure_on_final_delivery_dead_letters_when_te
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
         result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=True)
 
-    # Must return False so Service Bus abandons/dead-letters the message instead of discarding it
     assert result is False
 
 
@@ -3387,7 +3316,6 @@ async def test_cleanup_post_write_failure_on_final_delivery_dead_letters_when_wo
     status_updater.operations_repo.update_item = AsyncMock()
 
     status_updater.resource_repo = AsyncMock()
-    # Workspace resource update always fails
     status_updater.resource_repo.update_item.side_effect = Exception("Cosmos DB unavailable")
     status_updater.resource_repo.get_resource_dict_by_id.return_value = {"id": parent_workspace_id, "properties": {}}
     status_updater.workspace_repo = AsyncMock()
@@ -3403,7 +3331,6 @@ async def test_cleanup_post_write_failure_on_final_delivery_dead_letters_when_wo
     with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
         result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=True)
 
-    # Must return False so message is dead-lettered, and operation must NOT be marked Deleted
     assert result is False
     assert operation.status != Status.Deleted
 
