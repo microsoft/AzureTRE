@@ -139,7 +139,8 @@ def get_account_url(account_name: str) -> str:
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
                                  airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository,
                                  workspace_service_repo, operation_repo: WorkspaceServiceRepository, resource_template_repo: ResourceTemplateRepository,
-                                 resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
+                                 resource_history_repo: ResourceHistoryRepository,
+                                 background_tasks=None) -> AirlockRequest:
     airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
     # Store review with new status in cosmos, and send status_changed event
     if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
@@ -155,15 +156,27 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
     # however the operations still will be saved in the DB and displayed on the UI as normal.
-    await delete_all_review_user_resources(
-        airlock_request=airlock_request,
-        user_resource_repo=user_resource_repo,
-        workspace_service_repo=workspace_service_repo,
-        resource_template_repo=resource_template_repo,
-        operations_repo=operation_repo,
-        resource_history_repo=resource_history_repo,
-        user=user
-    )
+    if background_tasks is not None:
+        background_tasks.add_task(
+            delete_all_review_user_resources,
+            airlock_request=airlock_request,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
+            resource_template_repo=resource_template_repo,
+            operations_repo=operation_repo,
+            resource_history_repo=resource_history_repo,
+            user=user
+        )
+    else:
+        await delete_all_review_user_resources(
+            airlock_request=airlock_request,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
+            resource_template_repo=resource_template_repo,
+            operations_repo=operation_repo,
+            resource_history_repo=resource_history_repo,
+            user=user
+        )
 
     return updated_airlock_request
 
@@ -585,9 +598,22 @@ async def delete_all_review_user_resources(
 
 async def cancel_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
                          airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
-                         resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
+                         resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository,
+                         background_tasks=None) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
-    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    if background_tasks is not None:
+        background_tasks.add_task(
+            delete_all_review_user_resources,
+            airlock_request,
+            user_resource_repo,
+            workspace_service_repo,
+            resource_template_repo,
+            operations_repo,
+            resource_history_repo,
+            user
+        )
+    else:
+        await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
     return updated_request
 
 
