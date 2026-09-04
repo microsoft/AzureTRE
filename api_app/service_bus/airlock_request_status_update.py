@@ -71,6 +71,7 @@ class AirlockStatusUpdater(ServiceBusConsumer):
                                 except OperationTimeoutError:
                                     # Timeout occurred whilst connecting - this is expected and indicates no messages are available
                                     logger.debug("No messages for this process. Will look again...")
+                                    self.update_heartbeat()
 
                 except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.

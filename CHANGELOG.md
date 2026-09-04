@@ -9,6 +9,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
+* Implement service bus consumer monitoring with heartbeat detection, automatic recovery, and /health endpoint integration to prevent operations getting stuck indefinitely ([#4464](https://github.com/microsoft/AzureTRE/issues/4464))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
@@ -79,9 +80,6 @@ COMPONENTS:
 | tre-shared-service-cyclecloud | 0.7.6 |
 | tre-shared-service-gitea | 1.2.4 |
 | tre-shared-service-airlock-notifier | 1.0.12 |
-
-BUG FIXES:
-* Implement service bus consumer monitoring with heartbeat detection, automatic recovery, and /health endpoint integration to prevent operations getting stuck indefinitely ([#4464](https://github.com/microsoft/AzureTRE/issues/4464))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

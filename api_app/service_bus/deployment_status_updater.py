@@ -73,12 +73,14 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                                                 else:
                                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                                     await receiver.abandon_message(msg)
+                                                self.update_heartbeat()
                                         logger.info(f"Closing session: {receiver.session.session_id}")
                                     self.update_heartbeat()
 
                                 except OperationTimeoutError:
                                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
                                     logger.debug("No sessions for this process. Will look again...")
+                                    self.update_heartbeat()
 
                 except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.

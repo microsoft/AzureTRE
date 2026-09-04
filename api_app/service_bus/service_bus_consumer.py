@@ -49,7 +49,7 @@ class ServiceBusConsumer:
                         self.update_heartbeat()
                         task_just_started = True
 
-                    await asyncio.sleep(HEARTBEAT_CHECK_INTERVAL_SECONDS)
+                    await asyncio.wait({task}, timeout=HEARTBEAT_CHECK_INTERVAL_SECONDS)
 
                     if not self.check_heartbeat():
                         logger.warning(f"{self.service_name} heartbeat stale, restarting...")

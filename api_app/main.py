@@ -38,9 +38,16 @@ async def lifespan(app: FastAPI):
     app.state.deployment_status_updater = deploymentStatusUpdater
     app.state.airlock_status_updater = airlockStatusUpdater
 
-    asyncio.create_task(deploymentStatusUpdater.supervisor_with_heartbeat_check())
-    asyncio.create_task(airlockStatusUpdater.supervisor_with_heartbeat_check())
-    yield
+    supervisor_tasks = [
+        asyncio.create_task(deploymentStatusUpdater.supervisor_with_heartbeat_check()),
+        asyncio.create_task(airlockStatusUpdater.supervisor_with_heartbeat_check())
+    ]
+    try:
+        yield
+    finally:
+        for task in supervisor_tasks:
+            task.cancel()
+        await asyncio.gather(*supervisor_tasks, return_exceptions=True)
 
 
 def get_application() -> FastAPI:

@@ -4,6 +4,19 @@ from unittest.mock import patch
 from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
+@pytest.fixture(autouse=True)
+def mock_asyncio_wait():
+    async def wait_for_task_or_timeout(tasks, timeout):
+        done = {task for task in tasks if task.done()}
+        if not done:
+            await asyncio.sleep(timeout)
+            done = {task for task in tasks if task.done()}
+        return done, set(tasks) - done
+
+    with patch("service_bus.service_bus_consumer.asyncio.wait", side_effect=wait_for_task_or_timeout):
+        yield
+
+
 # Create a concrete implementation for testing edge cases
 class MockConsumerForEdgeCases(ServiceBusConsumer):
     def __init__(self):
