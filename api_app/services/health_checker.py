@@ -19,7 +19,8 @@ async def create_state_store_status() -> Tuple[StatusEnum, str]:
     message = ""
     try:
         container: ContainerProxy = await Database().get_container_proxy(STATE_STORE_RESOURCES_CONTAINER)
-        container.query_items("SELECT TOP 1 * FROM c")
+        async for _ in container.query_items("SELECT TOP 1 VALUE 1 FROM c", max_item_count=1):
+            break
     except exceptions.ServiceRequestError:
         status = StatusEnum.not_ok
         message = strings.STATE_STORE_ENDPOINT_NOT_RESPONDING
