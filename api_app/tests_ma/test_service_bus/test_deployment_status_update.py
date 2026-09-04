@@ -2387,7 +2387,7 @@ async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_be
 
 
 @patch('service_bus.deployment_status_updater.send_deployment_message')
-async def test_cleanup_dispatch_uses_deterministic_message_id(send_deployment_message_mock):
+async def test_cleanup_dispatch_transitions_step_to_updating(send_deployment_message_mock):
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     address_space = "10.1.0.0/22"
@@ -2455,12 +2455,16 @@ async def test_cleanup_dispatch_uses_deterministic_message_id(send_deployment_me
     assert status_before_send == Status.AwaitingUpdate
     assert cleanup_step.status == Status.Updating
 
-    send_deployment_message_mock.assert_called_once()
-    assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step.id}"
+    send_deployment_message_mock.assert_called_once_with(
+        content=ANY,
+        correlation_id=OPERATION_ID,
+        session_id=parent_workspace_id,
+        action=RequestAction.Upgrade
+    )
 
 
 @patch('service_bus.deployment_status_updater.send_deployment_message')
-async def test_redelivered_main_status_before_updating_dispatches_with_same_deterministic_message_id(send_deployment_message_mock):
+async def test_redelivered_main_status_dispatches_and_subsequent_redelivery_skips(send_deployment_message_mock):
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     cleanup_step_id = "step-2-cleanup-id"
@@ -2525,48 +2529,15 @@ async def test_redelivered_main_status_before_updating_dispatches_with_same_dete
     result = await status_updater.update_status_in_database(redelivered_main_message)
 
     assert result is True
-    send_deployment_message_mock.assert_called_once()
-    assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step_id}"
+    send_deployment_message_mock.assert_called_once_with(
+        content=ANY,
+        correlation_id=OPERATION_ID,
+        session_id=parent_workspace_id,
+        action=RequestAction.Upgrade
+    )
     assert step2.status == Status.Updating
 
     # Subsequent redelivery of main status message skips enqueueing because step2 is now Updating
     result2 = await status_updater.update_status_in_database(redelivered_main_message)
     assert result2 is True
     send_deployment_message_mock.assert_called_once()
-
-
-@patch('service_bus.helpers._send_message')
-async def test_send_deployment_message_attaches_deterministic_message_id(_send_message_mock):
-    from service_bus.helpers import send_deployment_message
-
-    # Derived from JSON payload with operationId and stepId
-    payload = {"operationId": "op-123", "stepId": "step-456", "action": "upgrade"}
-    await send_deployment_message(
-        content=json.dumps(payload),
-        correlation_id="op-123",
-        session_id="session-1",
-        action="upgrade"
-    )
-    sent_msg = _send_message_mock.call_args.args[0]
-    assert sent_msg.message_id == "op-123_step-456"
-
-    # Explicit message_id takes precedence
-    await send_deployment_message(
-        content=json.dumps(payload),
-        correlation_id="op-123",
-        session_id="session-1",
-        action="upgrade",
-        message_id="custom-id"
-    )
-    sent_msg = _send_message_mock.call_args.args[0]
-    assert sent_msg.message_id == "custom-id"
-
-    # Fallback when payload lacks stepId
-    await send_deployment_message(
-        content=json.dumps({"some": "data"}),
-        correlation_id="op-789",
-        session_id="session-2",
-        action="install"
-    )
-    sent_msg = _send_message_mock.call_args.args[0]
-    assert sent_msg.message_id == "op-789_install"

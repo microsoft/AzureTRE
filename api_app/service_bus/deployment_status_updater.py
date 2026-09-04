@@ -372,13 +372,11 @@ class DeploymentStatusUpdater():
                     # create + send the message
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
-                    step_message_id = f"{operation.id}_{next_step.id}"
                     await send_deployment_message(
                         content=content,
                         correlation_id=operation.id,
                         session_id=resource_to_send.id,
                         action=next_step.resourceAction,
-                        message_id=step_message_id,
                     )
                     if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
                         next_step.status = Status.Updating
