@@ -18,6 +18,43 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 
+RESOURCE_REQUEST_FIELD_TYPES = {
+    "id": str,
+    "action": str,
+    "stepId": str,
+    "operationId": str,
+    "name": str,
+    "version": str,
+    "parameters": dict,
+}
+OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES = {"user": dict}
+
+
+def validate_resource_request(message: object) -> None:
+    if not isinstance(message, dict):
+        raise ValueError("Resource request message must be a JSON object")
+
+    missing_fields = set(RESOURCE_REQUEST_FIELD_TYPES) - message.keys()
+    if missing_fields:
+        raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+
+    invalid_fields = [
+        field_name
+        for field_name, field_type in RESOURCE_REQUEST_FIELD_TYPES.items()
+        if not isinstance(message[field_name], field_type)
+    ]
+    if invalid_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_fields)}")
+
+    invalid_optional_fields = [
+        field_name
+        for field_name, field_type in OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES.items()
+        if field_name in message and not isinstance(message[field_name], field_type)
+    ]
+    if invalid_optional_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_optional_fields)}")
+
+
 def set_up_config() -> Optional[dict]:
     try:
         config = get_config()
@@ -73,8 +110,23 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
                         try:
                             message = json.loads(str(msg))
-                        except (json.JSONDecodeError) as e:
+                        except (json.JSONDecodeError, UnicodeDecodeError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter malformed message")
+                            continue
+
+                        try:
+                            validate_resource_request(message)
+                        except ValueError as e:
+                            logger.error(f"Received invalid service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidResourceRequest", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter invalid resource request message")
+                            continue
 
                         with tracer.start_as_current_span("receive_message") as current_span:
                             current_span.set_attribute("resource_id", message["id"])
