@@ -2609,7 +2609,63 @@ async def test_delayed_earlier_step_message_ignored_when_cleanup_terminal():
     status_updater.operations_repo.update_item.assert_not_called()
 
 
-async def test_missing_step_resource_persists_terminal_failure_operation_state():
+@pytest.mark.parametrize(
+    "action, expected_status",
+    [
+        (RequestAction.Install, Status.DeploymentFailed),
+        (RequestAction.UnInstall, Status.DeletingFailed),
+        (RequestAction.Upgrade, Status.UpdatingFailed),
+        ("custom-action", Status.ActionFailed),
+    ],
+)
+async def test_missing_step_resource_persists_terminal_failure_operation_state(action, expected_status):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Execute action on workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=action,
+        templateStepId="main",
+        status=Status.Deploying,
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=action,
+        status=Status.PipelineRunning,
+        steps=[step1],
+    )
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.side_effect = EntityDoesNotExist
+    status_updater.resource_repo.get_resource_dict_by_id.side_effect = EntityDoesNotExist
+
+    message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deployed,
+        message="status update",
+    )
+
+    result = await status_updater.update_status_in_database(message)
+
+    assert result is True
+    assert step1.status == expected_status
+    assert "not found in database" in step1.message
+    assert operation.status == expected_status
+    status_updater.operations_repo.update_item.assert_called_once_with(operation)
+
+
+async def test_missing_primary_resource_in_multi_step_operation_persists_failure_without_raising():
     workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
     parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 
@@ -2622,6 +2678,15 @@ async def test_missing_step_resource_persists_terminal_failure_operation_state()
         templateStepId="main",
         status=Status.Deleting,
     )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Address space cleanup",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId="address-space-cleanup",
+        status=Status.AwaitingUpdate,
+    )
     operation = Operation(
         id=OPERATION_ID,
         resourceId=workspace_service_id,
@@ -2629,7 +2694,7 @@ async def test_missing_step_resource_persists_terminal_failure_operation_state()
         resourceVersion=0,
         action=RequestAction.UnInstall,
         status=Status.PipelineRunning,
-        steps=[step1],
+        steps=[step1, step2],
     )
 
     status_updater = DeploymentStatusUpdater()
@@ -2653,6 +2718,53 @@ async def test_missing_step_resource_persists_terminal_failure_operation_state()
     assert step1.status == Status.DeletingFailed
     assert "not found in database" in step1.message
     assert operation.status == Status.DeletingFailed
+    status_updater.operations_repo.update_item.assert_called_once_with(operation)
+
+
+async def test_missing_resource_returns_false_when_operation_update_fails():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Install workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.Install,
+        templateStepId="main",
+        status=Status.Deploying,
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.Install,
+        status=Status.Deploying,
+        steps=[step1],
+    )
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.operations_repo.update_item.side_effect = Exception("Cosmos DB connection timeout")
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.side_effect = EntityDoesNotExist
+    status_updater.resource_repo.get_resource_dict_by_id.side_effect = EntityDoesNotExist
+
+    message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deployed,
+        message="deployed",
+    )
+
+    result = await status_updater.update_status_in_database(message)
+
+    assert result is False
+    assert step1.status == Status.DeploymentFailed
+    assert operation.status == Status.DeploymentFailed
     status_updater.operations_repo.update_item.assert_called_once_with(operation)
 
 
