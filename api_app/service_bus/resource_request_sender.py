@@ -76,8 +76,15 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                 operation.status = failure_status
                 operation.message = f"Failed to dispatch initial deployment message: {action}"
                 if operation.steps:
-                    operation.steps[0].status = failure_status
-                    operation.steps[0].message = f"Failed to dispatch initial deployment message: {action}"
+                    first_step = operation.steps[0]
+                    step_failure_status = (
+                        Status.DeploymentFailed if first_step.resourceAction == RequestAction.Install
+                        else Status.DeletingFailed if first_step.resourceAction == RequestAction.UnInstall
+                        else Status.UpdatingFailed if first_step.resourceAction == RequestAction.Upgrade
+                        else Status.ActionFailed
+                    )
+                    first_step.status = step_failure_status
+                    first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
                 await operations_repo.update_item(operation)
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")

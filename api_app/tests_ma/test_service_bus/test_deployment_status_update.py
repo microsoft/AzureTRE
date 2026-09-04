@@ -3369,3 +3369,214 @@ async def test_get_address_cleanup_details_returns_none_if_resource_type_not_wor
 
     details = await status_updater._get_address_cleanup_details(operation)
     assert details is None
+
+
+async def test_etag_conflict_on_earlier_step_reconciles_and_skips_when_fresh_op_already_terminal():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleting,
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate,
+    )
+    in_memory_op = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[copy.deepcopy(step1), copy.deepcopy(step2)],
+    )
+
+    terminal_step1 = copy.deepcopy(step1)
+    terminal_step1.status = Status.Deleted
+    terminal_step2 = copy.deepcopy(step2)
+    terminal_step2.status = Status.Updated
+    terminal_step2.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+    fresh_terminal_op = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=1,
+        action=RequestAction.UnInstall,
+        status=Status.Deleted,
+        steps=[terminal_step1, terminal_step2],
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleting
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updating
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.side_effect = [
+        in_memory_op,
+        fresh_terminal_op,
+    ]
+    status_updater.operations_repo.update_item.side_effect = CosmosAccessConditionFailedError()
+
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": "10.1.0.0/22"},
+    }
+    status_updater.workspace_repo = AsyncMock()
+
+    main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded",
+    )
+
+    result = await status_updater.update_status_in_database(main_message)
+
+    assert result is True
+    assert fresh_terminal_op.status == Status.Deleted
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
+    assert parent_workspace_mock.deploymentStatus == Status.Updated
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+async def test_etag_conflict_after_cleanup_dispatch_skips_when_fresh_op_already_terminal(send_deployment_message_mock):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted,
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate,
+    )
+    in_memory_op = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[copy.deepcopy(step1), copy.deepcopy(step2)],
+    )
+
+    terminal_step2 = copy.deepcopy(step2)
+    terminal_step2.status = Status.Updated
+    terminal_step2.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+    fresh_terminal_op = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=2,
+        action=RequestAction.UnInstall,
+        status=Status.Deleted,
+        steps=[copy.deepcopy(step1), terminal_step2],
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updated
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+
+    call_count = 0
+
+    def mock_get_op(op_id):
+        nonlocal call_count
+        call_count += 1
+        return in_memory_op if call_count == 1 else fresh_terminal_op
+
+    status_updater.operations_repo.get_operation_by_id.side_effect = mock_get_op
+
+    op_update_count = 0
+
+    async def mock_update_op(op):
+        nonlocal op_update_count
+        op_update_count += 1
+        if op_update_count > 1:
+            raise CosmosAccessConditionFailedError()
+        return op
+
+    status_updater.operations_repo.update_item.side_effect = mock_update_op
+
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": "10.1.0.0/22"},
+    }
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
+
+    main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded",
+    )
+
+    result = await status_updater.update_status_in_database(main_message)
+
+    assert result is True
+    send_deployment_message_mock.assert_called_once()
+    assert fresh_terminal_op.steps[1].status == Status.Updated
+    assert fresh_terminal_op.status == Status.Deleted

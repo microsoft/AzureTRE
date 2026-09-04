@@ -240,3 +240,38 @@ async def test_send_resource_request_message_persists_failure_state_on_dispatch_
     assert operation.status == expected_status
     assert operation.steps[0].status == expected_status
     assert "Failed to dispatch" in operation.message
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_derives_step_failure_status_from_step_action(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.UnInstall)
+    operation.steps[0].resourceAction = RequestAction.Upgrade
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.UnInstall,
+        )
+
+    operations_repo_mock.update_item.assert_awaited_once_with(operation)
+    assert operation.status == Status.DeletingFailed
+    assert operation.steps[0].status == Status.UpdatingFailed
+    assert "Failed to dispatch" in operation.steps[0].message

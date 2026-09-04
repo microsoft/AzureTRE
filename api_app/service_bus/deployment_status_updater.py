@@ -302,6 +302,20 @@ class DeploymentStatusUpdater():
                             raise
                         logger.warning(f"ETag conflict when saving operation {operation.id}. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
                         fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
+                        if (
+                            fresh_op is not operation
+                            and (
+                                (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
+                            )
+                        ):
+                            logger.info(
+                                f"Operation {fresh_op.id} is already terminal ({fresh_op.status}) after ETag conflict reload. "
+                                f"Reconciling resource writes and skipping stale update."
+                            )
+                            await self._reconcile_resources_for_terminal_operation(fresh_op)
+                            return True
+
                         step_to_update, is_last_step, current_step_index = self._merge_operation_steps(
                             in_memory_op=operation,
                             fresh_op=fresh_op,
@@ -350,16 +364,26 @@ class DeploymentStatusUpdater():
                         if workspace_persisted and primary_persisted:
                             try:
                                 fresh_op = await self.operations_repo.get_operation_by_id(str(message.operationId))
-                                fresh_step, fresh_is_last, _ = self._merge_operation_steps(
-                                    in_memory_op=operation,
-                                    fresh_op=fresh_op,
-                                    step_id_to_update=step_to_update.id,
-                                    step_status=step_to_update.status,
-                                    step_message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS,
-                                )
-                                await self.update_overall_operation_status(fresh_op, fresh_step, fresh_is_last)
-                                await self.operations_repo.update_item(fresh_op)
-                                operation_persisted = True
+                                if (
+                                    fresh_op is not operation
+                                    and (
+                                        (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                        or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
+                                    )
+                                ):
+                                    await self._reconcile_resources_for_terminal_operation(fresh_op)
+                                    operation_persisted = True
+                                else:
+                                    fresh_step, fresh_is_last, _ = self._merge_operation_steps(
+                                        in_memory_op=operation,
+                                        fresh_op=fresh_op,
+                                        step_id_to_update=step_to_update.id,
+                                        step_status=step_to_update.status,
+                                        step_message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS,
+                                    )
+                                    await self.update_overall_operation_status(fresh_op, fresh_step, fresh_is_last)
+                                    await self.operations_repo.update_item(fresh_op)
+                                    operation_persisted = True
                             except Exception as op_err:
                                 logger.error(f"Failed to persist terminal operation status on final delivery: {op_err}", exc_info=True)
 
@@ -500,18 +524,27 @@ class DeploymentStatusUpdater():
                             await self.operations_repo.update_item(operation)
                             break
                         except CosmosAccessConditionFailedError:
-                            if attempt == MAX_CLEANUP_RETRIES - 1:
-                                logger.warning(
-                                    f"ETag conflict persisting {Status.Updating} status for cleanup step {next_step.id} "
-                                    f"in operation {operation.id} after successful dispatch."
-                                )
-                            else:
-                                logger.warning(
-                                    f"ETag conflict persisting {Status.Updating} status for cleanup step {next_step.id}. "
-                                    f"Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})..."
-                                )
-                                try:
-                                    fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
+                            logger.warning(
+                                f"ETag conflict persisting {Status.Updating} status for cleanup step {next_step.id}. "
+                                f"Reloading operation (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})..."
+                            )
+                            try:
+                                fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
+                                if (
+                                    fresh_op is not operation
+                                    and (
+                                        (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                        or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
+                                    )
+                                ):
+                                    logger.info(
+                                        f"Operation {fresh_op.id} is already terminal ({fresh_op.status}) after cleanup step dispatch. "
+                                        f"Reconciling resource writes and skipping stale update."
+                                    )
+                                    await self._reconcile_resources_for_terminal_operation(fresh_op)
+                                    return True
+
+                                if attempt < MAX_CLEANUP_RETRIES - 1:
                                     self._merge_operation_steps(
                                         in_memory_op=operation,
                                         fresh_op=fresh_op,
@@ -522,8 +555,8 @@ class DeploymentStatusUpdater():
                                     await self.operations_repo.update_item(fresh_op)
                                     operation = fresh_op
                                     break
-                                except Exception:
-                                    pass
+                            except Exception:
+                                pass
                         except Exception as post_send_err:
                             if attempt == MAX_CLEANUP_RETRIES - 1:
                                 logger.error(
@@ -602,9 +635,21 @@ class DeploymentStatusUpdater():
         if step_to_update is None:
             raise Exception(f"Error finding step {step_id_to_update} in reloaded operation {fresh_op.id}")
 
-        step_to_update.status = step_status
-        step_to_update.message = step_message
-        step_to_update.updatedWhen = get_timestamp()
+        step_is_terminal = step_to_update.is_success() or step_to_update.is_failure()
+        new_status_is_terminal = step_status in (
+            Status.ActionSucceeded,
+            Status.Deployed,
+            Status.Deleted,
+            Status.Updated,
+            Status.ActionFailed,
+            Status.DeletingFailed,
+            Status.DeploymentFailed,
+            Status.UpdatingFailed,
+        )
+        if not step_is_terminal or new_status_is_terminal:
+            step_to_update.status = step_status
+            step_to_update.message = step_message
+            step_to_update.updatedWhen = get_timestamp()
 
         return step_to_update, is_last_step, current_step_index
 
@@ -641,6 +686,40 @@ class DeploymentStatusUpdater():
 
     def _is_cleanup_terminal(self, operation: Operation) -> bool:
         return self._is_cleanup_completed(operation) or self._is_cleanup_failed(operation)
+
+    async def _reconcile_resources_for_terminal_operation(self, operation: Operation) -> None:
+        """Reconcile resource deployment statuses against terminal operation state."""
+        if operation.resourceId:
+            try:
+                primary = await self.resource_repo.get_resource_by_id(uuid.UUID(str(operation.resourceId)))
+                if primary.deploymentStatus != operation.status:
+                    primary.deploymentStatus = operation.status
+                    await self.resource_repo.update_item(primary)
+            except (EntityDoesNotExist, ValueError):
+                pass
+            except Exception:
+                logger.exception(f"Failed to reconcile primary resource for terminal operation {operation.id}")
+
+        if operation.action == RequestAction.UnInstall:
+            cleanup_step = next(
+                (s for s in (operation.steps or []) if s.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID),
+                None
+            )
+            if cleanup_step and cleanup_step.resourceId:
+                try:
+                    ws_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(str(cleanup_step.resourceId)))
+                    target_status = (
+                        Status.Updated if cleanup_step.is_success() or operation.status == Status.Deleted
+                        else Status.UpdatingFailed if cleanup_step.is_failure() or operation.status == Status.DeletingFailed
+                        else ws_resource.deploymentStatus
+                    )
+                    if ws_resource.deploymentStatus != target_status:
+                        ws_resource.deploymentStatus = target_status
+                        await self.resource_repo.update_item(ws_resource)
+                except (EntityDoesNotExist, ValueError):
+                    pass
+                except Exception:
+                    logger.exception(f"Failed to reconcile workspace resource for terminal operation {operation.id}")
 
     def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
         return OperationStep(
