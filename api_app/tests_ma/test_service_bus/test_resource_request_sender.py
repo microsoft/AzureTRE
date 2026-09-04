@@ -4,7 +4,7 @@ import pytest
 import uuid
 
 from azure.servicebus import ServiceBusMessage
-from mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch, MagicMock
 from resources import strings
 from models.schemas.resource import ResourcePatch
 from service_bus.helpers import (
