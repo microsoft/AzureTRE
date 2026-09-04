@@ -92,6 +92,9 @@ async def save_and_deploy_resource(
             action=RequestAction.Install,
         )
         return operation
+    except HTTPException:
+        await resource_repo.delete_item(resource.id)
+        raise
     except Exception:
         await resource_repo.delete_item(resource.id)
         logger.exception("Failed send resource request message")
@@ -183,6 +186,8 @@ async def send_uninstall_message(
             is_cascade=is_cascade
         )
         return operation
+    except HTTPException:
+        raise
     except Exception:
         logger.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
@@ -234,6 +239,8 @@ async def send_custom_action_message(
             action=custom_action,
         )
         return operation
+    except HTTPException:
+        raise
     except Exception:
         logger.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(

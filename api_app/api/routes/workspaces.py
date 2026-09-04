@@ -425,6 +425,8 @@ async def create_user_resource(
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     owner_id: str = None
 
@@ -483,6 +485,9 @@ async def delete_user_resource(
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
     if user_resource.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
@@ -515,6 +520,9 @@ async def patch_user_resource(
         force_version_update: bool = False) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
     try:
         operation = await update_user_resource(user_resource, user_resource_patch, force_version_update, user, etag, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
         response.headers["Location"] = construct_location_header(operation)
@@ -540,6 +548,10 @@ async def invoke_action_on_user_resource(
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
+
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
     operation = await send_custom_action_message(
         resource=user_resource,
         resource_repo=user_resource_repo,

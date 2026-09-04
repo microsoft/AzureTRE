@@ -211,8 +211,13 @@ class DeploymentStatusUpdater():
                     if main_step:
                         try:
                             primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                            primary_resource.deploymentStatus = Status.DeletingFailed
-                            await self.resource_repo.update_item(primary_resource)
+                            primary_status = (
+                                Status.Deleted if main_step.is_success()
+                                else Status.DeletingFailed
+                            )
+                            if primary_resource.deploymentStatus != primary_status:
+                                primary_resource.deploymentStatus = primary_status
+                                await self.resource_repo.update_item(primary_resource)
                         except EntityDoesNotExist:
                             pass
                     await self.update_overall_operation_status(operation, step_to_update, is_last_step)
@@ -240,8 +245,13 @@ class DeploymentStatusUpdater():
                         if main_step:
                             try:
                                 primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                                primary_resource.deploymentStatus = Status.DeletingFailed
-                                await self.resource_repo.update_item(primary_resource)
+                                primary_status = (
+                                    Status.Deleted if main_step.is_success()
+                                    else Status.DeletingFailed
+                                )
+                                if primary_resource.deploymentStatus != primary_status:
+                                    primary_resource.deploymentStatus = primary_status
+                                    await self.resource_repo.update_item(primary_resource)
                             except EntityDoesNotExist:
                                 pass
                         await self.update_overall_operation_status(operation, step_to_update, is_last_step)
@@ -476,11 +486,9 @@ class DeploymentStatusUpdater():
                     next_step.message = f"Terminal address space conflict: {e}"
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step=True)
-                    await self.operations_repo.update_item(operation)
                     # Preserve the primary resource's status based on what the main step actually achieved.
-                    # If the main uninstall step succeeded the service is Deleted; only the address-space
-                    # cleanup step failed.  Forcing DeletingFailed here would resurrect the service as
-                    # non-Deleted and cause ownership conflicts on every future operation.
+                    # Reconcile and persist the resource state BEFORE saving the terminal operation so that
+                    # transient failures cause message retry without stranding the resource in DeletingFailed.
                     main_step = next(
                         (op_step for op_step in operation.steps
                          if op_step.templateStepId == "main"
@@ -501,6 +509,7 @@ class DeploymentStatusUpdater():
                                 await self.resource_repo.update_item(primary_resource)
                         except EntityDoesNotExist:
                             pass
+                    await self.operations_repo.update_item(operation)
                     return True
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
@@ -509,7 +518,6 @@ class DeploymentStatusUpdater():
                             next_step.message = f"Failed to enqueue address space cleanup after {MAX_CLEANUP_DELIVERY_COUNT} deliveries: {e}"
                             next_step.status = Status.UpdatingFailed
                             await self.update_overall_operation_status(operation, next_step, is_last_step=True)
-                            await self.operations_repo.update_item(operation)
                             main_step = next(
                                 (op_step for op_step in operation.steps
                                  if op_step.templateStepId == "main"
@@ -529,6 +537,7 @@ class DeploymentStatusUpdater():
                                         await self.resource_repo.update_item(primary_resource)
                                 except EntityDoesNotExist:
                                     pass
+                            await self.operations_repo.update_item(operation)
                             return True
                         else:
                             next_step.status = Status.AwaitingUpdate
@@ -718,8 +727,17 @@ class DeploymentStatusUpdater():
         if operation.resourceId:
             try:
                 primary = await self.resource_repo.get_resource_by_id(uuid.UUID(str(operation.resourceId)))
-                if primary.deploymentStatus != operation.status:
-                    primary.deploymentStatus = operation.status
+                main_step = next(
+                    (op_step for op_step in (operation.steps or [])
+                     if op_step.templateStepId == "main" and op_step.resourceId == operation.resourceId),
+                    None
+                )
+                target_status = (
+                    Status.Deleted if (operation.action == RequestAction.UnInstall and main_step and main_step.is_success())
+                    else operation.status
+                )
+                if primary.deploymentStatus != target_status:
+                    primary.deploymentStatus = target_status
                     await self.resource_repo.update_item(primary)
             except (EntityDoesNotExist, ValueError):
                 pass
@@ -879,8 +897,12 @@ class DeploymentStatusUpdater():
             if main_step:
                 try:
                     primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                    if primary_resource.deploymentStatus != operation.status:
-                        primary_resource.deploymentStatus = operation.status
+                    primary_status = (
+                        Status.Deleted if main_step.is_success()
+                        else Status.DeletingFailed
+                    )
+                    if primary_resource.deploymentStatus != primary_status:
+                        primary_resource.deploymentStatus = primary_status
                         await self.resource_repo.update_item(primary_resource)
                 except EntityDoesNotExist:
                     pass
@@ -903,8 +925,13 @@ class DeploymentStatusUpdater():
             if main_step:
                 try:
                     primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                    primary_resource.deploymentStatus = operation.status
-                    await self.resource_repo.update_item(primary_resource)
+                    primary_status = (
+                        Status.Deleted if (operation.action == RequestAction.UnInstall and main_step.is_success())
+                        else operation.status
+                    )
+                    if primary_resource.deploymentStatus != primary_status:
+                        primary_resource.deploymentStatus = primary_status
+                        await self.resource_repo.update_item(primary_resource)
                 except EntityDoesNotExist:
                     pass
 

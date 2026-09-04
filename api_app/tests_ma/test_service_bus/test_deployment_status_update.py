@@ -1412,7 +1412,7 @@ async def test_terminal_address_space_conflict_marks_operation_and_resource_fail
     assert step2.status == Status.UpdatingFailed
     assert "Terminal address space conflict" in step2.message
     assert operation.status == Status.DeletingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
     assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
 
 
@@ -1739,7 +1739,7 @@ async def test_cleanup_failure_on_final_delivery_marks_failed_and_completes_mess
     assert step2.status == Status.UpdatingFailed
     assert "delivery attempts" in step2.message
     assert operation.status == Status.DeletingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
     assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
 
 
@@ -2012,7 +2012,7 @@ async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send
 
     workspace_service_mock = MagicMock()
     workspace_service_mock.id = workspace_service_id
-    workspace_service_mock.deploymentStatus = Status.DeletingFailed
+    workspace_service_mock.deploymentStatus = Status.Deleted
 
     status_updater = DeploymentStatusUpdater()
     status_updater.operations_repo = AsyncMock()
@@ -2043,7 +2043,7 @@ async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send
     assert result is True
     assert operation.status == Status.DeletingFailed
     assert step2.status == Status.UpdatingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
     status_updater.operations_repo.update_item.assert_not_called()
     send_deployment_message_mock.assert_not_called()
 
@@ -2186,7 +2186,7 @@ async def test_cleanup_conflict_persists_workspace_and_primary_resource_before_o
 
     workspace_service_mock = MagicMock()
     workspace_service_mock.id = workspace_service_id
-    workspace_service_mock.deploymentStatus = Status.Deleted
+    workspace_service_mock.deploymentStatus = Status.Deleting
 
     parent_workspace_mock = MagicMock()
     parent_workspace_mock.id = parent_workspace_id
@@ -2230,6 +2230,7 @@ async def test_cleanup_conflict_persists_workspace_and_primary_resource_before_o
 
     assert result is True
     assert operation.status == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
 
     op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
     assert len(op_update_calls) == 1
@@ -2278,7 +2279,7 @@ async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_be
 
     workspace_service_mock = MagicMock()
     workspace_service_mock.id = workspace_service_id
-    workspace_service_mock.deploymentStatus = Status.Deleted
+    workspace_service_mock.deploymentStatus = Status.Deleting
 
     parent_workspace_mock = MagicMock()
     parent_workspace_mock.id = parent_workspace_id
@@ -2322,6 +2323,7 @@ async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_be
 
     assert result is True
     assert operation.status == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
 
     op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
     assert len(op_update_calls) == 1
@@ -2773,7 +2775,7 @@ async def test_cleanup_failure_in_get_address_cleanup_details_on_final_delivery_
     assert step2.status == Status.UpdatingFailed
     assert "delivery attempts" in step2.message
     assert operation.status == Status.DeletingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
     assert parent_workspace_mock.deploymentStatus == Status.UpdatingFailed
 
 

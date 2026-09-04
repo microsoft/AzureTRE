@@ -9,6 +9,8 @@ from models.domain.authentication import User
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
 from models.domain.operation import Operation, get_failure_status_for_action
+from resources import strings
+from fastapi import HTTPException, status
 
 from db.repositories.operations import OperationRepository
 from services.logging import logger, tracer
@@ -25,6 +27,14 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     with tracer.start_as_current_span("send_resource_request_message") as current_span:
         current_span.set_attribute("resource_id", resource.id)
         current_span.set_attribute("action", action)
+
+        target_workspace_id = getattr(resource, "workspaceId", None)
+        if target_workspace_id and hasattr(operations_repo, "resource_has_active_operation"):
+            active_op_check = operations_repo.resource_has_active_operation(target_workspace_id)
+            if hasattr(active_op_check, "__await__"):
+                is_active = await active_op_check
+                if is_active is True:
+                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
         #  Construct the resources to build an operation item for
         resources_list = []
