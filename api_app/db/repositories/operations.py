@@ -3,6 +3,9 @@ import uuid
 from typing import List, Optional
 
 from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError
+from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosAccessConditionFailedError
+from fastapi import HTTPException, status as http_status
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -15,6 +18,14 @@ from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status
+
+
+def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
+    if resource_path and resource_path.startswith("/workspaces/"):
+        parts = resource_path.split("/")
+        if len(parts) > 2:
+            return parts[2]
+    return None
 
 
 class OperationRepository(BaseRepository):
@@ -51,7 +62,81 @@ class OperationRepository(BaseRepository):
             if isinstance(response, dict) and "_etag" in response:
                 new_etag = response["_etag"]
                 item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+
+        active_statuses = (
+            Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
+            Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
+            Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
+        )
+        if item.status not in active_statuses:
+            target_workspace_id = extract_workspace_id_from_resource_path(item.resourcePath)
+            if target_workspace_id:
+                await self.release_workspace_lease(target_workspace_id, item.id)
+
         return item
+
+    async def acquire_workspace_lease(self, workspace_id: str, operation_id: str) -> bool:
+        if not hasattr(self, "_container") or self._container is None:
+            return True
+
+        if hasattr(self, "resource_has_active_operation"):
+            check = self.resource_has_active_operation(workspace_id)
+            if hasattr(check, "__await__"):
+                is_active = await check
+                if is_active is True:
+                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+        lease_id = f"lease_{workspace_id}"
+        timestamp = self.get_timestamp()
+        lease_body = {
+            "id": lease_id,
+            "workspaceId": workspace_id,
+            "operationId": operation_id,
+            "createdWhen": timestamp,
+        }
+
+        try:
+            await self.container.create_item(body=lease_body)
+            return True
+        except (CosmosResourceExistsError, ResourceExistsError):
+            try:
+                existing_lease = await self.read_item_by_id(lease_id)
+                current_op_id = existing_lease.get("operationId")
+                lease_created = existing_lease.get("createdWhen", 0.0)
+
+                if current_op_id != operation_id:
+                    is_active = False
+                    if hasattr(self, "resource_has_active_operation"):
+                        active_check = self.resource_has_active_operation(workspace_id)
+                        if hasattr(active_check, "__await__"):
+                            is_active = (await active_check) is True
+                    if (timestamp - lease_created < 60.0) or is_active:
+                        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+                etag = existing_lease.get("_etag")
+                if etag:
+                    await self.container.replace_item(
+                        item=lease_id,
+                        body=lease_body,
+                        etag=etag,
+                        match_condition=MatchConditions.IfNotModified
+                    )
+                else:
+                    await self.container.upsert_item(body=lease_body)
+                return True
+            except (CosmosAccessConditionFailedError, ResourceExistsError):
+                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+    async def release_workspace_lease(self, workspace_id: str, operation_id: Optional[str] = None) -> None:
+        if not hasattr(self, "_container") or self._container is None:
+            return
+        lease_id = f"lease_{workspace_id}"
+        try:
+            existing_lease = await self.read_item_by_id(lease_id)
+            if not operation_id or existing_lease.get("operationId") == operation_id:
+                await self.delete_item(lease_id)
+        except Exception:
+            pass
 
     @staticmethod
     def operations_query():
@@ -82,54 +167,63 @@ class OperationRepository(BaseRepository):
     async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
         operation_id = self.create_operation_id()
 
-        # get the right "awaiting" message based on the action
-        status, message = self.get_initial_status(action)
-        all_steps = []
-        for resource in resource_list:
-            name = resource["templateName"]
-            version = resource["templateVersion"]
-            resource_type = ResourceType(resource["resourceType"])
-            primary_parent_service_name = None
-            if resource_type == ResourceType.UserResource:
-                primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
-                primary_parent_service_name = primary_parent_workspace_service.templateName
-            resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
-            resource_template_dict = resource_template.model_dump(exclude_none=True)
-            # if the template has a pipeline defined for this action, copy over all the steps to the ops document
-            steps = await self.build_step_list(
-                steps=[],
-                resource_template_dict=resource_template_dict,
-                action=action,
-                resource_repo=resource_repo,
-                resource_id=resource["id"],
+        target_workspace_id = extract_workspace_id_from_resource_path(resource_path)
+        if target_workspace_id:
+            await self.acquire_workspace_lease(target_workspace_id, operation_id)
+
+        try:
+            # get the right "awaiting" message based on the action
+            status, message = self.get_initial_status(action)
+            all_steps = []
+            for resource in resource_list:
+                name = resource["templateName"]
+                version = resource["templateVersion"]
+                resource_type = ResourceType(resource["resourceType"])
+                primary_parent_service_name = None
+                if resource_type == ResourceType.UserResource:
+                    primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
+                    primary_parent_service_name = primary_parent_workspace_service.templateName
+                resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
+                resource_template_dict = resource_template.model_dump(exclude_none=True)
+                # if the template has a pipeline defined for this action, copy over all the steps to the ops document
+                steps = await self.build_step_list(
+                    steps=[],
+                    resource_template_dict=resource_template_dict,
+                    action=action,
+                    resource_repo=resource_repo,
+                    resource_id=resource["id"],
+                    status=status,
+                    message=message,
+                    is_cascade_operation=resource["id"] != resource_id
+                )
+
+                # if no pipeline is defined for this action, create a main step only
+                if len(steps) == 0:
+                    all_steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource["id"], status=status, message=message))
+                else:
+                    all_steps.extend(steps)
+
+            timestamp = self.get_timestamp()
+            operation = Operation(
+                id=operation_id,
+                resourceId=resource_id,
+                resourcePath=resource_path,
+                resourceVersion=resource_version,
                 status=status,
+                createdWhen=timestamp,
+                updatedWhen=timestamp,
+                action=action,
                 message=message,
-                is_cascade_operation=resource["id"] != resource_id
+                user=user.model_dump(),
+                steps=all_steps
             )
 
-            # if no pipeline is defined for this action, create a main step only
-            if len(steps) == 0:
-                all_steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource["id"], status=status, message=message))
-            else:
-                all_steps.extend(steps)
-
-        timestamp = self.get_timestamp()
-        operation = Operation(
-            id=operation_id,
-            resourceId=resource_id,
-            resourcePath=resource_path,
-            resourceVersion=resource_version,
-            status=status,
-            createdWhen=timestamp,
-            updatedWhen=timestamp,
-            action=action,
-            message=message,
-            user=user.model_dump(),
-            steps=all_steps
-        )
-
-        await self.save_item(operation)
-        return operation
+            await self.save_item(operation)
+            return operation
+        except Exception:
+            if target_workspace_id:
+                await self.release_workspace_lease(target_workspace_id, operation_id)
+            raise
 
     async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str, is_cascade_operation: bool = False):
         if "pipeline" in resource_template_dict and resource_template_dict["pipeline"] is not None:

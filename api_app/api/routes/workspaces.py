@@ -281,14 +281,31 @@ async def create_workspace_service(response: Response, workspace_service_input: 
         except CosmosAccessConditionFailedError:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
-    operation = await save_and_deploy_resource(
-        resource=workspace_service,
-        resource_repo=workspace_service_repo,
-        operations_repo=operations_repo,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+    try:
+        operation = await save_and_deploy_resource(
+            resource=workspace_service,
+            resource_repo=workspace_service_repo,
+            operations_repo=operations_repo,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template)
+    except Exception:
+        if resource_template.properties.get("address_space") and workspace_service.properties.get("address_space"):
+            try:
+                latest_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+                current_spaces = latest_workspace.properties.get("address_spaces", [])
+                allocated_space = workspace_service.properties["address_space"]
+                if allocated_space in current_spaces:
+                    updated_spaces = [s for s in current_spaces if s != allocated_space]
+                    rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
+                    await workspace_repo.patch_workspace(
+                        latest_workspace, rollback_patch, latest_workspace.etag,
+                        resource_template_repo, resource_history_repo, user, False
+                    )
+            except Exception:
+                logger.exception("Failed to rollback allocated address space on workspace")
+        raise
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)

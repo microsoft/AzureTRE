@@ -5,7 +5,7 @@ from pydantic import Field
 import pytest
 from mock import patch
 
-from fastapi import status
+from fastapi import status, HTTPException
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_admin_user, create_test_user, create_workspace_owner_user, create_workspace_researcher_user
 
@@ -827,6 +827,40 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
+    @patch("api.routes.workspaces.save_and_deploy_resource", side_effect=HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION))
+    @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_rolls_back_address_space_if_deploy_fails(self, create_workspace_service_item_mock, _, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+        etag = "some-etag-value"
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        workspace.etag = etag
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"] = {"type": "string"}
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+        basic_resource_template.properties["address_spaces"] = {"type": "array", "updateable": True}
+        resource_template_repo.return_value = basic_resource_template
+
+        modified_workspace = sample_workspace()
+        modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
+        modified_workspace.etag = etag
+        update_item_mock.return_value = modified_workspace
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert update_item_mock.call_count == 2
+        rollback_call_workspace = update_item_mock.call_args_list[1][0][0]
+        assert rollback_call_workspace.properties["address_spaces"] == ["192.168.0.1/24"]
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)

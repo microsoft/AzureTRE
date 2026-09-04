@@ -209,3 +209,56 @@ async def test_update_item_raises_cosmos_access_condition_failed_error_on_mismat
     )
     with pytest.raises(CosmosAccessConditionFailedError):
         await operations_repo.update_item(op)
+
+
+async def test_acquire_workspace_lease_creates_item(operations_repo):
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(return_value={})
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+    operations_repo._container.create_item.assert_awaited_once()
+    body = operations_repo._container.create_item.call_args[1]["body"]
+    assert body["id"] == "lease_ws-1"
+    assert body["workspaceId"] == "ws-1"
+    assert body["operationId"] == "op-1"
+
+
+async def test_acquire_workspace_lease_raises_409_if_active_operation_exists(operations_repo):
+    from fastapi import HTTPException
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=True)
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert exc.value.status_code == 409
+
+
+async def test_acquire_workspace_lease_raises_409_if_recent_lease_exists(operations_repo):
+    from fastapi import HTTPException
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "other-op",
+        "createdWhen": operations_repo.get_timestamp(),
+    })
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert exc.value.status_code == 409
+
+
+async def test_release_workspace_lease_deletes_item(operations_repo):
+    operations_repo._container = MagicMock()
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "op-1"
+    })
+    operations_repo.delete_item = AsyncMock()
+
+    await operations_repo.release_workspace_lease("ws-1", "op-1")
+    operations_repo.delete_item.assert_awaited_once_with("lease_ws-1")
