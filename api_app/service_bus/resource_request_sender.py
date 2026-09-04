@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -14,7 +15,7 @@ from db.repositories.operations import OperationRepository
 from services.logging import logger, tracer
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False, operation_id: Optional[str] = None) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -42,7 +43,8 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             resource_version=resource.resourceVersion,
             user=user,
             resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo)
+            resource_template_repo=resource_template_repo,
+            operation_id=operation_id)
         current_span.set_attribute("operation_id", operation.id)
 
         try:

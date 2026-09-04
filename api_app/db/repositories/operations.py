@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from azure.core import MatchConditions
 from azure.core.exceptions import ResourceExistsError
-from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosAccessConditionFailedError
+from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosAccessConditionFailedError, CosmosResourceNotFoundError
 from fastapi import HTTPException, status as http_status
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -42,6 +42,18 @@ class OperationRepository(BaseRepository):
         if isinstance(response, dict) and "_etag" in response:
             new_etag = response["_etag"]
             item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+
+    async def get_active_operations_for_resource(self, resource_id: str) -> List[Operation]:
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND NOT ARRAY_CONTAINS(["deployed", "deleted", "updated", "invoking_action_failed"], c.status)'
+        operations = await self.query(query=query)
+        return [TypeAdapter(Operation).validate_python(op) for op in operations]
+
+    async def get_last_operation_for_resource(self, resource_id: str) -> Operation:
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" ORDER BY c.createdWhen DESC OFFSET 0 LIMIT 1'
+        operations = await self.query(query=query)
+        if not operations:
+            raise EntityDoesNotExist
+        return TypeAdapter(Operation).validate_python(operations[0])
 
     async def update_item(self, item: Operation, etag: Optional[str] = None) -> Operation:
         etag_to_match = etag or getattr(item, "etag", None)
@@ -83,8 +95,10 @@ class OperationRepository(BaseRepository):
             check = self.resource_has_active_operation(workspace_id)
             if hasattr(check, "__await__"):
                 is_active = await check
-                if is_active is True:
-                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+            else:
+                is_active = check
+            if is_active is True:
+                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
         lease_id = f"lease_{workspace_id}"
         timestamp = self.get_timestamp()
@@ -96,33 +110,54 @@ class OperationRepository(BaseRepository):
         }
 
         try:
-            await self.container.create_item(body=lease_body)
+            create_call = self.container.create_item(body=lease_body)
+            if hasattr(create_call, "__await__"):
+                await create_call
             return True
         except (CosmosResourceExistsError, ResourceExistsError):
             try:
-                existing_lease = await self.read_item_by_id(lease_id)
-                current_op_id = existing_lease.get("operationId")
-                lease_created = existing_lease.get("createdWhen", 0.0)
+                read_call = self.read_item_by_id(lease_id)
+                existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+                current_op_id = existing_lease.get("operationId") if isinstance(existing_lease, dict) else None
 
-                if current_op_id != operation_id:
-                    is_active = False
-                    if hasattr(self, "resource_has_active_operation"):
-                        active_check = self.resource_has_active_operation(workspace_id)
-                        if hasattr(active_check, "__await__"):
-                            is_active = (await active_check) is True
-                    if (timestamp - lease_created < 60.0) or is_active:
+                if current_op_id == operation_id:
+                    return True
+
+                if current_op_id:
+                    try:
+                        op_call = self.get_operation_by_id(current_op_id)
+                        existing_op = await op_call if hasattr(op_call, "__await__") else op_call
+                        terminal_statuses = {
+                            Status.Deployed,
+                            Status.DeploymentFailed,
+                            Status.Deleted,
+                            Status.DeletingFailed,
+                            Status.Updated,
+                            Status.UpdatingFailed,
+                            Status.ActionSucceeded,
+                            Status.ActionFailed,
+                        }
+                        if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
+                            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                    except (EntityDoesNotExist, CosmosResourceNotFoundError):
+                        # Operation doc not written yet (still constructing cascade/operation).
+                        # Keep ownership until explicit release!
                         raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
-                etag = existing_lease.get("_etag")
+                etag = existing_lease.get("_etag") if isinstance(existing_lease, dict) else None
                 if etag:
-                    await self.container.replace_item(
+                    rep_call = self.container.replace_item(
                         item=lease_id,
                         body=lease_body,
                         etag=etag,
                         match_condition=MatchConditions.IfNotModified
                     )
+                    if hasattr(rep_call, "__await__"):
+                        await rep_call
                 else:
-                    await self.container.upsert_item(body=lease_body)
+                    up_call = self.container.upsert_item(body=lease_body)
+                    if hasattr(up_call, "__await__"):
+                        await up_call
                 return True
             except (CosmosAccessConditionFailedError, ResourceExistsError):
                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
@@ -132,9 +167,12 @@ class OperationRepository(BaseRepository):
             return
         lease_id = f"lease_{workspace_id}"
         try:
-            existing_lease = await self.read_item_by_id(lease_id)
-            if not operation_id or existing_lease.get("operationId") == operation_id:
-                await self.delete_item(lease_id)
+            read_call = self.read_item_by_id(lease_id)
+            existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+            if isinstance(existing_lease, dict) and (not operation_id or existing_lease.get("operationId") == operation_id):
+                del_call = self.delete_item(lease_id)
+                if hasattr(del_call, "__await__"):
+                    await del_call
         except Exception:
             pass
 
@@ -164,8 +202,9 @@ class OperationRepository(BaseRepository):
             message=message,
             updatedWhen=self.get_timestamp())
 
-    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
-        operation_id = self.create_operation_id()
+    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, operation_id: Optional[str] = None) -> Operation:
+        if not operation_id:
+            operation_id = self.create_operation_id()
 
         target_workspace_id = extract_workspace_id_from_resource_path(resource_path)
         if target_workspace_id:

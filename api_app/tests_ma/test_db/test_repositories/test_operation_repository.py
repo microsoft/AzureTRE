@@ -9,6 +9,7 @@ from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
+from db.errors import EntityDoesNotExist
 from resources import strings
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 
@@ -235,7 +236,7 @@ async def test_acquire_workspace_lease_raises_409_if_active_operation_exists(ope
     assert exc.value.status_code == 409
 
 
-async def test_acquire_workspace_lease_raises_409_if_recent_lease_exists(operations_repo):
+async def test_acquire_workspace_lease_raises_409_if_existing_lease_operation_not_found(operations_repo):
     from fastapi import HTTPException
     from azure.cosmos.exceptions import CosmosResourceExistsError
     operations_repo._container = MagicMock()
@@ -246,10 +247,45 @@ async def test_acquire_workspace_lease_raises_409_if_recent_lease_exists(operati
         "operationId": "other-op",
         "createdWhen": operations_repo.get_timestamp(),
     })
+    operations_repo.get_operation_by_id = AsyncMock(side_effect=EntityDoesNotExist())
 
     with pytest.raises(HTTPException) as exc:
         await operations_repo.acquire_workspace_lease("ws-1", "op-1")
     assert exc.value.status_code == 409
+
+
+async def test_acquire_workspace_lease_succeeds_if_same_operation_holds_lease(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "op-1",
+        "createdWhen": operations_repo.get_timestamp(),
+    })
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+
+
+async def test_acquire_workspace_lease_replaces_lease_if_previous_operation_terminal(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "other-op",
+        "createdWhen": operations_repo.get_timestamp() - 1000,
+        "_etag": "old-etag",
+    })
+    operations_repo.get_operation_by_id = AsyncMock(return_value=MagicMock(status=Status.Deployed))
+    operations_repo._container.replace_item = AsyncMock(return_value={})
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+    operations_repo._container.replace_item.assert_awaited_once()
 
 
 async def test_release_workspace_lease_deletes_item(operations_repo):

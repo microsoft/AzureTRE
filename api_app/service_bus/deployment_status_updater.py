@@ -620,8 +620,20 @@ class DeploymentStatusUpdater():
                     if operation.resourceId and operation.resourceId != str(message.id):
                         try:
                             primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(operation.resourceId))
-                            primary_resource.deploymentStatus = failure_status
-                            await self.resource_repo.update_item(primary_resource)
+                            main_step = next(
+                                (op_step for op_step in operation.steps
+                                 if op_step.templateStepId == "main"
+                                 and op_step.resourceId == operation.resourceId),
+                                None
+                            )
+                            primary_status = (
+                                Status.Deleted
+                                if (operation.action == RequestAction.UnInstall and main_step and main_step.is_success())
+                                else failure_status
+                            )
+                            if primary_resource.deploymentStatus != primary_status:
+                                primary_resource.deploymentStatus = primary_status
+                                await self.resource_repo.update_item(primary_resource)
                         except Exception:
                             pass
                     await self.operations_repo.update_item(operation)

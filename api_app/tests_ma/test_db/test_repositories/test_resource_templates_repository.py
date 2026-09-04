@@ -318,6 +318,9 @@ async def test_create_template_with_null_pipeline_creates_template_without_pipel
         {
             "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
         },
+        {
+            "uninstall": [{"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+        },
     ],
 )
 async def test_create_template_with_invalid_address_space_cleanup_pipeline_fails(resource_template_repo, input_workspace_service_template, pipeline):
