@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-user-resource-aml-compute-instance
-version: 0.5.12
+version: 0.5.13
 description: "Azure Machine Learning Compute Instance"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -17,6 +17,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: id

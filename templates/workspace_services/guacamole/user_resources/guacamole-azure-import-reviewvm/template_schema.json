@@ -10,7 +10,6 @@
   ],
   "properties": {
     "os_image": {
-      "$id": "#/properties/os_image",
       "type": "string",
       "title": "Windows image",
       "description": "Select Windows image to use for VM",
@@ -19,7 +18,6 @@
       ]
     },
     "vm_size": {
-      "$id": "#/properties/vm_size",
       "type": "string",
       "title": "VM Size",
       "description": "Select size of VM",
@@ -29,7 +27,6 @@
       "updateable": true
     },
     "airlock_request_sas_url": {
-      "$id": "#/properties/airlock_request_sas_url",
       "type": "string",
       "title": "Airlock request SAS Token",
       "description": "SAS Token for airlock request",
