@@ -160,6 +160,20 @@ class DeploymentStatusUpdater():
 
             resource_id = uuid.UUID(step_to_update.resourceId)
 
+            # If address space cleanup for this operation has already completed,
+            # do not reopen the operation or re-enqueue cleanup on redelivered main-step messages.
+            if (
+                step_to_update.templateStepId == "main"
+                and step_to_update.is_success()
+                and operation.action == RequestAction.UnInstall
+                and self._is_cleanup_completed(operation)
+            ):
+                logger.info(
+                    f"Address space cleanup already completed for operation {operation.id}. "
+                    f"Skipping redelivery of step {message.stepId} to prevent reopening operation."
+                )
+                return True
+
             # If this is the main step of an uninstall succeeding for a workspace service with an address space,
             # ensure the trailing workspace upgrade fallback step is appended BEFORE calculating
             # and persisting the main step's overall status. This ensures is_last_step is False
@@ -291,6 +305,17 @@ class DeploymentStatusUpdater():
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
                     if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        if (
+                            self._is_cleanup_completed(operation)
+                            or next_step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+                            or next_step.status == Status.Updating
+                        ):
+                            logger.info(
+                                f"Address space cleanup step {next_step.id} in operation {operation.id} "
+                                f"is already completed or in progress. Skipping enqueue."
+                            )
+                            return True
+
                         workspace = await self.workspace_repo.get_workspace_by_id(next_step.resourceId)
                         resource_to_send = copy.deepcopy(workspace)
                         cleanup_details = await self._get_address_cleanup_details(operation)
@@ -403,6 +428,16 @@ class DeploymentStatusUpdater():
             for step in operation.steps[current_step_index + 1:]
         )
 
+    def _is_cleanup_completed(self, operation: Operation) -> bool:
+        for step in operation.steps:
+            if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                if step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS:
+                    return True
+        if operation.action == RequestAction.UnInstall and operation.status == Status.Deleted:
+            if any(step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID for step in operation.steps):
+                return True
+        return False
+
     def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
         return OperationStep(
             id=str(uuid.uuid4()),
@@ -448,9 +483,8 @@ class DeploymentStatusUpdater():
         address_to_free, parent_workspace_id, resource_id, service_dict = cleanup_details
 
         # Check if cleanup for this step was already completed (idempotency on redelivery)
-        for step in operation.steps:
-            if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS:
-                return True
+        if self._is_cleanup_completed(operation):
+            return True
 
         # Check if the uninstalled service already has the address_space_freed marker
         if service_dict.get("properties", {}).get("address_space_freed"):
@@ -517,6 +551,12 @@ class DeploymentStatusUpdater():
         if len(operation.steps) == 1:
             operation.status = step.status
             operation.message = step.message
+            return
+
+        # If address space cleanup has completed for an uninstall, do not reopen to PipelineRunning
+        if self._is_cleanup_completed(operation) and operation.action == RequestAction.UnInstall:
+            operation.status = Status.Deleted
+            operation.message = "Multi step pipeline completed successfully"
             return
 
         operation.status = Status.PipelineRunning
