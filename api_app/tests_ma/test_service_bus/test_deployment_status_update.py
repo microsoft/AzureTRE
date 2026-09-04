@@ -2453,6 +2453,7 @@ async def test_cleanup_dispatch_uses_deterministic_message_id(send_deployment_me
     cleanup_step = operation.steps[1]
     assert cleanup_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
     assert status_before_send == Status.AwaitingUpdate
+    assert cleanup_step.status == Status.Updating
 
     send_deployment_message_mock.assert_called_once()
     assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step.id}"
@@ -2526,6 +2527,12 @@ async def test_redelivered_main_status_before_updating_dispatches_with_same_dete
     assert result is True
     send_deployment_message_mock.assert_called_once()
     assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step_id}"
+    assert step2.status == Status.Updating
+
+    # Subsequent redelivery of main status message skips enqueueing because step2 is now Updating
+    result2 = await status_updater.update_status_in_database(redelivered_main_message)
+    assert result2 is True
+    send_deployment_message_mock.assert_called_once()
 
 
 @patch('service_bus.helpers._send_message')

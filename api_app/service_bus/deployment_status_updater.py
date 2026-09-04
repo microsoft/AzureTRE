@@ -380,6 +380,10 @@ class DeploymentStatusUpdater():
                         action=next_step.resourceAction,
                         message_id=step_message_id,
                     )
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        next_step.status = Status.Updating
+                        next_step.updatedWhen = get_timestamp()
+                        await self.operations_repo.update_item(operation)
                 except AddressSpaceConflictError as e:
                     logger.error(f"[ADDRESS_SPACE_CONFLICT] {e}")
                     next_step.message = f"Terminal address space conflict: {e}"
