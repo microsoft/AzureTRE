@@ -1775,8 +1775,9 @@ async def test_cleanup_failure_on_final_delivery_marks_failed_and_completes_mess
     (0, False),
     (1, False),
     (8, False),
-    (9, True),
+    (9, False),
     (10, True),
+    (11, True),
     (None, False),
 ])
 async def test_process_message_delivery_count_handling(delivery_count, expected_final):

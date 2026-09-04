@@ -96,7 +96,7 @@ Use `address-space-cleanup` as the `stepId` for a trailing workspace upgrade tha
 }
 ```
 
-This identifier is reserved for that cleanup behavior and may be used by multiple templates. Step IDs only need to be unique within a single template's pipeline.
+This identifier is reserved for that cleanup behavior and is only permitted as the final step in a `workspace-service` `uninstall` pipeline. Step IDs only need to be unique within a single template's pipeline.
 
 ## Notes
 - Each step is executed in serial, in the order defined in the template
