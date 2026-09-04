@@ -800,6 +800,8 @@ async def test_workspace_service_uninstall_logs_error_after_max_retries(
 
     status_updater = DeploymentStatusUpdater()
     await status_updater.init_repos()
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     # The uninstall message is complete; cleanup is deferred to the upgrade step.
@@ -989,6 +991,8 @@ async def test_workspace_service_uninstall_defers_address_space_cleanup_until_wo
 
     status_updater = DeploymentStatusUpdater()
     await status_updater.init_repos()
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
