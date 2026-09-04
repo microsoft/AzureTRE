@@ -8,6 +8,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+* Fix API resource update retries so a successful retry returns the patched resource to the original caller. ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
