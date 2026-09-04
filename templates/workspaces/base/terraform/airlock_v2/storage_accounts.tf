@@ -48,6 +48,9 @@ resource "azurerm_private_dns_a_record" "airlock_workspace_global" {
   resource_group_name = var.ws_resource_group_name
   ttl                 = 10
   records             = [azurerm_private_endpoint.airlock_workspace_pe.private_service_connection[0].private_ip_address]
+  tags                = var.tre_workspace_tags
+
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_role_assignment" "api_workspace_global_blob_data_contributor" {
