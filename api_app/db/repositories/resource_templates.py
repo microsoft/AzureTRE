@@ -206,6 +206,8 @@ class ResourceTemplateRepository(BaseRepository):
                     if (step.get("resourceType") != ResourceType.Workspace
                             or step.get("resourceAction") != RequestAction.Upgrade):
                         raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' must upgrade a workspace")
+                    if not step.get("stepTitle") or not str(step.get("stepTitle")).strip():
+                        raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' requires a non-empty 'stepTitle'")
 
                 if step_id != "main":
                     step_ids.append(step_id)

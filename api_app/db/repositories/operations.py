@@ -52,7 +52,18 @@ class OperationRepository(BaseRepository):
             item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
 
     async def get_active_operations_for_resource(self, resource_id: str) -> List[Operation]:
-        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND NOT ARRAY_CONTAINS(["deployed", "deleted", "updated", "invoking_action_failed"], c.status)'
+        terminal_statuses = (
+            Status.Deployed,
+            Status.DeploymentFailed,
+            Status.Updated,
+            Status.UpdatingFailed,
+            Status.Deleted,
+            Status.DeletingFailed,
+            Status.ActionSucceeded,
+            Status.ActionFailed,
+        )
+        status_filter = ", ".join(f'\"{s}\"' for s in terminal_statuses)
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND NOT ARRAY_CONTAINS([{status_filter}], c.status)'
         operations = await self.query(query=query)
         return [TypeAdapter(Operation).validate_python(op) for op in operations]
 
@@ -341,7 +352,7 @@ class OperationRepository(BaseRepository):
                         steps.append(OperationStep(
                             id=str(uuid.uuid4()),
                             templateStepId=step["stepId"],
-                            stepTitle=step["stepTitle"],
+                            stepTitle=step.get("stepTitle"),
                             resourceId=resource_for_step.id,
                             resourceTemplateName=resource_for_step.templateName,
                             resourceType=resource_for_step.resourceType,

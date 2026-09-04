@@ -440,3 +440,46 @@ async def test_resource_has_active_operation_fails_closed_when_reconciliation_fa
 
     result = await operations_repo.resource_has_active_operation(workspace_id)
     assert result is True
+
+
+async def test_get_active_operations_for_resource_excludes_terminal_statuses(operations_repo):
+    operations_repo.query = AsyncMock(return_value=[])
+
+    await operations_repo.get_active_operations_for_resource("res-1")
+    operations_repo.query.assert_awaited_once()
+    query_str = operations_repo.query.call_args[1]["query"]
+    assert 'c.resourceId = "res-1"' in query_str
+    assert 'NOT ARRAY_CONTAINS(["deployed", "deployment_failed", "updated", "updating_failed", "deleted", "deleting_failed", "action_succeeded", "action_failed"], c.status)' in query_str
+
+
+async def test_build_step_list_tolerates_missing_step_title(operations_repo):
+    ws_id = str(uuid.uuid4())
+    svc_id = str(uuid.uuid4())
+    resource_template_dict = {
+        "pipeline": {
+            "upgrade": [
+                {
+                    "stepId": "step-1",
+                    "resourceType": ResourceType.Workspace,
+                    "resourceAction": RequestAction.Upgrade,
+                }
+            ]
+        }
+    }
+    mock_resource_repo = MagicMock()
+    mock_workspace = MagicMock(id=ws_id, templateName="tre-workspace", resourceType=ResourceType.Workspace)
+    mock_service = MagicMock(id=svc_id, workspaceId=ws_id, resourceType=ResourceType.WorkspaceService)
+    mock_resource_repo.get_resource_by_id = AsyncMock(side_effect=[mock_service, mock_workspace])
+
+    steps = await operations_repo.build_step_list(
+        steps=[],
+        resource_template_dict=resource_template_dict,
+        action="upgrade",
+        resource_repo=mock_resource_repo,
+        resource_id=svc_id,
+        status=Status.AwaitingUpdate,
+        message="updating",
+    )
+    assert len(steps) == 1
+    assert steps[0].stepTitle is None
+    assert steps[0].templateStepId == "step-1"

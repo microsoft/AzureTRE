@@ -319,7 +319,10 @@ async def test_create_template_with_null_pipeline_creates_template_without_pipel
             "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
         },
         {
-            "uninstall": [{"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade, "stepTitle": ""}],
         },
     ],
 )
@@ -343,6 +346,7 @@ async def test_create_template_with_address_space_cleanup_on_non_workspace_servi
             {"stepId": "main"},
             {
                 "stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                "stepTitle": "Cleanup address space",
                 "resourceType": ResourceType.Workspace,
                 "resourceAction": RequestAction.Upgrade,
             },
@@ -359,6 +363,7 @@ async def test_create_template_with_valid_address_space_cleanup_as_final_uninsta
             {"stepId": "main"},
             {
                 "stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                "stepTitle": "Cleanup address space",
                 "resourceType": ResourceType.Workspace,
                 "resourceAction": RequestAction.Upgrade,
             },
