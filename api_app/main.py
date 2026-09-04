@@ -38,6 +38,9 @@ class BackgroundTaskManager:
         return list(self._tasks)
 
 
+SHUTDOWN_TIMEOUT = 10.0
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.background_tasks = BackgroundTaskManager()
@@ -96,22 +99,26 @@ async def lifespan(app: FastAPI):
             task.cancel()
 
         if tasks:
-            try:
-                results = await asyncio.wait_for(
-                    asyncio.gather(*tasks, return_exceptions=True),
-                    timeout=10.0
-                )
-                for task, result in zip(tasks, results):
-                    if isinstance(result, BaseException) and not isinstance(result, asyncio.CancelledError):
-                        logger.warning(
-                            f"Background task {task.get_name()} raised exception during shutdown: {result}",
-                            exc_info=(type(result), result, result.__traceback__)
-                        )
-            except asyncio.TimeoutError:
+            done, pending = await asyncio.wait(tasks, timeout=SHUTDOWN_TIMEOUT)
+            for task in done:
+                if task.cancelled():
+                    continue
+
+                try:
+                    exception = task.exception()
+                except asyncio.CancelledError:
+                    continue
+
+                if exception is not None:
+                    logger.warning(
+                        f"Background task {task.get_name()} raised exception during shutdown: {exception}",
+                        exc_info=(type(exception), exception, exception.__traceback__)
+                    )
+
+            if pending:
                 logger.error("Timeout waiting for background tasks to shutdown")
-                pending = [t for t in tasks if not t.done()]
-                for t in pending:
-                    logger.warning(f"Task {t.get_name()} did not terminate in time during shutdown")
+                for task in pending:
+                    logger.warning(f"Task {task.get_name()} did not terminate in time during shutdown")
 
 
 def get_application() -> FastAPI:
