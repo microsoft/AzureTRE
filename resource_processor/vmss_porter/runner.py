@@ -110,7 +110,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
                         try:
                             message = json.loads(str(msg))
-                        except json.JSONDecodeError as e:
+                        except (json.JSONDecodeError, UnicodeDecodeError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
                             try:
                                 await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))

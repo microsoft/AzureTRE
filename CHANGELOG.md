@@ -10,8 +10,7 @@ BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
-BUG FIXES:
-* Fix to enhance service bus handling of invalid JSON in receive_message function ([#4932](https://github.com/microsoft/AzureTRE/pull/4932))
+* Dead-letter malformed Service Bus resource-request payloads instead of retrying them indefinitely. ([#4976](https://github.com/microsoft/AzureTRE/issues/4976))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
