@@ -338,6 +338,7 @@ def set_output_event_to_trigger_container_deletion(dataDeletionEvent, request_pr
 
 def get_request_files(request_properties: RequestProperties):
     use_metadata = request_properties.airlock_version >= 2
+    if use_metadata:
         storage_account_name = airlock_storage_helper.get_storage_account_name_for_request(request_properties.type, request_properties.previous_status)
         draft_container = airlock_storage_helper.get_container_name_for_request(request_properties.request_id, request_properties.previous_status)
         sealed_container = request_properties.request_id
@@ -350,6 +351,7 @@ def get_request_files(request_properties: RequestProperties):
             raise NoDataInRequestException(f'Request {request_properties.request_id}: neither the draft nor a valid sealed container exists, cannot enumerate request files')
     else:
         storage_account_name = get_storage_account(request_properties.previous_status, request_properties.type, request_properties.workspace_id)
+        container_name = None
     return blob_operations.get_request_files(account_name=storage_account_name, request_id=request_properties.request_id, container_name=container_name)
 
 

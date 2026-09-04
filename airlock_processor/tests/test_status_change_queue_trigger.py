@@ -1,7 +1,7 @@
 from json import JSONDecodeError
 import os
 import pytest
-from mock import MagicMock, patch
+from mock import MagicMock, call, patch
 
 from pydantic import ValidationError
 from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy, get_storage_account_destination_for_copy
@@ -321,13 +321,14 @@ class TestV2MetadataMode():
         assert data["new_status"] == constants.STAGE_IN_REVIEW
         assert data["request_files"] == [{"name": "test.txt", "size": 100}]
 
+    @patch("StatusChangedQueueTrigger.blob_operations.is_submission_sealed", return_value=True)
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: not container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_redelivered_submit_resumes_from_the_sealed_container(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
+    def test_v2_redelivered_submit_resumes_from_the_sealed_container(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, _):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -354,7 +355,10 @@ class TestV2MetadataMode():
 
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
 
-        mock_is_sealed.assert_called_once_with("stalairlocktre-id", "123")
+        assert mock_is_sealed.call_args_list == [
+            call("stalairlocktre-id", "123"),
+            call("stalairlocktre-id", "123"),
+        ]
         mock_copy.assert_not_called()
         mock_delete.assert_called_once_with("stalairlocktre-id", "123-draft")
         assert step_result.set.call_count == 1

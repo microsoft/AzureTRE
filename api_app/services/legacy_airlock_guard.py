@@ -31,12 +31,20 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     """Reject version changes while airlock requests are still in flight."""
     if not resource_patch.properties:
         return
+    current_version = workspace.properties.get("airlock_version", 1)
+    if current_version >= 2 and workspace.properties.get("enable_airlock", True) and resource_patch.properties.get("enable_airlock") is False:
+        # The v2 signer and its conditioned role assignment are needed to delete request containers
+        # retained in shared storage. Workspace deletion performs that cleanup before removing them.
+        logger.warning("Blocked Airlock disablement for v2 workspace %s", workspace.id)
+        raise ValueError(
+            "Cannot disable Airlock on an airlock_version=2 workspace because doing so would remove "
+            "the signer required to clean up request data. Delete the workspace to remove Airlock data safely."
+        )
     new_version = resource_patch.properties.get("airlock_version")
     if new_version is None:
         return
     if type(new_version) is not int or new_version not in (1, 2):
         raise ValueError("airlock_version must be an integer with a value of 1 or 2")
-    current_version = workspace.properties.get("airlock_version", 1)
     if new_version == current_version:
         return
 

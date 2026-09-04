@@ -30,6 +30,19 @@ async def test_ensure_airlock_version_change_allowed_noop_when_no_version_in_pat
 
 
 @pytest.mark.asyncio
+async def test_ensure_airlock_version_change_allowed_blocks_disabling_v2_airlock():
+    request_repo = AsyncMock()
+    workspace = _workspace(2)
+    workspace.properties["enable_airlock"] = True
+
+    with pytest.raises(ValueError, match="Cannot disable Airlock"):
+        await ensure_airlock_version_change_allowed(
+            workspace, ResourcePatch(properties={"enable_airlock": False}), request_repo)
+
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("invalid_version", ["2", 2.0, True, 0, 3])
 async def test_ensure_airlock_version_change_allowed_rejects_invalid_version(invalid_version):
     request_repo = AsyncMock()
