@@ -494,7 +494,7 @@ async def delete_review_user_resource(
     # disable might contain logic that we need to execute before the deletion of the resource
     disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
     if disable_op and hasattr(disable_op, "id"):
-        await wait_for_successful_operation(operations_repo, disable_op.id)
+        await wait_for_successful_operation(operations_repo, disable_op.id, timeout=30.0)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -557,8 +557,6 @@ async def delete_all_review_user_resources(
                     user=user
                 )
                 operations.append(operation)
-                if operation and hasattr(operation, "id"):
-                    await wait_for_successful_operation(operations_repo, operation.id)
                 break
             except EntityDoesNotExist:
                 logger.info(f"Review user resource {review_ur.userResourceId} already deleted or does not exist")

@@ -56,13 +56,14 @@ async def _rollback_address_space(workspace_repo, workspace_id, allocated_space,
                     latest_workspace, rollback_patch, latest_workspace.etag,
                     resource_template_repo, resource_history_repo, user, False
                 )
-            break
+            return
         except CosmosAccessConditionFailedError:
             if attempt == max_rollback_attempts - 1:
                 logger.exception("Failed to rollback allocated address space due to repeated ETag conflicts")
+                raise
         except Exception:
             logger.exception("Failed to rollback allocated address space on workspace")
-            break
+            raise
 
 
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
