@@ -13,6 +13,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Mark Airlock import-review workspaces as not exposing their own Airlock, allowing them to be created when legacy Airlock is disabled (`tre-workspace-airlock-import-review` 0.17.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Make v2 Airlock submission retries preserve an already sealed blob while recovering from failed or aborted copies, retain legacy import-review Terraform resource state, and reject malformed `airlock_version` patches with HTTP 400 (`airlock-processor` 0.8.33, API 0.27.29) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Derive a new workspace's `airlock_version` from its template rather than always defaulting to 2, so a workspace created from a legacy (pre-v2) template is correctly stamped `airlock_version=1` instead of being marked v2 while deploying v1 storage. The version guard now validates the resolved value, and the "missing means legacy (1)" default is applied consistently ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Remove incorrect Terraform `moved` blocks for the legacy airlock role assignments and Defender action, which already used `count` on `main` (moving an unindexed address to `[0]` was a no-op at best and misleading) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
