@@ -94,16 +94,20 @@ def airlock_request_mock(status=AirlockRequestStatus.Draft):
 
 
 def get_allowed_status_changes():
+    changes = []
     for current_status, allowed_new_statuses in ALLOWED_STATUS_CHANGES.items():
         for new_status in allowed_new_statuses:
-            yield current_status, new_status
+            changes.append((current_status, new_status))
+    return changes
 
 
 def get_forbidden_status_changes():
+    changes = []
     for current_status, allowed_new_statuses in ALLOWED_STATUS_CHANGES.items():
         forbidden_new_statuses = list(set(ALL_STATUSES) - set(allowed_new_statuses))
         for new_status in forbidden_new_statuses:
-            yield current_status, new_status
+            changes.append((current_status, new_status))
+    return changes
 
 
 async def test_get_airlock_request_by_id(airlock_request_repo):

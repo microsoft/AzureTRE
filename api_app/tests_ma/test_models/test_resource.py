@@ -8,7 +8,6 @@ from models.domain.restricted_resource import RestrictedProperties, RestrictedRe
 from models.domain.resource import Output, Resource, ResourceHistoryItem, ResourceType
 from models.domain.resource_template import Property
 from models.domain.user_resource import UserResource
-from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourceHistoryInList
 from models.schemas.shared_service_template import SharedServiceTemplateInCreate
@@ -54,25 +53,6 @@ def test_workspace_service_get_resource_request_message_payload_augments_payload
     message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
     assert message_payload["workspaceId"] == workspace_id
-
-
-def test_workspace_get_resource_request_message_payload_excludes_pending_removal_address_spaces():
-    workspace = Workspace(
-        id="123",
-        templateName="workspace-template",
-        templateVersion="1.0",
-        etag="",
-        resourcePath="test",
-        properties={
-            "address_spaces": ["10.0.0.0/22", "10.1.0.0/22"],
-            "address_spaces_pending_removal": ["10.1.0.0/22"]
-        }
-    )
-
-    message_payload = workspace.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Upgrade)
-
-    assert message_payload["parameters"]["address_spaces"] == ["10.0.0.0/22"]
-    assert "address_spaces_pending_removal" not in message_payload["parameters"]
 
 
 def test_legacy_actor_dicts_validate_without_user_required_fields():

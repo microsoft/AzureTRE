@@ -209,7 +209,7 @@ class OperationRepository(BaseRepository):
             self.operations_query()
             + f' (c.resourceId = "{resource_id}"'
             + f' OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true)'
-            + f' OR CONTAINS(c.resourcePath, "{resource_id}"))'
+            + f' OR (CONTAINS(c.resourcePath, "{resource_id}") AND NOT CONTAINS(c.resourcePath, "/user-resources/")))'
             + f' AND c.status IN ({status_filter})'
         )
         operations = await self.query(query=query)
