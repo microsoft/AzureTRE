@@ -309,29 +309,34 @@ class DeploymentStatusUpdater():
                         if attempt == MAX_CLEANUP_RETRIES - 1:
                             raise
                         logger.warning(f"ETag conflict when saving operation {operation.id}. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
-                        operation = await self.operations_repo.get_operation_by_id(operation.id)
-                        for s in operation.steps:
-                            if s.id == step_to_update.id:
-                                s.status = step_to_update.status
-                                s.message = step_to_update.message
-                                s.updatedWhen = get_timestamp()
-                                break
-                        await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                        fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
+                        step_to_update, is_last_step, current_step_index = self._merge_operation_steps(
+                            in_memory_op=operation,
+                            fresh_op=fresh_op,
+                            step_id_to_update=step_to_update.id,
+                            step_status=step_to_update.status,
+                            step_message=step_to_update.message,
+                        )
+                        await self.update_overall_operation_status(fresh_op, step_to_update, is_last_step)
+                        operation = fresh_op
             except Exception as e:
                 if is_cleanup_step and step_to_update.is_success():
                     logger.error(f"[CLEANUP_FINALIZATION_FAILED] Error in post-cleanup writes: {e}", exc_info=True)
                     if is_final_delivery:
                         # Final delivery handling: must persist terminal state and complete message
+                        terminal_persisted = False
                         try:
                             fresh_op = await self.operations_repo.get_operation_by_id(str(message.operationId))
-                            for s in fresh_op.steps:
-                                if s.id == step_to_update.id:
-                                    s.status = step_to_update.status
-                                    s.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
-                                    s.updatedWhen = get_timestamp()
-                                    break
-                            await self.update_overall_operation_status(fresh_op, step_to_update, is_last_step)
+                            fresh_step, fresh_is_last, _ = self._merge_operation_steps(
+                                in_memory_op=operation,
+                                fresh_op=fresh_op,
+                                step_id_to_update=step_to_update.id,
+                                step_status=step_to_update.status,
+                                step_message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS,
+                            )
+                            await self.update_overall_operation_status(fresh_op, fresh_step, fresh_is_last)
                             await self.operations_repo.update_item(fresh_op)
+                            terminal_persisted = True
                         except Exception as op_err:
                             logger.error(f"Failed to persist terminal operation status on final delivery: {op_err}", exc_info=True)
 
@@ -349,7 +354,17 @@ class DeploymentStatusUpdater():
                                     await self.resource_repo.update_item(primary_resource)
                             except Exception as prim_err:
                                 logger.error(f"Failed to restore primary resource to Deleted on final delivery: {prim_err}", exc_info=True)
-                        return True
+
+                        if terminal_persisted:
+                            logger.info(f"Terminal operation status successfully persisted on final delivery for operation {operation.id}. Completing message.")
+                            return True
+                        else:
+                            logger.error(
+                                f"[CLEANUP_FINALIZATION_DEAD_LETTER] Could not persist terminal operation status for "
+                                f"operation {operation.id} on final delivery {MAX_CLEANUP_DELIVERY_COUNT}. "
+                                f"Returning False so message is dead-lettered for manual recovery."
+                            )
+                            return False
                     else:
                         return False
                 else:
@@ -490,11 +505,13 @@ class DeploymentStatusUpdater():
                                 )
                                 try:
                                     fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
-                                    for s in fresh_op.steps:
-                                        if s.id == next_step.id:
-                                            s.status = Status.Updating
-                                            s.updatedWhen = get_timestamp()
-                                            break
+                                    self._merge_operation_steps(
+                                        in_memory_op=operation,
+                                        fresh_op=fresh_op,
+                                        step_id_to_update=next_step.id,
+                                        step_status=Status.Updating,
+                                        step_message=next_step.message or "",
+                                    )
                                     await self.operations_repo.update_item(fresh_op)
                                     operation = fresh_op
                                     break
@@ -535,6 +552,49 @@ class DeploymentStatusUpdater():
             logger.exception("Failed to update status")
 
         return result
+
+    def _merge_operation_steps(
+        self,
+        in_memory_op: Operation,
+        fresh_op: Operation,
+        step_id_to_update: str,
+        step_status: Status,
+        step_message: str,
+    ) -> Tuple[OperationStep, bool, int]:
+        """
+        Merges in-memory appended steps (e.g. dynamically appended cleanup step on legacy operations)
+        into the fresh operation reloaded from Cosmos DB during an ETag conflict retry.
+        Recomputes step_to_update, is_last_step, and current_step_index for fresh_op.
+        """
+        if fresh_op.steps is None:
+            fresh_op.steps = []
+
+        if in_memory_op.steps:
+            fresh_step_ids = {s.id for s in fresh_op.steps}
+            for s in in_memory_op.steps:
+                if s.id not in fresh_step_ids:
+                    fresh_op.steps.append(s)
+                    fresh_step_ids.add(s.id)
+
+        step_to_update = None
+        current_step_index = 0
+        is_last_step = False
+        for i, s in enumerate(fresh_op.steps):
+            if s.id == step_id_to_update:
+                step_to_update = s
+                current_step_index = i
+                if i == (len(fresh_op.steps) - 1):
+                    is_last_step = True
+                break
+
+        if step_to_update is None:
+            raise Exception(f"Error finding step {step_id_to_update} in reloaded operation {fresh_op.id}")
+
+        step_to_update.status = step_status
+        step_to_update.message = step_message
+        step_to_update.updatedWhen = get_timestamp()
+
+        return step_to_update, is_last_step, current_step_index
 
     def _is_workspace_service_with_address_space(self, resource: dict) -> bool:
         return (resource.get("resourceType") in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value)

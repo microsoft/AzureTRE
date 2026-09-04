@@ -1,7 +1,8 @@
 from datetime import datetime, UTC
 import uuid
-from typing import List
+from typing import List, Optional
 
+from azure.core import MatchConditions
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -22,6 +23,38 @@ class OperationRepository(BaseRepository):
         cls = OperationRepository()
         await super().create(config.STATE_STORE_OPERATIONS_CONTAINER)
         return cls
+
+    async def save_item(self, item: Operation):
+        item_dict = item.model_dump()
+        item_dict.pop("_etag", None)
+        response = await self.container.create_item(body=item_dict)
+        if isinstance(response, dict) and "_etag" in response:
+            new_etag = response["_etag"]
+            item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+
+    async def update_item(self, item: Operation, etag: Optional[str] = None) -> Operation:
+        etag_to_match = etag or getattr(item, "etag", None)
+        item_dict = item.model_dump()
+        item_dict.pop("_etag", None)
+        if etag_to_match:
+            response = await self.container.replace_item(
+                item=item.id,
+                body=item_dict,
+                etag=etag_to_match,
+                match_condition=MatchConditions.IfNotModified
+            )
+            if isinstance(response, dict) and "_etag" in response:
+                new_etag = response["_etag"]
+                item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+        else:
+            response = await self.container.upsert_item(body=item_dict)
+            if isinstance(response, dict) and "_etag" in response:
+                new_etag = response["_etag"]
+                item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+        return item
+
+    async def update_item_with_etag(self, item: Operation, etag: str) -> Operation:
+        return await self.update_item(item, etag=etag)
 
     @staticmethod
     def operations_query():

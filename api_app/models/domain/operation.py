@@ -94,6 +94,14 @@ class Operation(AzureTREModel):
     updatedWhen: float = Field(0.0, title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+    etag: Optional[str] = Field(None, title="_etag", alias="_etag")
+
+    # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
+    @field_validator("etag", mode="before")
+    @classmethod
+    def parse_etag_to_remove_escaped_quotes(cls, value):
+        if value:
+            return value.replace('\"', '')
 
     @field_validator("user", mode="before")
     @classmethod

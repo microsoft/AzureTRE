@@ -4,7 +4,7 @@ import pytest_asyncio
 import pytest
 from mock import patch
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.operation import Status
+from models.domain.operation import Operation, Status
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
@@ -122,3 +122,57 @@ async def test_resource_has_active_operation_returns_false_when_no_active_operat
     operations_repo.query = AsyncMock(return_value=[])
     result = await operations_repo.resource_has_active_operation("workspace-123")
     assert result is False
+
+
+async def test_update_item_with_etag_calls_replace_item(operations_repo):
+    from azure.core import MatchConditions
+    operations_repo._container = MagicMock()
+    operations_repo._container.replace_item = AsyncMock(return_value={"_etag": "\"new-etag\""})
+
+    op = Operation(
+        id="op-1",
+        resourceId="res-1",
+        resourcePath="/workspaces/res-1",
+        action="install",
+        etag="old-etag"
+    )
+    result = await operations_repo.update_item(op)
+
+    operations_repo._container.replace_item.assert_awaited_once()
+    call_kwargs = operations_repo._container.replace_item.call_args[1]
+    assert call_kwargs["item"] == "op-1"
+    assert call_kwargs["etag"] == "old-etag"
+    assert call_kwargs["match_condition"] == MatchConditions.IfNotModified
+    assert result.etag == "new-etag"
+
+
+async def test_update_item_without_etag_calls_upsert_item(operations_repo):
+    operations_repo._container = MagicMock()
+    operations_repo._container.upsert_item = AsyncMock(return_value={"_etag": "\"new-etag\""})
+
+    op = Operation(
+        id="op-1",
+        resourceId="res-1",
+        resourcePath="/workspaces/res-1",
+        action="install",
+    )
+    result = await operations_repo.update_item(op)
+
+    operations_repo._container.upsert_item.assert_awaited_once()
+    assert result.etag == "new-etag"
+
+
+async def test_update_item_raises_cosmos_access_condition_failed_error_on_mismatch(operations_repo):
+    from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+    operations_repo._container = MagicMock()
+    operations_repo._container.replace_item = AsyncMock(side_effect=CosmosAccessConditionFailedError())
+
+    op = Operation(
+        id="op-1",
+        resourceId="res-1",
+        resourcePath="/workspaces/res-1",
+        action="install",
+        etag="stale-etag"
+    )
+    with pytest.raises(CosmosAccessConditionFailedError):
+        await operations_repo.update_item(op)
