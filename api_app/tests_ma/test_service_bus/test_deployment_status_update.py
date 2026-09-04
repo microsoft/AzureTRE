@@ -2384,3 +2384,182 @@ async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_be
     assert len(resource_calls) == 2  # workspace and primary resource
     for r_idx in resource_calls:
         assert r_idx < op_update_index
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+async def test_cleanup_dispatch_uses_deterministic_message_id(send_deployment_message_mock):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleting
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        steps=[step1]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleting
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = workspace_service_mock
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
+
+    status_before_send = None
+
+    async def mock_send_deployment_message(*args, **kwargs):
+        nonlocal status_before_send
+        status_before_send = operation.steps[1].status
+
+    send_deployment_message_mock.side_effect = mock_send_deployment_message
+
+    main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded"
+    )
+
+    result = await status_updater.update_status_in_database(main_message)
+
+    assert result is True
+    assert len(operation.steps) == 2
+    cleanup_step = operation.steps[1]
+    assert cleanup_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
+    assert status_before_send == Status.AwaitingUpdate
+
+    send_deployment_message_mock.assert_called_once()
+    assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step.id}"
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+async def test_redelivered_main_status_before_updating_dispatches_with_same_deterministic_message_id(send_deployment_message_mock):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    cleanup_step_id = "step-2-cleanup-id"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id=cleanup_step_id,
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = workspace_service_mock
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": "10.1.0.0/22"}
+    }
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
+
+    redelivered_main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded"
+    )
+
+    result = await status_updater.update_status_in_database(redelivered_main_message)
+
+    assert result is True
+    send_deployment_message_mock.assert_called_once()
+    assert send_deployment_message_mock.call_args.kwargs["message_id"] == f"{OPERATION_ID}_{cleanup_step_id}"
+
+
+@patch('service_bus.helpers._send_message')
+async def test_send_deployment_message_attaches_deterministic_message_id(_send_message_mock):
+    from service_bus.helpers import send_deployment_message
+
+    # Derived from JSON payload with operationId and stepId
+    payload = {"operationId": "op-123", "stepId": "step-456", "action": "upgrade"}
+    await send_deployment_message(
+        content=json.dumps(payload),
+        correlation_id="op-123",
+        session_id="session-1",
+        action="upgrade"
+    )
+    sent_msg = _send_message_mock.call_args.args[0]
+    assert sent_msg.message_id == "op-123_step-456"
+
+    # Explicit message_id takes precedence
+    await send_deployment_message(
+        content=json.dumps(payload),
+        correlation_id="op-123",
+        session_id="session-1",
+        action="upgrade",
+        message_id="custom-id"
+    )
+    sent_msg = _send_message_mock.call_args.args[0]
+    assert sent_msg.message_id == "custom-id"
+
+    # Fallback when payload lacks stepId
+    await send_deployment_message(
+        content=json.dumps({"some": "data"}),
+        correlation_id="op-789",
+        session_id="session-2",
+        action="install"
+    )
+    sent_msg = _send_message_mock.call_args.args[0]
+    assert sent_msg.message_id == "op-789_install"

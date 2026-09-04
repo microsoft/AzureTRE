@@ -1,3 +1,5 @@
+import json
+from typing import Optional
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import TypeAdapter
@@ -35,9 +37,26 @@ async def _send_message(message: ServiceBusMessage, queue: str):
                 await sender.send_messages(message)
 
 
-async def send_deployment_message(content, correlation_id, session_id, action):
-    resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
-    logger.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
+async def send_deployment_message(content, correlation_id, session_id, action, message_id: Optional[str] = None):
+    if not message_id:
+        try:
+            payload = content if isinstance(content, dict) else json.loads(content)
+            op_id = payload.get("operationId", correlation_id)
+            step_id = payload.get("stepId")
+            if op_id and step_id:
+                message_id = f"{op_id}_{step_id}"
+        except Exception:
+            pass
+    if not message_id:
+        message_id = f"{correlation_id}_{action}"
+
+    resource_request_message = ServiceBusMessage(
+        body=content,
+        correlation_id=correlation_id,
+        session_id=session_id,
+        message_id=message_id,
+    )
+    logger.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, message ID {resource_request_message.message_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
