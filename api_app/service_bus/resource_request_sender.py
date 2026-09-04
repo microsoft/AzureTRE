@@ -69,8 +69,11 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             # create + send the message
             content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
             await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
-        except Exception:
+        except Exception as ex:
             logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
+            lease_released = False
+            lease_retained = False
+            should_release_lease = operation_id is None
             try:
                 operation.status = get_failure_status_for_action(action)
                 operation.message = f"Failed to dispatch initial deployment message: {action}"
@@ -78,15 +81,12 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                     first_step = operation.steps[0]
                     first_step.status = get_failure_status_for_action(first_step.resourceAction)
                     first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
-                # If the caller provided operation_id, they manage the operation lifecycle and outer compensation,
-                # so keep the lease held. Otherwise, this function created and owns the operation, so release the
-                # workspace lease when persisting terminal failure.
-                should_release_lease = operation_id is None
                 await operations_repo.update_item(operation, release_lease=should_release_lease)
+                if should_release_lease:
+                    lease_released = True
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")
                 # Fallback: remove orphaned operation and release its workspace lease only if it has not been advanced
-                lease_released = False
                 try:
                     creation_etag = getattr(operation, "etag", None)
                     if hasattr(operations_repo, "delete_item"):
@@ -105,6 +105,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                     logger.warning(
                         f"Operation {operation.id} was modified concurrently; retaining operation and workspace lease"
                     )
+                    lease_retained = True
                 except Exception:
                     logger.exception(f"Failed to delete orphaned operation {operation.id}")
 
@@ -122,6 +123,8 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                                 await rel_call
                         except Exception:
                             logger.exception(f"Failed to release workspace lease for {target_workspace_id}")
-            raise
+
+            setattr(ex, "lease_retained", lease_retained)
+            raise ex
 
     return operation

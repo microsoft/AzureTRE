@@ -100,13 +100,14 @@ async def save_and_deploy_resource(
     except HTTPException:
         await resource_repo.delete_item(resource.id)
         raise
-    except Exception:
-        await resource_repo.delete_item(resource.id)
+    except Exception as ex:
+        if not getattr(ex, "lease_retained", False):
+            await resource_repo.delete_item(resource.id)
         logger.exception("Failed send resource request message")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
-        )
+        ) from ex
 
 
 def mask_sensitive_properties(
@@ -326,8 +327,8 @@ async def update_user_resource(
             operation_id=operation_id)
 
         return operation
-    except Exception:
-        if target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
+    except Exception as ex:
+        if not getattr(ex, "lease_retained", False) and target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(target_workspace_id, operation_id)
         raise
 

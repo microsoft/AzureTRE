@@ -43,6 +43,28 @@ workspace_services_workspace_router = APIRouter(dependencies=[Depends(require_wo
 user_resources_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
 
+async def _rollback_address_space(workspace_repo, workspace_id, allocated_space, resource_template_repo, resource_history_repo, user):
+    max_rollback_attempts = 3
+    for attempt in range(max_rollback_attempts):
+        try:
+            latest_workspace = await workspace_repo.get_workspace_by_id(workspace_id)
+            current_spaces = latest_workspace.properties.get("address_spaces", [])
+            if allocated_space in current_spaces:
+                updated_spaces = [s for s in current_spaces if s != allocated_space]
+                rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
+                await workspace_repo.patch_workspace(
+                    latest_workspace, rollback_patch, latest_workspace.etag,
+                    resource_template_repo, resource_history_repo, user, False
+                )
+            break
+        except CosmosAccessConditionFailedError:
+            if attempt == max_rollback_attempts - 1:
+                logger.exception("Failed to rollback allocated address space due to repeated ETag conflicts")
+        except Exception:
+            logger.exception("Failed to rollback allocated address space on workspace")
+            break
+
+
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
         return
@@ -166,7 +188,12 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise
@@ -312,30 +339,20 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             user=user,
             resource_template=resource_template,
             operation_id=operation_id)
-    except Exception:
-        if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
-            max_rollback_attempts = 3
-            for attempt in range(max_rollback_attempts):
-                try:
-                    latest_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
-                    current_spaces = latest_workspace.properties.get("address_spaces", [])
-                    allocated_space = workspace_service.properties["address_space"]
-                    if allocated_space in current_spaces:
-                        updated_spaces = [s for s in current_spaces if s != allocated_space]
-                        rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
-                        await workspace_repo.patch_workspace(
-                            latest_workspace, rollback_patch, latest_workspace.etag,
-                            resource_template_repo, resource_history_repo, user, False
-                        )
-                    break
-                except CosmosAccessConditionFailedError:
-                    if attempt == max_rollback_attempts - 1:
-                        logger.exception("Failed to rollback allocated address space due to repeated ETag conflicts")
-                except Exception:
-                    logger.exception("Failed to rollback allocated address space on workspace")
-                    break
-        if hasattr(operations_repo, "release_workspace_lease"):
-            await operations_repo.release_workspace_lease(workspace.id, operation_id)
+    except Exception as err:
+        if not getattr(err, "lease_retained", False):
+            if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
+                await _rollback_address_space(
+                    workspace_repo, workspace.id, workspace_service.properties["address_space"],
+                    resource_template_repo, resource_history_repo, user
+                )
+            if hasattr(operations_repo, "release_workspace_lease"):
+                await operations_repo.release_workspace_lease(workspace.id, operation_id)
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
         raise
     response.headers["Location"] = construct_location_header(operation)
 
@@ -379,7 +396,12 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise
@@ -540,7 +562,12 @@ async def create_user_resource(
         response.headers["Location"] = construct_location_header(operation)
 
         return OperationInResponse(operation=operation)
-    except Exception:
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise

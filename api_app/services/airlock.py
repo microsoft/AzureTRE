@@ -38,27 +38,6 @@ from event_grid.event_sender import send_status_changed_event, send_airlock_noti
 
 STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
 
-_background_cleanup_tasks: set = set()
-
-
-def _handle_background_cleanup_result(task: asyncio.Task) -> None:
-    _background_cleanup_tasks.discard(task)
-    try:
-        exc = task.exception()
-        if exc:
-            logger.error(f"Background cleanup task failed with exception: {exc}")
-    except asyncio.CancelledError:
-        logger.warning("Background cleanup task was cancelled")
-    except Exception:
-        logger.exception("Failed to handle background cleanup task result")
-
-
-def run_background_cleanup_task(coro) -> asyncio.Task:
-    task = asyncio.create_task(coro)
-    _background_cleanup_tasks.add(task)
-    task.add_done_callback(_handle_background_cleanup_result)
-    return task
-
 
 def get_account_by_request(airlock_request: AirlockRequest, workspace: Workspace) -> str:
     tre_id = config.TRE_ID
@@ -176,7 +155,7 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
     # however the operations still will be saved in the DB and displayed on the UI as normal.
-    run_background_cleanup_task(delete_all_review_user_resources(
+    await delete_all_review_user_resources(
         airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,
         workspace_service_repo=workspace_service_repo,
@@ -184,8 +163,7 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
         operations_repo=operation_repo,
         resource_history_repo=resource_history_repo,
         user=user
-    ))
-    await asyncio.sleep(0)
+    )
 
     return updated_airlock_request
 
@@ -558,8 +536,10 @@ async def delete_all_review_user_resources(
         user: User) -> List[Operation]:
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
-        max_attempts = 3
-        for attempt in range(max_attempts):
+        start_time = time.time()
+        max_lease_wait = WORKSPACE_LEASE_EXPIRY_SECONDS
+        poll_interval = 2.0
+        while True:
             try:
                 user_resource = await user_resource_repo.get_user_resource_by_id(
                     workspace_id=review_ur.workspaceId,
@@ -583,16 +563,25 @@ async def delete_all_review_user_resources(
             except EntityDoesNotExist:
                 logger.info(f"Review user resource {review_ur.userResourceId} already deleted or does not exist")
                 break
-            except Exception as ex:
-                if attempt == max_attempts - 1:
-                    logger.exception(
-                        f"Failed to delete review user resource {review_ur.userResourceId} after {max_attempts} attempts: {ex}"
+            except HTTPException as ex:
+                if ex.status_code == status.HTTP_409_CONFLICT:
+                    elapsed = time.time() - start_time
+                    if elapsed >= max_lease_wait:
+                        logger.error(
+                            f"Timed out waiting for workspace lease to delete review user resource {review_ur.userResourceId}"
+                        )
+                        raise
+                    logger.info(
+                        f"Workspace lease contention for review user resource {review_ur.userResourceId}; "
+                        f"waiting for active operation to complete (elapsed {elapsed:.1f}s)..."
                     )
-                    raise
-                logger.warning(
-                    f"Retrying deletion for review user resource {review_ur.userResourceId} (attempt {attempt + 1}/{max_attempts}): {ex}"
-                )
-                await asyncio.sleep(1.0)
+                    await asyncio.sleep(min(poll_interval, max_lease_wait - elapsed))
+                    poll_interval = min(poll_interval * 1.5, 30.0)
+                    continue
+                raise
+            except Exception as ex:
+                logger.exception(f"Failed to delete review user resource {review_ur.userResourceId}: {ex}")
+                raise
 
     logger.info(f"Started {len(operations)} operations on deleting user resources")
     return operations
@@ -602,8 +591,7 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
                          airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
                          resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
-    run_background_cleanup_task(delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user))
-    await asyncio.sleep(0)
+    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
     return updated_request
 
 

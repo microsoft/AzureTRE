@@ -383,7 +383,7 @@ async def test_send_resource_request_message_retains_lease_when_concurrently_mod
 
 @patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
 @patch("service_bus.resource_request_sender.update_resource_for_step")
-async def test_send_resource_request_message_does_not_release_lease_in_fallback_when_operation_id_provided(
+async def test_send_resource_request_message_sets_lease_retained_on_concurrent_modification(
     update_resource_mock,
     send_deployment_mock,
 ):
@@ -394,14 +394,14 @@ async def test_send_resource_request_message_does_not_release_lease_in_fallback_
     operations_repo_mock = AsyncMock()
     operations_repo_mock.create_operation_item.return_value = operation
     operations_repo_mock.update_item = AsyncMock(side_effect=Exception("Cosmos error"))
-    operations_repo_mock.delete_item = AsyncMock()
+    operations_repo_mock.delete_item = AsyncMock(side_effect=CosmosAccessConditionFailedError)
     operations_repo_mock.release_workspace_lease = AsyncMock()
 
     resource_to_send_mock = MagicMock()
     resource_to_send_mock.get_resource_request_message_payload.return_value = {}
     update_resource_mock.return_value = resource_to_send_mock
 
-    with pytest.raises(Exception, match="Service Bus unavailable"):
+    with pytest.raises(Exception, match="Service Bus unavailable") as exc_info:
         await send_resource_request_message(
             resource=resource,
             operations_repo=operations_repo_mock,
@@ -413,5 +413,6 @@ async def test_send_resource_request_message_does_not_release_lease_in_fallback_
             operation_id="custom-op-id",
         )
 
+    assert getattr(exc_info.value, "lease_retained", False) is True
     operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
     operations_repo_mock.release_workspace_lease.assert_not_called()
