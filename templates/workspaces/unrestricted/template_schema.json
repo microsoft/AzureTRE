@@ -1,6 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/unrestricted/template_schema.json",
   "type": "object",
   "title": "Unrestricted Workspace",
   "description": "Workspace with unrestricted access to the Internet",

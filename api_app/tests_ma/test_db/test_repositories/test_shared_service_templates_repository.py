@@ -35,6 +35,8 @@ async def test_create_shared_service_template_item_calls_create_item_with_the_co
         actions=input_shared_service_template.customActions,
         required=input_shared_service_template.json_schema["required"],
         current=input_shared_service_template.current,
+        schema_uri=input_shared_service_template.json_schema["$schema"],
+        schema_id=input_shared_service_template.json_schema["$id"],
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
