@@ -28,21 +28,18 @@
       "updateable": true
     },
     "guac_disable_copy": {
-      "$id": "#/properties/guac_disable_copy",
       "type": "boolean",
       "title": "Disable 'Copy'",
       "description": "Disable Copy functionality",
       "updateable": true
     },
     "guac_disable_paste": {
-      "$id": "#/properties/guac_disable_paste",
       "type": "boolean",
       "title": "Disable 'Paste'",
       "description": "Disable Paste functionality",
       "updateable": true
     },
     "guac_enable_drive": {
-      "$id": "#/properties/guac_enable_drive",
       "type": "boolean",
       "title": "Enable Drive",
       "description": "Enable mounted drive",
@@ -50,7 +47,6 @@
       "default": false
     },
     "guac_disable_download": {
-      "$id": "#/properties/guac_disable_download",
       "type": "boolean",
       "title": "Disable files download",
       "description": "Disable files download",
@@ -58,7 +54,6 @@
       "default": true
     },
     "guac_disable_upload": {
-      "$id": "#/properties/guac_disable_upload",
       "type": "boolean",
       "title": "Disable files upload",
       "description": "Disable files upload",
@@ -66,7 +61,6 @@
       "default": true
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Is the Guacamole service exposed outside of the vnet",

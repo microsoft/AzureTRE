@@ -21,7 +21,6 @@
       "updateable": true
     },
     "deploy_dicom": {
-      "$id": "#/properties/deploy_dicom",
       "type": "boolean",
       "title": "Deploy DICOM",
       "description": "Deploy DICOM instance",
@@ -29,7 +28,6 @@
       "default": false
     },
     "deploy_fhir": {
-      "$id": "#/properties/deploy_fhir",
       "type": "boolean",
       "title": "Deploy FHIR",
       "description": "Deploy FHIR instance",
@@ -37,13 +35,11 @@
       "default": false
     },
     "workspace_owners_group_id": {
-      "$id": "#/properties/workspace_owners_group_id",
       "type": "string",
       "title": "Workspace Owners Group ID",
       "description": "Object ID of the workspace owners AAD group"
     },
     "workspace_researchers_group_id": {
-      "$id": "#/properties/workspace_researchers_group_id",
       "type": "string",
       "title": "Workspace Researchers Group ID",
       "description": "Object ID of the workspace researchers AAD group"
