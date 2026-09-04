@@ -160,18 +160,32 @@ class WorkspaceRepository(ResourceRepository):
 
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.
-        address_space_size = workspace_properties.get("address_space_size", "small").lower()
+        raw_size = workspace_properties.get("address_space_size")
+        if raw_size is None or str(raw_size).strip() == "":
+            address_space_size = "small"
+        else:
+            address_space_size = str(raw_size).strip().lower()
 
         # 773 allow custom sized networks to be requested
-        if (address_space_size == "custom"):
+        if address_space_size == "custom":
             if (await self.validate_address_space(workspace_properties.get("address_space"))):
                 return workspace_properties.get("address_space")
             else:
                 raise InvalidInput("The custom 'address_space' you requested does not fit in the current network.")
 
-        # Default mask is 24 (small)
-        cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
-        return await self.get_new_address_space(cidr_netmask)
+        # If a numeric cidr was provided (e.g. as a string like "25"), accept it
+        if address_space_size.isdecimal():
+            cidr_netmask = int(address_space_size)
+            # basic validation for reasonable CIDR mask values
+            if cidr_netmask < 16 or cidr_netmask > 29:
+                raise InvalidInput("'address_space_size' numeric value must be between 16 and 29")
+            return await self.get_new_address_space(cidr_netmask)
+
+        if address_space_size in WorkspaceRepository.predefined_address_spaces:
+            cidr_netmask = WorkspaceRepository.predefined_address_spaces[address_space_size]
+            return await self.get_new_address_space(cidr_netmask)
+
+        raise InvalidInput(f"Invalid 'address_space_size': {address_space_size}")
 
     # 772 check that the provided address_space is available in the network.
     async def validate_address_space(self, address_space):
