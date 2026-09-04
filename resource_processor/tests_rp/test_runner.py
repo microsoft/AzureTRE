@@ -48,8 +48,11 @@ async def test_set_up_config(mock_get_config):
 
 async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, msi_id):
     mock_credential = AsyncMock()
-    mock_default_credential.return_value.__aenter__.return_value = mock_credential
+    mock_default_credential.return_value.__aenter__ = AsyncMock(return_value=mock_credential)
+    mock_default_credential.return_value.__aexit__ = AsyncMock(return_value=False)
     mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_service_bus_client.return_value.__aenter__ = AsyncMock(return_value=mock_service_bus_client_instance)
+    mock_service_bus_client.return_value.__aexit__ = AsyncMock(return_value=False)
     return mock_service_bus_client_instance, mock_credential
 
 
@@ -67,6 +70,12 @@ async def test_runner(mock_receive_message, mock_service_bus_client, mock_defaul
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
 
+    # Verify context manager entered and exited cleanly
+    mock_default_credential.return_value.__aenter__.assert_awaited_once()
+    mock_default_credential.return_value.__aexit__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aenter__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aexit__.assert_awaited_once()
+
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.receive_message")
@@ -81,6 +90,12 @@ async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, m
     mock_default_credential.assert_called_once_with(None)
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+
+    # Verify context manager entered and exited cleanly
+    mock_default_credential.return_value.__aenter__.assert_awaited_once()
+    mock_default_credential.return_value.__aexit__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aenter__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aexit__.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -98,6 +113,28 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
     mock_default_credential.assert_called_once_with('test_msi_id')
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
+
+    # Verify context manager entered and exited cleanly, even on exception
+    mock_default_credential.return_value.__aenter__.assert_awaited_once()
+    mock_default_credential.return_value.__aexit__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aenter__.assert_awaited_once()
+    mock_service_bus_client.return_value.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_default_credentials_closes_real_credential_on_exception(mock_service_bus_client):
+    mock_credential = AsyncMock()
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_service_bus_client.return_value.__aenter__.return_value = mock_service_bus_client_instance
+
+    with patch("vmss_porter.runner.DefaultAzureCredential", return_value=mock_credential), \
+            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+        config = {"vmss_msi_id": "test_msi_id", "service_bus_namespace": "test_namespace"}
+
+        with pytest.raises(Exception, match="Test Exception"):
+            await runner(0, config)
+
+    mock_credential.close.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -151,9 +188,11 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
     config = {"resource_request_queue": "test_queue"}
 
-    with patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
+            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
         await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
         mock_logger.exception.assert_any_call("Unknown exception. Will retry...")
+        mock_sleep.assert_awaited_once_with(10)
 
 
 @pytest.mark.asyncio
