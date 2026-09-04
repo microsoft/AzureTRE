@@ -188,9 +188,11 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
     config = {"resource_request_queue": "test_queue"}
 
-    with patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
+            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
         await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
         mock_logger.exception.assert_any_call("Unknown exception. Will retry...")
+        mock_sleep.assert_awaited_once_with(10)
 
 
 @pytest.mark.asyncio
