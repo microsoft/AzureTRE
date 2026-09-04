@@ -8,6 +8,7 @@ from db.errors import EntityDoesNotExist, InvalidInput
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
+from resources import strings
 
 
 pytestmark = pytest.mark.asyncio
@@ -293,3 +294,32 @@ async def test_create_template_with_null_pipeline_creates_template_without_pipel
     input_user_resource_template.json_schema["pipeline"] = None
     created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
     assert created.pipeline is None
+
+
+@pytest.mark.parametrize(
+    "pipeline",
+    [
+        {
+            "install": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
+        },
+        {
+            "upgrade": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
+        },
+        {
+            "uninstall": [{"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}, {"stepId": "main"}],
+        },
+    ],
+)
+async def test_create_template_with_invalid_address_space_cleanup_pipeline_fails(resource_template_repo, input_user_resource_template, pipeline):
+    input_user_resource_template.json_schema["pipeline"] = pipeline
+    with pytest.raises(InvalidInput):
+        await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_valid_address_space_cleanup_as_final_uninstall_step_succeeds(_, resource_template_repo, input_user_resource_template):
+    input_user_resource_template.json_schema["pipeline"] = {
+        "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
+    }
+    created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
+    assert created.pipeline

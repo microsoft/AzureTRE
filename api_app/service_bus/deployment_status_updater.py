@@ -134,11 +134,12 @@ class DeploymentStatusUpdater():
         If there is another step in the operation after this one, process the substitutions + patch, then enqueue a message to process it.
         """
         result = False
+        operation = None
+        step_to_update = None
 
         try:
             # update the op
             operation = await self.operations_repo.get_operation_by_id(str(message.operationId))
-            step_to_update = None
             is_last_step = False
 
             current_step_index = 0
@@ -153,31 +154,16 @@ class DeploymentStatusUpdater():
             if step_to_update is None:
                 raise Exception(f"Error finding step {message.stepId} in operation {message.operationId}")
 
-            # If address space cleanup for this operation is already in a terminal state (completed or failed),
-            # do not reopen the operation or re-enqueue cleanup on redelivered main-step messages.
+            # If address space cleanup for this uninstall operation is already in a terminal state (completed or failed),
+            # the entire operation is already finalized. Ignore any delayed or duplicate messages for ANY step in this
+            # operation to prevent overwriting resources with stale status or reopening the operation.
             if (
-                step_to_update.templateStepId == "main"
-                and (step_to_update.is_success() or message.status in [Status.Deployed, Status.Deleted, Status.Updated, Status.ActionSucceeded])
-                and operation.action == RequestAction.UnInstall
+                operation.action == RequestAction.UnInstall
                 and self._is_cleanup_terminal(operation)
             ):
                 logger.info(
-                    f"Address space cleanup already in terminal state for operation {operation.id}. "
-                    f"Skipping redelivery of step {message.stepId} to prevent reopening operation."
-                )
-                return True
-
-            # If the uninstall cleanup is already terminal, ignore delayed or duplicate cleanup-step messages
-            # (such as an intermediate Updating or delayed UpdatingFailed) to prevent writing stale status
-            # to the workspace resource or reopening the operation.
-            if (
-                step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
-                and operation.action == RequestAction.UnInstall
-                and self._is_cleanup_terminal(operation)
-            ):
-                logger.info(
-                    f"Cleanup step message {message.stepId} with status {message.status} received for operation {operation.id}, "
-                    f"but uninstall cleanup is already terminal. Ignoring to prevent stale writes."
+                    f"Message {message.stepId} (step {step_to_update.templateStepId}, status {message.status}) received for operation {operation.id}, "
+                    f"but uninstall cleanup is already terminal ({operation.status}). Ignoring to prevent stale writes."
                 )
                 return True
 
@@ -211,6 +197,7 @@ class DeploymentStatusUpdater():
                 and step_to_update.resourceType in (ResourceType.Workspace, ResourceType.Workspace.value)
                 and step_to_update.resourceAction == RequestAction.Upgrade
                 and operation.action == RequestAction.UnInstall
+                and is_last_step
             )
 
             # For the address space cleanup step, we MUST run cleanup before persisting the
@@ -240,6 +227,9 @@ class DeploymentStatusUpdater():
                     await self.update_overall_operation_status(operation, step_to_update, is_last_step)
                     await self.operations_repo.update_item(operation)
                     return True
+                except Exception as e:
+                    logger.error(f"[ADDRESS_SPACE_CLEANUP_FAILED] Unexpected error freeing workspace address space: {e}", exc_info=True)
+                    freed = False
 
                 if not freed:
                     if is_final_delivery:
@@ -435,6 +425,18 @@ class DeploymentStatusUpdater():
             # Marking as true as this message will never succeed anyways and should be removed from the queue.
             result = True
             logger.exception(strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(message.id))
+            if operation is not None and step_to_update is not None:
+                try:
+                    step_to_update.status = (
+                        Status.UpdatingFailed if operation.action == RequestAction.Upgrade
+                        else Status.DeletingFailed if operation.action == RequestAction.UnInstall
+                        else Status.DeploymentFailed
+                    )
+                    step_to_update.message = f"Resource {message.id} not found in database: operation aborted."
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step=True)
+                    await self.operations_repo.update_item(operation)
+                except Exception:
+                    logger.exception(f"Failed to persist terminal failure status for operation {operation.id} when resource {message.id} was missing")
         except Exception:
             logger.exception("Failed to update status")
 
@@ -512,21 +514,20 @@ class DeploymentStatusUpdater():
         Frees the address space owned by the uninstalled WorkspaceService after
         the corresponding workspace upgrade has succeeded.
         """
-        cleanup_details = await self._get_address_cleanup_details(operation)
-        if cleanup_details is None:
-            return True
-
-        address_to_free, parent_workspace_id, resource_id, service_dict = cleanup_details
-
-        # Check if cleanup for this step was already completed (idempotency on redelivery)
-        if self._is_cleanup_completed(operation):
-            return True
-
-        # Check if the uninstalled service already has the address_space_freed marker
-        if service_dict.get("properties", {}).get("address_space_freed"):
-            return True
-
         try:
+            cleanup_details = await self._get_address_cleanup_details(operation)
+            if cleanup_details is None:
+                return True
+
+            address_to_free, parent_workspace_id, resource_id, service_dict = cleanup_details
+
+            # Check if cleanup for this step was already completed (idempotency on redelivery)
+            if self._is_cleanup_completed(operation):
+                return True
+
+            # Check if the uninstalled service already has the address_space_freed marker
+            if service_dict.get("properties", {}).get("address_space_freed"):
+                return True
             # Check if address_to_free has been assigned to another active workspace service on this workspace (fail closed)
             workspace_services_repo = getattr(self, "workspace_services_repo", None)
             if workspace_services_repo is None:
@@ -589,11 +590,12 @@ class DeploymentStatusUpdater():
             operation.message = step.message
             return
 
-        # If address space cleanup has completed for an uninstall, do not reopen to PipelineRunning
+        # If address space cleanup has completed for an uninstall, only finalize as Deleted if it is the last step and all steps succeeded
         if self._is_cleanup_completed(operation) and operation.action == RequestAction.UnInstall:
-            operation.status = Status.Deleted
-            operation.message = "Multi step pipeline completed successfully"
-            return
+            if is_last_step and all(op_step.is_success() for op_step in operation.steps):
+                operation.status = Status.Deleted
+                operation.message = "Multi step pipeline completed successfully"
+                return
 
         # If address space cleanup has failed terminally for an uninstall, do not reopen to PipelineRunning
         if self._is_cleanup_failed(operation) and operation.action == RequestAction.UnInstall:
@@ -631,8 +633,9 @@ class DeploymentStatusUpdater():
                 await self.resource_repo.update_item(primary_resource)
 
         if step.is_success() and is_last_step:
-            operation.status = self.get_success_status_for_action(operation.action)
-            operation.message = "Multi step pipeline completed successfully"
+            if all(op_step.is_success() for op_step in operation.steps):
+                operation.status = self.get_success_status_for_action(operation.action)
+                operation.message = "Multi step pipeline completed successfully"
 
             # pipeline succeeded - update the primary resource (from the main step) as succeeded too
             main_step = None

@@ -7,9 +7,11 @@ from core import config
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput
 from db.repositories.base import BaseRepository
 from models.domain.resource import ResourceType
+from models.domain.request_action import RequestAction
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
 from models.schemas.resource_template import ResourceTemplateInCreate, ResourceTemplateInformation
+from resources import strings
 from services.schema_service import enrich_shared_service_template, enrich_workspace_template, enrich_workspace_service_template, enrich_user_resource_template
 
 
@@ -181,7 +183,9 @@ class ResourceTemplateRepository(BaseRepository):
         step_ids = []
         for action in pipeline:
             num_of_main_steps = 0
-            for step in pipeline[action]:
+            steps = pipeline[action]
+            num_steps = len(steps)
+            for i, step in enumerate(steps):
                 step_id = step["stepId"]
 
                 if step_id == "main":
@@ -189,6 +193,12 @@ class ResourceTemplateRepository(BaseRepository):
 
                 if step_id in step_ids or num_of_main_steps > 1:
                     raise InvalidInput(f"Invalid template - duplicate stepIds are not allowed. stepId: {step_id}")
+
+                if step_id == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                    if action != RequestAction.UnInstall:
+                        raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' is only allowed in the '{RequestAction.UnInstall}' pipeline")
+                    if i != num_steps - 1:
+                        raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' must be the final step in the '{RequestAction.UnInstall}' pipeline")
 
                 if step_id != "main":
                     step_ids.append(step_id)
