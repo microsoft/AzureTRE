@@ -40,9 +40,9 @@ async def get_request(endpoint, access_token, verify, assert_status):
         response = await client.get(
             full_endpoint, headers=auth_headers, timeout=TIMEOUT
         )
-        LOGGER.info(
-            f"Response Status code: {response.status_code} Content: {response.content}"
-        )
+        # Link responses contain a container SAS. Do not log response bodies because
+        # doing so would expose credentials before the upload/delete helpers redact them.
+        LOGGER.info(f"Response Status code: {response.status_code}")
 
         assert response.status_code == assert_status
 
@@ -64,13 +64,26 @@ async def upload_blob_using_sas(file_path: str, sas_url: str):
         _, file_ext = os.path.splitext(file_name)
 
         blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
-        LOGGER.info(f"uploading [{file_name}] to container [{blob_url}]")
+        LOGGER.info(f"uploading [{file_name}] to container [{storage_account_url}{container_name}]")
 
         client = BlobClient.from_blob_url(blob_url)
         with open(file_name, 'rb') as data:
             response = client.upload_blob(data)
 
         return response
+
+
+async def delete_blob_using_sas(file_path: str, sas_url: str):
+    parsed_sas_url = urlparse(sas_url)
+    container_name = parsed_sas_url.path.lstrip("/")
+    storage_account_url = f"{parsed_sas_url.scheme}://{parsed_sas_url.netloc}/"
+    file_name = os.path.basename(file_path)
+
+    blob_url = f"{storage_account_url}{container_name}/{file_name}?{parsed_sas_url.query}"
+    LOGGER.info(f"deleting [{file_name}] from container [{storage_account_url}{container_name}]")
+
+    client = BlobClient.from_blob_url(blob_url)
+    client.delete_blob()
 
 
 async def wait_for_status(

@@ -100,6 +100,10 @@ inputs:
     description: "If False, Airlock requests will skip the malware scanning stage."
     required: false
     default: "false"
+  ENABLE_LEGACY_AIRLOCK:
+    description: "If True, deploys legacy per-stage airlock storage accounts alongside the consolidated accounts."
+    required: false
+    default: "true"
   CI_CACHE_ACR_NAME:
     description: "A secondary ACR used for caching in CI environments"
     required: true
@@ -297,6 +301,7 @@ runs:
           -e TF_VAR_stateful_resources_locked=${{ inputs.STATEFUL_RESOURCES_LOCKED }} \
           -e TF_VAR_kv_purge_protection_enabled="${{ inputs.KV_PURGE_PROTECTION_ENABLED }}" \
           -e TF_VAR_enable_airlock_malware_scanning=${{ inputs.ENABLE_AIRLOCK_MALWARE_SCANNING }} \
+          -e TF_VAR_enable_legacy_airlock=${{ inputs.ENABLE_LEGACY_AIRLOCK }} \
           -e CI_CACHE_ACR_NAME="${{ inputs.CI_CACHE_ACR_NAME }}" \
           -e TF_VAR_core_app_service_plan_sku="${{ (inputs.CORE_APP_SERVICE_PLAN_SKU != ''
             && inputs.CORE_APP_SERVICE_PLAN_SKU) || 'P1v2' }}" \

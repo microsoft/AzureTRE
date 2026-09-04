@@ -9,6 +9,7 @@ from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 import resources.strings as strings
+from resources import constants
 from core import config, credentials
 from azure.core.exceptions import HttpResponseError
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
@@ -64,6 +65,18 @@ class WorkspaceRepository(ResourceRepository):
         query, parameters = WorkspaceRepository.active_workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[Workspace]).validate_python(workspaces)
+
+    async def set_default_airlock_version_for_legacy_workspaces(self) -> List[str]:
+        # The bundle now defaults to v2, so pre-v2 workspaces must be stamped v1 explicitly
+        # or a later redeploy would migrate them - and destroy their legacy storage.
+        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND NOT IS_DEFINED(c.properties.airlock_version)'
+        parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
+        migrated = []
+        for workspace in await self.query(query=query, parameters=parameters):
+            workspace['properties']['airlock_version'] = 1
+            await self.update_item_dict(workspace)
+            migrated.append(workspace['id'])
+        return migrated
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
@@ -128,6 +141,15 @@ class WorkspaceRepository(ResourceRepository):
         auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
+        # Derive airlock_version from the template: a template that doesn't declare it is legacy (v1) and
+        # must not be stamped v2, which would route airlock to consolidated storage it never provisioned.
+        if "airlock_version" in template.properties:
+            template_default = template.properties["airlock_version"].default
+            default_airlock_version = template_default if template_default is not None else constants.DEFAULT_AIRLOCK_VERSION
+        else:
+            default_airlock_version = 1
+        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", default_airlock_version)}
+
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
@@ -135,6 +157,7 @@ class WorkspaceRepository(ResourceRepository):
                                     **address_spaces_param,
                                     **auto_app_registration_param,
                                     **workspace_owner_param,
+                                    **airlock_version_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 
