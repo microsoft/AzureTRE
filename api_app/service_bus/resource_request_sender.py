@@ -75,8 +75,11 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                     first_step = operation.steps[0]
                     first_step.status = get_failure_status_for_action(first_step.resourceAction)
                     first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
-                # Keep lease held during caller compensation; caller will release lease upon completing rollback
-                await operations_repo.update_item(operation, release_lease=False)
+                # If the caller provided operation_id, they manage the operation lifecycle and outer compensation,
+                # so keep the lease held. Otherwise, this function created and owns the operation, so release the
+                # workspace lease when persisting terminal failure.
+                should_release_lease = operation_id is None
+                await operations_repo.update_item(operation, release_lease=should_release_lease)
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")
                 # Fallback: remove orphaned operation and release its workspace lease

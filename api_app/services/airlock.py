@@ -25,6 +25,7 @@ from resources import strings, constants
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, update_user_resource
 
+from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
@@ -261,7 +262,7 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
         logger.info("Deleting existing user resource...")
-        _ = await delete_review_user_resource(
+        del_op = await delete_review_user_resource(
             user_resource=existing_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
@@ -270,6 +271,8 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
             resource_history_repo=resource_history_repo,
             user=user
         )
+        if del_op and hasattr(del_op, "id"):
+            await wait_for_successful_operation(operation_repo, del_op.id)
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
@@ -416,26 +419,66 @@ TERMINAL_STATUSES = {
 }
 
 
-async def wait_for_terminal_operation(
+SUCCESS_STATUSES = {
+    Status.Deployed,
+    Status.Updated,
+    Status.Deleted,
+    Status.ActionSucceeded,
+}
+
+FAILURE_STATUSES = {
+    Status.DeploymentFailed,
+    Status.UpdatingFailed,
+    Status.DeletingFailed,
+    Status.ActionFailed,
+}
+
+
+async def wait_for_successful_operation(
     operations_repo: OperationRepository,
     operation_id: str,
-    timeout: float = 30.0,
+    timeout: float = 300.0,
     poll_interval: float = 0.5,
 ) -> Optional[Operation]:
-    if not hasattr(operations_repo, "get_operation_by_id"):
+    if not hasattr(operations_repo, "get_operation_by_id") or not isinstance(operation_id, str):
         return None
     start = time.time()
     while time.time() - start < timeout:
         try:
             op_call = operations_repo.get_operation_by_id(operation_id)
             op = await op_call if hasattr(op_call, "__await__") else op_call
-            status = getattr(op, "status", None)
-            if op is None or not isinstance(status, (str, Status)) or status in TERMINAL_STATUSES:
+            op_status = getattr(op, "status", None)
+            if op is None or not isinstance(op_status, (str, Status)):
                 return op
+            if op_status in SUCCESS_STATUSES:
+                return op
+            if op_status in FAILURE_STATUSES:
+                logger.error(f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}"
+                )
+        except HTTPException:
+            raise
+        except EntityDoesNotExist:
+            return None
         except Exception:
             pass
         await asyncio.sleep(poll_interval)
-    return None
+    logger.error(f"Timed out waiting for operation {operation_id} to complete successfully")
+    raise HTTPException(
+        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+        detail=f"Timed out waiting for operation {operation_id} to complete successfully"
+    )
+
+
+async def wait_for_terminal_operation(
+    operations_repo: OperationRepository,
+    operation_id: str,
+    timeout: float = 300.0,
+    poll_interval: float = 0.5,
+) -> Optional[Operation]:
+    return await wait_for_successful_operation(operations_repo, operation_id, timeout=timeout, poll_interval=poll_interval)
 
 
 async def delete_review_user_resource(
@@ -452,7 +495,7 @@ async def delete_review_user_resource(
     # disable might contain logic that we need to execute before the deletion of the resource
     disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
     if disable_op and hasattr(disable_op, "id"):
-        await wait_for_terminal_operation(operations_repo, disable_op.id)
+        await wait_for_successful_operation(operations_repo, disable_op.id)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -511,7 +554,7 @@ async def delete_all_review_user_resources(
         )
         operations.append(operation)
         if operation and hasattr(operation, "id"):
-            await wait_for_terminal_operation(operations_repo, operation.id)
+            await wait_for_successful_operation(operations_repo, operation.id)
 
     logger.info(f"Started {len(operations)} operations on deleting user resources")
     return operations

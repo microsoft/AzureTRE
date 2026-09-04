@@ -732,3 +732,84 @@ def test_authenticated_user_with_empty_email_persists_and_builds_notification():
 
     assert notification.created_by.email == ""
     assert notification.updated_by.email == ""
+
+
+@pytest.mark.asyncio
+async def test_wait_for_successful_operation_success():
+    from services.airlock import wait_for_successful_operation
+    from models.domain.operation import Status, Operation
+
+    repo = AsyncMock()
+    op = MagicMock(spec=Operation)
+    op.status = Status.Updated
+    repo.get_operation_by_id.return_value = op
+
+    res = await wait_for_successful_operation(repo, "op-123", timeout=1.0)
+    assert res == op
+
+
+@pytest.mark.asyncio
+async def test_wait_for_successful_operation_failure():
+    from services.airlock import wait_for_successful_operation
+    from models.domain.operation import Status, Operation
+
+    repo = AsyncMock()
+    op = MagicMock(spec=Operation)
+    op.status = Status.UpdatingFailed
+    op.message = "Failed step"
+    repo.get_operation_by_id.return_value = op
+
+    with pytest.raises(HTTPException) as exc_info:
+        await wait_for_successful_operation(repo, "op-123", timeout=1.0)
+    assert exc_info.value.status_code == 500
+    assert "Failed step" in exc_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_wait_for_successful_operation_timeout():
+    from services.airlock import wait_for_successful_operation
+    from models.domain.operation import Status, Operation
+
+    repo = AsyncMock()
+    op = MagicMock(spec=Operation)
+    op.status = Status.Updating
+    repo.get_operation_by_id.return_value = op
+
+    with pytest.raises(HTTPException) as exc_info:
+        await wait_for_successful_operation(repo, "op-123", timeout=0.1, poll_interval=0.02)
+    assert exc_info.value.status_code == 504
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.disable_user_resource")
+@patch("services.airlock.send_uninstall_message")
+async def test_delete_review_user_resource_aborts_if_disable_fails(mock_send_uninstall, mock_disable):
+    from models.domain.operation import Status, Operation
+
+    disable_op = MagicMock(spec=Operation)
+    disable_op.id = "op-disable"
+    mock_disable.return_value = disable_op
+
+    operations_repo = AsyncMock()
+    op_record = MagicMock(spec=Operation)
+    op_record.status = Status.UpdatingFailed
+    op_record.message = "Could not disable"
+    operations_repo.get_operation_by_id.return_value = op_record
+
+    workspace_service_repo = AsyncMock()
+    user_resource = AsyncMock()
+    user_resource.workspaceId = "ws-1"
+    user_resource.parentWorkspaceServiceId = "svc-1"
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_review_user_resource(
+            user_resource=user_resource,
+            user_resource_repo=AsyncMock(),
+            workspace_service_repo=workspace_service_repo,
+            resource_template_repo=AsyncMock(),
+            operations_repo=operations_repo,
+            resource_history_repo=AsyncMock(),
+            user=create_test_user(),
+        )
+    assert exc_info.value.status_code == 500
+    mock_send_uninstall.assert_not_called()
