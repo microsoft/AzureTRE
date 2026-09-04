@@ -305,7 +305,7 @@ async def test_acquire_workspace_lease_reclaims_orphaned_lease_when_operation_no
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
         "operationId": "orphaned-op",
-        "createdWhen": operations_repo.get_timestamp() - 500,
+        "createdWhen": operations_repo.get_timestamp() - 4000,
         "_etag": "old-etag",
     })
     operations_repo.get_operation_by_id = AsyncMock(side_effect=EntityDoesNotExist())
@@ -356,7 +356,32 @@ async def test_release_workspace_lease_deletes_item_with_etag(operations_repo):
     operations_repo.delete_item.assert_awaited_once_with("lease_ws-1", etag="lease-etag", match_condition=MatchConditions.IfNotModified)
 
 
-async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_replaces_lease(operations_repo):
+async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_reacquires_lease(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    operations_repo._container = MagicMock()
+    # 1st attempt: conflict on create, reads lease, reconciles stale op, restarts loop
+    # 2nd attempt: create succeeds because old lease was released by update_item
+    operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
+    now = operations_repo.get_timestamp()
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "stale-op",
+        "createdWhen": now - 4000,
+        "_etag": "lease-etag",
+    })
+    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 4000, createdWhen=now - 4000)
+    operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
+    operations_repo.update_item = AsyncMock()
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+    operations_repo.update_item.assert_awaited_once()
+    assert stale_op.status == Status.DeploymentFailed
+    assert operations_repo._container.create_item.await_count == 2
+
+
+async def test_acquire_workspace_lease_fails_closed_when_reconciliation_fails(operations_repo):
+    from fastapi import HTTPException
     from azure.cosmos.exceptions import CosmosResourceExistsError
     operations_repo._container = MagicMock()
     operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
@@ -364,19 +389,16 @@ async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_rep
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
         "operationId": "stale-op",
-        "createdWhen": now - 500,
+        "createdWhen": now - 4000,
         "_etag": "lease-etag",
     })
-    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 500, createdWhen=now - 500)
+    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 4000, createdWhen=now - 4000)
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
-    operations_repo.update_item = AsyncMock()
-    operations_repo._container.replace_item = AsyncMock(return_value={})
+    operations_repo.update_item = AsyncMock(side_effect=Exception("Cosmos write error"))
 
-    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
-    assert res is True
-    operations_repo.update_item.assert_awaited_once()
-    assert stale_op.status == Status.DeploymentFailed
-    operations_repo._container.replace_item.assert_awaited_once()
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert exc.value.status_code == 409
 
 
 async def test_resource_has_active_operation_reconciles_stale_operation(operations_repo):
@@ -388,8 +410,8 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
         "resourcePath": f"/workspaces/{workspace_id}",
         "action": "install",
         "status": Status.AwaitingDeployment,
-        "createdWhen": now - 500,
-        "updatedWhen": now - 500,
+        "createdWhen": now - 4000,
+        "updatedWhen": now - 4000,
     }
     operations_repo.query = AsyncMock(return_value=[stale_op_dict])
     operations_repo.update_item = AsyncMock()
@@ -399,3 +421,22 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
     operations_repo.update_item.assert_awaited_once()
     saved_op = operations_repo.update_item.call_args[0][0]
     assert saved_op.status == Status.DeploymentFailed
+
+
+async def test_resource_has_active_operation_fails_closed_when_reconciliation_fails(operations_repo):
+    now = operations_repo.get_timestamp()
+    workspace_id = "7c5b2dc2-6b4c-4c7f-8d3e-1f5a9b0e2c4d"
+    stale_op_dict = {
+        "id": "op-stale",
+        "resourceId": workspace_id,
+        "resourcePath": f"/workspaces/{workspace_id}",
+        "action": "install",
+        "status": Status.AwaitingDeployment,
+        "createdWhen": now - 4000,
+        "updatedWhen": now - 4000,
+    }
+    operations_repo.query = AsyncMock(return_value=[stale_op_dict])
+    operations_repo.update_item = AsyncMock(side_effect=Exception("Cosmos write error"))
+
+    result = await operations_repo.resource_has_active_operation(workspace_id)
+    assert result is True

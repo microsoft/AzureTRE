@@ -16,10 +16,16 @@ from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
 
+from services.logging import logger
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status, get_failure_status_for_action
 
-WORKSPACE_LEASE_EXPIRY_SECONDS = 300.0
+# The resource processor auto-renews Porter session locks for up to 3600 seconds (1 hour)
+# during deployment execution (see resource_processor/vmss_porter/runner.py:68).
+# Lease expiry must safely cover this maximum execution duration rather than aging out
+# active operations after 300 seconds, preventing premature lease reclamation and
+# overlapping Terraform operations.
+WORKSPACE_LEASE_EXPIRY_SECONDS = 3600.0
 
 
 def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
@@ -155,8 +161,14 @@ class OperationRepository(BaseRepository):
                                 update_call = self.update_item(existing_op)
                                 if hasattr(update_call, "__await__"):
                                     await update_call
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.exception(f"Failed to reconcile stale operation {existing_op.id}: {e}")
+                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            # update_item persists a terminal status and releases/deletes the workspace lease.
+                            # Restart lease acquisition rather than replacing the now-deleted lease document.
+                            continue
+                    except HTTPException:
+                        raise
                     except (EntityDoesNotExist, CosmosResourceNotFoundError):
                         # Operation doc not written yet (still constructing cascade/operation).
                         # Safely reclaim orphaned leases after a bounded interval (WORKSPACE_LEASE_EXPIRY_SECONDS).
@@ -179,10 +191,12 @@ class OperationRepository(BaseRepository):
                         if hasattr(up_call, "__await__"):
                             await up_call
                     return True
-                except (CosmosAccessConditionFailedError, ResourceExistsError):
+                except (CosmosAccessConditionFailedError, ResourceExistsError, CosmosResourceNotFoundError, ResourceNotFoundError):
                     if attempt < max_attempts - 1:
                         continue
                     raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     async def release_workspace_lease(self, workspace_id: str, operation_id: Optional[str] = None) -> None:
         if not hasattr(self, "_container") or self._container is None:
@@ -437,8 +451,9 @@ class OperationRepository(BaseRepository):
                     update_call = self.update_item(op)
                     if hasattr(update_call, "__await__"):
                         await update_call
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.exception(f"Failed to reconcile stale active operation {op_dict.get('id') if isinstance(op_dict, dict) else getattr(op_dict, 'id', None)}: {e}")
+                    has_active = True
             else:
                 has_active = True
 
