@@ -864,6 +864,26 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
 
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_patch_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json={"isEnabled": False}, headers={"etag": "etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_invoke_action_on_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), params={"action": "restart"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
     # [POST] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")

@@ -54,8 +54,10 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
   name         = "workspacequeue"
   namespace_id = azurerm_servicebus_namespace.sb.id
 
-  partitioning_enabled = false
-  requires_session     = true # use sessions here to make sure updates to each resource happen in serial, in order
+  partitioning_enabled                    = false
+  requires_session                        = true # use sessions here to make sure updates to each resource happen in serial, in order
+  requires_duplicate_detection            = true
+  duplicate_detection_history_time_window = "PT4H"
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {
