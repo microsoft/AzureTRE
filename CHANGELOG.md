@@ -13,6 +13,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Use the current environment configuration mappings for v2 Airlock workspaces so signer and private-link deployment supports all configured sovereign clouds (`tre-workspace-base` 2.11.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Prevent disabling Airlock on v2 workspaces because removing the per-workspace signer would make retained shared request containers impossible to clean up safely, and reject an explicit null `airlock_version` patch before it can silently select the bundle default ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Mark Airlock import-review workspaces as not exposing their own Airlock, allowing them to be created when legacy Airlock is disabled (`tre-workspace-airlock-import-review` 0.17.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Make v2 Airlock submission retries preserve an already sealed blob while recovering from failed or aborted copies, retain legacy import-review Terraform resource state, and reject malformed `airlock_version` patches with HTTP 400 (`airlock-processor` 0.8.33, API 0.27.29) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
