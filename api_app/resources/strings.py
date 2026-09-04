@@ -143,6 +143,7 @@ WORKSPACE_SERVICE_IS_NOT_DEPLOYED = "Workspace service is not deployed."
 WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service needs to be disabled before you can delete it"
 WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
 WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY = "Workspace does not have address_spaces property"
+WORKSPACE_HAS_ACTIVE_OPERATION = "Workspace has an active operation in progress"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with the same version, or a newer version already exists"
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
 CUSTOM_ACTION_NOT_DEFINED = "The specified custom action isn't defined in the targeted resource."
@@ -181,6 +182,8 @@ RESOURCE_STATUS_UPDATING_FAILED = "updating_failed"
 RESOURCE_ACTION_INSTALL = "install"
 RESOURCE_ACTION_UPDATE = "upgrade"
 RESOURCE_ACTION_UNINSTALL = "uninstall"
+ADDRESS_SPACE_CLEANUP_STEP_ID = "address-space-cleanup"
+ADDRESS_SPACE_CLEANUP_SUCCESS = "address_space_cleanup_success"
 
 
 # Resource Action Status

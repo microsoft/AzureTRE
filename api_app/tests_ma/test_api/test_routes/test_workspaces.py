@@ -5,7 +5,7 @@ from pydantic import Field
 import pytest
 from mock import patch
 
-from fastapi import status
+from fastapi import status, HTTPException
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_admin_user, create_test_user, create_workspace_owner_user, create_workspace_researcher_user
 
@@ -684,6 +684,30 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
 
+    # [PATCH] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_patch_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json={"isEnabled": False}, headers={"etag": "some-etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [DELETE] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_delete_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/invoke-action
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_invoke_action_on_workspace_raises_409_if_workspace_has_active_operation(self, _, __, app, client):
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE, workspace_id=WORKSPACE_ID), params={"action": "restart"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
     # [DELETE] /workspaces/{workspace_id}
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
@@ -776,8 +800,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
-    async def test_post_workspace_services_creates_workspace_service_with_address_space(self, create_workspace_service_item_mock, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+    async def test_post_workspace_services_creates_workspace_service_with_address_space(self, create_workspace_service_item_mock, _, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
         etag = "some-etag-value"
         workspace = sample_workspace()
         workspace.properties["address_spaces"] = ["192.168.0.1/24"]
@@ -802,6 +827,96 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert response.json()["operation"]["resourceId"] == SERVICE_ID
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
+    @patch("api.routes.workspaces.save_and_deploy_resource", side_effect=HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION))
+    @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_rolls_back_address_space_if_deploy_fails(self, create_workspace_service_item_mock, _, __, get_workspace_mock, resource_template_repo, ___, update_item_mock, ____, _____, ______, app, client, workspace_service_input, basic_workspace_service_template, basic_resource_template):
+        etag = "some-etag-value"
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        workspace.etag = etag
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"] = {"type": "string"}
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+        basic_resource_template.properties["address_spaces"] = {"type": "array", "updateable": True}
+        resource_template_repo.return_value = basic_resource_template
+
+        modified_workspace = sample_workspace()
+        modified_workspace.properties["address_spaces"] = ["192.168.0.1/24", "10.1.4.0/24"]
+        modified_workspace.etag = etag
+        update_item_mock.return_value = modified_workspace
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert update_item_mock.call_count == 2
+        rollback_call_workspace = update_item_mock.call_args_list[1][0][0]
+        assert rollback_call_workspace.properties["address_spaces"] == ["192.168.0.1/24"]
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_creates_workspace_service_with_address_space_raises_409_if_workspace_has_active_operation(self, create_workspace_service_item_mock, _, get_workspace_mock, __, app, client, workspace_service_input, basic_workspace_service_template):
+        workspace = sample_workspace()
+        workspace.properties["address_spaces"] = ["192.168.0.1/24"]
+        get_workspace_mock.return_value = workspace
+        basic_workspace_service_template.properties["address_space"]: str = Field()
+        create_workspace_service_item_mock.return_value = [sample_workspace_service(), basic_workspace_service_template]
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    async def test_post_workspace_services_raises_409_if_workspace_has_active_operation(self, _, get_workspace_mock, __, app, client, workspace_service_input):
+        get_workspace_mock.return_value = sample_workspace()
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_delete_workspace_service_raises_409_if_workspace_has_active_operation(self, _, __, ___, app, client):
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_patch_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json={"isEnabled": False}, headers={"etag": "etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_invoke_action_on_workspace_service_raises_409_if_workspace_has_active_operation(self, _, get_service_mock, __, app, client):
+        get_service_mock.return_value = sample_workspace_service()
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), params={"action": "restart"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
 
     # [POST] /workspaces/{workspace_id}/workspace-services
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_new_address_space", return_value="10.1.4.0/24")
@@ -838,7 +953,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, get_workspace_service_mock, __, app, client):
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
+    async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _mock_active_op, _, get_workspace_service_mock, __, app, client):
         workspace_service = sample_workspace_service()
         workspace_service.properties["enabled"] = True
         get_workspace_service_mock.return_value = workspace_service
@@ -854,8 +970,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     async def test_delete_workspace_service_raises_404_if_workspace_service_has_active_resources(self,
-                                                                                                 __, ___, ____, app,
+                                                                                                 _mock_active_op, __, ___, ____, app,
                                                                                                  client):
         response = await client.delete(
             app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID,
@@ -905,9 +1022,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
-    async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, __, ___, ____, resource_template_repo, _____,
+    async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, __, _mock_active_op, ___, ____, resource_template_repo, _____,
                                                                     app, client, basic_workspace_service_template):
 
         resource_template_repo.return_value = basic_workspace_service_template
@@ -919,9 +1037,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
-    async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, __, ___, ____, workspace_service_mock, resource_template_repo, _____, app, client, basic_workspace_service_template):
+    async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, __, ___, _mock_active_op, ____, workspace_service_mock, resource_template_repo, _____, app, client, basic_workspace_service_template):
         workspace_service = disabled_workspace_service()
         workspace_service_mock.return_value = workspace_service
         resource_template_repo.return_value = basic_workspace_service_template
@@ -933,6 +1052,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.json()["operation"]["resourceId"] == workspace_service.id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+
     @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
@@ -1499,6 +1619,52 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     async def test_get_user_resource_raises_404_if_resource_not_found(self, _, __, app, client):
         response = await client.get(app.url_path_for(strings.API_GET_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
+    async def test_post_user_resources_raises_409_if_workspace_has_active_operation(self, _, __, get_workspace_mock, app, client, sample_user_resource_input_data):
+        get_workspace_mock.return_value = sample_workspace()
+        response = await client.post(app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID), json=sample_user_resource_input_data)
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [DELETE] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_delete_user_resource_raises_409_if_workspace_has_active_operation(self, _, __, get_user_res_mock, ___, ____, app, client):
+        get_user_res_mock.return_value = sample_user_resource_object()
+        response = await client.delete(app.url_path_for(strings.API_DELETE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [PATCH] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_patch_user_resource_raises_409_if_workspace_has_active_operation(self, _, __, get_user_res_mock, ___, ____, app, client):
+        get_user_res_mock.return_value = sample_user_resource_object()
+        response = await client.patch(app.url_path_for(strings.API_UPDATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), json={"isEnabled": False}, headers={"etag": "etag"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}/invoke-action
+    @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=True)
+    @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_invoke_action_on_user_resource_raises_409_if_workspace_has_active_operation(self, _, __, get_user_res_mock, ___, ____, app, client):
+        get_user_res_mock.return_value = sample_user_resource_object()
+        response = await client.post(app.url_path_for(strings.API_INVOKE_ACTION_ON_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID, resource_id=USER_RESOURCE_ID), params={"action": "restart"})
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ACTIVE_OPERATION
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")

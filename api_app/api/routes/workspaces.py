@@ -43,6 +43,29 @@ workspace_services_workspace_router = APIRouter(dependencies=[Depends(require_wo
 user_resources_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
 
+async def _rollback_address_space(workspace_repo, workspace_id, allocated_space, resource_template_repo, resource_history_repo, user):
+    max_rollback_attempts = 3
+    for attempt in range(max_rollback_attempts):
+        try:
+            latest_workspace = await workspace_repo.get_workspace_by_id(workspace_id)
+            current_spaces = latest_workspace.properties.get("address_spaces", [])
+            if allocated_space in current_spaces:
+                updated_spaces = [s for s in current_spaces if s != allocated_space]
+                rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
+                await workspace_repo.patch_workspace(
+                    latest_workspace, rollback_patch, latest_workspace.etag,
+                    resource_template_repo, resource_history_repo, user, False
+                )
+            return
+        except CosmosAccessConditionFailedError:
+            if attempt == max_rollback_attempts - 1:
+                logger.exception("Failed to rollback allocated address space due to repeated ETag conflicts")
+                raise
+        except Exception:
+            logger.exception("Failed to rollback allocated address space on workspace")
+            raise
+
+
 def validate_user_has_valid_role_for_user_resource(user, user_resource):
     if "WorkspaceOwner" in user.roles:
         return
@@ -129,6 +152,12 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+    operation_id = operations_repo.create_operation_id()
+    if hasattr(operations_repo, "acquire_workspace_lease"):
+        await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -143,20 +172,38 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade,
-            is_cascade=is_disablement)
+            is_cascade=is_disablement,
+            operation_id=operation_id)
 
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
+        raise
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     if await delete_validation(workspace, workspace_repo):
         operation = await send_uninstall_message(
             resource=workspace,
@@ -175,6 +222,8 @@ async def delete_workspace(response: Response, user=Depends(require_tre_admin), 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def invoke_action_on_workspace(response: Response, action: str, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     operation = await send_custom_action_message(
         resource=workspace,
         resource_repo=workspace_repo,
@@ -243,44 +292,71 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
+    operation_id = operations_repo.create_operation_id()
+    if hasattr(operations_repo, "acquire_workspace_lease"):
+        await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
+
+    address_space_added = False
     try:
-        workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
-    except (ValidationError, ValueError) as e:
-        logger.exception("Failed create workspace service model instance")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except UserNotAuthorizedToUseTemplate as e:
-        logger.exception("User not authorized to use template")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-
-    # Get the workspace subscription id (if set)
-    if workspace.properties.get("workspace_subscription_id"):
-        workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
-
-    # if template has address_space get an address space
-    if resource_template.properties.get("address_space"):
-        # check workspace has address_spaces property
-        if not workspace.properties.get("address_spaces"):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
-        workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
-        workspace_patch = ResourcePatch()
-        workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
-        # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
-        # service deployment via the reosurce processor. there is no such functionality so the database is being
-        # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
         try:
-            await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
-        except CosmosAccessConditionFailedError:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+            workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
+        except (ValidationError, ValueError) as e:
+            logger.exception("Failed create workspace service model instance")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except UserNotAuthorizedToUseTemplate as e:
+            logger.exception("User not authorized to use template")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
-    operation = await save_and_deploy_resource(
-        resource=workspace_service,
-        resource_repo=workspace_service_repo,
-        operations_repo=operations_repo,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
+        # Get the workspace subscription id (if set)
+        if workspace.properties.get("workspace_subscription_id"):
+            workspace_service.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
+
+        # if template has address_space get an address space
+        if resource_template.properties.get("address_space"):
+            # check workspace has address_spaces property
+            if not workspace.properties.get("address_spaces"):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
+            workspace_service.properties["address_space"] = await workspace_repo.get_address_space_based_on_size(workspace_service_input.properties)
+            workspace_patch = ResourcePatch()
+            workspace_patch.properties = {"address_spaces": workspace.properties["address_spaces"] + [workspace_service.properties["address_space"]]}
+            # IP address allocation is managed by the API. Ideally this request would happen as a result of the workspace
+            # service deployment via the reosurce processor. there is no such functionality so the database is being
+            # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
+            try:
+                await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
+                address_space_added = True
+            except CosmosAccessConditionFailedError:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+
+        operation = await save_and_deploy_resource(
+            resource=workspace_service,
+            resource_repo=workspace_service_repo,
+            operations_repo=operations_repo,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template,
+            operation_id=operation_id)
+    except Exception as err:
+        if not getattr(err, "lease_retained", False):
+            try:
+                if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
+                    await _rollback_address_space(
+                        workspace_repo, workspace.id, workspace_service.properties["address_space"],
+                        resource_template_repo, resource_history_repo, user
+                    )
+            finally:
+                if hasattr(operations_repo, "release_workspace_lease"):
+                    await operations_repo.release_workspace_lease(workspace.id, operation_id)
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
+        raise
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
@@ -288,6 +364,12 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
 @workspace_services_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner), Depends(get_workspace_by_id_from_path)])
 async def patch_workspace_service(resource_patch: ResourcePatch, response: Response, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace_service.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+    operation_id = operations_repo.create_operation_id()
+    if hasattr(operations_repo, "acquire_workspace_lease"):
+        await operations_repo.acquire_workspace_lease(workspace_service.workspaceId, operation_id)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -301,19 +383,37 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Upgrade,
-            is_cascade=is_disablement)
+            is_cascade=is_disablement,
+            operation_id=operation_id)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
     except CosmosAccessConditionFailedError:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
+        raise
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def delete_workspace_service(response: Response, user=Depends(require_workspace_owner), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     if await delete_validation(workspace_service, workspace_service_repo):
         operation = await send_uninstall_message(
             resource=workspace_service,
@@ -332,6 +432,8 @@ async def delete_workspace_service(response: Response, user=Depends(require_work
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def invoke_action_on_workspace_service(response: Response, action: str, user=Depends(require_workspace_owner), workspace_service=Depends(get_workspace_service_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace_service.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
     operation = await send_custom_action_message(
         resource=workspace_service,
         resource_repo=workspace_service_repo,
@@ -411,50 +513,67 @@ async def create_user_resource(
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
         workspace_service=Depends(get_deployed_workspace_service_by_id_from_path)) -> OperationInResponse:
+    if await operations_repo.resource_has_active_operation(workspace.id):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
-    owner_id: str = None
-
-    # Check for assign_to_another_user logic
-    if (
-        hasattr(user_resource_create, "properties")
-        and isinstance(user_resource_create.properties, dict)
-        and user_resource_create.properties.get("assign_to_another_user") is True
-    ):
-        if user_resource_create.properties.get("owner_id"):
-            owner_id = user_resource_create.properties.get("owner_id")
+    operation_id = operations_repo.create_operation_id()
+    if hasattr(operations_repo, "acquire_workspace_lease"):
+        await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
 
     try:
-        user_resource, resource_template = await user_resource_repo.create_user_resource_item(
-            user_resource_create,
-            workspace.id,
-            workspace_service.id,
-            workspace_service.templateName,
-            user.id,
-            user.roles,
-            owner_id
-        )
-    except (ValidationError, ValueError) as e:
-        logger.exception("Failed create user resource model instance")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except UserNotAuthorizedToUseTemplate as e:
-        logger.exception("User not authorized to use template")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        owner_id: str = None
 
-    # Get the workspace subscription id (if set)
-    if workspace.properties.get("workspace_subscription_id"):
-        user_resource.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
+        # Check for assign_to_another_user logic
+        if (
+            hasattr(user_resource_create, "properties")
+            and isinstance(user_resource_create.properties, dict)
+            and user_resource_create.properties.get("assign_to_another_user") is True
+        ):
+            if user_resource_create.properties.get("owner_id"):
+                owner_id = user_resource_create.properties.get("owner_id")
 
-    operation = await save_and_deploy_resource(
-        resource=user_resource,
-        resource_repo=user_resource_repo,
-        operations_repo=operations_repo,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
-    response.headers["Location"] = construct_location_header(operation)
+        try:
+            user_resource, resource_template = await user_resource_repo.create_user_resource_item(
+                user_resource_create,
+                workspace.id,
+                workspace_service.id,
+                workspace_service.templateName,
+                user.id,
+                user.roles,
+                owner_id
+            )
+        except (ValidationError, ValueError) as e:
+            logger.exception("Failed create user resource model instance")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except UserNotAuthorizedToUseTemplate as e:
+            logger.exception("User not authorized to use template")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
-    return OperationInResponse(operation=operation)
+        # Get the workspace subscription id (if set)
+        if workspace.properties.get("workspace_subscription_id"):
+            user_resource.properties["workspace_subscription_id"] = workspace.properties["workspace_subscription_id"]
+
+        operation = await save_and_deploy_resource(
+            resource=user_resource,
+            resource_repo=user_resource_repo,
+            operations_repo=operations_repo,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template,
+            operation_id=operation_id)
+        response.headers["Location"] = construct_location_header(operation)
+
+        return OperationInResponse(operation=operation)
+    except Exception as err:
+        if getattr(err, "lease_retained", False):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
+            )
+        if hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
+        raise
 
 
 @user_resources_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", response_model=OperationInResponse, name=strings.API_DELETE_USER_RESOURCE)
@@ -468,6 +587,9 @@ async def delete_user_resource(
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
+
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     if user_resource.isEnabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
@@ -501,6 +623,9 @@ async def patch_user_resource(
         force_version_update: bool = False) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
 
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
     try:
         operation = await update_user_resource(user_resource, user_resource_patch, force_version_update, user, etag, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
         response.headers["Location"] = construct_location_header(operation)
@@ -526,6 +651,10 @@ async def invoke_action_on_user_resource(
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
         user=Depends(require_workspace_owner_or_researcher_or_airlock_manager)) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
+
+    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
     operation = await send_custom_action_message(
         resource=user_resource,
         resource_repo=user_resource_repo,

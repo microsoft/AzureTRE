@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from db.repositories.resources import ResourceRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
@@ -7,14 +8,17 @@ from service_bus.helpers import send_deployment_message, update_resource_for_ste
 from models.domain.authentication import User
 
 from models.domain.request_action import RequestAction
-from models.domain.resource import Resource
-from models.domain.operation import Operation
+from models.domain.resource import Resource, ResourceType
+from models.domain.operation import Operation, get_failure_status_for_action
 
-from db.repositories.operations import OperationRepository
-from services.logging import tracer
+from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError, ResourceModifiedError
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+from db.repositories.operations import OperationRepository, extract_workspace_id_from_resource_path
+from services.logging import logger, tracer
 
 
-async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False) -> Operation:
+async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False, operation_id: Optional[str] = None) -> Operation:
     """
     Creates and sends a resource request message for the resource to the Service Bus.
     The resource ID is added to the message to serve as an correlation ID for the deployment process.
@@ -42,26 +46,88 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             resource_version=resource.resourceVersion,
             user=user,
             resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo)
+            resource_template_repo=resource_template_repo,
+            operation_id=operation_id)
         current_span.set_attribute("operation_id", operation.id)
 
-        # prep the first step to send in SB
-        # resource at this point is the original object with unmaskked values
-        first_step = operation.steps[0]
-        current_span.set_attribute("step_id", first_step.id)
-        resource_to_send = await update_resource_for_step(
-            operation_step=first_step,
-            resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            root_resource=resource,
-            step_resource=None,
-            resource_to_update_id=first_step.resourceId,
-            primary_action=action,
-            user=user)
+        try:
+            # prep the first step to send in SB
+            # resource at this point is the original object with unmaskked values
+            first_step = operation.steps[0]
+            current_span.set_attribute("step_id", first_step.id)
+            resource_to_send = await update_resource_for_step(
+                operation_step=first_step,
+                resource_repo=resource_repo,
+                resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
+                root_resource=resource,
+                step_resource=None,
+                resource_to_update_id=first_step.resourceId,
+                primary_action=action,
+                user=user)
 
-        # create + send the message
-        content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
-        await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+            # create + send the message
+            content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
+            await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+        except Exception as ex:
+            logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
+            lease_released = False
+            lease_retained = False
+            should_release_lease = operation_id is None
+            try:
+                operation.status = get_failure_status_for_action(action)
+                operation.message = f"Failed to dispatch initial deployment message: {action}"
+                if operation.steps:
+                    first_step = operation.steps[0]
+                    first_step.status = get_failure_status_for_action(first_step.resourceAction)
+                    first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
+                await operations_repo.update_item(operation, release_lease=should_release_lease)
+                if should_release_lease:
+                    lease_released = True
+            except Exception:
+                logger.exception(f"Failed to persist failure state for operation {operation.id}")
+                # Fallback: remove orphaned operation and release its workspace lease only if it has not been advanced
+                lease_retained = True
+                try:
+                    creation_etag = getattr(operation, "etag", None)
+                    if hasattr(operations_repo, "delete_item"):
+                        if creation_etag:
+                            del_call = operations_repo.delete_item(
+                                operation.id,
+                                etag=creation_etag,
+                                match_condition=MatchConditions.IfNotModified
+                            )
+                        else:
+                            del_call = operations_repo.delete_item(operation.id)
+                        if hasattr(del_call, "__await__"):
+                            await del_call
+                        lease_released = True
+                        lease_retained = False
+                except (CosmosAccessConditionFailedError, ResourceModifiedError, ResourceExistsError):
+                    logger.warning(
+                        f"Operation {operation.id} was modified concurrently; retaining operation and workspace lease"
+                    )
+                    lease_retained = True
+                except Exception:
+                    logger.exception(f"Failed to delete orphaned operation {operation.id}")
+                    lease_retained = True
+
+                if lease_released and should_release_lease:
+                    target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
+                    if not target_workspace_id:
+                        if getattr(resource, "resourceType", None) == ResourceType.Workspace:
+                            target_workspace_id = resource.id
+                        elif hasattr(resource, "workspaceId") and resource.workspaceId:
+                            target_workspace_id = resource.workspaceId
+                    if target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
+                        try:
+                            rel_call = operations_repo.release_workspace_lease(target_workspace_id, operation.id)
+                            if hasattr(rel_call, "__await__"):
+                                await rel_call
+                        except Exception:
+                            logger.exception(f"Failed to release workspace lease for {target_workspace_id}")
+
+            setattr(ex, "lease_retained", lease_retained)
+            raise ex
 
     return operation

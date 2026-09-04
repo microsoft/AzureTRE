@@ -4,7 +4,7 @@ import pytest
 import uuid
 
 from azure.servicebus import ServiceBusMessage
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 from resources import strings
 from models.schemas.resource import ResourcePatch
 from service_bus.helpers import (
@@ -21,6 +21,8 @@ from service_bus.resource_request_sender import (
     send_resource_request_message,
     RequestAction,
 )
+from models.domain.operation import Status
+from azure.core import MatchConditions
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 pytestmark = pytest.mark.asyncio
@@ -168,7 +170,7 @@ async def test_multi_step_document_retries(
     )
 
     # simulate an etag mismatch
-    resource_repo.patch_resource.side_effect = CosmosAccessConditionFailedError
+    resource_repo.patch_resource.side_effect = CosmosAccessConditionFailedError()
 
     num_retries = 5
     try:
@@ -191,3 +193,226 @@ async def test_multi_step_document_retries(
     # check it tried to patch and re-get the item the first time + all the retries
     assert len(resource_repo.patch_resource.mock_calls) == (num_retries + 1)
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
+
+
+@pytest.mark.parametrize(
+    "action, expected_status",
+    [
+        (RequestAction.Install, Status.DeploymentFailed),
+        (RequestAction.Upgrade, Status.UpdatingFailed),
+        (RequestAction.UnInstall, Status.DeletingFailed),
+    ],
+)
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_persists_failure_state_on_dispatch_failure(
+    update_resource_mock,
+    send_deployment_mock,
+    action,
+    expected_status,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, action)
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock()
+
+    resource_repo_mock = AsyncMock()
+    resource_template_repo_mock = AsyncMock()
+    resource_history_repo_mock = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=resource_repo_mock,
+            user=create_test_user(),
+            resource_template_repo=resource_template_repo_mock,
+            resource_history_repo=resource_history_repo_mock,
+            action=action,
+        )
+
+    operations_repo_mock.update_item.assert_awaited_once_with(operation, release_lease=True)
+    assert operation.status == expected_status
+    assert operation.steps[0].status == expected_status
+    assert "Failed to dispatch" in operation.message
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_derives_step_failure_status_from_step_action(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.UnInstall)
+    operation.steps[0].resourceAction = RequestAction.Upgrade
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.UnInstall,
+        )
+
+    operations_repo_mock.update_item.assert_awaited_once_with(operation, release_lease=True)
+    assert operation.status == Status.DeletingFailed
+    assert operation.steps[0].status == Status.UpdatingFailed
+    assert "Failed to dispatch" in operation.steps[0].message
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_retains_lease_when_caller_provides_operation_id(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+            operation_id=operation.id,
+        )
+
+    operations_repo_mock.update_item.assert_awaited_once_with(operation, release_lease=False)
+    assert operation.status == Status.DeploymentFailed
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_cleans_up_orphaned_operation_when_persisting_failure_fails(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operation.etag = "creation-etag"
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock(side_effect=Exception("Cosmos error"))
+    operations_repo_mock.delete_item = AsyncMock()
+    operations_repo_mock.release_workspace_lease = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+        )
+
+    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
+    operations_repo_mock.release_workspace_lease.assert_awaited_once_with(resource.id, operation.id)
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_retains_lease_when_concurrently_modified(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operation.etag = "creation-etag"
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock(side_effect=Exception("Cosmos error"))
+    operations_repo_mock.delete_item = AsyncMock(side_effect=CosmosAccessConditionFailedError)
+    operations_repo_mock.release_workspace_lease = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+        )
+
+    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
+    operations_repo_mock.release_workspace_lease.assert_not_called()
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_sets_lease_retained_on_concurrent_modification(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operation.etag = "creation-etag"
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock(side_effect=Exception("Cosmos error"))
+    operations_repo_mock.delete_item = AsyncMock(side_effect=CosmosAccessConditionFailedError)
+    operations_repo_mock.release_workspace_lease = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable") as exc_info:
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+            operation_id="custom-op-id",
+        )
+
+    assert getattr(exc_info.value, "lease_retained", False) is True
+    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
+    operations_repo_mock.release_workspace_lease.assert_not_called()

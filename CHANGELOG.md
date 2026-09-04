@@ -8,6 +8,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+* A workspace service's allocated `address_space` will now be removed from its parent workspace's `address_spaces` list when the service is deleted, preventing IP address range exhaustion, and workspace-level operation leasing ensures safe serialization of concurrent workspace mutations ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 ## (0.29.0) (August 14, 2026)

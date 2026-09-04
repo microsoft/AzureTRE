@@ -8,7 +8,7 @@ This document will help you write a valid `pipeline: {}` block in your template.
 "pipeline": {
     "install": [ // <-- [install | upgrade | uninstall]
       {
-        "stepId": "a unique string value here",
+        "stepId": "a unique string value within this template",
         "stepTitle": "Friendly description of the step here - will be displayed in the UI",
         "resourceTemplateName": "name of the resource template to update", // only required for shared_service targets
         "resourceType": "shared-service", // [ shared-service | user-resource | workspace-service | workspace ]
@@ -82,6 +82,21 @@ To do so, the `arraySubstitutionAction` field supports the following values:
 - `append` - just append this object into the array
 - `replace` - find this object in the array (using the `arrayMatchField` value), and replace it with this value
 - `remove` - remove this property from the array (useful for `uninstall` actions)
+
+## Reserved Cleanup Step
+Use `address-space-cleanup` as the `stepId` for a trailing workspace upgrade that releases a workspace service's address space during uninstall:
+
+```json
+{
+  "stepId": "address-space-cleanup",
+  "stepTitle": "Upgrade to ensure workspace is aware of address space removal",
+  "resourceType": "workspace",
+  "resourceAction": "upgrade",
+  "properties": []
+}
+```
+
+This identifier is reserved for that cleanup behavior and is only permitted as the final step in a `workspace-service` `uninstall` pipeline. Step IDs only need to be unique within a single template's pipeline.
 
 ## Notes
 - Each step is executed in serial, in the order defined in the template

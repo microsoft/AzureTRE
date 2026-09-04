@@ -1,3 +1,5 @@
+import asyncio
+import time
 from datetime import datetime, timedelta, UTC
 from services.logging import logger
 
@@ -8,7 +10,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from models.domain.user_resource import UserResource
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
 from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
@@ -23,9 +25,10 @@ from resources import strings, constants
 
 from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, update_user_resource
 
+from db.errors import EntityDoesNotExist
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
-from db.repositories.operations import OperationRepository
+from db.repositories.operations import OperationRepository, WORKSPACE_LEASE_EXPIRY_SECONDS
 from db.repositories.airlock_requests import AirlockRequestRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
@@ -136,7 +139,8 @@ def get_account_url(account_name: str) -> str:
 async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, airlock_request: AirlockRequest, user: User, workspace: Workspace,
                                  airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository,
                                  workspace_service_repo, operation_repo: WorkspaceServiceRepository, resource_template_repo: ResourceTemplateRepository,
-                                 resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
+                                 resource_history_repo: ResourceHistoryRepository,
+                                 background_tasks=None) -> AirlockRequest:
     airlock_review = airlock_request_repo.create_airlock_review_item(airlock_review_input, user)
     # Store review with new status in cosmos, and send status_changed event
     if airlock_review.reviewDecision.value == AirlockReviewDecision.Approved:
@@ -152,15 +156,27 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
     # however the operations still will be saved in the DB and displayed on the UI as normal.
-    _ = await delete_all_review_user_resources(
-        airlock_request=airlock_request,
-        user_resource_repo=user_resource_repo,
-        workspace_service_repo=workspace_service_repo,
-        resource_template_repo=resource_template_repo,
-        operations_repo=operation_repo,
-        resource_history_repo=resource_history_repo,
-        user=user
-    )
+    if background_tasks is not None:
+        background_tasks.add_task(
+            delete_all_review_user_resources,
+            airlock_request=airlock_request,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
+            resource_template_repo=resource_template_repo,
+            operations_repo=operation_repo,
+            resource_history_repo=resource_history_repo,
+            user=user
+        )
+    else:
+        await delete_all_review_user_resources(
+            airlock_request=airlock_request,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
+            resource_template_repo=resource_template_repo,
+            operations_repo=operation_repo,
+            resource_history_repo=resource_history_repo,
+            user=user
+        )
 
     return updated_airlock_request
 
@@ -259,7 +275,7 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
         logger.info("Deleting existing user resource...")
-        _ = await delete_review_user_resource(
+        delete_op = await delete_review_user_resource(
             user_resource=existing_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
@@ -268,6 +284,8 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
             resource_history_repo=resource_history_repo,
             user=user
         )
+        if delete_op and hasattr(delete_op, "id"):
+            await wait_for_successful_operation(operation_repo, delete_op.id)
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
@@ -402,6 +420,79 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     return enriched_requests
 
 
+TERMINAL_STATUSES = {
+    Status.Deployed,
+    Status.DeploymentFailed,
+    Status.Updated,
+    Status.UpdatingFailed,
+    Status.Deleted,
+    Status.DeletingFailed,
+    Status.ActionSucceeded,
+    Status.ActionFailed,
+}
+
+
+SUCCESS_STATUSES = {
+    Status.Deployed,
+    Status.Updated,
+    Status.Deleted,
+    Status.ActionSucceeded,
+}
+
+FAILURE_STATUSES = {
+    Status.DeploymentFailed,
+    Status.UpdatingFailed,
+    Status.DeletingFailed,
+    Status.ActionFailed,
+}
+
+
+async def wait_for_successful_operation(
+    operations_repo: OperationRepository,
+    operation_id: str,
+    timeout: float = WORKSPACE_LEASE_EXPIRY_SECONDS,
+    poll_interval: float = 0.5,
+) -> Optional[Operation]:
+    if not hasattr(operations_repo, "get_operation_by_id") or not isinstance(operation_id, str):
+        return None
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            op_call = operations_repo.get_operation_by_id(operation_id)
+            op = await op_call if hasattr(op_call, "__await__") else op_call
+            if op is not None:
+                op_status = getattr(op, "status", None)
+                if not isinstance(op_status, (str, Status)):
+                    return op
+                if op_status in SUCCESS_STATUSES:
+                    return op
+                if op_status in FAILURE_STATUSES:
+                    logger.error(f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}"
+                    )
+        except HTTPException:
+            raise
+        except EntityDoesNotExist:
+            pass
+        await asyncio.sleep(poll_interval)
+    logger.error(f"Timed out waiting for operation {operation_id} to complete successfully")
+    raise HTTPException(
+        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+        detail=f"Timed out waiting for operation {operation_id} to complete successfully"
+    )
+
+
+async def wait_for_terminal_operation(
+    operations_repo: OperationRepository,
+    operation_id: str,
+    timeout: float = WORKSPACE_LEASE_EXPIRY_SECONDS,
+    poll_interval: float = 0.5,
+) -> Optional[Operation]:
+    return await wait_for_successful_operation(operations_repo, operation_id, timeout=timeout, poll_interval=poll_interval)
+
+
 async def delete_review_user_resource(
         user_resource: UserResource,
         user_resource_repo: UserResourceRepository,
@@ -414,7 +505,9 @@ async def delete_review_user_resource(
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
 
     # disable might contain logic that we need to execute before the deletion of the resource
-    _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+    disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+    if disable_op and hasattr(disable_op, "id"):
+        await wait_for_successful_operation(operations_repo, disable_op.id)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -456,22 +549,50 @@ async def delete_all_review_user_resources(
         user: User) -> List[Operation]:
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
-        user_resource = await user_resource_repo.get_user_resource_by_id(
-            workspace_id=review_ur.workspaceId,
-            service_id=review_ur.workspaceServiceId,
-            resource_id=review_ur.userResourceId
-        )
+        start_time = time.time()
+        max_lease_wait = WORKSPACE_LEASE_EXPIRY_SECONDS
+        poll_interval = 2.0
+        while True:
+            try:
+                user_resource = await user_resource_repo.get_user_resource_by_id(
+                    workspace_id=review_ur.workspaceId,
+                    service_id=review_ur.workspaceServiceId,
+                    resource_id=review_ur.userResourceId
+                )
 
-        operation = await delete_review_user_resource(
-            user_resource=user_resource,
-            user_resource_repo=user_resource_repo,
-            workspace_service_repo=workspace_service_repo,
-            resource_template_repo=resource_template_repo,
-            operations_repo=operations_repo,
-            resource_history_repo=resource_history_repo,
-            user=user
-        )
-        operations.append(operation)
+                operation = await delete_review_user_resource(
+                    user_resource=user_resource,
+                    user_resource_repo=user_resource_repo,
+                    workspace_service_repo=workspace_service_repo,
+                    resource_template_repo=resource_template_repo,
+                    operations_repo=operations_repo,
+                    resource_history_repo=resource_history_repo,
+                    user=user
+                )
+                operations.append(operation)
+                break
+            except EntityDoesNotExist:
+                logger.info(f"Review user resource {review_ur.userResourceId} already deleted or does not exist")
+                break
+            except HTTPException as ex:
+                if ex.status_code == status.HTTP_409_CONFLICT:
+                    elapsed = time.time() - start_time
+                    if elapsed >= max_lease_wait:
+                        logger.error(
+                            f"Timed out waiting for workspace lease to delete review user resource {review_ur.userResourceId}"
+                        )
+                        raise
+                    logger.info(
+                        f"Workspace lease contention for review user resource {review_ur.userResourceId}; "
+                        f"waiting for active operation to complete (elapsed {elapsed:.1f}s)..."
+                    )
+                    await asyncio.sleep(min(poll_interval, max_lease_wait - elapsed))
+                    poll_interval = min(poll_interval * 1.5, 30.0)
+                    continue
+                raise
+            except Exception as ex:
+                logger.exception(f"Failed to delete review user resource {review_ur.userResourceId}: {ex}")
+                raise
 
     logger.info(f"Started {len(operations)} operations on deleting user resources")
     return operations
@@ -479,9 +600,22 @@ async def delete_all_review_user_resources(
 
 async def cancel_request(airlock_request: AirlockRequest, user: User, workspace: Workspace,
                          airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
-                         resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
+                         resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository,
+                         background_tasks=None) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
-    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    if background_tasks is not None:
+        background_tasks.add_task(
+            delete_all_review_user_resources,
+            airlock_request,
+            user_resource_repo,
+            workspace_service_repo,
+            resource_template_repo,
+            operations_repo,
+            resource_history_repo,
+            user
+        )
+    else:
+        await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
     return updated_request
 
 

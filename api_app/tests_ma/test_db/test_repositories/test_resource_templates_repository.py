@@ -5,9 +5,11 @@ from models.domain.user_resource_template import UserResourceTemplate
 
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.errors import EntityDoesNotExist, InvalidInput
+from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from models.domain.resource_template import ResourceTemplate
 from models.schemas.workspace_template import WorkspaceTemplateInCreate
+from resources import strings
 
 
 pytestmark = pytest.mark.asyncio
@@ -293,3 +295,79 @@ async def test_create_template_with_null_pipeline_creates_template_without_pipel
     input_user_resource_template.json_schema["pipeline"] = None
     created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
     assert created.pipeline is None
+
+
+@pytest.mark.parametrize(
+    "pipeline",
+    [
+        {
+            "install": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+        },
+        {
+            "upgrade": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+        },
+        {
+            "uninstall": [{"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}, {"stepId": "main"}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.SharedService, "resourceAction": RequestAction.Upgrade}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.UnInstall}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade}],
+        },
+        {
+            "uninstall": [{"stepId": "main"}, {"stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID, "resourceType": ResourceType.Workspace, "resourceAction": RequestAction.Upgrade, "stepTitle": ""}],
+        },
+    ],
+)
+async def test_create_template_with_invalid_address_space_cleanup_pipeline_fails(resource_template_repo, input_workspace_service_template, pipeline):
+    input_workspace_service_template.json_schema["pipeline"] = pipeline
+    with pytest.raises(InvalidInput):
+        await resource_template_repo.create_template(input_workspace_service_template, ResourceType.WorkspaceService)
+
+
+@pytest.mark.parametrize(
+    "non_ws_resource_type",
+    [
+        ResourceType.UserResource,
+        ResourceType.Workspace,
+        ResourceType.SharedService,
+    ],
+)
+async def test_create_template_with_address_space_cleanup_on_non_workspace_service_fails(resource_template_repo, input_user_resource_template, non_ws_resource_type):
+    input_user_resource_template.json_schema["pipeline"] = {
+        "uninstall": [
+            {"stepId": "main"},
+            {
+                "stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                "stepTitle": "Cleanup address space",
+                "resourceType": ResourceType.Workspace,
+                "resourceAction": RequestAction.Upgrade,
+            },
+        ],
+    }
+    with pytest.raises(InvalidInput, match=f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' is only allowed in '{ResourceType.WorkspaceService}' templates"):
+        await resource_template_repo.create_template(input_user_resource_template, non_ws_resource_type)
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+async def test_create_template_with_valid_address_space_cleanup_as_final_uninstall_step_succeeds(_, resource_template_repo, input_workspace_service_template):
+    input_workspace_service_template.json_schema["pipeline"] = {
+        "uninstall": [
+            {"stepId": "main"},
+            {
+                "stepId": strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                "stepTitle": "Cleanup address space",
+                "resourceType": ResourceType.Workspace,
+                "resourceAction": RequestAction.Upgrade,
+            },
+        ],
+    }
+    created = await resource_template_repo.create_template(input_workspace_service_template, ResourceType.WorkspaceService)
+    assert created.pipeline

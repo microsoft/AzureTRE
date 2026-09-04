@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
+from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response, BackgroundTasks
 
 from jsonschema.exceptions import ValidationError
 from api.helpers import get_repository
@@ -99,7 +99,8 @@ async def create_submit_request(airlock_request=Depends(get_airlock_request_by_i
 @airlock_workspace_router.post("/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel", status_code=status_code.HTTP_200_OK,
                                response_model=AirlockRequestWithAllowedUserActions, name=strings.API_CANCEL_AIRLOCK_REQUEST,
                                dependencies=[Depends(require_workspace_owner_or_researcher), Depends(get_workspace_by_id_from_path)])
-async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_id_from_path),
+async def create_cancel_request(background_tasks: BackgroundTasks,
+                                airlock_request=Depends(get_airlock_request_by_id_from_path),
                                 user=Depends(require_workspace_owner_or_researcher),
                                 workspace=Depends(get_workspace_by_id_from_path),
                                 airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
@@ -108,7 +109,7 @@ async def create_cancel_request(airlock_request=Depends(get_airlock_request_by_i
                                 resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
                                 operation_repo=Depends(get_repository(OperationRepository)),
                                 resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),) -> AirlockRequestWithAllowedUserActions:
-    updated_request = await cancel_request(airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, resource_template_repo, operation_repo, resource_history_repo)
+    updated_request = await cancel_request(airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, resource_template_repo, operation_repo, resource_history_repo, background_tasks=background_tasks)
     allowed_actions = get_allowed_actions(updated_request, user, airlock_request_repo)
     return AirlockRequestWithAllowedUserActions(airlockRequest=updated_request, allowedUserActions=allowed_actions)
 
@@ -170,6 +171,7 @@ async def create_review_user_resource(
                                                                                       Depends(get_workspace_by_id_from_path)])
 async def create_airlock_review(
         airlock_review_input: AirlockReviewInCreate,
+        background_tasks: BackgroundTasks,
         airlock_request=Depends(get_airlock_request_by_id_from_path),
         user=Depends(require_airlock_manager),
         workspace=Depends(get_deployed_workspace_by_id_from_path),
@@ -180,7 +182,7 @@ async def create_airlock_review(
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> AirlockRequestWithAllowedUserActions:
     try:
-        updated_airlock_request = await review_airlock_request(airlock_review_input, airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+        updated_airlock_request = await review_airlock_request(airlock_review_input, airlock_request, user, workspace, airlock_request_repo, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo, background_tasks=background_tasks)
         allowed_actions = get_allowed_actions(updated_airlock_request, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActions(airlockRequest=updated_airlock_request, allowedUserActions=allowed_actions)
     except (ValidationError, ValueError) as e:

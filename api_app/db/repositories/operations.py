@@ -1,7 +1,11 @@
 from datetime import datetime, UTC
 import uuid
-from typing import List
+from typing import List, Optional
 
+from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosAccessConditionFailedError, CosmosResourceNotFoundError
+from fastapi import HTTPException, status as http_status
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -12,8 +16,23 @@ from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
 
+from services.logging import logger
 from db.errors import EntityDoesNotExist
-from models.domain.operation import Operation, OperationStep, Status
+from models.domain.operation import Operation, OperationStep, Status, get_failure_status_for_action
+
+# The resource processor auto-renews Porter session locks for up to 3600 seconds (1 hour)
+# during deployment execution (see resource_processor/vmss_porter/runner.py:68).
+# Lease expiry includes a safe margin beyond the 3600-second execution window and status-delivery
+# latency (7200 seconds / 2 hours) to ensure still-running operations are not prematurely reclaimed.
+WORKSPACE_LEASE_EXPIRY_SECONDS = 7200.0
+
+
+def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
+    if resource_path and resource_path.startswith("/workspaces/"):
+        parts = resource_path.split("/")
+        if len(parts) > 2:
+            return parts[2]
+    return None
 
 
 class OperationRepository(BaseRepository):
@@ -22,6 +41,197 @@ class OperationRepository(BaseRepository):
         cls = OperationRepository()
         await super().create(config.STATE_STORE_OPERATIONS_CONTAINER)
         return cls
+
+    async def save_item(self, item: Operation):
+        item_dict = item.model_dump(exclude={"etag"})
+        item_dict.pop("_etag", None)
+        response = await self.container.create_item(body=item_dict)
+        if isinstance(response, dict) and "_etag" in response:
+            new_etag = response["_etag"]
+            item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+
+    async def get_active_operations_for_resource(self, resource_id: str) -> List[Operation]:
+        terminal_statuses = (
+            Status.Deployed,
+            Status.DeploymentFailed,
+            Status.Updated,
+            Status.UpdatingFailed,
+            Status.Deleted,
+            Status.DeletingFailed,
+            Status.ActionSucceeded,
+            Status.ActionFailed,
+        )
+        status_filter = ", ".join(f'\"{s}\"' for s in terminal_statuses)
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" AND NOT ARRAY_CONTAINS([{status_filter}], c.status)'
+        operations = await self.query(query=query)
+        return [TypeAdapter(Operation).validate_python(op) for op in operations]
+
+    async def get_last_operation_for_resource(self, resource_id: str) -> Operation:
+        query = self.operations_query() + f' c.resourceId = "{resource_id}" ORDER BY c.createdWhen DESC OFFSET 0 LIMIT 1'
+        operations = await self.query(query=query)
+        if not operations:
+            raise EntityDoesNotExist
+        return TypeAdapter(Operation).validate_python(operations[0])
+
+    async def update_item(self, item: Operation, etag: Optional[str] = None, release_lease: bool = True) -> Operation:
+        etag_to_match = etag or getattr(item, "etag", None)
+        item_dict = item.model_dump(exclude={"etag"})
+        item_dict.pop("_etag", None)
+        if etag_to_match:
+            response = await self.container.replace_item(
+                item=item.id,
+                body=item_dict,
+                etag=etag_to_match,
+                match_condition=MatchConditions.IfNotModified
+            )
+            if isinstance(response, dict) and "_etag" in response:
+                new_etag = response["_etag"]
+                item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+        else:
+            response = await self.container.upsert_item(body=item_dict)
+            if isinstance(response, dict) and "_etag" in response:
+                new_etag = response["_etag"]
+                item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
+
+        active_statuses = (
+            Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
+            Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
+            Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
+        )
+        if release_lease and item.status not in active_statuses:
+            target_workspace_id = extract_workspace_id_from_resource_path(item.resourcePath)
+            if target_workspace_id:
+                await self.release_workspace_lease(target_workspace_id, item.id)
+
+        return item
+
+    async def acquire_workspace_lease(self, workspace_id: str, operation_id: str) -> bool:
+        if not hasattr(self, "_container") or self._container is None:
+            return True
+
+        lease_id = f"lease_{workspace_id}"
+        max_attempts = 3
+
+        for attempt in range(max_attempts):
+            timestamp = self.get_timestamp()
+            lease_body = {
+                "id": lease_id,
+                "workspaceId": workspace_id,
+                "operationId": operation_id,
+                "createdWhen": timestamp,
+            }
+
+            try:
+                create_call = self.container.create_item(body=lease_body)
+                if hasattr(create_call, "__await__"):
+                    await create_call
+                return True
+            except (CosmosResourceExistsError, ResourceExistsError):
+                try:
+                    read_call = self.read_item_by_id(lease_id)
+                    existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+                except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist):
+                    # The lease was released between create_item conflict and read_item_by_id; retry
+                    if attempt < max_attempts - 1:
+                        continue
+                    raise
+
+                if not isinstance(existing_lease, dict):
+                    return True
+
+                current_op_id = existing_lease.get("operationId")
+                if current_op_id == operation_id:
+                    return True
+
+                lease_created = existing_lease.get("createdWhen", 0.0)
+
+                if current_op_id:
+                    try:
+                        op_call = self.get_operation_by_id(current_op_id)
+                        existing_op = await op_call if hasattr(op_call, "__await__") else op_call
+                        terminal_statuses = {
+                            Status.Deployed,
+                            Status.DeploymentFailed,
+                            Status.Deleted,
+                            Status.DeletingFailed,
+                            Status.Updated,
+                            Status.UpdatingFailed,
+                            Status.ActionSucceeded,
+                            Status.ActionFailed,
+                        }
+                        if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
+                            op_time = getattr(existing_op, "updatedWhen", 0.0) or getattr(existing_op, "createdWhen", 0.0)
+                            if timestamp - op_time < WORKSPACE_LEASE_EXPIRY_SECONDS:
+                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            # Stale operation from interrupted dispatch; reconcile to failed status
+                            try:
+                                existing_op.status = get_failure_status_for_action(existing_op.action)
+                                existing_op.message = "Operation timed out or was interrupted before completion"
+                                existing_op.updatedWhen = timestamp
+                                existing_op.reconciled = True
+                                if getattr(existing_op, "steps", None):
+                                    for step in existing_op.steps:
+                                        if not step.is_failure() and not step.is_success():
+                                            step.status = get_failure_status_for_action(step.resourceAction or existing_op.action)
+                                            step.message = "Operation timed out or was interrupted before completion"
+                                            step.updatedWhen = timestamp
+                                update_call = self.update_item(existing_op)
+                                if hasattr(update_call, "__await__"):
+                                    await update_call
+                            except Exception as e:
+                                logger.exception(f"Failed to reconcile stale operation {existing_op.id}: {e}")
+                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            # update_item persists a terminal status and releases/deletes the workspace lease.
+                            # Restart lease acquisition rather than replacing the now-deleted lease document.
+                            continue
+                    except HTTPException:
+                        raise
+                    except (EntityDoesNotExist, CosmosResourceNotFoundError):
+                        # Operation doc not written yet (still constructing cascade/operation).
+                        # Safely reclaim orphaned leases after a bounded interval (WORKSPACE_LEASE_EXPIRY_SECONDS).
+                        if timestamp - lease_created < WORKSPACE_LEASE_EXPIRY_SECONDS:
+                            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+                etag = existing_lease.get("_etag") if isinstance(existing_lease, dict) else None
+                try:
+                    if etag:
+                        rep_call = self.container.replace_item(
+                            item=lease_id,
+                            body=lease_body,
+                            etag=etag,
+                            match_condition=MatchConditions.IfNotModified
+                        )
+                        if hasattr(rep_call, "__await__"):
+                            await rep_call
+                    else:
+                        up_call = self.container.upsert_item(body=lease_body)
+                        if hasattr(up_call, "__await__"):
+                            await up_call
+                    return True
+                except (CosmosAccessConditionFailedError, ResourceExistsError, CosmosResourceNotFoundError, ResourceNotFoundError):
+                    if attempt < max_attempts - 1:
+                        continue
+                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+    async def release_workspace_lease(self, workspace_id: str, operation_id: Optional[str] = None) -> None:
+        if not hasattr(self, "_container") or self._container is None:
+            return
+        lease_id = f"lease_{workspace_id}"
+        try:
+            read_call = self.read_item_by_id(lease_id)
+            existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+            if isinstance(existing_lease, dict) and (not operation_id or existing_lease.get("operationId") == operation_id):
+                etag = existing_lease.get("_etag")
+                if etag:
+                    del_call = self.delete_item(lease_id, etag=etag, match_condition=MatchConditions.IfNotModified)
+                else:
+                    del_call = self.delete_item(lease_id)
+                if hasattr(del_call, "__await__"):
+                    await del_call
+        except Exception:
+            pass
 
     @staticmethod
     def operations_query():
@@ -49,61 +259,74 @@ class OperationRepository(BaseRepository):
             message=message,
             updatedWhen=self.get_timestamp())
 
-    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository) -> Operation:
-        operation_id = self.create_operation_id()
+    async def create_operation_item(self, resource_id: str, resource_list: List, action: str, resource_path: str, resource_version: int, user: User, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, operation_id: Optional[str] = None) -> Operation:
+        if not operation_id:
+            operation_id = self.create_operation_id()
 
-        # get the right "awaiting" message based on the action
-        status, message = self.get_initial_status(action)
-        all_steps = []
-        for resource in resource_list:
-            name = resource["templateName"]
-            version = resource["templateVersion"]
-            resource_type = ResourceType(resource["resourceType"])
-            primary_parent_service_name = None
-            if resource_type == ResourceType.UserResource:
-                primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
-                primary_parent_service_name = primary_parent_workspace_service.templateName
-            resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
-            resource_template_dict = resource_template.model_dump(exclude_none=True)
-            # if the template has a pipeline defined for this action, copy over all the steps to the ops document
-            steps = await self.build_step_list(
-                steps=[],
-                resource_template_dict=resource_template_dict,
-                action=action,
-                resource_repo=resource_repo,
-                resource_id=resource["id"],
+        target_workspace_id = extract_workspace_id_from_resource_path(resource_path)
+        if target_workspace_id:
+            await self.acquire_workspace_lease(target_workspace_id, operation_id)
+
+        try:
+            # get the right "awaiting" message based on the action
+            status, message = self.get_initial_status(action)
+            all_steps = []
+            for resource in resource_list:
+                name = resource["templateName"]
+                version = resource["templateVersion"]
+                resource_type = ResourceType(resource["resourceType"])
+                primary_parent_service_name = None
+                if resource_type == ResourceType.UserResource:
+                    primary_parent_workspace_service = await resource_repo.get_resource_by_id(resource["parentWorkspaceServiceId"])
+                    primary_parent_service_name = primary_parent_workspace_service.templateName
+                resource_template = await resource_template_repo.get_template_by_name_and_version(name, version, resource_type, primary_parent_service_name)
+                resource_template_dict = resource_template.model_dump(exclude_none=True)
+                # if the template has a pipeline defined for this action, copy over all the steps to the ops document
+                steps = await self.build_step_list(
+                    steps=[],
+                    resource_template_dict=resource_template_dict,
+                    action=action,
+                    resource_repo=resource_repo,
+                    resource_id=resource["id"],
+                    status=status,
+                    message=message,
+                    is_cascade_operation=resource["id"] != resource_id
+                )
+
+                # if no pipeline is defined for this action, create a main step only
+                if len(steps) == 0:
+                    all_steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource["id"], status=status, message=message))
+                else:
+                    all_steps.extend(steps)
+
+            timestamp = self.get_timestamp()
+            operation = Operation(
+                id=operation_id,
+                resourceId=resource_id,
+                resourcePath=resource_path,
+                resourceVersion=resource_version,
                 status=status,
-                message=message
+                createdWhen=timestamp,
+                updatedWhen=timestamp,
+                action=action,
+                message=message,
+                user=user.model_dump(),
+                steps=all_steps
             )
 
-            # if no pipeline is defined for this action, create a main step only
-            if len(steps) == 0:
-                all_steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource["id"], status=status, message=message))
-            else:
-                all_steps.extend(steps)
+            await self.save_item(operation)
+            return operation
+        except Exception:
+            if target_workspace_id:
+                await self.release_workspace_lease(target_workspace_id, operation_id)
+            raise
 
-        timestamp = self.get_timestamp()
-        operation = Operation(
-            id=operation_id,
-            resourceId=resource_id,
-            resourcePath=resource_path,
-            resourceVersion=resource_version,
-            status=status,
-            createdWhen=timestamp,
-            updatedWhen=timestamp,
-            action=action,
-            message=message,
-            user=user.model_dump(),
-            steps=all_steps
-        )
-
-        await self.save_item(operation)
-        return operation
-
-    async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str):
+    async def build_step_list(self, steps: List[OperationStep], resource_template_dict: dict, action: str, resource_repo: ResourceRepository, resource_id: str, status: Status, message: str, is_cascade_operation: bool = False):
         if "pipeline" in resource_template_dict and resource_template_dict["pipeline"] is not None:
             if action in resource_template_dict["pipeline"] and resource_template_dict["pipeline"][action] is not None:
                 for step in resource_template_dict["pipeline"][action]:
+                    if is_cascade_operation and step["stepId"] == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        continue
                     if step["stepId"] == "main":
                         steps.append(self.create_main_step(resource_template=resource_template_dict, action=action, resource_id=resource_id, status=status, message=message))
                     else:
@@ -135,7 +358,7 @@ class OperationRepository(BaseRepository):
                         steps.append(OperationStep(
                             id=str(uuid.uuid4()),
                             templateStepId=step["stepId"],
-                            stepTitle=step["stepTitle"],
+                            stepTitle=step.get("stepTitle"),
                             resourceId=resource_for_step.id,
                             resourceTemplateName=resource_for_step.templateName,
                             resourceType=resource_for_step.resourceType,
@@ -194,3 +417,68 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0
+
+    async def resource_has_active_operation(self, resource_id: str) -> bool:
+        # Guard against injection; resource_id should always be a valid UUID string
+        try:
+            uuid.UUID(resource_id)
+        except ValueError:
+            return False
+        active_statuses = (
+            Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
+            Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
+            Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
+        )
+        status_filter = ", ".join(f'"{s}"' for s in active_statuses)
+        query = (
+            self.operations_query()
+            + f' (c.resourceId = "{resource_id}"'
+            + f' OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true)'
+            # Include any operation whose resource path contains this resource id — this catches
+            # cascading operations on all descendant resources (workspace services AND user resources).
+            # The previous NOT CONTAINS(c.resourcePath, "/user-resources/") exclusion meant that
+            # active user-resource operations were invisible when checking a parent workspace or
+            # workspace-service, allowing duplicate cascading pipelines to start.
+            + f' OR CONTAINS(c.resourcePath, "{resource_id}"))'
+            + f' AND c.status IN ({status_filter})'
+        )
+        operations = await self.query(query=query)
+        if not operations:
+            return False
+
+        timestamp = self.get_timestamp()
+        has_active = False
+        for op_dict in operations:
+            op_status = op_dict.get("status") if isinstance(op_dict, dict) else getattr(op_dict, "status", None)
+            if op_status is not None and op_status not in active_statuses:
+                continue
+            op_time = (
+                (op_dict.get("updatedWhen") or op_dict.get("createdWhen"))
+                if isinstance(op_dict, dict)
+                else (getattr(op_dict, "updatedWhen", None) or getattr(op_dict, "createdWhen", None))
+            )
+            # If timestamp is present and exceeds expiry, it is stale
+            if op_time is not None and (timestamp - op_time >= WORKSPACE_LEASE_EXPIRY_SECONDS):
+                # Stale active operation from interrupted dispatch; reconcile to failure status
+                try:
+                    op = TypeAdapter(Operation).validate_python(op_dict)
+                    op.status = get_failure_status_for_action(op.action)
+                    op.message = "Operation timed out or was interrupted before completion"
+                    op.updatedWhen = timestamp
+                    op.reconciled = True
+                    if getattr(op, "steps", None):
+                        for step in op.steps:
+                            if not step.is_failure() and not step.is_success():
+                                step.status = get_failure_status_for_action(step.resourceAction or op.action)
+                                step.message = "Operation timed out or was interrupted before completion"
+                                step.updatedWhen = timestamp
+                    update_call = self.update_item(op)
+                    if hasattr(update_call, "__await__"):
+                        await update_call
+                except Exception as e:
+                    logger.exception(f"Failed to reconcile stale active operation {op_dict.get('id') if isinstance(op_dict, dict) else getattr(op_dict, 'id', None)}: {e}")
+                    has_active = True
+            else:
+                has_active = True
+
+        return has_active

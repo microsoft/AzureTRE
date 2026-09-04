@@ -63,6 +63,7 @@ async def save_and_deploy_resource(
     resource_history_repo: ResourceHistoryRepository,
     user: User,
     resource_template: ResourceTemplate,
+    operation_id: Optional[str] = None,
 ) -> Operation:
     try:
         resource.user = user.model_dump()
@@ -82,6 +83,9 @@ async def save_and_deploy_resource(
         )
 
     try:
+        kwargs = {}
+        if operation_id is not None:
+            kwargs["operation_id"] = operation_id
         operation = await send_resource_request_message(
             resource=resource,
             operations_repo=operations_repo,
@@ -90,15 +94,23 @@ async def save_and_deploy_resource(
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.Install,
+            **kwargs,
         )
         return operation
-    except Exception:
+    except HTTPException:
         await resource_repo.delete_item(resource.id)
+        raise
+    except Exception as ex:
+        lease_retained = getattr(ex, "lease_retained", False)
+        if not lease_retained:
+            await resource_repo.delete_item(resource.id)
         logger.exception("Failed send resource request message")
-        raise HTTPException(
+        http_ex = HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
         )
+        setattr(http_ex, "lease_retained", lease_retained)
+        raise http_ex from ex
 
 
 def mask_sensitive_properties(
@@ -183,6 +195,8 @@ async def send_uninstall_message(
             is_cascade=is_cascade
         )
         return operation
+    except HTTPException:
+        raise
     except Exception:
         logger.exception(f"Failed to send {resource_type} resource delete message")
         raise HTTPException(
@@ -234,6 +248,8 @@ async def send_custom_action_message(
             action=custom_action,
         )
         return operation
+    except HTTPException:
+        raise
     except Exception:
         logger.exception(f"Failed to send {resource_type} resource custom action message")
         raise HTTPException(
@@ -296,17 +312,28 @@ async def update_user_resource(
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository) -> Operation:
 
-    patched_user_resource, _ = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
-    operation = await send_resource_request_message(
-        resource=patched_user_resource,
-        operations_repo=operations_repo,
-        resource_repo=user_resource_repo,
-        user=user,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        action=RequestAction.Upgrade)
+    target_workspace_id = getattr(workspace_service, "workspaceId", None) or getattr(user_resource, "workspaceId", None)
+    operation_id = operations_repo.create_operation_id()
+    if target_workspace_id and hasattr(operations_repo, "acquire_workspace_lease"):
+        await operations_repo.acquire_workspace_lease(target_workspace_id, operation_id)
 
-    return operation
+    try:
+        patched_user_resource, _ = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+        operation = await send_resource_request_message(
+            resource=patched_user_resource,
+            operations_repo=operations_repo,
+            resource_repo=user_resource_repo,
+            user=user,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            action=RequestAction.Upgrade,
+            operation_id=operation_id)
+
+        return operation
+    except Exception as ex:
+        if not getattr(ex, "lease_retained", False) and target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
+            await operations_repo.release_workspace_lease(target_workspace_id, operation_id)
+        raise
 
 
 async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):

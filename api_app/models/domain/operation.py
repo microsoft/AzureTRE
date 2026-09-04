@@ -79,6 +79,16 @@ class OperationStep(AzureTREModel):
         )
 
 
+def get_failure_status_for_action(action) -> Status:
+    """Return the terminal failure Status for a given RequestAction."""
+    from models.domain.request_action import RequestAction  # local import to avoid circular deps
+    return {
+        RequestAction.Install: Status.DeploymentFailed,
+        RequestAction.UnInstall: Status.DeletingFailed,
+        RequestAction.Upgrade: Status.UpdatingFailed,
+    }.get(action, Status.ActionFailed)
+
+
 class Operation(AzureTREModel):
     """
     Operation model
@@ -94,6 +104,16 @@ class Operation(AzureTREModel):
     updatedWhen: float = Field(0.0, title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+    reconciled: Optional[bool] = Field(default=False, title="reconciled", description="Whether operation was reconciled due to timeout or interruption")
+    etag: Optional[str] = Field(None, title="_etag", alias="_etag")
+
+    # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
+    @field_validator("etag", mode="before")
+    @classmethod
+    def parse_etag_to_remove_escaped_quotes(cls, value):
+        if value:
+            return value.replace('\"', '')
+        return value
 
     @field_validator("user", mode="before")
     @classmethod
