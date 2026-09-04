@@ -107,21 +107,29 @@ async def test_create_operation_steps_excludes_address_space_cleanup_for_cascade
 
 
 async def test_resource_has_active_operation_returns_true_when_active_operation_exists(operations_repo):
+    workspace_id = "7c5b2dc2-6b4c-4c7f-8d3e-1f5a9b0e2c4d"
     operations_repo.query = AsyncMock(return_value=[{"id": "op-1"}])
-    result = await operations_repo.resource_has_active_operation("workspace-123")
+    result = await operations_repo.resource_has_active_operation(workspace_id)
     assert result is True
     operations_repo.query.assert_called_once()
     query_str = operations_repo.query.call_args[1]["query"] if "query" in operations_repo.query.call_args[1] else operations_repo.query.call_args[0][0]
-    assert "workspace-123" in query_str
+    assert workspace_id in query_str
     assert "ARRAY_CONTAINS" in query_str
-    assert 'CONTAINS(c.resourcePath, "workspace-123")' in query_str
+    assert f'CONTAINS(c.resourcePath, "{workspace_id}")' in query_str
     assert 'NOT CONTAINS(c.resourcePath, "/user-resources/")' in query_str
 
 
 async def test_resource_has_active_operation_returns_false_when_no_active_operation_exists(operations_repo):
     operations_repo.query = AsyncMock(return_value=[])
-    result = await operations_repo.resource_has_active_operation("workspace-123")
+    result = await operations_repo.resource_has_active_operation("7c5b2dc2-6b4c-4c7f-8d3e-1f5a9b0e2c4d")
     assert result is False
+
+
+async def test_resource_has_active_operation_returns_false_for_non_uuid_resource_id(operations_repo):
+    operations_repo.query = AsyncMock()
+    result = await operations_repo.resource_has_active_operation("not-a-uuid")
+    assert result is False
+    operations_repo.query.assert_not_called()
 
 
 async def test_update_item_with_etag_calls_replace_item(operations_repo):

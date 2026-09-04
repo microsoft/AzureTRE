@@ -8,7 +8,7 @@ from models.domain.authentication import User
 
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
-from models.domain.operation import Operation, Status
+from models.domain.operation import Operation, get_failure_status_for_action
 
 from db.repositories.operations import OperationRepository
 from services.logging import logger, tracer
@@ -67,23 +67,11 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         except Exception:
             logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
             try:
-                failure_status = (
-                    Status.DeploymentFailed if action == RequestAction.Install
-                    else Status.DeletingFailed if action == RequestAction.UnInstall
-                    else Status.UpdatingFailed if action == RequestAction.Upgrade
-                    else Status.ActionFailed
-                )
-                operation.status = failure_status
+                operation.status = get_failure_status_for_action(action)
                 operation.message = f"Failed to dispatch initial deployment message: {action}"
                 if operation.steps:
                     first_step = operation.steps[0]
-                    step_failure_status = (
-                        Status.DeploymentFailed if first_step.resourceAction == RequestAction.Install
-                        else Status.DeletingFailed if first_step.resourceAction == RequestAction.UnInstall
-                        else Status.UpdatingFailed if first_step.resourceAction == RequestAction.Upgrade
-                        else Status.ActionFailed
-                    )
-                    first_step.status = step_failure_status
+                    first_step.status = get_failure_status_for_action(first_step.resourceAction)
                     first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
                 await operations_repo.update_item(operation)
             except Exception:

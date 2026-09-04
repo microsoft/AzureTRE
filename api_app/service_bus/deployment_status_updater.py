@@ -209,9 +209,12 @@ class DeploymentStatusUpdater():
                         None
                     )
                     if main_step:
-                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                        primary_resource.deploymentStatus = Status.DeletingFailed
-                        await self.resource_repo.update_item(primary_resource)
+                        try:
+                            primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                            primary_resource.deploymentStatus = Status.DeletingFailed
+                            await self.resource_repo.update_item(primary_resource)
+                        except EntityDoesNotExist:
+                            pass
                     await self.update_overall_operation_status(operation, step_to_update, is_last_step)
                     await self.operations_repo.update_item(operation)
                     return True
@@ -481,9 +484,12 @@ class DeploymentStatusUpdater():
                         None
                     )
                     if main_step:
-                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                        primary_resource.deploymentStatus = Status.DeletingFailed
-                        await self.resource_repo.update_item(primary_resource)
+                        try:
+                            primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                            primary_resource.deploymentStatus = Status.DeletingFailed
+                            await self.resource_repo.update_item(primary_resource)
+                        except EntityDoesNotExist:
+                            pass
                     return True
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
@@ -500,9 +506,12 @@ class DeploymentStatusUpdater():
                                 None
                             )
                             if main_step:
-                                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                                primary_resource.deploymentStatus = Status.DeletingFailed
-                                await self.resource_repo.update_item(primary_resource)
+                                try:
+                                    primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                                    primary_resource.deploymentStatus = Status.DeletingFailed
+                                    await self.resource_repo.update_item(primary_resource)
+                                except EntityDoesNotExist:
+                                    pass
                             return True
                         else:
                             next_step.status = Status.AwaitingUpdate
@@ -577,7 +586,7 @@ class DeploymentStatusUpdater():
             if operation is not None and step_to_update is not None:
                 try:
                     failure_status = self.get_failure_status_for_action(operation.action)
-                    step_to_update.status = failure_status
+                    step_to_update.status = self.get_failure_status_for_action(step_to_update.resourceAction)
                     step_to_update.message = f"Resource {message.id} not found in database: operation aborted."
                     operation.status = failure_status
                     operation.message = f"Resource {message.id} not found in database: operation aborted."
@@ -677,7 +686,7 @@ class DeploymentStatusUpdater():
     def _is_cleanup_failed(self, operation: Operation) -> bool:
         for step in operation.steps:
             if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
-                if step.is_failure() or step.status == Status.UpdatingFailed:
+                if step.is_failure():
                     return True
         if operation.action == RequestAction.UnInstall and operation.status == Status.DeletingFailed:
             if any(step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID for step in operation.steps):

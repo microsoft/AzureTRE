@@ -53,9 +53,6 @@ class OperationRepository(BaseRepository):
                 item.etag = new_etag.replace('\"', '') if isinstance(new_etag, str) else new_etag
         return item
 
-    async def update_item_with_etag(self, item: Operation, etag: str) -> Operation:
-        return await self.update_item(item, etag=etag)
-
     @staticmethod
     def operations_query():
         return 'SELECT * FROM c WHERE'
@@ -232,6 +229,11 @@ class OperationRepository(BaseRepository):
         return len(operations) > 0
 
     async def resource_has_active_operation(self, resource_id: str) -> bool:
+        # Guard against injection; resource_id should always be a valid UUID string
+        try:
+            uuid.UUID(resource_id)
+        except ValueError:
+            return False
         active_statuses = (
             Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
             Status.Deploying, Status.AwaitingDeletion, Status.Deleting,

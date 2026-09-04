@@ -79,6 +79,16 @@ class OperationStep(AzureTREModel):
         )
 
 
+def get_failure_status_for_action(action) -> Status:
+    """Return the terminal failure Status for a given RequestAction."""
+    from models.domain.request_action import RequestAction  # local import to avoid circular deps
+    return {
+        RequestAction.Install: Status.DeploymentFailed,
+        RequestAction.UnInstall: Status.DeletingFailed,
+        RequestAction.Upgrade: Status.UpdatingFailed,
+    }.get(action, Status.ActionFailed)
+
+
 class Operation(AzureTREModel):
     """
     Operation model
@@ -102,6 +112,7 @@ class Operation(AzureTREModel):
     def parse_etag_to_remove_escaped_quotes(cls, value):
         if value:
             return value.replace('\"', '')
+        return value
 
     @field_validator("user", mode="before")
     @classmethod
