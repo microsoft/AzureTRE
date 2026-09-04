@@ -323,23 +323,20 @@ class DeploymentStatusUpdater():
                 if is_cleanup_step and step_to_update.is_success():
                     logger.error(f"[CLEANUP_FINALIZATION_FAILED] Error in post-cleanup writes: {e}", exc_info=True)
                     if is_final_delivery:
-                        # Final delivery handling: must persist terminal state and complete message
-                        terminal_persisted = False
+                        # Final delivery handling: must retry and verify all required resource and operation writes
+                        workspace_persisted = False
                         try:
-                            fresh_op = await self.operations_repo.get_operation_by_id(str(message.operationId))
-                            fresh_step, fresh_is_last, _ = self._merge_operation_steps(
-                                in_memory_op=operation,
-                                fresh_op=fresh_op,
-                                step_id_to_update=step_to_update.id,
-                                step_status=step_to_update.status,
-                                step_message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS,
-                            )
-                            await self.update_overall_operation_status(fresh_op, fresh_step, fresh_is_last)
-                            await self.operations_repo.update_item(fresh_op)
-                            terminal_persisted = True
-                        except Exception as op_err:
-                            logger.error(f"Failed to persist terminal operation status on final delivery: {op_err}", exc_info=True)
+                            resource = await self.resource_repo.get_resource_by_id(resource_id)
+                            resource.deploymentStatus = step_to_update.status
+                            await self.resource_repo.update_item(resource)
+                            resource_dict = await self.resource_repo.get_resource_dict_by_id(resource_id)
+                            resource_to_persist = self.create_updated_resource_document(resource_dict, message)
+                            await self.resource_repo.update_item_dict(resource_to_persist)
+                            workspace_persisted = True
+                        except Exception as ws_err:
+                            logger.error(f"Failed to persist workspace resource status/outputs on final delivery: {ws_err}", exc_info=True)
 
+                        primary_persisted = False
                         main_step = next(
                             (op_step for op_step in operation.steps
                              if op_step.templateStepId == "main"
@@ -352,16 +349,37 @@ class DeploymentStatusUpdater():
                                 if primary_resource.deploymentStatus != Status.Deleted:
                                     primary_resource.deploymentStatus = Status.Deleted
                                     await self.resource_repo.update_item(primary_resource)
+                                primary_persisted = True
                             except Exception as prim_err:
                                 logger.error(f"Failed to restore primary resource to Deleted on final delivery: {prim_err}", exc_info=True)
+                        else:
+                            primary_persisted = True
 
-                        if terminal_persisted:
-                            logger.info(f"Terminal operation status successfully persisted on final delivery for operation {operation.id}. Completing message.")
+                        operation_persisted = False
+                        if workspace_persisted and primary_persisted:
+                            try:
+                                fresh_op = await self.operations_repo.get_operation_by_id(str(message.operationId))
+                                fresh_step, fresh_is_last, _ = self._merge_operation_steps(
+                                    in_memory_op=operation,
+                                    fresh_op=fresh_op,
+                                    step_id_to_update=step_to_update.id,
+                                    step_status=step_to_update.status,
+                                    step_message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS,
+                                )
+                                await self.update_overall_operation_status(fresh_op, fresh_step, fresh_is_last)
+                                await self.operations_repo.update_item(fresh_op)
+                                operation_persisted = True
+                            except Exception as op_err:
+                                logger.error(f"Failed to persist terminal operation status on final delivery: {op_err}", exc_info=True)
+
+                        if workspace_persisted and primary_persisted and operation_persisted:
+                            logger.info(f"All required resource and operation writes successfully persisted on final delivery for operation {operation.id}. Completing message.")
                             return True
                         else:
                             logger.error(
-                                f"[CLEANUP_FINALIZATION_DEAD_LETTER] Could not persist terminal operation status for "
-                                f"operation {operation.id} on final delivery {MAX_CLEANUP_DELIVERY_COUNT}. "
+                                f"[CLEANUP_FINALIZATION_DEAD_LETTER] Could not persist all required states for "
+                                f"operation {operation.id} on final delivery {MAX_CLEANUP_DELIVERY_COUNT} "
+                                f"(workspace={workspace_persisted}, primary={primary_persisted}, op={operation_persisted}). "
                                 f"Returning False so message is dead-lettered for manual recovery."
                             )
                             return False
@@ -654,6 +672,9 @@ class DeploymentStatusUpdater():
         if main_step is None:
             return None
         resource_to_persist = await self.resource_repo.get_resource_dict_by_id(main_step.resourceId)
+        if resource_to_persist.get("resourceType") not in (ResourceType.WorkspaceService, ResourceType.WorkspaceService.value):
+            return None
+
         address_to_free = resource_to_persist.get("properties", {}).get("address_space")
         parent_workspace_id = resource_to_persist.get("workspaceId")
         resource_id = resource_to_persist.get("id")
@@ -699,8 +720,8 @@ class DeploymentStatusUpdater():
             for attempt in range(MAX_CLEANUP_RETRIES):
                 try:
                     workspace = await self.workspace_repo.get_workspace_by_id(parent_workspace_id)
-                    workspace_address_spaces = workspace.properties.get("address_spaces", [])
-                    if address_to_free not in workspace_address_spaces:
+                    workspace_address_spaces = workspace.properties.get("address_spaces") or []
+                    if not isinstance(workspace_address_spaces, list) or address_to_free not in workspace_address_spaces:
                         service_dict["properties"]["address_space_freed"] = True
                         await self.resource_repo.update_item_dict(service_dict)
                         return True

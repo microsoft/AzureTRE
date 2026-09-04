@@ -139,7 +139,7 @@ class ResourceTemplateRepository(BaseRepository):
 
         if "pipeline" in template_input.json_schema:
             pipeline = template_input.json_schema["pipeline"]
-            self._validate_pipeline_has_unique_step_ids(pipeline)
+            self._validate_pipeline_has_unique_step_ids(pipeline, resource_type)
             template["pipeline"] = pipeline
 
         if "allOf" in template_input.json_schema:
@@ -176,7 +176,7 @@ class ResourceTemplateRepository(BaseRepository):
             created_template = await self.create_template(template_input, resource_type, workspace_service_template_name)
             return self.enrich_template(created_template)
 
-    def _validate_pipeline_has_unique_step_ids(self, pipeline):
+    def _validate_pipeline_has_unique_step_ids(self, pipeline, resource_type: ResourceType = None):
         if pipeline is None:
             return
 
@@ -195,6 +195,8 @@ class ResourceTemplateRepository(BaseRepository):
                     raise InvalidInput(f"Invalid template - duplicate stepIds are not allowed. stepId: {step_id}")
 
                 if step_id == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                    if resource_type != ResourceType.WorkspaceService:
+                        raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' is only allowed in '{ResourceType.WorkspaceService}' templates")
                     if action != RequestAction.UnInstall:
                         raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' is only allowed in the '{RequestAction.UnInstall}' pipeline")
                     if i != num_steps - 1:

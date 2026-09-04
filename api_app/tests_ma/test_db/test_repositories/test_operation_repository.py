@@ -143,6 +143,8 @@ async def test_update_item_with_etag_calls_replace_item(operations_repo):
     assert call_kwargs["item"] == "op-1"
     assert call_kwargs["etag"] == "old-etag"
     assert call_kwargs["match_condition"] == MatchConditions.IfNotModified
+    assert "etag" not in call_kwargs["body"]
+    assert "_etag" not in call_kwargs["body"]
     assert result.etag == "new-etag"
 
 
@@ -159,7 +161,30 @@ async def test_update_item_without_etag_calls_upsert_item(operations_repo):
     result = await operations_repo.update_item(op)
 
     operations_repo._container.upsert_item.assert_awaited_once()
+    call_kwargs = operations_repo._container.upsert_item.call_args[1]
+    assert "etag" not in call_kwargs["body"]
+    assert "_etag" not in call_kwargs["body"]
     assert result.etag == "new-etag"
+
+
+async def test_save_item_excludes_etag_from_body(operations_repo):
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(return_value={"_etag": "\"created-etag\""})
+
+    op = Operation(
+        id="op-1",
+        resourceId="res-1",
+        resourcePath="/workspaces/res-1",
+        action="install",
+        etag="initial-etag"
+    )
+    await operations_repo.save_item(op)
+
+    operations_repo._container.create_item.assert_awaited_once()
+    call_kwargs = operations_repo._container.create_item.call_args[1]
+    assert "etag" not in call_kwargs["body"]
+    assert "_etag" not in call_kwargs["body"]
+    assert op.etag == "created-etag"
 
 
 async def test_update_item_raises_cosmos_access_condition_failed_error_on_mismatch(operations_repo):

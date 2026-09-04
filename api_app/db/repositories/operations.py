@@ -25,7 +25,7 @@ class OperationRepository(BaseRepository):
         return cls
 
     async def save_item(self, item: Operation):
-        item_dict = item.model_dump()
+        item_dict = item.model_dump(exclude={"etag"})
         item_dict.pop("_etag", None)
         response = await self.container.create_item(body=item_dict)
         if isinstance(response, dict) and "_etag" in response:
@@ -34,7 +34,7 @@ class OperationRepository(BaseRepository):
 
     async def update_item(self, item: Operation, etag: Optional[str] = None) -> Operation:
         etag_to_match = etag or getattr(item, "etag", None)
-        item_dict = item.model_dump()
+        item_dict = item.model_dump(exclude={"etag"})
         item_dict.pop("_etag", None)
         if etag_to_match:
             response = await self.container.replace_item(
