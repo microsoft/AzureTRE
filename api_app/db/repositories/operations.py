@@ -172,7 +172,7 @@ class OperationRepository(BaseRepository):
                                 if getattr(existing_op, "steps", None):
                                     for step in existing_op.steps:
                                         if not step.is_failure() and not step.is_success():
-                                            step.status = get_failure_status_for_action(existing_op.action)
+                                            step.status = get_failure_status_for_action(step.resourceAction or existing_op.action)
                                             step.message = "Operation timed out or was interrupted before completion"
                                             step.updatedWhen = timestamp
                                 update_call = self.update_item(existing_op)
@@ -469,7 +469,7 @@ class OperationRepository(BaseRepository):
                     if getattr(op, "steps", None):
                         for step in op.steps:
                             if not step.is_failure() and not step.is_success():
-                                step.status = get_failure_status_for_action(op.action)
+                                step.status = get_failure_status_for_action(step.resourceAction or op.action)
                                 step.message = "Operation timed out or was interrupted before completion"
                                 step.updatedWhen = timestamp
                     update_call = self.update_item(op)

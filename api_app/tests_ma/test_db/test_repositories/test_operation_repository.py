@@ -4,7 +4,7 @@ import pytest_asyncio
 import pytest
 from mock import patch
 from db.repositories.resource_templates import ResourceTemplateRepository
-from models.domain.operation import Operation, Status
+from models.domain.operation import Operation, OperationStep, Status
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 from db.repositories.resources import ResourceRepository
@@ -484,3 +484,85 @@ async def test_build_step_list_tolerates_missing_step_title(operations_repo):
     assert len(steps) == 1
     assert steps[0].stepTitle is None
     assert steps[0].templateStepId == "step-1"
+
+
+async def test_reconcile_stale_operation_uses_step_resource_action(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
+
+    stale_time = operations_repo.get_timestamp() - WORKSPACE_LEASE_EXPIRY_SECONDS - 100
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "stale-op",
+        "createdWhen": stale_time,
+    })
+
+    step1 = OperationStep(
+        id="step-1",
+        templateStepId="main",
+        resourceAction="uninstall",
+        status=Status.Deleting,
+    )
+    step2 = OperationStep(
+        id="step-2",
+        templateStepId="cleanup",
+        resourceAction="upgrade",
+        status=Status.Updating,
+    )
+    stale_op = Operation(
+        id="stale-op",
+        resourceId="ws-1",
+        resourcePath="ws/ws-1",
+        action="uninstall",
+        status=Status.Deleting,
+        createdWhen=stale_time,
+        updatedWhen=stale_time,
+        steps=[step1, step2],
+    )
+    operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
+    operations_repo.update_item = AsyncMock(return_value=None)
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+
+    await operations_repo.acquire_workspace_lease("ws-1", "new-op")
+
+    operations_repo.update_item.assert_awaited_once()
+    saved_op = operations_repo.update_item.call_args[0][0]
+    assert saved_op.status == Status.DeletingFailed
+    assert saved_op.steps[0].status == Status.DeletingFailed
+    assert saved_op.steps[1].status == Status.UpdatingFailed
+
+
+async def test_resource_has_active_operation_reconciles_stale_step_with_step_resource_action(operations_repo):
+    from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
+
+    stale_time = operations_repo.get_timestamp() - WORKSPACE_LEASE_EXPIRY_SECONDS - 100
+    res_id = str(uuid.uuid4())
+    stale_op_dict = {
+        "id": "stale-op",
+        "resourceId": res_id,
+        "resourcePath": f"res/{res_id}",
+        "action": "uninstall",
+        "status": "deleting",
+        "createdWhen": stale_time,
+        "updatedWhen": stale_time,
+        "steps": [
+            {
+                "id": "step-1",
+                "templateStepId": "cleanup",
+                "resourceAction": "upgrade",
+                "status": "updating",
+            }
+        ],
+    }
+    operations_repo.query = AsyncMock(return_value=[stale_op_dict])
+    operations_repo.update_item = AsyncMock(return_value=None)
+
+    has_active = await operations_repo.resource_has_active_operation(res_id)
+    assert has_active is False
+    operations_repo.update_item.assert_awaited_once()
+    saved_op = operations_repo.update_item.call_args[0][0]
+    assert saved_op.status == Status.DeletingFailed
+    assert saved_op.steps[0].status == Status.UpdatingFailed

@@ -275,7 +275,7 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
         logger.info("Deleting existing user resource...")
-        _ = await delete_review_user_resource(
+        delete_op = await delete_review_user_resource(
             user_resource=existing_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
@@ -284,6 +284,8 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
             resource_history_repo=resource_history_repo,
             user=user
         )
+        if delete_op and hasattr(delete_op, "id"):
+            await wait_for_successful_operation(operation_repo, delete_op.id)
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
