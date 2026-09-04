@@ -553,6 +553,8 @@ async def test_workspace_service_uninstall_frees_address_space_from_root_main_st
     status_updater.workspace_repo = AsyncMock()
     status_updater.resource_template_repo = AsyncMock()
     status_updater.resource_history_repo = AsyncMock()
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
     status_updater.resource_repo.get_resource_dict_by_id.return_value = {
         "id": workspace_service_id,
         "resourceType": ResourceType.WorkspaceService,
@@ -722,6 +724,8 @@ async def test_workspace_service_uninstall_frees_address_space_with_retry_on_eta
 
     status_updater = DeploymentStatusUpdater()
     await status_updater.init_repos()
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True

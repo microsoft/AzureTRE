@@ -8,10 +8,10 @@ from models.domain.authentication import User
 
 from models.domain.request_action import RequestAction
 from models.domain.resource import Resource
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
 
 from db.repositories.operations import OperationRepository
-from services.logging import tracer
+from services.logging import logger, tracer
 
 
 async def send_resource_request_message(resource: Resource, operations_repo: OperationRepository, resource_repo: ResourceRepository, user: User, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, action: RequestAction = RequestAction.Install, is_cascade: str = False) -> Operation:
@@ -45,23 +45,43 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             resource_template_repo=resource_template_repo)
         current_span.set_attribute("operation_id", operation.id)
 
-        # prep the first step to send in SB
-        # resource at this point is the original object with unmaskked values
-        first_step = operation.steps[0]
-        current_span.set_attribute("step_id", first_step.id)
-        resource_to_send = await update_resource_for_step(
-            operation_step=first_step,
-            resource_repo=resource_repo,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            root_resource=resource,
-            step_resource=None,
-            resource_to_update_id=first_step.resourceId,
-            primary_action=action,
-            user=user)
+        try:
+            # prep the first step to send in SB
+            # resource at this point is the original object with unmaskked values
+            first_step = operation.steps[0]
+            current_span.set_attribute("step_id", first_step.id)
+            resource_to_send = await update_resource_for_step(
+                operation_step=first_step,
+                resource_repo=resource_repo,
+                resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
+                root_resource=resource,
+                step_resource=None,
+                resource_to_update_id=first_step.resourceId,
+                primary_action=action,
+                user=user)
 
-        # create + send the message
-        content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
-        await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+            # create + send the message
+            content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=first_step.id, action=first_step.resourceAction))
+            await send_deployment_message(content=content, correlation_id=operation.id, session_id=first_step.resourceId, action=first_step.resourceAction)
+        except Exception:
+            logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
+            try:
+                await operations_repo.delete_item(operation.id)
+            except Exception:
+                logger.exception(f"Failed to delete undispatched operation {operation.id}, attempting to mark failed")
+                try:
+                    failure_status = (
+                        Status.DeploymentFailed if action == RequestAction.Install
+                        else Status.DeletingFailed if action == RequestAction.UnInstall
+                        else Status.UpdatingFailed if action == RequestAction.Upgrade
+                        else Status.ActionFailed
+                    )
+                    operation.status = failure_status
+                    operation.message = f"Failed to dispatch initial deployment message: {action}"
+                    await operations_repo.update_item(operation)
+                except Exception:
+                    logger.exception(f"Failed to mark operation {operation.id} as failed")
+            raise
 
     return operation
