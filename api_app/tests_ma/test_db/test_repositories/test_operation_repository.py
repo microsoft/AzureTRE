@@ -116,7 +116,7 @@ async def test_resource_has_active_operation_returns_true_when_active_operation_
     assert workspace_id in query_str
     assert "ARRAY_CONTAINS" in query_str
     assert f'CONTAINS(c.resourcePath, "{workspace_id}")' in query_str
-    assert 'NOT CONTAINS(c.resourcePath, "/user-resources/")' in query_str
+    assert 'NOT CONTAINS(c.resourcePath, "/user-resources/")' not in query_str
 
 
 async def test_resource_has_active_operation_returns_false_when_no_active_operation_exists(operations_repo):

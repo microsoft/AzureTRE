@@ -477,6 +477,10 @@ class DeploymentStatusUpdater():
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step=True)
                     await self.operations_repo.update_item(operation)
+                    # Preserve the primary resource's status based on what the main step actually achieved.
+                    # If the main uninstall step succeeded the service is Deleted; only the address-space
+                    # cleanup step failed.  Forcing DeletingFailed here would resurrect the service as
+                    # non-Deleted and cause ownership conflicts on every future operation.
                     main_step = next(
                         (op_step for op_step in operation.steps
                          if op_step.templateStepId == "main"
@@ -486,8 +490,15 @@ class DeploymentStatusUpdater():
                     if main_step:
                         try:
                             primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                            primary_resource.deploymentStatus = Status.DeletingFailed
-                            await self.resource_repo.update_item(primary_resource)
+                            # Use the status the main step actually achieved rather than
+                            # unconditionally overwriting it with DeletingFailed.
+                            primary_status = (
+                                Status.Deleted if main_step.is_success()
+                                else Status.DeletingFailed
+                            )
+                            if primary_resource.deploymentStatus != primary_status:
+                                primary_resource.deploymentStatus = primary_status
+                                await self.resource_repo.update_item(primary_resource)
                         except EntityDoesNotExist:
                             pass
                     return True
@@ -508,8 +519,14 @@ class DeploymentStatusUpdater():
                             if main_step:
                                 try:
                                     primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                                    primary_resource.deploymentStatus = Status.DeletingFailed
-                                    await self.resource_repo.update_item(primary_resource)
+                                    # Preserve the status the main step actually achieved.
+                                    primary_status = (
+                                        Status.Deleted if main_step.is_success()
+                                        else Status.DeletingFailed
+                                    )
+                                    if primary_resource.deploymentStatus != primary_status:
+                                        primary_resource.deploymentStatus = primary_status
+                                        await self.resource_repo.update_item(primary_resource)
                                 except EntityDoesNotExist:
                                     pass
                             return True
@@ -708,6 +725,7 @@ class DeploymentStatusUpdater():
                 pass
             except Exception:
                 logger.exception(f"Failed to reconcile primary resource for terminal operation {operation.id}")
+                raise  # propagate so Service Bus abandons and retries the message
 
         if operation.action == RequestAction.UnInstall:
             cleanup_step = next(
@@ -729,6 +747,7 @@ class DeploymentStatusUpdater():
                     pass
                 except Exception:
                     logger.exception(f"Failed to reconcile workspace resource for terminal operation {operation.id}")
+                    raise  # propagate so Service Bus abandons and retries the message
 
     def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
         return OperationStep(

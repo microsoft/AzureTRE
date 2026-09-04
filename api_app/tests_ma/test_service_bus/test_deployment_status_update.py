@@ -1540,7 +1540,7 @@ async def test_enqueue_cleanup_validates_ownership_and_aborts_before_azure_send(
     assert operation.status == Status.DeletingFailed
     assert operation.steps[1].status == Status.UpdatingFailed
     assert "Terminal address space conflict" in operation.steps[1].message
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
 
 
 @patch('service_bus.deployment_status_updater.send_deployment_message', side_effect=Exception("Service Bus send failed"))
@@ -1660,7 +1660,7 @@ async def test_enqueue_cleanup_send_failure_on_final_delivery_marks_failed(send_
     assert result is True
     assert operation.status == Status.DeletingFailed
     assert operation.steps[1].status == Status.UpdatingFailed
-    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
 
 
 async def test_cleanup_failure_on_final_delivery_marks_failed_and_completes_message():

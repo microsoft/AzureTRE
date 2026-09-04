@@ -919,7 +919,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
-    async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _, get_workspace_service_mock, __, app, client):
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
+    async def test_delete_workspace_service_raises_400_if_workspace_service_is_enabled(self, _mock_active_op, _, get_workspace_service_mock, __, app, client):
         workspace_service = sample_workspace_service()
         workspace_service.properties["enabled"] = True
         get_workspace_service_mock.return_value = workspace_service
@@ -935,8 +936,9 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     async def test_delete_workspace_service_raises_404_if_workspace_service_has_active_resources(self,
-                                                                                                 __, ___, ____, app,
+                                                                                                 _mock_active_op, __, ___, ____, app,
                                                                                                  client):
         response = await client.delete(
             app.url_path_for(strings.API_DELETE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID,
@@ -986,9 +988,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
            return_value=disabled_workspace_service())
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
-    async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, __, ___, ____, resource_template_repo, _____,
+    async def test_delete_workspace_service_sends_uninstall_message(self, send_uninstall_mock, __, _mock_active_op, ___, ____, resource_template_repo, _____,
                                                                     app, client, basic_workspace_service_template):
 
         resource_template_repo.return_value = basic_workspace_service_template
@@ -1000,9 +1003,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_active_operation", return_value=False)
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service", return_value=[])
     @patch("api.routes.workspaces.send_uninstall_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
-    async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, __, ___, ____, workspace_service_mock, resource_template_repo, _____, app, client, basic_workspace_service_template):
+    async def test_delete_workspace_service_returns_the_deleted_workspace_service_id(self, __, ___, _mock_active_op, ____, workspace_service_mock, resource_template_repo, _____, app, client, basic_workspace_service_template):
         workspace_service = disabled_workspace_service()
         workspace_service_mock.return_value = workspace_service
         resource_template_repo.return_value = basic_workspace_service_template
@@ -1014,6 +1018,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.json()["operation"]["resourceId"] == workspace_service.id
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+
     @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")

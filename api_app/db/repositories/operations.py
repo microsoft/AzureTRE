@@ -244,7 +244,12 @@ class OperationRepository(BaseRepository):
             self.operations_query()
             + f' (c.resourceId = "{resource_id}"'
             + f' OR ARRAY_CONTAINS(c.steps, {{"resourceId": "{resource_id}"}}, true)'
-            + f' OR (CONTAINS(c.resourcePath, "{resource_id}") AND NOT CONTAINS(c.resourcePath, "/user-resources/")))'
+            # Include any operation whose resource path contains this resource id — this catches
+            # cascading operations on all descendant resources (workspace services AND user resources).
+            # The previous NOT CONTAINS(c.resourcePath, "/user-resources/") exclusion meant that
+            # active user-resource operations were invisible when checking a parent workspace or
+            # workspace-service, allowing duplicate cascading pipelines to start.
+            + f' OR CONTAINS(c.resourcePath, "{resource_id}"))'
             + f' AND c.status IN ({status_filter})'
         )
         operations = await self.query(query=query)
