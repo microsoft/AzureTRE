@@ -45,6 +45,7 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "urllib3.connectionpool"
 ]
 
+
 logger = logging.getLogger("azuretre_api")
 tracer = trace.get_tracer("azuretre_api")
 
