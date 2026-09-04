@@ -3,7 +3,7 @@ import uuid
 from typing import List, Optional
 
 from azure.core import MatchConditions
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosAccessConditionFailedError, CosmosResourceNotFoundError
 from fastapi import HTTPException, status as http_status
 from pydantic import TypeAdapter
@@ -18,6 +18,8 @@ from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status
+
+WORKSPACE_LEASE_EXPIRY_SECONDS = 300.0
 
 
 def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
@@ -101,27 +103,40 @@ class OperationRepository(BaseRepository):
                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
         lease_id = f"lease_{workspace_id}"
-        timestamp = self.get_timestamp()
-        lease_body = {
-            "id": lease_id,
-            "workspaceId": workspace_id,
-            "operationId": operation_id,
-            "createdWhen": timestamp,
-        }
+        max_attempts = 3
 
-        try:
-            create_call = self.container.create_item(body=lease_body)
-            if hasattr(create_call, "__await__"):
-                await create_call
-            return True
-        except (CosmosResourceExistsError, ResourceExistsError):
+        for attempt in range(max_attempts):
+            timestamp = self.get_timestamp()
+            lease_body = {
+                "id": lease_id,
+                "workspaceId": workspace_id,
+                "operationId": operation_id,
+                "createdWhen": timestamp,
+            }
+
             try:
-                read_call = self.read_item_by_id(lease_id)
-                existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
-                current_op_id = existing_lease.get("operationId") if isinstance(existing_lease, dict) else None
+                create_call = self.container.create_item(body=lease_body)
+                if hasattr(create_call, "__await__"):
+                    await create_call
+                return True
+            except (CosmosResourceExistsError, ResourceExistsError):
+                try:
+                    read_call = self.read_item_by_id(lease_id)
+                    existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+                except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist):
+                    # The lease was released between create_item conflict and read_item_by_id; retry
+                    if attempt < max_attempts - 1:
+                        continue
+                    raise
 
+                if not isinstance(existing_lease, dict):
+                    return True
+
+                current_op_id = existing_lease.get("operationId")
                 if current_op_id == operation_id:
                     return True
+
+                lease_created = existing_lease.get("createdWhen", 0.0)
 
                 if current_op_id:
                     try:
@@ -141,26 +156,30 @@ class OperationRepository(BaseRepository):
                             raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                     except (EntityDoesNotExist, CosmosResourceNotFoundError):
                         # Operation doc not written yet (still constructing cascade/operation).
-                        # Keep ownership until explicit release!
-                        raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                        # Safely reclaim orphaned leases after a bounded interval (WORKSPACE_LEASE_EXPIRY_SECONDS).
+                        if timestamp - lease_created < WORKSPACE_LEASE_EXPIRY_SECONDS:
+                            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
                 etag = existing_lease.get("_etag") if isinstance(existing_lease, dict) else None
-                if etag:
-                    rep_call = self.container.replace_item(
-                        item=lease_id,
-                        body=lease_body,
-                        etag=etag,
-                        match_condition=MatchConditions.IfNotModified
-                    )
-                    if hasattr(rep_call, "__await__"):
-                        await rep_call
-                else:
-                    up_call = self.container.upsert_item(body=lease_body)
-                    if hasattr(up_call, "__await__"):
-                        await up_call
-                return True
-            except (CosmosAccessConditionFailedError, ResourceExistsError):
-                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                try:
+                    if etag:
+                        rep_call = self.container.replace_item(
+                            item=lease_id,
+                            body=lease_body,
+                            etag=etag,
+                            match_condition=MatchConditions.IfNotModified
+                        )
+                        if hasattr(rep_call, "__await__"):
+                            await rep_call
+                    else:
+                        up_call = self.container.upsert_item(body=lease_body)
+                        if hasattr(up_call, "__await__"):
+                            await up_call
+                    return True
+                except (CosmosAccessConditionFailedError, ResourceExistsError):
+                    if attempt < max_attempts - 1:
+                        continue
+                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     async def release_workspace_lease(self, workspace_id: str, operation_id: Optional[str] = None) -> None:
         if not hasattr(self, "_container") or self._container is None:

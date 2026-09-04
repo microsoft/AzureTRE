@@ -288,6 +288,39 @@ async def test_acquire_workspace_lease_replaces_lease_if_previous_operation_term
     operations_repo._container.replace_item.assert_awaited_once()
 
 
+async def test_acquire_workspace_lease_reclaims_orphaned_lease_when_operation_not_found_after_expiry(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "orphaned-op",
+        "createdWhen": operations_repo.get_timestamp() - 500,
+        "_etag": "old-etag",
+    })
+    operations_repo.get_operation_by_id = AsyncMock(side_effect=EntityDoesNotExist())
+    operations_repo._container.replace_item = AsyncMock(return_value={})
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+    operations_repo._container.replace_item.assert_awaited_once()
+
+
+async def test_acquire_workspace_lease_retries_and_succeeds_when_lease_deleted_during_conflict_race(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError, CosmosResourceNotFoundError
+    operations_repo._container = MagicMock()
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
+    # 1st attempt: create fails with conflict, read fails because lease was deleted
+    # 2nd attempt: create succeeds!
+    operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
+    operations_repo.read_item_by_id = AsyncMock(side_effect=CosmosResourceNotFoundError())
+
+    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert res is True
+    assert operations_repo._container.create_item.await_count == 2
+
+
 async def test_release_workspace_lease_deletes_item(operations_repo):
     operations_repo._container = MagicMock()
     operations_repo.read_item_by_id = AsyncMock(return_value={
