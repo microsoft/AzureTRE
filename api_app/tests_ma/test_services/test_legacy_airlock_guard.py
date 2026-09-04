@@ -43,7 +43,7 @@ async def test_ensure_airlock_version_change_allowed_blocks_disabling_v2_airlock
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("invalid_version", ["2", 2.0, True, 0, 3])
+@pytest.mark.parametrize("invalid_version", [None, "2", 2.0, True, 0, 3])
 async def test_ensure_airlock_version_change_allowed_rejects_invalid_version(invalid_version):
     request_repo = AsyncMock()
     with pytest.raises(ValueError, match="integer with a value of 1 or 2"):
