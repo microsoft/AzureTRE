@@ -22,10 +22,9 @@ from models.domain.operation import Operation, OperationStep, Status, get_failur
 
 # The resource processor auto-renews Porter session locks for up to 3600 seconds (1 hour)
 # during deployment execution (see resource_processor/vmss_porter/runner.py:68).
-# Lease expiry must safely cover this maximum execution duration rather than aging out
-# active operations after 300 seconds, preventing premature lease reclamation and
-# overlapping Terraform operations.
-WORKSPACE_LEASE_EXPIRY_SECONDS = 3600.0
+# Lease expiry includes a safe margin beyond the 3600-second execution window and status-delivery
+# latency (7200 seconds / 2 hours) to ensure still-running operations are not prematurely reclaimed.
+WORKSPACE_LEASE_EXPIRY_SECONDS = 7200.0
 
 
 def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
@@ -74,7 +73,7 @@ class OperationRepository(BaseRepository):
             raise EntityDoesNotExist
         return TypeAdapter(Operation).validate_python(operations[0])
 
-    async def update_item(self, item: Operation, etag: Optional[str] = None) -> Operation:
+    async def update_item(self, item: Operation, etag: Optional[str] = None, release_lease: bool = True) -> Operation:
         etag_to_match = etag or getattr(item, "etag", None)
         item_dict = item.model_dump(exclude={"etag"})
         item_dict.pop("_etag", None)
@@ -99,7 +98,7 @@ class OperationRepository(BaseRepository):
             Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
             Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
         )
-        if item.status not in active_statuses:
+        if release_lease and item.status not in active_statuses:
             target_workspace_id = extract_workspace_id_from_resource_path(item.resourcePath)
             if target_workspace_id:
                 await self.release_workspace_lease(target_workspace_id, item.id)

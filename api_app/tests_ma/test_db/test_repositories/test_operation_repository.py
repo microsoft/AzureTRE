@@ -305,7 +305,7 @@ async def test_acquire_workspace_lease_reclaims_orphaned_lease_when_operation_no
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
         "operationId": "orphaned-op",
-        "createdWhen": operations_repo.get_timestamp() - 4000,
+        "createdWhen": operations_repo.get_timestamp() - 8000,
         "_etag": "old-etag",
     })
     operations_repo.get_operation_by_id = AsyncMock(side_effect=EntityDoesNotExist())
@@ -366,10 +366,10 @@ async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_rea
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
         "operationId": "stale-op",
-        "createdWhen": now - 4000,
+        "createdWhen": now - 8000,
         "_etag": "lease-etag",
     })
-    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 4000, createdWhen=now - 4000)
+    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 8000, createdWhen=now - 8000)
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
     operations_repo.update_item = AsyncMock()
 
@@ -389,10 +389,10 @@ async def test_acquire_workspace_lease_fails_closed_when_reconciliation_fails(op
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
         "operationId": "stale-op",
-        "createdWhen": now - 4000,
+        "createdWhen": now - 8000,
         "_etag": "lease-etag",
     })
-    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 4000, createdWhen=now - 4000)
+    stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 8000, createdWhen=now - 8000)
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
     operations_repo.update_item = AsyncMock(side_effect=Exception("Cosmos write error"))
 
@@ -410,8 +410,8 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
         "resourcePath": f"/workspaces/{workspace_id}",
         "action": "install",
         "status": Status.AwaitingDeployment,
-        "createdWhen": now - 4000,
-        "updatedWhen": now - 4000,
+        "createdWhen": now - 8000,
+        "updatedWhen": now - 8000,
     }
     operations_repo.query = AsyncMock(return_value=[stale_op_dict])
     operations_repo.update_item = AsyncMock()
@@ -432,8 +432,8 @@ async def test_resource_has_active_operation_fails_closed_when_reconciliation_fa
         "resourcePath": f"/workspaces/{workspace_id}",
         "action": "install",
         "status": Status.AwaitingDeployment,
-        "createdWhen": now - 4000,
-        "updatedWhen": now - 4000,
+        "createdWhen": now - 8000,
+        "updatedWhen": now - 8000,
     }
     operations_repo.query = AsyncMock(return_value=[stale_op_dict])
     operations_repo.update_item = AsyncMock(side_effect=Exception("Cosmos write error"))

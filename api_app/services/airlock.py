@@ -1,3 +1,5 @@
+import asyncio
+import time
 from datetime import datetime, timedelta, UTC
 from services.logging import logger
 
@@ -8,7 +10,7 @@ from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, 
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from models.domain.user_resource import UserResource
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
 from models.domain.resource import ResourceType
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.airlock_request import AirlockReviewInCreate
@@ -402,6 +404,40 @@ def enrich_requests_with_allowed_actions(requests: List[AirlockRequest], user: U
     return enriched_requests
 
 
+TERMINAL_STATUSES = {
+    Status.Deployed,
+    Status.DeploymentFailed,
+    Status.Updated,
+    Status.UpdatingFailed,
+    Status.Deleted,
+    Status.DeletingFailed,
+    Status.ActionSucceeded,
+    Status.ActionFailed,
+}
+
+
+async def wait_for_terminal_operation(
+    operations_repo: OperationRepository,
+    operation_id: str,
+    timeout: float = 30.0,
+    poll_interval: float = 0.5,
+) -> Optional[Operation]:
+    if not hasattr(operations_repo, "get_operation_by_id"):
+        return None
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            op_call = operations_repo.get_operation_by_id(operation_id)
+            op = await op_call if hasattr(op_call, "__await__") else op_call
+            status = getattr(op, "status", None)
+            if op is None or not isinstance(status, (str, Status)) or status in TERMINAL_STATUSES:
+                return op
+        except Exception:
+            pass
+        await asyncio.sleep(poll_interval)
+    return None
+
+
 async def delete_review_user_resource(
         user_resource: UserResource,
         user_resource_repo: UserResourceRepository,
@@ -414,7 +450,9 @@ async def delete_review_user_resource(
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
 
     # disable might contain logic that we need to execute before the deletion of the resource
-    _ = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+    disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
+    if disable_op and hasattr(disable_op, "id"):
+        await wait_for_terminal_operation(operations_repo, disable_op.id)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -472,6 +510,8 @@ async def delete_all_review_user_resources(
             user=user
         )
         operations.append(operation)
+        if operation and hasattr(operation, "id"):
+            await wait_for_terminal_operation(operations_repo, operation.id)
 
     logger.info(f"Started {len(operations)} operations on deleting user resources")
     return operations

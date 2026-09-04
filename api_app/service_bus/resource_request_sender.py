@@ -8,10 +8,10 @@ from service_bus.helpers import send_deployment_message, update_resource_for_ste
 from models.domain.authentication import User
 
 from models.domain.request_action import RequestAction
-from models.domain.resource import Resource
+from models.domain.resource import Resource, ResourceType
 from models.domain.operation import Operation, get_failure_status_for_action
 
-from db.repositories.operations import OperationRepository
+from db.repositories.operations import OperationRepository, extract_workspace_id_from_resource_path
 from services.logging import logger, tracer
 
 
@@ -75,9 +75,30 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                     first_step = operation.steps[0]
                     first_step.status = get_failure_status_for_action(first_step.resourceAction)
                     first_step.message = f"Failed to dispatch initial deployment message: {first_step.resourceAction}"
-                await operations_repo.update_item(operation)
+                # Keep lease held during caller compensation; caller will release lease upon completing rollback
+                await operations_repo.update_item(operation, release_lease=False)
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")
+                # Fallback: remove orphaned operation and release its workspace lease
+                try:
+                    del_call = operations_repo.delete_item(operation.id)
+                    if hasattr(del_call, "__await__"):
+                        await del_call
+                except Exception:
+                    logger.exception(f"Failed to delete orphaned operation {operation.id}")
+                target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
+                if not target_workspace_id:
+                    if getattr(resource, "resourceType", None) == ResourceType.Workspace:
+                        target_workspace_id = resource.id
+                    elif hasattr(resource, "workspaceId") and resource.workspaceId:
+                        target_workspace_id = resource.workspaceId
+                if target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
+                    try:
+                        rel_call = operations_repo.release_workspace_lease(target_workspace_id, operation.id)
+                        if hasattr(rel_call, "__await__"):
+                            await rel_call
+                    except Exception:
+                        logger.exception(f"Failed to release workspace lease for {target_workspace_id}")
             raise
 
     return operation
