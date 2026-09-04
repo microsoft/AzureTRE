@@ -5,7 +5,7 @@ import time
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from fastapi import HTTPException
-from pydantic import ValidationError, parse_obj_as
+from pydantic import ValidationError, TypeAdapter
 
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
 from services.airlock import update_and_publish_event_airlock_request
@@ -43,20 +43,20 @@ class AirlockStatusUpdater():
                         polling_count = 0
 
                     async with credentials.get_credential_async_context() as credential:
-                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
-                        receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
-                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
-                        async with receiver:
-                            received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
-                            for msg in received_msgs:
-                                async with AutoLockRenewer() as renewer:
-                                    renewer.register(receiver, msg, max_lock_renewal_duration=60)
-                                    complete_message = await self.process_message(msg)
-                                    if complete_message:
-                                        await receiver.complete_message(msg)
-                                    else:
-                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                        await receiver.abandon_message(msg)
+                        async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
+                            receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
+                            logger.debug(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
+                            async with receiver:
+                                received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
+                                for msg in received_msgs:
+                                    async with AutoLockRenewer() as renewer:
+                                        renewer.register(receiver, msg, max_lock_renewal_duration=60)
+                                        complete_message = await self.process_message(msg)
+                                        if complete_message:
+                                            await receiver.complete_message(msg)
+                                        else:
+                                            # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                            await receiver.abandon_message(msg)
 
                         await asyncio.sleep(10)
 
@@ -77,7 +77,7 @@ class AirlockStatusUpdater():
             complete_message = False
 
             try:
-                message = parse_obj_as(StepResultStatusUpdateMessage, json.loads(str(msg)))
+                message = TypeAdapter(StepResultStatusUpdateMessage).validate_python(json.loads(str(msg)))
 
                 current_span.set_attribute("step_id", message.id)
                 current_span.set_attribute("event_type", message.eventType)
