@@ -34,6 +34,8 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     new_version = resource_patch.properties.get("airlock_version")
     if new_version is None:
         return
+    if type(new_version) is not int or new_version not in (1, 2):
+        raise ValueError("airlock_version must be an integer with a value of 1 or 2")
     current_version = workspace.properties.get("airlock_version", 1)
     if new_version == current_version:
         return

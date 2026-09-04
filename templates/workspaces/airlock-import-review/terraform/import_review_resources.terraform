@@ -2,8 +2,8 @@
 # The Dockerfile includes a RUN command to change the extension from .terraform to .tf after the files from the base workspace are copied to this directory.
 
 locals {
-  core_resource_group_name  = "rg-${var.tre_id}"
-  airlock_core_storage_name = lower(replace("stalairlock${var.tre_id}", "-", ""))
+  core_resource_group_name        = "rg-${var.tre_id}"
+  airlock_core_storage_name       = lower(replace("stalairlock${var.tre_id}", "-", ""))
   import_in_progress_storage_name = lower(replace("stalimip${var.tre_id}", "-", ""))
 }
 
@@ -132,4 +132,25 @@ resource "azurerm_private_dns_zone_virtual_network_link" "stg_import_inprogress_
   tags = local.tre_workspace_tags
 
   depends_on = [azurerm_private_dns_a_record.stg_import_inprogress_blob]
+}
+
+# These resources predate the enable_legacy_airlock toggle; preserve their state addresses.
+moved {
+  from = azurerm_private_endpoint.sa_import_inprogress_pe
+  to   = azurerm_private_endpoint.sa_import_inprogress_pe[0]
+}
+
+moved {
+  from = azurerm_private_dns_zone.stg_import_inprogress_blob
+  to   = azurerm_private_dns_zone.stg_import_inprogress_blob[0]
+}
+
+moved {
+  from = azurerm_private_dns_a_record.stg_import_inprogress_blob
+  to   = azurerm_private_dns_a_record.stg_import_inprogress_blob[0]
+}
+
+moved {
+  from = azurerm_private_dns_zone_virtual_network_link.stg_import_inprogress_blob
+  to   = azurerm_private_dns_zone_virtual_network_link.stg_import_inprogress_blob[0]
 }

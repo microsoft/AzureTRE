@@ -111,10 +111,21 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                     # is revoked structurally rather than by an eventually-consistent condition.
                     draft_container = airlock_storage_helper.get_container_name_for_request(req_id, previous_status)
                     if blob_operations.container_exists(source_account, draft_container):
-                        logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
-                        create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
-                        blob_operations.copy_data(source_account, dest_account, req_id,
-                                                  source_container=draft_container, destination_container=req_id)
+                        sealed_container_exists = blob_operations.container_exists(dest_account, req_id)
+                        if sealed_container_exists and blob_operations.is_submission_sealed(dest_account, req_id):
+                            # A prior delivery completed the copy but failed before deleting the draft.
+                            # Never overwrite the scanned sealed blob with data from a still-writable draft.
+                            logging.info(f'Request {req_id}: sealed copy already complete, deleting the remaining draft')
+                        else:
+                            if sealed_container_exists and blob_operations.get_request_files(dest_account, req_id):
+                                raise RuntimeError(
+                                    f'Request {req_id}: refusing to overwrite an incomplete or unmarked sealed submission')
+                            logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
+                            create_container_with_metadata(dest_account, req_id, new_stage, workspace_id=ws_id, request_type=request_type)
+                            blob_operations.copy_data(
+                                source_account, dest_account, req_id,
+                                source_container=draft_container, destination_container=req_id,
+                                additional_metadata={blob_operations.SUBMISSION_SEALED_METADATA_KEY: "true"})
                         blob_operations.delete_container(source_account, draft_container)
                     elif blob_operations.container_exists(dest_account, req_id):
                         # A redelivery after the draft was deleted but before the result was published:

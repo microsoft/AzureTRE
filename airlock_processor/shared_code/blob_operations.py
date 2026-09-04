@@ -14,6 +14,7 @@ from exceptions import NoFilesInRequestException, TooManyFilesInRequestException
 
 COPY_TIMEOUT_SECONDS = 300
 COPY_POLL_INTERVAL_SECONDS = 2
+SUBMISSION_SEALED_METADATA_KEY = "submission_sealed"
 
 
 def get_account_url(account_name: str) -> str:
@@ -65,8 +66,22 @@ def get_request_files(account_name: str, request_id: str, container_name: str = 
     return files
 
 
+def is_submission_sealed(account_name: str, container_name: str) -> bool:
+    """Return whether the container has one successfully copied, immutable submission blob."""
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
+    container_client = blob_service_client.get_container_client(container_name)
+    blobs = list(container_client.list_blobs())
+    if len(blobs) != 1:
+        return False
+
+    properties = container_client.get_blob_client(blobs[0].name).get_blob_properties()
+    copy_status = getattr(getattr(properties, "copy", None), "status", None)
+    return properties.metadata.get(SUBMISSION_SEALED_METADATA_KEY) == "true" and copy_status == "success"
+
+
 def copy_data(source_account_name: str, destination_account_name: str, request_id: str,
-              source_container: str = None, destination_container: str = None):
+              source_container: str = None, destination_container: str = None,
+              additional_metadata: dict = None):
     credential = get_credential()
     container_name = source_container or request_id
     dest_container_name = destination_container or request_id
@@ -108,9 +123,11 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     source_url = f'{source_blob.url}?{sas_token}'
 
     # Set metadata to include the blob url that it is copied from
-    metadata = source_blob.get_blob_properties()["metadata"]
+    metadata = source_blob.get_blob_properties()["metadata"].copy()
     copied_from = json.loads(metadata["copied_from"]) if "copied_from" in metadata else []
     metadata["copied_from"] = json.dumps(copied_from + [source_blob.url])
+    if additional_metadata:
+        metadata.update(additional_metadata)
 
     # Copy files
     dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),

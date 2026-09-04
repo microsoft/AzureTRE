@@ -68,8 +68,10 @@ async def get_credential_async_context() -> TokenCredential:
     Context manager which yields the default credentials.
     """
     credential = await get_credential_async()
-    yield credential
-    await credential.close()
+    try:
+        yield credential
+    finally:
+        await credential.close()
 
 
 def get_airlock_signer_credential(signer_client_id: str, tenant_id: str) -> TokenCredential:

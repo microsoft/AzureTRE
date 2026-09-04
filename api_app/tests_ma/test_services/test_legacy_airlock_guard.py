@@ -30,6 +30,16 @@ async def test_ensure_airlock_version_change_allowed_noop_when_no_version_in_pat
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("invalid_version", ["2", 2.0, True, 0, 3])
+async def test_ensure_airlock_version_change_allowed_rejects_invalid_version(invalid_version):
+    request_repo = AsyncMock()
+    with pytest.raises(ValueError, match="integer with a value of 1 or 2"):
+        await ensure_airlock_version_change_allowed(
+            _workspace(1), ResourcePatch(properties={"airlock_version": invalid_version}), request_repo)
+    request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_permits_change_when_no_in_flight():
     request_repo = AsyncMock()
     request_repo.get_in_flight_airlock_request_ids_for_workspace.return_value = []

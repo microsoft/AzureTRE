@@ -131,7 +131,7 @@ class TestFileEnumeration():
         get_request_files(request_properties)
         mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id, container_name=None)
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_enumerates_the_draft_container_for_v2(self, mock_get_request_files, _):
@@ -247,7 +247,7 @@ class TestV2MetadataMode():
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -266,7 +266,7 @@ class TestV2MetadataMode():
         assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
         assert second_call_event.get_json()["request_files"] == [{"name": "test.txt", "size": 100}]
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -277,7 +277,7 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "a.txt", "size": 1}, {"name": "b.txt", "size": 2}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -291,7 +291,7 @@ class TestV2MetadataMode():
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 1}])
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
     def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(self, mock_blob_svc, _, mock_copy, mock_delete, mock_files):
@@ -305,7 +305,7 @@ class TestV2MetadataMode():
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -337,6 +337,26 @@ class TestV2MetadataMode():
         # or the request would stay in Submitted forever.
         mock_copy.assert_not_called()
         mock_delete.assert_not_called()
+        assert step_result.set.call_count == 1
+
+    @patch("StatusChangedQueueTrigger.blob_operations.is_submission_sealed", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
+    def test_v2_redelivery_does_not_overwrite_sealed_submission_when_draft_remains(
+            self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, mock_is_sealed):
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
+        message = _mock_service_bus_message(body=message_body)
+        step_result = MagicMock()
+
+        main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
+
+        mock_is_sealed.assert_called_once_with("stalairlocktre-id", "123")
+        mock_copy.assert_not_called()
+        mock_delete.assert_called_once_with("stalairlocktre-id", "123-draft")
         assert step_result.set.call_count == 1
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")

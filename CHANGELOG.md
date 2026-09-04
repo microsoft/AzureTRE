@@ -9,8 +9,11 @@ ENHANCEMENTS:
   upgrade to `2.11.0`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
 See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
+* Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Make v2 Airlock submission retries preserve an already sealed blob, retain legacy import-review Terraform resource state, and reject malformed `airlock_version` patches with HTTP 400 (`airlock-processor` 0.8.32, API 0.27.29) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Derive a new workspace's `airlock_version` from its template rather than always defaulting to 2, so a workspace created from a legacy (pre-v2) template is correctly stamped `airlock_version=1` instead of being marked v2 while deploying v1 storage. The version guard now validates the resolved value, and the "missing means legacy (1)" default is applied consistently ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Remove incorrect Terraform `moved` blocks for the legacy airlock role assignments and Defender action, which already used `count` on `main` (moving an unindexed address to `[0]` was a no-op at best and misleading) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Raise a clear error when an Event Grid topic/subject or blob URL can't be parsed (including the BlobCreated trigger), and fix a malformed log statement, so unexpected airlock scan/blob events are diagnosable instead of failing with an opaque `NoneType` error (`airlock-processor` 0.8.31) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
@@ -19,6 +22,8 @@ BUG FIXES:
 * Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+* Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
