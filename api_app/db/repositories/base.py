@@ -44,8 +44,13 @@ class BaseRepository:
     async def update_item_dict(self, item_dict: dict):
         await self.container.upsert_item(body=item_dict)
 
-    async def delete_item(self, item_id: str):
-        await self.container.delete_item(item=item_id, partition_key=item_id)
+    async def delete_item(self, item_id: str, etag: Optional[str] = None, match_condition: Optional[MatchConditions] = None):
+        kwargs = {}
+        if etag is not None:
+            kwargs["etag"] = etag
+        if match_condition is not None:
+            kwargs["match_condition"] = match_condition
+        await self.container.delete_item(item=item_id, partition_key=item_id, **kwargs)
 
     async def rename_field_name(self, old_field_name: str, new_field_name: str):
         for item in await self.query('SELECT * FROM c'):

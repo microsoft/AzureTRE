@@ -8,7 +8,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
-* `address_spaces` will now be removed from a workspace when a workspace service that uses an `address_space` is deleted to prevent IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
+* A workspace service's allocated `address_space` will now be removed from its parent workspace's `address_spaces` list when the service is deleted, preventing IP address range exhaustion ([#4727](https://github.com/microsoft/AzureTRE/issues/4727))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**

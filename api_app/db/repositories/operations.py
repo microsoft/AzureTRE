@@ -17,7 +17,7 @@ from core import config
 from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
-from models.domain.operation import Operation, OperationStep, Status
+from models.domain.operation import Operation, OperationStep, Status, get_failure_status_for_action
 
 WORKSPACE_LEASE_EXPIRY_SECONDS = 300.0
 
@@ -93,15 +93,6 @@ class OperationRepository(BaseRepository):
         if not hasattr(self, "_container") or self._container is None:
             return True
 
-        if hasattr(self, "resource_has_active_operation"):
-            check = self.resource_has_active_operation(workspace_id)
-            if hasattr(check, "__await__"):
-                is_active = await check
-            else:
-                is_active = check
-            if is_active is True:
-                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
-
         lease_id = f"lease_{workspace_id}"
         max_attempts = 3
 
@@ -153,7 +144,19 @@ class OperationRepository(BaseRepository):
                             Status.ActionFailed,
                         }
                         if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
-                            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            op_time = getattr(existing_op, "updatedWhen", 0.0) or getattr(existing_op, "createdWhen", 0.0)
+                            if timestamp - op_time < WORKSPACE_LEASE_EXPIRY_SECONDS:
+                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            # Stale operation from interrupted dispatch; reconcile to failed status
+                            try:
+                                existing_op.status = get_failure_status_for_action(existing_op.action)
+                                existing_op.message = "Operation timed out or was interrupted before completion"
+                                existing_op.updatedWhen = timestamp
+                                update_call = self.update_item(existing_op)
+                                if hasattr(update_call, "__await__"):
+                                    await update_call
+                            except Exception:
+                                pass
                     except (EntityDoesNotExist, CosmosResourceNotFoundError):
                         # Operation doc not written yet (still constructing cascade/operation).
                         # Safely reclaim orphaned leases after a bounded interval (WORKSPACE_LEASE_EXPIRY_SECONDS).
@@ -189,7 +192,11 @@ class OperationRepository(BaseRepository):
             read_call = self.read_item_by_id(lease_id)
             existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
             if isinstance(existing_lease, dict) and (not operation_id or existing_lease.get("operationId") == operation_id):
-                del_call = self.delete_item(lease_id)
+                etag = existing_lease.get("_etag")
+                if etag:
+                    del_call = self.delete_item(lease_id, etag=etag, match_condition=MatchConditions.IfNotModified)
+                else:
+                    del_call = self.delete_item(lease_id)
                 if hasattr(del_call, "__await__"):
                     await del_call
         except Exception:
@@ -405,4 +412,34 @@ class OperationRepository(BaseRepository):
             + f' AND c.status IN ({status_filter})'
         )
         operations = await self.query(query=query)
-        return len(operations) > 0
+        if not operations:
+            return False
+
+        timestamp = self.get_timestamp()
+        has_active = False
+        for op_dict in operations:
+            op_status = op_dict.get("status") if isinstance(op_dict, dict) else getattr(op_dict, "status", None)
+            if op_status is not None and op_status not in active_statuses:
+                continue
+            op_time = (
+                (op_dict.get("updatedWhen") or op_dict.get("createdWhen"))
+                if isinstance(op_dict, dict)
+                else (getattr(op_dict, "updatedWhen", None) or getattr(op_dict, "createdWhen", None))
+            )
+            # If timestamp is present and exceeds expiry, it is stale
+            if op_time is not None and (timestamp - op_time >= WORKSPACE_LEASE_EXPIRY_SECONDS):
+                # Stale active operation from interrupted dispatch; reconcile to failure status
+                try:
+                    op = TypeAdapter(Operation).validate_python(op_dict)
+                    op.status = get_failure_status_for_action(op.action)
+                    op.message = "Operation timed out or was interrupted before completion"
+                    op.updatedWhen = timestamp
+                    update_call = self.update_item(op)
+                    if hasattr(update_call, "__await__"):
+                        await update_call
+                except Exception:
+                    pass
+            else:
+                has_active = True
+
+        return has_active
