@@ -3670,3 +3670,41 @@ async def test_etag_conflict_after_cleanup_dispatch_skips_when_fresh_op_already_
     send_deployment_message_mock.assert_called_once()
     assert fresh_terminal_op.steps[1].status == Status.Updated
     assert fresh_terminal_op.status == Status.Deleted
+
+
+async def test_update_status_in_database_rejects_reconciled_operation():
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+
+    res_id = uuid.uuid4()
+    reconciled_op = Operation(
+        id=OPERATION_ID,
+        resourceId=str(res_id),
+        resourcePath="/workspaces/ws-1",
+        action=RequestAction.Install,
+        status=Status.DeploymentFailed,
+        reconciled=True,
+        steps=[
+            OperationStep(
+                id="step-1",
+                templateStepId="main",
+                resourceId=str(res_id),
+                status=Status.DeploymentFailed,
+            )
+        ],
+    )
+    status_updater.operations_repo.get_operation_by_id = AsyncMock(return_value=reconciled_op)
+    status_updater.resource_repo = AsyncMock()
+
+    msg = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=res_id,
+        status=Status.Deployed,
+        message="late success",
+    )
+
+    result = await status_updater.update_status_in_database(msg)
+    assert result is True
+    status_updater.operations_repo.update_item.assert_not_called()
+    status_updater.resource_repo.update_item.assert_not_called()

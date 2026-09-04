@@ -160,6 +160,14 @@ class DeploymentStatusUpdater():
             if step_to_update is None:
                 raise Exception(f"Error finding step {message.stepId} in operation {message.operationId}")
 
+            # Reject messages for reconciled/timed-out operations to prevent resurrecting stale operations
+            if getattr(operation, "reconciled", False):
+                logger.warning(
+                    f"Message {message.stepId} received for operation {operation.id}, "
+                    f"but operation was reconciled due to timeout/interruption. Rejecting to prevent stale writes."
+                )
+                return True
+
             # Ignore duplicate messages if uninstall cleanup is already terminal
             if (
                 operation.action == RequestAction.UnInstall
@@ -327,7 +335,8 @@ class DeploymentStatusUpdater():
                         if (
                             fresh_op is not operation
                             and (
-                                (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                getattr(fresh_op, "reconciled", False)
+                                or (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
                                 or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
                             )
                         ):
@@ -389,7 +398,8 @@ class DeploymentStatusUpdater():
                                 if (
                                     fresh_op is not operation
                                     and (
-                                        (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                        getattr(fresh_op, "reconciled", False)
+                                        or (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
                                         or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
                                     )
                                 ):
@@ -577,7 +587,8 @@ class DeploymentStatusUpdater():
                                 if (
                                     fresh_op is not operation
                                     and (
-                                        (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
+                                        getattr(fresh_op, "reconciled", False)
+                                        or (fresh_op.action == RequestAction.UnInstall and self._is_cleanup_terminal(fresh_op))
                                         or fresh_op.status in (Status.Deleted, Status.DeletingFailed)
                                     )
                                 ):

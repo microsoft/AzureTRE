@@ -342,13 +342,15 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             operation_id=operation_id)
     except Exception as err:
         if not getattr(err, "lease_retained", False):
-            if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
-                await _rollback_address_space(
-                    workspace_repo, workspace.id, workspace_service.properties["address_space"],
-                    resource_template_repo, resource_history_repo, user
-                )
-            if hasattr(operations_repo, "release_workspace_lease"):
-                await operations_repo.release_workspace_lease(workspace.id, operation_id)
+            try:
+                if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
+                    await _rollback_address_space(
+                        workspace_repo, workspace.id, workspace_service.properties["address_space"],
+                        resource_template_repo, resource_history_repo, user
+                    )
+            finally:
+                if hasattr(operations_repo, "release_workspace_lease"):
+                    await operations_repo.release_workspace_lease(workspace.id, operation_id)
         if getattr(err, "lease_retained", False):
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

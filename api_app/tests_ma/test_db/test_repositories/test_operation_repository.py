@@ -421,6 +421,7 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
     operations_repo.update_item.assert_awaited_once()
     saved_op = operations_repo.update_item.call_args[0][0]
     assert saved_op.status == Status.DeploymentFailed
+    assert saved_op.reconciled is True
 
 
 async def test_resource_has_active_operation_fails_closed_when_reconciliation_fails(operations_repo):

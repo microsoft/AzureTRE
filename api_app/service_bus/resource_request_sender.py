@@ -87,6 +87,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")
                 # Fallback: remove orphaned operation and release its workspace lease only if it has not been advanced
+                lease_retained = True
                 try:
                     creation_etag = getattr(operation, "etag", None)
                     if hasattr(operations_repo, "delete_item"):
@@ -101,6 +102,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                         if hasattr(del_call, "__await__"):
                             await del_call
                         lease_released = True
+                        lease_retained = False
                 except (CosmosAccessConditionFailedError, ResourceModifiedError, ResourceExistsError):
                     logger.warning(
                         f"Operation {operation.id} was modified concurrently; retaining operation and workspace lease"
@@ -108,6 +110,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                     lease_retained = True
                 except Exception:
                     logger.exception(f"Failed to delete orphaned operation {operation.id}")
+                    lease_retained = True
 
                 if lease_released and should_release_lease:
                     target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)

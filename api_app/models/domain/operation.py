@@ -104,6 +104,7 @@ class Operation(AzureTREModel):
     updatedWhen: float = Field(0.0, title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+    reconciled: Optional[bool] = Field(default=False, title="reconciled", description="Whether operation was reconciled due to timeout or interruption")
     etag: Optional[str] = Field(None, title="_etag", alias="_etag")
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931

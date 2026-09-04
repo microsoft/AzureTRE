@@ -168,6 +168,13 @@ class OperationRepository(BaseRepository):
                                 existing_op.status = get_failure_status_for_action(existing_op.action)
                                 existing_op.message = "Operation timed out or was interrupted before completion"
                                 existing_op.updatedWhen = timestamp
+                                existing_op.reconciled = True
+                                if getattr(existing_op, "steps", None):
+                                    for step in existing_op.steps:
+                                        if not step.is_failure() and not step.is_success():
+                                            step.status = get_failure_status_for_action(existing_op.action)
+                                            step.message = "Operation timed out or was interrupted before completion"
+                                            step.updatedWhen = timestamp
                                 update_call = self.update_item(existing_op)
                                 if hasattr(update_call, "__await__"):
                                     await update_call
@@ -458,6 +465,13 @@ class OperationRepository(BaseRepository):
                     op.status = get_failure_status_for_action(op.action)
                     op.message = "Operation timed out or was interrupted before completion"
                     op.updatedWhen = timestamp
+                    op.reconciled = True
+                    if getattr(op, "steps", None):
+                        for step in op.steps:
+                            if not step.is_failure() and not step.is_success():
+                                step.status = get_failure_status_for_action(op.action)
+                                step.message = "Operation timed out or was interrupted before completion"
+                                step.updatedWhen = timestamp
                     update_call = self.update_item(op)
                     if hasattr(update_call, "__await__"):
                         await update_call
