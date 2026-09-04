@@ -40,9 +40,9 @@ async def get_request(endpoint, access_token, verify, assert_status):
         response = await client.get(
             full_endpoint, headers=auth_headers, timeout=TIMEOUT
         )
-        LOGGER.info(
-            f"Response Status code: {response.status_code} Content: {response.content}"
-        )
+        # Link responses contain a container SAS. Do not log response bodies because
+        # doing so would expose credentials before the upload/delete helpers redact them.
+        LOGGER.info(f"Response Status code: {response.status_code}")
 
         assert response.status_code == assert_status
 

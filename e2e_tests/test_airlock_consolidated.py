@@ -144,7 +144,7 @@ async def test_v2_export_uses_workspace_storage(setup_test_workspace, verify):
     container_url = link_result["containerUrl"]
 
     assert "stalairlockg" in container_url
-    LOGGER.info(f"Export request uses correct storage: {container_url}")
+    LOGGER.info(f"Export request uses correct storage: {container_url.split('?', 1)[0]}")
 
 
 @pytest.mark.timeout(10 * 60)
@@ -167,4 +167,4 @@ async def test_v2_import_uses_core_storage(setup_test_workspace, verify):
     container_url = link_result["containerUrl"]
 
     assert "stalairlock" in container_url and "stalairlockg" not in container_url
-    LOGGER.info(f"Import request uses correct storage: {container_url}")
+    LOGGER.info(f"Import request uses correct storage: {container_url.split('?', 1)[0]}")

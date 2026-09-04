@@ -50,7 +50,7 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
     blob_uploaded = False
     wait_time = 30
     while not blob_uploaded:
-        LOGGER.info(f"try #{i} to upload a blob to container [{container_url}]")
+        LOGGER.info(f"try #{i} to upload a blob to container [{container_url.split('?', 1)[0]}]")
         try:
             await asyncio.sleep(5)
             upload_response = await upload_blob_using_sas(BLOB_FILE_PATH, container_url)

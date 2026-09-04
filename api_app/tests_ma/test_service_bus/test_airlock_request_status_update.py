@@ -353,16 +353,26 @@ async def test_file_validation_arriving_after_verdict_completes_submission(airlo
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(test_sb_step_result_message_with_files)
 
     scanned = sample_airlock_request(AirlockRequestStatus.Submitted)
+    scanned.files = []
     scanned.scanResult = {"clean": True, "message": None}
+    persisted = sample_airlock_request(AirlockRequestStatus.Submitted)
+    persisted.scanResult = scanned.scanResult
     airlock_request_repo.return_value.get_airlock_request_by_id.return_value = scanned
+    airlock_request_repo.return_value.update_airlock_request.return_value = persisted
     workspace_repo.return_value.get_workspace_by_id.return_value = sample_workspace()
-    update_and_publish_mock.return_value = scanned
+    update_and_publish_mock.return_value = persisted
 
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
     complete_message = await airlockStatusUpdater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
+    airlock_request_repo.return_value.update_airlock_request.assert_awaited_once()
+    persistence_args = airlock_request_repo.return_value.update_airlock_request.call_args.kwargs
+    assert persistence_args["original_request"] == scanned
+    assert persistence_args["updated_by"] == scanned.updatedBy
+    assert [file.model_dump() for file in persistence_args["request_files"]] == test_sb_step_result_message_with_files["data"]["request_files"]
+    assert update_and_publish_mock.call_args.kwargs["airlock_request"] == persisted
     assert update_and_publish_mock.call_args.kwargs["new_status"] == AirlockRequestStatus.InReview
 
 
