@@ -3,6 +3,11 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
+* Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
+
+BUG FIXES:
+* Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 
 BUG FIXES:
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
