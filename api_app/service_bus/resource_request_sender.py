@@ -11,6 +11,9 @@ from models.domain.request_action import RequestAction
 from models.domain.resource import Resource, ResourceType
 from models.domain.operation import Operation, get_failure_status_for_action
 
+from azure.core import MatchConditions
+from azure.core.exceptions import ResourceExistsError, ResourceModifiedError
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from db.repositories.operations import OperationRepository, extract_workspace_id_from_resource_path
 from services.logging import logger, tracer
 
@@ -82,26 +85,43 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                 await operations_repo.update_item(operation, release_lease=should_release_lease)
             except Exception:
                 logger.exception(f"Failed to persist failure state for operation {operation.id}")
-                # Fallback: remove orphaned operation and release its workspace lease
+                # Fallback: remove orphaned operation and release its workspace lease only if it has not been advanced
+                lease_released = False
                 try:
-                    del_call = operations_repo.delete_item(operation.id)
-                    if hasattr(del_call, "__await__"):
-                        await del_call
+                    creation_etag = getattr(operation, "etag", None)
+                    if hasattr(operations_repo, "delete_item"):
+                        if creation_etag:
+                            del_call = operations_repo.delete_item(
+                                operation.id,
+                                etag=creation_etag,
+                                match_condition=MatchConditions.IfNotModified
+                            )
+                        else:
+                            del_call = operations_repo.delete_item(operation.id)
+                        if hasattr(del_call, "__await__"):
+                            await del_call
+                        lease_released = True
+                except (CosmosAccessConditionFailedError, ResourceModifiedError, ResourceExistsError):
+                    logger.warning(
+                        f"Operation {operation.id} was modified concurrently; retaining operation and workspace lease"
+                    )
                 except Exception:
                     logger.exception(f"Failed to delete orphaned operation {operation.id}")
-                target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
-                if not target_workspace_id:
-                    if getattr(resource, "resourceType", None) == ResourceType.Workspace:
-                        target_workspace_id = resource.id
-                    elif hasattr(resource, "workspaceId") and resource.workspaceId:
-                        target_workspace_id = resource.workspaceId
-                if target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
-                    try:
-                        rel_call = operations_repo.release_workspace_lease(target_workspace_id, operation.id)
-                        if hasattr(rel_call, "__await__"):
-                            await rel_call
-                    except Exception:
-                        logger.exception(f"Failed to release workspace lease for {target_workspace_id}")
+
+                if lease_released:
+                    target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
+                    if not target_workspace_id:
+                        if getattr(resource, "resourceType", None) == ResourceType.Workspace:
+                            target_workspace_id = resource.id
+                        elif hasattr(resource, "workspaceId") and resource.workspaceId:
+                            target_workspace_id = resource.workspaceId
+                    if target_workspace_id and hasattr(operations_repo, "release_workspace_lease"):
+                        try:
+                            rel_call = operations_repo.release_workspace_lease(target_workspace_id, operation.id)
+                            if hasattr(rel_call, "__await__"):
+                                await rel_call
+                        except Exception:
+                            logger.exception(f"Failed to release workspace lease for {target_workspace_id}")
             raise
 
     return operation

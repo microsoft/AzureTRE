@@ -271,6 +271,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
 
+    address_space_added = False
     try:
         try:
             workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
@@ -298,6 +299,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             # updated directly, and an "update" on the workspace is called by the workspace service pipeline.
             try:
                 await workspace_repo.patch_workspace(workspace, workspace_patch, workspace.etag, resource_template_repo, resource_history_repo, user, False)
+                address_space_added = True
             except CosmosAccessConditionFailedError:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
 
@@ -311,7 +313,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             resource_template=resource_template,
             operation_id=operation_id)
     except Exception:
-        if 'resource_template' in locals() and 'workspace_service' in locals() and resource_template.properties.get("address_space") and workspace_service.properties.get("address_space"):
+        if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
             try:
                 latest_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
                 current_spaces = latest_workspace.properties.get("address_spaces", [])

@@ -155,7 +155,7 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
     # If there was a VM created for the request, clean it up as it will no longer be needed
     # In this request, we aren't returning the operations for clean up of VMs,
     # however the operations still will be saved in the DB and displayed on the UI as normal.
-    _ = await delete_all_review_user_resources(
+    asyncio.create_task(delete_all_review_user_resources(
         airlock_request=airlock_request,
         user_resource_repo=user_resource_repo,
         workspace_service_repo=workspace_service_repo,
@@ -163,7 +163,8 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
         operations_repo=operation_repo,
         resource_history_repo=resource_history_repo,
         user=user
-    )
+    ))
+    await asyncio.sleep(0)
 
     return updated_airlock_request
 
@@ -262,7 +263,7 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
         logger.info("Deleting existing user resource...")
-        del_op = await delete_review_user_resource(
+        _ = await delete_review_user_resource(
             user_resource=existing_resource,
             user_resource_repo=user_resource_repo,
             workspace_service_repo=workspace_service_repo,
@@ -271,8 +272,6 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
             resource_history_repo=resource_history_repo,
             user=user
         )
-        if del_op and hasattr(del_op, "id"):
-            await wait_for_successful_operation(operation_repo, del_op.id)
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):
@@ -447,21 +446,22 @@ async def wait_for_successful_operation(
         try:
             op_call = operations_repo.get_operation_by_id(operation_id)
             op = await op_call if hasattr(op_call, "__await__") else op_call
-            op_status = getattr(op, "status", None)
-            if op is None or not isinstance(op_status, (str, Status)):
-                return op
-            if op_status in SUCCESS_STATUSES:
-                return op
-            if op_status in FAILURE_STATUSES:
-                logger.error(f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}")
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}"
-                )
+            if op is not None:
+                op_status = getattr(op, "status", None)
+                if not isinstance(op_status, (str, Status)):
+                    return op
+                if op_status in SUCCESS_STATUSES:
+                    return op
+                if op_status in FAILURE_STATUSES:
+                    logger.error(f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}")
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Operation {operation_id} failed with status {op_status}: {getattr(op, 'message', '')}"
+                    )
         except HTTPException:
             raise
         except EntityDoesNotExist:
-            return None
+            pass
         except Exception:
             pass
         await asyncio.sleep(poll_interval)
@@ -564,7 +564,8 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
                          airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
                          resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
-    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    asyncio.create_task(delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user))
+    await asyncio.sleep(0)
     return updated_request
 
 

@@ -813,3 +813,16 @@ async def test_delete_review_user_resource_aborts_if_disable_fails(mock_send_uni
         )
     assert exc_info.value.status_code == 500
     mock_send_uninstall.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_wait_for_successful_operation_retries_on_entity_does_not_exist():
+    from services.airlock import wait_for_successful_operation
+    from db.errors import EntityDoesNotExist
+
+    repo = AsyncMock()
+    repo.get_operation_by_id.side_effect = EntityDoesNotExist
+
+    with pytest.raises(HTTPException) as exc_info:
+        await wait_for_successful_operation(repo, "op-123", timeout=0.1, poll_interval=0.02)
+    assert exc_info.value.status_code == 504
