@@ -194,53 +194,27 @@ async def test_multi_step_document_retries(
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
 
 
+@pytest.mark.parametrize(
+    "action, expected_status",
+    [
+        (RequestAction.Install, Status.DeploymentFailed),
+        (RequestAction.Upgrade, Status.UpdatingFailed),
+        (RequestAction.UnInstall, Status.DeletingFailed),
+    ],
+)
 @patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
 @patch("service_bus.resource_request_sender.update_resource_for_step")
-async def test_send_resource_request_message_deletes_operation_on_dispatch_failure(
+async def test_send_resource_request_message_persists_failure_state_on_dispatch_failure(
     update_resource_mock,
     send_deployment_mock,
+    action,
+    expected_status,
 ):
     resource = create_test_resource()
-    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operation = create_sample_operation(resource.id, action)
 
     operations_repo_mock = AsyncMock()
     operations_repo_mock.create_operation_item.return_value = operation
-    operations_repo_mock.delete_item = AsyncMock()
-
-    resource_repo_mock = AsyncMock()
-    resource_template_repo_mock = AsyncMock()
-    resource_history_repo_mock = AsyncMock()
-
-    resource_to_send_mock = MagicMock()
-    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
-    update_resource_mock.return_value = resource_to_send_mock
-
-    with pytest.raises(Exception, match="Service Bus unavailable"):
-        await send_resource_request_message(
-            resource=resource,
-            operations_repo=operations_repo_mock,
-            resource_repo=resource_repo_mock,
-            user=create_test_user(),
-            resource_template_repo=resource_template_repo_mock,
-            resource_history_repo=resource_history_repo_mock,
-            action=RequestAction.Install,
-        )
-
-    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id)
-
-
-@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
-@patch("service_bus.resource_request_sender.update_resource_for_step")
-async def test_send_resource_request_message_marks_operation_failed_when_delete_fails(
-    update_resource_mock,
-    send_deployment_mock,
-):
-    resource = create_test_resource()
-    operation = create_sample_operation(resource.id, RequestAction.Install)
-
-    operations_repo_mock = AsyncMock()
-    operations_repo_mock.create_operation_item.return_value = operation
-    operations_repo_mock.delete_item = AsyncMock(side_effect=Exception("Cosmos delete error"))
     operations_repo_mock.update_item = AsyncMock()
 
     resource_repo_mock = AsyncMock()
@@ -259,9 +233,10 @@ async def test_send_resource_request_message_marks_operation_failed_when_delete_
             user=create_test_user(),
             resource_template_repo=resource_template_repo_mock,
             resource_history_repo=resource_history_repo_mock,
-            action=RequestAction.Install,
+            action=action,
         )
 
-    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id)
     operations_repo_mock.update_item.assert_awaited_once_with(operation)
-    assert operation.status == Status.DeploymentFailed
+    assert operation.status == expected_status
+    assert operation.steps[0].status == expected_status
+    assert "Failed to dispatch" in operation.message

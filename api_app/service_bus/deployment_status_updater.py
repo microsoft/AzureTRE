@@ -32,10 +32,10 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 MAX_CLEANUP_RETRIES = 3
 MAX_CLEANUP_DELIVERY_COUNT = 10
 # Azure Service Bus default max delivery count is 10.
-# ServiceBusReceivedMessage.delivery_count is 1-based in Azure Service Bus:
-# attempt 1 has delivery_count = 1, and attempt 10 (the final processable attempt before DLQ) has delivery_count = 10.
-# When delivery_count >= MAX_CLEANUP_DELIVERY_COUNT, this is the final delivery attempt before Service Bus dead-letters the message.
-FINAL_CLEANUP_DELIVERY_COUNT = MAX_CLEANUP_DELIVERY_COUNT
+# The AMQP delivery_count reported by ServiceBusReceivedMessage represents prior unsuccessful delivery attempts (0-based):
+# attempt 1 has delivery_count = 0, and attempt 10 (the final processable attempt) has delivery_count = 9.
+# Waiting for delivery_count >= 10 would cause attempt 10 (count 9) to be abandoned into the dead-letter queue.
+FINAL_CLEANUP_DELIVERY_COUNT = MAX_CLEANUP_DELIVERY_COUNT - 1
 
 
 class AddressSpaceConflictError(Exception):

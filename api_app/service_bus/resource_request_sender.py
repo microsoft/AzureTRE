@@ -67,21 +67,20 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
         except Exception:
             logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
             try:
-                await operations_repo.delete_item(operation.id)
+                failure_status = (
+                    Status.DeploymentFailed if action == RequestAction.Install
+                    else Status.DeletingFailed if action == RequestAction.UnInstall
+                    else Status.UpdatingFailed if action == RequestAction.Upgrade
+                    else Status.ActionFailed
+                )
+                operation.status = failure_status
+                operation.message = f"Failed to dispatch initial deployment message: {action}"
+                if operation.steps:
+                    operation.steps[0].status = failure_status
+                    operation.steps[0].message = f"Failed to dispatch initial deployment message: {action}"
+                await operations_repo.update_item(operation)
             except Exception:
-                logger.exception(f"Failed to delete undispatched operation {operation.id}, attempting to mark failed")
-                try:
-                    failure_status = (
-                        Status.DeploymentFailed if action == RequestAction.Install
-                        else Status.DeletingFailed if action == RequestAction.UnInstall
-                        else Status.UpdatingFailed if action == RequestAction.Upgrade
-                        else Status.ActionFailed
-                    )
-                    operation.status = failure_status
-                    operation.message = f"Failed to dispatch initial deployment message: {action}"
-                    await operations_repo.update_item(operation)
-                except Exception:
-                    logger.exception(f"Failed to mark operation {operation.id} as failed")
+                logger.exception(f"Failed to persist failure state for operation {operation.id}")
             raise
 
     return operation
