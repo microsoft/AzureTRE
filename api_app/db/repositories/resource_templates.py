@@ -199,6 +199,9 @@ class ResourceTemplateRepository(BaseRepository):
                         raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' is only allowed in the '{RequestAction.UnInstall}' pipeline")
                     if i != num_steps - 1:
                         raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' must be the final step in the '{RequestAction.UnInstall}' pipeline")
+                    if (step.get("resourceType") != ResourceType.Workspace
+                            or step.get("resourceAction") != RequestAction.Upgrade):
+                        raise InvalidInput(f"Step '{strings.ADDRESS_SPACE_CLEANUP_STEP_ID}' must upgrade a workspace")
 
                 if step_id != "main":
                     step_ids.append(step_id)

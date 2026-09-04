@@ -10,6 +10,7 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
 
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
@@ -2778,3 +2779,247 @@ async def test_cleanup_step_with_trailing_step_does_not_prematurely_finalize_as_
 
     assert operation.status == Status.PipelineRunning
     assert operation.status != Status.Deleted
+
+
+async def test_cleanup_post_cleanup_write_failure_retries_on_non_final_delivery():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted,
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updating,
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2],
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updating
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.operations_repo.update_item.side_effect = Exception("Cosmos write failed")
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {"id": parent_workspace_id, "properties": {}}
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded",
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
+        result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=False)
+
+    assert result is False
+    assert step2.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+    assert operation.status != Status.DeletingFailed
+
+
+async def test_cleanup_post_cleanup_write_failure_persists_terminal_state_on_final_delivery():
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted,
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updating,
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2],
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Updating
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updating
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+
+    attempt_count = 0
+
+    async def mock_op_update(op):
+        nonlocal attempt_count
+        attempt_count += 1
+        if attempt_count <= 3:
+            raise CosmosAccessConditionFailedError()
+        return op
+
+    status_updater.operations_repo.update_item.side_effect = mock_op_update
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {"id": parent_workspace_id, "properties": {}}
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded",
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
+        result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=True)
+
+    assert result is True
+    assert operation.status == Status.Deleted
+    assert workspace_service_mock.deploymentStatus == Status.Deleted
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+async def test_cleanup_post_send_persistence_failure_does_not_terminally_fail_enqueued_cleanup(send_deployment_message_mock):
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleting,
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f"/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}",
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1],
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleting
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+
+    send_called = False
+
+    async def mock_op_update(op):
+        if send_called:
+            raise Exception("Cosmos write error during post-send status update")
+        return op
+
+    async def mock_send_deployment_message(*args, **kwargs):
+        nonlocal send_called
+        send_called = True
+
+    send_deployment_message_mock.side_effect = mock_send_deployment_message
+    status_updater.operations_repo.update_item.side_effect = mock_op_update
+
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = workspace_service_mock
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space},
+    }
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
+
+    main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded",
+    )
+
+    result = await status_updater.update_status_in_database(main_message, is_final_delivery=True)
+
+    assert result is True
+    send_deployment_message_mock.assert_called_once()
+    cleanup_step = operation.steps[1]
+    assert cleanup_step.status != Status.UpdatingFailed
+    assert operation.status != Status.DeletingFailed
+    assert not status_updater._is_cleanup_terminal(operation)
+
+
+async def test_free_workspace_address_space_read_failure_avoids_unbound_local():
+    status_updater = DeploymentStatusUpdater()
+    status_updater._get_address_cleanup_details = AsyncMock(side_effect=Exception("Cosmos read error"))
+
+    operation = MagicMock()
+    freed = await status_updater._free_workspace_address_space(operation)
+
+    assert freed is False

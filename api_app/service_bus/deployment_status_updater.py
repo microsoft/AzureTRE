@@ -266,41 +266,94 @@ class DeploymentStatusUpdater():
                 else:
                     step_to_update.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
 
-            # copy the step status to the resource item, for convenience
-            resource = await self.resource_repo.get_resource_by_id(resource_id)
-            resource.deploymentStatus = step_to_update.status
-            await self.resource_repo.update_item(resource)
+            try:
+                # copy the step status to the resource item, for convenience
+                resource = await self.resource_repo.get_resource_by_id(resource_id)
+                resource.deploymentStatus = step_to_update.status
+                await self.resource_repo.update_item(resource)
 
-            # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
-            if not step_to_update.is_success():
+                # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
+                if not step_to_update.is_success():
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    await self.operations_repo.update_item(operation)
+                    return True
+
+                # update the resource doc to persist any outputs
+                resource = await self.resource_repo.get_resource_dict_by_id(resource_id)
+                resource_to_persist = self.create_updated_resource_document(resource, message)
+                await self.resource_repo.update_item_dict(resource_to_persist)
+
+                if is_cleanup_step and step_to_update.is_success():
+                    # Restore the primary resource to Deleted when cleanup succeeds
+                    main_step = next(
+                        (op_step for op_step in operation.steps
+                         if op_step.templateStepId == "main"
+                         and op_step.resourceId == operation.resourceId),
+                        None
+                    )
+                    if main_step:
+                        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                        if primary_resource.deploymentStatus != Status.Deleted:
+                            primary_resource.deploymentStatus = Status.Deleted
+                            await self.resource_repo.update_item(primary_resource)
+
+                # update the overall headline operation status
                 await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                await self.operations_repo.update_item(operation)
-                return True
 
-            # update the resource doc to persist any outputs
-            resource = await self.resource_repo.get_resource_dict_by_id(resource_id)
-            resource_to_persist = self.create_updated_resource_document(resource, message)
-            await self.resource_repo.update_item_dict(resource_to_persist)
+                # save the operation with final status LAST, after all resource updates are committed
+                for attempt in range(MAX_CLEANUP_RETRIES):
+                    try:
+                        await self.operations_repo.update_item(operation)
+                        break
+                    except CosmosAccessConditionFailedError:
+                        if attempt == MAX_CLEANUP_RETRIES - 1:
+                            raise
+                        logger.warning(f"ETag conflict when saving operation {operation.id}. Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})...")
+                        operation = await self.operations_repo.get_operation_by_id(operation.id)
+                        for s in operation.steps:
+                            if s.id == step_to_update.id:
+                                s.status = step_to_update.status
+                                s.message = step_to_update.message
+                                s.updatedWhen = get_timestamp()
+                                break
+                        await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+            except Exception as e:
+                if is_cleanup_step and step_to_update.is_success():
+                    logger.error(f"[CLEANUP_FINALIZATION_FAILED] Error in post-cleanup writes: {e}", exc_info=True)
+                    if is_final_delivery:
+                        # Final delivery handling: must persist terminal state and complete message
+                        try:
+                            fresh_op = await self.operations_repo.get_operation_by_id(str(message.operationId))
+                            for s in fresh_op.steps:
+                                if s.id == step_to_update.id:
+                                    s.status = step_to_update.status
+                                    s.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+                                    s.updatedWhen = get_timestamp()
+                                    break
+                            await self.update_overall_operation_status(fresh_op, step_to_update, is_last_step)
+                            await self.operations_repo.update_item(fresh_op)
+                        except Exception as op_err:
+                            logger.error(f"Failed to persist terminal operation status on final delivery: {op_err}", exc_info=True)
 
-            if is_cleanup_step and step_to_update.is_success():
-                # Restore the primary resource to Deleted when cleanup succeeds
-                main_step = next(
-                    (op_step for op_step in operation.steps
-                     if op_step.templateStepId == "main"
-                     and op_step.resourceId == operation.resourceId),
-                    None
-                )
-                if main_step:
-                    primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                    if primary_resource.deploymentStatus != Status.Deleted:
-                        primary_resource.deploymentStatus = Status.Deleted
-                        await self.resource_repo.update_item(primary_resource)
-
-            # update the overall headline operation status
-            await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-
-            # save the operation with final status LAST, after all resource updates are committed
-            await self.operations_repo.update_item(operation)
+                        main_step = next(
+                            (op_step for op_step in operation.steps
+                             if op_step.templateStepId == "main"
+                             and op_step.resourceId == operation.resourceId),
+                            None
+                        )
+                        if main_step:
+                            try:
+                                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                                if primary_resource.deploymentStatus != Status.Deleted:
+                                    primary_resource.deploymentStatus = Status.Deleted
+                                    await self.resource_repo.update_item(primary_resource)
+                            except Exception as prim_err:
+                                logger.error(f"Failed to restore primary resource to Deleted on final delivery: {prim_err}", exc_info=True)
+                        return True
+                    else:
+                        return False
+                else:
+                    raise
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -368,10 +421,6 @@ class DeploymentStatusUpdater():
                         session_id=resource_to_send.id,
                         action=next_step.resourceAction,
                     )
-                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
-                        next_step.status = Status.Updating
-                        next_step.updatedWhen = get_timestamp()
-                        await self.operations_repo.update_item(operation)
                 except AddressSpaceConflictError as e:
                     logger.error(f"[ADDRESS_SPACE_CONFLICT] {e}")
                     next_step.message = f"Terminal address space conflict: {e}"
@@ -418,6 +467,51 @@ class DeploymentStatusUpdater():
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
+                    return True
+
+                # Post-send persistence: send succeeded, now update operation status for cleanup step
+                if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                    for attempt in range(MAX_CLEANUP_RETRIES):
+                        try:
+                            next_step.status = Status.Updating
+                            next_step.updatedWhen = get_timestamp()
+                            await self.operations_repo.update_item(operation)
+                            break
+                        except CosmosAccessConditionFailedError:
+                            if attempt == MAX_CLEANUP_RETRIES - 1:
+                                logger.warning(
+                                    f"ETag conflict persisting {Status.Updating} status for cleanup step {next_step.id} "
+                                    f"in operation {operation.id} after successful dispatch."
+                                )
+                            else:
+                                logger.warning(
+                                    f"ETag conflict persisting {Status.Updating} status for cleanup step {next_step.id}. "
+                                    f"Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})..."
+                                )
+                                try:
+                                    fresh_op = await self.operations_repo.get_operation_by_id(operation.id)
+                                    for s in fresh_op.steps:
+                                        if s.id == next_step.id:
+                                            s.status = Status.Updating
+                                            s.updatedWhen = get_timestamp()
+                                            break
+                                    await self.operations_repo.update_item(fresh_op)
+                                    operation = fresh_op
+                                    break
+                                except Exception:
+                                    pass
+                        except Exception as post_send_err:
+                            if attempt == MAX_CLEANUP_RETRIES - 1:
+                                logger.error(
+                                    f"Failed to persist {Status.Updating} status for address space cleanup step {next_step.id} "
+                                    f"in operation {operation.id} after successful dispatch: {post_send_err}",
+                                    exc_info=True
+                                )
+                            else:
+                                logger.warning(
+                                    f"Transient error persisting {Status.Updating} status for cleanup step {next_step.id}. "
+                                    f"Retrying (attempt {attempt + 1}/{MAX_CLEANUP_RETRIES})..."
+                                )
 
             result = True
 
@@ -514,6 +608,7 @@ class DeploymentStatusUpdater():
         Frees the address space owned by the uninstalled WorkspaceService after
         the corresponding workspace upgrade has succeeded.
         """
+        address_to_free = parent_workspace_id = resource_id = "<unknown>"
         try:
             cleanup_details = await self._get_address_cleanup_details(operation)
             if cleanup_details is None:
