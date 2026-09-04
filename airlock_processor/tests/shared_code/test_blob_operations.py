@@ -3,7 +3,7 @@ import json
 import pytest
 from mock import MagicMock, patch
 
-from shared_code.blob_operations import get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix, is_submission_sealed
+from shared_code.blob_operations import delete_failed_submission_copy, get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix, is_submission_sealed
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 
 
@@ -105,6 +105,31 @@ class TestBlobOperations():
         container_client.get_blob_client.return_value.get_blob_properties.return_value = properties
 
         assert is_submission_sealed("account", "request") is True
+
+    @pytest.mark.parametrize("copy_status", ["aborted", "failed"])
+    @patch("shared_code.blob_operations.BlobServiceClient")
+    def test_delete_failed_submission_copy_removes_retriable_destination(self, mock_blob_service_client, copy_status):
+        container_client = mock_blob_service_client().get_container_client.return_value
+        container_client.list_blobs.return_value = [get_test_blob()("blob")]
+        blob_client = container_client.get_blob_client.return_value
+        properties = MagicMock()
+        properties.copy.status = copy_status
+        blob_client.get_blob_properties.return_value = properties
+
+        assert delete_failed_submission_copy("account", "request") is True
+        blob_client.delete_blob.assert_called_once_with()
+
+    @patch("shared_code.blob_operations.BlobServiceClient")
+    def test_delete_failed_submission_copy_preserves_ambiguous_destination(self, mock_blob_service_client):
+        container_client = mock_blob_service_client().get_container_client.return_value
+        container_client.list_blobs.return_value = [get_test_blob()("blob")]
+        blob_client = container_client.get_blob_client.return_value
+        properties = MagicMock()
+        properties.copy.status = "success"
+        blob_client.get_blob_properties.return_value = properties
+
+        assert delete_failed_submission_copy("account", "request") is False
+        blob_client.delete_blob.assert_not_called()
 
     @patch("shared_code.blob_operations.time.sleep")
     @patch("shared_code.blob_operations.BlobServiceClient")

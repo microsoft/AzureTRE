@@ -359,6 +359,26 @@ class TestV2MetadataMode():
         mock_delete.assert_called_once_with("stalairlocktre-id", "123-draft")
         assert step_result.set.call_count == 1
 
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_failed_submission_copy", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.is_submission_sealed", return_value=False)
+    @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
+    @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
+    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
+    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch("shared_code.blob_operations_metadata.BlobServiceClient")
+    @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
+    def test_v2_redelivery_retries_after_deleting_failed_copy(
+            self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete,
+            mock_is_sealed, mock_delete_failed_copy):
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
+        message = _mock_service_bus_message(body=message_body)
+
+        main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
+
+        mock_delete_failed_copy.assert_called_once_with("stalairlocktre-id", "123")
+        mock_copy.assert_called_once()
+        mock_delete.assert_called_once_with("stalairlocktre-id", "123-draft")
+
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=False)

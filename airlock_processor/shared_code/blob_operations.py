@@ -79,6 +79,27 @@ def is_submission_sealed(account_name: str, container_name: str) -> bool:
     return properties.metadata.get(SUBMISSION_SEALED_METADATA_KEY) == "true" and copy_status == "success"
 
 
+def delete_failed_submission_copy(account_name: str, container_name: str) -> bool:
+    """Delete the single destination blob left by an aborted or failed copy."""
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
+    container_client = blob_service_client.get_container_client(container_name)
+    blobs = list(container_client.list_blobs())
+    if len(blobs) != 1:
+        return False
+
+    blob_client = container_client.get_blob_client(blobs[0].name)
+    properties = blob_client.get_blob_properties()
+    copy_status = getattr(getattr(properties, "copy", None), "status", None)
+    if copy_status not in ("aborted", "failed"):
+        return False
+
+    blob_client.delete_blob()
+    logging.info(
+        "Deleted incomplete submission blob '%s' after copy status '%s' so delivery can retry",
+        blobs[0].name, copy_status)
+    return True
+
+
 def copy_data(source_account_name: str, destination_account_name: str, request_id: str,
               source_container: str = None, destination_container: str = None,
               additional_metadata: dict = None):

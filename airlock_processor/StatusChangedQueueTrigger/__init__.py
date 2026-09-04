@@ -117,7 +117,9 @@ def handle_status_changed(request_properties: RequestProperties, stepResultEvent
                             # Never overwrite the scanned sealed blob with data from a still-writable draft.
                             logging.info(f'Request {req_id}: sealed copy already complete, deleting the remaining draft')
                         else:
-                            if sealed_container_exists and blob_operations.get_request_files(dest_account, req_id):
+                            failed_copy_deleted = sealed_container_exists and blob_operations.delete_failed_submission_copy(
+                                dest_account, req_id)
+                            if sealed_container_exists and not failed_copy_deleted and blob_operations.get_request_files(dest_account, req_id):
                                 raise RuntimeError(
                                     f'Request {req_id}: refusing to overwrite an incomplete or unmarked sealed submission')
                             logging.info(f'Request {req_id}: Sealing submission - copying {draft_container} to {req_id}')
