@@ -153,26 +153,40 @@ class DeploymentStatusUpdater():
             if step_to_update is None:
                 raise Exception(f"Error finding step {message.stepId} in operation {message.operationId}")
 
+            # If address space cleanup for this operation is already in a terminal state (completed or failed),
+            # do not reopen the operation or re-enqueue cleanup on redelivered main-step messages.
+            if (
+                step_to_update.templateStepId == "main"
+                and (step_to_update.is_success() or message.status in [Status.Deployed, Status.Deleted, Status.Updated, Status.ActionSucceeded])
+                and operation.action == RequestAction.UnInstall
+                and self._is_cleanup_terminal(operation)
+            ):
+                logger.info(
+                    f"Address space cleanup already in terminal state for operation {operation.id}. "
+                    f"Skipping redelivery of step {message.stepId} to prevent reopening operation."
+                )
+                return True
+
+            # If the uninstall cleanup is already terminal, ignore delayed or duplicate cleanup-step messages
+            # (such as an intermediate Updating or delayed UpdatingFailed) to prevent writing stale status
+            # to the workspace resource or reopening the operation.
+            if (
+                step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
+                and operation.action == RequestAction.UnInstall
+                and self._is_cleanup_terminal(operation)
+            ):
+                logger.info(
+                    f"Cleanup step message {message.stepId} with status {message.status} received for operation {operation.id}, "
+                    f"but uninstall cleanup is already terminal. Ignoring to prevent stale writes."
+                )
+                return True
+
             # update the step status
             step_to_update.status = message.status
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
 
             resource_id = uuid.UUID(step_to_update.resourceId)
-
-            # If address space cleanup for this operation has already completed,
-            # do not reopen the operation or re-enqueue cleanup on redelivered main-step messages.
-            if (
-                step_to_update.templateStepId == "main"
-                and step_to_update.is_success()
-                and operation.action == RequestAction.UnInstall
-                and self._is_cleanup_completed(operation)
-            ):
-                logger.info(
-                    f"Address space cleanup already completed for operation {operation.id}. "
-                    f"Skipping redelivery of step {message.stepId} to prevent reopening operation."
-                )
-                return True
 
             # If this is the main step of an uninstall succeeding for a workspace service with an address space,
             # ensure the trailing workspace upgrade fallback step is appended BEFORE calculating
@@ -210,8 +224,6 @@ class DeploymentStatusUpdater():
                     logger.error(f"[ADDRESS_SPACE_CONFLICT] {e}")
                     step_to_update.status = Status.UpdatingFailed
                     step_to_update.message = f"Terminal address space conflict: {e}"
-                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                    await self.operations_repo.update_item(operation)
                     resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
                     resource_to_update.deploymentStatus = step_to_update.status
                     await self.resource_repo.update_item(resource_to_update)
@@ -225,6 +237,8 @@ class DeploymentStatusUpdater():
                         primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
                         primary_resource.deploymentStatus = Status.DeletingFailed
                         await self.resource_repo.update_item(primary_resource)
+                    await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                    await self.operations_repo.update_item(operation)
                     return True
 
                 if not freed:
@@ -233,8 +247,6 @@ class DeploymentStatusUpdater():
                         logger.error(f"[ADDRESS_SPACE_CLEANUP_MAX_DELIVERIES] {cleanup_failure_message}")
                         step_to_update.status = Status.UpdatingFailed
                         step_to_update.message = cleanup_failure_message
-                        await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-                        await self.operations_repo.update_item(operation)
                         resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
                         resource_to_update.deploymentStatus = step_to_update.status
                         await self.resource_repo.update_item(resource_to_update)
@@ -248,25 +260,21 @@ class DeploymentStatusUpdater():
                             primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
                             primary_resource.deploymentStatus = Status.DeletingFailed
                             await self.resource_repo.update_item(primary_resource)
+                        await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                        await self.operations_repo.update_item(operation)
                         return True
                     else:
                         cleanup_failure_message = "Address space cleanup failed after maximum retries; the message will be retried."
                         step_to_update.status = Status.Updating
                         step_to_update.message = cleanup_failure_message
-                        operation.status = Status.PipelineRunning
-                        await self.operations_repo.update_item(operation)
                         resource_to_update = await self.resource_repo.get_resource_by_id(resource_id)
                         resource_to_update.deploymentStatus = step_to_update.status
                         await self.resource_repo.update_item(resource_to_update)
+                        operation.status = Status.PipelineRunning
+                        await self.operations_repo.update_item(operation)
                         return False
                 else:
                     step_to_update.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
-
-            # update the overall headline operation status
-            await self.update_overall_operation_status(operation, step_to_update, is_last_step)
-
-            # save the operation
-            await self.operations_repo.update_item(operation)
 
             # copy the step status to the resource item, for convenience
             resource = await self.resource_repo.get_resource_by_id(resource_id)
@@ -275,6 +283,8 @@ class DeploymentStatusUpdater():
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
+                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                await self.operations_repo.update_item(operation)
                 return True
 
             # update the resource doc to persist any outputs
@@ -296,6 +306,12 @@ class DeploymentStatusUpdater():
                         primary_resource.deploymentStatus = Status.Deleted
                         await self.resource_repo.update_item(primary_resource)
 
+            # update the overall headline operation status
+            await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+
+            # save the operation with final status LAST, after all resource updates are committed
+            await self.operations_repo.update_item(operation)
+
             # more steps in the op to do?
             if is_last_step is False:
                 assert current_step_index < (len(operation.steps) - 1)
@@ -306,9 +322,10 @@ class DeploymentStatusUpdater():
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
                     if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
                         if (
-                            self._is_cleanup_completed(operation)
+                            self._is_cleanup_terminal(operation)
                             or next_step.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS
-                            or next_step.status == Status.Updating
+                            or next_step.is_failure()
+                            or next_step.status in (Status.Updating, Status.UpdatingFailed)
                         ):
                             logger.info(
                                 f"Address space cleanup step {next_step.id} in operation {operation.id} "
@@ -438,6 +455,19 @@ class DeploymentStatusUpdater():
                 return True
         return False
 
+    def _is_cleanup_failed(self, operation: Operation) -> bool:
+        for step in operation.steps:
+            if step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                if step.is_failure() or step.status == Status.UpdatingFailed:
+                    return True
+        if operation.action == RequestAction.UnInstall and operation.status == Status.DeletingFailed:
+            if any(step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID for step in operation.steps):
+                return True
+        return False
+
+    def _is_cleanup_terminal(self, operation: Operation) -> bool:
+        return self._is_cleanup_completed(operation) or self._is_cleanup_failed(operation)
+
     def _create_workspace_upgrade_step(self, resource: dict) -> OperationStep:
         return OperationStep(
             id=str(uuid.uuid4()),
@@ -557,6 +587,22 @@ class DeploymentStatusUpdater():
         if self._is_cleanup_completed(operation) and operation.action == RequestAction.UnInstall:
             operation.status = Status.Deleted
             operation.message = "Multi step pipeline completed successfully"
+            return
+
+        # If address space cleanup has failed terminally for an uninstall, do not reopen to PipelineRunning
+        if self._is_cleanup_failed(operation) and operation.action == RequestAction.UnInstall:
+            operation.status = Status.DeletingFailed
+            operation.message = f"Multi step pipeline failed on step {strings.ADDRESS_SPACE_CLEANUP_STEP_ID}"
+            main_step = next(
+                (op_step for op_step in operation.steps
+                 if op_step.templateStepId == "main" and op_step.resourceId == operation.resourceId),
+                None
+            )
+            if main_step:
+                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                if primary_resource.deploymentStatus != operation.status:
+                    primary_resource.deploymentStatus = operation.status
+                    await self.resource_repo.update_item(primary_resource)
             return
 
         operation.status = Status.PipelineRunning

@@ -1937,3 +1937,450 @@ async def test_redelivered_main_status_skips_enqueue_when_cleanup_in_progress(se
 
     assert result is True
     send_deployment_message_mock.assert_not_called()
+
+
+async def test_cleanup_redelivery_ignored_when_cleanup_already_terminal_success():
+    """
+    Addresses review comment 1:
+    Cleanup-status redeliveries are not idempotent after success. If a delayed duplicate
+    Updating or UpdatingFailed message arrives after the operation is Deleted, ignore it
+    to avoid writing stale status to the workspace resource.
+    """
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.Updated,
+        message=strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.Deleted,
+        steps=[step1, step2]
+    )
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+
+    # Delayed / duplicate Updating message arrives for the cleanup step
+    delayed_cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updating,
+        message="in progress..."
+    )
+
+    result = await status_updater.update_status_in_database(delayed_cleanup_message)
+
+    assert result is True
+    # Verify no stale updates written to workspace resource or operation
+    status_updater.resource_repo.update_item.assert_not_called()
+    status_updater.resource_repo.update_item_dict.assert_not_called()
+    status_updater.operations_repo.update_item.assert_not_called()
+    assert operation.status == Status.Deleted
+    assert step2.status == Status.Updated
+    assert step2.message == strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+
+
+@patch('service_bus.deployment_status_updater.send_deployment_message')
+async def test_redelivered_main_status_skips_when_cleanup_failed_terminally(send_deployment_message_mock):
+    """
+    Addresses review comment 3:
+    Redelivered main-step message reopening terminal cleanup failure: _is_cleanup_completed was false
+    for UpdatingFailed/DeletingFailed. Redelivery of the main-step message must not reset operation.status
+    from DeletingFailed back to PipelineRunning or re-enqueue cleanup.
+    """
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.UpdatingFailed,
+        message="Cleanup failed terminally"
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.DeletingFailed,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.DeletingFailed
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id.return_value = workspace_service_mock
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": workspace_service_id,
+        "resourceType": ResourceType.WorkspaceService,
+        "workspaceId": parent_workspace_id,
+        "properties": {"address_space": address_space}
+    }
+    status_updater.workspace_repo = AsyncMock()
+    status_updater.workspace_repo.get_workspace_by_id.return_value = create_sample_workspace_object(parent_workspace_id)
+    status_updater.workspace_services_repo = AsyncMock()
+    status_updater.workspace_services_repo.get_active_workspace_services_for_workspace.return_value = []
+
+    redelivered_main_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-1",
+        id=workspace_service_id,
+        status=Status.Deleted,
+        message="uninstall succeeded"
+    )
+
+    result = await status_updater.update_status_in_database(redelivered_main_message)
+
+    assert result is True
+    # Operation and resource must remain DeletingFailed, not reopened to PipelineRunning
+    assert operation.status == Status.DeletingFailed
+    assert step2.status == Status.UpdatingFailed
+    assert workspace_service_mock.deploymentStatus == Status.DeletingFailed
+    status_updater.operations_repo.update_item.assert_not_called()
+    send_deployment_message_mock.assert_not_called()
+
+
+async def test_cleanup_success_persists_workspace_and_primary_resource_before_operation_deleted():
+    """
+    Addresses review comment 2:
+    Keep the operation active (PipelineRunning) until all workspace and primary resource writes
+    are complete, persisting operation with final status (Deleted) last.
+    """
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    address_space = "10.1.0.0/22"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updating
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    call_order = []
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+
+    async def tracking_op_update(op):
+        call_order.append(("operations_repo.update_item", op.status))
+
+    async def tracking_resource_update(res):
+        call_order.append(("resource_repo.update_item", getattr(res, "id", None), res.deploymentStatus))
+
+    async def tracking_resource_dict_update(res_dict):
+        call_order.append(("resource_repo.update_item_dict", res_dict.get("id")))
+
+    status_updater.operations_repo.update_item = AsyncMock(side_effect=tracking_op_update)
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.get_resource_dict_by_id.return_value = {
+        "id": parent_workspace_id,
+        "resourceType": ResourceType.Workspace,
+        "properties": {"address_spaces": [address_space]}
+    }
+    status_updater.resource_repo.update_item = AsyncMock(side_effect=tracking_resource_update)
+    status_updater.resource_repo.update_item_dict = AsyncMock(side_effect=tracking_resource_dict_update)
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded"
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=True)):
+        result = await status_updater.update_status_in_database(cleanup_message)
+
+    assert result is True
+    assert operation.status == Status.Deleted
+
+    # Check that operations_repo.update_item with Status.Deleted was the LAST call
+    assert len(call_order) >= 3
+    op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
+    assert len(op_update_calls) == 1
+    op_update_index = op_update_calls[0]
+    assert call_order[op_update_index] == ("operations_repo.update_item", Status.Deleted)
+
+    # All resource_repo calls must have occurred BEFORE operations_repo.update_item
+    resource_calls = [i for i, call in enumerate(call_order) if call[0].startswith("resource_repo")]
+    for r_idx in resource_calls:
+        assert r_idx < op_update_index
+
+
+async def test_cleanup_conflict_persists_workspace_and_primary_resource_before_operation_failed():
+    """
+    Addresses review comment 2 (failure path):
+    In AddressSpaceConflictError, update workspace and primary resource before saving operation as DeletingFailed.
+    """
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updated
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    call_order = []
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+
+    async def tracking_op_update(op):
+        call_order.append(("operations_repo.update_item", op.status))
+
+    async def tracking_resource_update(res):
+        call_order.append(("resource_repo.update_item", getattr(res, "id", None), res.deploymentStatus))
+
+    status_updater.operations_repo.update_item = AsyncMock(side_effect=tracking_op_update)
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.update_item = AsyncMock(side_effect=tracking_resource_update)
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded"
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", side_effect=AddressSpaceConflictError("Conflict")):
+        result = await status_updater.update_status_in_database(cleanup_message)
+
+    assert result is True
+    assert operation.status == Status.DeletingFailed
+
+    # Verify operations_repo.update_item with Status.DeletingFailed was called AFTER resource updates
+    op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
+    assert len(op_update_calls) == 1
+    op_update_index = op_update_calls[0]
+    assert call_order[op_update_index] == ("operations_repo.update_item", Status.DeletingFailed)
+
+    resource_calls = [i for i, call in enumerate(call_order) if call[0] == "resource_repo.update_item"]
+    assert len(resource_calls) == 2  # workspace and primary resource
+    for r_idx in resource_calls:
+        assert r_idx < op_update_index
+
+
+async def test_cleanup_final_delivery_persists_workspace_and_primary_resource_before_operation_failed():
+    """
+    Addresses review comment 2 (final delivery failure path):
+    On final delivery cleanup failure, update workspace and primary resource before saving operation as DeletingFailed.
+    """
+    workspace_service_id = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+    parent_workspace_id = "1111c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+
+    step1 = OperationStep(
+        id="step-1",
+        stepTitle="Uninstall workspace service",
+        resourceId=workspace_service_id,
+        resourceType=ResourceType.WorkspaceService,
+        resourceAction=RequestAction.UnInstall,
+        templateStepId="main",
+        status=Status.Deleted
+    )
+    step2 = OperationStep(
+        id="step-2",
+        stepTitle="Upgrade workspace",
+        resourceId=parent_workspace_id,
+        resourceType=ResourceType.Workspace,
+        resourceAction=RequestAction.Upgrade,
+        templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+        sourceTemplateResourceId=parent_workspace_id,
+        status=Status.AwaitingUpdate
+    )
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=workspace_service_id,
+        resourcePath=f'/workspaces/{parent_workspace_id}/workspace-services/{workspace_service_id}',
+        resourceVersion=0,
+        action=RequestAction.UnInstall,
+        status=Status.PipelineRunning,
+        steps=[step1, step2]
+    )
+
+    workspace_service_mock = MagicMock()
+    workspace_service_mock.id = workspace_service_id
+    workspace_service_mock.deploymentStatus = Status.Deleted
+
+    parent_workspace_mock = MagicMock()
+    parent_workspace_mock.id = parent_workspace_id
+    parent_workspace_mock.deploymentStatus = Status.Updating
+
+    async def mock_get_resource_by_id(resource_uuid):
+        if str(resource_uuid) == workspace_service_id:
+            return workspace_service_mock
+        elif str(resource_uuid) == parent_workspace_id:
+            return parent_workspace_mock
+        raise EntityDoesNotExist
+
+    call_order = []
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.operations_repo = AsyncMock()
+    status_updater.operations_repo.get_operation_by_id.return_value = operation
+
+    async def tracking_op_update(op):
+        call_order.append(("operations_repo.update_item", op.status))
+
+    async def tracking_resource_update(res):
+        call_order.append(("resource_repo.update_item", getattr(res, "id", None), res.deploymentStatus))
+
+    status_updater.operations_repo.update_item = AsyncMock(side_effect=tracking_op_update)
+    status_updater.resource_repo = AsyncMock()
+    status_updater.resource_repo.get_resource_by_id = AsyncMock(side_effect=mock_get_resource_by_id)
+    status_updater.resource_repo.update_item = AsyncMock(side_effect=tracking_resource_update)
+    status_updater.workspace_repo = AsyncMock()
+
+    cleanup_message = DeploymentStatusUpdateMessage(
+        operationId=OPERATION_ID,
+        stepId="step-2",
+        id=parent_workspace_id,
+        status=Status.Updated,
+        message="workspace upgrade succeeded"
+    )
+
+    with patch.object(status_updater, "_free_workspace_address_space", new=AsyncMock(return_value=False)):
+        result = await status_updater.update_status_in_database(cleanup_message, is_final_delivery=True)
+
+    assert result is True
+    assert operation.status == Status.DeletingFailed
+
+    # Verify operations_repo.update_item with Status.DeletingFailed was called AFTER resource updates
+    op_update_calls = [i for i, call in enumerate(call_order) if call[0] == "operations_repo.update_item"]
+    assert len(op_update_calls) == 1
+    op_update_index = op_update_calls[0]
+    assert call_order[op_update_index] == ("operations_repo.update_item", Status.DeletingFailed)
+
+    resource_calls = [i for i, call in enumerate(call_order) if call[0] == "resource_repo.update_item"]
+    assert len(resource_calls) == 2  # workspace and primary resource
+    for r_idx in resource_calls:
+        assert r_idx < op_update_index
