@@ -35,22 +35,16 @@ class AirlockStatusUpdater():
             while True:
                 try:
                     async with credentials.get_credential_async_context() as credential:
-                        # We keep a single ServiceBusClient alive across the inner loop to avoid excessive connection
-                        # and reconnection churn. Any fatal connection-related errors or other exceptions
-                        # will propagate out of the inner loop, closing this context manager and recreating the client.
                         async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
                             client_created_time = time.time()
                             while True:
                                 try:
-                                    # Recreate the client periodically (every hour) to ensure connection freshness
-                                    # and avoid holding a potentially stale client open indefinitely.
                                     if time.time() - client_created_time > 3600:
                                         logger.info("ServiceBusClient has been active for 1 hour. Recreating for freshness...")
                                         break
 
                                     current_time = time.time()
                                     polling_count += 1
-                                    # Log a heartbeat message every 60 seconds to show the service is still working
                                     if current_time - last_heartbeat_time >= 60:
                                         logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue {polling_count} times in the last minute")
                                         last_heartbeat_time = current_time
@@ -85,7 +79,6 @@ class AirlockStatusUpdater():
                     raise
 
                 except Exception as e:
-                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                     logger.exception(f"Unknown exception. Will retry - {e}")
                     await asyncio.sleep(10)
 

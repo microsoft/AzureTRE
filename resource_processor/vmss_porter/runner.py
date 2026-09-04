@@ -108,7 +108,6 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
             raise
 
         except Exception:
-            # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
             logger.exception("Unknown exception. Will retry...")
             await asyncio.sleep(10)
 
