@@ -379,3 +379,39 @@ async def test_send_resource_request_message_retains_lease_when_concurrently_mod
 
     operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
     operations_repo_mock.release_workspace_lease.assert_not_called()
+
+
+@patch("service_bus.resource_request_sender.send_deployment_message", side_effect=Exception("Service Bus unavailable"))
+@patch("service_bus.resource_request_sender.update_resource_for_step")
+async def test_send_resource_request_message_does_not_release_lease_in_fallback_when_operation_id_provided(
+    update_resource_mock,
+    send_deployment_mock,
+):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operation.etag = "creation-etag"
+
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    operations_repo_mock.update_item = AsyncMock(side_effect=Exception("Cosmos error"))
+    operations_repo_mock.delete_item = AsyncMock()
+    operations_repo_mock.release_workspace_lease = AsyncMock()
+
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+    update_resource_mock.return_value = resource_to_send_mock
+
+    with pytest.raises(Exception, match="Service Bus unavailable"):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=AsyncMock(),
+            user=create_test_user(),
+            resource_template_repo=AsyncMock(),
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+            operation_id="custom-op-id",
+        )
+
+    operations_repo_mock.delete_item.assert_awaited_once_with(operation.id, etag="creation-etag", match_condition=MatchConditions.IfNotModified)
+    operations_repo_mock.release_workspace_lease.assert_not_called()

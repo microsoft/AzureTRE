@@ -314,19 +314,26 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             operation_id=operation_id)
     except Exception:
         if address_space_added and 'workspace_service' in locals() and workspace_service.properties.get("address_space"):
-            try:
-                latest_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
-                current_spaces = latest_workspace.properties.get("address_spaces", [])
-                allocated_space = workspace_service.properties["address_space"]
-                if allocated_space in current_spaces:
-                    updated_spaces = [s for s in current_spaces if s != allocated_space]
-                    rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
-                    await workspace_repo.patch_workspace(
-                        latest_workspace, rollback_patch, latest_workspace.etag,
-                        resource_template_repo, resource_history_repo, user, False
-                    )
-            except Exception:
-                logger.exception("Failed to rollback allocated address space on workspace")
+            max_rollback_attempts = 3
+            for attempt in range(max_rollback_attempts):
+                try:
+                    latest_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+                    current_spaces = latest_workspace.properties.get("address_spaces", [])
+                    allocated_space = workspace_service.properties["address_space"]
+                    if allocated_space in current_spaces:
+                        updated_spaces = [s for s in current_spaces if s != allocated_space]
+                        rollback_patch = ResourcePatch(properties={"address_spaces": updated_spaces})
+                        await workspace_repo.patch_workspace(
+                            latest_workspace, rollback_patch, latest_workspace.etag,
+                            resource_template_repo, resource_history_repo, user, False
+                        )
+                    break
+                except CosmosAccessConditionFailedError:
+                    if attempt == max_rollback_attempts - 1:
+                        logger.exception("Failed to rollback allocated address space due to repeated ETag conflicts")
+                except Exception:
+                    logger.exception("Failed to rollback allocated address space on workspace")
+                    break
         if hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace.id, operation_id)
         raise

@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import HTTPException, status
 import pytest
 import pytest_asyncio
@@ -826,3 +827,56 @@ async def test_wait_for_successful_operation_retries_on_entity_does_not_exist():
     with pytest.raises(HTTPException) as exc_info:
         await wait_for_successful_operation(repo, "op-123", timeout=0.1, poll_interval=0.02)
     assert exc_info.value.status_code == 504
+
+
+@pytest.mark.asyncio
+async def test_run_background_cleanup_task_tracks_and_cleans_up():
+    from services.airlock import run_background_cleanup_task, _background_cleanup_tasks
+
+    async def sample_coro():
+        await asyncio.sleep(0.01)
+        return "done"
+
+    task = run_background_cleanup_task(sample_coro())
+    assert task in _background_cleanup_tasks
+    await task
+    assert task not in _background_cleanup_tasks
+
+
+@pytest.mark.asyncio
+@patch("services.airlock.delete_review_user_resource")
+async def test_delete_all_review_user_resources_retries_on_failure(mock_delete_review):
+    from services.airlock import delete_all_review_user_resources
+    from models.domain.operation import Status
+
+    airlock_request = sample_airlock_request()
+
+    user_resource_repo = AsyncMock()
+    # First attempt fails with transient exception, second attempt succeeds
+    user_resource_repo.get_user_resource_by_id.side_effect = [
+        Exception("Cosmos transient error"),
+        AsyncMock(),
+    ]
+
+    mock_op = MagicMock()
+    mock_op.id = "op-1"
+    mock_delete_review.return_value = mock_op
+
+    operations_repo = AsyncMock()
+    op_record = MagicMock()
+    op_record.status = Status.Deleted
+    operations_repo.get_operation_by_id.return_value = op_record
+
+    with patch("asyncio.sleep", new_callable=AsyncMock):
+        ops = await delete_all_review_user_resources(
+            airlock_request=airlock_request,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=AsyncMock(),
+            resource_template_repo=AsyncMock(),
+            operations_repo=operations_repo,
+            resource_history_repo=AsyncMock(),
+            user=create_test_user(),
+        )
+
+    assert len(ops) == 1
+    assert user_resource_repo.get_user_resource_by_id.call_count == 2

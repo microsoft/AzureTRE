@@ -108,7 +108,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
                 except Exception:
                     logger.exception(f"Failed to delete orphaned operation {operation.id}")
 
-                if lease_released:
+                if lease_released and should_release_lease:
                     target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
                     if not target_workspace_id:
                         if getattr(resource, "resourceType", None) == ResourceType.Workspace:
