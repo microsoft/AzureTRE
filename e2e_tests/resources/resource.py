@@ -8,7 +8,7 @@ from e2e_tests.resources.deployment import delete_done, install_done, patch_done
 from resources import strings
 
 LOGGER = logging.getLogger(__name__)
-TIMEOUT = Timeout(10, read=30)
+TIMEOUT = Timeout(10, read=60)
 
 
 async def get_resource(endpoint, access_token, verify):

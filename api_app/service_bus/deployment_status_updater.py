@@ -1,9 +1,9 @@
+import asyncio
 import json
 import uuid
 import time
-from typing import Dict, List, Any
 
-from pydantic import ValidationError, parse_obj_as
+from pydantic import ValidationError, TypeAdapter
 
 from api.routes.resource_helpers import get_timestamp
 from models.domain.resource import Output
@@ -34,6 +34,9 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
 
+    def run(self, *args, **kwargs):
+        asyncio.run(self.receive_messages())
+
     async def receive_messages(self):
         with tracer.start_as_current_span("deployment_status_receive_messages"):
             last_heartbeat_time = 0
@@ -41,55 +44,69 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
             while True:
                 try:
-                    current_time = time.time()
-                    polling_count += 1
-
-                    # Log a heartbeat message every 60 seconds to show the service is still working
-                    if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"{config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue polled {polling_count} times in the last minute")
-                        last_heartbeat_time = current_time
-                        polling_count = 0
-
                     async with credentials.get_credential_async_context() as credential:
-                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+                        # We keep a single ServiceBusClient alive across the inner loop to avoid excessive connection
+                        # and reconnection churn, as get_queue_receiver with NEXT_AVAILABLE_SESSION is polled frequently.
+                        # Any fatal connection-related errors or other exceptions (other than OperationTimeoutError)
+                        # will propagate out of the inner loop, closing this context manager and recreating the client.
+                        async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
+                            client_created_time = time.time()
+                            while True:
+                                try:
+                                    # Recreate the client periodically (every hour) to ensure connection freshness
+                                    # and avoid holding a potentially stale client open indefinitely.
+                                    if time.time() - client_created_time > 3600:
+                                        logger.info("ServiceBusClient has been active for 1 hour. Recreating for freshness...")
+                                        break
 
-                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
-                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                            async with AutoLockRenewer() as renewer:
-                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                                async for msg in receiver:
-                                    complete_message = await self.process_message(msg)
-                                    if complete_message:
-                                        await receiver.complete_message(msg)
-                                    else:
-                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                        await receiver.abandon_message(msg)
-                            logger.info(f"Closing session: {receiver.session.session_id}")
+                                    current_time = time.time()
+                                    polling_count += 1
+                                    # Log a heartbeat message every 60 seconds to show the service is still working
+                                    if current_time - last_heartbeat_time >= 60:
+                                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
+                                        last_heartbeat_time = current_time
+                                        polling_count = 0
 
-                    # Update heartbeat for supervisor monitoring
-                    self.update_heartbeat()
+                                    logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                                    # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+                                    async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                                        logger.info(f"Got a session containing messages: {receiver.session.session_id}")
+                                        async with AutoLockRenewer() as renewer:
+                                            renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                            async for msg in receiver:
+                                                complete_message = await self.process_message(msg)
+                                                if complete_message:
+                                                    await receiver.complete_message(msg)
+                                                else:
+                                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                                    await receiver.abandon_message(msg)
+                                        logger.info(f"Closing session: {receiver.session.session_id}")
+                                    self.update_heartbeat()
 
-                except OperationTimeoutError:
-                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                                except OperationTimeoutError:
+                                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+                                    logger.debug("No sessions for this process. Will look again...")
 
                 except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
                     logger.warning(f"Service Bus connection error (will retry): {e}")
+                    await asyncio.sleep(10)
+
+                except asyncio.CancelledError:
+                    raise
 
                 except Exception as e:
                     # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                     logger.exception(f"Unexpected error in message processing: {type(e).__name__}: {e}")
+                    await asyncio.sleep(10)
 
-    async def process_message(self, msg) -> bool:
+    async def process_message(self, msg):
         complete_message = False
         message = ""
 
         with tracer.start_as_current_span("process_message") as current_span:
             try:
-                message = parse_obj_as(DeploymentStatusUpdateMessage, json.loads(str(msg)))
+                message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(json.loads(str(msg)))
 
                 current_span.set_attribute("step_id", message.stepId)
                 current_span.set_attribute("operation_id", message.operationId)
@@ -117,11 +134,6 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
         try:
             # update the op
             operation = await self.operations_repo.get_operation_by_id(str(message.operationId))
-
-            # Add null safety for operation steps
-            if not operation.steps:
-                raise ValueError(f"Operation {message.operationId} has no steps")
-
             step_to_update = None
             is_last_step = False
 
@@ -135,7 +147,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                         is_last_step = True
 
             if step_to_update is None:
-                raise ValueError(f"Step {message.stepId} not found in operation {message.operationId}")
+                raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
             # update the step status
             step_to_update.status = message.status
@@ -166,8 +178,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
             # more steps in the op to do?
             if is_last_step is False:
-                if current_step_index >= len(operation.steps) - 1:
-                    raise ValueError(f"Step index {current_step_index} is the last step in operation (has {len(operation.steps)} steps), but more steps were expected")
+                assert current_step_index < (len(operation.steps) - 1)
                 next_step = operation.steps[current_step_index + 1]
 
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
@@ -263,7 +274,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
         return status
 
-    def create_updated_resource_document(self, resource: Dict[str, Any], message: DeploymentStatusUpdateMessage) -> Dict[str, Any]:
+    def create_updated_resource_document(self, resource: dict, message: DeploymentStatusUpdateMessage):
         """
         Merge the outputs with the resource document to persist
         """
@@ -276,7 +287,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
 
         return resource
 
-    def convert_outputs_to_dict(self, outputs_list: List[Output]) -> Dict[str, Any]:
+    def convert_outputs_to_dict(self, outputs_list: [Output]):
         """
         Convert a list of Porter outputs to a dictionary
         """

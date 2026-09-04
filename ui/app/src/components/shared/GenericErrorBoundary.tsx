@@ -5,11 +5,7 @@ interface ErrorState {
   hasError: boolean;
 }
 
-export class GenericErrorBoundary extends React.Component<
-  any,
-  ErrorState,
-  any
-> {
+export class GenericErrorBoundary extends React.Component<any, ErrorState, any> {
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
@@ -31,8 +27,8 @@ export class GenericErrorBoundary extends React.Component<
         <MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
           <h3>Uh oh!</h3>
           <p>
-            This area encountered an error that we can't recover from. Please
-            check your configuration and refresh. <br />
+            This area encountered an error that we can't recover from. Please check your configuration and refresh.{" "}
+            <br />
             Further debugging details can be found in the browser console.
           </p>
         </MessageBar>

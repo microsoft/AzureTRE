@@ -45,6 +45,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      skipDeployment:
+        description: Skip deployment jobs and run only the requested E2E tests against an existing environment
+        type: boolean
+        default: false
+        required: false
     secrets:
       AAD_TENANT_ID:
         description: ""
@@ -120,6 +125,7 @@ concurrency: "deploy-${{ inputs.ciGitRef }}"
 jobs:
   deploy_management:
     name: Deploy Management
+    if: ${{ !inputs.skipDeployment }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -410,6 +416,7 @@ jobs:
           STATEFUL_RESOURCES_LOCKED: "${{ github.ref == 'refs/heads/main' && inputs.prRef == '' && true || false }}"
           KV_PURGE_PROTECTION_ENABLED: ${{ vars.KV_PURGE_PROTECTION_ENABLED || true }}
           CORE_APP_SERVICE_PLAN_SKU: ${{ vars.CORE_APP_SERVICE_PLAN_SKU }}
+          RESOURCE_PROCESSOR_VMSS_SKU: ${{ vars.RESOURCE_PROCESSOR_VMSS_SKU }}
           RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE: ${{ vars.RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE }}
           RP_BUNDLE_VALUES: ${{ vars.RP_BUNDLE_VALUES }}
           FIREWALL_SKU: ${{ vars.FIREWALL_SKU}}
@@ -831,6 +838,13 @@ jobs:
 
   e2e_tests_smoke:
     name: "Run E2E Tests (Smoke)"
+    # When skipDeployment is true, the deploy jobs in needs are intentionally skipped.
+    # always() lets this job still evaluate its guard and run against the existing PR environment.
+    if: >-
+      ${{ always() &&
+      (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs: [deploy_shared_services, register_bundles, deploy_ui]
@@ -875,7 +889,12 @@ jobs:
 
   e2e_tests_custom:
     name: "Run E2E Tests"
-    if: ${{ inputs.e2eTestsCustomSelector != '' }}
+    # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
+    if: >-
+      ${{ always() && inputs.e2eTestsCustomSelector != '' &&
+      (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs:
@@ -936,7 +955,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # For PR builds triggered from comment builds, the GITHUB_REF is set to main
       # so the checks aren't automatically associated with the PR
-      # If prHeadSha is specified then explicity mark the checks for that SHA
+      # If prHeadSha is specified then explicitly mark the checks for that SHA.
+      # This still runs after skipDeployment builds because the summary job needs the E2E jobs,
+      # not the skipped deploy jobs.
       - name: Report check status
         if: inputs.prHeadSha != ''
         uses: LouisBrunner/checks-action@dfcbcf801bff1ea7f1414824fc28f2cd697b35da # v3.0.0

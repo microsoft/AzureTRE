@@ -1,14 +1,17 @@
 import uuid
 from typing import List, Tuple
-from azure.mgmt.storage import StorageManagementClient
-from pydantic import parse_obj_as
+import asyncio
+from azure.mgmt.storage.aio import StorageManagementClient
+
+from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
 
 import resources.strings as strings
 from core import config, credentials
-from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed
+from azure.core.exceptions import HttpResponseError
+from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import Status
@@ -18,6 +21,7 @@ from models.domain.workspace import Workspace
 from models.schemas.resource import ResourcePatch
 from models.schemas.workspace import WorkspaceInCreate
 from services.cidr_service import generate_new_cidr, is_network_available
+from services.logging import logger
 
 
 class WorkspaceRepository(ResourceRepository):
@@ -54,12 +58,12 @@ class WorkspaceRepository(ResourceRepository):
     async def get_workspaces(self) -> List[Workspace]:
         query, parameters = WorkspaceRepository.workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[Workspace], workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_active_workspaces(self) -> List[Workspace]:
         query, parameters = WorkspaceRepository.active_workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[Workspace], workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
@@ -77,26 +81,42 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         if not workspaces:
             raise EntityDoesNotExist
-        return parse_obj_as(Workspace, workspaces[0])
+        return TypeAdapter(Workspace).validate_python(workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
-    async def is_workspace_storage_account_available(self, workspace_id: str) -> bool:
-        storage_client = StorageManagementClient(credentials.get_credential(), config.SUBSCRIPTION_ID)
-        # check for storage account with last 4 digits of workspace_id
-        availability_result = storage_client.storage_accounts.check_name_availability(
-            {
-                "name": f"stgws{workspace_id[-4:]}"
-            }
+    async def is_workspace_storage_account_available(self, credential, workspace_id: str) -> bool:
+        name = f"stgws{workspace_id[-4:]}"
+        storage_client = StorageManagementClient(
+            credential,
+            config.SUBSCRIPTION_ID,
+            base_url=config.RESOURCE_MANAGER_ENDPOINT,
+            credential_scopes=config.CREDENTIAL_SCOPES,
         )
-        return availability_result.name_available
+        try:
+            logger.info("Checking storage account name availability: %s", name)
+            result = await storage_client.storage_accounts.check_name_availability(
+                {"name": name, "type": "Microsoft.Storage/storageAccounts"}
+            )
+            return result.name_available
+        finally:
+            await storage_client.close()
 
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
 
         # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
-        while not await self.is_workspace_storage_account_available(full_workspace_id):
-            full_workspace_id = str(uuid.uuid4())
+        async with credentials.get_credential_async_context() as credential:
+            async def name_check():
+                nonlocal full_workspace_id
+                while not await self.is_workspace_storage_account_available(credential, full_workspace_id):
+                    full_workspace_id = str(uuid.uuid4())
+            try:
+                await asyncio.wait_for(name_check(), timeout=45.0)
+            except asyncio.TimeoutError:
+                raise StorageAccountNameGenerationTimeout("Unable to generate a unique storage account name within the timeout limit.")
+            except HttpResponseError as e:
+                raise StorageAccountNameCheckFailed("Storage name availability check failed.") from e
 
         template = await self.validate_input_against_template(workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles)
 

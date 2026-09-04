@@ -63,8 +63,6 @@ openapi_definitions: DefaultDict[str, Optional[Dict[str, Any]]] = defaultdict(la
 
 @core_swagger_router.get("/openapi.json", include_in_schema=False, name="core_openapi")
 async def core_openapi(request: Request):
-    global openapi_definitions
-
     if openapi_definitions["core"] is None:
         openapi_definitions["core"] = get_openapi(
             title=f"{config.PROJECT_NAME}",
@@ -122,8 +120,6 @@ def get_scope(workspace) -> str:
 
 @workspace_swagger_router.get("/workspaces/{workspace_id}/openapi.json", include_in_schema=False, name="openapi_definitions")
 async def get_openapi_json(workspace_id: str, request: Request, workspace_repo=Depends(get_repository(WorkspaceRepository))):
-    global openapi_definitions
-
     if openapi_definitions[workspace_id] is None:
 
         openapi_definitions[workspace_id] = get_openapi(

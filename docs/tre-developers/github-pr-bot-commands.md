@@ -12,7 +12,7 @@ These commands can only be run when commented by a user who is identified as a r
 
 This command will cause the pr-comment-bot to respond with a comment listing the available commands.
 
-### `/test [<sha>]`
+### `/test [<sha>] [skip_deployment]`
 
 This command runs the build, deploy, and smoke tests for a PR.
 
@@ -20,6 +20,10 @@ For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `
 
 For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test <sha>` where `<sha>` is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
+
+If the PR validation environment is already deployed, add `skip_deployment` to skip the build and deployment jobs and run the smoke tests against the existing environment. For PRs from forks, include both the SHA and `skip_deployment`, for example `/test <sha> skip_deployment`.
+
+The `skip_deployment` flag is only supported by `/test` and `/test-extended`.
 
 **IMPORTANT**
 
@@ -32,7 +36,7 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
-### `/test-extended [<sha>]` / `/test-extended-aad [<sha>]`/ `/test-shared-services [<sha>]`
+### `/test-extended [<sha>] [skip_deployment]` / `/test-extended-aad [<sha>]`/ `/test-shared-services [<sha>]`
 
 This command runs the build, deploy, and smoke & extended / shared services tests for a PR.
 
@@ -41,6 +45,26 @@ For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `
 If a change has been made which would affect any of the core shared services, make sure you run `/test-shared-services`.
 
 For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test-extended <sha>` where `<sha>` is the SHA for the commit that you have verified.
+You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
+
+If the PR validation environment is already deployed, add `skip_deployment` to `/test-extended` to skip the build and deployment jobs and run the smoke and extended tests against the existing environment. For PRs from forks, include both the SHA and `skip_deployment`, for example `/test-extended <sha> skip_deployment`.
+
+The `skip_deployment` flag is not supported by `/test-extended-aad` or `/test-shared-services`.
+
+**IMPORTANT**
+
+As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
+Before running tests on a PR, run the same checks on the PR code as for `/test`.
+
+### `/test-backups [<sha>]`
+
+This command runs the build, deploy, and backup tests for a PR.
+
+Use this command when a change has been made that could affect workspace backup functionality.
+
+For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test-backups` is sufficient.
+
+For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test-backups <sha>` where `<sha>` is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
 
 **IMPORTANT**
