@@ -43,7 +43,9 @@ SHUTDOWN_TIMEOUT = 10.0
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.background_tasks = BackgroundTaskManager()
+
+    background_tasks = BackgroundTaskManager()
+    app.state.background_tasks = background_tasks
 
     while not await bootstrap_database():
         await asyncio.sleep(5)
@@ -55,10 +57,12 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
+    shutdown_inspected_tasks: set[asyncio.Task[Any]] = set()
+
     def track(task: asyncio.Task[Any]) -> None:
         def _done_callback(task: asyncio.Task[Any]) -> None:
-            app.state.background_tasks.discard(task)
-            if app.state.background_tasks.is_shutting_down:
+            background_tasks.discard(task)
+            if task in shutdown_inspected_tasks:
                 return
 
             if task.cancelled():
@@ -75,7 +79,7 @@ async def lifespan(app: FastAPI):
                     exc_info=(type(exception), exception, exception.__traceback__)
                 )
 
-        app.state.background_tasks.add(task)
+        background_tasks.add(task)
         task.add_done_callback(_done_callback)
 
     track(asyncio.create_task(
@@ -90,8 +94,9 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        app.state.background_tasks.is_shutting_down = True
-        tasks = app.state.background_tasks.get_tasks()
+        background_tasks.is_shutting_down = True
+        tasks = background_tasks.get_tasks()
+        shutdown_inspected_tasks.update(tasks)
         logger.info(f"Cancelling {len(tasks)} background tasks")
 
         for task in tasks:
@@ -116,6 +121,7 @@ async def lifespan(app: FastAPI):
                     )
 
             if pending:
+                shutdown_inspected_tasks.difference_update(pending)
                 logger.error("Timeout waiting for background tasks to shutdown")
                 for task in pending:
                     logger.warning(f"Task {task.get_name()} did not terminate in time during shutdown")
