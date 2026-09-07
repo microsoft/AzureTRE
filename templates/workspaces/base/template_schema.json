@@ -20,7 +20,7 @@
       "type": "boolean",
       "title": "Enable Airlock",
       "description": "Allow safe import and export to the workspace",
-      "default": true,
+      "default": false,
       "updateable": true
     },
     "app_service_plan_sku": {
@@ -79,7 +79,7 @@
       "type": "boolean",
       "title": "Enable Backup",
       "description": "Enable backups for the workspace. Workspace services must support this feature.",
-      "default": true,
+      "default": false,
       "updateable": true
     },
     "enable_dns_policy": {
@@ -286,7 +286,7 @@
             "type": "boolean",
             "title": "Create AAD Groups for each workspace role (Required for user management)",
             "description": "Create AAD Groups for the workspace roles. If this is set to true, the workspace will create new AAD Groups.",
-            "default": false,
+            "default": true,
             "updateable": true
           },
           "aad_redirect_uris": {
