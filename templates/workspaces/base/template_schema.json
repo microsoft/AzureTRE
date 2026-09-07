@@ -20,7 +20,7 @@
       "type": "boolean",
       "title": "Enable Airlock",
       "description": "Allow safe import and export to the workspace",
-      "default": false,
+      "default": true,
       "updateable": true
     },
     "app_service_plan_sku": {
@@ -79,7 +79,7 @@
       "type": "boolean",
       "title": "Enable Backup",
       "description": "Enable backups for the workspace. Workspace services must support this feature.",
-      "default": false,
+      "default": true,
       "updateable": true
     },
     "enable_dns_policy": {
