@@ -49,21 +49,6 @@ resource "azurerm_role_assignment" "eventgrid_data_sender_data_deletion" {
   principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
 }
 
-resource "azurerm_role_assignment" "airlock_blob_data_contributor" {
-  count                = length(local.airlock_sa_blob_data_contributor)
-  scope                = local.airlock_sa_blob_data_contributor[count.index]
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_user_assigned_identity.airlock_id.principal_id
-}
-
-# This might be considered redundent since we give Virtual Machine Contributor
-# at the subscription level, but best to be explicit.
-resource "azurerm_role_assignment" "api_sa_data_contributor" {
-  count                = length(local.api_sa_data_contributor)
-  scope                = local.api_sa_data_contributor[count.index]
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = var.api_principal_id
-}
 
 # Permissions needed for the Function Host to work correctly.
 resource "azurerm_role_assignment" "function_host_storage" {

@@ -115,6 +115,11 @@ variable "airlock_malware_scan_result_topic_name" {
   description = "Name of the topic to publish Airlock malware scan results to"
 }
 
+variable "enable_legacy_airlock" {
+  type        = bool
+  description = "Whether the core legacy (v1) airlock storage accounts are deployed. Propagated to workspace bundles so they only provision legacy connectivity when core does."
+}
+
 variable "mgmt_storage_account_id" {
   type        = string
   description = "ID of the management storage account"

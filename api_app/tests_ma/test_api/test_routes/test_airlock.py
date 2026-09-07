@@ -183,6 +183,12 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
+    @patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", False)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={"airlock_version": 1}))
+    async def test_post_airlock_request_on_v1_workspace_with_legacy_disabled_returns_400(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
     async def test_post_airlock_request_with_enable_airlock_property_missing_returns_201(self, _, __, app, client, sample_airlock_request_input_data):
@@ -215,6 +221,19 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
         assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request")
+    async def test_post_submit_does_not_apply_a_recorded_scan_result(self, update_mock, _, app, client):
+        submitted = sample_airlock_request_object(status=AirlockRequestStatus.Submitted)
+        submitted.scanResult = {"clean": True, "message": None}
+        update_mock.return_value = submitted
+
+        response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
+        assert update_mock.call_count == 1
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
     async def test_post_submit_airlock_request_if_request_not_found_returns_404(self, _, app, client):

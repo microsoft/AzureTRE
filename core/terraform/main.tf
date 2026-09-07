@@ -136,9 +136,9 @@ module "appgateway" {
 
   depends_on = [
     module.network,
+    azurerm_private_endpoint.api_private_endpoint,
     azurerm_key_vault.kv,
     azurerm_role_assignment.keyvault_deployer_role,
-    azurerm_private_endpoint.api_private_endpoint,
     azurerm_key_vault_key.tre_encryption[0]
   ]
 }
@@ -159,10 +159,12 @@ module "airlock_resources" {
   airlock_servicebus_fqdn               = azurerm_servicebus_namespace.sb.endpoint
   applicationinsights_connection_string = module.azure_monitor.app_insights_connection_string
   enable_malware_scanning               = var.enable_airlock_malware_scanning
+  enable_legacy_airlock                 = var.enable_legacy_airlock
   arm_environment                       = var.arm_environment
   tre_core_tags                         = local.tre_core_tags
   log_analytics_workspace_id            = module.azure_monitor.log_analytics_workspace_id
   blob_core_dns_zone_id                 = module.network.blob_core_dns_zone_id
+  core_vnet_id                          = module.network.core_vnet_id
   file_core_dns_zone_id                 = module.network.file_core_dns_zone_id
   queue_core_dns_zone_id                = module.network.queue_core_dns_zone_id
   table_core_dns_zone_id                = module.network.table_core_dns_zone_id
@@ -218,6 +220,7 @@ module "resource_processor_vmss_porter" {
   auto_grant_workspace_consent                     = var.auto_grant_workspace_consent
   enable_airlock_malware_scanning                  = var.enable_airlock_malware_scanning
   airlock_malware_scan_result_topic_name           = module.airlock_resources.airlock_malware_scan_result_topic_name
+  enable_legacy_airlock                            = var.enable_legacy_airlock
   firewall_policy_id                               = module.firewall.firewall_policy_id
 
   depends_on = [
