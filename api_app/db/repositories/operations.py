@@ -105,6 +105,18 @@ class OperationRepository(BaseRepository):
 
         return item
 
+    async def _reconcile_resource_status(self, resource_id: str, status: Status, message: str):
+        resource_repo = await ResourceRepository.create()
+        resource = await resource_repo.get_resource_by_id(resource_id)
+        if resource.deploymentStatus in {
+            Status.AwaitingAction, Status.InvokingAction, Status.AwaitingDeployment,
+            Status.Deploying, Status.AwaitingDeletion, Status.Deleting,
+            Status.AwaitingUpdate, Status.Updating, Status.PipelineRunning
+        }:
+            resource.deploymentStatus = status
+            resource.updatedWhen = self.get_timestamp()
+            await resource_repo.update_item(resource)
+
     async def acquire_workspace_lease(self, workspace_id: str, operation_id: str) -> bool:
         if not hasattr(self, "_container") or self._container is None:
             return True
@@ -175,6 +187,11 @@ class OperationRepository(BaseRepository):
                                             step.status = get_failure_status_for_action(step.resourceAction or existing_op.action)
                                             step.message = "Operation timed out or was interrupted before completion"
                                             step.updatedWhen = timestamp
+                                await self._reconcile_resource_status(
+                                    existing_op.resourceId,
+                                    existing_op.status,
+                                    existing_op.message,
+                                )
                                 update_call = self.update_item(existing_op)
                                 if hasattr(update_call, "__await__"):
                                     await update_call
@@ -472,6 +489,7 @@ class OperationRepository(BaseRepository):
                                 step.status = get_failure_status_for_action(step.resourceAction or op.action)
                                 step.message = "Operation timed out or was interrupted before completion"
                                 step.updatedWhen = timestamp
+                    await self._reconcile_resource_status(op.resourceId, op.status, op.message)
                     update_call = self.update_item(op)
                     if hasattr(update_call, "__await__"):
                         await update_call

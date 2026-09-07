@@ -176,7 +176,8 @@ def get_airlock_container_link(airlock_request: AirlockRequest, user, workspace)
 
 
 async def create_review_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
-                           operation_repo: OperationRepository, airlock_request_repo: AirlockRequestRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository) -> Tuple[UserResource, Operation]:
+                           operation_repo: OperationRepository, airlock_request_repo: AirlockRequestRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository,
+                           ) -> Tuple[AirlockRequest, Operation]:
     if airlock_request.type == AirlockRequestType.Import:
         config = workspace.properties["airlock_review_config"]["import"]
         review_workspace_id = config["import_vm_workspace_id"]
@@ -248,7 +249,8 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
 
 
 async def _handle_existing_review_resource(existing_resource: AirlockReviewUserResource, user: User, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
-                                           operation_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository):
+                                           operation_repo: OperationRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository,
+                                           wait_for_completion: bool = True) -> Optional[Operation]:
     # Is the existing resource enabled, deployed, and can we get its power state information
     if existing_resource.isEnabled and existing_resource.deploymentStatus == "deployed" and 'azure_resource_id' in existing_resource.properties:
         resource_status = get_azure_resource_status(existing_resource.properties['azure_resource_id'])
@@ -261,18 +263,42 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
-        logger.info("Deleting existing user resource...")
-        delete_op = await delete_review_user_resource(
-            user_resource=existing_resource,
-            user_resource_repo=user_resource_repo,
-            workspace_service_repo=workspace_service_repo,
-            resource_template_repo=resource_template_repo,
+        if wait_for_completion:
+            logger.info("Deleting existing user resource...")
+            operation = await delete_review_user_resource(
+                user_resource=existing_resource,
+                user_resource_repo=user_resource_repo,
+                workspace_service_repo=workspace_service_repo,
+                resource_template_repo=resource_template_repo,
+                operations_repo=operation_repo,
+                resource_history_repo=resource_history_repo,
+                user=user)
+            if operation and hasattr(operation, "id"):
+                await wait_for_successful_operation(operation_repo, operation.id)
+            return operation
+
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
+            workspace_id=existing_resource.workspaceId,
+            service_id=existing_resource.parentWorkspaceServiceId)
+        disable_op = await disable_user_resource(
+            existing_resource, user, workspace_service, user_resource_repo,
+            resource_template_repo, operation_repo, resource_history_repo)
+        if disable_op and hasattr(disable_op, "id"):
+            if not wait_for_completion:
+                return disable_op
+            await wait_for_successful_operation(operation_repo, disable_op.id)
+
+        logger.info(f"Deleting user resource {existing_resource.id} in workspace service {workspace_service.id}")
+        operation = await send_uninstall_message(
+            resource=existing_resource,
+            resource_repo=user_resource_repo,
             operations_repo=operation_repo,
+            resource_type=ResourceType.UserResource,
+            resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
-            user=user
-        )
-        if delete_op and hasattr(delete_op, "id"):
-            await wait_for_successful_operation(operation_repo, delete_op.id)
+            user=user)
+        logger.info(f"Started operation {operation}")
+        return operation
 
 
 async def save_and_publish_event_airlock_request(airlock_request: AirlockRequest, airlock_request_repo: AirlockRequestRepository, user: User, workspace: Workspace):

@@ -372,6 +372,7 @@ async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_rea
     stale_op = MagicMock(action="install", status=Status.AwaitingDeployment, updatedWhen=now - 8000, createdWhen=now - 8000)
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
     operations_repo.update_item = AsyncMock()
+    operations_repo._reconcile_resource_status = AsyncMock()
 
     res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
     assert res is True
@@ -415,6 +416,7 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
     }
     operations_repo.query = AsyncMock(return_value=[stale_op_dict])
     operations_repo.update_item = AsyncMock()
+    operations_repo._reconcile_resource_status = AsyncMock()
 
     result = await operations_repo.resource_has_active_operation(workspace_id)
     assert result is False
@@ -524,6 +526,7 @@ async def test_reconcile_stale_operation_uses_step_resource_action(operations_re
     )
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
     operations_repo.update_item = AsyncMock(return_value=None)
+    operations_repo._reconcile_resource_status = AsyncMock()
     operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
 
     await operations_repo.acquire_workspace_lease("ws-1", "new-op")
@@ -559,6 +562,7 @@ async def test_resource_has_active_operation_reconciles_stale_step_with_step_res
     }
     operations_repo.query = AsyncMock(return_value=[stale_op_dict])
     operations_repo.update_item = AsyncMock(return_value=None)
+    operations_repo._reconcile_resource_status = AsyncMock()
 
     has_active = await operations_repo.resource_has_active_operation(res_id)
     assert has_active is False

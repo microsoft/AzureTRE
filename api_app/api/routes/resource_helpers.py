@@ -97,8 +97,9 @@ async def save_and_deploy_resource(
             **kwargs,
         )
         return operation
-    except HTTPException:
-        await resource_repo.delete_item(resource.id)
+    except HTTPException as ex:
+        if not getattr(ex, "lease_retained", False):
+            await resource_repo.delete_item(resource.id)
         raise
     except Exception as ex:
         lease_retained = getattr(ex, "lease_retained", False)

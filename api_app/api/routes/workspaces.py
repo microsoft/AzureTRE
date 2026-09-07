@@ -387,8 +387,8 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
             operation_id=operation_id)
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
-    except CosmosAccessConditionFailedError:
-        if hasattr(operations_repo, "release_workspace_lease"):
+    except CosmosAccessConditionFailedError as err:
+        if not getattr(err, "lease_retained", False) and hasattr(operations_repo, "release_workspace_lease"):
             await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
