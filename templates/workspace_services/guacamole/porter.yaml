@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.14.4
+version: 0.15.1
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -29,6 +29,8 @@ parameters:
   - name: workspace_id
     type: string
   - name: tre_id
+    type: string
+  - name: address_space
     type: string
   - name: image_tag
     type: string
@@ -142,6 +144,7 @@ install:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        address_space: ${ bundle.parameters.address_space }
         image_name: ${ bundle.custom.runtime_image.name }
         image_tag: ${ bundle.parameters.image_tag }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
@@ -177,6 +180,7 @@ upgrade:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        address_space: ${ bundle.parameters.address_space }
         image_name: ${ bundle.custom.runtime_image.name }
         image_tag: ${ bundle.parameters.image_tag }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }
@@ -212,6 +216,7 @@ uninstall:
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
         tre_id: ${ bundle.parameters.tre_id }
+        address_space: ${ bundle.parameters.address_space }
         image_name: ${ bundle.custom.runtime_image.name }
         image_tag: ${ bundle.parameters.image_tag }
         mgmt_acr_name: ${ bundle.parameters.mgmt_acr_name }

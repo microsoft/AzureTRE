@@ -1,0 +1,6 @@
+**/.terraform
+**/*.tfstate*
+image/
+!image/version.txt
+parameters.json
+.env
