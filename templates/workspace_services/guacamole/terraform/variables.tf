@@ -2,6 +2,10 @@ variable "workspace_id" {
   type        = string
   description = "The workspace ID"
 }
+variable "address_space" {
+  type        = string
+  description = "The address space for the ACI subnet"
+}
 variable "aad_authority_url" {
   type        = string
   description = "The Azure AD authority URL"

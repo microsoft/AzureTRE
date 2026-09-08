@@ -27,6 +27,12 @@
       "default": "Access Windows and Linux virtual machines via Apache Guacamole. Documentation for using this service can be found here: [https://guacamole.apache.org/doc/gug/using-guacamole.html](https://guacamole.apache.org/doc/gug/using-guacamole.html)",
       "updateable": true
     },
+    "address_space": {
+      "type": "string",
+      "title": "Address space",
+      "description": "Address space for the ACI desktop subnet",
+      "updateable": true
+    },
     "guac_disable_copy": {
       "type": "boolean",
       "title": "Disable 'Copy'",
@@ -69,6 +75,13 @@
   },
   "pipeline": {
     "install": [
+      {
+        "stepId": "9f918431-a2d4-409f-a012-5b66381f0ab8",
+        "stepTitle": "Upgrade workspace to ensure the existence of the ACI address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
       {
         "stepId": "main"
       },
@@ -127,6 +140,13 @@
       }
     ],
     "upgrade": [
+      {
+        "stepId": "34f3ee4f-0bb7-4104-a0c7-574d5f66447e",
+        "stepTitle": "Upgrade workspace to ensure the existence of the ACI address space",
+        "resourceType": "workspace",
+        "resourceAction": "upgrade",
+        "properties": []
+      },
       {
         "stepId": "main"
       },
@@ -226,5 +246,8 @@
     ]
   },
   "uiSchema": {
+    "address_space": {
+      "classNames": "tre-hidden"
+    }
   }
 }

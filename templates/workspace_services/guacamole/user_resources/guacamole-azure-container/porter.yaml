@@ -1,0 +1,238 @@
+schemaVersion: 1.0.0
+name: tre-service-guacamole-container
+version: 0.3.2
+description: Guacamole ACI research desktop with Microsoft Edge (PoC)
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+custom:
+  runtime_image:
+    name: tre-guacamole-desktop
+    build:
+      version_file: image/version.txt
+      docker_file: image/Dockerfile
+      docker_context: ..
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+    sensitive: true
+
+parameters:
+  - name: tre_id
+    type: string
+  - name: workspace_id
+    type: string
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    description: "Used by Azure CLI to set the Azure environment"
+  - name: parent_service_id
+    type: string
+  - name: id
+    type: string
+  - name: owner_id
+    type: string
+  - name: image_tag
+    type: string
+    default: ""
+  - name: container_size
+    type: string
+    default: "2 CPU | 8GB RAM"
+  - name: shared_storage_access
+    type: boolean
+    default: false
+  - name: workspace_subscription_id
+    type: string
+    default: ""
+  - name: tfstate_resource_group_name
+    type: string
+  - name: tfstate_storage_account_name
+    type: string
+  - name: tfstate_container_name
+    type: string
+    default: tfstate
+  - name: arm_use_msi
+    type: boolean
+    default: false
+    env: ARM_USE_MSI
+  - name: arm_environment
+    type: string
+    default: public
+    env: ARM_ENVIRONMENT
+
+outputs:
+  - name: ip
+    type: string
+    applyTo: [install, upgrade]
+  - name: hostname
+    type: string
+    applyTo: [install, upgrade]
+  - name: connection_uri
+    type: string
+    applyTo: [install, upgrade]
+  - name: azure_resource_id
+    type: string
+    applyTo: [install, upgrade, start, stop]
+
+mixins:
+  - terraform:
+      clientVersion: 1.14.3
+  - az:
+      clientVersion: 2.81.0
+
+install:
+  - terraform:
+      description: Create the ACI research desktop
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        owner_id: ${ bundle.parameters.owner_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        container_size: ${ bundle.parameters.container_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+      outputs:
+        - name: ip
+        - name: hostname
+        - name: connection_uri
+        - name: azure_resource_id
+
+upgrade:
+  - terraform:
+      description: Update the ACI research desktop
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        owner_id: ${ bundle.parameters.owner_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        container_size: ${ bundle.parameters.container_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+      outputs:
+        - name: ip
+        - name: hostname
+        - name: connection_uri
+        - name: azure_resource_id
+
+uninstall:
+  - terraform:
+      description: Delete the desktop, preserving workspace files
+      vars:
+        tre_id: ${ bundle.parameters.tre_id }
+        workspace_id: ${ bundle.parameters.workspace_id }
+        parent_service_id: ${ bundle.parameters.parent_service_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        owner_id: ${ bundle.parameters.owner_id }
+        image_name: ${ bundle.custom.runtime_image.name }
+        image_tag: ${ bundle.parameters.image_tag }
+        container_size: ${ bundle.parameters.container_size }
+        shared_storage_access: ${ bundle.parameters.shared_storage_access }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+
+start:
+  - terraform:
+      arguments:
+        - "output"
+      description: Get container group resource ID from Terraform outputs
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+      outputs:
+        - name: azure_resource_id
+  - az:
+      description: Set Azure Cloud Environment
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: Login to Azure
+      arguments:
+        - login
+      flags:
+        identity:
+        client-id: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: Start the container desktop
+      arguments:
+        - resource
+        - invoke-action
+      flags:
+        action: start
+        ids: ${ bundle.outputs.azure_resource_id }
+
+stop:
+  - terraform:
+      arguments:
+        - "output"
+      description: Get container group resource ID from Terraform outputs
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: ${ bundle.parameters.id }
+      outputs:
+        - name: azure_resource_id
+  - az:
+      description: Set Azure Cloud Environment
+      arguments:
+        - cloud
+        - set
+      flags:
+        name: ${ bundle.parameters.azure_environment }
+  - az:
+      description: Login to Azure
+      arguments:
+        - login
+      flags:
+        identity:
+        client-id: ${ bundle.credentials.azure_client_id }
+  - az:
+      description: Stop the container desktop
+      arguments:
+        - resource
+        - invoke-action
+      flags:
+        action: stop
+        ids: ${ bundle.outputs.azure_resource_id }

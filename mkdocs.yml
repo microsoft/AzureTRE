@@ -111,6 +111,7 @@ nav:
       - User Resources:
           - Guacamole Windows VM: tre-templates/user-resources/guacamole-windows-vm.md
           - Guacamole Linux VM: tre-templates/user-resources/guacamole-linux-vm.md
+          - Guacamole Container Desktop: tre-templates/user-resources/guacamole-container-desktop.md
           - Import Review VM: tre-templates/user-resources/import-reviewvm.md
           - Export Review VM: tre-templates/user-resources/export-reviewvm.md
 

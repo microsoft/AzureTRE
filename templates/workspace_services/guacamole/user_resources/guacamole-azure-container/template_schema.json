@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-azure-container/template_schema.json",
+  "type": "object",
+  "title": "Linux Container Desktop",
+  "description": "ACI research desktop with Microsoft Edge, without Docker.",
+  "authorizedRoles": [
+    "WorkspaceOwner",
+    "WorkspaceResearcher"
+  ],
+  "required": [
+    "container_size"
+  ],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name",
+      "default": "My Container Desktop",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "default": "Research desktop with Microsoft Edge, no Docker support",
+      "updateable": true
+    },
+    "container_size": {
+      "type": "string",
+      "title": "Container size",
+      "description": "Select the CPU and memory allocated to the desktop.",
+      "default": "2 CPU | 8GB RAM",
+      "enum": [
+        "2 CPU | 4GB RAM",
+        "2 CPU | 8GB RAM",
+        "4 CPU | 16GB RAM"
+      ],
+      "updateable": true
+    },
+    "shared_storage_access": {
+      "type": "boolean",
+      "title": "Shared storage",
+      "description": "Requires storage-account Shared Key authorization, which is disabled by default in Azure TRE.",
+      "default": false
+    }
+  }
+}
