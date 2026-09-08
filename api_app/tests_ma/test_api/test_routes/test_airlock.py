@@ -129,7 +129,8 @@ def create_test_user_with_roles(roles):
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_researcher_user(self, app, researcher_user):
+    @classmethod
+    def log_in_with_researcher_user(cls, app, researcher_user):
         app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         with patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
@@ -305,7 +306,8 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
 class TestAirlockRoutesThatRequireAirlockManagerRights():
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
+    @classmethod
+    def log_in_with_airlock_manager_user(cls, app, airlock_manager_user):
         app.dependency_overrides[require_airlock_manager] = airlock_manager_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = airlock_manager_user
         with patch("services.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
