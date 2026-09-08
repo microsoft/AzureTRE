@@ -10,6 +10,7 @@ ENHANCEMENTS:
 BUG FIXES:
 * Fix `create_aad_groups` default in `template_schema.json` to match `porter.yaml` (`true`), preventing an unrelated workspace edit from unintentionally disabling AAD group creation and destroying workspace role groups/app-role assignments (`tre-workspace-base` 2.10.2) ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+* Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 ## (0.29.0) (August 14, 2026)
