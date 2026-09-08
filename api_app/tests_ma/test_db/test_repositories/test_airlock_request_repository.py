@@ -169,7 +169,7 @@ async def test_create_airlock_request_item_creates_an_airlock_request_with_the_r
     assert airlock_request.createdBy["id"] == created_by_user.id
 
 
-@pytest.mark.parametrize("current_status, new_status", get_allowed_status_changes())
+@pytest.mark.parametrize("current_status, new_status", list(get_allowed_status_changes()))
 async def test_update_airlock_request_with_allowed_new_status_should_update_request_status(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
@@ -177,7 +177,7 @@ async def test_update_airlock_request_with_allowed_new_status_should_update_requ
     assert airlock_request.status == new_status
 
 
-@pytest.mark.parametrize("current_status, new_status", get_forbidden_status_changes())
+@pytest.mark.parametrize("current_status, new_status", list(get_forbidden_status_changes()))
 async def test_update_airlock_request_with_forbidden_status_should_fail_on_validation(airlock_request_repo, current_status, new_status, verify_dictionary_contains_all_enum_values):
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=current_status)
