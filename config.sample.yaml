@@ -57,7 +57,8 @@ tre:
   bastion_sku: Basic
 
   # Set to true if TreAdmins should be able to assign and de-assign users to workspaces via the UI
-  user_management_enabled: false
+  # Requires Entra ID groups to be enabled on the workspace and the workspace template version to be 2.2.0 or greater.
+  user_management_enabled: true
 
   # Uncomment to enable DNS Security policy on the system, and add any known DNS names that you need to allow
   # DNS queries on, in addition to those in the core list in core/terraform/allowed-dns.json
@@ -81,10 +82,11 @@ authentication:
   # When this is false, the AAD Application will need creating manually.
   auto_workspace_app_registration: true
   # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`
-  auto_workspace_group_creation: false
+  # Note: Microsoft Entra ID licensing implications need to be considered, as group assignment is a premium feature.
+  auto_workspace_group_creation: true
   # Setting this to true will remove the need for users to manually grant consent when creating new workspaces.
   # The identity will be granted Application.ReadWrite.All and DelegatedPermissionGrant.ReadWrite.All permissions.
-  auto_grant_workspace_consent: false
+  auto_grant_workspace_consent: true
 
 resource_processor:
   # The number of processes to start in the resource processor VMSS image
