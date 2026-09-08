@@ -196,7 +196,18 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
         existing_resource = airlock_request.reviewUserResources[user.id]
         existing_resource = await user_resource_repo.get_user_resource_by_id(workspace_id=existing_resource.workspaceId, service_id=existing_resource.workspaceServiceId, resource_id=existing_resource.userResourceId)
         logger.info("User already has an existing review resource")
-        await _handle_existing_review_resource(existing_resource, user, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
+        delete_operation = await _handle_existing_review_resource(
+            existing_resource, user, user_resource_repo, workspace_service_repo,
+            operation_repo, resource_template_repo, resource_history_repo,
+            wait_for_completion=False)
+        if delete_operation and hasattr(delete_operation, "id"):
+            asyncio.create_task(_redeploy_review_vm_after_delete(
+                airlock_request, user, workspace, review_workspace_id,
+                review_workspace_service_id, user_resource_template_name,
+                user_resource_repo, workspace_service_repo, operation_repo,
+                airlock_request_repo, resource_template_repo,
+                resource_history_repo, delete_operation.id))
+            return airlock_request, delete_operation
 
     # Create the VM
     user_resource, operation = await _deploy_vm(airlock_request, user, workspace, review_workspace_id, review_workspace_service_id, user_resource_template_name, user_resource_repo, workspace_service_repo, operation_repo, resource_template_repo, resource_history_repo)
@@ -215,6 +226,31 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
 
     logger.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
     return updated_resource, operation
+
+
+async def _redeploy_review_vm_after_delete(
+        airlock_request: AirlockRequest, user: User, workspace: Workspace,
+        review_workspace_id: str, review_workspace_service_id: str,
+        user_resource_template_name: str, user_resource_repo: UserResourceRepository,
+        workspace_service_repo: WorkspaceServiceRepository,
+        operation_repo: OperationRepository, airlock_request_repo: AirlockRequestRepository,
+        resource_template_repo: ResourceTemplateRepository,
+        resource_history_repo: ResourceHistoryRepository, delete_operation_id: str):
+    try:
+        await wait_for_successful_operation(operation_repo, delete_operation_id)
+        user_resource, _ = await _deploy_vm(
+            airlock_request, user, workspace, review_workspace_id,
+            review_workspace_service_id, user_resource_template_name,
+            user_resource_repo, workspace_service_repo, operation_repo,
+            resource_template_repo, resource_history_repo)
+        await update_and_publish_event_airlock_request(
+            airlock_request, airlock_request_repo, user, workspace,
+            review_user_resource=AirlockReviewUserResource(
+                workspaceId=review_workspace_id,
+                workspaceServiceId=review_workspace_service_id,
+                userResourceId=user_resource.id))
+    except Exception:
+        logger.exception("Failed to replace Airlock review VM after delete operation %s", delete_operation_id)
 
 
 async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, review_workspace_id: str, review_workspace_service_id: str, user_resource_template_name: str,
@@ -263,41 +299,17 @@ async def _handle_existing_review_resource(existing_resource: AirlockReviewUserR
     # If it wasn't healthy or running, we'll delete the existing resource if not already deleted, and then create a new one
     logger.info("Existing review resource is in an unhealthy state.")
     if existing_resource.deploymentStatus != "deleted":
-        if wait_for_completion:
-            logger.info("Deleting existing user resource...")
-            operation = await delete_review_user_resource(
-                user_resource=existing_resource,
-                user_resource_repo=user_resource_repo,
-                workspace_service_repo=workspace_service_repo,
-                resource_template_repo=resource_template_repo,
-                operations_repo=operation_repo,
-                resource_history_repo=resource_history_repo,
-                user=user)
-            if operation and hasattr(operation, "id"):
-                await wait_for_successful_operation(operation_repo, operation.id)
-            return operation
-
-        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
-            workspace_id=existing_resource.workspaceId,
-            service_id=existing_resource.parentWorkspaceServiceId)
-        disable_op = await disable_user_resource(
-            existing_resource, user, workspace_service, user_resource_repo,
-            resource_template_repo, operation_repo, resource_history_repo)
-        if disable_op and hasattr(disable_op, "id"):
-            if not wait_for_completion:
-                return disable_op
-            await wait_for_successful_operation(operation_repo, disable_op.id)
-
-        logger.info(f"Deleting user resource {existing_resource.id} in workspace service {workspace_service.id}")
-        operation = await send_uninstall_message(
-            resource=existing_resource,
-            resource_repo=user_resource_repo,
-            operations_repo=operation_repo,
-            resource_type=ResourceType.UserResource,
+        logger.info("Deleting existing user resource...")
+        operation = await delete_review_user_resource(
+            user_resource=existing_resource,
+            user_resource_repo=user_resource_repo,
+            workspace_service_repo=workspace_service_repo,
             resource_template_repo=resource_template_repo,
+            operations_repo=operation_repo,
             resource_history_repo=resource_history_repo,
-            user=user)
-        logger.info(f"Started operation {operation}")
+            user=user, wait_for_completion=wait_for_completion)
+        if wait_for_completion and operation and hasattr(operation, "id"):
+            await wait_for_successful_operation(operation_repo, operation.id)
         return operation
 
 
@@ -513,13 +525,13 @@ async def delete_review_user_resource(
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository,
-        user: User) -> Operation:
+        user: User, wait_for_completion: bool = True) -> Operation:
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=user_resource.workspaceId,
                                                                                  service_id=user_resource.parentWorkspaceServiceId)
 
     # disable might contain logic that we need to execute before the deletion of the resource
     disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
-    if disable_op and hasattr(disable_op, "id"):
+    if wait_for_completion and disable_op and hasattr(disable_op, "id"):
         await wait_for_successful_operation(operations_repo, disable_op.id)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")

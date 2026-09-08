@@ -131,6 +131,7 @@ class OperationRepository(BaseRepository):
 
         for attempt in range(max_attempts):
             timestamp = self.get_timestamp()
+            lease_created = False
             lease_body = {
                 "id": lease_id,
                 "workspaceId": workspace_id,
@@ -142,8 +143,17 @@ class OperationRepository(BaseRepository):
                 create_call = self.container.create_item(body=lease_body)
                 if hasattr(create_call, "__await__"):
                     await create_call
-                if await self.resource_has_active_operation(workspace_id, exclude_operation_id=operation_id):
+                lease_created = True
+                try:
+                    has_active_operation = await self.resource_has_active_operation(
+                        workspace_id, exclude_operation_id=operation_id)
+                except Exception:
                     await self.release_workspace_lease(workspace_id, operation_id)
+                    lease_created = False
+                    raise
+                if has_active_operation:
+                    await self.release_workspace_lease(workspace_id, operation_id)
+                    lease_created = False
                     raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                 return True
             except (CosmosResourceExistsError, ResourceExistsError):
@@ -155,7 +165,6 @@ class OperationRepository(BaseRepository):
                     if attempt < max_attempts - 1:
                         continue
                     raise
-
                 if not isinstance(existing_lease, dict):
                     return True
 

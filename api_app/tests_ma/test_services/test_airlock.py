@@ -866,3 +866,32 @@ async def test_delete_all_review_user_resources_retries_on_lease_contention(mock
     assert len(ops) == 1
     assert mock_delete_review.call_count == 2
     mock_sleep.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_redeploy_review_vm_after_delete_waits_deploys_and_publishes():
+    from services.airlock import _redeploy_review_vm_after_delete
+
+    airlock_request = sample_airlock_request(status=AirlockRequestStatus.InReview)
+    user = create_test_user()
+    workspace = sample_workspace()
+    user_resource = MagicMock(id="replacement-resource")
+    operation_repo = AsyncMock()
+    airlock_request_repo = AsyncMock()
+    user_resource_repo = AsyncMock()
+    workspace_service_repo = AsyncMock()
+    resource_template_repo = AsyncMock()
+    resource_history_repo = AsyncMock()
+
+    with patch("services.airlock.wait_for_successful_operation", new_callable=AsyncMock) as wait_mock, \
+            patch("services.airlock._deploy_vm", new_callable=AsyncMock, return_value=(user_resource, MagicMock())) as deploy_mock, \
+            patch("services.airlock.update_and_publish_event_airlock_request", new_callable=AsyncMock) as publish_mock:
+        await _redeploy_review_vm_after_delete(
+            airlock_request, user, workspace, "review-workspace", "review-service", "review-template",
+            user_resource_repo, workspace_service_repo, operation_repo, airlock_request_repo,
+            resource_template_repo, resource_history_repo, "delete-operation")
+
+    wait_mock.assert_awaited_once_with(operation_repo, "delete-operation")
+    deploy_mock.assert_awaited_once()
+    publish_mock.assert_awaited_once()
+    assert publish_mock.await_args.kwargs["review_user_resource"].userResourceId == "replacement-resource"
