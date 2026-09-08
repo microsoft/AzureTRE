@@ -61,6 +61,7 @@ jobs:
             workspace_base_template:
               - templates/workspaces/base/porter.yaml
               - templates/workspaces/base/template_schema.json
+              - tests/test_workspace_base_template_defaults.py
 
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
         if: ${{ steps.filter.outputs.terraform == 'true' }}
