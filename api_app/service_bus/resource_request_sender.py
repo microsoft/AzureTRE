@@ -29,13 +29,23 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
     with tracer.start_as_current_span("send_resource_request_message") as current_span:
         current_span.set_attribute("resource_id", resource.id)
         current_span.set_attribute("action", action)
+        caller_operation_id = operation_id
+        operation_id = operation_id or OperationRepository.create_operation_id()
+        target_workspace_id = extract_workspace_id_from_resource_path(resource.resourcePath)
 
         #  Construct the resources to build an operation item for
         resources_list = []
-        if is_cascade:
-            resources_list = await resource_repo.get_resource_dependency_list(resource)
-        else:
-            resources_list.append(resource.__dict__)
+        try:
+            if target_workspace_id:
+                await operations_repo.acquire_workspace_lease(target_workspace_id, operation_id)
+            if is_cascade:
+                resources_list = await resource_repo.get_resource_dependency_list(resource)
+            else:
+                resources_list.append(resource.__dict__)
+        except Exception:
+            if target_workspace_id:
+                await operations_repo.release_workspace_lease(target_workspace_id, operation_id)
+            raise
 
         # add the operation to the db - this will create all the steps needed (if any are defined in the template)
         operation = await operations_repo.create_operation_item(
@@ -73,7 +83,7 @@ async def send_resource_request_message(resource: Resource, operations_repo: Ope
             logger.exception(f"Failed to dispatch initial deployment message for operation {operation.id}")
             lease_released = False
             lease_retained = False
-            should_release_lease = operation_id is None
+            should_release_lease = caller_operation_id is None
             try:
                 operation.status = get_failure_status_for_action(action)
                 operation.message = f"Failed to dispatch initial deployment message: {action}"

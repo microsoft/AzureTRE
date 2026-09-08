@@ -226,6 +226,22 @@ async def test_acquire_workspace_lease_creates_item(operations_repo):
     assert body["operationId"] == "op-1"
 
 
+async def test_acquire_workspace_lease_rejects_legacy_active_operation_after_create(operations_repo):
+    from fastapi import HTTPException
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(return_value={})
+    operations_repo.resource_has_active_operation = AsyncMock(return_value=True)
+    operations_repo.release_workspace_lease = AsyncMock()
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+
+    assert exc.value.status_code == 409
+    operations_repo.resource_has_active_operation.assert_awaited_once_with("ws-1", exclude_operation_id="op-1")
+    operations_repo.release_workspace_lease.assert_awaited_once_with("ws-1", "op-1")
+
+
 async def test_acquire_workspace_lease_raises_409_if_active_operation_exists(operations_repo):
     from fastapi import HTTPException
     from azure.cosmos.exceptions import CosmosResourceExistsError
@@ -570,3 +586,9 @@ async def test_resource_has_active_operation_reconciles_stale_step_with_step_res
     saved_op = operations_repo.update_item.call_args[0][0]
     assert saved_op.status == Status.DeletingFailed
     assert saved_op.steps[0].status == Status.UpdatingFailed
+    operations_repo.update_item.assert_awaited_once_with(saved_op, release_lease=False)
+    assert operations_repo._reconcile_resource_status.await_args_list[1].args == (
+        saved_op.steps[0].resourceId,
+        Status.UpdatingFailed,
+        saved_op.steps[0].message,
+    )

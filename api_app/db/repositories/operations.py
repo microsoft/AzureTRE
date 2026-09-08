@@ -117,6 +117,11 @@ class OperationRepository(BaseRepository):
             resource.updatedWhen = self.get_timestamp()
             await resource_repo.update_item(resource)
 
+    async def _reconcile_operation_resources(self, operation: Operation, step_resources=None):
+        await self._reconcile_resource_status(operation.resourceId, operation.status, operation.message)
+        for resource_id, status, message in step_resources or []:
+            await self._reconcile_resource_status(resource_id, status, message)
+
     async def acquire_workspace_lease(self, workspace_id: str, operation_id: str) -> bool:
         if not hasattr(self, "_container") or self._container is None:
             return True
@@ -137,6 +142,9 @@ class OperationRepository(BaseRepository):
                 create_call = self.container.create_item(body=lease_body)
                 if hasattr(create_call, "__await__"):
                     await create_call
+                if await self.resource_has_active_operation(workspace_id, exclude_operation_id=operation_id):
+                    await self.release_workspace_lease(workspace_id, operation_id)
+                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                 return True
             except (CosmosResourceExistsError, ResourceExistsError):
                 try:
@@ -181,20 +189,19 @@ class OperationRepository(BaseRepository):
                                 existing_op.message = "Operation timed out or was interrupted before completion"
                                 existing_op.updatedWhen = timestamp
                                 existing_op.reconciled = True
+                                affected_step_resources = []
                                 if getattr(existing_op, "steps", None):
                                     for step in existing_op.steps:
                                         if not step.is_failure() and not step.is_success():
                                             step.status = get_failure_status_for_action(step.resourceAction or existing_op.action)
                                             step.message = "Operation timed out or was interrupted before completion"
                                             step.updatedWhen = timestamp
-                                await self._reconcile_resource_status(
-                                    existing_op.resourceId,
-                                    existing_op.status,
-                                    existing_op.message,
-                                )
-                                update_call = self.update_item(existing_op)
+                                            affected_step_resources.append((step.resourceId, step.status, step.message))
+                                update_call = self.update_item(existing_op, release_lease=False)
                                 if hasattr(update_call, "__await__"):
                                     await update_call
+                                await self._reconcile_operation_resources(existing_op, affected_step_resources)
+                                await self.release_workspace_lease(workspace_id, existing_op.id)
                             except Exception as e:
                                 logger.exception(f"Failed to reconcile stale operation {existing_op.id}: {e}")
                                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
@@ -435,7 +442,7 @@ class OperationRepository(BaseRepository):
         operations = await self.query(query=query)
         return len(operations) > 0
 
-    async def resource_has_active_operation(self, resource_id: str) -> bool:
+    async def resource_has_active_operation(self, resource_id: str, exclude_operation_id: Optional[str] = None) -> bool:
         # Guard against injection; resource_id should always be a valid UUID string
         try:
             uuid.UUID(resource_id)
@@ -459,6 +466,8 @@ class OperationRepository(BaseRepository):
             + f' OR CONTAINS(c.resourcePath, "{resource_id}"))'
             + f' AND c.status IN ({status_filter})'
         )
+        if exclude_operation_id:
+            query += f' AND c.id != "{exclude_operation_id}"'
         operations = await self.query(query=query)
         if not operations:
             return False
@@ -483,16 +492,21 @@ class OperationRepository(BaseRepository):
                     op.message = "Operation timed out or was interrupted before completion"
                     op.updatedWhen = timestamp
                     op.reconciled = True
+                    affected_step_resources = []
                     if getattr(op, "steps", None):
                         for step in op.steps:
                             if not step.is_failure() and not step.is_success():
                                 step.status = get_failure_status_for_action(step.resourceAction or op.action)
                                 step.message = "Operation timed out or was interrupted before completion"
                                 step.updatedWhen = timestamp
-                    await self._reconcile_resource_status(op.resourceId, op.status, op.message)
-                    update_call = self.update_item(op)
+                                affected_step_resources.append((step.resourceId, step.status, step.message))
+                    update_call = self.update_item(op, release_lease=False)
                     if hasattr(update_call, "__await__"):
                         await update_call
+                    await self._reconcile_operation_resources(op, affected_step_resources)
+                    target_workspace_id = extract_workspace_id_from_resource_path(op.resourcePath)
+                    if target_workspace_id:
+                        await self.release_workspace_lease(target_workspace_id, op.id)
                 except Exception as e:
                     logger.exception(f"Failed to reconcile stale active operation {op_dict.get('id') if isinstance(op_dict, dict) else getattr(op_dict, 'id', None)}: {e}")
                     has_active = True

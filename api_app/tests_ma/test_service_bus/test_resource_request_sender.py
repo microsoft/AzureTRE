@@ -195,6 +195,41 @@ async def test_multi_step_document_retries(
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
 
 
+async def test_cascade_acquires_workspace_lease_before_dependency_snapshot():
+    resource = create_test_resource()
+    resource.resourcePath = f"/workspaces/{resource.id}"
+    operation = create_sample_operation(resource.id, RequestAction.UnInstall)
+    operations_repo_mock = AsyncMock()
+    operations_repo_mock.create_operation_item.return_value = operation
+    resource_repo_mock = AsyncMock()
+    resource_repo_mock.get_resource_dependency_list.return_value = [resource.__dict__]
+    resource_template_repo_mock = AsyncMock()
+    resource_history_repo_mock = AsyncMock()
+    order = []
+    operations_repo_mock.acquire_workspace_lease.side_effect = lambda *args: order.append(("lease", args))
+    resource_repo_mock.get_resource_dependency_list.side_effect = lambda *args: order.append(("snapshot", args)) or [resource.__dict__]
+    resource_to_send_mock = MagicMock()
+    resource_to_send_mock.get_resource_request_message_payload.return_value = {}
+
+    with patch("service_bus.resource_request_sender.update_resource_for_step", new=AsyncMock(return_value=resource_to_send_mock)), \
+            patch("service_bus.resource_request_sender.send_deployment_message", new=AsyncMock()):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo_mock,
+            resource_repo=resource_repo_mock,
+            user=create_test_user(),
+            resource_template_repo=resource_template_repo_mock,
+            resource_history_repo=resource_history_repo_mock,
+            action=RequestAction.UnInstall,
+            is_cascade=True,
+        )
+
+    assert order[0][0] == "lease"
+    assert order[1][0] == "snapshot"
+    operations_repo_mock.create_operation_item.assert_awaited_once()
+    assert operations_repo_mock.create_operation_item.call_args.kwargs["operation_id"] == order[0][1][1]
+
+
 @pytest.mark.parametrize(
     "action, expected_status",
     [
