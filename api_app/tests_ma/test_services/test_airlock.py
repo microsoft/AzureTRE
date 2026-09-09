@@ -556,9 +556,9 @@ async def test_revoke_request_calls_update_with_revoked_status(update_mock, airl
 
 
 @pytest.mark.asyncio
-@patch("services.airlock.delete_review_user_resource")
+@patch("services.airlock.send_airlock_workflow_message", new_callable=AsyncMock)
 @patch("services.airlock.update_and_publish_event_airlock_request")
-async def test_cancel_request_deletes_review_resource(_, delete_review_user_resource, airlock_request_repo_mock):
+async def test_cancel_request_enqueues_review_resource_cleanup(_, send_airlock_workflow_message, airlock_request_repo_mock):
     await cancel_request(
         airlock_request=sample_airlock_request(),
         user=create_test_user(),
@@ -570,7 +570,8 @@ async def test_cancel_request_deletes_review_resource(_, delete_review_user_reso
         operations_repo=AsyncMock(),
         resource_history_repo=AsyncMock())
 
-    delete_review_user_resource.assert_called_once()
+    send_airlock_workflow_message.assert_awaited_once()
+    assert send_airlock_workflow_message.await_args.args[0]["workflow"] == "cleanup"
 
 
 @pytest.mark.asyncio
@@ -816,6 +817,32 @@ async def test_delete_review_user_resource_aborts_if_disable_fails(mock_send_uni
 
 
 @pytest.mark.asyncio
+@patch("services.airlock.wait_for_successful_operation", new_callable=AsyncMock)
+@patch("services.airlock.disable_user_resource")
+@patch("services.airlock.send_uninstall_message")
+async def test_delete_review_user_resource_waits_for_disable_before_uninstall(mock_send_uninstall, mock_disable, wait_mock):
+    from models.domain.operation import Operation
+
+    disable_op = Operation(id="disable", resourceId="resource", resourcePath="/workspaces/ws", action="upgrade")
+    delete_op = Operation(id="delete", resourceId="resource", resourcePath="/workspaces/ws", action="uninstall")
+    mock_disable.return_value = disable_op
+    mock_send_uninstall.return_value = delete_op
+
+    user_resource = MagicMock(workspaceId="ws-1", parentWorkspaceServiceId="svc-1", id="resource")
+    await delete_review_user_resource(
+        user_resource=user_resource,
+        user_resource_repo=AsyncMock(),
+        workspace_service_repo=AsyncMock(),
+        resource_template_repo=AsyncMock(),
+        operations_repo=AsyncMock(),
+        resource_history_repo=AsyncMock(),
+        user=create_test_user(),
+        wait_for_completion=False)
+
+    mock_send_uninstall.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_wait_for_successful_operation_retries_on_entity_does_not_exist():
     from services.airlock import wait_for_successful_operation
     from db.errors import EntityDoesNotExist
@@ -893,5 +920,6 @@ async def test_redeploy_review_vm_after_delete_waits_deploys_and_publishes():
 
     wait_mock.assert_awaited_once_with(operation_repo, "delete-operation")
     deploy_mock.assert_awaited_once()
+    airlock_request_repo.get_airlock_request_by_id.assert_awaited_once_with(airlock_request.id)
     publish_mock.assert_awaited_once()
     assert publish_mock.await_args.kwargs["review_user_resource"].userResourceId == "replacement-resource"

@@ -70,6 +70,12 @@ resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue"
   requires_session     = true
 }
 
+resource "azurerm_servicebus_queue" "airlock_workflow" {
+  name                 = "airlock-workflow"
+  namespace_id         = azurerm_servicebus_namespace.sb.id
+  partitioning_enabled = false
+}
+
 resource "azurerm_private_dns_zone" "servicebus" {
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.servicebus.windows.net"]
   resource_group_name = azurerm_resource_group.core.name

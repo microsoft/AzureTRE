@@ -208,7 +208,14 @@ class AirlockRequestRepository(BaseRepository):
         except CosmosAccessConditionFailedError:
             logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
-            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
+            updated_request = self._build_updated_request(
+                original_request=original_request,
+                new_status=new_status,
+                request_files=request_files,
+                status_message=status_message,
+                airlock_review=airlock_review,
+                review_user_resource=review_user_resource,
+                updated_by=updated_by)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response

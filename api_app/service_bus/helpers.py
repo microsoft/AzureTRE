@@ -1,3 +1,4 @@
+import json
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import TypeAdapter
@@ -39,6 +40,10 @@ async def send_deployment_message(content, correlation_id, session_id, action):
     resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
     logger.info(f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}")
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
+
+
+async def send_airlock_workflow_message(content):
+    await _send_message(ServiceBusMessage(body=json.dumps(content)), config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, root_resource: Resource, step_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:

@@ -45,6 +45,7 @@ resource "azurerm_linux_web_app" "api" {
     "SERVICE_BUS_RESOURCE_REQUEST_QUEUE"             = azurerm_servicebus_queue.workspacequeue.name
     "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"     = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
     "SERVICE_BUS_STEP_RESULT_QUEUE"                  = module.airlock_resources.service_bus_step_result_queue
+    "SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE"             = azurerm_servicebus_queue.airlock_workflow.name
     "MANAGED_IDENTITY_CLIENT_ID"                     = azurerm_user_assigned_identity.id.client_id
     "TRE_ID"                                         = var.tre_id
     "RESOURCE_LOCATION"                              = azurerm_resource_group.core.location

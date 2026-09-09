@@ -20,6 +20,7 @@ from db.events import bootstrap_database
 from services.logging import initialize_logging, logger
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
 from service_bus.airlock_request_status_update import AirlockStatusUpdater
+from service_bus.airlock_workflow import AirlockWorkflowUpdater
 
 
 @asynccontextmanager
@@ -33,9 +34,12 @@ async def lifespan(app: FastAPI):
 
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
+    airlockWorkflow = AirlockWorkflowUpdater()
+    await airlockWorkflow.init_repos()
 
     asyncio.create_task(deploymentStatusUpdater.receive_messages())
     asyncio.create_task(airlockStatusUpdater.receive_messages())
+    asyncio.create_task(airlockWorkflow.receive_messages())
     yield
 
 

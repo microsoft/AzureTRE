@@ -188,6 +188,24 @@ class OperationRepository(BaseRepository):
                             Status.ActionSucceeded,
                             Status.ActionFailed,
                         }
+                        if existing_op and getattr(existing_op, "status", None) in terminal_statuses and not getattr(existing_op, "reconciled", False):
+                            try:
+                                affected_step_resources = [
+                                    (step.resourceId, step.status, step.message)
+                                    for step in getattr(existing_op, "steps", None) or []
+                                    if step.resourceId and step.status
+                                ]
+                                await self._reconcile_operation_resources(existing_op, affected_step_resources)
+                                existing_op.reconciled = True
+                                existing_op.updatedWhen = timestamp
+                                update_call = self.update_item(existing_op, release_lease=False)
+                                if hasattr(update_call, "__await__"):
+                                    await update_call
+                                await self.release_workspace_lease(workspace_id, existing_op.id)
+                            except Exception as e:
+                                logger.exception(f"Failed to reconcile pending operation {existing_op.id}: {e}")
+                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                            continue
                         if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
                             op_time = getattr(existing_op, "updatedWhen", 0.0) or getattr(existing_op, "createdWhen", 0.0)
                             if timestamp - op_time < WORKSPACE_LEASE_EXPIRY_SECONDS:
@@ -197,7 +215,7 @@ class OperationRepository(BaseRepository):
                                 existing_op.status = get_failure_status_for_action(existing_op.action)
                                 existing_op.message = "Operation timed out or was interrupted before completion"
                                 existing_op.updatedWhen = timestamp
-                                existing_op.reconciled = True
+                                existing_op.reconciled = False
                                 affected_step_resources = []
                                 if getattr(existing_op, "steps", None):
                                     for step in existing_op.steps:
@@ -210,12 +228,15 @@ class OperationRepository(BaseRepository):
                                 if hasattr(update_call, "__await__"):
                                     await update_call
                                 await self._reconcile_operation_resources(existing_op, affected_step_resources)
+                                existing_op.reconciled = True
+                                update_call = self.update_item(existing_op, release_lease=False)
+                                if hasattr(update_call, "__await__"):
+                                    await update_call
                                 await self.release_workspace_lease(workspace_id, existing_op.id)
                             except Exception as e:
                                 logger.exception(f"Failed to reconcile stale operation {existing_op.id}: {e}")
                                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
-                            # update_item persists a terminal status and releases/deletes the workspace lease.
-                            # Restart lease acquisition rather than replacing the now-deleted lease document.
+                            # Restart lease acquisition rather than replacing the now-reconciled lease document.
                             continue
                     except HTTPException:
                         raise
@@ -263,8 +284,9 @@ class OperationRepository(BaseRepository):
                     del_call = self.delete_item(lease_id)
                 if hasattr(del_call, "__await__"):
                     await del_call
-        except Exception:
-            pass
+        except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
+                CosmosAccessConditionFailedError):
+            return
 
     @staticmethod
     def operations_query():

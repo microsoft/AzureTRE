@@ -7,7 +7,7 @@ from models.domain.authentication import RoleAssignment, User
 from models.domain.workspace import Workspace
 from tests_ma.test_api.conftest import create_test_user
 from models.schemas.airlock_request import AirlockRequestInCreate
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource
 from db.repositories.airlock_requests import AirlockRequestRepository
 
 from db.errors import EntityDoesNotExist
@@ -191,8 +191,18 @@ async def test_update_airlock_request_should_retry_update_when_etag_is_not_up_to
     expected_update_attempts = 2
     user = create_test_user()
     mock_existing_request = airlock_request_mock(status=DRAFT)
-    await airlock_request_repo.update_airlock_request(original_request=mock_existing_request, updated_by=user, new_status=SUBMITTED)
+    review_user_resource = AirlockReviewUserResource(
+        workspaceId="review-workspace",
+        workspaceServiceId="review-service",
+        userResourceId="replacement-resource")
+    await airlock_request_repo.update_airlock_request(
+        original_request=mock_existing_request,
+        updated_by=user,
+        new_status=SUBMITTED,
+        review_user_resource=review_user_resource)
     assert update_airlock_request_item_mock.call_count == expected_update_attempts
+    retried_request = update_airlock_request_item_mock.call_args_list[1].args[1]
+    assert review_user_resource in retried_request.reviewUserResources.values()
 
 
 async def test_get_airlock_requests_queries_db(airlock_request_repo):

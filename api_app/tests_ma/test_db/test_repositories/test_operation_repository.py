@@ -392,9 +392,40 @@ async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_rea
 
     res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
     assert res is True
-    operations_repo.update_item.assert_awaited_once()
+    assert operations_repo.update_item.await_count == 2
     assert stale_op.status == Status.DeploymentFailed
     assert operations_repo._container.create_item.await_count == 2
+
+
+async def test_acquire_workspace_lease_retries_unreconciled_terminal_operation(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    from fastapi import HTTPException
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "lease_ws-1",
+        "operationId": "terminal-op",
+        "createdWhen": operations_repo.get_timestamp(),
+        "_etag": "lease-etag",
+    })
+    terminal_op = MagicMock(id="terminal-op", status=Status.DeploymentFailed, reconciled=False, steps=[])
+    operations_repo.get_operation_by_id = AsyncMock(return_value=terminal_op)
+    operations_repo._reconcile_operation_resources = AsyncMock(side_effect=Exception("Cosmos write error"))
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "new-op")
+
+    assert exc.value.status_code == 409
+    operations_repo._container.replace_item.assert_not_called()
+
+    operations_repo._reconcile_operation_resources.side_effect = None
+    operations_repo.update_item = AsyncMock()
+    operations_repo.release_workspace_lease = AsyncMock()
+    assert await operations_repo.acquire_workspace_lease("ws-1", "new-op") is True
+    assert terminal_op.reconciled is True
+    operations_repo.update_item.assert_awaited_once_with(terminal_op, release_lease=False)
+    operations_repo.release_workspace_lease.assert_awaited_once_with("ws-1", "terminal-op")
 
 
 async def test_acquire_workspace_lease_fails_closed_when_reconciliation_fails(operations_repo):
@@ -543,11 +574,12 @@ async def test_reconcile_stale_operation_uses_step_resource_action(operations_re
     operations_repo.get_operation_by_id = AsyncMock(return_value=stale_op)
     operations_repo.update_item = AsyncMock(return_value=None)
     operations_repo._reconcile_resource_status = AsyncMock()
+    operations_repo._container.delete_item = AsyncMock()
     operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
 
     await operations_repo.acquire_workspace_lease("ws-1", "new-op")
 
-    operations_repo.update_item.assert_awaited_once()
+    assert operations_repo.update_item.await_count == 2
     saved_op = operations_repo.update_item.call_args[0][0]
     assert saved_op.status == Status.DeletingFailed
     assert saved_op.steps[0].status == Status.DeletingFailed

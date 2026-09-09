@@ -50,6 +50,10 @@ output "service_bus_deployment_status_queue" {
   value = azurerm_servicebus_queue.service_bus_deployment_status_update_queue.name
 }
 
+output "service_bus_airlock_workflow_queue" {
+  value = azurerm_servicebus_queue.airlock_workflow.name
+}
+
 output "state_store_resource_id" {
   value = azurerm_cosmosdb_account.tre_db_account.id
 }

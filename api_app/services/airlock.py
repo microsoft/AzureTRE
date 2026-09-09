@@ -35,6 +35,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 
 from collections import defaultdict
 from event_grid.event_sender import send_status_changed_event, send_airlock_notification_event
+from service_bus.helpers import send_airlock_workflow_message
 
 STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
 
@@ -201,12 +202,17 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
             operation_repo, resource_template_repo, resource_history_repo,
             wait_for_completion=False)
         if delete_operation and hasattr(delete_operation, "id"):
-            asyncio.create_task(_redeploy_review_vm_after_delete(
-                airlock_request, user, workspace, review_workspace_id,
-                review_workspace_service_id, user_resource_template_name,
-                user_resource_repo, workspace_service_repo, operation_repo,
-                airlock_request_repo, resource_template_repo,
-                resource_history_repo, delete_operation.id))
+            await send_airlock_workflow_message({
+                "workflow": "redeploy",
+                "airlock_request_id": airlock_request.id,
+                "user": user.model_dump(),
+                "workspace_id": workspace.id,
+                "review_workspace_id": review_workspace_id,
+                "review_workspace_service_id": review_workspace_service_id,
+                "user_resource_template_name": user_resource_template_name,
+                "user_resource_id": existing_resource.id,
+                "operation_id": delete_operation.id,
+            })
             return airlock_request, delete_operation
 
     # Create the VM
@@ -235,7 +241,10 @@ async def _redeploy_review_vm_after_delete(
         workspace_service_repo: WorkspaceServiceRepository,
         operation_repo: OperationRepository, airlock_request_repo: AirlockRequestRepository,
         resource_template_repo: ResourceTemplateRepository,
-        resource_history_repo: ResourceHistoryRepository, delete_operation_id: str):
+        resource_history_repo: ResourceHistoryRepository, delete_operation_id: str,
+        existing_resource_workspace_id: Optional[str] = None,
+        existing_resource_service_id: Optional[str] = None,
+        existing_resource_id: Optional[str] = None):
     try:
         await wait_for_successful_operation(operation_repo, delete_operation_id)
         user_resource, _ = await _deploy_vm(
@@ -243,6 +252,7 @@ async def _redeploy_review_vm_after_delete(
             review_workspace_service_id, user_resource_template_name,
             user_resource_repo, workspace_service_repo, operation_repo,
             resource_template_repo, resource_history_repo)
+        airlock_request = await airlock_request_repo.get_airlock_request_by_id(airlock_request.id)
         await update_and_publish_event_airlock_request(
             airlock_request, airlock_request_repo, user, workspace,
             review_user_resource=AirlockReviewUserResource(
@@ -533,6 +543,8 @@ async def delete_review_user_resource(
     disable_op = await disable_user_resource(user_resource, user, workspace_service, user_resource_repo, resource_template_repo, operations_repo, resource_history_repo)
     if wait_for_completion and disable_op and hasattr(disable_op, "id"):
         await wait_for_successful_operation(operations_repo, disable_op.id)
+    if not wait_for_completion:
+        return disable_op
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -571,7 +583,18 @@ async def delete_all_review_user_resources(
         resource_template_repo: ResourceTemplateRepository,
         operations_repo: OperationRepository,
         resource_history_repo: ResourceHistoryRepository,
-        user: User) -> List[Operation]:
+        user: User, enqueue: bool = False) -> List[Operation]:
+    if enqueue:
+        for review_resource in airlock_request.reviewUserResources.values():
+            await send_airlock_workflow_message({
+                "workflow": "cleanup",
+                "user": user.model_dump(),
+                "review_workspace_id": review_resource.workspaceId,
+                "review_workspace_service_id": review_resource.workspaceServiceId,
+                "user_resource_id": review_resource.userResourceId,
+            })
+        return []
+
     operations: List[Operation] = []
     for review_ur in airlock_request.reviewUserResources.values():
         start_time = time.time()
@@ -592,7 +615,8 @@ async def delete_all_review_user_resources(
                     resource_template_repo=resource_template_repo,
                     operations_repo=operations_repo,
                     resource_history_repo=resource_history_repo,
-                    user=user
+                    user=user,
+                    enqueue=True
                 )
                 operations.append(operation)
                 break
@@ -627,7 +651,7 @@ async def cancel_request(airlock_request: AirlockRequest, user: User, workspace:
                          airlock_request_repo: AirlockRequestRepository, user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository,
                          resource_template_repo: ResourceTemplateRepository, operations_repo: OperationRepository, resource_history_repo: ResourceHistoryRepository) -> AirlockRequest:
     updated_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=airlock_request_repo, updated_by=user, workspace=workspace, new_status=AirlockRequestStatus.Cancelled)
-    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user)
+    await delete_all_review_user_resources(airlock_request, user_resource_repo, workspace_service_repo, resource_template_repo, operations_repo, resource_history_repo, user, enqueue=True)
     return updated_request
 
 
