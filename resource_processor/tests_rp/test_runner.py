@@ -232,7 +232,10 @@ async def test_receive_message_dead_letter_failure_is_logged(
     run_once = Mock(side_effect=[True, False])
     config = {"resource_request_queue": "test_queue"}
 
-    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+
+    mock_sleep.assert_awaited_once_with(10)
 
     assert mock_logger.exception.call_args_list == [
         ((expected_log,), {}),
