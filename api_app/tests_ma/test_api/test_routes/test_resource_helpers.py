@@ -276,6 +276,7 @@ class TestResourceHelpers:
         resource_repo.save_item = AsyncMock(return_value=None)
         resource_repo.get_resource_by_id = AsyncMock(return_value=resource)
         operations_repo.create_operation_item = AsyncMock(return_value=operation)
+        operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
 
         resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=basic_resource_template)
 

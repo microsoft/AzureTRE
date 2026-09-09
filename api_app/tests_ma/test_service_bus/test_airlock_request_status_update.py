@@ -212,11 +212,12 @@ async def test_receiving_good_message(_, logging_mock, workspace_repo, airlock_r
     airlock_request_repo.return_value.update_airlock_request.assert_called_once_with(
         original_request=expected_airlock_request,
         updated_by=expected_airlock_request.updatedBy,
-        new_status=test_sb_step_result_message["data"]["new_status"],
+        new_status=AirlockRequestStatus.InReview,
         request_files=None,
         status_message=None,
         airlock_review=None,
-        review_user_resource=None)
+        review_user_resource=None,
+        redeploy_workflow=None)
     assert eg_client().send.call_count == 2
     logging_mock.assert_not_called()
 

@@ -37,6 +37,12 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.fixture(autouse=True)
+def mock_workspace_lease_release():
+    with patch("api.routes.workspaces.OperationRepository.release_workspace_lease", new=AsyncMock()):
+        yield
+
+
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
 SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'a33ad738-7265-4b5f-9eae-a1a62928772a'
