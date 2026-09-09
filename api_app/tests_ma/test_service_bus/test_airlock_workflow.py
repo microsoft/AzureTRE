@@ -5,6 +5,7 @@ import pytest
 
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User
+from models.domain.airlock_request import AirlockRequest, AirlockRedeployWorkflow
 from service_bus.airlock_workflow import AirlockWorkflowUpdater
 
 
@@ -72,6 +73,64 @@ async def test_process_message_redeploys_without_duplicate_uninstall(updater):
 
     assert result is True
     uninstall.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_process_message_acknowledges_unknown_workflow_without_side_effects(updater):
+    with patch("service_bus.airlock_workflow.wait_for_successful_operation", new=AsyncMock()) as wait_for_operation, \
+            patch("service_bus.airlock_workflow.send_uninstall_message", new=AsyncMock()) as uninstall:
+        result = await updater.process_message(message({
+            "workflow": "future-workflow",
+            "user": user_payload(),
+            "review_workspace_id": "workspace-id",
+            "review_workspace_service_id": "service-id",
+            "user_resource_id": "resource-id",
+        }))
+
+    assert result is True
+    updater.user_resource_repo.get_user_resource_by_id.assert_not_called()
+    wait_for_operation.assert_not_awaited()
+    uninstall.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_process_message_recovers_deploying_redeploy_without_deploying_again(updater):
+    workflow_id = "request-id:user-id"
+    updater.user_resource_repo.get_user_resource_by_id = AsyncMock(side_effect=EntityDoesNotExist)
+    updater.user_resource_repo.get_user_resource_by_workflow_id = AsyncMock(
+        return_value=MagicMock(id="replacement-resource-id"))
+    updater.airlock_request_repo.get_airlock_request_by_id = AsyncMock(return_value=AirlockRequest(
+        id="request-id",
+        redeployWorkflows={workflow_id: AirlockRedeployWorkflow(
+            workflowId=workflow_id,
+            phase="deploying",
+            operationId="replacement-operation-id")}
+    ))
+    updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=MagicMock())
+
+    payload = {
+        "workflow": "redeploy",
+        "redeploy_workflow_id": workflow_id,
+        "user": user_payload(),
+        "airlock_request_id": "request-id",
+        "workspace_id": "workspace-id",
+        "review_workspace_id": "review-workspace-id",
+        "review_workspace_service_id": "service-id",
+        "user_resource_template_name": "template",
+        "user_resource_id": "resource-id",
+        "operation_id": "delete-operation-id",
+        "uninstall_started": True,
+    }
+
+    with patch("service_bus.airlock_workflow.wait_for_successful_operation", new=AsyncMock()), \
+            patch("service_bus.airlock_workflow._deploy_vm", new=AsyncMock()) as deploy, \
+            patch("service_bus.airlock_workflow.update_and_publish_event_airlock_request", new=AsyncMock()) as update:
+        result = await updater.process_message(message(payload))
+
+    assert result is True
+    deploy.assert_not_awaited()
+    assert update.await_args.kwargs["redeploy_workflow"].phase == "completed"
+    assert update.await_args.kwargs["redeploy_workflow"].operationId == "replacement-operation-id"
 
 
 @pytest.mark.asyncio

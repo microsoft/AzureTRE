@@ -6,7 +6,7 @@ from services.logging import logger
 from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobServiceClient
 from fastapi import HTTPException, status
 from core import config, credentials
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision, AirlockActions, AirlockFile, AirlockReview
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType, AirlockReviewUserResource, AirlockReviewDecision, AirlockActions, AirlockFile, AirlockReview, AirlockRedeployWorkflow
 from models.domain.authentication import User
 from models.domain.workspace import Workspace
 from models.domain.user_resource import UserResource
@@ -214,6 +214,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
                 "user_resource_id": existing_resource.id,
                 "operation_id": delete_operation.id,
                 "uninstall_started": True,
+                "redeploy_workflow_id": f"{airlock_request.id}:{user.id}",
             })
             return airlock_request, delete_operation
 
@@ -267,7 +268,8 @@ async def _redeploy_review_vm_after_delete(
 
 async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Workspace, review_workspace_id: str, review_workspace_service_id: str, user_resource_template_name: str,
                      user_resource_repo: UserResourceRepository, workspace_service_repo: WorkspaceServiceRepository, operation_repo: OperationRepository,
-                     resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository):
+                     resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository,
+                     workflow_id: Optional[str] = None, operation_id: Optional[str] = None):
     logger.info(f"Creating review VM in workspace:{review_workspace_id} service:{review_workspace_service_id} using template:{user_resource_template_name}")
     workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
     airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
@@ -280,6 +282,8 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
             "airlock_request_sas_url": airlock_request_sas_url
         }
     )
+    if workflow_id is not None:
+        user_resource_create.properties["airlock_redeploy_workflow_id"] = workflow_id
 
     user_resource, resource_template = await user_resource_repo.create_user_resource_item(
         user_resource_create, review_workspace_id, review_workspace_service_id, workspace_service.templateName, user.id, user.roles)
@@ -291,7 +295,8 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
         user=user,
-        resource_template=resource_template)
+        resource_template=resource_template,
+        operation_id=operation_id)
 
     return user_resource, operation
 
@@ -366,6 +371,7 @@ async def update_and_publish_event_airlock_request(
     status_message: Optional[str] = None,
     airlock_review: Optional[AirlockReview] = None,
     review_user_resource: Optional[AirlockReviewUserResource] = None,
+    redeploy_workflow: Optional[AirlockRedeployWorkflow] = None,
 ) -> AirlockRequest:
     try:
         logger.debug(f"Updating airlock request item: {airlock_request.id}")
@@ -376,7 +382,8 @@ async def update_and_publish_event_airlock_request(
             request_files=request_files,
             status_message=status_message,
             airlock_review=airlock_review,
-            review_user_resource=review_user_resource)
+            review_user_resource=review_user_resource,
+            redeploy_workflow=redeploy_workflow)
     except Exception as e:
         logger.exception(f'Failed updating airlock_request item {airlock_request}')
         # If the validation failed, the error was not related to the saving itself

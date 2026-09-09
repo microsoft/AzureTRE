@@ -85,6 +85,16 @@ class UserResourceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return TypeAdapter(UserResource).validate_python(user_resources[0])
 
+    async def get_user_resource_by_workflow_id(self, workspace_id: str, service_id: str, workflow_id: str) -> UserResource:
+        query, parameters = self.user_resources_query(str(workspace_id), str(service_id))
+        query += ' AND c.properties.airlock_redeploy_workflow_id = @workflowId AND c.deploymentStatus != @deletedStatus'
+        parameters.append({'name': '@workflowId', 'value': workflow_id})
+        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
+        user_resources = await self.query(query=query, parameters=parameters)
+        if not user_resources:
+            raise EntityDoesNotExist
+        return TypeAdapter(UserResource).validate_python(user_resources[0])
+
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()
 

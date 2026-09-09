@@ -93,6 +93,15 @@ class AirlockReviewUserResource(AzureTREModel):
     userResourceId: str = Field(title="User Resource ID")
 
 
+class AirlockRedeployWorkflow(AzureTREModel):
+    workflowId: str
+    phase: str
+    operationId: str
+    workspaceId: Optional[str] = None
+    workspaceServiceId: Optional[str] = None
+    userResourceId: Optional[str] = None
+
+
 class AirlockRequest(AzureTREModel):
     """
     Airlock request
@@ -114,6 +123,7 @@ class AirlockRequest(AzureTREModel):
     reviews: Optional[List[AirlockReview]] = None
     etag: Optional[str] = Field(None, title="_etag", alias="_etag")
     reviewUserResources: Dict[str, AirlockReviewUserResource] = Field(default_factory=dict, title="User resources created for Airlock Reviews")
+    redeployWorkflows: Dict[str, AirlockRedeployWorkflow] = Field(default_factory=dict)
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @field_validator("etag", mode="before")

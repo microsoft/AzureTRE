@@ -12,7 +12,7 @@ from services.authentication import get_aad_service
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
-    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
+    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource, AirlockRedeployWorkflow
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -194,7 +194,8 @@ class AirlockRequestRepository(BaseRepository):
             request_files: Optional[List[AirlockFile]] = None,
             status_message: Optional[str] = None,
             airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
+            review_user_resource: Optional[AirlockReviewUserResource] = None,
+            redeploy_workflow: Optional[AirlockRedeployWorkflow] = None) -> AirlockRequest:
         updated_request = self._build_updated_request(
             original_request=original_request,
             new_status=new_status,
@@ -202,6 +203,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
+            redeploy_workflow=redeploy_workflow,
             updated_by=updated_by)
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
@@ -215,6 +217,7 @@ class AirlockRequestRepository(BaseRepository):
                 status_message=status_message,
                 airlock_review=airlock_review,
                 review_user_resource=review_user_resource,
+                redeploy_workflow=redeploy_workflow,
                 updated_by=updated_by)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
@@ -258,6 +261,7 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
+            redeploy_workflow: Optional[AirlockRedeployWorkflow] = None,
             updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
@@ -281,6 +285,9 @@ class AirlockRequestRepository(BaseRepository):
             reviewer_id = updated_by.id if hasattr(updated_by, "id") else updated_by.get("id")
             if reviewer_id:
                 updated_request.reviewUserResources[reviewer_id] = review_user_resource
+
+        if redeploy_workflow is not None:
+            updated_request.redeployWorkflows[redeploy_workflow.workflowId] = redeploy_workflow
 
         return updated_request
 

@@ -158,7 +158,15 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
-        workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+        try:
+            workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+        except Exception:
+            if hasattr(operations_repo, "release_workspace_lease"):
+                try:
+                    await operations_repo.release_workspace_lease(workspace.id, operation_id)
+                except Exception:
+                    logger.exception("Failed to release workspace lease after workspace reload failed")
+            raise
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -299,7 +307,15 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
-        workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
+        try:
+            workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
+        except Exception:
+            if hasattr(operations_repo, "release_workspace_lease"):
+                try:
+                    await operations_repo.release_workspace_lease(workspace.id, operation_id)
+                except Exception:
+                    logger.exception("Failed to release workspace lease after workspace reload failed")
+            raise
 
     address_space_added = False
     try:
@@ -372,8 +388,16 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace_service.workspaceId, operation_id)
-        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
-            workspace_service.workspaceId, workspace_service.id)
+        try:
+            workspace_service = await workspace_service_repo.get_workspace_service_by_id(
+                workspace_service.workspaceId, workspace_service.id)
+        except Exception:
+            if hasattr(operations_repo, "release_workspace_lease"):
+                try:
+                    await operations_repo.release_workspace_lease(workspace_service.workspaceId, operation_id)
+                except Exception:
+                    logger.exception("Failed to release workspace lease after workspace service reload failed")
+            raise
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -525,9 +549,17 @@ async def create_user_resource(
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
-        workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
-        workspace_service = await workspace_service_repo.get_deployed_workspace_service_by_id(
-            workspace.id, workspace_service.id, operations_repo)
+        try:
+            workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
+            workspace_service = await workspace_service_repo.get_deployed_workspace_service_by_id(
+                workspace.id, workspace_service.id, operations_repo)
+        except Exception:
+            if hasattr(operations_repo, "release_workspace_lease"):
+                try:
+                    await operations_repo.release_workspace_lease(workspace.id, operation_id)
+                except Exception:
+                    logger.exception("Failed to release workspace lease after resource reload failed")
+            raise
 
     try:
         owner_id: str = None
