@@ -158,6 +158,7 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
+        workspace = await workspace_repo.get_workspace_by_id(workspace.id)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -298,6 +299,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
+        workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
 
     address_space_added = False
     try:
@@ -370,6 +372,8 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace_service.workspaceId, operation_id)
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
+            workspace_service.workspaceId, workspace_service.id)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -507,6 +511,8 @@ async def create_user_resource(
         response: Response,
         user_resource_create: UserResourceInCreate,
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        workspace_repo=Depends(get_repository(WorkspaceRepository)),
+        workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         operations_repo=Depends(get_repository(OperationRepository)),
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository)),
@@ -519,6 +525,9 @@ async def create_user_resource(
     operation_id = operations_repo.create_operation_id()
     if hasattr(operations_repo, "acquire_workspace_lease"):
         await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
+        workspace = await workspace_repo.get_deployed_workspace_by_id(workspace.id, operations_repo)
+        workspace_service = await workspace_service_repo.get_deployed_workspace_service_by_id(
+            workspace.id, workspace_service.id, operations_repo)
 
     try:
         owner_id: str = None

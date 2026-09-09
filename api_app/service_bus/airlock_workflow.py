@@ -13,6 +13,8 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.workspaces import WorkspaceRepository
+from db.errors import EntityDoesNotExist
+from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
 from models.domain.authentication import User
 from models.domain.airlock_request import AirlockReviewUserResource
 from models.domain.resource import ResourceType
@@ -38,10 +40,13 @@ class AirlockWorkflowUpdater:
                     async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as client:
                         receiver = client.get_queue_receiver(queue_name=config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
                         async with receiver:
-                            messages = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
+                            messages = await receiver.receive_messages(max_message_count=1, max_wait_time=1)
                             for message in messages:
                                 async with AutoLockRenewer() as renewer:
-                                    renewer.register(receiver, message, max_lock_renewal_duration=60)
+                                    renewer.register(
+                                        receiver,
+                                        message,
+                                        max_lock_renewal_duration=2 * WORKSPACE_LEASE_EXPIRY_SECONDS)
                                     if await self.process_message(message):
                                         await receiver.complete_message(message)
                                     else:
@@ -60,29 +65,38 @@ class AirlockWorkflowUpdater:
         try:
             payload = json.loads(str(message))
             user = User.model_validate(payload["user"])
-            user_resource = await self.user_resource_repo.get_user_resource_by_id(
-                workspace_id=payload["review_workspace_id"],
-                service_id=payload["review_workspace_service_id"],
-                resource_id=payload["user_resource_id"])
+            try:
+                user_resource = await self.user_resource_repo.get_user_resource_by_id(
+                    workspace_id=payload["review_workspace_id"],
+                    service_id=payload["review_workspace_service_id"],
+                    resource_id=payload["user_resource_id"])
+            except EntityDoesNotExist:
+                if payload["workflow"] == "cleanup":
+                    logger.info("Airlock review resource %s is already deleted", payload["user_resource_id"])
+                    return True
+                user_resource = None
             if payload["workflow"] == "cleanup":
                 workspace_service = await self.workspace_service_repo.get_workspace_service_by_id(
                     workspace_id=payload["review_workspace_id"],
                     service_id=payload["review_workspace_service_id"])
+                if user_resource is None:
+                    return True
                 disable_operation = await disable_user_resource(
                     user_resource, user, workspace_service, self.user_resource_repo,
                     self.resource_template_repo, self.operations_repo, self.resource_history_repo)
                 await wait_for_successful_operation(self.operations_repo, disable_operation.id)
             else:
                 await wait_for_successful_operation(self.operations_repo, payload["operation_id"])
-            delete_operation = await send_uninstall_message(
-                resource=user_resource,
-                resource_repo=self.user_resource_repo,
-                operations_repo=self.operations_repo,
-                resource_type=ResourceType.UserResource,
-                resource_template_repo=self.resource_template_repo,
-                resource_history_repo=self.resource_history_repo,
-                user=user)
-            await wait_for_successful_operation(self.operations_repo, delete_operation.id)
+            if user_resource is not None and not payload.get("uninstall_started", False):
+                delete_operation = await send_uninstall_message(
+                    resource=user_resource,
+                    resource_repo=self.user_resource_repo,
+                    operations_repo=self.operations_repo,
+                    resource_type=ResourceType.UserResource,
+                    resource_template_repo=self.resource_template_repo,
+                    resource_history_repo=self.resource_history_repo,
+                    user=user)
+                await wait_for_successful_operation(self.operations_repo, delete_operation.id)
 
             if payload["workflow"] == "redeploy":
                 airlock_request = await self.airlock_request_repo.get_airlock_request_by_id(payload["airlock_request_id"])

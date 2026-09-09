@@ -163,7 +163,8 @@ async def review_airlock_request(airlock_review_input: AirlockReviewInCreate, ai
         resource_template_repo=resource_template_repo,
         operations_repo=operation_repo,
         resource_history_repo=resource_history_repo,
-        user=user
+        user=user,
+        enqueue=True
     )
 
     return updated_airlock_request
@@ -212,6 +213,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
                 "user_resource_template_name": user_resource_template_name,
                 "user_resource_id": existing_resource.id,
                 "operation_id": delete_operation.id,
+                "uninstall_started": True,
             })
             return airlock_request, delete_operation
 
@@ -544,7 +546,15 @@ async def delete_review_user_resource(
     if wait_for_completion and disable_op and hasattr(disable_op, "id"):
         await wait_for_successful_operation(operations_repo, disable_op.id)
     if not wait_for_completion:
-        return disable_op
+        logger.info(f"Starting deletion of user resource {user_resource.id} after disable operation {disable_op.id}")
+        return await send_uninstall_message(
+            resource=user_resource,
+            resource_repo=user_resource_repo,
+            operations_repo=operations_repo,
+            resource_type=ResourceType.UserResource,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user)
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(
@@ -615,8 +625,7 @@ async def delete_all_review_user_resources(
                     resource_template_repo=resource_template_repo,
                     operations_repo=operations_repo,
                     resource_history_repo=resource_history_repo,
-                    user=user,
-                    enqueue=True
+                    user=user
                 )
                 operations.append(operation)
                 break

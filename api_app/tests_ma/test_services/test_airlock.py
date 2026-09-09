@@ -829,7 +829,7 @@ async def test_delete_review_user_resource_waits_for_disable_before_uninstall(mo
     mock_send_uninstall.return_value = delete_op
 
     user_resource = MagicMock(workspaceId="ws-1", parentWorkspaceServiceId="svc-1", id="resource")
-    await delete_review_user_resource(
+    result = await delete_review_user_resource(
         user_resource=user_resource,
         user_resource_repo=AsyncMock(),
         workspace_service_repo=AsyncMock(),
@@ -839,7 +839,8 @@ async def test_delete_review_user_resource_waits_for_disable_before_uninstall(mo
         user=create_test_user(),
         wait_for_completion=False)
 
-    mock_send_uninstall.assert_not_called()
+    mock_send_uninstall.assert_awaited_once()
+    assert result is delete_op
 
 
 @pytest.mark.asyncio

@@ -351,7 +351,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @patch("services.airlock.send_uninstall_message")
+    @patch("services.airlock.send_airlock_workflow_message")
     @patch("services.airlock.ResourceHistoryRepository.save_item")
     @patch("services.airlock.UserResourceRepository.update_item_with_etag")
     @patch("services.airlock.update_user_resource")
@@ -362,10 +362,10 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.AirlockRequestRepository.create_airlock_review_item", return_value=sample_airlock_review_object())
     @patch("services.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.Approved, review_user_resource=True))
     @patch("services.airlock.AirlockRequestRepository.save_item")
-    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, ________, _________, __________, send_uninstall_message_mock, app, client, sample_airlock_review_input_data):
+    async def test_post_create_airlock_review_cleans_up_review_user_resources(self, _, __, ___, ____, _____, ______, _______, ________, _________, __________, workflow_message_mock, app, client, sample_airlock_review_input_data):
         response = await client.post(app.url_path_for(strings.API_REVIEW_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID), json=sample_airlock_review_input_data)
         assert response.status_code == status.HTTP_200_OK
-        assert send_uninstall_message_mock.call_count == 1
+        workflow_message_mock.assert_awaited_once()
 
     @patch("services.airlock.save_and_deploy_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="install", createdWhen=time.time(), updatedWhen=time.time()))
     @patch("services.airlock.update_and_publish_event_airlock_request", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
@@ -411,8 +411,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_409_CONFLICT
 
-    @patch("services.airlock._redeploy_review_vm_after_delete")
-    @patch("services.airlock.asyncio.create_task", side_effect=lambda coroutine: coroutine.close())
+    @patch("services.airlock.send_airlock_workflow_message")
     @patch("services.airlock.delete_review_user_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="uninstall", createdWhen=time.time(), updatedWhen=time.time()))
     @patch("services.airlock.save_and_deploy_resource", return_value=Operation(id="123", resourceId=USER_RESOURCE_ID, resourcePath="a/b", action="install", createdWhen=time.time(), updatedWhen=time.time()))
     @patch("services.airlock.get_azure_resource_status", return_value={})
@@ -423,13 +422,12 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
     @patch("services.airlock.UserResourceRepository.create_user_resource_item", return_value=(UserResource(id=USER_RESOURCE_ID, templateName="test", templateVersion="0.0.1", _etag="123"), "test"))
     @patch("services.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview, review_user_resource=True))
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace(workspace_properties=sample_airlock_review_config()))
-    async def test_post_create_review_user_resource_with_existing_unhealthy_resource_deletes_previous_and_redeploys(self, _, __, ___, ____, _____, ______, _______, ________, deploy_resource_mock, delete_review_resource_mock, create_task_mock, redeploy_mock, app, client):
+    async def test_post_create_review_user_resource_with_existing_unhealthy_resource_deletes_previous_and_redeploys(self, _, __, ___, ____, _____, ______, _______, ________, deploy_resource_mock, delete_review_resource_mock, workflow_message_mock, app, client):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
         assert response.status_code == status.HTTP_202_ACCEPTED
         assert delete_review_resource_mock.call_count == 1
         assert response.json()["operation"]["action"] == "uninstall"
-        assert create_task_mock.call_count == 1
-        redeploy_mock.assert_called_once()
+        workflow_message_mock.assert_awaited_once()
         deploy_resource_mock.assert_not_called()
 
     # [POST] /workspaces/{workspace_id}/requests/{airlock_request_id}/revoke
