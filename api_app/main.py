@@ -58,11 +58,29 @@ async def lifespan(app: FastAPI):
     await airlockStatusUpdater.init_repos()
 
     shutdown_inspected_tasks: set[asyncio.Task[Any]] = set()
+    shutdown_reported_tasks: set[asyncio.Task[Any]] = set()
+
+    def inspect_shutdown_task(task: asyncio.Task[Any]) -> None:
+        if task.cancelled() or task in shutdown_reported_tasks:
+            return
+
+        try:
+            exception = task.exception()
+        except asyncio.CancelledError:
+            return
+
+        if exception is not None:
+            shutdown_reported_tasks.add(task)
+            logger.warning(
+                f"Background task {task.get_name()} raised exception during shutdown: {exception}",
+                exc_info=(type(exception), exception, exception.__traceback__)
+            )
 
     def track(task: asyncio.Task[Any]) -> None:
         def _done_callback(task: asyncio.Task[Any]) -> None:
             background_tasks.discard(task)
             if task in shutdown_inspected_tasks:
+                inspect_shutdown_task(task)
                 return
 
             if task.cancelled():
@@ -106,22 +124,9 @@ async def lifespan(app: FastAPI):
         if tasks:
             done, pending = await asyncio.wait(tasks, timeout=SHUTDOWN_TIMEOUT)
             for task in done:
-                if task.cancelled():
-                    continue
-
-                try:
-                    exception = task.exception()
-                except asyncio.CancelledError:
-                    continue
-
-                if exception is not None:
-                    logger.warning(
-                        f"Background task {task.get_name()} raised exception during shutdown: {exception}",
-                        exc_info=(type(exception), exception, exception.__traceback__)
-                    )
+                inspect_shutdown_task(task)
 
             if pending:
-                shutdown_inspected_tasks.difference_update(pending)
                 logger.error("Timeout waiting for background tasks to shutdown")
                 for task in pending:
                     logger.warning(f"Task {task.get_name()} did not terminate in time during shutdown")

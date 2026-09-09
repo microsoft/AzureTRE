@@ -186,11 +186,11 @@ async def test_lifespan_timeout_preserves_completed_task_exceptions(mock_logger,
     finally:
         hang_event.set()
         await asyncio.sleep(0.01)
-        late_error_logs = [
-            call for call in mock_logger.error.call_args_list
-            if "Background task airlock-status-updater failed" in call[0][0]
+        late_shutdown_logs = [
+            call for call in mock_logger.warning.call_args_list
+            if "Background task airlock-status-updater raised exception during shutdown" in call[0][0]
         ]
-        assert len(late_error_logs) == 1
+        assert len(late_shutdown_logs) == 1
 
 
 @pytest.mark.asyncio
