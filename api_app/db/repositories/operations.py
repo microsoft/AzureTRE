@@ -195,6 +195,11 @@ class OperationRepository(BaseRepository):
                                     for step in getattr(existing_op, "steps", None) or []
                                     if step.resourceId and step.status
                                 ]
+                                existing_op.reconciled = False
+                                existing_op.updatedWhen = timestamp
+                                update_call = self.update_item(existing_op, release_lease=False)
+                                if hasattr(update_call, "__await__"):
+                                    await update_call
                                 await self._reconcile_operation_resources(existing_op, affected_step_resources)
                                 existing_op.reconciled = True
                                 existing_op.updatedWhen = timestamp

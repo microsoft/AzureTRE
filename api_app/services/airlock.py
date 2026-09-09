@@ -213,7 +213,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
                 "user_resource_template_name": user_resource_template_name,
                 "user_resource_id": existing_resource.id,
                 "operation_id": delete_operation.id,
-                "uninstall_started": True,
+                "uninstall_started": False,
                 "redeploy_workflow_id": f"{airlock_request.id}:{user.id}",
             })
             return airlock_request, delete_operation
@@ -553,15 +553,8 @@ async def delete_review_user_resource(
     if wait_for_completion and disable_op and hasattr(disable_op, "id"):
         await wait_for_successful_operation(operations_repo, disable_op.id)
     if not wait_for_completion:
-        logger.info(f"Starting deletion of user resource {user_resource.id} after disable operation {disable_op.id}")
-        return await send_uninstall_message(
-            resource=user_resource,
-            resource_repo=user_resource_repo,
-            operations_repo=operations_repo,
-            resource_type=ResourceType.UserResource,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            user=user)
+        logger.info(f"Deferring deletion of user resource {user_resource.id} until disable operation {disable_op.id} completes")
+        return disable_op
 
     logger.info(f"Deleting user resource {user_resource.id} in workspace service {workspace_service.id}")
     operation = await send_uninstall_message(

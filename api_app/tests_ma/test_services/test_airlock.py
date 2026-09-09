@@ -824,9 +824,7 @@ async def test_delete_review_user_resource_waits_for_disable_before_uninstall(mo
     from models.domain.operation import Operation
 
     disable_op = Operation(id="disable", resourceId="resource", resourcePath="/workspaces/ws", action="upgrade")
-    delete_op = Operation(id="delete", resourceId="resource", resourcePath="/workspaces/ws", action="uninstall")
     mock_disable.return_value = disable_op
-    mock_send_uninstall.return_value = delete_op
 
     user_resource = MagicMock(workspaceId="ws-1", parentWorkspaceServiceId="svc-1", id="resource")
     result = await delete_review_user_resource(
@@ -839,8 +837,8 @@ async def test_delete_review_user_resource_waits_for_disable_before_uninstall(mo
         user=create_test_user(),
         wait_for_completion=False)
 
-    mock_send_uninstall.assert_awaited_once()
-    assert result is delete_op
+    mock_send_uninstall.assert_not_awaited()
+    assert result is disable_op
 
 
 @pytest.mark.asyncio

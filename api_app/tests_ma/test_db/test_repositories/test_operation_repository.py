@@ -411,6 +411,8 @@ async def test_acquire_workspace_lease_retries_unreconciled_terminal_operation(o
     })
     terminal_op = MagicMock(id="terminal-op", status=Status.DeploymentFailed, reconciled=False, steps=[])
     operations_repo.get_operation_by_id = AsyncMock(return_value=terminal_op)
+    persisted_reconciled_states = []
+    operations_repo.update_item = AsyncMock(side_effect=lambda item, **kwargs: persisted_reconciled_states.append(item.reconciled))
     operations_repo._reconcile_operation_resources = AsyncMock(side_effect=Exception("Cosmos write error"))
 
     with pytest.raises(HTTPException) as exc:
@@ -418,13 +420,21 @@ async def test_acquire_workspace_lease_retries_unreconciled_terminal_operation(o
 
     assert exc.value.status_code == 409
     operations_repo._container.replace_item.assert_not_called()
+    operations_repo.update_item.assert_awaited_once_with(terminal_op, release_lease=False)
+    assert persisted_reconciled_states == [False]
+    assert terminal_op.reconciled is False
 
     operations_repo._reconcile_operation_resources.side_effect = None
-    operations_repo.update_item = AsyncMock()
+    operations_repo.update_item.reset_mock()
     operations_repo.release_workspace_lease = AsyncMock()
     assert await operations_repo.acquire_workspace_lease("ws-1", "new-op") is True
     assert terminal_op.reconciled is True
-    operations_repo.update_item.assert_awaited_once_with(terminal_op, release_lease=False)
+    assert operations_repo.update_item.await_count == 2
+    assert persisted_reconciled_states == [False, False, True]
+    assert operations_repo.update_item.await_args_list[0].args == (terminal_op,)
+    assert operations_repo.update_item.await_args_list[0].kwargs == {"release_lease": False}
+    assert operations_repo.update_item.await_args_list[1].args == (terminal_op,)
+    assert operations_repo.update_item.await_args_list[1].kwargs == {"release_lease": False}
     operations_repo.release_workspace_lease.assert_awaited_once_with("ws-1", "terminal-op")
 
 
