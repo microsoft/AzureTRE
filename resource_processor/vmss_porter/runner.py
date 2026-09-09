@@ -116,6 +116,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                                 await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
                             except Exception:
                                 logger.exception("Failed to dead-letter malformed message")
+                                raise
                             continue
 
                         try:
@@ -126,6 +127,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                                 await receiver.dead_letter_message(msg, reason="InvalidResourceRequest", error_description=str(e))
                             except Exception:
                                 logger.exception("Failed to dead-letter invalid resource request message")
+                                raise
                             continue
 
                         with tracer.start_as_current_span("receive_message") as current_span:

@@ -234,7 +234,10 @@ async def test_receive_message_dead_letter_failure_is_logged(
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
 
-    mock_logger.exception.assert_called_once_with(expected_log)
+    assert mock_logger.exception.call_args_list == [
+        ((expected_log,), {}),
+        (("Unknown exception. Will retry...",), {}),
+    ]
     mock_receiver.complete_message.assert_not_awaited()
 
 
