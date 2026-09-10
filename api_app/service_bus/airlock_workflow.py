@@ -204,13 +204,14 @@ class AirlockWorkflowUpdater:
                         airlock_request, self.airlock_request_repo, user, workspace,
                         redeploy_workflow=workflow_state)
                     try:
-                        replacement_resource, _ = await _deploy_vm(
+                        replacement_resource, replacement_operation = await _deploy_vm(
                             airlock_request, user, workspace,
                             redeploy_workspace_id, redeploy_workspace_service_id,
                             user_resource_template_name, self.user_resource_repo,
                             self.workspace_service_repo, self.operations_repo,
                             self.resource_template_repo, self.resource_history_repo,
                             workflow_id=workflow_id, operation_id=operation_id)
+                        await wait_for_successful_operation(self.operations_repo, replacement_operation.id)
                     except Exception as ex:
                         if not getattr(ex, "lease_retained", False):
                             try:
