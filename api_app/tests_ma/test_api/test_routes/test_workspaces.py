@@ -39,7 +39,8 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture(autouse=True)
 def mock_workspace_lease_release():
-    with patch("api.routes.workspaces.OperationRepository.release_workspace_lease", new=AsyncMock()):
+    with patch("api.routes.workspaces.OperationRepository.release_workspace_lease", new=AsyncMock()), \
+            patch("api.routes.workspaces.OperationRepository.assert_address_space_allocator_lease", new=AsyncMock()):
         yield
 
 

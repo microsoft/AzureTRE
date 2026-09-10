@@ -216,6 +216,17 @@ class AirlockWorkflowUpdater:
                                     resource_id=replacement_operation.resourceId)
                             await wait_for_successful_operation(self.operations_repo, operation_id)
                     except EntityDoesNotExist:
+                        try:
+                            orphaned_resource = await self.user_resource_repo.get_user_resource_by_workflow_id(
+                                workspace_id=redeploy_workspace_id,
+                                service_id=redeploy_workspace_service_id,
+                                workflow_id=workflow_id)
+                            await self.user_resource_repo.delete_item(orphaned_resource.id)
+                            logger.warning(
+                                "Removed orphaned Airlock redeploy resource %s before retrying workflow %s",
+                                orphaned_resource.id, workflow_id)
+                        except EntityDoesNotExist:
+                            pass
                         operation_id = str(uuid.uuid4())
 
                 if replacement_resource is None:

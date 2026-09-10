@@ -148,6 +148,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
         raise
 
     try:
+        await operations_repo.assert_address_space_allocator_lease(address_space_operation_id)
         operation = await save_and_deploy_resource(
             resource=workspace,
             resource_repo=workspace_repo,

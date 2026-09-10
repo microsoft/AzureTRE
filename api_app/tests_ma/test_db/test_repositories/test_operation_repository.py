@@ -468,6 +468,43 @@ async def test_acquire_address_space_allocator_lease_creates_item(operations_rep
     assert body["operationId"] == "op-1"
 
 
+async def test_assert_address_space_allocator_lease_requires_current_owner(operations_repo):
+    from db.repositories.operations import ADDRESS_SPACE_ALLOCATOR_LEASE_ID
+    from fastapi import HTTPException
+
+    operations_repo._container = MagicMock()
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": ADDRESS_SPACE_ALLOCATOR_LEASE_ID,
+        "operationId": "other-op",
+        "createdWhen": operations_repo.get_timestamp(),
+    })
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.assert_address_space_allocator_lease("op-1")
+
+    assert exc.value.status_code == 409
+
+
+async def test_reconcile_operation_resources_uses_last_status_per_resource(operations_repo):
+    operation = MagicMock(
+        resourceId="workspace-id",
+        status=Status.Updated,
+        message="workspace update",
+    )
+    operations_repo._reconcile_resource_status = AsyncMock()
+
+    await operations_repo._reconcile_operation_resources(operation, [
+        ("workspace-id", Status.Updated, "first workspace update"),
+        ("workspace-id", Status.UpdatingFailed, "final workspace update"),
+        ("service-id", Status.DeletingFailed, "service cleanup"),
+    ])
+
+    assert [call.args for call in operations_repo._reconcile_resource_status.await_args_list] == [
+        ("workspace-id", Status.UpdatingFailed, "final workspace update"),
+        ("service-id", Status.DeletingFailed, "service cleanup"),
+    ]
+
+
 async def test_acquire_address_space_allocator_lease_is_idempotent(operations_repo):
     from azure.cosmos.exceptions import CosmosResourceExistsError
 

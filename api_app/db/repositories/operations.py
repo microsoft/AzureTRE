@@ -120,8 +120,12 @@ class OperationRepository(BaseRepository):
             await resource_repo.update_item(resource)
 
     async def _reconcile_operation_resources(self, operation: Operation, step_resources=None):
-        await self._reconcile_resource_status(operation.resourceId, operation.status, operation.message)
-        for resource_id, status, message in step_resources or []:
+        resource_updates = [(operation.resourceId, operation.status, operation.message)]
+        resource_updates.extend(step_resources or [])
+        collapsed_updates = {}
+        for resource_id, status, message in resource_updates:
+            collapsed_updates[resource_id] = (status, message)
+        for resource_id, (status, message) in collapsed_updates.items():
             await self._reconcile_resource_status(resource_id, status, message)
 
     async def _reconcile_operation(self, operation, timestamp: float, mark_failed: bool = False):
@@ -344,6 +348,22 @@ class OperationRepository(BaseRepository):
                 return True
             except (CosmosAccessConditionFailedError, ResourceExistsError, CosmosResourceNotFoundError, ResourceNotFoundError):
                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+    async def assert_address_space_allocator_lease(self, operation_id: str) -> None:
+        if not hasattr(self, "_container") or self._container is None:
+            return
+        try:
+            lease = self.read_item_by_id(ADDRESS_SPACE_ALLOCATOR_LEASE_ID)
+            lease = await lease if hasattr(lease, "__await__") else lease
+        except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist):
+            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+        if (
+            not isinstance(lease, dict)
+            or lease.get("operationId") != operation_id
+            or self.get_timestamp() - lease.get("createdWhen", 0.0) >= ADDRESS_SPACE_ALLOCATOR_LEASE_EXPIRY_SECONDS
+        ):
+            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     async def release_address_space_allocator_lease(self, operation_id: Optional[str] = None) -> None:
         if not hasattr(self, "_container") or self._container is None:
