@@ -28,6 +28,7 @@ from resources import strings
 from service_bus.helpers import send_airlock_workflow_message
 
 MAX_LEASE_CONTENTION_RETRY_DELAY_SECONDS = int(WORKSPACE_LEASE_EXPIRY_SECONDS)
+MAX_CONCURRENT_AIRLOCK_WORKFLOWS = 10
 
 
 class AirlockWorkflowUpdater:
@@ -41,23 +42,43 @@ class AirlockWorkflowUpdater:
         self.workspace_repo = await WorkspaceRepository.create()
 
     async def receive_messages(self):
+        processing_tasks = set()
+
+        async def process_received_message(message):
+            try:
+                async with AutoLockRenewer() as renewer:
+                    renewer.register(
+                        receiver,
+                        message,
+                        max_lock_renewal_duration=3 * WORKSPACE_LEASE_EXPIRY_SECONDS)
+                    if await self.process_message(message):
+                        await receiver.complete_message(message)
+                    else:
+                        await receiver.abandon_message(message)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                logger.exception("Airlock workflow message acknowledgement failed")
+
         while True:
             try:
                 async with credentials.get_credential_async_context() as credential:
                     async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as client:
                         receiver = client.get_queue_receiver(queue_name=config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
                         async with receiver:
-                            messages = await receiver.receive_messages(max_message_count=1, max_wait_time=1)
-                            for message in messages:
-                                async with AutoLockRenewer() as renewer:
-                                    renewer.register(
-                                        receiver,
-                                        message,
-                                        max_lock_renewal_duration=3 * WORKSPACE_LEASE_EXPIRY_SECONDS)
-                                    if await self.process_message(message):
-                                        await receiver.complete_message(message)
-                                    else:
-                                        await receiver.abandon_message(message)
+                            while True:
+                                available_slots = MAX_CONCURRENT_AIRLOCK_WORKFLOWS - len(processing_tasks)
+                                if available_slots <= 0:
+                                    await asyncio.sleep(1)
+                                    processing_tasks = {task for task in processing_tasks if not task.done()}
+                                    continue
+                                messages = await receiver.receive_messages(
+                                    max_message_count=available_slots,
+                                    max_wait_time=1)
+                                for message in messages:
+                                    task = asyncio.create_task(process_received_message(message))
+                                    processing_tasks.add(task)
+                                processing_tasks = {task for task in processing_tasks if not task.done()}
             except OperationTimeoutError:
                 logger.debug("No Airlock workflow messages available")
             except ServiceBusConnectionError:
@@ -96,17 +117,19 @@ class AirlockWorkflowUpdater:
             user_resource_id = review_resource.userResourceId
             redeploy_workspace_id = review_workspace_id
             redeploy_workspace_service_id = review_workspace_service_id
-            workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
-            if airlock_request.type == AirlockRequestType.Import:
-                review_config = workspace.properties["airlock_review_config"]["import"]
-                redeploy_workspace_id = review_config["import_vm_workspace_id"]
-                redeploy_workspace_service_id = review_config["import_vm_workspace_service_id"]
-                user_resource_template_name = review_config["import_vm_user_resource_template_name"]
-            else:
-                review_config = workspace.properties["airlock_review_config"]["export"]
-                redeploy_workspace_id = workspace.id
-                redeploy_workspace_service_id = review_config["export_vm_workspace_service_id"]
-                user_resource_template_name = review_config["export_vm_user_resource_template_name"]
+            workspace = None
+            if workflow == "redeploy":
+                workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
+                if airlock_request.type == AirlockRequestType.Import:
+                    review_config = workspace.properties["airlock_review_config"]["import"]
+                    redeploy_workspace_id = review_config["import_vm_workspace_id"]
+                    redeploy_workspace_service_id = review_config["import_vm_workspace_service_id"]
+                    user_resource_template_name = review_config["import_vm_user_resource_template_name"]
+                else:
+                    review_config = workspace.properties["airlock_review_config"]["export"]
+                    redeploy_workspace_id = workspace.id
+                    redeploy_workspace_service_id = review_config["export_vm_workspace_service_id"]
+                    user_resource_template_name = review_config["export_vm_user_resource_template_name"]
             try:
                 user_resource = await self.user_resource_repo.get_user_resource_by_id(
                     workspace_id=review_workspace_id,
@@ -187,10 +210,10 @@ class AirlockWorkflowUpdater:
                                     service_id=workflow_state.workspaceServiceId,
                                     resource_id=workflow_state.userResourceId)
                             else:
-                                replacement_resource = await self.user_resource_repo.get_user_resource_by_workflow_id(
+                                replacement_resource = await self.user_resource_repo.get_user_resource_by_id(
                                     workspace_id=redeploy_workspace_id,
                                     service_id=redeploy_workspace_service_id,
-                                    workflow_id=workflow_id)
+                                    resource_id=replacement_operation.resourceId)
                             await wait_for_successful_operation(self.operations_repo, operation_id)
                     except EntityDoesNotExist:
                         operation_id = str(uuid.uuid4())

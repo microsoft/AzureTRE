@@ -125,10 +125,24 @@ class OperationRepository(BaseRepository):
             await self._reconcile_resource_status(resource_id, status, message)
 
     async def _reconcile_operation(self, operation, timestamp: float, mark_failed: bool = False):
+        terminal_statuses = {
+            Status.Deployed,
+            Status.DeploymentFailed,
+            Status.Deleted,
+            Status.DeletingFailed,
+            Status.Updated,
+            Status.UpdatingFailed,
+            Status.ActionSucceeded,
+            Status.ActionFailed,
+        }
+        if mark_failed:
+            for step in getattr(operation, "steps", None) or []:
+                if step.status not in terminal_statuses:
+                    step.status = get_failure_status_for_action(step.resourceAction)
         affected_step_resources = [
             (
                 step.resourceId,
-                get_failure_status_for_action(step.resourceAction) if mark_failed else step.status,
+                step.status,
                 step.message,
             )
             for step in getattr(operation, "steps", None) or []

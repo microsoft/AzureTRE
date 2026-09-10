@@ -58,6 +58,7 @@ async def test_process_message_completes_cleanup_when_resource_is_already_delete
     }))
 
     assert result is True
+    updater.workspace_repo.get_workspace_by_id.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -177,9 +178,10 @@ async def test_process_message_rejects_forged_review_user_context(updater):
 @pytest.mark.asyncio
 async def test_process_message_recovers_deploying_redeploy_without_deploying_again(updater):
     workflow_id = "request-id:user-id"
-    updater.user_resource_repo.get_user_resource_by_id = AsyncMock(side_effect=EntityDoesNotExist)
-    updater.user_resource_repo.get_user_resource_by_workflow_id = AsyncMock(
-        return_value=MagicMock(id="replacement-resource-id"))
+    updater.user_resource_repo.get_user_resource_by_id = AsyncMock(
+        side_effect=[EntityDoesNotExist, MagicMock(id="replacement-resource-id")])
+    updater.operations_repo.get_operation_by_id = AsyncMock(
+        return_value=MagicMock(status="deploying", resourceId="replacement-resource-id"))
     updater.airlock_request_repo.get_airlock_request_by_id = AsyncMock(return_value=AirlockRequest(
         id="request-id",
         workspaceId="workspace-id",
