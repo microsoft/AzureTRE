@@ -182,9 +182,13 @@ async def send_uninstall_message(
     resource_template_repo: ResourceTemplateRepository,
     resource_history_repo: ResourceHistoryRepository,
     user: User,
-    is_cascade: str = False
+    is_cascade: str = False,
+    operation_id: Optional[str] = None,
 ) -> Operation:
     try:
+        operation_kwargs = {}
+        if operation_id is not None:
+            operation_kwargs["operation_id"] = operation_id
         operation = await send_resource_request_message(
             resource=resource,
             operations_repo=operations_repo,
@@ -193,7 +197,8 @@ async def send_uninstall_message(
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.UnInstall,
-            is_cascade=is_cascade
+            is_cascade=is_cascade,
+            **operation_kwargs,
         )
         return operation
     except HTTPException:

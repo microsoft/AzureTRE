@@ -1,5 +1,6 @@
 import asyncio
 import time
+import uuid
 from datetime import datetime, timedelta, UTC
 from services.logging import logger
 
@@ -206,12 +207,6 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
             await send_airlock_workflow_message({
                 "workflow": "redeploy",
                 "airlock_request_id": airlock_request.id,
-                "user": user.model_dump(),
-                "workspace_id": workspace.id,
-                "review_workspace_id": review_workspace_id,
-                "review_workspace_service_id": review_workspace_service_id,
-                "user_resource_template_name": user_resource_template_name,
-                "user_resource_id": existing_resource.id,
                 "operation_id": delete_operation.id,
                 "uninstall_started": False,
                 "redeploy_workflow_id": f"{airlock_request.id}:{user.id}:{delete_operation.id}",
@@ -271,8 +266,14 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
                      resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository,
                      workflow_id: Optional[str] = None, operation_id: Optional[str] = None):
     logger.info(f"Creating review VM in workspace:{review_workspace_id} service:{review_workspace_service_id} using template:{user_resource_template_name}")
-    workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
-    airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
+    deployment_operation_id = operation_id or str(uuid.uuid4())
+    await operation_repo.acquire_workspace_lease(review_workspace_id, deployment_operation_id)
+    try:
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(workspace_id=review_workspace_id, service_id=review_workspace_service_id)
+        airlock_request_sas_url = get_airlock_container_link(airlock_request, user, workspace)
+    except Exception:
+        await operation_repo.release_workspace_lease(review_workspace_id, deployment_operation_id)
+        raise
 
     user_resource_create = UserResourceInCreate(
         templateName=user_resource_template_name,
@@ -285,18 +286,23 @@ async def _deploy_vm(airlock_request: AirlockRequest, user: User, workspace: Wor
     if workflow_id is not None:
         user_resource_create.properties["airlock_redeploy_workflow_id"] = workflow_id
 
-    user_resource, resource_template = await user_resource_repo.create_user_resource_item(
-        user_resource_create, review_workspace_id, review_workspace_service_id, workspace_service.templateName, user.id, user.roles)
+    try:
+        user_resource, resource_template = await user_resource_repo.create_user_resource_item(
+            user_resource_create, review_workspace_id, review_workspace_service_id, workspace_service.templateName, user.id, user.roles)
 
-    operation = await save_and_deploy_resource(
-        resource=user_resource,
-        resource_repo=user_resource_repo,
-        operations_repo=operation_repo,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template,
-        operation_id=operation_id)
+        operation = await save_and_deploy_resource(
+            resource=user_resource,
+            resource_repo=user_resource_repo,
+            operations_repo=operation_repo,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template,
+            operation_id=deployment_operation_id)
+    except Exception as ex:
+        if not getattr(ex, "lease_retained", False):
+            await operation_repo.release_workspace_lease(review_workspace_id, deployment_operation_id)
+        raise
 
     return user_resource, operation
 
@@ -598,10 +604,8 @@ async def delete_all_review_user_resources(
         for review_resource in airlock_request.reviewUserResources.values():
             await send_airlock_workflow_message({
                 "workflow": "cleanup",
-                "user": user.model_dump(),
-                "review_workspace_id": review_resource.workspaceId,
-                "review_workspace_service_id": review_resource.workspaceServiceId,
-                "user_resource_id": review_resource.userResourceId,
+                "airlock_request_id": airlock_request.id,
+                "review_user_id": next(user_id for user_id, resource in airlock_request.reviewUserResources.items() if resource == review_resource),
             })
         return []
 

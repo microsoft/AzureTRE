@@ -460,23 +460,32 @@ async def patch_workspace_service(resource_patch: ResourcePatch, response: Respo
 
 
 @workspace_services_workspace_router.delete("/workspaces/{workspace_id}/workspace-services/{service_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
-async def delete_workspace_service(response: Response, user=Depends(require_workspace_owner), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
-    if await operations_repo.resource_has_active_operation(workspace.id):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
-    if await delete_validation(workspace_service, workspace_service_repo):
-        operation = await send_uninstall_message(
-            resource=workspace_service,
-            resource_repo=workspace_service_repo,
-            operations_repo=operations_repo,
-            resource_type=ResourceType.WorkspaceService,
-            resource_template_repo=resource_template_repo,
-            resource_history_repo=resource_history_repo,
-            user=user,
-            is_cascade=True)
+async def delete_workspace_service(response: Response, user=Depends(require_workspace_owner), workspace=Depends(get_workspace_by_id_from_path), workspace_service=Depends(get_workspace_service_by_id_from_path), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), user_resource_repo=Depends(get_repository(UserResourceRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    operation_id = operations_repo.create_operation_id()
+    await operations_repo.acquire_workspace_lease(workspace.id, operation_id)
+    try:
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
+            workspace.id, workspace_service.id)
+        if await operations_repo.resource_has_active_operation(workspace.id, exclude_operation_id=operation_id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+        if await delete_validation(workspace_service, workspace_service_repo):
+            operation = await send_uninstall_message(
+                resource=workspace_service,
+                resource_repo=workspace_service_repo,
+                operations_repo=operations_repo,
+                resource_type=ResourceType.WorkspaceService,
+                resource_template_repo=resource_template_repo,
+                resource_history_repo=resource_history_repo,
+                user=user,
+                is_cascade=True,
+                operation_id=operation_id)
 
-        response.headers["Location"] = construct_location_header(operation)
-
-        return OperationInResponse(operation=operation)
+            response.headers["Location"] = construct_location_header(operation)
+            return OperationInResponse(operation=operation)
+    except Exception as err:
+        if not getattr(err, "lease_retained", False):
+            await operations_repo.release_workspace_lease(workspace.id, operation_id)
+        raise
 
 
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services/{service_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
@@ -645,29 +654,44 @@ async def delete_user_resource(
         user_resource=Depends(get_user_resource_by_id_from_path),
         workspace_service=Depends(get_workspace_service_by_id_from_path),
         user_resource_repo=Depends(get_repository(UserResourceRepository)),
+        workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)),
         operations_repo=Depends(get_repository(OperationRepository)),
         resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
         resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
-    validate_user_has_valid_role_for_user_resource(user, user_resource)
+    operation_id = operations_repo.create_operation_id()
+    await operations_repo.acquire_workspace_lease(user_resource.workspaceId, operation_id)
+    try:
+        user_resource = await user_resource_repo.get_user_resource_by_id(
+            workspace_id=user_resource.workspaceId,
+            service_id=workspace_service.id,
+            resource_id=user_resource.id)
+        workspace_service = await workspace_service_repo.get_workspace_service_by_id(
+            user_resource.workspaceId, workspace_service.id)
+        validate_user_has_valid_role_for_user_resource(user, user_resource)
 
-    if await operations_repo.resource_has_active_operation(user_resource.workspaceId):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+        if await operations_repo.resource_has_active_operation(
+                user_resource.workspaceId, exclude_operation_id=operation_id):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
-    if user_resource.isEnabled:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+        if user_resource.isEnabled:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
 
-    operation = await send_uninstall_message(
-        resource=user_resource,
-        resource_repo=user_resource_repo,
-        operations_repo=operations_repo,
-        resource_type=ResourceType.UserResource,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user)
+        operation = await send_uninstall_message(
+            resource=user_resource,
+            resource_repo=user_resource_repo,
+            operations_repo=operations_repo,
+            resource_type=ResourceType.UserResource,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            operation_id=operation_id)
 
-    response.headers["Location"] = construct_location_header(operation)
-
-    return OperationInResponse(operation=operation)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
+    except Exception as err:
+        if not getattr(err, "lease_retained", False):
+            await operations_repo.release_workspace_lease(user_resource.workspaceId, operation_id)
+        raise
 
 
 @user_resources_workspace_router.patch("/workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_USER_RESOURCE, dependencies=[Depends(get_workspace_by_id_from_path), Depends(get_workspace_service_by_id_from_path)])

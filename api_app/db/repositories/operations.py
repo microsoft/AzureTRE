@@ -26,6 +26,7 @@ from models.domain.operation import Operation, OperationStep, Status, get_failur
 # latency (7200 seconds / 2 hours) to ensure still-running operations are not prematurely reclaimed.
 WORKSPACE_LEASE_EXPIRY_SECONDS = 7200.0
 ADDRESS_SPACE_ALLOCATOR_LEASE_ID = "address_space_allocator"
+ADDRESS_SPACE_ALLOCATOR_LEASE_EXPIRY_SECONDS = 300.0
 
 
 def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
@@ -291,14 +292,69 @@ class OperationRepository(BaseRepository):
                 if hasattr(del_call, "__await__"):
                     await del_call
         except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
-                CosmosAccessConditionFailedError):
+                CosmosAccessConditionFailedError, TypeError):
             return
 
     async def acquire_address_space_allocator_lease(self, operation_id: str) -> bool:
-        return await self.acquire_workspace_lease(ADDRESS_SPACE_ALLOCATOR_LEASE_ID, operation_id)
+        if not hasattr(self, "_container") or self._container is None:
+            return True
+
+        lease_body = {
+            "id": ADDRESS_SPACE_ALLOCATOR_LEASE_ID,
+            "operationId": operation_id,
+            "createdWhen": self.get_timestamp(),
+        }
+        try:
+            create_call = self.container.create_item(body=lease_body)
+            if hasattr(create_call, "__await__"):
+                await create_call
+            return True
+        except (CosmosResourceExistsError, ResourceExistsError):
+            try:
+                read_call = self.read_item_by_id(ADDRESS_SPACE_ALLOCATOR_LEASE_ID)
+                existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+            except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist):
+                return await self.acquire_address_space_allocator_lease(operation_id)
+
+            if not isinstance(existing_lease, dict):
+                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+            if existing_lease.get("operationId") == operation_id:
+                return True
+            if self.get_timestamp() - existing_lease.get("createdWhen", 0.0) < ADDRESS_SPACE_ALLOCATOR_LEASE_EXPIRY_SECONDS:
+                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+
+            etag = existing_lease.get("_etag")
+            try:
+                if not etag:
+                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT,
+                                        detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                replace_call = self.container.replace_item(
+                    item=ADDRESS_SPACE_ALLOCATOR_LEASE_ID,
+                    body=lease_body,
+                    etag=etag,
+                    match_condition=MatchConditions.IfNotModified)
+                if hasattr(replace_call, "__await__"):
+                    await replace_call
+                return True
+            except (CosmosAccessConditionFailedError, ResourceExistsError, CosmosResourceNotFoundError, ResourceNotFoundError):
+                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
 
     async def release_address_space_allocator_lease(self, operation_id: Optional[str] = None) -> None:
-        await self.release_workspace_lease(ADDRESS_SPACE_ALLOCATOR_LEASE_ID, operation_id)
+        if not hasattr(self, "_container") or self._container is None:
+            return
+        try:
+            read_call = self.read_item_by_id(ADDRESS_SPACE_ALLOCATOR_LEASE_ID)
+            existing_lease = await read_call if hasattr(read_call, "__await__") else read_call
+            if isinstance(existing_lease, dict) and (not operation_id or existing_lease.get("operationId") == operation_id):
+                etag = existing_lease.get("_etag")
+                delete_call = self.delete_item(
+                    ADDRESS_SPACE_ALLOCATOR_LEASE_ID,
+                    **({"etag": etag, "match_condition": MatchConditions.IfNotModified} if etag else {}))
+                if hasattr(delete_call, "__await__"):
+                    await delete_call
+        except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
+                CosmosAccessConditionFailedError, TypeError):
+            return
 
     @staticmethod
     def operations_query():
@@ -534,7 +590,7 @@ class OperationRepository(BaseRepository):
                     op.status = get_failure_status_for_action(op.action)
                     op.message = "Operation timed out or was interrupted before completion"
                     op.updatedWhen = timestamp
-                    op.reconciled = True
+                    op.reconciled = False
                     affected_step_resources = []
                     if getattr(op, "steps", None):
                         for step in op.steps:
@@ -547,6 +603,10 @@ class OperationRepository(BaseRepository):
                     if hasattr(update_call, "__await__"):
                         await update_call
                     await self._reconcile_operation_resources(op, affected_step_resources)
+                    op.reconciled = True
+                    update_call = self.update_item(op, release_lease=False)
+                    if hasattr(update_call, "__await__"):
+                        await update_call
                     target_workspace_id = extract_workspace_id_from_resource_path(op.resourcePath)
                     if target_workspace_id:
                         await self.release_workspace_lease(target_workspace_id, op.id)

@@ -459,6 +459,79 @@ async def test_acquire_workspace_lease_fails_closed_when_reconciliation_fails(op
     assert exc.value.status_code == 409
 
 
+async def test_acquire_address_space_allocator_lease_creates_item(operations_repo):
+    from db.repositories.operations import ADDRESS_SPACE_ALLOCATOR_LEASE_ID
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(return_value={})
+
+    assert await operations_repo.acquire_address_space_allocator_lease("op-1") is True
+    body = operations_repo._container.create_item.call_args.kwargs["body"]
+    assert body["id"] == ADDRESS_SPACE_ALLOCATOR_LEASE_ID
+    assert body["operationId"] == "op-1"
+
+
+async def test_acquire_address_space_allocator_lease_is_idempotent(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "address_space_allocator",
+        "operationId": "op-1",
+        "createdWhen": operations_repo.get_timestamp(),
+    })
+
+    assert await operations_repo.acquire_address_space_allocator_lease("op-1") is True
+
+
+async def test_acquire_address_space_allocator_lease_rejects_active_lease(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+    from fastapi import HTTPException
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "address_space_allocator",
+        "operationId": "other-op",
+        "createdWhen": operations_repo.get_timestamp(),
+    })
+
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_address_space_allocator_lease("op-1")
+    assert exc.value.status_code == 409
+
+
+async def test_acquire_address_space_allocator_lease_reclaims_expired_lease(operations_repo):
+    from azure.cosmos.exceptions import CosmosResourceExistsError
+
+    operations_repo._container = MagicMock()
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "address_space_allocator",
+        "operationId": "other-op",
+        "createdWhen": operations_repo.get_timestamp() - 301,
+        "_etag": "old-etag",
+    })
+    operations_repo._container.replace_item = AsyncMock(return_value={})
+
+    assert await operations_repo.acquire_address_space_allocator_lease("op-1") is True
+    operations_repo._container.replace_item.assert_awaited_once()
+    assert operations_repo._container.replace_item.call_args.kwargs["etag"] == "old-etag"
+
+
+async def test_release_address_space_allocator_lease_only_releases_owner(operations_repo):
+    operations_repo._container = MagicMock()
+    operations_repo.read_item_by_id = AsyncMock(return_value={
+        "id": "address_space_allocator",
+        "operationId": "other-op",
+    })
+    operations_repo.delete_item = AsyncMock()
+
+    await operations_repo.release_address_space_allocator_lease("op-1")
+    operations_repo.delete_item.assert_not_awaited()
+
+
 async def test_resource_has_active_operation_reconciles_stale_operation(operations_repo):
     now = operations_repo.get_timestamp()
     workspace_id = "7c5b2dc2-6b4c-4c7f-8d3e-1f5a9b0e2c4d"
@@ -477,8 +550,8 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
 
     result = await operations_repo.resource_has_active_operation(workspace_id)
     assert result is False
-    operations_repo.update_item.assert_awaited_once()
-    saved_op = operations_repo.update_item.call_args[0][0]
+    assert operations_repo.update_item.await_count == 2
+    saved_op = operations_repo.update_item.call_args_list[-1].args[0]
     assert saved_op.status == Status.DeploymentFailed
     assert saved_op.reconciled is True
 
@@ -624,11 +697,11 @@ async def test_resource_has_active_operation_reconciles_stale_step_with_step_res
 
     has_active = await operations_repo.resource_has_active_operation(res_id)
     assert has_active is False
-    operations_repo.update_item.assert_awaited_once()
-    saved_op = operations_repo.update_item.call_args[0][0]
+    assert operations_repo.update_item.await_count == 2
+    saved_op = operations_repo.update_item.call_args_list[-1].args[0]
     assert saved_op.status == Status.DeletingFailed
     assert saved_op.steps[0].status == Status.UpdatingFailed
-    operations_repo.update_item.assert_awaited_once_with(saved_op, release_lease=False)
+    assert all(call.kwargs == {"release_lease": False} for call in operations_repo.update_item.call_args_list)
     assert operations_repo._reconcile_resource_status.await_args_list[1].args == (
         saved_op.steps[0].resourceId,
         Status.UpdatingFailed,

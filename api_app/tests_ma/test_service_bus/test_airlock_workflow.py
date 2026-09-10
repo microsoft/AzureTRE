@@ -5,7 +5,7 @@ import pytest
 
 from db.errors import EntityDoesNotExist
 from models.domain.authentication import User
-from models.domain.airlock_request import AirlockRequest, AirlockRedeployWorkflow
+from models.domain.airlock_request import AirlockRequest, AirlockRedeployWorkflow, AirlockRequestType, AirlockReviewUserResource
 from service_bus.airlock_workflow import AirlockWorkflowUpdater
 
 
@@ -19,6 +19,22 @@ def updater():
     workflow.resource_history_repo = MagicMock()
     workflow.airlock_request_repo = MagicMock()
     workflow.workspace_repo = MagicMock()
+    workflow.airlock_request_repo.get_airlock_request_by_id = AsyncMock(return_value=AirlockRequest(
+        id="request-id",
+        workspaceId="workspace-id",
+        type=AirlockRequestType.Import,
+        createdBy=User.model_validate(user_payload()),
+        reviewUserResources={"user-id": AirlockReviewUserResource(
+            workspaceId="review-workspace-id",
+            workspaceServiceId="service-id",
+            userResourceId="resource-id")}
+    ))
+    workflow.workspace_repo.get_workspace_by_id = AsyncMock(return_value=MagicMock(properties={
+        "airlock_review_config": {"import": {
+            "import_vm_workspace_id": "review-workspace-id",
+            "import_vm_workspace_service_id": "service-id",
+            "import_vm_user_resource_template_name": "template"}}
+    }))
     return workflow
 
 
@@ -36,10 +52,8 @@ async def test_process_message_completes_cleanup_when_resource_is_already_delete
 
     result = await updater.process_message(message({
         "workflow": "cleanup",
-        "user": user_payload(),
-        "review_workspace_id": "workspace-id",
-        "review_workspace_service_id": "service-id",
-        "user_resource_id": "resource-id",
+        "airlock_request_id": "request-id",
+        "review_user_id": "user-id",
     }))
 
     assert result is True
@@ -48,21 +62,13 @@ async def test_process_message_completes_cleanup_when_resource_is_already_delete
 @pytest.mark.asyncio
 async def test_process_message_redeploys_without_duplicate_uninstall(updater):
     updater.user_resource_repo.get_user_resource_by_id = AsyncMock(side_effect=EntityDoesNotExist)
-    updater.operations_repo.get_operation_by_id = AsyncMock()
-    updater.airlock_request_repo.get_airlock_request_by_id = AsyncMock()
-    updater.workspace_repo.get_workspace_by_id = AsyncMock()
 
     payload = {
         "workflow": "redeploy",
-        "user": user_payload(),
         "airlock_request_id": "request-id",
-        "workspace_id": "workspace-id",
-        "review_workspace_id": "review-workspace-id",
-        "review_workspace_service_id": "service-id",
-        "user_resource_template_name": "template",
-        "user_resource_id": "resource-id",
         "operation_id": "delete-operation-id",
         "uninstall_started": True,
+        "redeploy_workflow_id": "request-id:user-id:delete-operation-id",
     }
 
     with patch("service_bus.airlock_workflow.wait_for_successful_operation", new=AsyncMock()), \
@@ -81,16 +87,33 @@ async def test_process_message_acknowledges_unknown_workflow_without_side_effect
             patch("service_bus.airlock_workflow.send_uninstall_message", new=AsyncMock()) as uninstall:
         result = await updater.process_message(message({
             "workflow": "future-workflow",
-            "user": user_payload(),
-            "review_workspace_id": "workspace-id",
-            "review_workspace_service_id": "service-id",
-            "user_resource_id": "resource-id",
+            "airlock_request_id": "request-id",
         }))
 
     assert result is True
     updater.user_resource_repo.get_user_resource_by_id.assert_not_called()
     wait_for_operation.assert_not_awaited()
     uninstall.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_process_message_rejects_forged_review_user_context(updater):
+    with patch("service_bus.airlock_workflow.wait_for_successful_operation", new=AsyncMock()), \
+            patch("service_bus.airlock_workflow.send_uninstall_message", new=AsyncMock()), \
+            patch("service_bus.airlock_workflow._deploy_vm", new=AsyncMock()), \
+            patch("service_bus.airlock_workflow.update_and_publish_event_airlock_request", new=AsyncMock()):
+        result = await updater.process_message(message({
+            "workflow": "cleanup",
+            "airlock_request_id": "request-id",
+            "review_user_id": "attacker-id",
+            "user": user_payload(),
+            "review_workspace_id": "attacker-workspace-id",
+            "review_workspace_service_id": "attacker-service-id",
+            "user_resource_id": "attacker-resource-id",
+        }))
+
+    assert result is False
+    updater.user_resource_repo.get_user_resource_by_id.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -101,23 +124,29 @@ async def test_process_message_recovers_deploying_redeploy_without_deploying_aga
         return_value=MagicMock(id="replacement-resource-id"))
     updater.airlock_request_repo.get_airlock_request_by_id = AsyncMock(return_value=AirlockRequest(
         id="request-id",
+        workspaceId="workspace-id",
+        type=AirlockRequestType.Import,
+        createdBy=User.model_validate(user_payload()),
+        reviewUserResources={"user-id": AirlockReviewUserResource(
+            workspaceId="review-workspace-id",
+            workspaceServiceId="service-id",
+            userResourceId="resource-id")},
         redeployWorkflows={workflow_id: AirlockRedeployWorkflow(
             workflowId=workflow_id,
             phase="deploying",
             operationId="replacement-operation-id")}
     ))
-    updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=MagicMock())
+    updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=MagicMock(properties={
+        "airlock_review_config": {"import": {
+            "import_vm_workspace_id": "review-workspace-id",
+            "import_vm_workspace_service_id": "service-id",
+            "import_vm_user_resource_template_name": "template"}}
+    }))
 
     payload = {
         "workflow": "redeploy",
         "redeploy_workflow_id": workflow_id,
-        "user": user_payload(),
         "airlock_request_id": "request-id",
-        "workspace_id": "workspace-id",
-        "review_workspace_id": "review-workspace-id",
-        "review_workspace_service_id": "service-id",
-        "user_resource_template_name": "template",
-        "user_resource_id": "resource-id",
         "operation_id": "delete-operation-id",
         "uninstall_started": True,
     }
