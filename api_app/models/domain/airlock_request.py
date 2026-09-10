@@ -91,6 +91,14 @@ class AirlockReviewUserResource(AzureTREModel):
     workspaceId: str = Field(title="Workspace ID")
     workspaceServiceId: str = Field(title="Workspace Service ID")
     userResourceId: str = Field(title="User Resource ID")
+    reviewer: dict = Field(default_factory=dict, title="User who created the review resource")
+
+    @field_validator("reviewer", mode="before")
+    @classmethod
+    def convert_reviewer_to_dict(cls, value):
+        if hasattr(value, "model_dump"):
+            return value.model_dump()
+        return value
 
 
 class AirlockRedeployWorkflow(AzureTREModel):

@@ -264,6 +264,25 @@ class TestResourceHelpers:
 
         assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
+    @patch("api.routes.resource_helpers.send_resource_request_message")
+    @pytest.mark.asyncio
+    async def test_send_uninstall_message_preserves_retained_lease(self, send_request_mock, resource_repo, resource_history_repo):
+        dispatch_error = Exception()
+        dispatch_error.lease_retained = True
+        send_request_mock.side_effect = dispatch_error
+
+        with pytest.raises(HTTPException) as ex:
+            await send_uninstall_message(
+                resource=sample_resource(),
+                resource_repo=resource_repo,
+                operations_repo=OperationRepository(),
+                resource_type=ResourceType.Workspace,
+                resource_template_repo=None,
+                resource_history_repo=resource_history_repo,
+                user=create_test_user())
+
+        assert ex.value.lease_retained is True
+
     @patch("api.routes.workspaces.ResourceTemplateRepository")
     @patch("service_bus.resource_request_sender.send_deployment_message")
     @pytest.mark.asyncio

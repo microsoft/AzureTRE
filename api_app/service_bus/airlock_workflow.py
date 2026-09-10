@@ -82,9 +82,6 @@ class AirlockWorkflowUpdater:
                 review_user_id = review_user_id or workflow_user_id
             if not review_user_id or review_user_id not in airlock_request.reviewUserResources:
                 raise ValueError("Airlock workflow user is not associated with the request")
-            user = User.model_validate(airlock_request.createdBy)
-            if user.id != review_user_id:
-                raise ValueError("Airlock workflow user does not match the request owner")
             review_resource = airlock_request.reviewUserResources[review_user_id]
             review_workspace_id = review_resource.workspaceId
             review_workspace_service_id = review_resource.workspaceServiceId
@@ -109,6 +106,14 @@ class AirlockWorkflowUpdater:
                     logger.info("Airlock review resource %s is already deleted", user_resource_id)
                     return True
                 user_resource = None
+            reviewer = (review_resource.reviewer
+                        or (user_resource.user if user_resource is not None else {})
+                        or airlock_request.createdBy)
+            if not reviewer:
+                raise ValueError("Airlock workflow reviewer identity is missing")
+            user = User.model_validate(reviewer)
+            if user.id != review_user_id:
+                raise ValueError("Airlock workflow user does not match the review resource")
             if workflow == "cleanup":
                 workspace_service = await self.workspace_service_repo.get_workspace_service_by_id(
                     workspace_id=review_workspace_id,
@@ -198,7 +203,8 @@ class AirlockWorkflowUpdater:
                     review_user_resource=AirlockReviewUserResource(
                         workspaceId=review_workspace_id,
                         workspaceServiceId=review_workspace_service_id,
-                        userResourceId=replacement_resource.id),
+                        userResourceId=replacement_resource.id,
+                        reviewer=user),
                     redeploy_workflow=workflow_state)
             return True
         except (json.JSONDecodeError, KeyError, ValidationError):

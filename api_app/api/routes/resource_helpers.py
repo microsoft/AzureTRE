@@ -203,12 +203,14 @@ async def send_uninstall_message(
         return operation
     except HTTPException:
         raise
-    except Exception:
+    except Exception as ex:
         logger.exception(f"Failed to send {resource_type} resource delete message")
-        raise HTTPException(
+        http_ex = HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
         )
+        http_ex.lease_retained = getattr(ex, "lease_retained", False)
+        raise http_ex from ex
 
 
 async def send_custom_action_message(

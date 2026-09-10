@@ -225,7 +225,8 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
         review_user_resource=AirlockReviewUserResource(
             workspaceId=review_workspace_id,
             workspaceServiceId=review_workspace_service_id,
-            userResourceId=user_resource.id
+            userResourceId=user_resource.id,
+            reviewer=user
         ))
 
     logger.info(f"Airlock Request {updated_resource.id} updated to include {updated_resource.reviewUserResources}")
@@ -256,7 +257,8 @@ async def _redeploy_review_vm_after_delete(
             review_user_resource=AirlockReviewUserResource(
                 workspaceId=review_workspace_id,
                 workspaceServiceId=review_workspace_service_id,
-                userResourceId=user_resource.id))
+                userResourceId=user_resource.id,
+                reviewer=user))
     except Exception:
         logger.exception("Failed to replace Airlock review VM after delete operation %s", delete_operation_id)
 
