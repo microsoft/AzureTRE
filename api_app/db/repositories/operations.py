@@ -18,7 +18,7 @@ from db.repositories.base import BaseRepository
 
 from services.logging import logger
 from db.errors import EntityDoesNotExist
-from models.domain.operation import Operation, OperationStep, Status, get_failure_status_for_action
+from models.domain.operation import Operation, OperationStep, Status
 
 # The resource processor auto-renews Porter session locks for up to 3600 seconds (1 hour)
 # during deployment execution (see resource_processor/vmss_porter/runner.py:68).
@@ -214,37 +214,7 @@ class OperationRepository(BaseRepository):
                                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                             continue
                         if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
-                            op_time = getattr(existing_op, "updatedWhen", 0.0) or getattr(existing_op, "createdWhen", 0.0)
-                            if timestamp - op_time < WORKSPACE_LEASE_EXPIRY_SECONDS:
-                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
-                            # Stale operation from interrupted dispatch; reconcile to failed status
-                            try:
-                                existing_op.status = get_failure_status_for_action(existing_op.action)
-                                existing_op.message = "Operation timed out or was interrupted before completion"
-                                existing_op.updatedWhen = timestamp
-                                existing_op.reconciled = False
-                                affected_step_resources = []
-                                if getattr(existing_op, "steps", None):
-                                    for step in existing_op.steps:
-                                        if not step.is_failure() and not step.is_success():
-                                            step.status = get_failure_status_for_action(step.resourceAction or existing_op.action)
-                                            step.message = "Operation timed out or was interrupted before completion"
-                                            step.updatedWhen = timestamp
-                                            affected_step_resources.append((step.resourceId, step.status, step.message))
-                                update_call = self.update_item(existing_op, release_lease=False)
-                                if hasattr(update_call, "__await__"):
-                                    await update_call
-                                await self._reconcile_operation_resources(existing_op, affected_step_resources)
-                                existing_op.reconciled = True
-                                update_call = self.update_item(existing_op, release_lease=False)
-                                if hasattr(update_call, "__await__"):
-                                    await update_call
-                                await self.release_workspace_lease(workspace_id, existing_op.id)
-                            except Exception as e:
-                                logger.exception(f"Failed to reconcile stale operation {existing_op.id}: {e}")
-                                raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
-                            # Restart lease acquisition rather than replacing the now-reconciled lease document.
-                            continue
+                            raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                     except HTTPException:
                         raise
                     except (EntityDoesNotExist, CosmosResourceNotFoundError):
@@ -294,6 +264,9 @@ class OperationRepository(BaseRepository):
         except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
                 CosmosAccessConditionFailedError, TypeError):
             return
+        except Exception:
+            logger.exception("Failed to release workspace lease")
+            raise
 
     async def acquire_address_space_allocator_lease(self, operation_id: str) -> bool:
         if not hasattr(self, "_container") or self._container is None:
@@ -355,6 +328,9 @@ class OperationRepository(BaseRepository):
         except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
                 CosmosAccessConditionFailedError, TypeError):
             return
+        except Exception:
+            logger.exception("Failed to release address-space allocator lease")
+            raise
 
     @staticmethod
     def operations_query():
@@ -571,49 +547,11 @@ class OperationRepository(BaseRepository):
         if not operations:
             return False
 
-        timestamp = self.get_timestamp()
         has_active = False
         for op_dict in operations:
             op_status = op_dict.get("status") if isinstance(op_dict, dict) else getattr(op_dict, "status", None)
             if op_status is not None and op_status not in active_statuses:
                 continue
-            op_time = (
-                (op_dict.get("updatedWhen") or op_dict.get("createdWhen"))
-                if isinstance(op_dict, dict)
-                else (getattr(op_dict, "updatedWhen", None) or getattr(op_dict, "createdWhen", None))
-            )
-            # If timestamp is present and exceeds expiry, it is stale
-            if op_time is not None and (timestamp - op_time >= WORKSPACE_LEASE_EXPIRY_SECONDS):
-                # Stale active operation from interrupted dispatch; reconcile to failure status
-                try:
-                    op = TypeAdapter(Operation).validate_python(op_dict)
-                    op.status = get_failure_status_for_action(op.action)
-                    op.message = "Operation timed out or was interrupted before completion"
-                    op.updatedWhen = timestamp
-                    op.reconciled = False
-                    affected_step_resources = []
-                    if getattr(op, "steps", None):
-                        for step in op.steps:
-                            if not step.is_failure() and not step.is_success():
-                                step.status = get_failure_status_for_action(step.resourceAction or op.action)
-                                step.message = "Operation timed out or was interrupted before completion"
-                                step.updatedWhen = timestamp
-                                affected_step_resources.append((step.resourceId, step.status, step.message))
-                    update_call = self.update_item(op, release_lease=False)
-                    if hasattr(update_call, "__await__"):
-                        await update_call
-                    await self._reconcile_operation_resources(op, affected_step_resources)
-                    op.reconciled = True
-                    update_call = self.update_item(op, release_lease=False)
-                    if hasattr(update_call, "__await__"):
-                        await update_call
-                    target_workspace_id = extract_workspace_id_from_resource_path(op.resourcePath)
-                    if target_workspace_id:
-                        await self.release_workspace_lease(target_workspace_id, op.id)
-                except Exception as e:
-                    logger.exception(f"Failed to reconcile stale active operation {op_dict.get('id') if isinstance(op_dict, dict) else getattr(op_dict, 'id', None)}: {e}")
-                    has_active = True
-            else:
-                has_active = True
+            has_active = True
 
         return has_active

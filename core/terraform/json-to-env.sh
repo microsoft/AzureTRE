@@ -54,6 +54,10 @@ jq -r '
             "env_var": "SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE"
         },
         {
+            "path": "service_bus_airlock_workflow_queue",
+            "env_var": "SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE"
+        },
+        {
             "path": "service_bus_step_result_queue",
             "env_var": "SERVICE_BUS_STEP_RESULT_QUEUE"
         },

@@ -4,6 +4,7 @@ import uuid
 
 from azure.servicebus.aio import AutoLockRenewer, ServiceBusClient
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from core import config, credentials
@@ -19,9 +20,14 @@ from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
 from models.domain.authentication import User
 from models.domain.airlock_request import AirlockRequestType, AirlockReviewUserResource, AirlockRedeployWorkflow
 from models.domain.resource import ResourceType
+from models.domain.operation import Status
 from services.airlock import _deploy_vm, wait_for_successful_operation, update_and_publish_event_airlock_request, disable_user_resource
 from api.routes.resource_helpers import send_uninstall_message
 from services.logging import logger
+from resources import strings
+from service_bus.helpers import send_airlock_workflow_message
+
+MAX_LEASE_CONTENTION_RETRY_DELAY_SECONDS = int(WORKSPACE_LEASE_EXPIRY_SECONDS)
 
 
 class AirlockWorkflowUpdater:
@@ -63,6 +69,7 @@ class AirlockWorkflowUpdater:
             await asyncio.sleep(10)
 
     async def process_message(self, message) -> bool:
+        payload = None
         try:
             payload = json.loads(str(message))
             workflow = payload["workflow"]
@@ -110,8 +117,13 @@ class AirlockWorkflowUpdater:
                     logger.info("Airlock review resource %s is already deleted", user_resource_id)
                     return True
                 user_resource = None
+            review_reviewer = next(
+                (review.reviewer for review in (airlock_request.reviews or [])
+                 if review.reviewer.get("id") == review_user_id),
+                {})
             reviewer = (review_resource.reviewer
                         or (user_resource.user if user_resource is not None else {})
+                        or review_reviewer
                         or airlock_request.createdBy)
             if not reviewer:
                 raise ValueError("Airlock workflow reviewer identity is missing")
@@ -157,18 +169,31 @@ class AirlockWorkflowUpdater:
                 operation_id = workflow_state.operationId if workflow_state is not None else str(uuid.uuid4())
                 if workflow_state is not None and workflow_state.phase == "deploying":
                     try:
-                        if workflow_state.userResourceId:
-                            replacement_resource = await self.user_resource_repo.get_user_resource_by_id(
-                                workspace_id=workflow_state.workspaceId,
-                                service_id=workflow_state.workspaceServiceId,
-                                resource_id=workflow_state.userResourceId)
+                        replacement_operation_call = self.operations_repo.get_operation_by_id(operation_id)
+                        replacement_operation = (
+                            await replacement_operation_call
+                            if hasattr(replacement_operation_call, "__await__")
+                            else replacement_operation_call
+                        )
+                        if replacement_operation.status in {
+                            Status.DeploymentFailed, Status.UpdatingFailed,
+                            Status.DeletingFailed, Status.ActionFailed,
+                        }:
+                            operation_id = str(uuid.uuid4())
                         else:
-                            replacement_resource = await self.user_resource_repo.get_user_resource_by_workflow_id(
-                                workspace_id=redeploy_workspace_id,
-                                service_id=redeploy_workspace_service_id,
-                                workflow_id=workflow_id)
+                            if workflow_state.userResourceId:
+                                replacement_resource = await self.user_resource_repo.get_user_resource_by_id(
+                                    workspace_id=workflow_state.workspaceId,
+                                    service_id=workflow_state.workspaceServiceId,
+                                    resource_id=workflow_state.userResourceId)
+                            else:
+                                replacement_resource = await self.user_resource_repo.get_user_resource_by_workflow_id(
+                                    workspace_id=redeploy_workspace_id,
+                                    service_id=redeploy_workspace_service_id,
+                                    workflow_id=workflow_id)
+                            await wait_for_successful_operation(self.operations_repo, operation_id)
                     except EntityDoesNotExist:
-                        pass
+                        operation_id = str(uuid.uuid4())
 
                 if replacement_resource is None:
                     workflow_state = AirlockRedeployWorkflow(
@@ -221,6 +246,18 @@ class AirlockWorkflowUpdater:
         except (json.JSONDecodeError, KeyError, ValidationError):
             logger.exception("Invalid Airlock workflow message")
             return True
+        except HTTPException as ex:
+            if ex.status_code == 409 and ex.detail == strings.WORKSPACE_HAS_ACTIVE_OPERATION and payload is not None:
+                retry_count = int(payload.get("lease_contention_retry_count", 0))
+                delay_seconds = min(2 ** retry_count * 30, MAX_LEASE_CONTENTION_RETRY_DELAY_SECONDS)
+                payload["lease_contention_retry_count"] = retry_count + 1
+                await send_airlock_workflow_message(payload, delay_seconds=delay_seconds)
+                logger.info(
+                    "Rescheduled Airlock workflow %s after workspace lease contention in %s seconds",
+                    payload.get("airlock_request_id"), delay_seconds)
+                return True
+            logger.exception("Airlock workflow message failed")
+            return False
         except Exception:
             logger.exception("Airlock workflow message failed; it will be retried")
             return False

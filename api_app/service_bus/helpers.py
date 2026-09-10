@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, UTC
 from azure.servicebus import ServiceBusMessage
 from azure.servicebus.aio import ServiceBusClient
 from pydantic import TypeAdapter
@@ -42,8 +43,21 @@ async def send_deployment_message(content, correlation_id, session_id, action):
     await _send_message(resource_request_message, config.SERVICE_BUS_RESOURCE_REQUEST_QUEUE)
 
 
-async def send_airlock_workflow_message(content):
-    await _send_message(ServiceBusMessage(body=json.dumps(content)), config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
+async def send_airlock_workflow_message(content, delay_seconds: int = 0):
+    message = ServiceBusMessage(body=json.dumps(content))
+    if delay_seconds <= 0:
+        await _send_message(message, config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
+        return
+
+    async with credentials.get_credential_async_context() as credential:
+        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+        async with service_bus_client:
+            sender = service_bus_client.get_queue_sender(queue_name=config.SERVICE_BUS_AIRLOCK_WORKFLOW_QUEUE)
+            async with sender:
+                await sender.schedule_messages(
+                    message,
+                    scheduled_enqueue_time_utc=datetime.now(UTC) + timedelta(seconds=delay_seconds),
+                )
 
 
 async def update_resource_for_step(operation_step: OperationStep, resource_repo: ResourceRepository, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, root_resource: Resource, step_resource: Resource, resource_to_update_id: str, primary_action: str, user: User) -> Resource:

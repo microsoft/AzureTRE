@@ -372,12 +372,11 @@ async def test_release_workspace_lease_deletes_item_with_etag(operations_repo):
     operations_repo.delete_item.assert_awaited_once_with("lease_ws-1", etag="lease-etag", match_condition=MatchConditions.IfNotModified)
 
 
-async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_reacquires_lease(operations_repo):
+async def test_acquire_workspace_lease_rejects_existing_active_operation(operations_repo):
     from azure.cosmos.exceptions import CosmosResourceExistsError
+    from fastapi import HTTPException
     operations_repo._container = MagicMock()
-    # 1st attempt: conflict on create, reads lease, reconciles stale op, restarts loop
-    # 2nd attempt: create succeeds because old lease was released by update_item
-    operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
+    operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
     now = operations_repo.get_timestamp()
     operations_repo.read_item_by_id = AsyncMock(return_value={
         "id": "lease_ws-1",
@@ -390,11 +389,10 @@ async def test_acquire_workspace_lease_reconciles_stale_active_operation_and_rea
     operations_repo.update_item = AsyncMock()
     operations_repo._reconcile_resource_status = AsyncMock()
 
-    res = await operations_repo.acquire_workspace_lease("ws-1", "op-1")
-    assert res is True
-    assert operations_repo.update_item.await_count == 2
-    assert stale_op.status == Status.DeploymentFailed
-    assert operations_repo._container.create_item.await_count == 2
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
+    assert exc.value.status_code == 409
+    operations_repo.update_item.assert_not_awaited()
 
 
 async def test_acquire_workspace_lease_retries_unreconciled_terminal_operation(operations_repo):
@@ -532,7 +530,7 @@ async def test_release_address_space_allocator_lease_only_releases_owner(operati
     operations_repo.delete_item.assert_not_awaited()
 
 
-async def test_resource_has_active_operation_reconciles_stale_operation(operations_repo):
+async def test_resource_has_active_operation_rejects_stale_timestamp_without_heartbeat(operations_repo):
     now = operations_repo.get_timestamp()
     workspace_id = "7c5b2dc2-6b4c-4c7f-8d3e-1f5a9b0e2c4d"
     stale_op_dict = {
@@ -549,11 +547,8 @@ async def test_resource_has_active_operation_reconciles_stale_operation(operatio
     operations_repo._reconcile_resource_status = AsyncMock()
 
     result = await operations_repo.resource_has_active_operation(workspace_id)
-    assert result is False
-    assert operations_repo.update_item.await_count == 2
-    saved_op = operations_repo.update_item.call_args_list[-1].args[0]
-    assert saved_op.status == Status.DeploymentFailed
-    assert saved_op.reconciled is True
+    assert result is True
+    operations_repo.update_item.assert_not_awaited()
 
 
 async def test_resource_has_active_operation_fails_closed_when_reconciliation_fails(operations_repo):
@@ -618,9 +613,10 @@ async def test_build_step_list_tolerates_missing_step_title(operations_repo):
     assert steps[0].templateStepId == "step-1"
 
 
-async def test_reconcile_stale_operation_uses_step_resource_action(operations_repo):
+async def test_acquire_workspace_lease_does_not_reconcile_active_steps_by_timestamp(operations_repo):
     from azure.cosmos.exceptions import CosmosResourceExistsError
     from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
+    from fastapi import HTTPException
 
     operations_repo._container = MagicMock()
     operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
@@ -660,16 +656,13 @@ async def test_reconcile_stale_operation_uses_step_resource_action(operations_re
     operations_repo._container.delete_item = AsyncMock()
     operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
 
-    await operations_repo.acquire_workspace_lease("ws-1", "new-op")
-
-    assert operations_repo.update_item.await_count == 2
-    saved_op = operations_repo.update_item.call_args[0][0]
-    assert saved_op.status == Status.DeletingFailed
-    assert saved_op.steps[0].status == Status.DeletingFailed
-    assert saved_op.steps[1].status == Status.UpdatingFailed
+    with pytest.raises(HTTPException) as exc:
+        await operations_repo.acquire_workspace_lease("ws-1", "new-op")
+    assert exc.value.status_code == 409
+    operations_repo.update_item.assert_not_awaited()
 
 
-async def test_resource_has_active_operation_reconciles_stale_step_with_step_resource_action(operations_repo):
+async def test_resource_has_active_operation_keeps_stale_pipeline_active(operations_repo):
     from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
 
     stale_time = operations_repo.get_timestamp() - WORKSPACE_LEASE_EXPIRY_SECONDS - 100
@@ -696,14 +689,6 @@ async def test_resource_has_active_operation_reconciles_stale_step_with_step_res
     operations_repo._reconcile_resource_status = AsyncMock()
 
     has_active = await operations_repo.resource_has_active_operation(res_id)
-    assert has_active is False
-    assert operations_repo.update_item.await_count == 2
-    saved_op = operations_repo.update_item.call_args_list[-1].args[0]
-    assert saved_op.status == Status.DeletingFailed
-    assert saved_op.steps[0].status == Status.UpdatingFailed
-    assert all(call.kwargs == {"release_lease": False} for call in operations_repo.update_item.call_args_list)
-    assert operations_repo._reconcile_resource_status.await_args_list[1].args == (
-        saved_op.steps[0].resourceId,
-        Status.UpdatingFailed,
-        saved_op.steps[0].message,
-    )
+    assert has_active is True
+    operations_repo.update_item.assert_not_awaited()
+    operations_repo._reconcile_resource_status.assert_not_awaited()
