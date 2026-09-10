@@ -72,6 +72,7 @@ class AirlockWorkflowUpdater:
             airlock_request = await self.airlock_request_repo.get_airlock_request_by_id(payload["airlock_request_id"])
             review_user_id = payload.get("review_user_id")
             workflow_id = payload.get("redeploy_workflow_id")
+            workflow_state = None
             if workflow == "redeploy":
                 if not workflow_id:
                     raise ValueError("Redeploy workflow ID is required")
@@ -86,15 +87,18 @@ class AirlockWorkflowUpdater:
             review_workspace_id = review_resource.workspaceId
             review_workspace_service_id = review_resource.workspaceServiceId
             user_resource_id = review_resource.userResourceId
+            redeploy_workspace_id = review_workspace_id
+            redeploy_workspace_service_id = review_workspace_service_id
             workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
             if airlock_request.type == AirlockRequestType.Import:
                 review_config = workspace.properties["airlock_review_config"]["import"]
-                review_workspace_id = review_config["import_vm_workspace_id"]
-                review_workspace_service_id = review_config["import_vm_workspace_service_id"]
+                redeploy_workspace_id = review_config["import_vm_workspace_id"]
+                redeploy_workspace_service_id = review_config["import_vm_workspace_service_id"]
                 user_resource_template_name = review_config["import_vm_user_resource_template_name"]
             else:
                 review_config = workspace.properties["airlock_review_config"]["export"]
-                review_workspace_service_id = review_config["export_vm_workspace_service_id"]
+                redeploy_workspace_id = workspace.id
+                redeploy_workspace_service_id = review_config["export_vm_workspace_service_id"]
                 user_resource_template_name = review_config["export_vm_user_resource_template_name"]
             try:
                 user_resource = await self.user_resource_repo.get_user_resource_by_id(
@@ -126,7 +130,13 @@ class AirlockWorkflowUpdater:
                 await wait_for_successful_operation(self.operations_repo, disable_operation.id)
             else:
                 await wait_for_successful_operation(self.operations_repo, payload["operation_id"])
-            if user_resource is not None and not payload.get("uninstall_started", False):
+            uninstall_started = payload.get("uninstall_started", False)
+            uninstall_started = uninstall_started or (
+                workflow == "redeploy"
+                and workflow_state is not None
+                and workflow_state.phase == "deploying"
+            )
+            if user_resource is not None and not uninstall_started:
                 delete_operation = await send_uninstall_message(
                     resource=user_resource,
                     resource_repo=self.user_resource_repo,
@@ -154,8 +164,8 @@ class AirlockWorkflowUpdater:
                                 resource_id=workflow_state.userResourceId)
                         else:
                             replacement_resource = await self.user_resource_repo.get_user_resource_by_workflow_id(
-                                workspace_id=review_workspace_id,
-                                service_id=review_workspace_service_id,
+                                workspace_id=redeploy_workspace_id,
+                                service_id=redeploy_workspace_service_id,
                                 workflow_id=workflow_id)
                     except EntityDoesNotExist:
                         pass
@@ -171,38 +181,39 @@ class AirlockWorkflowUpdater:
                     try:
                         replacement_resource, _ = await _deploy_vm(
                             airlock_request, user, workspace,
-                            review_workspace_id, review_workspace_service_id,
+                            redeploy_workspace_id, redeploy_workspace_service_id,
                             user_resource_template_name, self.user_resource_repo,
                             self.workspace_service_repo, self.operations_repo,
                             self.resource_template_repo, self.resource_history_repo,
                             workflow_id=workflow_id, operation_id=operation_id)
-                    except Exception:
-                        try:
-                            await self.operations_repo.release_workspace_lease(
-                                review_workspace_id, operation_id)
-                        except Exception:
-                            logger.exception("Failed to release failed Airlock redeploy lease")
-                        replacement_operation_id = str(uuid.uuid4())
-                        await update_and_publish_event_airlock_request(
-                            airlock_request, self.airlock_request_repo, user, workspace,
-                            redeploy_workflow=AirlockRedeployWorkflow(
-                                workflowId=workflow_id,
-                                phase="deploying",
-                                operationId=replacement_operation_id))
+                    except Exception as ex:
+                        if not getattr(ex, "lease_retained", False):
+                            try:
+                                await self.operations_repo.release_workspace_lease(
+                                    redeploy_workspace_id, operation_id)
+                            except Exception:
+                                logger.exception("Failed to release failed Airlock redeploy lease")
+                            replacement_operation_id = str(uuid.uuid4())
+                            await update_and_publish_event_airlock_request(
+                                airlock_request, self.airlock_request_repo, user, workspace,
+                                redeploy_workflow=AirlockRedeployWorkflow(
+                                    workflowId=workflow_id,
+                                    phase="deploying",
+                                    operationId=replacement_operation_id))
                         raise
 
                 workflow_state = AirlockRedeployWorkflow(
                     workflowId=workflow_id,
                     phase="completed",
                     operationId=operation_id,
-                    workspaceId=review_workspace_id,
-                    workspaceServiceId=review_workspace_service_id,
+                    workspaceId=redeploy_workspace_id,
+                    workspaceServiceId=redeploy_workspace_service_id,
                     userResourceId=replacement_resource.id)
                 await update_and_publish_event_airlock_request(
                     airlock_request, self.airlock_request_repo, user, workspace,
                     review_user_resource=AirlockReviewUserResource(
-                        workspaceId=review_workspace_id,
-                        workspaceServiceId=review_workspace_service_id,
+                        workspaceId=redeploy_workspace_id,
+                        workspaceServiceId=redeploy_workspace_service_id,
                         userResourceId=replacement_resource.id,
                         reviewer=user),
                     redeploy_workflow=workflow_state)
