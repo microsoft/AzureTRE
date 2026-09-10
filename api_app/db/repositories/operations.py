@@ -18,7 +18,7 @@ from db.repositories.base import BaseRepository
 
 from services.logging import logger
 from db.errors import EntityDoesNotExist
-from models.domain.operation import Operation, OperationStep, Status
+from models.domain.operation import Operation, OperationStep, Status, get_failure_status_for_action
 
 # The resource processor auto-renews Porter session locks for up to 3600 seconds (1 hour)
 # during deployment execution (see resource_processor/vmss_porter/runner.py:68).
@@ -124,6 +124,27 @@ class OperationRepository(BaseRepository):
         for resource_id, status, message in step_resources or []:
             await self._reconcile_resource_status(resource_id, status, message)
 
+    async def _reconcile_operation(self, operation, timestamp: float, mark_failed: bool = False):
+        affected_step_resources = [
+            (
+                step.resourceId,
+                get_failure_status_for_action(step.resourceAction) if mark_failed else step.status,
+                step.message,
+            )
+            for step in getattr(operation, "steps", None) or []
+            if step.resourceId and step.status
+        ]
+        if mark_failed:
+            operation.status = get_failure_status_for_action(operation.action)
+            operation.message = "Operation was reconciled after its workspace lease expired"
+        operation.reconciled = False
+        operation.updatedWhen = timestamp
+        await self.update_item(operation, release_lease=False)
+        await self._reconcile_operation_resources(operation, affected_step_resources)
+        operation.reconciled = True
+        operation.updatedWhen = timestamp
+        await self.update_item(operation, release_lease=False)
+
     async def acquire_workspace_lease(self, workspace_id: str, operation_id: str) -> bool:
         if not hasattr(self, "_container") or self._container is None:
             return True
@@ -192,28 +213,26 @@ class OperationRepository(BaseRepository):
                         }
                         if existing_op and getattr(existing_op, "status", None) in terminal_statuses and not getattr(existing_op, "reconciled", False):
                             try:
-                                affected_step_resources = [
-                                    (step.resourceId, step.status, step.message)
-                                    for step in getattr(existing_op, "steps", None) or []
-                                    if step.resourceId and step.status
-                                ]
-                                existing_op.reconciled = False
-                                existing_op.updatedWhen = timestamp
-                                update_call = self.update_item(existing_op, release_lease=False)
-                                if hasattr(update_call, "__await__"):
-                                    await update_call
-                                await self._reconcile_operation_resources(existing_op, affected_step_resources)
-                                existing_op.reconciled = True
-                                existing_op.updatedWhen = timestamp
-                                update_call = self.update_item(existing_op, release_lease=False)
-                                if hasattr(update_call, "__await__"):
-                                    await update_call
+                                await self._reconcile_operation(existing_op, timestamp)
                                 await self.release_workspace_lease(workspace_id, existing_op.id)
                             except Exception as e:
                                 logger.exception(f"Failed to reconcile pending operation {existing_op.id}: {e}")
                                 raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                             continue
                         if existing_op and getattr(existing_op, "status", None) not in terminal_statuses:
+                            last_activity = max(
+                                lease_created,
+                                getattr(existing_op, "createdWhen", 0.0),
+                                getattr(existing_op, "updatedWhen", 0.0),
+                            )
+                            if timestamp - last_activity >= WORKSPACE_LEASE_EXPIRY_SECONDS:
+                                try:
+                                    await self._reconcile_operation(existing_op, timestamp, mark_failed=True)
+                                    await self.release_workspace_lease(workspace_id, existing_op.id)
+                                except Exception as e:
+                                    logger.exception(f"Failed to reconcile expired operation {existing_op.id}: {e}")
+                                    raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
+                                continue
                             raise HTTPException(status_code=http_status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ACTIVE_OPERATION)
                     except HTTPException:
                         raise

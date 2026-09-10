@@ -372,9 +372,8 @@ async def test_release_workspace_lease_deletes_item_with_etag(operations_repo):
     operations_repo.delete_item.assert_awaited_once_with("lease_ws-1", etag="lease-etag", match_condition=MatchConditions.IfNotModified)
 
 
-async def test_acquire_workspace_lease_rejects_existing_active_operation(operations_repo):
+async def test_acquire_workspace_lease_reconciles_expired_active_operation(operations_repo):
     from azure.cosmos.exceptions import CosmosResourceExistsError
-    from fastapi import HTTPException
     operations_repo._container = MagicMock()
     operations_repo._container.create_item = AsyncMock(side_effect=CosmosResourceExistsError())
     now = operations_repo.get_timestamp()
@@ -389,10 +388,10 @@ async def test_acquire_workspace_lease_rejects_existing_active_operation(operati
     operations_repo.update_item = AsyncMock()
     operations_repo._reconcile_resource_status = AsyncMock()
 
-    with pytest.raises(HTTPException) as exc:
-        await operations_repo.acquire_workspace_lease("ws-1", "op-1")
-    assert exc.value.status_code == 409
-    operations_repo.update_item.assert_not_awaited()
+    assert await operations_repo.acquire_workspace_lease("ws-1", "op-1") is True
+    assert stale_op.status == Status.DeploymentFailed
+    assert stale_op.reconciled is True
+    operations_repo.update_item.assert_awaited()
 
 
 async def test_acquire_workspace_lease_retries_unreconciled_terminal_operation(operations_repo):
@@ -613,10 +612,9 @@ async def test_build_step_list_tolerates_missing_step_title(operations_repo):
     assert steps[0].templateStepId == "step-1"
 
 
-async def test_acquire_workspace_lease_does_not_reconcile_active_steps_by_timestamp(operations_repo):
+async def test_acquire_workspace_lease_reconciles_expired_active_steps(operations_repo):
     from azure.cosmos.exceptions import CosmosResourceExistsError
     from db.repositories.operations import WORKSPACE_LEASE_EXPIRY_SECONDS
-    from fastapi import HTTPException
 
     operations_repo._container = MagicMock()
     operations_repo._container.create_item = AsyncMock(side_effect=[CosmosResourceExistsError(), {}])
@@ -631,12 +629,14 @@ async def test_acquire_workspace_lease_does_not_reconcile_active_steps_by_timest
     step1 = OperationStep(
         id="step-1",
         templateStepId="main",
+        resourceId="step-1-resource",
         resourceAction="uninstall",
         status=Status.Deleting,
     )
     step2 = OperationStep(
         id="step-2",
         templateStepId="cleanup",
+        resourceId="step-2-resource",
         resourceAction="upgrade",
         status=Status.Updating,
     )
@@ -656,10 +656,19 @@ async def test_acquire_workspace_lease_does_not_reconcile_active_steps_by_timest
     operations_repo._container.delete_item = AsyncMock()
     operations_repo.resource_has_active_operation = AsyncMock(return_value=False)
 
-    with pytest.raises(HTTPException) as exc:
-        await operations_repo.acquire_workspace_lease("ws-1", "new-op")
-    assert exc.value.status_code == 409
-    operations_repo.update_item.assert_not_awaited()
+    assert await operations_repo.acquire_workspace_lease("ws-1", "new-op") is True
+    assert stale_op.status == Status.DeletingFailed
+    assert stale_op.reconciled is True
+    assert operations_repo.update_item.await_count == 2
+    operations_repo._reconcile_resource_status.assert_any_await(
+        "ws-1", Status.DeletingFailed, "Operation was reconciled after its workspace lease expired"
+    )
+    operations_repo._reconcile_resource_status.assert_any_await(
+        "step-1-resource", Status.DeletingFailed, ""
+    )
+    operations_repo._reconcile_resource_status.assert_any_await(
+        "step-2-resource", Status.UpdatingFailed, ""
+    )
 
 
 async def test_resource_has_active_operation_keeps_stale_pipeline_active(operations_repo):
