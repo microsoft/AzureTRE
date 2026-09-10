@@ -214,7 +214,7 @@ async def create_review_vm(airlock_request: AirlockRequest, user: User, workspac
                 "user_resource_id": existing_resource.id,
                 "operation_id": delete_operation.id,
                 "uninstall_started": False,
-                "redeploy_workflow_id": f"{airlock_request.id}:{user.id}",
+                "redeploy_workflow_id": f"{airlock_request.id}:{user.id}:{delete_operation.id}",
             })
             return airlock_request, delete_operation
 
