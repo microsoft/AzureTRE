@@ -25,6 +25,7 @@ from models.domain.operation import Operation, OperationStep, Status, get_failur
 # Lease expiry includes a safe margin beyond the 3600-second execution window and status-delivery
 # latency (7200 seconds / 2 hours) to ensure still-running operations are not prematurely reclaimed.
 WORKSPACE_LEASE_EXPIRY_SECONDS = 7200.0
+ADDRESS_SPACE_ALLOCATOR_LEASE_ID = "address_space_allocator"
 
 
 def extract_workspace_id_from_resource_path(resource_path: str) -> Optional[str]:
@@ -292,6 +293,12 @@ class OperationRepository(BaseRepository):
         except (CosmosResourceNotFoundError, ResourceNotFoundError, EntityDoesNotExist,
                 CosmosAccessConditionFailedError):
             return
+
+    async def acquire_address_space_allocator_lease(self, operation_id: str) -> bool:
+        return await self.acquire_workspace_lease(ADDRESS_SPACE_ALLOCATOR_LEASE_ID, operation_id)
+
+    async def release_address_space_allocator_lease(self, operation_id: Optional[str] = None) -> None:
+        await self.release_workspace_lease(ADDRESS_SPACE_ALLOCATOR_LEASE_ID, operation_id)
 
     @staticmethod
     def operations_query():

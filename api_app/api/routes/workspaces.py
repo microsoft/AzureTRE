@@ -118,36 +118,48 @@ async def retrieve_workspace_scope_id_by_workspace_id(workspace=Depends(get_work
 
 @workspaces_core_router.post("/workspaces", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def create_workspace(workspace_create: WorkspaceInCreate, response: Response, user=Depends(require_tre_admin), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    address_space_operation_id = operations_repo.create_operation_id()
+    await operations_repo.acquire_address_space_allocator_lease(address_space_operation_id)
     try:
         # TODO: This requires Directory.ReadAll ( Application.Read.All ) to be enabled in the Azure AD application to enable a users workspaces to be listed. This should be made optional.
         auth_info = extract_auth_information(workspace_create.properties)
         workspace, resource_template = await workspace_repo.create_workspace_item(workspace_create, auth_info, user.id, user.roles)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed to create workspace model instance")
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except StorageAccountNameGenerationTimeout:
         logger.exception("Storage name availability check timed out")
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check timed out. Please try again.")
     except StorageAccountNameCheckFailed:
         logger.exception("Storage name availability check failed")
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Storage name availability check failed. Please try again.")
     except UserNotAuthorizedToUseTemplate as e:
         logger.exception("User not authorized to use template")
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except InvalidInput as e:
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e))
+    except Exception:
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
+        raise
 
-    operation = await save_and_deploy_resource(
-        resource=workspace,
-        resource_repo=workspace_repo,
-        operations_repo=operations_repo,
-        resource_template_repo=resource_template_repo,
-        resource_history_repo=resource_history_repo,
-        user=user,
-        resource_template=resource_template)
-    response.headers["Location"] = construct_location_header(operation)
-
-    return OperationInResponse(operation=operation)
+    try:
+        operation = await save_and_deploy_resource(
+            resource=workspace,
+            resource_repo=workspace_repo,
+            operations_repo=operations_repo,
+            resource_template_repo=resource_template_repo,
+            resource_history_repo=resource_history_repo,
+            user=user,
+            resource_template=resource_template)
+        response.headers["Location"] = construct_location_header(operation)
+        return OperationInResponse(operation=operation)
+    finally:
+        await operations_repo.release_address_space_allocator_lease(address_space_operation_id)
 
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
@@ -318,6 +330,7 @@ async def create_workspace_service(response: Response, workspace_service_input: 
             raise
 
     address_space_added = False
+    address_space_lease_acquired = False
     try:
         try:
             workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
@@ -334,6 +347,8 @@ async def create_workspace_service(response: Response, workspace_service_input: 
 
         # if template has address_space get an address space
         if resource_template.properties.get("address_space"):
+            await operations_repo.acquire_address_space_allocator_lease(operation_id)
+            address_space_lease_acquired = True
             # check workspace has address_spaces property
             if not workspace.properties.get("address_spaces"):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY)
@@ -367,14 +382,20 @@ async def create_workspace_service(response: Response, workspace_service_input: 
                         resource_template_repo, resource_history_repo, user
                     )
             finally:
+                if address_space_lease_acquired:
+                    await operations_repo.release_address_space_allocator_lease(operation_id)
                 if hasattr(operations_repo, "release_workspace_lease"):
                     await operations_repo.release_workspace_lease(workspace.id, operation_id)
         if getattr(err, "lease_retained", False):
+            if address_space_lease_acquired:
+                await operations_repo.release_address_space_allocator_lease(operation_id)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
             )
         raise
+    if address_space_lease_acquired:
+        await operations_repo.release_address_space_allocator_lease(operation_id)
     response.headers["Location"] = construct_location_header(operation)
 
     return OperationInResponse(operation=operation)
