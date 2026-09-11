@@ -66,53 +66,12 @@
       "readOnly": true,
       "updateable": true
     },
-    "maximum_sessions": {
-      "type": "integer",
-      "title": "Maximum sessions per host",
-      "description": "Maximum number of concurrent user sessions on each pooled session host.",
-      "default": 10,
-      "minimum": 1,
-      "maximum": 50
-    },
-    "pooled_session_host_count": {
-      "type": "integer",
-      "title": "Session host count",
-      "description": "Number of shared multi-user session hosts in the pooled host pool.",
-      "default": 1,
-      "minimum": 1,
-      "maximum": 10
-    },
-    "pooled_vm_size": {
-      "type": "string",
-      "title": "Session host VM size",
-      "default": "Standard_D4s_v6",
-      "enum": [
-        "Standard_D2s_v6",
-        "Standard_D4s_v6",
-        "Standard_D8s_v6",
-        "Standard_D16s_v6"
-      ]
-    },
     "enable_clipboard": {
       "$id": "#/properties/enable_clipboard",
       "type": "boolean",
       "title": "Enable Clipboard Redirection",
       "description": "Enable clipboard redirection between session and client",
       "default": false,
-      "updateable": false
-    },
-    "clipboard_transfer_direction": {
-      "$id": "#/properties/clipboard_transfer_direction",
-      "type": "string",
-      "title": "Clipboard Transfer Direction",
-      "description": "Clipboard direction, fixed at service creation. Supported Windows Enterprise hosts are restarted before registration to activate policy.",
-      "default": "disabled",
-      "enum": [
-        "disabled",
-        "client_to_session",
-        "session_to_client",
-        "both"
-      ],
       "updateable": false
     }
   },
@@ -129,11 +88,70 @@
         ]
       },
       "then": {
+        "properties": {
+          "maximum_sessions": {
+            "type": "integer",
+            "title": "Maximum sessions per host",
+            "description": "Maximum number of concurrent user sessions on each pooled session host.",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "pooled_session_host_count": {
+            "type": "integer",
+            "title": "Session host count",
+            "description": "Number of shared multi-user session hosts in the pooled host pool.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "pooled_vm_size": {
+            "type": "string",
+            "title": "Session host VM size",
+            "default": "Standard_D4s_v6",
+            "enum": [
+              "Standard_D2s_v6",
+              "Standard_D4s_v6",
+              "Standard_D8s_v6",
+              "Standard_D16s_v6"
+            ]
+          }
+        },
         "required": [
           "maximum_sessions",
           "pooled_session_host_count",
           "pooled_vm_size"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "enable_clipboard": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_clipboard"
+        ]
+      },
+      "then": {
+        "properties": {
+          "clipboard_transfer_direction": {
+            "$id": "#/properties/clipboard_transfer_direction",
+            "type": "string",
+            "title": "Clipboard Transfer Direction",
+            "description": "Clipboard direction, fixed at service creation. Supported Windows Enterprise hosts are restarted before registration to activate policy.",
+            "default": "disabled",
+            "enum": [
+              "disabled",
+              "client_to_session",
+              "session_to_client",
+              "both"
+            ],
+            "updateable": false
+          }
+        }
       }
     }
   ],
@@ -158,16 +176,29 @@
                 {
                   "name": "WindowsActivation",
                   "source_addresses": "{{ resource.parent.properties.address_spaces }}",
-                  "destination_addresses": ["20.118.99.224", "40.83.235.53"],
-                  "destination_ports": ["1688"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "20.118.99.224",
+                    "40.83.235.53"
+                  ],
+                  "destination_ports": [
+                    "1688"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 },
                 {
                   "name": "AVDRelay",
                   "source_addresses": "{{ resource.parent.properties.address_spaces }}",
-                  "destination_addresses": ["51.5.0.0/16"],
-                  "destination_ports": ["3478"],
-                  "protocols": ["UDP"]
+                  "destination_addresses": [
+                    "51.5.0.0/16"
+                  ],
+                  "destination_ports": [
+                    "3478"
+                  ],
+                  "protocols": [
+                    "UDP"
+                  ]
                 },
                 {
                   "name": "AzureVirtualDesktop",
@@ -222,7 +253,10 @@
                     "*.prod.warm.ingest.monitor.core.windows.net"
                   ],
                   "protocols": [
-                    { "port": "443", "type": "Https" }
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
                   ]
                 },
                 {
@@ -236,7 +270,12 @@
                     "*.microsoftaik.azure.net",
                     "ctldl.windowsupdate.com"
                   ],
-                  "protocols": [{ "port": "80", "type": "Http" }]
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ]
                 }
               ]
             }
@@ -284,16 +323,29 @@
                 {
                   "name": "WindowsActivation",
                   "source_addresses": "{{ resource.parent.properties.address_spaces }}",
-                  "destination_addresses": ["20.118.99.224", "40.83.235.53"],
-                  "destination_ports": ["1688"],
-                  "protocols": ["TCP"]
+                  "destination_addresses": [
+                    "20.118.99.224",
+                    "40.83.235.53"
+                  ],
+                  "destination_ports": [
+                    "1688"
+                  ],
+                  "protocols": [
+                    "TCP"
+                  ]
                 },
                 {
                   "name": "AVDRelay",
                   "source_addresses": "{{ resource.parent.properties.address_spaces }}",
-                  "destination_addresses": ["51.5.0.0/16"],
-                  "destination_ports": ["3478"],
-                  "protocols": ["UDP"]
+                  "destination_addresses": [
+                    "51.5.0.0/16"
+                  ],
+                  "destination_ports": [
+                    "3478"
+                  ],
+                  "protocols": [
+                    "UDP"
+                  ]
                 },
                 {
                   "name": "AzureVirtualDesktop",
@@ -348,7 +400,10 @@
                     "*.prod.warm.ingest.monitor.core.windows.net"
                   ],
                   "protocols": [
-                    { "port": "443", "type": "Https" }
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
                   ]
                 },
                 {
@@ -362,7 +417,12 @@
                     "*.microsoftaik.azure.net",
                     "ctldl.windowsupdate.com"
                   ],
-                  "protocols": [{ "port": "80", "type": "Http" }]
+                  "protocols": [
+                    {
+                      "port": "80",
+                      "type": "Http"
+                    }
+                  ]
                 }
               ]
             }

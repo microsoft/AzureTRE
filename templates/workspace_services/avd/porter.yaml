@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-avd
-version: 0.6.1
+version: 0.6.2
 description: "An Azure TRE service for Azure Virtual Desktop with personal or pooled host pools"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
