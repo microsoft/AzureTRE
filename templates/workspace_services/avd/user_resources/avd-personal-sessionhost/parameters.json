@@ -89,6 +89,12 @@
       }
     },
     {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
       "name": "enable_shutdown_schedule",
       "source": {
         "env": "ENABLE_SHUTDOWN_SCHEDULE"

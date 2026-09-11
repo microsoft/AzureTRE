@@ -8,7 +8,8 @@ ENHANCEMENTS:
 * Upgrade Guacamole to v1.6.0 with Java 17 and other security updates ([#4754](https://github.com/microsoft/AzureTRE/pull/4754))
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
-* Add Azure Virtual Desktop workspace service with personal host pools, private endpoints, and external identity support ([#4769](https://github.com/microsoft/AzureTRE/issues/4769))
+* Add Azure Virtual Desktop with multiple personal desktops per user, VM-specific connection links, workspace-grouped display names, pooled desktops, workspace-group access, creation-only host-pool type, private endpoints, enforced clipboard bootstrap, registration renewal, host cleanup,
+  required network access with IP-based Windows activation rules compatible with Azure Firewall Basic and no DNS-proxy dependency, and optional SSO pre-consent (AVD 0.6.1, personal session host 0.4.0) ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
 
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))

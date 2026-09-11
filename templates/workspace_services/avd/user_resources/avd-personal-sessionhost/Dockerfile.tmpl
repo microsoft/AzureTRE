@@ -5,11 +5,16 @@ FROM --platform=linux/amd64 debian:bookworm-slim
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 
-# Git is required for terraform_azurerm_environment_configuration
+# Git is required for terraform_azurerm_environment_configuration. Curl stages the AVD DSC artifact in the bundle.
 RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-    apt-get update && apt-get install -y git --no-install-recommends
+    apt-get update && apt-get install -y ca-certificates curl git jq --no-install-recommends
 
 # PORTER_MIXINS
 
 # Use the BUNDLE_DIR build argument to copy files into the bundle
 COPY --link . ${BUNDLE_DIR}/
+
+RUN curl --fail --location --retry 3 \
+    --output ${BUNDLE_DIR}/Configuration.zip \
+    https://raw.githubusercontent.com/Azure/RDS-Templates/1f36cf0bb39d3849b8cd5f494f75accac03ec21b/ARM-wvd-templates/DSC/Configuration.zip \
+    && cd ${BUNDLE_DIR} && sha256sum --check Configuration.zip.sha256

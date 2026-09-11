@@ -14,7 +14,7 @@ resource "azurerm_private_endpoint" "hostpool" {
   }
 
   private_dns_zone_group {
-    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.wvd.microsoft.com"]
+    name                 = local.wvd_private_dns_zone_name
     private_dns_zone_ids = [data.azurerm_private_dns_zone.wvd.id]
   }
 
@@ -37,7 +37,7 @@ resource "azurerm_private_endpoint" "workspace" {
   }
 
   private_dns_zone_group {
-    name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.wvd.microsoft.com"]
+    name                 = local.wvd_private_dns_zone_name
     private_dns_zone_ids = [data.azurerm_private_dns_zone.wvd.id]
   }
 

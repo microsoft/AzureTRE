@@ -1,0 +1,30 @@
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+$policyPath = 'HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services'
+$policy = Get-ItemProperty -Path $policyPath -ErrorAction Stop
+$bootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToUniversalTime().ToString('o')
+if (!$policy.TREPolicyBootTime -or $policy.TREPolicyBootTime -eq $bootTime -or $policy.SCClipLevel -ne ${clipboard_server_to_client} -or $policy.CSClipLevel -ne ${clipboard_client_to_server}) {
+    throw 'Session host must restart with the expected clipboard policy before registration'
+}
+$deadline = (Get-Date).AddMinutes(15)
+while ($true) {
+    try {
+        $token = Invoke-RestMethod -Uri 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F' -Headers @{Metadata = 'true'} -TimeoutSec 30
+        Invoke-WebRequest -UseBasicParsing -Uri '${artifact_url}' -Headers @{Authorization = "Bearer $($token.access_token)"; 'x-ms-version' = '2023-11-03'} -OutFile 'Configuration.zip' -TimeoutSec 60
+        break
+    } catch {
+        if ((Get-Date) -ge $deadline) { throw }
+        Start-Sleep -Seconds 15
+    }
+}
+if ((Get-FileHash -LiteralPath 'Configuration.zip' -Algorithm SHA256).Hash -ne '${artifact_sha256}') {
+    throw 'AVD configuration archive checksum does not match the approved artifact'
+}
+Expand-Archive -LiteralPath 'Configuration.zip' -DestinationPath 'Configuration' -Force
+Set-Location 'Configuration'
+. '.\Configuration.ps1'
+AddSessionHost -HostPoolName '${host_pool_name}' -RegistrationInfoToken '${registration_token}' -AadJoin $true -OutputPath '.\Mof'
+Start-DscConfiguration -Path '.\Mof' -Wait -Force -Verbose -ErrorAction Stop
+${mount_storage_command}
+$changeLogonOutput = (& $env:ComSpec /d /c 'change logon /enable 2>&1') -join "`n"
+if ($LASTEXITCODE -ne 0 -and $changeLogonOutput.Trim() -ne 'Session logins are currently ENABLED') { throw 'Unable to enable session logons' }

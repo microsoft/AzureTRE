@@ -47,15 +47,63 @@
       }
     },
     {
+      "name": "azure_environment",
+      "source": {
+        "env": "AZURE_ENVIRONMENT"
+      }
+    },
+    {
       "name": "workspace_subscription_id",
       "source": {
         "env": "WORKSPACE_SUBSCRIPTION_ID"
       }
     },
     {
+      "name": "host_pool_type",
+      "source": {
+        "env": "HOST_POOL_TYPE"
+      }
+    },
+    {
+      "name": "workspace_owners_group_id",
+      "source": {
+        "env": "WORKSPACE_OWNERS_GROUP_ID"
+      }
+    },
+    {
+      "name": "workspace_researchers_group_id",
+      "source": {
+        "env": "WORKSPACE_RESEARCHERS_GROUP_ID"
+      }
+    },
+    {
+      "name": "maximum_sessions",
+      "source": {
+        "env": "MAXIMUM_SESSIONS"
+      }
+    },
+    {
+      "name": "pooled_session_host_count",
+      "source": {
+        "env": "POOLED_SESSION_HOST_COUNT"
+      }
+    },
+    {
+      "name": "pooled_vm_size",
+      "source": {
+        "env": "POOLED_VM_SIZE"
+      }
+    },
+    {
       "name": "enable_clipboard",
       "source": {
         "env": "ENABLE_CLIPBOARD"
+      }
+    },
+    {
+      "name": "enable_sso_preconsent",
+      "source": {
+        "env": "ENABLE_SSO_PRECONSENT"
       }
     },
     {

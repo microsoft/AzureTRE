@@ -1,0 +1,9 @@
+$ErrorActionPreference = 'Stop'
+$changeLogonOutput = & $env:ComSpec /d /c 'change logon /disable 2>&1'
+if ($LASTEXITCODE -ne 0 -and $changeLogonOutput -notmatch 'currently DISABLED') { throw 'Unable to disable session logons' }
+$policyPath = 'HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services'
+New-Item -Path $policyPath -Force | Out-Null
+New-ItemProperty -Path $policyPath -Name SCClipLevel -PropertyType DWord -Value ${clipboard_server_to_client} -Force | Out-Null
+New-ItemProperty -Path $policyPath -Name CSClipLevel -PropertyType DWord -Value ${clipboard_client_to_server} -Force | Out-Null
+$bootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToUniversalTime().ToString('o')
+New-ItemProperty -Path $policyPath -Name TREPolicyBootTime -PropertyType String -Value $bootTime -Force | Out-Null

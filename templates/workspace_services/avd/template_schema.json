@@ -3,7 +3,7 @@
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/avd/template_schema.json",
   "type": "object",
   "title": "Azure Virtual Desktop",
-  "description": "Azure Virtual Desktop enables secure access to Windows virtual machines through personal host pools.",
+  "description": "Azure Virtual Desktop enables secure access through personal or pooled multi-user host pools.",
   "required": [],
   "properties": {
     "display_name": {
@@ -17,15 +17,81 @@
       "type": "string",
       "title": "Description of the workspace service",
       "description": "Description of the workspace service",
-      "default": "Access Windows virtual machines via Azure Virtual Desktop with personal host pools.",
+      "default": "Access Windows virtual machines through a personal or pooled Azure Virtual Desktop host pool.",
       "updateable": true
     },
     "overview": {
       "type": "string",
       "title": "Workspace Service Overview",
       "description": "Long form description of the workspace service, in markdown syntax",
-      "default": "Azure Virtual Desktop is a desktop and app virtualization service that runs on Azure. It enables secure remote desktop access from any device.\n\n**Key Features:**\n- Personal host pools with one VM per user\n- External identity support\n- Private endpoint connectivity for data exfiltration prevention\n- Seamless integration with Microsoft Entra ID\n\n**Documentation:** [Azure Virtual Desktop](https://learn.microsoft.com/en-us/azure/virtual-desktop/)",
+      "default": "Azure Virtual Desktop is a desktop and app virtualization service that runs on Azure. It enables secure remote desktop access from any device.\n\n**Key Features:**\n- Personal host pools with multiple user-resource VMs per user\n- Pooled host pools with workspace-managed multi-user session hosts\n- External identity support\n- Private session-host connectivity with public client access\n- Seamless integration with Microsoft Entra ID\n\n**Documentation:** [Azure Virtual Desktop](https://learn.microsoft.com/en-us/azure/virtual-desktop/)",
       "updateable": true
+    },
+    "host_pool_type": {
+      "type": "string",
+      "title": "Host pool type",
+      "description": "Personal creates session hosts as user resources. Pooled deploys shared multi-user session hosts with this workspace service.",
+      "default": "Personal",
+      "enum": [
+        "Personal",
+        "Pooled"
+      ],
+      "updateable": false
+    },
+    "enable_sso_preconsent": {
+      "type": "boolean",
+      "title": "Pre-approve remote connections",
+      "description": "Create a service-scoped dynamic device group for SSO pre-consent. Consider Entra licensing and Graph group/application write permissions. If unavailable, users approve their own connections.",
+      "default": false,
+      "updateable": false
+    },
+    "workspace_display_name": {
+      "type": "string",
+      "title": "Workspace display name",
+      "description": "Supplied from the parent workspace by the deployment pipeline.",
+      "readOnly": true,
+      "updateable": true
+    },
+    "workspace_owners_group_id": {
+      "type": "string",
+      "title": "Workspace owners group ID",
+      "description": "Supplied from the parent workspace by the deployment pipeline.",
+      "readOnly": true,
+      "updateable": true
+    },
+    "workspace_researchers_group_id": {
+      "type": "string",
+      "title": "Workspace researchers group ID",
+      "description": "Supplied from the parent workspace by the deployment pipeline.",
+      "readOnly": true,
+      "updateable": true
+    },
+    "maximum_sessions": {
+      "type": "integer",
+      "title": "Maximum sessions per host",
+      "description": "Maximum number of concurrent user sessions on each pooled session host.",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 50
+    },
+    "pooled_session_host_count": {
+      "type": "integer",
+      "title": "Session host count",
+      "description": "Number of shared multi-user session hosts in the pooled host pool.",
+      "default": 1,
+      "minimum": 1,
+      "maximum": 10
+    },
+    "pooled_vm_size": {
+      "type": "string",
+      "title": "Session host VM size",
+      "default": "Standard_D4s_v6",
+      "enum": [
+        "Standard_D2s_v6",
+        "Standard_D4s_v6",
+        "Standard_D8s_v6",
+        "Standard_D16s_v6"
+      ]
     },
     "enable_clipboard": {
       "$id": "#/properties/enable_clipboard",
@@ -33,13 +99,13 @@
       "title": "Enable Clipboard Redirection",
       "description": "Enable clipboard redirection between session and client",
       "default": false,
-      "updateable": true
+      "updateable": false
     },
     "clipboard_transfer_direction": {
       "$id": "#/properties/clipboard_transfer_direction",
       "type": "string",
       "title": "Clipboard Transfer Direction",
-      "description": "Direction of allowed clipboard transfers (only applies when clipboard is enabled)",
+      "description": "Clipboard direction, fixed at service creation. Supported Windows Enterprise hosts are restarted before registration to activate policy.",
       "default": "disabled",
       "enum": [
         "disabled",
@@ -47,14 +113,32 @@
         "session_to_client",
         "both"
       ],
-      "updateable": true
+      "updateable": false
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "host_pool_type": {
+            "const": "Pooled"
+          }
+        },
+        "required": [
+          "host_pool_type"
+        ]
+      },
+      "then": {
+        "required": [
+          "maximum_sessions",
+          "pooled_session_host_count",
+          "pooled_vm_size"
+        ]
+      }
+    }
+  ],
   "pipeline": {
     "install": [
-      {
-        "stepId": "main"
-      },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0ff50",
         "stepTitle": "Add network firewall rules for Azure Virtual Desktop",
@@ -72,9 +156,23 @@
               "action": "Allow",
               "rules": [
                 {
+                  "name": "WindowsActivation",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": ["20.118.99.224", "40.83.235.53"],
+                  "destination_ports": ["1688"],
+                  "protocols": ["TCP"]
+                },
+                {
+                  "name": "AVDRelay",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": ["51.5.0.0/16"],
+                  "destination_ports": ["3478"],
+                  "protocols": ["UDP"]
+                },
+                {
                   "name": "AzureVirtualDesktop",
                   "description": "Azure Virtual Desktop service traffic",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "WindowsVirtualDesktop"
                   ],
@@ -88,23 +186,9 @@
                 {
                   "name": "AzureActiveDirectory",
                   "description": "AAD access for authentication",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureMonitor",
-                  "description": "Azure Monitor for diagnostics",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": [
-                    "AzureMonitor"
                   ],
                   "destination_ports": [
                     "443"
@@ -115,14 +199,72 @@
                 }
               ]
             }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_avd_monitor",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AVDPlatform",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "catalogartifact.azureedge.net",
+                    "mrsglobalsteus2prod.blob.core.windows.net",
+                    "wvdportalstorageblob.blob.core.windows.net",
+                    "*.windows.cloud.microsoft",
+                    "*.windows.static.microsoft",
+                    "gcs.prod.monitoring.core.windows.net",
+                    "*.prod.warm.ingest.monitor.core.windows.net"
+                  ],
+                  "protocols": [
+                    { "port": "443", "type": "Https" }
+                  ]
+                },
+                {
+                  "name": "AVDCertificates",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "oneocsp.microsoft.com",
+                    "www.microsoft.com",
+                    "*.aikcertaia.microsoft.com",
+                    "azcsprodeusaikpublish.blob.core.windows.net",
+                    "*.microsoftaik.azure.net",
+                    "ctldl.windowsupdate.com"
+                  ],
+                  "protocols": [{ "port": "80", "type": "Http" }]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_display_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.display_name }}"
+          },
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
           }
         ]
       }
     ],
     "upgrade": [
-      {
-        "stepId": "main"
-      },
       {
         "stepId": "260421b3-7308-491f-b531-e007cdc0ff51",
         "stepTitle": "Update network firewall rules for Azure Virtual Desktop",
@@ -140,9 +282,23 @@
               "action": "Allow",
               "rules": [
                 {
+                  "name": "WindowsActivation",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": ["20.118.99.224", "40.83.235.53"],
+                  "destination_ports": ["1688"],
+                  "protocols": ["TCP"]
+                },
+                {
+                  "name": "AVDRelay",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "destination_addresses": ["51.5.0.0/16"],
+                  "destination_ports": ["3478"],
+                  "protocols": ["UDP"]
+                },
+                {
                   "name": "AzureVirtualDesktop",
                   "description": "Azure Virtual Desktop service traffic",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "WindowsVirtualDesktop"
                   ],
@@ -156,23 +312,9 @@
                 {
                   "name": "AzureActiveDirectory",
                   "description": "AAD access for authentication",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
                   "destination_addresses": [
                     "AzureActiveDirectory"
-                  ],
-                  "destination_ports": [
-                    "443"
-                  ],
-                  "protocols": [
-                    "TCP"
-                  ]
-                },
-                {
-                  "name": "AzureMonitor",
-                  "description": "Azure Monitor for diagnostics",
-                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
-                  "destination_addresses": [
-                    "AzureMonitor"
                   ],
                   "destination_ports": [
                     "443"
@@ -183,6 +325,67 @@
                 }
               ]
             }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_avd_monitor",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AVDPlatform",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "catalogartifact.azureedge.net",
+                    "mrsglobalsteus2prod.blob.core.windows.net",
+                    "wvdportalstorageblob.blob.core.windows.net",
+                    "*.windows.cloud.microsoft",
+                    "*.windows.static.microsoft",
+                    "gcs.prod.monitoring.core.windows.net",
+                    "*.prod.warm.ingest.monitor.core.windows.net"
+                  ],
+                  "protocols": [
+                    { "port": "443", "type": "Https" }
+                  ]
+                },
+                {
+                  "name": "AVDCertificates",
+                  "source_addresses": "{{ resource.parent.properties.address_spaces }}",
+                  "target_fqdns": [
+                    "oneocsp.microsoft.com",
+                    "www.microsoft.com",
+                    "*.aikcertaia.microsoft.com",
+                    "azcsprodeusaikpublish.blob.core.windows.net",
+                    "*.microsoftaik.azure.net",
+                    "ctldl.windowsupdate.com"
+                  ],
+                  "protocols": [{ "port": "80", "type": "Http" }]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_display_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.display_name }}"
+          },
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
           }
         ]
       }
@@ -203,6 +406,15 @@
             "value": {
               "name": "nrc_svc_{{ resource.id }}_avd"
             }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_avd_monitor"
+            }
           }
         ]
       },
@@ -211,5 +423,21 @@
       }
     ]
   },
-  "uiSchema": {}
+  "uiSchema": {
+    "workspace_display_name": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "maximum_sessions": {
+      "ui:widget": "updown"
+    },
+    "pooled_session_host_count": {
+      "ui:widget": "updown"
+    }
+  }
 }

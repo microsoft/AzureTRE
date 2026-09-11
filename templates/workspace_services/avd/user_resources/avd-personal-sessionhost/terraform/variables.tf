@@ -14,6 +14,12 @@ variable "tre_resource_id" {
   type = string
 }
 
+variable "display_name" {
+  type        = string
+  description = "The personal desktop display name"
+  default     = ""
+}
+
 variable "image" {
   type = string
 }
@@ -46,6 +52,28 @@ variable "shutdown_timezone" {
 
 variable "owner_id" {
   type = string
+}
+
+variable "auth_client_id" {
+  type        = string
+  description = "Client ID used to resolve the session-host owner"
+}
+
+variable "auth_client_secret" {
+  type        = string
+  description = "Client secret used to resolve the session-host owner"
+  sensitive   = true
+}
+
+variable "auth_tenant_id" {
+  type        = string
+  description = "Tenant containing the session-host owner"
+}
+
+variable "azure_environment" {
+  type        = string
+  description = "Azure CLI cloud name"
+  default     = "AzureCloud"
 }
 
 variable "admin_username" {

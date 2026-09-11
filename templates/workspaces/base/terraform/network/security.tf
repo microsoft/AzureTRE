@@ -111,6 +111,34 @@ resource "azurerm_network_security_rule" "allow_outbound_to_internet" {
 }
 
 
+resource "azurerm_network_security_rule" "allow_outbound_windows_activation" {
+  access                      = "Allow"
+  destination_address_prefix  = "Internet"
+  destination_port_range      = "1688"
+  direction                   = "Outbound"
+  name                        = "windows-activation-via-firewall"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 121
+  protocol                    = "Tcp"
+  resource_group_name         = var.ws_resource_group_name
+  source_address_prefixes     = azurerm_subnet.services.address_prefixes
+  source_port_range           = "*"
+}
+
+resource "azurerm_network_security_rule" "allow_outbound_avd_relay" {
+  access                      = "Allow"
+  destination_address_prefix  = "51.5.0.0/16"
+  destination_port_range      = "3478"
+  direction                   = "Outbound"
+  name                        = "avd-relay-via-firewall"
+  network_security_group_name = azurerm_network_security_group.ws.name
+  priority                    = 122
+  protocol                    = "Udp"
+  resource_group_name         = var.ws_resource_group_name
+  source_address_prefixes     = azurerm_subnet.services.address_prefixes
+  source_port_range           = "*"
+}
+
 resource "azurerm_network_security_rule" "allow_outbound_from_webapp_to_core_webapp" {
   access                       = "Allow"
   destination_port_range       = "443"

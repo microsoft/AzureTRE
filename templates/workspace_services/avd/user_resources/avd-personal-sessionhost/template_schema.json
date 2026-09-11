@@ -32,8 +32,7 @@
       "default": "Windows 11 Multi-Session",
       "enum": [
         "Windows 11 Multi-Session",
-        "Windows 11",
-        "Windows 10 Multi-Session"
+        "Windows 11 Enterprise"
       ]
     },
     "admin_username": {
@@ -60,8 +59,8 @@
       "$id": "#/properties/shared_storage_access",
       "type": "boolean",
       "title": "Shared storage",
-      "default": true,
-      "description": "Enable access to shared storage"
+      "default": false,
+      "description": "Optional shared storage access using storage account keys. Leave disabled in tenants that prohibit storage keys."
     },
     "enable_shutdown_schedule": {
       "$id": "#/properties/enable_shutdown_schedule",

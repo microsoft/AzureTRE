@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-avd-sessionhost
-version: 0.1.0
+version: 0.4.0
 description: "An Azure TRE User Resource Template for Azure Virtual Desktop Personal Session Host (Windows)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -19,6 +19,14 @@ custom:
         publisher: microsoftwindowsdesktop
         offer: windows-11
         sku: win11-24h2-avd
+        version: latest
+      secure_boot_enabled: true
+      vtpm_enabled: true
+    "Windows 11 Enterprise":
+      source_image_reference:
+        publisher: microsoftwindowsdesktop
+        offer: windows-11
+        sku: win11-24h2-ent
         version: latest
       secure_boot_enabled: true
       vtpm_enabled: true
@@ -40,6 +48,12 @@ custom:
       vtpm_enabled: true
 
 credentials:
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -52,6 +66,10 @@ credentials:
 parameters:
   - name: workspace_id
     type: string
+  - name: display_name
+    type: string
+    default: ""
+    description: "The personal desktop display name; defaults to the VM hostname when omitted"
   - name: tre_id
     type: string
   - name: parent_service_id
@@ -64,6 +82,7 @@ parameters:
   - name: azure_environment
     type: string
     default: "AzureCloud"
+    enum: ["AzureCloud"]
     description: "Used by Azure CLI to set the Azure environment"
   - name: tfstate_resource_group_name
     type: string
@@ -79,7 +98,9 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     type: boolean
-    default: false
+    default: true
+    enum: [true]
+    description: "AVD deployment requires the TRE resource processor managed identity."
   - name: os_image
     type: string
     default: "Windows 11 Multi-Session"
@@ -91,7 +112,8 @@ parameters:
     default: "2 CPU | 8GB RAM"
   - name: shared_storage_access
     type: boolean
-    default: true
+    default: false
+    description: "Optional shared storage access; requires storage account keys. Leave disabled where keys are prohibited."
   - name: shared_storage_name
     type: string
     default: "vm-shared-storage"
@@ -104,7 +126,7 @@ parameters:
     default: false
     description: "Enable automatic shutdown schedule for the VM"
   - name: shutdown_time
-    default: ""
+    default: "1800"
     type: string
     description: "Time of day to shutdown the VM (HHmm format)"
     pattern: "^([01]?[0-9]|2[0-3])[0-5][0-9]$"
@@ -150,6 +172,7 @@ install:
       description: "Deploy AVD Personal Session Host (Windows VM)"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
@@ -163,6 +186,10 @@ install:
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        azure_environment: ${ bundle.parameters.azure_environment }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
@@ -182,6 +209,7 @@ upgrade:
       description: "Update AVD Personal Session Host (Windows VM)"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
@@ -195,6 +223,10 @@ upgrade:
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        azure_environment: ${ bundle.parameters.azure_environment }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"
@@ -214,6 +246,7 @@ uninstall:
       description: "Delete the AVD Personal Session Host"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
@@ -227,6 +260,10 @@ uninstall:
         shutdown_time: ${ bundle.parameters.shutdown_time }
         shutdown_timezone: ${ bundle.parameters.shutdown_timezone }
         owner_id: ${ bundle.parameters.owner_id }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
+        azure_environment: ${ bundle.parameters.azure_environment }
         arm_environment: ${ bundle.parameters.arm_environment }
       backendConfig:
         use_azuread_auth: "true"

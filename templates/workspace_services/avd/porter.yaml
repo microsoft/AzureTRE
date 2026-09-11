@@ -1,12 +1,18 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-avd
-version: 0.1.0
-description: "An Azure TRE service for Azure Virtual Desktop with Personal Host Pools"
+version: 0.6.1
+description: "An Azure TRE service for Azure Virtual Desktop with personal or pooled host pools"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
 
 credentials:
+  - name: auth_client_id
+    env: AUTH_CLIENT_ID
+  - name: auth_client_secret
+    env: AUTH_CLIENT_SECRET
+  - name: auth_tenant_id
+    env: AUTH_TENANT_ID
   - name: azure_tenant_id
     env: ARM_TENANT_ID
   - name: azure_subscription_id
@@ -19,6 +25,14 @@ credentials:
 parameters:
   - name: workspace_id
     type: string
+  - name: display_name
+    type: string
+    default: "Azure Virtual Desktop"
+    description: "The workspace service display name"
+  - name: workspace_display_name
+    type: string
+    default: ""
+    description: "The parent TRE workspace display name, supplied by the deployment pipeline"
   - name: tre_id
     type: string
   - name: id
@@ -38,12 +52,45 @@ parameters:
   - name: arm_use_msi
     env: ARM_USE_MSI
     type: boolean
-    default: false
+    default: true
+    enum: [true]
+    description: "AVD deployment requires the TRE resource processor managed identity."
   - name: arm_environment
     type: string
+  - name: azure_environment
+    type: string
+    default: "AzureCloud"
+    enum: ["AzureCloud"]
+    description: "Used by Azure CLI to select the Azure cloud"
   - name: workspace_subscription_id
     type: string
     default: ""
+  - name: host_pool_type
+    type: string
+    default: "Personal"
+    description: "Host pool deployment model (Personal or Pooled)"
+  - name: workspace_owners_group_id
+    type: string
+    description: "Object ID of the workspace owners security group"
+  - name: workspace_researchers_group_id
+    type: string
+    description: "Object ID of the workspace researchers security group"
+  - name: enable_sso_preconsent
+    type: boolean
+    default: false
+    description: "Create a dynamic device group for optional SSO pre-consent. Requires licensed Entra features and Graph application/group write permissions."
+  - name: maximum_sessions
+    type: integer
+    default: 10
+    description: "Maximum concurrent sessions per pooled session host"
+  - name: pooled_session_host_count
+    type: integer
+    default: 1
+    description: "Number of multi-user session hosts to deploy for a pooled host pool"
+  - name: pooled_vm_size
+    type: string
+    default: "Standard_D4s_v6"
+    description: "Virtual machine size for pooled session hosts"
   - name: enable_clipboard
     type: boolean
     default: false
@@ -73,18 +120,33 @@ outputs:
 mixins:
   - terraform:
       clientVersion: 1.9.8
+  - az:
+      clientVersion: 2.67.0
 
 install:
   - terraform:
       description: "Deploy Azure Virtual Desktop Service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
+        workspace_display_name: ${ bundle.parameters.workspace_display_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        host_pool_type: ${ bundle.parameters.host_pool_type }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+        maximum_sessions: ${ bundle.parameters.maximum_sessions }
+        pooled_session_host_count: ${ bundle.parameters.pooled_session_host_count }
+        pooled_vm_size: ${ bundle.parameters.pooled_vm_size }
         enable_clipboard: ${ bundle.parameters.enable_clipboard }
         clipboard_transfer_direction: ${ bundle.parameters.clipboard_transfer_direction }
+        enable_sso_preconsent: ${ bundle.parameters.enable_sso_preconsent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -102,12 +164,25 @@ upgrade:
       description: "Upgrade Azure Virtual Desktop Service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
+        workspace_display_name: ${ bundle.parameters.workspace_display_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        host_pool_type: ${ bundle.parameters.host_pool_type }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+        maximum_sessions: ${ bundle.parameters.maximum_sessions }
+        pooled_session_host_count: ${ bundle.parameters.pooled_session_host_count }
+        pooled_vm_size: ${ bundle.parameters.pooled_vm_size }
         enable_clipboard: ${ bundle.parameters.enable_clipboard }
         clipboard_transfer_direction: ${ bundle.parameters.clipboard_transfer_direction }
+        enable_sso_preconsent: ${ bundle.parameters.enable_sso_preconsent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -125,12 +200,25 @@ uninstall:
       description: "Delete the Azure Virtual Desktop Service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        display_name: ${ bundle.parameters.display_name }
+        workspace_display_name: ${ bundle.parameters.workspace_display_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
+        azure_environment: ${ bundle.parameters.azure_environment }
+        auth_client_id: ${ bundle.credentials.auth_client_id }
+        auth_client_secret: ${ bundle.credentials.auth_client_secret }
+        auth_tenant_id: ${ bundle.credentials.auth_tenant_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        host_pool_type: ${ bundle.parameters.host_pool_type }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+        maximum_sessions: ${ bundle.parameters.maximum_sessions }
+        pooled_session_host_count: ${ bundle.parameters.pooled_session_host_count }
+        pooled_vm_size: ${ bundle.parameters.pooled_vm_size }
         enable_clipboard: ${ bundle.parameters.enable_clipboard }
         clipboard_transfer_direction: ${ bundle.parameters.clipboard_transfer_direction }
+        enable_sso_preconsent: ${ bundle.parameters.enable_sso_preconsent }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

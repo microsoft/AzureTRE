@@ -52,8 +52,9 @@ Within the image definition in `image_options` there are a few properties that c
 
 Users can access their personal session hosts through:
 
-1. **Web Client**: [https://client.wvd.microsoft.com](https://client.wvd.microsoft.com)
+1. **Windows App web client**: [https://windows.cloud.microsoft](https://windows.cloud.microsoft)
 2. **Windows Desktop Client**: Download from [Microsoft Store](https://aka.ms/wvd/clients/windows)
 3. **macOS Client**: Download from [Mac App Store](https://aka.ms/wvd/clients/mac)
 
 The session host automatically joins the AVD host pool and uses Microsoft Entra ID for authentication, supporting external identities.
+Users can own multiple personal desktops in the same host pool. Each resource's Connect action opens that VM directly using its AVD session-host object ID. Windows App shows the resource's display name under the TRE workspace heading; use distinct names for multiple desktops. Names are applied during install or upgrade. Owners must also belong to an entitled workspace group to see their desktops.

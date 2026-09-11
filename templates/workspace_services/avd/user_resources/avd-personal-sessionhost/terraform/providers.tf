@@ -2,15 +2,19 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "= 4.27.0"
+      version = "= 5.4.0"
+    }
+    azapi = {
+      source  = "Azure/azapi"
+      version = "= 2.12.0"
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "= 3.3.0"
+      version = "= 3.9.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = "= 3.7.2"
+      version = "= 3.9.0"
     }
   }
   backend "azurerm" {
@@ -43,7 +47,14 @@ provider "azurerm" {
   }
 }
 
-provider "azuread" {}
+provider "azapi" {}
+
+provider "azuread" {
+  client_id     = var.auth_client_id
+  client_secret = var.auth_client_secret
+  tenant_id     = var.auth_tenant_id
+  environment   = var.arm_environment
+}
 
 module "terraform_azurerm_environment_configuration" {
   source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.2.0"

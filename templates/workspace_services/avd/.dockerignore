@@ -8,4 +8,4 @@ Dockerfile.tmpl
 
 .env*
 
-user_resources/
+user_resources/*

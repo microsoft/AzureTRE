@@ -1,5 +1,5 @@
 output "connection_uri" {
-  value = "https://client.wvd.microsoft.com/arm/webclient/index.html"
+  value = var.host_pool_type == "Pooled" ? "https://windows.cloud.microsoft/webclient/avd/${data.azapi_resource.avd_workspace.output.properties.objectId}/${one(data.azapi_resource_list.desktops.output.object_ids)}?tenant=${nonsensitive(data.azurerm_key_vault_secret.aad_tenant_id.value)}" : ""
 }
 
 output "hostpool_name" {
