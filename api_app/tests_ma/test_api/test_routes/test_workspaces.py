@@ -1,4 +1,5 @@
 import random
+import time
 from unittest.mock import AsyncMock
 import uuid
 from pydantic import Field
@@ -737,6 +738,52 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_patch_workspace_returns_409_when_workspace_has_live_cleanup_lock(self, get_workspace_mock, app, client):
+        workspace = sample_workspace()
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-123",
+            "expires_when": time.time() + 900,
+        }
+        get_workspace_mock.return_value = workspace
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"isEnabled": False},
+            headers={"etag": "some-etag"},
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_delete_workspace_returns_409_when_workspace_has_live_cleanup_lock(self, get_workspace_mock, app, client):
+        workspace = sample_workspace()
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-123",
+            "expires_when": time.time() + 900,
+        }
+        get_workspace_mock.return_value = workspace
+
+        response = await client.delete(app.url_path_for(strings.API_DELETE_WORKSPACE, workspace_id=WORKSPACE_ID))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    async def test_invoke_action_on_workspace_returns_409_when_workspace_has_live_cleanup_lock(self, get_workspace_mock, app, client):
+        workspace = sample_workspace()
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-123",
+            "expires_when": time.time() + 900,
+        }
+        get_workspace_mock.return_value = workspace
+
+        response = await client.post(
+            app.url_path_for(strings.API_INVOKE_ACTION_ON_WORKSPACE, workspace_id=WORKSPACE_ID),
+            params={"action": "test_action"},
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP
+
 
 class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @pytest.fixture(autouse=True, scope='class')
@@ -836,6 +883,43 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    async def test_post_workspace_services_returns_409_when_workspace_has_live_cleanup_lock(self, _, get_workspace_mock, app, client, workspace_service_input):
+        workspace = sample_workspace()
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-123",
+            "expires_when": time.time() + 900,
+        }
+        get_workspace_mock.return_value = workspace
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.text == strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.resource_helpers.send_resource_request_message", return_value=sample_resource_operation(resource_id=SERVICE_ID, operation_id=OPERATION_ID))
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.save_item")
+    @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item", return_value=[sample_workspace_service(), sample_resource_template()])
+    async def test_post_workspace_services_clears_expired_lock_and_proceeds(self, _, __, update_item_with_etag_mock, ___, ____, get_workspace_mock, resource_template_repo, app, client, workspace_service_input, basic_workspace_service_template):
+        workspace = sample_workspace()
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-123",
+            "expires_when": time.time() - 100,
+        }
+        get_workspace_mock.return_value = workspace
+        resource_template_repo.return_value = basic_workspace_service_template
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID), json=workspace_service_input)
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        update_item_with_etag_mock.assert_called_once()
+        assert strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY not in workspace.properties
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace_service().__dict__])

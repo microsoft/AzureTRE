@@ -379,6 +379,52 @@ async def test_live_cleanup_lock_blocks_competing_cleanup_snapshot():
     status_updater.workspace_repo.update_item_with_etag.assert_not_awaited()
 
 
+async def test_acquire_address_space_cleanup_lock_returns_workspace_with_new_etag():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "initial-etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+
+    replaced_doc = workspace.model_dump()
+    replaced_doc["_etag"] = "new-etag-from-cosmos"
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(return_value=replaced_doc)
+
+    locked_workspace = await status_updater._acquire_address_space_cleanup_lock(operation)
+
+    assert locked_workspace.etag == "new-etag-from-cosmos"
+
+
+async def test_complete_address_space_cleanup_uses_new_etag_from_acquire_lock():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "initial-etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+
+    replaced_doc = workspace.model_dump()
+    replaced_doc["_etag"] = "new-etag-from-lock"
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(side_effect=[replaced_doc, None])
+
+    await status_updater._complete_address_space_cleanup(operation)
+
+    # First call acquired the lock using initial-etag
+    first_call_args = status_updater.workspace_repo.update_item_with_etag.call_args_list[0]
+    assert first_call_args[0][1] == "initial-etag"
+
+    # Second call completed cleanup using the new etag returned from the lock acquisition
+    second_call_args = status_updater.workspace_repo.update_item_with_etag.call_args_list[1]
+    assert second_call_args[0][1] == "new-etag-from-lock"
+
+
 async def test_failed_cleanup_can_recover_and_complete():
     operation = create_address_space_cleanup_operation(AddressSpaceCleanupState.Failed)
     workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)

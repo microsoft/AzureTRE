@@ -23,6 +23,7 @@ from resources import strings
 from services.logging import logger, tracer
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import ResourceType
+from models.domain.workspace import Workspace
 from models.domain.operation import AddressSpaceCleanupState
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
@@ -293,7 +294,11 @@ class DeploymentStatusUpdater():
                 "expires_when": now + strings.ADDRESS_SPACE_CLEANUP_LOCK_EXPIRY_SECONDS,
             }
             try:
-                await workspace_repo.update_item_with_etag(workspace, workspace.etag)
+                updated = await workspace_repo.update_item_with_etag(workspace, workspace.etag)
+                if isinstance(updated, dict):
+                    return TypeAdapter(Workspace).validate_python(updated)
+                elif isinstance(updated, Workspace):
+                    return updated
                 return workspace
             except CosmosAccessConditionFailedError:
                 continue

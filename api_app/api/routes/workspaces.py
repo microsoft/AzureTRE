@@ -1,7 +1,8 @@
 import asyncio
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Path, status, Response
-from pydantic import UUID4
+from pydantic import UUID4, TypeAdapter
 
 from jsonschema.exceptions import ValidationError
 
@@ -15,7 +16,7 @@ from db.repositories.user_resources import UserResourceRepository
 from db.repositories.workspaces import WorkspaceRepository
 from db.repositories.workspace_services import WorkspaceServiceRepository
 from models.domain.resource import ResourceType
-from models.domain.workspace import WorkspaceAuth, WorkspaceRole
+from models.domain.workspace import Workspace, WorkspaceAuth, WorkspaceRole
 from models.schemas.operation import OperationInList, OperationInResponse
 from models.schemas.user_resource import UserResourceInResponse, UserResourceInCreate, UserResourcesInList
 from models.schemas.workspace import WorkspaceAuthInResponse, WorkspaceInCreate, WorkspacesInList, WorkspaceInResponse
@@ -51,6 +52,49 @@ def validate_user_has_valid_role_for_user_resource(user, user_resource):
         return
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.ACCESS_USER_IS_NOT_OWNER_OR_RESEARCHER)
+
+
+async def validate_workspace_not_locked_for_cleanup(workspace: Workspace, workspace_repo: WorkspaceRepository):
+    lock = workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
+    if not lock:
+        return
+
+    now = time.time()
+    if isinstance(lock, dict):
+        expires_when = lock.get("expires_when", 0)
+        if expires_when > now:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP,
+            )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP,
+        )
+
+    # Lock has expired; clear it with ETag protection
+    workspace.properties.pop(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY, None)
+    try:
+        updated = await workspace_repo.update_item_with_etag(workspace, workspace.etag)
+        if isinstance(updated, dict):
+            fresh = TypeAdapter(Workspace).validate_python(updated)
+            workspace.etag = fresh.etag
+            workspace.properties = fresh.properties
+        elif isinstance(updated, Workspace):
+            workspace.etag = updated.etag
+            workspace.properties = updated.properties
+    except CosmosAccessConditionFailedError:
+        fresh = await workspace_repo.get_workspace_by_id(workspace.id)
+        fresh_lock = fresh.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
+        if fresh_lock:
+            if isinstance(fresh_lock, dict) and fresh_lock.get("expires_when", 0) > time.time():
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP,
+                )
+        workspace.etag = fresh.etag
+        workspace.properties = fresh.properties
 
 
 # WORKSPACE ROUTES
@@ -129,6 +173,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    await validate_workspace_not_locked_for_cleanup(workspace, workspace_repo)
     try:
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
@@ -157,6 +202,7 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def delete_workspace(response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    await validate_workspace_not_locked_for_cleanup(workspace, workspace_repo)
     if await delete_validation(workspace, workspace_repo):
         operation = await send_uninstall_message(
             resource=workspace,
@@ -175,6 +221,7 @@ async def delete_workspace(response: Response, user=Depends(require_tre_admin), 
 
 @workspaces_core_router.post("/workspaces/{workspace_id}/invoke-action", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_INVOKE_ACTION_ON_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def invoke_action_on_workspace(response: Response, action: str, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository))) -> OperationInResponse:
+    await validate_workspace_not_locked_for_cleanup(workspace, workspace_repo)
     operation = await send_custom_action_message(
         resource=workspace,
         resource_repo=workspace_repo,
@@ -244,8 +291,7 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
-    if workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP)
+    await validate_workspace_not_locked_for_cleanup(workspace, workspace_repo)
 
     try:
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
