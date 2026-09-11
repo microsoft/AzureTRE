@@ -244,6 +244,9 @@ async def retrieve_workspace_service_by_id(workspace_service=Depends(get_workspa
 @workspace_services_workspace_router.post("/workspaces/{workspace_id}/workspace-services", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_CREATE_WORKSPACE_SERVICE, dependencies=[Depends(require_workspace_owner)])
 async def create_workspace_service(response: Response, workspace_service_input: WorkspaceServiceInCreate, user=Depends(require_workspace_owner), workspace_service_repo=Depends(get_repository(WorkspaceServiceRepository)), workspace_repo=Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), workspace=Depends(get_deployed_workspace_by_id_from_path)) -> OperationInResponse:
 
+    if workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP)
+
     try:
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(workspace_service_input, workspace.id, user.roles)
     except (ValidationError, ValueError) as e:

@@ -24,7 +24,11 @@ from services.logging import logger, tracer
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.resource import ResourceType
 from models.domain.operation import AddressSpaceCleanupState
-from models.schemas.resource import ResourcePatch
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
+
+
+class AddressSpaceCleanupBusyError(Exception):
+    pass
 
 
 class DeploymentStatusUpdater():
@@ -155,6 +159,7 @@ class DeploymentStatusUpdater():
             elif is_cleanup_step and step_to_update.is_failure() and operation.addressSpaceCleanup:
                 operation.addressSpaceCleanup.state = AddressSpaceCleanupState.Failed
                 operation.addressSpaceCleanup.message = message.message
+                await self._release_address_space_cleanup_lock(operation)
 
             # update the overall headline operation status
             await self.update_overall_operation_status(operation, step_to_update, is_last_step)
@@ -191,8 +196,6 @@ class DeploymentStatusUpdater():
                             result = True
                             return result
                         resource_to_send = await self._prepare_address_space_cleanup_resource(operation)
-                        operation.addressSpaceCleanup.state = AddressSpaceCleanupState.InProgress
-                        await self.operations_repo.update_item(operation)
                     else:
                         parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
                         resource_to_send = await update_resource_for_step(
@@ -210,6 +213,11 @@ class DeploymentStatusUpdater():
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
                     content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
                     await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and operation.addressSpaceCleanup:
+                        operation.addressSpaceCleanup.state = AddressSpaceCleanupState.InProgress
+                        await self.operations_repo.update_item(operation)
+                except AddressSpaceCleanupBusyError:
+                    return False
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
@@ -217,6 +225,7 @@ class DeploymentStatusUpdater():
                     if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and operation.addressSpaceCleanup:
                         operation.addressSpaceCleanup.state = AddressSpaceCleanupState.Failed
                         operation.addressSpaceCleanup.message = repr(e)
+                        await self._release_address_space_cleanup_lock(operation)
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
 
@@ -236,8 +245,7 @@ class DeploymentStatusUpdater():
         if cleanup is None or cleanup.state != AddressSpaceCleanupState.Pending:
             raise ValueError("Address space cleanup state is missing")
 
-        workspace_repo = await self._get_workspace_repo()
-        workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+        workspace = await self._acquire_address_space_cleanup_lock(operation)
         if workspace.resourceType != ResourceType.Workspace:
             raise ValueError(f"Cleanup resource {cleanup.workspaceId} is not a workspace")
 
@@ -255,27 +263,54 @@ class DeploymentStatusUpdater():
             return
 
         workspace_repo = await self._get_workspace_repo()
-        workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+        workspace = await self._acquire_address_space_cleanup_lock(operation)
         address_spaces = workspace.properties.get("address_spaces") or []
-        if cleanup.addressSpace in address_spaces:
-            workspace_patch = ResourcePatch(properties={
-                "address_spaces": [
-                    address_space for address_space in address_spaces
-                    if address_space != cleanup.addressSpace
-                ]
-            })
-            await workspace_repo.patch_workspace(
-                workspace,
-                workspace_patch,
-                workspace.etag,
-                self.resource_template_repo,
-                self.resource_history_repo,
-                operation.user,
-                False
-            )
+        workspace.properties["address_spaces"] = [
+            address_space for address_space in address_spaces
+            if address_space != cleanup.addressSpace
+        ]
+        workspace.properties.pop(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY, None)
+        await workspace_repo.update_item_with_etag(workspace, workspace.etag)
 
         cleanup.state = AddressSpaceCleanupState.Completed
         cleanup.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+
+    async def _acquire_address_space_cleanup_lock(self, operation: Operation):
+        cleanup = operation.addressSpaceCleanup
+        if cleanup is None:
+            raise ValueError("Address space cleanup state is missing")
+
+        workspace_repo = await self._get_workspace_repo()
+        for _ in range(3):
+            workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+            lock = workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
+            now = time.time()
+            if lock and lock.get("operation_id") != operation.id and lock.get("expires_when", 0) > now:
+                raise AddressSpaceCleanupBusyError
+
+            workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+                "operation_id": operation.id,
+                "expires_when": now + strings.ADDRESS_SPACE_CLEANUP_LOCK_EXPIRY_SECONDS,
+            }
+            try:
+                await workspace_repo.update_item_with_etag(workspace, workspace.etag)
+                return workspace
+            except CosmosAccessConditionFailedError:
+                continue
+
+        raise AddressSpaceCleanupBusyError
+
+    async def _release_address_space_cleanup_lock(self, operation: Operation):
+        cleanup = operation.addressSpaceCleanup
+        if cleanup is None:
+            return
+
+        workspace_repo = await self._get_workspace_repo()
+        workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+        lock = workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
+        if lock and lock.get("operation_id") == operation.id:
+            workspace.properties.pop(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY, None)
+            await workspace_repo.update_item_with_etag(workspace, workspace.etag)
 
     async def _get_workspace_repo(self):
         if self.workspace_repo is None:

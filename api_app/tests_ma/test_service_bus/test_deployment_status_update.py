@@ -14,7 +14,7 @@ from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
 from models.domain.operation import AddressSpaceCleanup, AddressSpaceCleanupState, DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
-from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from service_bus.deployment_status_updater import AddressSpaceCleanupBusyError, DeploymentStatusUpdater
 from tests_ma.test_service_bus.test_helpers import (
     StopReceiveMessages,
     credential_context,
@@ -307,7 +307,7 @@ async def test_address_space_cleanup_is_idempotent_after_successful_workspace_up
     status_updater = DeploymentStatusUpdater()
     status_updater.workspace_repo = MagicMock()
     status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
-    status_updater.workspace_repo.patch_workspace = AsyncMock()
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
     status_updater.resource_template_repo = MagicMock()
     status_updater.resource_history_repo = MagicMock()
 
@@ -315,7 +315,7 @@ async def test_address_space_cleanup_is_idempotent_after_successful_workspace_up
     await status_updater._complete_address_space_cleanup(operation)
 
     assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.Completed
-    status_updater.workspace_repo.patch_workspace.assert_awaited_once()
+    assert status_updater.workspace_repo.update_item_with_etag.await_count == 2
 
 
 async def test_address_space_cleanup_retries_after_etag_conflict():
@@ -328,7 +328,7 @@ async def test_address_space_cleanup_retries_after_etag_conflict():
     status_updater = DeploymentStatusUpdater()
     status_updater.workspace_repo = MagicMock()
     status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
-    status_updater.workspace_repo.patch_workspace = AsyncMock(side_effect=CosmosAccessConditionFailedError())
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(side_effect=[None, CosmosAccessConditionFailedError()])
     status_updater.resource_template_repo = MagicMock()
     status_updater.resource_history_repo = MagicMock()
 
@@ -345,6 +345,7 @@ async def test_duplicate_cleanup_dispatch_does_not_prepare_a_second_message():
     workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
     workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
     status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
 
     first = await status_updater._prepare_address_space_cleanup_resource(operation)
     operation.addressSpaceCleanup.state = AddressSpaceCleanupState.InProgress
@@ -356,6 +357,28 @@ async def test_duplicate_cleanup_dispatch_does_not_prepare_a_second_message():
         await status_updater._prepare_address_space_cleanup_resource(operation)
 
 
+async def test_live_cleanup_lock_blocks_competing_cleanup_snapshot():
+    operation = create_address_space_cleanup_operation()
+    workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
+    workspace.properties = {
+        "address_spaces": ["10.0.0.0/24"],
+        strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY: {
+            "operation_id": "another-operation",
+            "expires_when": 9999999999,
+        },
+    }
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
+
+    with pytest.raises(AddressSpaceCleanupBusyError):
+        await status_updater._prepare_address_space_cleanup_resource(operation)
+
+    status_updater.workspace_repo.update_item_with_etag.assert_not_awaited()
+
+
 async def test_failed_cleanup_can_recover_and_complete():
     operation = create_address_space_cleanup_operation(AddressSpaceCleanupState.Failed)
     workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
@@ -365,14 +388,14 @@ async def test_failed_cleanup_can_recover_and_complete():
     status_updater = DeploymentStatusUpdater()
     status_updater.workspace_repo = MagicMock()
     status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
-    status_updater.workspace_repo.patch_workspace = AsyncMock()
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
     status_updater.resource_template_repo = MagicMock()
     status_updater.resource_history_repo = MagicMock()
 
     await status_updater._complete_address_space_cleanup(operation)
 
     assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.Completed
-    status_updater.workspace_repo.patch_workspace.assert_awaited_once()
+    assert status_updater.workspace_repo.update_item_with_etag.await_count == 2
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')

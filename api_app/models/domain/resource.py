@@ -87,7 +87,13 @@ class Resource(AzureTREModel):
             "id": self.id,
             "name": self.templateName,
             "version": self.templateVersion,
-            "parameters": self.properties
+            "parameters": {
+                key: value for key, value in self.properties.items()
+                if not (
+                    self.resourceType == ResourceType.Workspace
+                    and key == strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY
+                )
+            }
         }
 
         if self.resourceType == ResourceType.WorkspaceService:
