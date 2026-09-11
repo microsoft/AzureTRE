@@ -173,21 +173,39 @@ class WorkspaceRepository(ResourceRepository):
         cidr_netmask = WorkspaceRepository.predefined_address_spaces.get(address_space_size, 24)
         return await self.get_new_address_space(cidr_netmask)
 
+    async def get_allocated_service_address_spaces(self) -> List[str]:
+        query = 'SELECT c.properties.address_space FROM c WHERE c.resourceType = @resourceType AND c.deploymentStatus != @deletedStatus AND IS_DEFINED(c.properties.address_space)'
+        parameters = [
+            {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
+            {'name': '@deletedStatus', 'value': Status.Deleted}
+        ]
+        results = await self.query(query=query, parameters=parameters)
+        service_address_spaces = []
+        for r in results:
+            if hasattr(r, "properties") and isinstance(r.properties, dict) and "address_space" in r.properties:
+                service_address_spaces.append(r.properties["address_space"])
+            elif isinstance(r, dict) and "address_space" in r:
+                service_address_spaces.append(r["address_space"])
+        return service_address_spaces
+
     # 772 check that the provided address_space is available in the network.
     async def validate_address_space(self, address_space):
         if (address_space is None):
             raise InvalidInput("Missing 'address_space' from properties.")
 
-        allocated_networks = [x.properties["address_space"] for x in await self.get_active_workspaces()]
+        workspaces = await self.get_active_workspaces()
+        networks = [[x.properties.get("address_space")] for x in workspaces]
+        networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
+        allocated_networks = list(set([i for s in networks for i in s if i is not None] + await self.get_allocated_service_address_spaces()))
         return is_network_available(allocated_networks, address_space)
 
     async def get_new_address_space(self, cidr_netmask: int = 24):
         workspaces = await self.get_active_workspaces()
         networks = [[x.properties.get("address_space")] for x in workspaces]
         networks = networks + [x.properties.get("address_spaces", []) for x in workspaces]
-        networks = [i for s in networks for i in s if i is not None]
+        allocated_networks = list(set([i for s in networks for i in s if i is not None] + await self.get_allocated_service_address_spaces()))
 
-        new_address_space = generate_new_cidr(networks, cidr_netmask)
+        new_address_space = generate_new_cidr(allocated_networks, cidr_netmask)
         return new_address_space
 
     async def patch_workspace(self, workspace: Workspace, workspace_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[Workspace, ResourceTemplate]:
