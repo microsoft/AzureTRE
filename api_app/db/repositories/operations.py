@@ -13,7 +13,7 @@ from core import config
 from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
-from models.domain.operation import AddressSpaceCleanup, Operation, OperationStep, Status
+from models.domain.operation import AddressSpaceCleanup, AddressSpaceCleanupState, Operation, OperationStep, Status
 
 
 class OperationRepository(BaseRepository):
@@ -223,3 +223,28 @@ class OperationRepository(BaseRepository):
         query = self.operations_query() + f' c.resourceId = "{resource_id}" AND ((c.action = "{RequestAction.Install}" AND c.status = "{Status.Deployed}") OR (c.action = "{RequestAction.Upgrade}" AND c.status = "{Status.Updated}"))'
         operations = await self.query(query=query)
         return len(operations) > 0
+
+    async def is_address_space_cleanup_active(self, operation_id: str) -> bool:
+        try:
+            operation = await self.get_operation_by_id(operation_id)
+        except EntityDoesNotExist:
+            return False
+
+        if operation.addressSpaceCleanup:
+            if operation.addressSpaceCleanup.state in (
+                AddressSpaceCleanupState.Completed,
+                AddressSpaceCleanupState.Failed,
+            ):
+                return False
+
+        terminal_statuses = (
+            Status.DeploymentFailed,
+            Status.UpdatingFailed,
+            Status.DeletingFailed,
+            Status.ActionFailed,
+            Status.Deployed,
+            Status.Deleted,
+            Status.Updated,
+            Status.ActionSucceeded,
+        )
+        return operation.status not in terminal_statuses

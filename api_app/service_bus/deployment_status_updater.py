@@ -286,8 +286,9 @@ class DeploymentStatusUpdater():
             workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
             lock = workspace.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
             now = time.time()
-            if lock and lock.get("operation_id") != operation.id and lock.get("expires_when", 0) > now:
-                raise AddressSpaceCleanupBusyError
+            if lock and lock.get("operation_id") != operation.id:
+                if await self._is_cleanup_lock_active(lock):
+                    raise AddressSpaceCleanupBusyError
 
             workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
                 "operation_id": operation.id,
@@ -304,6 +305,17 @@ class DeploymentStatusUpdater():
                 continue
 
         raise AddressSpaceCleanupBusyError
+
+    async def _is_cleanup_lock_active(self, lock: dict) -> bool:
+        if not lock or not isinstance(lock, dict):
+            return False
+        operation_id = lock.get("operation_id")
+        if not operation_id:
+            return lock.get("expires_when", 0) > time.time()
+        operations_repo = getattr(self, "operations_repo", None)
+        if operations_repo:
+            return await operations_repo.is_address_space_cleanup_active(operation_id)
+        return lock.get("expires_when", 0) > time.time()
 
     async def _release_address_space_cleanup_lock(self, operation: Operation):
         cleanup = operation.addressSpaceCleanup

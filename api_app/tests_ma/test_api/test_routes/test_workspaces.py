@@ -784,6 +784,51 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP
 
+    @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
+    @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
+    @patch("api.routes.workspaces.send_resource_request_message", return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID))
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+    async def test_patch_workspace_clears_expired_lock_and_uses_refreshed_etag(self, _, __, update_item_mock, get_workspace_mock, ___, ____, _____, app, client):
+        workspace = sample_workspace()
+        initial_etag = "initial-etag"
+        workspace.etag = initial_etag
+        workspace.properties[strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY] = {
+            "operation_id": "op-expired",
+            "expires_when": time.time() - 500,
+        }
+        get_workspace_mock.return_value = workspace
+
+        refreshed_workspace = sample_workspace()
+        refreshed_etag = "refreshed-etag"
+        refreshed_workspace.etag = refreshed_etag
+        refreshed_workspace.properties.pop(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY, None)
+
+        modified_workspace = sample_workspace()
+        modified_workspace.isEnabled = False
+        modified_workspace.resourceVersion = 1
+        modified_workspace.user = create_admin_user().model_dump()
+        modified_workspace.updatedWhen = FAKE_UPDATE_TIMESTAMP
+        modified_workspace.etag = refreshed_etag
+
+        # First update_item_with_etag is clearing the expired lock, second is the patch itself
+        update_item_mock.side_effect = [refreshed_workspace.model_dump(), modified_workspace]
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"isEnabled": False},
+            headers={"etag": initial_etag},
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert update_item_mock.call_count == 2
+        # First call cleared the lock using initial_etag
+        assert update_item_mock.call_args_list[0][0][1] == initial_etag
+        # Second call applied the patch using refreshed_etag
+        assert update_item_mock.call_args_list[1][0][1] == refreshed_etag
+
 
 class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @pytest.fixture(autouse=True, scope='class')
