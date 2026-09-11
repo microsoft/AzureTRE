@@ -87,12 +87,11 @@ async def validate_workspace_not_locked_for_cleanup(workspace: Workspace, worksp
     except CosmosAccessConditionFailedError:
         fresh = await workspace_repo.get_workspace_by_id(workspace.id)
         fresh_lock = fresh.properties.get(strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY)
-        if fresh_lock:
-            if isinstance(fresh_lock, dict) and fresh_lock.get("expires_when", 0) > time.time():
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP,
-                )
+        if fresh_lock and isinstance(fresh_lock, dict) and fresh_lock.get("expires_when", 0) > time.time():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=strings.WORKSPACE_HAS_ADDRESS_SPACE_CLEANUP,
+            )
         workspace.etag = fresh.etag
         workspace.properties = fresh.properties
 
