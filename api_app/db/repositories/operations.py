@@ -13,7 +13,7 @@ from core import config
 from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
-from models.domain.operation import Operation, OperationStep, Status
+from models.domain.operation import AddressSpaceCleanup, Operation, OperationStep, Status
 
 
 class OperationRepository(BaseRepository):
@@ -82,6 +82,34 @@ class OperationRepository(BaseRepository):
             else:
                 all_steps.extend(steps)
 
+        address_space_cleanup = None
+        root_resource = next((resource for resource in resource_list if resource["id"] == resource_id), None)
+        if (
+            action == RequestAction.UnInstall
+            and root_resource
+            and ResourceType(root_resource["resourceType"]) == ResourceType.WorkspaceService
+            and root_resource.get("properties", {}).get("address_space")
+            and root_resource.get("workspaceId")
+        ):
+            workspace = await resource_repo.get_resource_by_id(root_resource["workspaceId"])
+            address_space_cleanup = AddressSpaceCleanup(
+                addressSpace=root_resource["properties"]["address_space"],
+                workspaceId=root_resource["workspaceId"]
+            )
+            all_steps.append(OperationStep(
+                id=str(uuid.uuid4()),
+                templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                stepTitle="Remove the workspace service address space",
+                resourceId=workspace.id,
+                resourceTemplateName=workspace.templateName,
+                resourceType=workspace.resourceType,
+                resourceAction=RequestAction.Upgrade,
+                sourceTemplateResourceId=root_resource["id"],
+                status=Status.AwaitingUpdate,
+                message="Waiting for workspace service uninstall before address space cleanup",
+                updatedWhen=self.get_timestamp()
+            ))
+
         timestamp = self.get_timestamp()
         operation = Operation(
             id=operation_id,
@@ -94,7 +122,8 @@ class OperationRepository(BaseRepository):
             action=action,
             message=message,
             user=user.model_dump(),
-            steps=all_steps
+            steps=all_steps,
+            addressSpaceCleanup=address_space_cleanup
         )
 
         await self.save_item(operation)

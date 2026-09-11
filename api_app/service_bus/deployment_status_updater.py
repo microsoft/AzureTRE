@@ -21,6 +21,10 @@ from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+from db.repositories.workspaces import WorkspaceRepository
+from models.domain.resource import ResourceType
+from models.domain.operation import AddressSpaceCleanupState
+from models.schemas.resource import ResourcePatch
 
 
 class DeploymentStatusUpdater():
@@ -32,6 +36,7 @@ class DeploymentStatusUpdater():
         self.resource_repo = await ResourceRepository.create()
         self.resource_template_repo = await ResourceTemplateRepository.create()
         self.resource_history_repo = await ResourceHistoryRepository.create()
+        self.workspace_repo = None
 
     def run(self, *args, **kwargs):
         asyncio.run(self.receive_messages())
@@ -144,6 +149,13 @@ class DeploymentStatusUpdater():
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
 
+            is_cleanup_step = step_to_update.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID
+            if is_cleanup_step and step_to_update.is_success():
+                await self._complete_address_space_cleanup(operation)
+            elif is_cleanup_step and step_to_update.is_failure() and operation.addressSpaceCleanup:
+                operation.addressSpaceCleanup.state = AddressSpaceCleanupState.Failed
+                operation.addressSpaceCleanup.message = message.message
+
             # update the overall headline operation status
             await self.update_overall_operation_status(operation, step_to_update, is_last_step)
 
@@ -174,17 +186,25 @@ class DeploymentStatusUpdater():
                 # catch any errors in updating the resource - maybe Cosmos / schema invalid etc, and report them back to the op
                 try:
                     # parent resource is always retrieved via cosmos, hence it is always with redacted sensitive values
-                    parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
-                    resource_to_send = await update_resource_for_step(
-                        operation_step=next_step,
-                        resource_repo=self.resource_repo,
-                        resource_template_repo=self.resource_template_repo,
-                        resource_history_repo=self.resource_history_repo,
-                        root_resource=None,
-                        step_resource=parent_resource,
-                        resource_to_update_id=next_step.resourceId,
-                        primary_action=operation.action,
-                        user=operation.user)
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID:
+                        if operation.addressSpaceCleanup is None or operation.addressSpaceCleanup.state != AddressSpaceCleanupState.Pending:
+                            result = True
+                            return result
+                        resource_to_send = await self._prepare_address_space_cleanup_resource(operation)
+                        operation.addressSpaceCleanup.state = AddressSpaceCleanupState.InProgress
+                        await self.operations_repo.update_item(operation)
+                    else:
+                        parent_resource = await self.resource_repo.get_resource_by_id(next_step.sourceTemplateResourceId)
+                        resource_to_send = await update_resource_for_step(
+                            operation_step=next_step,
+                            resource_repo=self.resource_repo,
+                            resource_template_repo=self.resource_template_repo,
+                            resource_history_repo=self.resource_history_repo,
+                            root_resource=None,
+                            step_resource=parent_resource,
+                            resource_to_update_id=next_step.resourceId,
+                            primary_action=operation.action,
+                            user=operation.user)
 
                     # create + send the message
                     logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
@@ -194,6 +214,9 @@ class DeploymentStatusUpdater():
                     logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
                     next_step.status = Status.UpdatingFailed
+                    if next_step.templateStepId == strings.ADDRESS_SPACE_CLEANUP_STEP_ID and operation.addressSpaceCleanup:
+                        operation.addressSpaceCleanup.state = AddressSpaceCleanupState.Failed
+                        operation.addressSpaceCleanup.message = repr(e)
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
 
@@ -207,6 +230,57 @@ class DeploymentStatusUpdater():
             logger.exception("Failed to update status")
 
         return result
+
+    async def _prepare_address_space_cleanup_resource(self, operation: Operation):
+        cleanup = operation.addressSpaceCleanup
+        if cleanup is None or cleanup.state != AddressSpaceCleanupState.Pending:
+            raise ValueError("Address space cleanup state is missing")
+
+        workspace_repo = await self._get_workspace_repo()
+        workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+        if workspace.resourceType != ResourceType.Workspace:
+            raise ValueError(f"Cleanup resource {cleanup.workspaceId} is not a workspace")
+
+        resource_to_send = workspace.model_copy(deep=True)
+        address_spaces = resource_to_send.properties.get("address_spaces") or []
+        resource_to_send.properties["address_spaces"] = [
+            address_space for address_space in address_spaces
+            if address_space != cleanup.addressSpace
+        ]
+        return resource_to_send
+
+    async def _complete_address_space_cleanup(self, operation: Operation):
+        cleanup = operation.addressSpaceCleanup
+        if cleanup is None or cleanup.state == AddressSpaceCleanupState.Completed:
+            return
+
+        workspace_repo = await self._get_workspace_repo()
+        workspace = await workspace_repo.get_workspace_by_id(cleanup.workspaceId)
+        address_spaces = workspace.properties.get("address_spaces") or []
+        if cleanup.addressSpace in address_spaces:
+            workspace_patch = ResourcePatch(properties={
+                "address_spaces": [
+                    address_space for address_space in address_spaces
+                    if address_space != cleanup.addressSpace
+                ]
+            })
+            await workspace_repo.patch_workspace(
+                workspace,
+                workspace_patch,
+                workspace.etag,
+                self.resource_template_repo,
+                self.resource_history_repo,
+                operation.user,
+                False
+            )
+
+        cleanup.state = AddressSpaceCleanupState.Completed
+        cleanup.message = strings.ADDRESS_SPACE_CLEANUP_SUCCESS
+
+    async def _get_workspace_repo(self):
+        if self.workspace_repo is None:
+            self.workspace_repo = await WorkspaceRepository.create()
+        return self.workspace_repo
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()

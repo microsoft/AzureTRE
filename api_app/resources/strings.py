@@ -191,6 +191,8 @@ RESOURCE_ACTION_STATUS_FAILED = "action_failed"
 
 # Pipeline (multi-step) deployments
 RESOURCE_ACTION_STATUS_PIPELINE_RUNNING = "pipeline_running"
+ADDRESS_SPACE_CLEANUP_STEP_ID = "address-space-cleanup"
+ADDRESS_SPACE_CLEANUP_SUCCESS = "Address space cleanup completed successfully"
 RESOURCE_ACTION_STATUS_PIPELINE_FAILED = "pipeline_failed"
 RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED = "pipeline_succeeded"
 
