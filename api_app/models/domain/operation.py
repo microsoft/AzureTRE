@@ -36,6 +36,20 @@ class Status(StrEnum):
     PipelineRunning = strings.RESOURCE_ACTION_STATUS_PIPELINE_RUNNING  # set whilst a resource in a pipeline is running, as each step will have its own status
 
 
+class AddressSpaceCleanupState(StrEnum):
+    Pending = "pending"
+    InProgress = "in_progress"
+    Completed = "completed"
+    Failed = "failed"
+
+
+class AddressSpaceCleanup(AzureTREModel):
+    addressSpace: str
+    workspaceId: str
+    state: AddressSpaceCleanupState = AddressSpaceCleanupState.Pending
+    message: str = ""
+
+
 class OperationStep(AzureTREModel):
     """
     Model to define a step in an operation. Each step references either a secondary resource or the primary resource (stepId=main)
@@ -94,6 +108,7 @@ class Operation(AzureTREModel):
     updatedWhen: float = Field(0.0, title="POSIX Timestamp for When the operation was updated")
     user: dict = Field(default_factory=dict)
     steps: Optional[List[OperationStep]] = Field(None, title="Operation Steps")
+    addressSpaceCleanup: Optional[AddressSpaceCleanup] = None
 
     @field_validator("user", mode="before")
     @classmethod

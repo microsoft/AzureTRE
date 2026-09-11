@@ -276,6 +276,41 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
 
 
 @pytest.mark.asyncio
+@patch('db.repositories.workspaces.WorkspaceRepository.get_allocated_service_address_spaces')
+@patch('db.repositories.workspaces.WorkspaceRepository.get_active_workspaces')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
+@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+async def test_get_address_space_based_on_size_excludes_service_address_spaces(get_active_workspaces_mock, get_allocated_service_address_spaces_mock, workspace_repo, basic_workspace_request, workspace):
+    workspace_with_address_space = copy.deepcopy(workspace)
+    workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
+
+    get_active_workspaces_mock.return_value = [workspace_with_address_space]
+    get_allocated_service_address_spaces_mock.return_value = ["10.1.5.0/24", "10.1.6.0/24"]
+
+    workspace_to_create = basic_workspace_request
+    address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+    assert "10.1.7.0/24" == address_space
+
+
+@pytest.mark.asyncio
+async def test_get_allocated_service_address_spaces_queries_db(workspace_repo):
+    workspace_repo.container.query_items = MagicMock()
+    query_item_result = AsyncMock()
+    query_item_result.__aiter__.return_value = [
+        {"address_space": "10.1.4.0/24"},
+        {"address_space": "10.1.5.0/24"},
+    ]
+    workspace_repo.container.query_items.return_value = query_item_result
+
+    allocated = await workspace_repo.get_allocated_service_address_spaces()
+
+    assert allocated == ["10.1.4.0/24", "10.1.5.0/24"]
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
 async def test_create_workspace_item_raises_value_error_if_template_is_invalid(mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request):

@@ -2,6 +2,7 @@ import copy
 import json
 from unittest.mock import AsyncMock, MagicMock, ANY, patch
 from pydantic import TypeAdapter
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 import pytest
 import uuid
 
@@ -11,9 +12,9 @@ from models.domain.resource import ResourceType
 
 from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
-from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
+from models.domain.operation import AddressSpaceCleanup, AddressSpaceCleanupState, DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
-from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from service_bus.deployment_status_updater import AddressSpaceCleanupBusyError, DeploymentStatusUpdater
 from tests_ma.test_service_bus.test_helpers import (
     StopReceiveMessages,
     credential_context,
@@ -260,6 +261,187 @@ async def test_when_updating_non_existent_workspace_error_is_logged(logging_mock
     assert complete_message is True
     expected_error_message = strings.DEPLOYMENT_STATUS_ID_NOT_FOUND.format(test_sb_message["id"])
     logging_mock.assert_called_once_with(expected_error_message)
+
+
+def create_address_space_cleanup_operation(state=AddressSpaceCleanupState.Pending):
+    service_id = str(uuid.uuid4())
+    workspace_id = str(uuid.uuid4())
+    return Operation(
+        id=OPERATION_ID,
+        resourceId=service_id,
+        resourcePath=f"/workspaces/{workspace_id}/workspace-services/{service_id}",
+        action=RequestAction.UnInstall,
+        steps=[
+            OperationStep(
+                id="main-step",
+                templateStepId="main",
+                resourceId=service_id,
+                resourceType=ResourceType.WorkspaceService,
+                resourceAction=RequestAction.UnInstall,
+                status=Status.Deleted,
+            ),
+            OperationStep(
+                id="cleanup-step",
+                templateStepId=strings.ADDRESS_SPACE_CLEANUP_STEP_ID,
+                resourceId=workspace_id,
+                resourceType=ResourceType.Workspace,
+                resourceAction=RequestAction.Upgrade,
+                status=Status.Updated,
+            )
+        ],
+        addressSpaceCleanup=AddressSpaceCleanup(
+            addressSpace="10.0.0.0/24",
+            workspaceId=workspace_id,
+            state=state,
+        )
+    )
+
+
+async def test_address_space_cleanup_is_idempotent_after_successful_workspace_update():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24", "10.0.1.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
+    status_updater.resource_template_repo = MagicMock()
+    status_updater.resource_history_repo = MagicMock()
+
+    await status_updater._complete_address_space_cleanup(operation)
+    await status_updater._complete_address_space_cleanup(operation)
+
+    assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.Completed
+    assert status_updater.workspace_repo.update_item_with_etag.await_count == 2
+
+
+async def test_address_space_cleanup_retries_after_etag_conflict():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(side_effect=[None, CosmosAccessConditionFailedError()])
+    status_updater.resource_template_repo = MagicMock()
+    status_updater.resource_history_repo = MagicMock()
+
+    with pytest.raises(CosmosAccessConditionFailedError):
+        await status_updater._complete_address_space_cleanup(operation)
+
+    assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.Pending
+
+
+async def test_duplicate_cleanup_dispatch_does_not_prepare_a_second_message():
+    operation = create_address_space_cleanup_operation()
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
+
+    first = await status_updater._prepare_address_space_cleanup_resource(operation)
+    operation.addressSpaceCleanup.state = AddressSpaceCleanupState.InProgress
+
+    assert first.properties["address_spaces"] == []
+    assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.InProgress
+
+    with pytest.raises(ValueError):
+        await status_updater._prepare_address_space_cleanup_resource(operation)
+
+
+async def test_live_cleanup_lock_blocks_competing_cleanup_snapshot():
+    operation = create_address_space_cleanup_operation()
+    workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
+    workspace.properties = {
+        "address_spaces": ["10.0.0.0/24"],
+        strings.ADDRESS_SPACE_CLEANUP_LOCK_PROPERTY: {
+            "operation_id": "another-operation",
+            "expires_when": 9999999999,
+        },
+    }
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
+
+    with pytest.raises(AddressSpaceCleanupBusyError):
+        await status_updater._prepare_address_space_cleanup_resource(operation)
+
+    status_updater.workspace_repo.update_item_with_etag.assert_not_awaited()
+
+
+async def test_acquire_address_space_cleanup_lock_returns_workspace_with_new_etag():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "initial-etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+
+    replaced_doc = workspace.model_dump()
+    replaced_doc["_etag"] = "new-etag-from-cosmos"
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(return_value=replaced_doc)
+
+    locked_workspace = await status_updater._acquire_address_space_cleanup_lock(operation)
+
+    assert locked_workspace.etag == "new-etag-from-cosmos"
+
+
+async def test_complete_address_space_cleanup_uses_new_etag_from_acquire_lock():
+    workspace = create_sample_workspace_object(str(uuid.uuid4()))
+    workspace.etag = "initial-etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+    operation = create_address_space_cleanup_operation()
+    operation.addressSpaceCleanup.workspaceId = workspace.id
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+
+    replaced_doc = workspace.model_dump()
+    replaced_doc["_etag"] = "new-etag-from-lock"
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock(side_effect=[replaced_doc, None])
+
+    await status_updater._complete_address_space_cleanup(operation)
+
+    # First call acquired the lock using initial-etag
+    first_call_args = status_updater.workspace_repo.update_item_with_etag.call_args_list[0]
+    assert first_call_args[0][1] == "initial-etag"
+
+    # Second call completed cleanup using the new etag returned from the lock acquisition
+    second_call_args = status_updater.workspace_repo.update_item_with_etag.call_args_list[1]
+    assert second_call_args[0][1] == "new-etag-from-lock"
+
+
+async def test_failed_cleanup_can_recover_and_complete():
+    operation = create_address_space_cleanup_operation(AddressSpaceCleanupState.Failed)
+    workspace = create_sample_workspace_object(operation.addressSpaceCleanup.workspaceId)
+    workspace.etag = "etag"
+    workspace.properties = {"address_spaces": ["10.0.0.0/24"]}
+
+    status_updater = DeploymentStatusUpdater()
+    status_updater.workspace_repo = MagicMock()
+    status_updater.workspace_repo.get_workspace_by_id = AsyncMock(return_value=workspace)
+    status_updater.workspace_repo.update_item_with_etag = AsyncMock()
+    status_updater.resource_template_repo = MagicMock()
+    status_updater.resource_history_repo = MagicMock()
+
+    await status_updater._complete_address_space_cleanup(operation)
+
+    assert operation.addressSpaceCleanup.state == AddressSpaceCleanupState.Completed
+    assert status_updater.workspace_repo.update_item_with_etag.await_count == 2
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
