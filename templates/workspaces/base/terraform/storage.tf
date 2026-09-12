@@ -67,6 +67,13 @@ resource "azapi_resource" "shared_storage" {
   ]
 }
 
+resource "azurerm_role_assignment" "resource_processor_blob_contributor" {
+  scope                = azurerm_storage_account.stg.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id
+  principal_type       = "ServicePrincipal"
+}
+
 resource "azurerm_storage_container" "stgcontainer" {
   name                  = "datalake"
   storage_account_id    = azurerm_storage_account.stg.id

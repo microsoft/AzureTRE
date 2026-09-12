@@ -128,6 +128,17 @@ variable "pooled_vm_size" {
   }
 }
 
+variable "pooled_os_image" {
+  type        = string
+  description = "Windows multi-session image for pooled session hosts"
+  default     = "Windows 11 25H2 Multi-Session"
+
+  validation {
+    condition     = contains(keys(yamldecode(file("${path.module}/../porter.yaml"))["custom"]["image_options"]), var.pooled_os_image)
+    error_message = "pooled_os_image must be a supported multi-session image from the bundle catalogue."
+  }
+}
+
 variable "enable_clipboard" {
   type        = bool
   description = "Enable clipboard redirection between session and client"

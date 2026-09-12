@@ -1,30 +1,3 @@
-removed {
-  from = azurerm_role_assignment.resource_processor_avd_artifacts
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-resource "terraform_data" "resource_processor_avd_artifacts" {
-  triggers_replace = uuidv5("url", "${data.azurerm_storage_account.stg.id}/Storage Blob Data Contributor/${data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id}")
-
-  provisioner "local-exec" {
-    interpreter = ["/bin/sh", "-c"]
-    command     = <<-EOT
-      token_response=$(curl --fail --silent --show-error -H Metadata:true "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fmanagement.azure.com%2F&client_id=${data.azurerm_user_assigned_identity.resource_processor_vmss_id.client_id}")
-      access_token=$(printf '%s' "$token_response" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
-      test -n "$access_token"
-      curl --fail-with-body --silent --show-error --retry 18 --retry-delay 10 --retry-all-errors \
-        --request PUT \
-        --header "Authorization: Bearer $access_token" \
-        --header "Content-Type: application/json" \
-        --data '{"properties":{"roleDefinitionId":"/subscriptions/${data.azurerm_client_config.current.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe","principalId":"${data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id}","principalType":"ServicePrincipal"}}' \
-        "https://management.azure.com${data.azurerm_storage_account.stg.id}/providers/Microsoft.Authorization/roleAssignments/${uuidv5("url", "${data.azurerm_storage_account.stg.id}/Storage Blob Data Contributor/${data.azurerm_user_assigned_identity.resource_processor_vmss_id.principal_id}")}?api-version=2022-04-01"
-    EOT
-  }
-}
-
 resource "azurerm_storage_container" "avd_artifacts" {
   count = var.host_pool_type == "Pooled" ? 1 : 0
 
@@ -32,15 +5,6 @@ resource "azurerm_storage_container" "avd_artifacts" {
   storage_account_id    = data.azurerm_storage_account.stg.id
   container_access_type = "private"
 
-  depends_on = [terraform_data.resource_processor_avd_artifacts]
-}
-
-removed {
-  from = azurerm_storage_blob.avd_dsc
-
-  lifecycle {
-    destroy = false
-  }
 }
 
 resource "terraform_data" "avd_dsc" {
@@ -65,7 +29,6 @@ resource "terraform_data" "avd_dsc" {
     EOT
   }
 
-  depends_on = [terraform_data.resource_processor_avd_artifacts]
 }
 
 resource "azurerm_network_interface" "pooled_session_host" {
@@ -108,29 +71,29 @@ resource "azurerm_windows_virtual_machine" "pooled_session_host" {
   admin_username             = "avdadmin"
   admin_password             = random_password.pooled_session_host[count.index].result
   encryption_at_host_enabled = true
-  secure_boot_enabled        = true
-  vtpm_enabled               = true
-  license_type               = "Windows_Client"
+  secure_boot_enabled        = local.pooled_image.secure_boot_enabled
+  vtpm_enabled               = local.pooled_image.vtpm_enabled
+  license_type               = local.pooled_image.license_type
   tags                       = local.workspace_service_tags
 
   source_image_reference {
-    publisher = "microsoftwindowsdesktop"
-    offer     = "windows-11"
-    sku       = "win11-24h2-avd"
-    version   = "latest"
+    publisher = local.pooled_image.source_image_reference.publisher
+    offer     = local.pooled_image.source_image_reference.offer
+    sku       = local.pooled_image.source_image_reference.sku
+    version   = local.pooled_image.source_image_reference.version
   }
 
   os_disk {
     name                 = "osdisk-${local.session_host_name_prefix}${count.index + 1}"
     caching              = "ReadWrite"
-    storage_account_type = "StandardSSD_LRS"
+    storage_account_type = "Premium_LRS"
   }
 
   identity {
     type = "SystemAssigned"
   }
 
-  lifecycle { ignore_changes = [tags, os_disk[0].storage_account_type] }
+  lifecycle { ignore_changes = [tags] }
 }
 
 resource "azurerm_role_assignment" "pooled_session_host_login" {
@@ -200,7 +163,7 @@ resource "azurerm_virtual_machine_extension" "pooled_avd_dsc" {
   tags                       = local.workspace_service_tags
 
   protected_settings = jsonencode({
-    commandToExecute = "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(templatefile("${path.module}/configure_session_host.ps1.tftpl", {
+    commandToExecute = "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"& ([scriptblock]::Create([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${base64encode(templatefile("${path.module}/configure_session_host.ps1.tftpl", {
       artifact_url               = local.avd_dsc_artifact_url
       artifact_sha256            = local.avd_dsc_artifact_sha256
       host_pool_name             = azurerm_virtual_desktop_host_pool.avd.name
@@ -208,7 +171,7 @@ resource "azurerm_virtual_machine_extension" "pooled_avd_dsc" {
       clipboard_server_to_client = local.clipboard_server_to_client
       clipboard_client_to_server = local.clipboard_client_to_server
       mount_storage_command      = ""
-    }), "UTF-16LE")}"
+    }))}'))))\""
   })
 
   depends_on = [

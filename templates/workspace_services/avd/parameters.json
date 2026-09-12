@@ -95,6 +95,12 @@
       }
     },
     {
+      "name": "pooled_os_image",
+      "source": {
+        "env": "POOLED_OS_IMAGE"
+      }
+    },
+    {
       "name": "enable_clipboard",
       "source": {
         "env": "ENABLE_CLIPBOARD"

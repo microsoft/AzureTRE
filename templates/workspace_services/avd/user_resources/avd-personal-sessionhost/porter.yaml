@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-avd-sessionhost
-version: 0.4.0
+version: 1.0.0
 description: "An Azure TRE User Resource Template for Azure Virtual Desktop Personal Session Host (Windows)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -18,7 +18,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-24h2-avd
+        sku: win11-25h2-avd
         version: latest
       secure_boot_enabled: true
       vtpm_enabled: true
@@ -26,7 +26,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-24h2-ent
+        sku: win11-25h2-ent
         version: latest
       secure_boot_enabled: true
       vtpm_enabled: true
@@ -34,7 +34,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-24h2-pro
+        sku: win11-25h2-pro
         version: latest
       secure_boot_enabled: true
       vtpm_enabled: true

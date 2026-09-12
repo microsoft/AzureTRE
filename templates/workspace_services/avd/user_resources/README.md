@@ -30,7 +30,7 @@ custom:
       source_image_reference:
         publisher: microsoftwindowsdesktop
         offer: windows-11
-        sku: win11-24h2-avd
+        sku: win11-25h2-avd
         version: latest
       secure_boot_enabled: true
       vtpm_enabled: true

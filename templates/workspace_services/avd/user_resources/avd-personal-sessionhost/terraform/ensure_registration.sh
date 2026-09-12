@@ -4,11 +4,18 @@ set -euo pipefail
 : "${RP_CLIENT_ID:?}" "${HOST_POOL_ID:?}" "${STORAGE_ACCOUNT:?}" "${LOCK_CONTAINER:?}" "${KEY_VAULT_NAME:?}" "${SECRET_NAME:?}"
 az login --identity --username "$RP_CLIENT_ID" --output none
 storage_args=(--account-name "$STORAGE_ACCOUNT" --container-name "$LOCK_CONTAINER" --auth-mode login --only-show-errors)
-if [[ $(az storage blob exists "${storage_args[@]}" --name registration.lock --query exists --output tsv) != true ]]; then
-    az storage blob upload --account-name "$STORAGE_ACCOUNT" --container-name "$LOCK_CONTAINER" --name registration.lock --auth-mode login --file /dev/null --overwrite false --only-show-errors --output none ||
-        [[ $(az storage blob exists "${storage_args[@]}" --name registration.lock --query exists --output tsv) == true ]]
-fi
-    storage_args+=(--blob-name registration.lock)
+lock_ready=false
+for attempt in {1..60}; do
+    if exists=$(az storage blob exists "${storage_args[@]}" --name registration.lock --query exists --output tsv); then
+        if [[ "$exists" == true ]] || az storage blob upload "${storage_args[@]}" --name registration.lock --file /dev/null --overwrite false --output none; then
+            lock_ready=true
+            break
+        fi
+    fi
+    if [[ "$attempt" -lt 60 ]]; then sleep 5; fi
+done
+[[ "$lock_ready" == true ]] || { echo 'Timed out initializing the AVD registration lock; check storage access and RBAC propagation' >&2; exit 1; }
+storage_args+=(--blob-name registration.lock)
 lease_id=''
 for attempt in {1..120}; do
     if lease_id=$(az storage blob lease acquire "${storage_args[@]}" --lease-duration 60 --output tsv 2>/dev/null); then

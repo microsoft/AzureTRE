@@ -48,7 +48,6 @@ resource "azurerm_storage_container" "avd_registration" {
   storage_account_id    = data.azurerm_storage_account.stg.id
   container_access_type = "private"
 
-  depends_on = [terraform_data.resource_processor_avd_artifacts]
 }
 
 resource "terraform_data" "avd_registration" {

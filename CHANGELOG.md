@@ -9,7 +9,7 @@ ENHANCEMENTS:
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 * Add Azure Virtual Desktop with multiple personal desktops per user, VM-specific connection links, workspace-grouped display names, pooled desktops, workspace-group access, creation-only host-pool type, private endpoints, enforced clipboard bootstrap, registration renewal, host cleanup,
-  required network access with IP-based Windows activation rules compatible with Azure Firewall Basic and no DNS-proxy dependency, and optional SSO pre-consent (AVD 0.6.1, personal session host 0.4.0) ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
+  required network access with IP-based Windows activation rules compatible with Azure Firewall Basic and no DNS-proxy dependency, and optional SSO pre-consent. Includes CAF naming, 25H2 defaults, pooled image selection and scaling, Premium SSD pooled disks, pinned portal bootstrap, registration retries, shared DNS and Terraform-managed storage RBAC, and deployment workflow integration (AVD and personal session host 1.0.0, base workspace 2.9.0, core 0.17.0, DevOps 0.6.3) ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
 
 BUG FIXES:
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))

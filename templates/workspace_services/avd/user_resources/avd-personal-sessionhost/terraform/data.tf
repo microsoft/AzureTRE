@@ -58,13 +58,13 @@ data "azuread_service_principal" "avd" {
 }
 
 data "azurerm_virtual_desktop_host_pool" "avd" {
-  name                = "hp-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
+  name                = "vdpool-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   resource_group_name = data.azurerm_resource_group.ws.name
 }
 
 data "azapi_resource" "avd_workspace" {
   type                   = "Microsoft.DesktopVirtualization/workspaces@2024-04-03"
-  name                   = "ws-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
+  name                   = "vdws-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   parent_id              = data.azurerm_resource_group.ws.id
   response_export_values = ["properties.objectId"]
 }
@@ -72,7 +72,7 @@ data "azapi_resource" "avd_workspace" {
 data "azapi_resource" "avd_desktop" {
   type                   = "Microsoft.DesktopVirtualization/applicationGroups/desktops@2024-04-03"
   name                   = "SessionDesktop"
-  parent_id              = "${data.azurerm_resource_group.ws.id}/providers/Microsoft.DesktopVirtualization/applicationGroups/dag-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
+  parent_id              = "${data.azurerm_resource_group.ws.id}/providers/Microsoft.DesktopVirtualization/applicationGroups/vdag-${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_parent_id}"
   response_export_values = ["properties.objectId"]
 }
 

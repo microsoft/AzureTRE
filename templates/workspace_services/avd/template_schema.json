@@ -103,7 +103,17 @@
             "description": "Number of shared multi-user session hosts in the pooled host pool.",
             "default": 1,
             "minimum": 1,
-            "maximum": 10
+            "maximum": 10,
+            "updateable": true
+          },
+          "pooled_os_image": {
+            "type": "string",
+            "title": "Session host image",
+            "default": "Windows 11 25H2 Multi-Session",
+            "enum": [
+              "Windows 11 25H2 Multi-Session",
+              "Windows 11 24H2 Multi-Session"
+            ]
           },
           "pooled_vm_size": {
             "type": "string",
@@ -120,7 +130,8 @@
         "required": [
           "maximum_sessions",
           "pooled_session_host_count",
-          "pooled_vm_size"
+          "pooled_vm_size",
+          "pooled_os_image"
         ]
       }
     },

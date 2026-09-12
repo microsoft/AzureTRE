@@ -16,5 +16,5 @@ COPY --link . ${BUNDLE_DIR}/
 
 RUN curl --fail --location --retry 3 \
     --output ${BUNDLE_DIR}/Configuration.zip \
-    https://raw.githubusercontent.com/Azure/RDS-Templates/1f36cf0bb39d3849b8cd5f494f75accac03ec21b/ARM-wvd-templates/DSC/Configuration.zip \
+    https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_1.0.03519.1433.zip \
     && cd ${BUNDLE_DIR} && sha256sum --check Configuration.zip.sha256

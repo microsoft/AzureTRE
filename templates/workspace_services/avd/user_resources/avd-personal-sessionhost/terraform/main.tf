@@ -22,14 +22,6 @@ resource "azurerm_storage_container" "avd_artifacts" {
   container_access_type = "private"
 }
 
-removed {
-  from = azurerm_storage_blob.avd_dsc
-
-  lifecycle {
-    destroy = false
-  }
-}
-
 resource "terraform_data" "avd_dsc" {
   triggers_replace = [local.avd_dsc_artifact_sha256, local.avd_dsc_artifact_url]
 

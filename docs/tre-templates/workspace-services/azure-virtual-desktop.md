@@ -51,12 +51,13 @@ The bundle does not verify entitlement. Review [AVD licensing](https://learn.mic
 | `host_pool_type` | `Personal`/`Pooled` (Default: `Personal`) | Select personal child VMs or workspace-managed pooled VMs |
 | `enable_sso_preconsent` | `true`/`false` (Default: `false`) | Automate a service-owned dynamic device group for pre-consent; consider licensing and optional Graph write permissions |
 | `maximum_sessions` | 1-50 (Default: 10) | Maximum concurrent sessions on each pooled host |
-| `pooled_session_host_count` | 1-10 (Default: 1) | Number of multi-session hosts in a pooled deployment |
+| `pooled_session_host_count` | 1-10 (Default: 1) | Updateable number of multi-session hosts in a pooled deployment |
+| `pooled_os_image` | Windows 11 25H2/24H2 Multi-Session (Default: 25H2) | Image selected at creation; pooled hosts use Premium SSD OS disks |
 | `pooled_vm_size` | Supported `Standard_D*s_v6` size | VM size used by pooled session hosts |
 | `enable_clipboard` | `true`/`false` (Default: `false`) | Enable clipboard redirection between session and client |
 | `clipboard_transfer_direction` | `disabled`/`client_to_session`/`session_to_client`/`both` (Default: `disabled`) | Direction of allowed clipboard transfers |
 
-The pooled-only settings are ignored for personal host pools. Host-pool type is fixed at service creation (`updateable: false`). Multiple personal desktop assignment cannot be disabled once enabled.
+The pooled-only settings are shown only for pooled host pools. Host-pool type is fixed at service creation (`updateable: false`). Multiple personal desktop assignment cannot be disabled once enabled. Before reducing the pooled host count, drain the hosts being removed (highest numbered hosts first) and end their active sessions; scaling down deletes those VMs and their disks.
 
 ### Clipboard and redirection
 
@@ -87,13 +88,13 @@ The activation addresses are Microsoft's [documented Azure public-cloud KMS endp
 Review these addresses when Microsoft changes its endpoints; sovereign clouds require their corresponding KMS addresses.
 
 The activation rule uses IP addresses so it works with Azure Firewall Basic, Standard, and Premium without DNS proxy. This bundle does not require changing client DNS settings or disabling TRE's optional DNS security policy.
-Base workspace 2.8.1 adds the corresponding NSG paths; core 0.16.13 adds the Windows cloud DNS suffixes. Upgrade those components before deploying AVD in an existing TRE. The firewall still controls external destinations.
+Base workspace 2.9.0 provides the NSG paths, workspace DNS link, and workspace-owned Terraform role assignment granting the resource processor Storage Blob Data Contributor. Core 0.17.0 provides the Windows cloud DNS suffixes and the shared AVD private DNS zone linked to the core network. Deploy those components before AVD. The firewall still controls external destinations.
 
 See [Protect Azure Virtual Desktop with Azure Firewall](https://learn.microsoft.com/azure/firewall/protect-azure-virtual-desktop) for platform requirements.
 
 ## Bootstrap integrity
 
-Both bundles pin the AVD configuration archive to an upstream commit and verify its SHA-256 digest during build and on the session host. This provides integrity and reproducibility, not a security audit of elevated code.
+Both bundles pin Microsoft's portal configuration archive `Configuration_1.0.03519.1433.zip` and verify its SHA-256 digest during build and on the session host. The archive still uses PowerShell DSC. Pinning provides integrity and reproducibility, not a security audit of elevated code.
 
 Before bootstrap, both bundles reuse a registration token with at least four hours remaining or generate a new 24-hour token. A renewable per-pool storage lease serializes renewal, and Key Vault passes the token to the host deployment without printing it. Existing registered hosts do not need this token. Do not rotate registration credentials manually during deployment.
 
@@ -101,7 +102,7 @@ Uninstall and pooled scale-down remove session-host registrations before VM dele
 
 ## Prerequisites
 
-- [Base workspace 2.8.1 or later](../workspaces/base.md) and core 0.16.13 or later
+- [Base workspace 2.9.0 or later](../workspaces/base.md) and core 0.17.0 or later
 
 ## Personal desktops
 
@@ -117,6 +118,6 @@ Use **Connect** on a pooled workspace service or personal child resource. Pooled
 
 Windows App groups desktops by the TRE workspace name. Published desktops use the service name, and personal desktops use the child resource's display name. Give personal resources distinct names to distinguish them in the device list. Labels are applied during bundle install or upgrade; after renaming the TRE workspace, upgrade its AVD services to refresh the group heading.
 
-Upgrade the service to 0.6.1 and personal resources to 0.4.0 for these labels, VM-specific links, and IP-based activation rules. Each personal `connection_uri` includes the AVD workspace and published-desktop object IDs, the authentication tenant ID, and `endpointId` from the session host's `properties.objectId` (not the Azure VM ID). A login hint is omitted so guests can choose their home account.
+The service and personal resource bundles are version 1.0.0. Azure resource names use the CAF prefixes `vdpool`, `vdws`, and `vdag`. Each personal `connection_uri` includes the AVD workspace and published-desktop object IDs, the authentication tenant ID, and `endpointId` from the session host's `properties.objectId` (not the Azure VM ID). A login hint is omitted so guests can choose their home account.
 
 Clients: [Windows App web](https://windows.cloud.microsoft), [Windows](https://apps.microsoft.com/detail/9n1f85v9t8bn), and [macOS](https://aka.ms/WindowsAppMac). See the [AVD documentation](https://learn.microsoft.com/en-us/azure/virtual-desktop/) for other supported clients.

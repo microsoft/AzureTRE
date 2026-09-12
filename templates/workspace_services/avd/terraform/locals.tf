@@ -9,9 +9,9 @@ locals {
   session_host_name_prefix       = "avd${local.short_workspace_id}${local.short_service_id}"
 
   # AVD naming
-  hostpool_name           = "hp-${local.service_resource_name_suffix}"
-  avd_workspace_name      = "ws-${local.service_resource_name_suffix}"
-  application_group_name  = "dag-${local.service_resource_name_suffix}"
+  hostpool_name           = "vdpool-${local.service_resource_name_suffix}"
+  avd_workspace_name      = "vdws-${local.service_resource_name_suffix}"
+  application_group_name  = "vdag-${local.service_resource_name_suffix}"
   hostpool_friendly_name  = coalesce(trimspace(var.display_name), local.hostpool_name)
   workspace_friendly_name = coalesce(trimspace(var.workspace_display_name), "TRE Workspace ${local.short_workspace_id}")
   app_group_friendly_name = local.hostpool_friendly_name
@@ -26,6 +26,7 @@ locals {
   avd_dsc_artifact_url                  = var.host_pool_type == "Pooled" ? "${data.azurerm_storage_account.stg.primary_blob_endpoint}${azurerm_storage_container.avd_artifacts[0].name}/Configuration.zip" : null
   avd_dsc_artifact_sha256               = split(" ", trimspace(file("${path.module}/../Configuration.zip.sha256")))[0]
   workspace_role_principal_ids          = toset([var.workspace_owners_group_id, var.workspace_researchers_group_id])
+  pooled_image                          = yamldecode(file("${path.module}/../porter.yaml"))["custom"]["image_options"][var.pooled_os_image]
 
   workspace_service_tags = {
     tre_id                   = var.tre_id

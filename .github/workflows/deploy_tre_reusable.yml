@@ -418,6 +418,10 @@ jobs:
     strategy:
       matrix:
         include:
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/avd"
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/avd/user_resources/avd-personal-sessionhost"
           - BUNDLE_TYPE: "workspace"
             BUNDLE_DIR: "./templates/workspaces/base"
           - BUNDLE_TYPE: "workspace"
@@ -593,6 +597,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/avd"
           # bundles type can be inferred from the bundle dir (but this is more explicit)
           - BUNDLE_TYPE: "workspace"
             BUNDLE_DIR: "./templates/workspaces/base"
@@ -659,6 +665,9 @@ jobs:
     strategy:
       matrix:
         include:
+          - BUNDLE_TYPE: "user_resource"
+            BUNDLE_DIR: "./templates/workspace_services/avd/user_resources/avd-personal-sessionhost"
+            WORKSPACE_SERVICE_NAME: "tre-service-avd"
           - BUNDLE_TYPE: "user_resource"
             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
             WORKSPACE_SERVICE_NAME: "tre-service-guacamole"
