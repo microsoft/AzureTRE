@@ -36,7 +36,7 @@ def input_workspace_template():
         version="0.0.1",
         current=True,
         json_schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace.json",
             "type": "object",
             "title": "My Workspace Template",
@@ -101,7 +101,7 @@ def input_workspace_service_template():
         version="0.0.1",
         current=True,
         json_schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
             "type": "object",
             "title": "My Workspace Service Template",
@@ -122,11 +122,11 @@ def input_user_resource_template():
         version="0.0.1",
         current=True,
         json_schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
             "type": "object",
             "title": "My User Resource Template",
-            "description": "These is a test user resource template schema",
+            "description": "This is a test user resource template schema",
             "required": [],
             "properties": {},
         },
@@ -143,7 +143,7 @@ def input_shared_service_template():
         version="0.0.1",
         current=True,
         json_schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/mysharedservice/shared_service.json",
             "type": "object",
             "title": "My Shared Service Template",

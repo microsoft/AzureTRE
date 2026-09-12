@@ -132,6 +132,10 @@ class ResourceTemplateRepository(BaseRepository):
             "customActions": template_input.customActions
         }
 
+        for schema_key, template_field in (("$schema", "schema_uri"), ("$id", "schema_id"), ("$defs", "defs")):
+            if schema_key in template_input.json_schema:
+                template[template_field] = template_input.json_schema[schema_key]
+
         if "uiSchema" in template_input.json_schema:
             template["uiSchema"] = template_input.json_schema["uiSchema"]
 

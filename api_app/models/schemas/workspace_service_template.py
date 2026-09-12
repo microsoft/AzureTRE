@@ -44,7 +44,7 @@ class WorkspaceServiceTemplateInCreate(ResourceTemplateInCreate):
             "version": "0.0.1",
             "current": True,
             "json_schema": {
-                "$schema": "http://json-schema.org/draft-07/schema",
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/workspace_service.json",
                 "type": "object",
                 "title": "My Workspace Service Template",

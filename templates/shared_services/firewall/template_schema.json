@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/firewall/template_schema.json",
   "type": "object",
   "title": "Firewall Shared Service",
@@ -7,7 +7,6 @@
   "required": [],
   "properties": {
     "rule_collections": {
-      "$id": "#properties/rule_collections",
       "title": "application rule collections",
       "type": "array",
       "default": [],
@@ -183,7 +182,6 @@
       }
     },
     "network_rule_collections": {
-      "$id": "#properties/network_rule_collections",
       "title": "network rule collections",
       "type": "array",
       "default": [],
