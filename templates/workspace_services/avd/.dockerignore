@@ -9,3 +9,4 @@ Dockerfile.tmpl
 .env*
 
 user_resources/*
+tests/

@@ -9,9 +9,14 @@ ENHANCEMENTS:
 * API: Replace HTTP_422_UNPROCESSABLE_ENTITY response with HTTP_422_UNPROCESSABLE_CONTENT as per RFC 9110 ([#4742](https://github.com/microsoft/AzureTRE/issues/4742))
 * Make workspace shared storage quota updateable ([#4314](https://github.com/microsoft/AzureTRE/issues/4314))
 * Add Azure Virtual Desktop with multiple personal desktops per user, VM-specific connection links, workspace-grouped display names, pooled desktops, workspace-group access, creation-only host-pool type, private endpoints, enforced clipboard bootstrap, registration renewal, host cleanup,
-  required network access with IP-based Windows activation rules compatible with Azure Firewall Basic and no DNS-proxy dependency, and optional SSO pre-consent. Includes CAF naming, 25H2 defaults, pooled image selection and scaling, Premium SSD pooled disks, pinned portal bootstrap, registration retries, shared DNS and Terraform-managed storage RBAC, and deployment workflow integration (AVD and personal session host 1.0.0, base workspace 2.9.0, core 0.17.0, DevOps 0.6.3) ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
+  required network access with IP-based Windows activation rules compatible with Azure Firewall Basic and no DNS-proxy dependency, and optional SSO pre-consent.
+  Includes CAF naming, 25H2 defaults, pooled image selection and count-only PATCH validation, Premium SSD pooled disks, pinned portal bootstrap, registration retries, shared DNS and Terraform-managed storage RBAC, and deployment workflow integration.
+  Live pooled scale-out and scale-in acceptance remains pending.
+  (AVD 1.0.1, personal session host 1.0.0, base workspace 2.9.0, core 0.17.0, DevOps 0.6.4) ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
 
 BUG FIXES:
+* Allow AVD pooled host-count PATCH requests without the creation-only pool selector using a template-schema fallback; cover conditional PATCH validation with generic API regression tests ([#517](https://github.com/microsoft/AzureTRE/issues/517), [#1014](https://github.com/microsoft/AzureTRE/issues/1014))
+* Run AVD schema and registration-initialization regression suites in pull-request Build Validation ([#5075](https://github.com/microsoft/AzureTRE/pull/5075))
 * Fix circular dependancy in base workspace. ([#4756](https://github.com/microsoft/AzureTRE/pull/4756))
 * Replaced deprecated `datetime.utcnow()` with `datetime.now(datetime.UTC)` in the API and airlock processor. ([#4743](https://github.com/microsoft/AzureTRE/issues/4743))
 * Disable public access on stweb storage account ([#4766](https://github.com/microsoft/AzureTRE/issues/4766))
@@ -21,6 +26,7 @@ BUG FIXES:
 * Fix R configuration with incorrect quotes preventing package installation on Linux VMs ([#4657](https://github.com/microsoft/AzureTRE/issues/4657))
 
 COMPONENTS:
+* API 0.25.5: generic conditional PATCH regression coverage; runtime behavior unchanged. DevOps 0.6.4: AVD regression CI job ([#5075](https://github.com/microsoft/AzureTRE/pull/5075))
 
 ## 0.26.0 (October 12, 2025)
 **BREAKING CHANGES**

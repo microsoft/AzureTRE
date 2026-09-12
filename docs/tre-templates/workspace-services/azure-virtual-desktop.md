@@ -59,6 +59,12 @@ The bundle does not verify entitlement. Review [AVD licensing](https://learn.mic
 
 The pooled-only settings are shown only for pooled host pools. Host-pool type is fixed at service creation (`updateable: false`). Multiple personal desktop assignment cannot be disabled once enabled. Before reducing the pooled host count, drain the hosts being removed (highest numbered hosts first) and end their active sessions; scaling down deletes those VMs and their disks.
 
+To change pooled capacity, PATCH only the count, for example `{"properties":{"pooled_session_host_count":2}}`.
+A schema fallback validates counts from 1 to 10 when the creation-only `host_pool_type` selector is absent.
+The API validates partial properties without the existing resource, so this fallback does not enforce pool type: a count sent to a Personal service is unused metadata and does not create pooled hosts.
+
+The count-only PATCH schema fix is covered by local regression tests. Live scale-out and scale-in acceptance for version 1.0.1 remains pending; do not treat this as end-to-end scaling verification.
+
 ### Clipboard and redirection
 
 Clipboard defaults off. For **client-to-desktop only**, set `enable_clipboard = true` and `clipboard_transfer_direction = client_to_session`. This allows copying into the desktop and blocks copying back once host policy is effective.
@@ -118,6 +124,7 @@ Use **Connect** on a pooled workspace service or personal child resource. Pooled
 
 Windows App groups desktops by the TRE workspace name. Published desktops use the service name, and personal desktops use the child resource's display name. Give personal resources distinct names to distinguish them in the device list. Labels are applied during bundle install or upgrade; after renaming the TRE workspace, upgrade its AVD services to refresh the group heading.
 
-The service and personal resource bundles are version 1.0.0. Azure resource names use the CAF prefixes `vdpool`, `vdws`, and `vdag`. Each personal `connection_uri` includes the AVD workspace and published-desktop object IDs, the authentication tenant ID, and `endpointId` from the session host's `properties.objectId` (not the Azure VM ID). A login hint is omitted so guests can choose their home account.
+The service bundle is version 1.0.1 and the personal resource bundle is version 1.0.0. Azure resource names use the CAF prefixes `vdpool`, `vdws`, and `vdag`.
+Each personal `connection_uri` includes the AVD workspace and published-desktop object IDs, the authentication tenant ID, and `endpointId` from the session host's `properties.objectId` (not the Azure VM ID). A login hint is omitted so guests can choose their home account.
 
 Clients: [Windows App web](https://windows.cloud.microsoft), [Windows](https://apps.microsoft.com/detail/9n1f85v9t8bn), and [macOS](https://aka.ms/WindowsAppMac). See the [AVD documentation](https://learn.microsoft.com/en-us/azure/virtual-desktop/) for other supported clients.

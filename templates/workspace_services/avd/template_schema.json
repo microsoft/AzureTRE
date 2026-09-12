@@ -137,6 +137,23 @@
     },
     {
       "if": {
+        "not": {
+          "required": [
+            "host_pool_type"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "pooled_session_host_count": {
+            "$ref": "#/allOf/0/then/properties/pooled_session_host_count",
+            "updateable": true
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "enable_clipboard": {
             "const": true

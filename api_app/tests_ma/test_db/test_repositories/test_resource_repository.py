@@ -8,6 +8,7 @@ from mock import patch, MagicMock
 from jsonschema.exceptions import ValidationError
 from resources import strings
 from db.repositories.resources_history import ResourceHistoryRepository
+from db.repositories.resource_templates import ResourceTemplateRepository
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from tests_ma.test_api.conftest import create_test_user
 
@@ -42,6 +43,93 @@ async def resource_history_repo():
 @pytest.fixture
 def workspace_input():
     return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123"})
+
+
+@pytest.fixture
+def conditional_template_repo():
+    return ResourceTemplateRepository()
+
+
+@pytest.fixture
+def conditional_template():
+    return ResourceTemplate(
+        id="conditional-template-test",
+        name="conditional-template",
+        description="Template with a conditionally displayed updateable property",
+        version="0.1.0",
+        resourceType=ResourceType.WorkspaceService,
+        current=True,
+        required=[],
+        properties={
+            "mode": {"type": "string", "enum": ["basic", "advanced"], "updateable": False},
+            "fixed_property": {"type": "string", "updateable": False},
+            "display_name": {"type": "string", "updateable": True},
+        },
+        allOf=[
+            {
+                "if": {"properties": {"mode": {"const": "advanced"}}, "required": ["mode"]},
+                "then": {
+                    "properties": {
+                        "capacity": {"type": "integer", "minimum": 1, "maximum": 10, "updateable": True},
+                    },
+                    "required": ["capacity"],
+                },
+            },
+            {
+                "if": {"not": {"required": ["mode"]}},
+                "then": {
+                    "properties": {
+                        "capacity": {"$ref": "#/allOf/0/then/properties/capacity", "updateable": True},
+                    },
+                },
+            },
+        ],
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("properties", [
+    {"capacity": 1},
+    {"capacity": 2},
+    {"capacity": 10},
+    {"capacity": 2, "display_name": "Updated name"},
+    {"display_name": "Updated name"},
+])
+async def test_validate_patch_conditional_property_without_selector_passes(resource_repo, conditional_template_repo, conditional_template, properties):
+    resource_repo.validate_patch(
+        ResourcePatch(properties=properties),
+        conditional_template_repo, conditional_template, strings.RESOURCE_ACTION_UPDATE,
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("properties", [
+    {"capacity": 0},
+    {"capacity": 11},
+    {"capacity": 1.5},
+    {"capacity": "2"},
+    {"capacity": None},
+    {"capacity": True},
+    {"capacity": 2, "unknown_field": True},
+    {"capacity": 2, "fixed_property": "Changed"},
+    {"fixed_property": "Changed"},
+])
+async def test_validate_patch_conditional_schema_rejects_invalid_fields(resource_repo, conditional_template_repo, conditional_template, properties):
+    with pytest.raises(ValidationError):
+        resource_repo.validate_patch(
+            ResourcePatch(properties=properties),
+            conditional_template_repo, conditional_template, strings.RESOURCE_ACTION_UPDATE,
+        )
+
+
+@pytest.mark.asyncio
+async def test_validate_patch_conditional_property_without_fallback_fails(resource_repo, conditional_template_repo, conditional_template):
+    conditional_template.allOf = conditional_template.allOf[:1]
+    with pytest.raises(ValidationError, match="capacity"):
+        resource_repo.validate_patch(
+            ResourcePatch(properties={"capacity": 2}),
+            conditional_template_repo, conditional_template, strings.RESOURCE_ACTION_UPDATE,
+        )
 
 
 def sample_resource() -> Resource:

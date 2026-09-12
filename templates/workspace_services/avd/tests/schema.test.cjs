@@ -5,16 +5,31 @@ const { createRequire } = require('node:module');
 const test = require('node:test');
 
 const root = path.resolve(__dirname, '../../../..');
-const uiRequire = createRequire(path.join(root, 'ui/app/package.json'));
-const { retrieveSchema, getDefaultFormState } = uiRequire('@rjsf/utils');
-const validator = uiRequire('@rjsf/validator-ajv8').default;
-const yaml = uiRequire('js-yaml');
+const testRequire = createRequire(path.join(__dirname, 'package.json'));
+const { retrieveSchema, getDefaultFormState } = testRequire('@rjsf/utils');
+const validator = testRequire('@rjsf/validator-ajv8').default;
+const yaml = testRequire('js-yaml');
 const bundle = path.resolve(__dirname, '..');
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const readYaml = file => yaml.load(fs.readFileSync(file, 'utf8'));
 const schema = readJson(path.join(bundle, 'template_schema.json'));
 const manifest = readYaml(path.join(bundle, 'porter.yaml'));
 const pooledFields = ['maximum_sessions', 'pooled_session_host_count', 'pooled_vm_size', 'pooled_os_image'];
+
+test('count-only updates remain validated without the immutable pool selector', () => {
+  const updateSchema = {
+    ...schema,
+    required: [],
+    properties: Object.fromEntries(Object.entries(schema.properties).filter(([, property]) => property.updateable)),
+  };
+  const patch = { pooled_session_host_count: 2 };
+  const resolved = retrieveSchema(validator, updateSchema, updateSchema, patch);
+  assert.equal(resolved.properties.pooled_session_host_count?.updateable, true);
+  assert.deepEqual(validator.validateFormData(patch, updateSchema).errors, []);
+  for (const invalid of [0, 11, 1.5, '2']) {
+    assert(validator.validateFormData({ pooled_session_host_count: invalid }, updateSchema).errors.length > 0);
+  }
+});
 
 test('pooled bootstrap uses UTF-8 and stays within the Windows command limit', () => {
   const terraform = fs.readFileSync(path.join(bundle, 'terraform/pooled_session_hosts.tf'), 'utf8');
@@ -96,7 +111,7 @@ test('personal default uses 25H2 and both bundles declare v1', () => {
   for (const image of childSchema.properties.os_image.enum) {
     assert.match(childManifest.custom.image_options[image].source_image_reference.sku, /25h2/);
   }
-  assert.equal(manifest.version, '1.0.0');
+  assert.equal(manifest.version, '1.0.1');
   assert.equal(childManifest.version, '1.0.0');
 });
 
@@ -108,4 +123,21 @@ test('deployment workflow publishes and registers both AVD bundles', () => {
   for (const bundlePath of [parent, child]) assert(entries('publish_bundles').some(entry => entry.BUNDLE_DIR === bundlePath));
   assert(entries('register_bundles').some(entry => entry.BUNDLE_DIR === parent));
   assert(entries('register_user_resource_bundles').some(entry => entry.BUNDLE_DIR === child && entry.WORKSPACE_SERVICE_NAME === 'tre-service-avd'));
+});
+
+test('pull request validation runs both AVD regression suites', () => {
+  const workflow = readYaml(path.join(root, '.github/workflows/build_validation_develop.yml'));
+  assert(workflow.on.pull_request.branches.includes('main'));
+  const job = workflow.jobs.avd_template_tests;
+  assert.equal(job.permissions.contents, 'read');
+  assert(job.steps.some(step => step['working-directory'] === 'templates/workspace_services/avd/tests' && step.run === 'npm ci --ignore-scripts --no-audit --no-fund'));
+  for (const command of [
+    'node --test templates/workspace_services/avd/tests/schema.test.cjs',
+    'bash templates/workspace_services/avd/tests/test_registration_initialization.sh',
+  ]) {
+    const step = job.steps.find(entry => entry.run === command);
+    assert(step, `Missing CI command: ${command}`);
+    assert(!step.if);
+    assert(!step['continue-on-error']);
+  }
 });

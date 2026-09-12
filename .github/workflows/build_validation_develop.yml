@@ -14,6 +14,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  avd_template_tests:
+    name: AVD template tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: templates/workspace_services/avd/tests/package-lock.json
+
+      - name: Install schema test dependencies
+        working-directory: templates/workspace_services/avd/tests
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validate AVD template schemas and integration
+        run: node --test templates/workspace_services/avd/tests/schema.test.cjs
+
+      - name: Validate AVD registration initialization
+        run: bash templates/workspace_services/avd/tests/test_registration_initialization.sh
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
