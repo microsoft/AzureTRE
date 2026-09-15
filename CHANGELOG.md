@@ -8,7 +8,7 @@ ENHANCEMENTS:
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
-* Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths.
+* Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths. ([#5078](https://github.com/microsoft/AzureTRE/pull/5078))
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
