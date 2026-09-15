@@ -8,7 +8,7 @@ ENHANCEMENTS:
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
-* Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist so Nexus can proxy VS Code Marketplace extensions when DNS security policy is enabled. (`core` 0.16.18) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
+* Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist and `*.vsassets.io` to the Nexus firewall allowlist so Nexus can proxy VS Code Marketplace extensions when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
