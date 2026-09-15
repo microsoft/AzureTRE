@@ -9,6 +9,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
+* Fix API resource update retries so a successful retry returns the patched resource to the original caller. ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 * Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
 * Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
