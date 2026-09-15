@@ -45,6 +45,9 @@ jobs:
               - 'core/version.txt'
             docs:
               - 'docs/**/*'
+            github_scripts:
+              - '.github/scripts/**'
+              - '.github/workflows/build_validation_develop.yml'
 
             terraform_core:
               - core/**/terraform/**/*.tf
@@ -57,6 +60,19 @@ jobs:
 
             terraform_workspace_services:
               - templates/workspace_services/**/terraform/**/*.tf
+
+      - name: Set up Node.js for GitHub scripts
+        if: ${{ steps.filter.outputs.github_scripts == 'true' }}
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "24"
+
+      - name: Test GitHub scripts
+        if: ${{ steps.filter.outputs.github_scripts == 'true' }}
+        working-directory: .github/scripts
+        run: |
+          npm ci
+          npm test -- --runInBand
 
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
         if: ${{ steps.filter.outputs.terraform == 'true' }}
