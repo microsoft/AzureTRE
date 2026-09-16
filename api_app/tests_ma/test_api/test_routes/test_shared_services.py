@@ -77,7 +77,8 @@ def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID)
 
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_admin_user(self, app, non_admin_user):
+    @classmethod
+    def log_in_with_non_admin_user(cls, app, non_admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
         yield
         app.dependency_overrides = {}
@@ -119,7 +120,8 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
 class TestSharedServiceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
+    @classmethod
+    def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
         yield
