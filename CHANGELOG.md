@@ -28,6 +28,8 @@ BUG FIXES:
 * Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Patch `fast-uri` to 3.1.6 in the UI form validator and add URI and resource-form regression tests. ([#5080](https://github.com/microsoft/AzureTRE/pull/5080))
+* Patch `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@humanfs/node` and `brace-expansion` in the UI build and lint dependencies. ([#5079](https://github.com/microsoft/AzureTRE/pull/5079))
 * Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths. ([#5078](https://github.com/microsoft/AzureTRE/pull/5078))
 * Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
