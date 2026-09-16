@@ -44,6 +44,15 @@ class BaseRepository:
     async def update_item_dict(self, item_dict: dict):
         await self.container.upsert_item(body=item_dict)
 
+    async def add_item_property_if_undefined(self, item_id: str, path: str, value):
+        """Atomically add a property only when another writer has not set it."""
+        return await self.container.patch_item(
+            item=item_id,
+            partition_key=item_id,
+            patch_operations=[{"op": "add", "path": path, "value": value}],
+            filter_predicate=f"FROM c WHERE NOT IS_DEFINED(c{path.replace('/', '.')})",
+        )
+
     async def delete_item(self, item_id: str):
         await self.container.delete_item(item=item_id, partition_key=item_id)
 

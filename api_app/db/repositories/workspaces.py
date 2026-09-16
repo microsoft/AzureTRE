@@ -12,6 +12,7 @@ import resources.strings as strings
 from resources import constants
 from core import config, credentials
 from azure.core.exceptions import HttpResponseError
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from db.errors import EntityDoesNotExist, InvalidInput, ResourceIsNotDeployed, StorageAccountNameGenerationTimeout, StorageAccountNameCheckFailed
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources import ResourceRepository
@@ -73,9 +74,17 @@ class WorkspaceRepository(ResourceRepository):
         parameters = [{'name': '@resourceType', 'value': ResourceType.Workspace}]
         migrated = []
         for workspace in await self.query(query=query, parameters=parameters):
-            workspace['properties']['airlock_version'] = 1
-            await self.update_item_dict(workspace)
-            migrated.append(workspace['id'])
+            try:
+                # Do not replace a snapshot read by the query: a concurrent PATCH or deployment
+                # output update must survive this one-off migration intact.
+                await self.add_item_property_if_undefined(
+                    workspace['id'], '/properties/airlock_version', 1)
+                migrated.append(workspace['id'])
+            except CosmosHttpResponseError as error:
+                # The predicate can become false after the query if another writer stamps the
+                # version first. That is the desired, idempotent outcome.
+                if error.status_code != 412:
+                    raise
         return migrated
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:

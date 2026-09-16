@@ -67,6 +67,18 @@ async def test_get_active_workspaces_queries_db(workspace_repo):
 
 
 @pytest.mark.asyncio
+async def test_legacy_airlock_migration_adds_only_the_missing_version(workspace_repo):
+    workspace_repo.query = AsyncMock(return_value=[{"id": workspace.id, "properties": {}}])
+    workspace_repo.add_item_property_if_undefined = AsyncMock()
+
+    migrated = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
+
+    assert migrated == [workspace.id]
+    workspace_repo.add_item_property_if_undefined.assert_awaited_once_with(
+        workspace.id, "/properties/airlock_version", 1)
+
+
+@pytest.mark.asyncio
 async def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace, operations_repo):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     sample_workspace = workspace

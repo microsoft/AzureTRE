@@ -136,6 +136,15 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
         await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
+        if resource_patch.properties and resource_patch.properties.get("airlock_version") == 2:
+            target_version = resource_patch.templateVersion or workspace.templateVersion
+            target_template = await resource_template_repo.get_template_by_name_and_version(
+                workspace.templateName, target_version, ResourceType.Workspace)
+            if "airlock_version" not in target_template.properties:
+                raise ValueError(
+                    f"Cannot change airlock_version to 2 until workspace template "
+                    f"{workspace.templateName} version {target_version} supports Airlock v2."
+                )
         ensure_workspace_airlock_version_supported({**workspace.properties, **(resource_patch.properties or {})}, default_version=1)
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:
