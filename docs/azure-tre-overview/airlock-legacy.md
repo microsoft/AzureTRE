@@ -102,7 +102,7 @@ The following diagram shows the legacy airlock flow with data copies between sto
 | **Storage accounts** | 2 total | 10+ (5 core + 5 per workspace) |
 | **Stage tracking** | Container metadata | Separate storage accounts |
 | **Data copies per request** | 1 (on approval only) | Up to 3 |
-| **Workspace isolation** | ABAC + shared PE | Dedicated storage per workspace |
+| **Workspace isolation** | ABAC + per-workspace PE | Dedicated storage per workspace |
 | **Private endpoints** | 2 core + 1 per workspace | 5 core + 5 per workspace |
 | **EventGrid topics** | 2 system topics | 10+ system topics |
 | **Infrastructure cost** | Lower | Higher (more resources) |
@@ -113,8 +113,8 @@ The following diagram shows the legacy airlock flow with data copies between sto
 
 To upgrade a workspace from the legacy architecture:
 
-1. Ensure core is deployed with the current codebase (`enable_legacy_airlock: true` to keep legacy infrastructure alongside the new accounts), and upgrade the workspace to the current `tre-workspace-base` version. That upgrade is a non-destructive **minor** bump: the workspace stays on `airlock_version=1` (no v2 infrastructure is
-   deployed, no data moves) while the v2 airlock module becomes available for the switch below.
+1. After upgrading the API, run `POST /migrations` so every pre-v2 workspace is explicitly stamped with `airlock_version=1`. Ensure core is deployed with the current codebase (`enable_legacy_airlock: true` to keep legacy infrastructure alongside the new accounts), then upgrade the workspace to the current `tre-workspace-base` version.
+   The explicit v1 stamp makes that workspace upgrade non-destructive: no v2 infrastructure is deployed and no data moves until the switch below.
 2. Let any in-flight requests complete or cancel them: the API rejects an `airlock_version` change while the workspace holds requests that are still in progress (HTTP 400). Requests in a final state do not block the change.
 3. Update the workspace `airlock_version` property to `2`.
 4. Redeploy the workspace — this switches from the legacy airlock terraform module to the consolidated module.
