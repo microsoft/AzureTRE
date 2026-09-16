@@ -91,7 +91,7 @@ class DeploymentStatusUpdater(ServiceBusConsumer):
                     raise
 
                 except Exception as e:
-                    logger.exception(f"Unexpected error in message processing: {type(e).__name__}: {e}")
+                    logger.exception(f"Unexpected error in message processing. Will retry - {type(e).__name__}: {e}")
                     await asyncio.sleep(10)
 
     async def process_message(self, msg):

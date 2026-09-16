@@ -3,13 +3,19 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 * Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Patch `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@humanfs/node` and `brace-expansion` in the UI build and lint dependencies. ([#5079](https://github.com/microsoft/AzureTRE/pull/5079))
+* Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths. ([#5078](https://github.com/microsoft/AzureTRE/pull/5078))
+* Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
+* Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
-* Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 * Implement service bus consumer monitoring with heartbeat detection, automatic recovery, and /health endpoint integration to prevent operations getting stuck indefinitely ([#4464](https://github.com/microsoft/AzureTRE/issues/4464))
+* Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
+* Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
