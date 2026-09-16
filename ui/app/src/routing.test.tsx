@@ -70,6 +70,8 @@ const request = {
   allowedUserActions: [],
 };
 
+let listedRequests: Array<typeof request> = [];
+
 const LocationControls = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -91,6 +93,7 @@ const open = (path: string) =>
   );
 
 beforeEach(() => {
+  listedRequests = [];
   // Fluent UI constructs observers when its panels and command bars mount.
   class Observer {
     observe() {}
@@ -118,8 +121,13 @@ beforeEach(() => {
     if (endpoint.endsWith("/user-resource-templates")) return { templates: [] };
     if (endpoint.endsWith("/users")) return { users: [] };
     if (endpoint.endsWith("/roles")) return { roles: [] };
-    if (endpoint.endsWith("/requests")) return { airlockRequests: [] };
-    if (endpoint.endsWith("/requests/request")) return { airlockRequest: request, allowedUserActions: [] };
+    if (endpoint.endsWith("/requests")) {
+      return { airlockRequests: listedRequests.map((r) => ({ airlockRequest: r, allowedUserActions: [] })) };
+    }
+    const selectedRequest = [request, ...listedRequests].find(
+      (r) => endpoint === `workspaces/${r.workspaceId}/requests/${r.id}`,
+    );
+    if (selectedRequest) return { airlockRequest: selectedRequest, allowedUserActions: [] };
     throw new Error("Unexpected API path: " + endpoint);
   });
 });
@@ -202,5 +210,49 @@ describe("application navigation with the real router", () => {
     open(path);
     await screen.findByRole("heading", { name: "User resource desktop" });
     expect(screen.getByTestId("location").textContent).toBe(path);
+  });
+});
+
+describe("navigation from an active workspace child route", () => {
+  it.each([
+    ["/workspaces/workspace/requests/request", "Existing request", "New request", "/workspaces/workspace/requests/new"],
+    ["/workspaces/workspace/requests/new", "New airlock request", "New request", "/workspaces/workspace/requests/new"],
+    ["/workspaces/workspace/users/new", "Assign users to a role", "Assign New", "/workspaces/workspace/users/new"],
+  ])("keeps the parent action scoped to its workspace from %s", async (path, heading, action, expected) => {
+    open(path);
+    await screen.findByRole("dialog", { name: heading });
+    // The modal blocks this parent control in the browser. Dispatch directly to
+    // test its navigation callback with the child route still active.
+    fireEvent.click(screen.getByText(action).closest("button")!);
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe(expected));
+  });
+
+  it("opens a sibling Airlock request from an active request route", async () => {
+    listedRequests = [request, { ...request, id: "other", title: "Other request" }];
+    open("/workspaces/workspace/requests/request");
+    await screen.findByRole("dialog", { name: "Existing request" });
+    // Invoke the real row callback behind the modal to check sibling resolution.
+    fireEvent.doubleClick(await screen.findByText("Other request"));
+    await waitFor(() =>
+      expect(screen.getByTestId("location").textContent).toBe("/workspaces/workspace/requests/other"),
+    );
+    await screen.findByRole("dialog", { name: "Other request" });
+  });
+
+  it.each([
+    ["/workspaces/workspace/requests/request", "Existing request", "New request", "/workspaces/workspace/requests/new"],
+    ["/workspaces/workspace/requests/new", "New airlock request", "New request", "/workspaces/workspace/requests/new"],
+    ["/workspaces/workspace/users/new", "Assign users to a role", "Assign New", "/workspaces/workspace/users/new"],
+  ])("can dismiss a child and open the next panel from %s", async (path, heading, action, expected) => {
+    open(path);
+    await screen.findByRole("dialog", { name: heading });
+    fireEvent.click(
+      screen
+        .getAllByRole("button", { name: "Close" })
+        .find((button) => button.classList.contains("ms-Panel-closeButton"))!,
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: heading })).not.toBeInTheDocument());
+    fireEvent.click(await screen.findByRole("button", { name: action }));
+    await waitFor(() => expect(screen.getByTestId("location").textContent).toBe(expected));
   });
 });
