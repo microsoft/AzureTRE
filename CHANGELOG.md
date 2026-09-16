@@ -9,6 +9,7 @@ ENHANCEMENTS:
 * Update JSON Schema version to Draft 2020-12 ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 
 BUG FIXES:
+* Pin the API Starlette dependency to 1.6.0 and align the end-to-end test dependency. (`API` 0.26.10) ([#5043](https://github.com/microsoft/AzureTRE/pull/5043))
 * Keep Airlock and user-assignment navigation within the workspace when a child panel is already open. ([#5082](https://github.com/microsoft/AzureTRE/pull/5082))
 * Update React Router to 7.18.4 to address routing security advisories and add navigation regression tests. ([#5081](https://github.com/microsoft/AzureTRE/pull/5081))
 * Patch `fast-uri` to 3.1.6 in the UI form validator and add URI and resource-form regression tests. ([#5080](https://github.com/microsoft/AzureTRE/pull/5080))
