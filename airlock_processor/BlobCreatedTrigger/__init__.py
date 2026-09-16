@@ -28,9 +28,9 @@ def main(msg: func.ServiceBusMessage,
     json_body = json.loads(body)
     topic = json_body["topic"]
     # Parse through the shared helper so a malformed topic/subject raises a clear ValueError.
-    _, request_id, _ = get_blob_info_from_topic_and_subject(topic=topic, subject=json_body["subject"])
+    storage_account_name, request_id, _ = get_blob_info_from_topic_and_subject(topic=topic, subject=json_body["subject"])
 
-    if constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE in topic or constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL in topic:
+    if storage_account_name.startswith(constants.STORAGE_ACCOUNT_NAME_AIRLOCK_CORE):
         _handle_v2_blob_created(json_body, topic, request_id, stepResultEvent, dataDeletionEvent)
         return
 
