@@ -247,7 +247,7 @@ export const WorkspaceUsers: React.FunctionComponent = () => {
                   iconProps={{ iconName: "add" }}
                   text="Assign New"
                   style={{ background: "none", color: theme.palette.themePrimary }}
-                  onClick={() => navigate("new")}
+                  onClick={() => navigate(`/workspaces/${workspace.id}/users/new`)}
                 />
                 {selectedUserRole && (
                   <CommandBarButton

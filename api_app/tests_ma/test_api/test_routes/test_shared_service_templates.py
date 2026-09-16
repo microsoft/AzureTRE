@@ -37,7 +37,8 @@ def shared_service_template():
 
 class TestSharedServiceTemplates:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
+    @classmethod
+    def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
         yield
