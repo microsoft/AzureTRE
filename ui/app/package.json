@@ -1,6 +1,6 @@
 {
   "name": "tre-ui",
-  "version": "0.8.34",
+  "version": "0.8.35",
   "private": true,
   "type": "module",
   "dependencies": {
