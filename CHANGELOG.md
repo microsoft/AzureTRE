@@ -8,7 +8,7 @@ ENHANCEMENTS:
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
-* Patch `fast-uri` to 3.1.6 in the UI form validator and add URI and resource-form regression tests.
+* Patch `fast-uri` to 3.1.6 in the UI form validator and add URI and resource-form regression tests. ([#5080](https://github.com/microsoft/AzureTRE/pull/5080))
 * Patch `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@humanfs/node` and `brace-expansion` in the UI build and lint dependencies. ([#5079](https://github.com/microsoft/AzureTRE/pull/5079))
 * Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths. ([#5078](https://github.com/microsoft/AzureTRE/pull/5078))
 * Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
