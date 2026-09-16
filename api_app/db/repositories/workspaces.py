@@ -146,9 +146,10 @@ class WorkspaceRepository(ResourceRepository):
         if "airlock_version" in template.properties:
             template_default = template.properties["airlock_version"].default
             default_airlock_version = template_default if template_default is not None else constants.DEFAULT_AIRLOCK_VERSION
+            airlock_version = workspace_input.properties.get("airlock_version", default_airlock_version)
         else:
-            default_airlock_version = 1
-        airlock_version_param = {"airlock_version": workspace_input.properties.get("airlock_version", default_airlock_version)}
+            airlock_version = 1
+        airlock_version_param = {"airlock_version": airlock_version}
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
