@@ -252,7 +252,8 @@ def disabled_user_resource():
 
 class TestWorkspaceRoutesThatDontRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_admin_user(self, app, non_admin_user):
+    @classmethod
+    def log_in_with_non_admin_user(cls, app, non_admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
         yield
         app.dependency_overrides = {}
@@ -353,7 +354,8 @@ class TestWorkspaceRoutesThatDontRequireAdminRights:
 
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
+    @classmethod
+    def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = admin_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = admin_user
         app.dependency_overrides[require_workspace_owner_or_researcher] = admin_user
@@ -738,7 +740,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
 class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_owner_user(self, app, owner_user):
+    @classmethod
+    def log_in_with_owner_user(cls, app, owner_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[require_workspace_owner] = owner_user
         app.dependency_overrides[require_workspace_owner_or_tre_admin] = owner_user
@@ -1388,7 +1391,8 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
 
 class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_researcher_user(self, app, researcher_user):
+    @classmethod
+    def log_in_with_researcher_user(cls, app, researcher_user):
         # The following ws services requires the WS app registration
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager_or_tre_admin] = researcher_user
