@@ -333,7 +333,7 @@ export const Airlock: React.FunctionComponent = () => {
               iconProps={{ iconName: "add" }}
               text="New request"
               style={{ background: "none", color: theme.palette.themePrimary }}
-              onClick={() => navigate("new")}
+              onClick={() => navigate(`/workspaces/${workspaceCtx.workspace.id}/requests/new`)}
             />
           </Stack>
         </Stack.Item>
@@ -349,7 +349,7 @@ export const Airlock: React.FunctionComponent = () => {
           columns={requestColumns}
           selectionMode={SelectionMode.none}
           getKey={(item) => item?.id}
-          onItemInvoked={(item) => navigate(item.id)}
+          onItemInvoked={(item) => navigate(`/workspaces/${workspaceCtx.workspace.id}/requests/${item.id}`)}
           className="tre-table"
           enableShimmer={loadingState === LoadingState.Loading}
         />

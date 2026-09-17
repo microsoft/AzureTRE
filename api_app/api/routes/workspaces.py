@@ -38,6 +38,7 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
+from models.domain.operation import Status
 from services.logging import logger
 
 workspaces_core_router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
@@ -136,8 +137,9 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
     try:
         await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
+        current_airlock_version = workspace.properties.get("airlock_version", 1)
         effective_airlock_version = (resource_patch.properties or {}).get(
-            "airlock_version", workspace.properties.get("airlock_version", 1))
+            "airlock_version", current_airlock_version)
         if effective_airlock_version == 2:
             target_version = resource_patch.templateVersion or workspace.templateVersion
             target_template = await resource_template_repo.get_template_by_name_and_version(
@@ -147,6 +149,13 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
                     f"Cannot change airlock_version to 2 until workspace template "
                     f"{workspace.templateName} version {target_version} supports Airlock v2."
                 )
+        if current_airlock_version == 1 and effective_airlock_version == 2:
+            # Persist the pending upgrade before changing routing. Draft-request creation reloads
+            # this document and refuses requests until deployment reports a terminal status.
+            workspace = await workspace_repo.mark_airlock_version_upgrade_pending(workspace, etag)
+            etag = workspace.etag
+            # Catch a request that was started before the pending marker was written.
+            await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
         ensure_workspace_airlock_version_supported({**workspace.properties, **(resource_patch.properties or {})}, default_version=1)
         is_disablement = resource_patch.isEnabled is not None and not resource_patch.isEnabled
         if is_disablement:

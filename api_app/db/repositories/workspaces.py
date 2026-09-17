@@ -87,6 +87,12 @@ class WorkspaceRepository(ResourceRepository):
                     raise
         return migrated
 
+    async def mark_airlock_version_upgrade_pending(self, workspace: Workspace, etag: str) -> Workspace:
+        """Make an Airlock storage-version switch visible before changing its routing."""
+        workspace.deploymentStatus = Status.AwaitingUpdate
+        updated_workspace = await self.update_item_with_etag(workspace, etag)
+        return TypeAdapter(Workspace).validate_python(updated_workspace)
+
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
 

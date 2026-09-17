@@ -67,7 +67,7 @@ async def test_get_active_workspaces_queries_db(workspace_repo):
 
 
 @pytest.mark.asyncio
-async def test_legacy_airlock_migration_adds_only_the_missing_version(workspace_repo):
+async def test_legacy_airlock_migration_adds_only_the_missing_version(workspace_repo, workspace):
     workspace_repo.query = AsyncMock(return_value=[{"id": workspace.id, "properties": {}}])
     workspace_repo.add_item_property_if_undefined = AsyncMock()
 
