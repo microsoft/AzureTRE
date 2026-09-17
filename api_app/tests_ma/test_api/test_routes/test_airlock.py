@@ -13,7 +13,7 @@ from models.domain.user_resource import UserResource
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace_service import WorkspaceService
 from models.domain.workspace import Workspace
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
 from resources import strings
 from auth.rbac import require_workspace_owner_or_researcher, require_workspace_owner_or_researcher_or_airlock_manager, require_airlock_manager
 pytestmark = pytest.mark.asyncio
@@ -78,14 +78,15 @@ def sample_airlock_user_resource_object():
     )
 
 
-def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {}) -> Workspace:
+def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {}, deployment_status: Status = Status.Deployed) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
         properties=workspace_properties,
-        resourcePath=f'/workspaces/{workspace_id}'
+        resourcePath=f'/workspaces/{workspace_id}',
+        deploymentStatus=deployment_status,
     )
     return workspace
 
@@ -154,6 +155,13 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(deployment_status=Status.AwaitingUpdate))
+    async def test_post_airlock_request_during_airlock_version_upgrade_returns_409(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert "being upgraded" in response.text
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", side_effect=ValueError)
