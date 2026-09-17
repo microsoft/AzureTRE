@@ -10,6 +10,7 @@ from db.repositories.workspace_services import WorkspaceServiceRepository
 from db.repositories.operations import OperationRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.airlock_requests import AirlockRequestRepository
+from db.repositories.workspaces import WorkspaceRepository
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
@@ -26,7 +27,9 @@ from .resource_helpers import construct_location_header
 
 from services.airlock import create_review_vm, review_airlock_request, get_airlock_container_link, get_allowed_actions, save_and_publish_event_airlock_request, update_and_publish_event_airlock_request, \
     enrich_requests_with_allowed_actions, get_airlock_requests_by_user_and_workspace, cancel_request, revoke_request
+from services.legacy_airlock_guard import ensure_workspace_airlock_version_supported
 from services.logging import logger
+from models.domain.operation import Status
 
 airlock_workspace_router = APIRouter(dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 
@@ -37,11 +40,21 @@ airlock_workspace_router = APIRouter(dependencies=[Depends(require_workspace_own
                                dependencies=[Depends(require_workspace_owner_or_researcher), Depends(get_workspace_by_id_from_path)])
 async def create_draft_request(airlock_request_input: AirlockRequestInCreate, user=Depends(require_workspace_owner_or_researcher),
                                airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
+                               workspace_repo=Depends(get_repository(WorkspaceRepository)),
                                workspace=Depends(get_deployed_workspace_by_id_from_path)) -> AirlockRequestWithAllowedUserActions:
+    # Reload after dependencies have run so a version upgrade that started concurrently is seen.
+    workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+    if workspace.deploymentStatus not in (Status.Deployed, Status.Updated):
+        raise HTTPException(
+            status_code=status_code.HTTP_409_CONFLICT,
+            detail="Cannot create an Airlock request while the workspace is being upgraded.")
     if workspace.properties.get("enable_airlock") is False:
         raise HTTPException(status_code=status_code.HTTP_405_METHOD_NOT_ALLOWED, detail=strings.AIRLOCK_NOT_ENABLED_IN_WORKSPACE)
     try:
-        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user)
+        # Missing versions identify unmigrated v1 workspaces.
+        airlock_version = workspace.properties.get("airlock_version", 1)
+        ensure_workspace_airlock_version_supported(workspace.properties, default_version=1)
+        airlock_request = airlock_request_repo.create_airlock_request_item(airlock_request_input, workspace.id, user, airlock_version=airlock_version)
         await save_and_publish_event_airlock_request(airlock_request, airlock_request_repo, user, workspace)
         allowed_actions = get_allowed_actions(airlock_request, user, airlock_request_repo)
         return AirlockRequestWithAllowedUserActions(airlockRequest=airlock_request, allowedUserActions=allowed_actions)

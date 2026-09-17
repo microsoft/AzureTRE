@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from auth.rbac import require_tre_admin
 from resources import strings
-from models.schemas.migrations import MigrationOutList
+from models.schemas.migrations import Migration, MigrationOutList
+from db.repositories.workspaces import WorkspaceRepository
 from services.logging import logger
 
 migrations_core_router = APIRouter(dependencies=[Depends(require_tre_admin)])
@@ -16,12 +17,12 @@ async def migrate_database():
     try:
         migrations = list()
 
-        # ADD MIGRATIONS HERE
-        # Examples of migrations can be found in this file:
-        # https://github.com/microsoft/AzureTRE/blob/v0.22.0/api_app/api/routes/migrations.py#L32-L84
-        # and this folder:
-        # https://github.com/microsoft/AzureTRE/tree/v0.22.0/api_app/db/migrations
-        logger.info("No migrations exist.")
+        # Preserve legacy storage routing for pre-v2 workspaces, which the bundle would otherwise
+        # redeploy as v2 and destroy their legacy storage.
+        workspace_repo = await WorkspaceRepository.create()
+        migrated_ids = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
+        logger.info(f"Set default airlock_version=1 on {len(migrated_ids)} legacy workspace(s).")
+        migrations.append(Migration(issueNumber="5048", status=f"Set airlock_version=1 on {len(migrated_ids)} legacy workspace(s)"))
 
         return MigrationOutList(migrations=migrations)
     except Exception as e:
