@@ -166,6 +166,17 @@ class WorkspaceRepository(ResourceRepository):
             airlock_version = 1
         airlock_version_param = {"airlock_version": airlock_version}
 
+        # JSON Schema defaults validate input but are not materialised by the API. Persist the
+        # Airlock default so review-workspace templates that default it to false do not later get
+        # interpreted as having Airlock enabled.
+        enable_airlock_default = template.properties.get("enable_airlock")
+        enable_airlock_param = {}
+        if enable_airlock_default and enable_airlock_default.default is not None:
+            enable_airlock_param = {
+                "enable_airlock": workspace_input.properties.get(
+                    "enable_airlock", enable_airlock_default.default)
+            }
+
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
@@ -174,6 +185,7 @@ class WorkspaceRepository(ResourceRepository):
                                     **auto_app_registration_param,
                                     **workspace_owner_param,
                                     **airlock_version_param,
+                                    **enable_airlock_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 

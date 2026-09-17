@@ -6,7 +6,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 * Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Existing workspaces upgrade in place and stay on `airlock_version=1` (a minor, non-destructive `tre-workspace-base`
-  upgrade to `2.11.0`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
+  upgrade to `2.11.1`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
 See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
@@ -15,7 +15,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Discover the export-review VM's storage NSG destination from workspace private endpoints so install, upgrade, and uninstall support both legacy per-stage and v2 consolidated Airlock storage (`tre-service-guacamole-export-reviewvm` 2.0.5) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Use available Dsv7 VM sizes for Guacamole user-resource bundles to avoid Dsv6 VM start timeouts (`tre-service-guacamole-import-reviewvm`/`tre-service-guacamole-export-reviewvm` 2.0.3, `tre-service-guacamole-linuxvm` 1.4.6, `tre-service-guacamole-windowsvm` 3.0.3) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Use available Dsv7 VM sizes for Guacamole user-resource bundles to avoid Dsv6 VM start timeouts (`tre-service-guacamole-import-reviewvm` 2.0.3, `tre-service-guacamole-export-reviewvm` 2.0.5, `tre-service-guacamole-linuxvm` 1.4.6, `tre-service-guacamole-windowsvm` 3.0.3) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Use the current environment configuration mappings for v2 Airlock workspaces so signer and private-link deployment supports all configured sovereign clouds (`tre-workspace-base` 2.11.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Prevent disabling Airlock on v2 workspaces because removing the per-workspace signer would make retained shared request containers impossible to clean up safely, and reject an explicit null `airlock_version` patch before it can silently select the bundle default ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Mark Airlock import-review workspaces as not exposing their own Airlock, allowing them to be created when legacy Airlock is disabled (`tre-workspace-airlock-import-review` 0.17.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))

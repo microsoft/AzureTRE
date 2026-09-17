@@ -1,4 +1,5 @@
 import asyncio
+import copy
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Path, status, Response
 from pydantic import UUID4
@@ -135,6 +136,7 @@ async def create_workspace(workspace_create: WorkspaceInCreate, response: Respon
 
 @workspaces_core_router.patch("/workspaces/{workspace_id}", status_code=status.HTTP_202_ACCEPTED, response_model=OperationInResponse, name=strings.API_UPDATE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
 async def patch_workspace(resource_patch: ResourcePatch, response: Response, user=Depends(require_tre_admin), workspace=Depends(get_workspace_by_id_from_path), workspace_repo: WorkspaceRepository = Depends(get_repository(WorkspaceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository)), operations_repo=Depends(get_repository(OperationRepository)), resource_history_repo=Depends(get_repository(ResourceHistoryRepository)), airlock_request_repo=Depends(get_repository(AirlockRequestRepository)), etag: str = Header(...), force_version_update: bool = False) -> OperationInResponse:
+    pending_upgrade_workspace = None
     try:
         await ensure_airlock_version_change_allowed(workspace, resource_patch, airlock_request_repo)
         current_airlock_version = workspace.properties.get("airlock_version", 1)
@@ -150,6 +152,17 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
                     f"{workspace.templateName} version {target_version} supports Airlock v2."
                 )
         if current_airlock_version == 1 and effective_airlock_version == 2:
+            # Validate before writing a pending state, so bad patches cannot strand a workspace.
+            current_template = await resource_template_repo.get_template_by_name_and_version(
+                workspace.templateName, workspace.templateVersion, ResourceType.Workspace)
+            if resource_patch.templateVersion is not None:
+                await workspace_repo.validate_template_version_patch(
+                    workspace, resource_patch, resource_template_repo, current_template, force_version_update)
+            if resource_patch.properties:
+                workspace_repo.validate_patch(
+                    resource_patch, resource_template_repo, current_template, strings.RESOURCE_ACTION_UPDATE)
+
+            pending_upgrade_workspace = copy.deepcopy(workspace)
             # Persist the pending upgrade before changing routing. Draft-request creation reloads
             # this document and refuses requests until deployment reports a terminal status.
             workspace = await workspace_repo.mark_airlock_version_upgrade_pending(workspace, etag)
@@ -174,14 +187,25 @@ async def patch_workspace(resource_patch: ResourcePatch, response: Response, use
 
         response.headers["Location"] = construct_location_header(operation)
         return OperationInResponse(operation=operation)
-    except CosmosAccessConditionFailedError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
-    except ValidationError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
-    except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
-    except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as error:
+        if pending_upgrade_workspace is not None:
+            try:
+                # Revert the marker and routing only when no deployment worker has advanced it.
+                current_workspace = await workspace_repo.get_workspace_by_id(workspace.id)
+                if current_workspace.deploymentStatus == Status.AwaitingUpdate:
+                    current_workspace.deploymentStatus = pending_upgrade_workspace.deploymentStatus
+                    current_workspace.properties["airlock_version"] = pending_upgrade_workspace.properties.get("airlock_version", 1)
+                    current_workspace.templateVersion = pending_upgrade_workspace.templateVersion
+                    await workspace_repo.update_item_with_etag(current_workspace, current_workspace.etag)
+            except Exception:
+                logger.exception("Failed to compensate a pending Airlock version upgrade for workspace %s", workspace.id)
+        if isinstance(error, CosmosAccessConditionFailedError):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
+        if isinstance(error, ValidationError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.message)
+        if isinstance(error, (ValueError, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+        raise
 
 
 @workspaces_core_router.delete("/workspaces/{workspace_id}", response_model=OperationInResponse, name=strings.API_DELETE_WORKSPACE, dependencies=[Depends(require_tre_admin)])
