@@ -13,7 +13,7 @@ None.
 
 ENHANCEMENTS:
 * Add `skip_deployment` to the `/test` and `/test-extended` PR bot commands to run tests against an existing validation environment. ([#4947](https://github.com/microsoft/AzureTRE/pull/4947))
-* Expand Dependabot coverage to Dockerfiles throughout the repository, including Porter `Dockerfile.tmpl` files. ([#5047](https://github.com/microsoft/AzureTRE/pull/5047))
+* Expand Dependabot Docker scanning from the repository root to subdirectories. ([#5047](https://github.com/microsoft/AzureTRE/pull/5047))
 * Enable Dependabot security updates for npm dependencies in `.github/scripts`. ([#5046](https://github.com/microsoft/AzureTRE/pull/5046))
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 
