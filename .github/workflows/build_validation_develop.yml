@@ -97,6 +97,9 @@ jobs:
           steps.filter.outputs.core_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
 
+      - name: Test CI environment cleanup
+        run: python3 -m unittest discover -s devops/tests -v
+
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
         # Moved this after the Terraform checks above due something similar to this issue:
