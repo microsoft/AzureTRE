@@ -89,3 +89,31 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
     workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)
+
+
+@pytest.mark.workspace_services
+@pytest.mark.timeout(75 * 60)
+async def test_ai_foundry_model_service_lifecycle(verify, setup_test_foundry_workspace) -> None:
+    workspace_path, workspace_id = setup_test_foundry_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+    workspace_service_path, _ = await post_resource(
+        {
+            "templateName": strings.AI_FOUNDRY_SERVICE,
+            "properties": {
+                "display_name": "Private Foundry model test",
+                "description": "Model-only service lifecycle",
+                "openai_model_capacity": 1
+            }
+        },
+        f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
+        workspace_owner_token,
+        verify
+    )
+    try:
+        service = await get_resource(f"/api{workspace_service_path}", workspace_owner_token, verify)
+        properties = service["workspaceService"]["properties"]
+        assert properties["ai_foundry_id"].startswith("/subscriptions/")
+        assert properties["openai_model"] == "gpt-5.1 | 2025-11-13"
+        assert properties["openai_model_capacity"] == 1
+    finally:
+        await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)

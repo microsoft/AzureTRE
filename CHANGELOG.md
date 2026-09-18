@@ -6,6 +6,7 @@ ENHANCEMENTS:
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 * Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
+* Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. (`core` 0.16.19, `tre-workspace-base` 2.10.2, `tre-workspace-service-ai-foundry` 0.4.2) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
 * Pin the API Starlette dependency to 1.6.0 and align the end-to-end test dependency. (`API` 0.26.10) ([#5043](https://github.com/microsoft/AzureTRE/pull/5043))

@@ -52,6 +52,26 @@ resource "azurerm_private_dns_zone_virtual_network_link" "cognitivesearch" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# The environment configuration module does not list this Foundry DNS zone.
+resource "azurerm_private_dns_zone" "ai_services" {
+  name                = "privatelink.services.ai.azure.com"
+  resource_group_name = azurerm_resource_group.core.name
+  tags                = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "ai_services" {
+  resource_group_name   = azurerm_resource_group.core.name
+  virtual_network_id    = module.network.core_vnet_id
+  private_dns_zone_name = azurerm_private_dns_zone.ai_services.name
+  name                  = azurerm_private_dns_zone.ai_services.name
+  registration_enabled  = false
+  tags                  = local.tre_core_tags
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 # Once the deployment of the app gateway is complete, we can proceed to include the required DNS zone for Nexus, which is dependent on the FQDN of the app gateway.
 resource "azurerm_private_dns_zone" "nexus" {
   name                = "nexus-${module.appgateway.app_gateway_fqdn}"

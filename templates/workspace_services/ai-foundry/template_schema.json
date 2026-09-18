@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/ai-foundry/template_schema.json",
+  "type": "object",
+  "title": "Azure AI Foundry workspace service",
+  "description": "Use an approved model with configurable network access and authentication. The parent workspace must use Automatic authentication with Entra groups enabled.",
+  "required": [],
+  "properties": {
+    "display_name": {
+      "type": "string",
+      "title": "Name for the workspace service",
+      "description": "Enter the workspace service name displayed to users.",
+      "default": "Azure AI Foundry",
+      "updateable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description of the workspace service",
+      "description": "Enter a short workspace service description.",
+      "default": "Use an approved AI model from the workspace network.",
+      "updateable": true
+    },
+    "overview": {
+      "type": "string",
+      "title": "Workspace service overview",
+      "description": "Enter a detailed workspace service overview in Markdown.",
+      "default": "Use the approved model through the OpenAI chat completions API. Private network access and Microsoft Entra ID authentication are the defaults. You can enable public network access and API key authentication independently. The service outputs provide the endpoint, deployment name and Key Vault secret URI when keys are enabled. Owners and researchers receive Cognitive Services OpenAI User at this account only. This built-in role permits more than chat completions, including Assistants and Responses operations. API keys bypass per-user Entra role checks.\n\nCreate the parent workspace with `auth_type=Automatic` and `create_aad_groups=true`. Workspace owners manage the service through TRE. When keys are enabled, owners and researchers can read this service's key from the workspace Key Vault. The Foundry browser playground, agents, tools, knowledge search, external URL fetches and file uploads remain outside the supported scope. That support limit is not an RBAC denial guarantee. The playground requires shared Azure management endpoints that the workspace firewall cannot restrict to this account.\n\nSee the [service documentation](https://microsoft.github.io/AzureTRE/latest/tre-templates/workspace-services/ai-foundry/).",
+      "updateable": true
+    },
+    "is_exposed_externally": {
+      "type": "boolean",
+      "title": "Expose externally",
+      "description": "Allow access from outside the workspace network. Authentication is still required. The private endpoint remains available.",
+      "default": false,
+      "updateable": true
+    },
+    "local_auth_enabled": {
+      "type": "boolean",
+      "title": "Enable API key authentication",
+      "description": "Allow API keys alongside Microsoft Entra ID. Owners and researchers can retrieve the key from Key Vault. Keys bypass per-user Entra role checks.",
+      "default": false,
+      "updateable": true
+    },
+    "openai_model": {
+      "type": "string",
+      "title": "OpenAI model",
+      "description": "Select an approved OpenAI model. The service uses the Standard pricing tier. Azure TRE checks that the selected region offers this model and tier.",
+      "enum": [
+        "gpt-5.1 | 2025-11-13"
+      ],
+      "default": "gpt-5.1 | 2025-11-13",
+      "updateable": true
+    },
+    "openai_model_capacity": {
+      "type": "integer",
+      "title": "Model capacity",
+      "description": "A token is a small unit of text that a model processes. Set the model capacity in thousands of tokens per minute.",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 100,
+      "updateable": true
+    },
+    "workspace_owners_group_id": {
+      "type": "string",
+      "title": "Workspace owners group ID",
+      "description": "Azure TRE copies the Microsoft Entra ID object ID for this group from the parent workspace. Azure TRE replaces any value entered here during installation."
+    },
+    "workspace_researchers_group_id": {
+      "type": "string",
+      "title": "Workspace researchers group ID",
+      "description": "Azure TRE copies the Microsoft Entra ID object ID for this group from the parent workspace. Azure TRE replaces any value entered here during installation."
+    }
+  },
+  "uiSchema": {
+    "workspace_owners_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "workspace_researchers_group_id": {
+      "classNames": "tre-hidden"
+    },
+    "openai_model": {
+      "ui:widget": "radio"
+    },
+    "openai_model_capacity": {
+      "ui:widget": "updown"
+    }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_owners_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_owners_group_id }}"
+          },
+          {
+            "name": "workspace_researchers_group_id",
+            "type": "string",
+            "value": "{{ resource.parent.properties.workspace_researchers_group_id }}"
+          }
+        ]
+      },
+      {
+        "stepId": "aif-firewall-rules",
+        "stepTitle": "Add Foundry authentication firewall rule",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Authentication",
+                  "description": "Allow Microsoft Entra token requests",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "login.microsoftonline.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main"
+      },
+      {
+        "stepId": "aif-firewall-rules-upgrade",
+        "stepTitle": "Update Foundry authentication firewall rule",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "replace",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry",
+              "action": "Allow",
+              "rules": [
+                {
+                  "name": "AIFoundry_Authentication",
+                  "description": "Allow Microsoft Entra token requests",
+                  "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
+                  "target_fqdns": [
+                    "login.microsoftonline.com"
+                  ],
+                  "protocols": [
+                    {
+                      "port": "443",
+                      "type": "Https"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "uninstall": [
+      {
+        "stepId": "aif-firewall-rules-remove",
+        "stepTitle": "Remove Foundry authentication firewall rule",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}_aifoundry"
+            }
+          }
+        ]
+      },
+      {
+        "stepId": "main"
+      }
+    ]
+  }
+}

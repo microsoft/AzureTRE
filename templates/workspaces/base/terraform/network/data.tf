@@ -148,6 +148,12 @@ data "azurerm_private_dns_zone" "cognitiveservices" {
   resource_group_name = local.core_resource_group_name
 }
 
+data "azurerm_private_dns_zone" "ai_services" {
+  provider            = azurerm.core
+  name                = "privatelink.services.ai.azure.com"
+  resource_group_name = local.core_resource_group_name
+}
+
 data "azurerm_public_ip" "app_gateway_ip" {
   provider            = azurerm.core
   name                = "pip-agw-${var.tre_id}"

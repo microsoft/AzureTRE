@@ -21,6 +21,7 @@ MYSQL_SERVICE = "tre-workspace-service-mysql"
 HEALTH_SERVICE = "tre-workspace-service-health"
 AZURESQL_SERVICE = "tre-workspace-service-azuresql"
 OPENAI_SERVICE = "tre-workspace-service-openai"
+AI_FOUNDRY_SERVICE = "tre-workspace-service-ai-foundry"
 
 FIREWALL_SHARED_SERVICE = "tre-shared-service-firewall"
 GITEA_SHARED_SERVICE = "tre-shared-service-gitea"

@@ -13,7 +13,8 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 workspace_service_templates = [
     (strings.AZUREML_SERVICE),
     (strings.GUACAMOLE_SERVICE),
-    (strings.GITEA_SERVICE)
+    (strings.GITEA_SERVICE),
+    (strings.AI_FOUNDRY_SERVICE)
 ]
 
 

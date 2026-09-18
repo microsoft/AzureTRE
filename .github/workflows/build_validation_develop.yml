@@ -49,6 +49,10 @@ jobs:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
 
+            foundry:
+              - 'templates/workspace_services/ai-foundry/**'
+              - '.github/workflows/build_validation_develop.yml'
+
             terraform_core:
               - core/**/terraform/**/*.tf
 
@@ -75,7 +79,7 @@ jobs:
           npm test -- --runInBand
 
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
-        if: ${{ steps.filter.outputs.terraform == 'true' }}
+        if: ${{ steps.filter.outputs.terraform == 'true' || steps.filter.outputs.foundry == 'true' }}
         with:
           terraform_version: "1.14.3"
 
@@ -91,6 +95,13 @@ jobs:
           find . -type d -name 'terraform' -not -path '*cnab*' -print0 \
           | xargs -0 -I{} sh -c 'echo "***** Validating: {} *****"; \
           terraform -chdir={} init -backend=false; terraform -chdir={} validate'
+
+      - name: Test Foundry security configuration
+        if: ${{ steps.filter.outputs.foundry == 'true' }}
+        working-directory: templates/workspace_services/ai-foundry/terraform
+        run: |
+          terraform init -backend=false -input=false
+          terraform test
 
       - name: "Stale version: core"
         if: ${{ steps.filter.outputs.core == 'true' &&
