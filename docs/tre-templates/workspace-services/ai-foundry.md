@@ -176,9 +176,44 @@ Create a fresh service for validation. Retain prototype data until its owner app
 
 ## Validation before approval
 
-Run `terraform test` in the service's `terraform` directory for mocked security configuration checks across all four access combinations.
-The end-to-end lifecycle test uses a separate Automatic-auth workspace with groups enabled.
-That deployment test does not establish human model access or researcher denial behaviour.
+### Automated checks
+
+| Check | When it runs | Coverage |
+| --- | --- | --- |
+| Template and CI integration tests | PR Build Validation when Foundry, E2E or related CI files change | Boolean schema validation, private/Entra defaults, Porter settings and secret-reference outputs, bundle registration and pytest selection. |
+| Terraform mock tests | The same PR validation | All four access combinations, setting transitions, private endpoints, built-in role selection and scope, and conditional secret creation. |
+| Template smoke tests | Deployment smoke suite | Registered Foundry template and its access-setting defaults. No model deployment. |
+| Service lifecycle test | `extended_aad`, including the main-push and nightly suites | Install, repeatable upgrade and removal in a separate Automatic-auth workspace with groups enabled. Private access and Entra authentication remain enabled throughout. |
+
+Run the template and CI integration checks locally with Python 3.12:
+
+```bash
+python -m pip install -r .github/tests/foundry-requirements.txt
+python -m unittest discover -s .github/tests -p 'test_foundry_*.py' -v
+```
+
+Run the Terraform checks from `templates/workspace_services/ai-foundry/terraform`:
+
+```bash
+terraform init -backend=false -input=false
+terraform test
+```
+
+The lifecycle test deploys a model at capacity 1. It requires the region, quota and deployment permissions listed above.
+For a focused deployed test run, use `make test-e2e-custom SELECTOR=foundry` in the configured development environment.
+This selects the Foundry template checks and lifecycle test.
+
+Before the bundle-matrix changes reach `main`, PR comment commands cannot build and register Foundry in a fresh validation environment.
+They use workflow definitions from `main`, even when testing PR code.
+A maintainer must run `deploy_tre_branch.yml` from a reviewed branch in the main repository with `e2eTestsCustomSelector=foundry`.
+See [PR bot commands](../../tre-developers/github-pr-bot-commands.md) for the workflow and secret-access restrictions.
+After merge, `/test-extended-aad` also selects the lifecycle test.
+
+### Runtime access checks
+
+Mock tests and lifecycle output checks do not prove live model access, secret access or network enforcement.
+Role-selection assertions check the configured built-in role and assignment scope, not Microsoft's live permission definition.
+The automatic lifecycle test does not enable public access or API keys.
 
 Use separate attended identities to verify model use and denied model-management, network and role operations.
 With keys disabled, verify that API key requests and service-granted secret access are denied.

@@ -469,11 +469,12 @@ build-and-deploy-ui:
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
 	&& if [ "$${DEPLOY_UI}" != "false" ]; then ${MAKEFILE_DIR}/devops/scripts/build_deploy_ui.sh; else echo "UI Deploy skipped as DEPLOY_UI is false"; fi \
 
-# Description: Prepare for E2E tests by building and registering the necessary bundles such as base workspace, guacamole, gitea, guacamole-azure-windowsvm, guacamole-azure-linuxvm
+# Description: Prepare for E2E tests by building and registering the base workspace, guacamole, ai-foundry, gitea and desktop bundles
 # Example: make prepare-for-e2e
 prepare-for-e2e:
 	$(MAKE) workspace_bundle BUNDLE=base
 	$(MAKE) workspace_service_bundle BUNDLE=guacamole
+	$(MAKE) workspace_service_bundle BUNDLE=ai-foundry
 	$(MAKE) shared_service_bundle BUNDLE=gitea
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-windowsvm
 	$(MAKE) user_resource_bundle WORKSPACE_SERVICE=guacamole BUNDLE=guacamole-azure-linuxvm

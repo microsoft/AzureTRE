@@ -14,7 +14,7 @@ workspace_service_templates = [
     (strings.AZUREML_SERVICE),
     (strings.GUACAMOLE_SERVICE),
     (strings.GITEA_SERVICE),
-    (strings.AI_FOUNDRY_SERVICE)
+    pytest.param(strings.AI_FOUNDRY_SERVICE, marks=pytest.mark.foundry)
 ]
 
 
@@ -36,6 +36,19 @@ async def test_get_workspace_service_template(template_name, verify) -> None:
     async with get_template(template_name, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
         assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
         assert_status(response, [status.HTTP_200_OK], f"Failed to GET {template_name}")
+
+
+@pytest.mark.smoke
+@pytest.mark.foundry
+async def test_ai_foundry_template_access_settings(verify) -> None:
+    admin_token = await get_admin_token(verify)
+    async with get_template(strings.AI_FOUNDRY_SERVICE, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
+        assert_status(response, [status.HTTP_200_OK], "Failed to GET the Foundry template")
+        properties = response.json()["properties"]
+        for name in ("is_exposed_externally", "local_auth_enabled"):
+            assert properties[name]["type"] == "boolean"
+            assert properties[name]["default"] is False
+            assert properties[name]["updateable"] is True
 
 
 @pytest.mark.smoke
