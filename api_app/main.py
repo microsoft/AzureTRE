@@ -34,9 +34,20 @@ async def lifespan(app: FastAPI):
     airlockStatusUpdater = AirlockStatusUpdater()
     await airlockStatusUpdater.init_repos()
 
-    asyncio.create_task(deploymentStatusUpdater.receive_messages())
-    asyncio.create_task(airlockStatusUpdater.receive_messages())
-    yield
+    # Store consumer references on app.state so the /health endpoint can check their heartbeats
+    app.state.deployment_status_updater = deploymentStatusUpdater
+    app.state.airlock_status_updater = airlockStatusUpdater
+
+    supervisor_tasks = [
+        asyncio.create_task(deploymentStatusUpdater.supervisor_with_heartbeat_check()),
+        asyncio.create_task(airlockStatusUpdater.supervisor_with_heartbeat_check())
+    ]
+    try:
+        yield
+    finally:
+        for task in supervisor_tasks:
+            task.cancel()
+        await asyncio.gather(*supervisor_tasks, return_exceptions=True)
 
 
 def get_application() -> FastAPI:

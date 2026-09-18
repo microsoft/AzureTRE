@@ -21,11 +21,12 @@ from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+from service_bus.service_bus_consumer import ServiceBusConsumer
 
 
-class DeploymentStatusUpdater():
+class DeploymentStatusUpdater(ServiceBusConsumer):
     def __init__(self):
-        pass
+        super().__init__("deployment_status_updater")
 
     async def init_repos(self):
         self.operations_repo = await OperationRepository.create()
@@ -72,22 +73,25 @@ class DeploymentStatusUpdater():
                                                 else:
                                                     # could have been any kind of transient issue, we'll abandon back to the queue, and retry
                                                     await receiver.abandon_message(msg)
+                                                self.update_heartbeat()
                                         logger.info(f"Closing session: {receiver.session.session_id}")
+                                    self.update_heartbeat()
 
                                 except OperationTimeoutError:
                                     # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
                                     logger.debug("No sessions for this process. Will look again...")
+                                    self.update_heartbeat()
 
-                except ServiceBusConnectionError:
+                except ServiceBusConnectionError as e:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
-                    logger.info("Unknown Service Bus connection error. Will retry...")
+                    logger.warning(f"Service Bus connection error (will retry): {e}")
                     await asyncio.sleep(10)
 
                 except asyncio.CancelledError:
                     raise
 
                 except Exception as e:
-                    logger.exception(f"Unknown exception. Will retry - {e}")
+                    logger.exception(f"Unexpected error in message processing. Will retry - {type(e).__name__}: {e}")
                     await asyncio.sleep(10)
 
     async def process_message(self, msg):
