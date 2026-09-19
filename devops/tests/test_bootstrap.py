@@ -12,6 +12,25 @@ import unittest
 
 DEVOPS = Path(__file__).resolve().parents[1]
 
+# Azure CLI replaces storage error codes with these messages before printing them.
+CLI_PERMISSION_ERROR = '''ERROR:
+You do not have the required permissions needed to perform this operation.
+Depending on your operation, you may need to be assigned one of the following roles:
+    "Storage Blob Data Owner"
+    "Storage Blob Data Contributor"
+    "Storage Blob Data Reader"
+    "Storage Queue Data Contributor"
+    "Storage Queue Data Reader"
+    "Storage Table Data Contributor"
+    "Storage Table Data Reader"
+
+If you want to use the old authentication method and allow querying for the right account key, please use the "--auth-mode" parameter and "key" value.
+'''
+CLI_NETWORK_ERROR = '''ERROR:
+The request may be blocked by network rules of storage account. Please check network rule set using 'az storage account show -n accountname --query networkRuleSet'.
+If you want to change the default action to apply when no rule matches, please use 'az storage account update'.
+'''
+
 MOCK_COMMAND = r'''
 import json
 import os
@@ -211,6 +230,48 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(self.commands("terraform"), [])
         self.assertIn("Terraform has not been started", self.output)
 
+    def test_cli_permission_messages_retry_until_blob_access_is_ready(self):
+        result = self.run_bootstrap(blob_responses=[
+            {"code": 1, "output": CLI_PERMISSION_ERROR},
+            {"code": 1, "output": CLI_NETWORK_ERROR},
+            {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.blob_checks()), 3)
+        self.assertEqual(self.sleeps(), [10, 20])
+        self.assertIn(CLI_PERMISSION_ERROR, self.output)
+        self.assertIn(CLI_NETWORK_ERROR, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        init_index = self.calls.index(self.commands("terraform", "init")[0])
+        self.assertEqual(self.calls[:init_index].count(self.blob_checks()[0]), 3)
+
+    def test_cli_permission_message_retries_are_bounded(self):
+        result = self.run_bootstrap(blob_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.blob_checks()), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.output.count(CLI_PERMISSION_ERROR), 6)
+        self.assertIn("Terraform has not been started", self.output)
+
+    def test_cli_network_message_retries_are_bounded(self):
+        result = self.run_bootstrap(blob_responses=[{"code": 1, "output": CLI_NETWORK_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.blob_checks()), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.output.count(CLI_NETWORK_ERROR), 6)
+        self.assertIn("Terraform has not been started", self.output)
+
+    def test_cli_authentication_failure_is_not_retried(self):
+        error = "ERROR: Authentication failure. This may be caused by either invalid account key, connection string or sas token value provided for your storage account."
+        result = self.run_bootstrap(blob_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.blob_checks()), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertIn(error, self.output)
+
     def test_final_wait_is_followed_by_one_last_check(self):
         result = self.run_bootstrap(blob_responses=[
             *[{"code": 1, "output": "HTTP 403"}] * 5,
@@ -316,6 +377,18 @@ class BootstrapTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("terraform init failed (exit 2)", self.output)
         self.assertIn("Invalid backend configuration", self.output)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_imports()
+
+    def test_lock_error_takes_priority_over_cli_permission_message(self):
+        result = self.run_bootstrap(init_responses=[{
+            "code": 1,
+            "output": f"Failed to get existing workspaces: {CLI_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock",
+        }])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(CLI_PERMISSION_ERROR, self.output)
+        self.assertIn("Check the reported lock owner", self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
         self.assert_no_imports()
 

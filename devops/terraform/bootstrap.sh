@@ -25,7 +25,11 @@ retry_with_backoff() {
 }
 
 is_storage_permission_error() {
-  grep -Eq 'AuthorizationPermissionMismatch|AuthorizationFailure|(^|[^[:alnum:]])403([^[:alnum:]]|$)' <<< "$1"
+  # Azure CLI can replace storage error codes with these messages before printing them.
+  grep -Eq 'AuthorizationPermissionMismatch|AuthorizationFailure|(^|[^[:alnum:]])403([^[:alnum:]]|$)' <<< "$1" \
+    || grep -Fq \
+      -e 'You do not have the required permissions needed to perform this operation.' \
+      -e 'The request may be blocked by network rules of storage account.' <<< "$1"
 }
 
 check_blob_access() {
