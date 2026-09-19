@@ -19,6 +19,35 @@ function stopEnv ()
   TRE_ID=${tre_id} devops/scripts/control_tre.sh stop
 }
 
+# Check before any cleanup, including PR environments. Comment-triggered PR tests
+# report the default branch, so a branch filter would miss the environment in use.
+# Defer the entire sweep while another run is active, including queued runs.
+function skip_cleanup_if_workflows_active ()
+{
+  local status active_runs
+  for status in requested waiting pending queued in_progress; do
+    if ! active_runs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?status=${status}&per_page=100" |
+      jq --slurp --compact-output --exit-status --arg run_id "${GITHUB_RUN_ID}" '
+        if length == 0 then error("No workflow data returned")
+        elif any(.[]; type != "object") then error("Invalid workflow response page")
+        elif any(.[]; (.workflow_runs | type) != "array") then
+          error("Expected workflow_runs to be an array on every page")
+        else [.[].workflow_runs[] | select((.id | tostring) != $run_id)]
+        end'); then
+      echo "Could not check active workflow runs. Stopping cleanup." >&2
+      exit 1
+    fi
+
+    if [[ "${active_runs}" != "[]" ]]; then
+      echo "Skipping environment cleanup while other workflow runs are ${status}:"
+      echo "${active_runs}" | jq -r '.[].html_url'
+      exit 0
+    fi
+  done
+}
+
+skip_cleanup_if_workflows_active
+
 az config set extension.use_dynamic_install=yes_without_prompt
 
 echo "Refs:"
@@ -91,16 +120,12 @@ while read -r rg_name rg_ref_name; do
   fi
 done
 
-# check if any workflows run on the main branch (except the cleanup=current one)
-# to prevent us deleting a workspace for which an E2E (on main) is currently running
-if [[ -z $(gh api "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs?branch=main&status=in_progress" | jq --arg name "$GITHUB_WORKFLOW" '.workflow_runs | select(.[].name != $name)') ]]
-then
-  # if not, we can delete old workspace resource groups that were left due to errors.
-  az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
-  while read -r rg_name; do
-    echo "Deleting resource group: ${rg_name}"
-    az group delete --yes --no-wait --name "${rg_name}"
-  done
-else
-  echo "Workflows are running on the main branch, can't delete e2e workspaces."
-fi
+# Check again in case a workflow started during the environment cleanup.
+skip_cleanup_if_workflows_active
+
+# Delete workspace resource groups left behind by tests on main.
+az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
+while read -r rg_name; do
+  echo "Deleting resource group: ${rg_name}"
+  az group delete --yes --no-wait --name "${rg_name}"
+done
