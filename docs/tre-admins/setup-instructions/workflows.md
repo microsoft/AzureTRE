@@ -4,6 +4,16 @@ To deploy the Azure TRE using GitHub workflows, create a fork of the repository.
 
 Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.
 
+## Dockerfile build checks
+
+The `Dockerfile Build Check` workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.
+
+Pull requests to `main` or `feature/**` select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.
+
+These checks run without Azure deployment credentials and do not publish images. Each build uses a fresh GitHub-hosted runner without an imported build cache. The report lists every selected target and fails if any build fails or a result is missing or invalid. Result artifacts are retained for seven days.
+
+If a build fails, open its job log to identify the failed command. Package or base-image failures can occur without repository changes. The existing deployment validation remains necessary to test deployed services.
+
 ## Setup instructions
 
 Before you can run the `deploy_tre.yml` workflow there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.

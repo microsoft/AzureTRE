@@ -1,17 +1,12 @@
 ---
 name: Dockerfile Build Check
 
-# Builds every Dockerfile and every Porter bundle image in the repository as a
-# matrix, and reports the targets that fail. The weekly run finds breakage that
-# comes from outside the repository, for example a base image whose package
-# repositories moved or went away (see issue #5083). A pull request that
-# changes a Dockerfile, a porter.yaml or the dev container builds only the
-# targets it touches. The target list comes from
-# .github/scripts/dockerfile_build_matrix.sh.
+# Scheduled builds detect failures in external image and package dependencies.
+# Pull requests build selected targets, including shared Porter build inputs.
 
-on: # yamllint disable-line rule:truthy
+on:  # yamllint disable-line rule:truthy
   schedule:
-    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+    - cron: "0 6 * * 1"  # Every Monday at 06:00 UTC
   workflow_dispatch:
   pull_request:
     branches:
@@ -21,12 +16,13 @@ on: # yamllint disable-line rule:truthy
       - "**/Dockerfile"
       - "**/Dockerfile.tmpl"
       - "**/porter.yaml"
+      - "**/porter-build-context.env"
       - ".devcontainer/**"
-      - ".github/scripts/dockerfile_build_matrix.sh"
+      - "devops/scripts/porter_build_bundle.sh"
+      - ".github/scripts/dockerfile_build*"
       - ".github/workflows/build_all_dockerfiles.yml"
 
-# for each ref (branch/pr) run just the most recent, cancel
-# other pending/running ones
+# Cancel superseded PR runs. Keep manual and scheduled runs independent.
 concurrency:
   group: "${{ github.workflow }}-${{ github.head_ref || github.run_id }}"
   cancel-in-progress: true
@@ -40,30 +36,32 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read # For path filter
+      pull-requests: read  # For path filter
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           persist-credentials: false
 
       - name: Filter changes
         if: github.event_name == 'pull_request'
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
         id: filter
         with:
-          list-files: shell
+          list-files: json
           filters: |
             workflow:
-              - '.github/scripts/dockerfile_build_matrix.sh'
+              - '.github/scripts/dockerfile_build*'
               - '.github/workflows/build_all_dockerfiles.yml'
             build_inputs:
               - '**/Dockerfile'
               - '**/Dockerfile.tmpl'
               - '**/porter.yaml'
+              - '**/porter-build-context.env'
               - '.devcontainer/**'
+              - 'devops/scripts/porter_build_bundle.sh'
 
       - name: Build matrix
         id: matrix
@@ -87,7 +85,7 @@ jobs:
         target: ${{ fromJson(needs.discover.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
         with:
           persist-credentials: false
 
@@ -108,8 +106,7 @@ jobs:
           .devcontainer/scripts/porter-v1.sh
           echo "$PORTER_HOME" >> "$GITHUB_PATH"
 
-      # No build cache on purpose: a cached layer would hide a package
-      # repository that has gone away.
+      # Fresh hosted jobs do not import a shared build cache.
       - name: Build image
         if: matrix.target.kind == 'docker'
         env:
@@ -142,10 +139,11 @@ jobs:
 
       - name: Upload result
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
         with:
           name: dockerfile-build-result-${{ matrix.target.safe_name }}
           path: build-results
+          if-no-files-found: error
           retention-days: 7
 
   report:
@@ -158,28 +156,21 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
       - name: Download results
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           pattern: dockerfile-build-result-*
           path: build-results
           merge-multiple: true
 
       - name: Write summary
-        run: |
-          {
-            echo "## Dockerfile Build Check"
-            echo
-            echo "| Target | Kind | Result |"
-            echo "| --- | --- | --- |"
-            sort build-results/*.tsv | awk -F '\t' '{ printf "| `%s` | %s | %s |\n", $1, $2, $3 }'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          failed="$(awk -F '\t' '$3 != "success" { print $1 }' build-results/*.tsv)"
-          if [ -n "$failed" ]; then
-            while IFS= read -r target; do
-              echo "::error::Build failed: ${target}"
-            done <<< "$failed"
-            exit 1
-          fi
-          echo "All $(cat build-results/*.tsv | wc -l) targets built."
+        if: always()
+        env:
+          EXPECTED_MATRIX: ${{ needs.discover.outputs.matrix }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: node .github/scripts/dockerfile_build_report.js

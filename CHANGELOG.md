@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Add the `Dockerfile Build Check` workflow. It builds every Dockerfile and Porter bundle image in a matrix on a weekly schedule, and builds the changed ones on a pull request, then reports the targets that fail. ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
+* Add weekly and manual builds for all Dockerfiles and Porter bundle images, with selected pull request builds and checks for failed or missing results. ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 * Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
