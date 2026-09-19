@@ -8,6 +8,7 @@ ENHANCEMENTS:
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 
 BUG FIXES:
+* Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))
 * Defer scheduled CI environment cleanup while other GitHub Actions runs are active or queued, including PR tests started by comments. (`devops` 0.6.5) ([#5087](https://github.com/microsoft/AzureTRE/pull/5087))
 * Pin the API Starlette dependency to 1.6.0 and align the end-to-end test dependency. (`API` 0.26.10) ([#5043](https://github.com/microsoft/AzureTRE/pull/5043))
 * Keep Airlock and user-assignment navigation within the workspace when a child panel is already open. ([#5082](https://github.com/microsoft/AzureTRE/pull/5082))

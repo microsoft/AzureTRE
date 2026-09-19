@@ -47,7 +47,27 @@ check_role_assignments() {
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
-az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+  # Tag new CI groups in the create request, before any later bootstrap step can fail.
+  # On reruns, update only the ownership tag rather than replacing existing tags.
+  group_exists=$(az group exists --name "$TF_VAR_mgmt_resource_group_name" --output json)
+  case "$group_exists" in
+    true)
+      az group update --name "$TF_VAR_mgmt_resource_group_name" \
+        --set "tags.ci_git_ref=$TF_VAR_ci_git_ref" -o table
+      ;;
+    false)
+      az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" \
+        --tags "ci_git_ref=$TF_VAR_ci_git_ref" -o table
+      ;;
+    *)
+      echo "ERROR: Could not determine whether the management resource group exists." >&2
+      exit 1
+      ;;
+  esac
+else
+  az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+fi
 
 # shellcheck disable=SC2154
 if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --query "name" -o none 2>/dev/null; then

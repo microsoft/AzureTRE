@@ -50,6 +50,9 @@ jobs:
               - '.github/workflows/build_validation_develop.yml'
             ci_cleanup:
               - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/terraform/**'
+              - '.github/actions/devcontainer_run_command/action.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
               - 'devops/tests/**'
               - '.github/workflows/build_validation_develop.yml'
 

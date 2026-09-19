@@ -27,6 +27,19 @@ with (root / "calls.jsonl").open("a") as log:
 
 if command == "gh":
     if args[0] == "api":
+        if any("/pulls?" in arg for arg in args):
+            if config.get("pr_api_error"):
+                sys.exit(1)
+            if "bad_pr_response" in config:
+                print(config["bad_pr_response"])
+                sys.exit(0)
+            pages = config.get("pr_pages", [[{
+                "number": pr["number"], "head": {"ref": pr["headRefName"]},
+                "updated_at": pr["updatedAt"],
+            } for pr in config["open_prs"]]])
+            for page in pages if "--paginate" in args else pages[:1]:
+                print(json.dumps(page))
+            sys.exit(0)
         endpoint = next(arg for arg in args if "actions/runs?" in arg)
         status = parse_qs(urlsplit(endpoint).query)["status"][0]
         if config.get("api_error") == status:
@@ -49,9 +62,18 @@ if command == "gh":
 elif command == "az":
     if args[:2] == ["group", "list"]:
         query = args[args.index("--query") + 1]
-        rows = config["groups"] if "ci_git_ref" in query else ["rg-main-ws-old"]
-        for row in rows:
-            print(row)
+        if "ci_git_ref" in query:
+            if config.get("group_list_error"):
+                sys.exit(1)
+            if "bad_group_response" in config:
+                print(config["bad_group_response"])
+                sys.exit(0)
+            print(json.dumps([{
+                "name": row.split("\t")[0],
+                "ci_git_ref": row.split("\t")[1] if "\t" in row else None,
+            } for row in config["groups"]]))
+        else:
+            print("rg-main-ws-old")
     elif args[:2] not in (["config", "set"], ["group", "delete"]):
         sys.exit("Unexpected az command")
 elif command == "git":
@@ -265,6 +287,146 @@ class CleanupTests(unittest.TestCase):
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"], self.calls)
+
+    def environment_actions(self):
+        return [call for call in self.calls if call[0] in ("control_tre.sh", "destroy_env_no_terraform.sh")]
+
+    def test_management_only_closed_pr_uses_core_name_for_destroy(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [
+            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
+        ])
+
+    def test_management_only_expired_pr_is_destroyed(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=49)
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [
+            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
+        ])
+
+    def test_management_only_missing_branch_is_destroyed(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/heads/deleted"], missing_branch=True)
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [
+            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
+        ])
+
+    def test_management_only_branch_obeys_destroy_threshold(self):
+        self.config["groups"] = ["rg-tretest-mgmt\trefs/heads/feature/test"]
+        for age in (1, 6, 48, 49):
+            with self.subTest(age=age):
+                self.config["age_hours"] = age
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(len(self.environment_actions()), 1 if age > 48 else 0)
+                self.assertNotIn(["control_tre.sh", "stop"], self.calls)
+
+    def test_management_only_pr_is_not_stopped_or_destroyed_early(self):
+        self.config["groups"] = ["rg-tretest-mgmt\trefs/pull/5085/merge"]
+        for age in (1, 6, 48):
+            with self.subTest(age=age):
+                self.config["age_hours"] = age
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.environment_actions(), [])
+
+    def test_paired_core_and_management_are_destroyed_once_in_either_order(self):
+        groups = ["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt\trefs/pull/5085/merge"]
+        self.config["open_prs"] = []
+        for rows in (groups, list(reversed(groups))):
+            with self.subTest(rows=rows):
+                self.config["groups"] = rows
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.environment_actions(), [
+                    ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
+                ])
+
+    def test_paired_environment_only_stops_core(self):
+        self.config["groups"] = ["rg-tretest-mgmt\trefs/pull/5085/merge", "rg-tretest\trefs/pull/5085/merge"]
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [["control_tre.sh", "stop"]])
+
+    def test_management_with_untagged_core_is_not_an_orphan(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge", "rg-tretest"], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+
+    def test_untagged_legacy_management_orphan_is_untouched(self):
+        self.config.update(groups=["rg-tretest-mgmt"], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+
+    def test_non_ci_management_group_is_untouched(self):
+        self.config.update(groups=["rg-tretest-mgmt\tmanual", "rg-treother-mgmt\trefs/not-a-ci-ref"], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+
+    def test_active_run_protects_management_only_environment(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[])
+        self.config["pages"] = {"in_progress": [{"workflow_runs": [self.workflow_run()]}]}
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_no_azure_calls()
+
+    def test_open_pr_on_later_page_is_not_mistaken_for_closed(self):
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=1, open_prs=[])
+        first_page = [{
+            "number": number, "head": {"ref": "feature/other"}, "updated_at": "2026-09-18T00:00:00Z",
+        } for number in range(1, 101)]
+        self.config["pr_pages"] = [first_page, [{
+            "number": 5085, "head": {"ref": "feature/test"}, "updated_at": "2026-09-18T00:00:00Z",
+        }]]
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+
+    def test_pr_api_error_prevents_deletion(self):
+        self.config["pr_api_error"] = True
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.environment_actions(), [])
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_invalid_pr_response_prevents_deletion(self):
+        for response in ("", "{}", "not json", '[{"number": 5085}]'):
+            with self.subTest(response=response):
+                self.config["bad_pr_response"] = response
+                result = self.run_cleanup()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(self.environment_actions(), [])
+                self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_resource_group_query_error_prevents_deletion(self):
+        self.config["group_list_error"] = True
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.environment_actions(), [])
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_invalid_group_response_prevents_deletion(self):
+        for response in ("", " ", "[] []", "null", "{}", '[{}]', '[{"name": "rg-tretest-mgmt", "ci_git_ref": 42}]'):
+            with self.subTest(response=response):
+                self.config["bad_group_response"] = response
+                result = self.run_cleanup()
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(self.environment_actions(), [])
+                self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_no_tagged_groups_preserves_main_workspace_cleanup(self):
+        self.config["groups"] = []
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.environment_actions(), [])
+        self.assertIn(["az", "group", "delete", "--yes", "--no-wait", "--name", "rg-main-ws-old"], self.calls)
 
 
 if __name__ == "__main__":
