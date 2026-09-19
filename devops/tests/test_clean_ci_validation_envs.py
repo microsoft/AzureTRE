@@ -191,6 +191,43 @@ class CleanupTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assert_no_azure_calls()
 
+    def test_malformed_workflow_pages_prevent_cleanup(self):
+        malformed_pages = (
+            {"workflow_runs": {}},
+            {"workflow_runs": {"unexpected": self.workflow_run(run_id=123)}},
+            {"workflow_runs": None},
+            {"workflow_runs": False},
+            {"workflow_runs": ""},
+            {"workflow_runs": 0},
+            {}, [], None, True, 42, "invalid page",
+        )
+        for page in malformed_pages:
+            for page_index in (0, 1):
+                with self.subTest(page=page, page_index=page_index):
+                    pages = [{"workflow_runs": []}] * page_index + [page]
+                    self.config["pages"] = {"requested": pages}
+                    result = self.run_cleanup()
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("Could not check active workflow runs", result.stderr)
+                    self.assert_no_azure_calls()
+
+    def test_valid_empty_workflow_pages_allow_cleanup(self):
+        self.config["pages"] = {"requested": [
+            {"workflow_runs": []},
+            {"workflow_runs": []},
+        ]}
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(["control_tre.sh", "stop"], self.calls)
+
+    def test_malformed_recheck_prevents_main_workspace_cleanup(self):
+        self.config["later_pages"] = {"requested": [{"workflow_runs": {}}]}
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Could not check active workflow runs", result.stderr)
+        self.assertIn(["control_tre.sh", "stop"], self.calls)
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls), self.calls)
+
     def test_missing_run_id_prevents_cleanup(self):
         del self.env["GITHUB_RUN_ID"]
         result = self.run_cleanup()

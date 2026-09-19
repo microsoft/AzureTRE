@@ -29,6 +29,9 @@ function skip_cleanup_if_workflows_active ()
     if ! active_runs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?status=${status}&per_page=100" |
       jq --slurp --compact-output --exit-status --arg run_id "${GITHUB_RUN_ID}" '
         if length == 0 then error("No workflow data returned")
+        elif any(.[]; type != "object") then error("Invalid workflow response page")
+        elif any(.[]; (.workflow_runs | type) != "array") then
+          error("Expected workflow_runs to be an array on every page")
         else [.[].workflow_runs[] | select((.id | tostring) != $run_id)]
         end'); then
       echo "Could not check active workflow runs. Stopping cleanup." >&2
