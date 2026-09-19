@@ -48,8 +48,11 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
-            ci_cleanup:
+            devops_scripts:
               - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/scripts/storage_enable_public_access.sh'
+              - 'devops/scripts/bash_trap_helper.sh'
+              - 'devops/terraform/bootstrap.sh'
               - 'devops/tests/**'
               - '.github/workflows/build_validation_develop.yml'
 
@@ -78,8 +81,8 @@ jobs:
           npm ci
           npm test -- --runInBand
 
-      - name: Test CI environment cleanup
-        if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
+      - name: Test deployment scripts
+        if: ${{ steps.filter.outputs.devops_scripts == 'true' }}
         run: python3 -m unittest discover -s devops/tests -v
 
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0

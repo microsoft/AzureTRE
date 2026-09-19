@@ -5,29 +5,71 @@ set -o nounset
 
 retry_with_backoff() {
   local func="$1"
-  local sleep_time=10
-  local max_sleep=180
+  local sleep_time
+  local status
 
-  while [ "$sleep_time" -lt "$max_sleep" ]; do
+  for sleep_time in 10 20 40 80 160; do
     if "$func"; then
       return 0
+    else
+      status=$?
     fi
+    # A status of 1 is retryable. Other failures must retain their diagnostics.
+    if [ "$status" -ne 1 ]; then
+      return "$status"
+    fi
+    echo "Retrying ${func} in ${sleep_time} seconds..." >&2
     sleep "$sleep_time"
-    sleep_time=$((sleep_time * 2))
   done
-  return 1
+  "$func"
 }
 
-init_terraform() {
-  terraform_output=$(terraform init -input=false -backend=true -reconfigure 2>&1)
-  if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
-    return 1
-  elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
+is_storage_permission_error() {
+  grep -Eq 'AuthorizationPermissionMismatch|AuthorizationFailure|(^|[^[:alnum:]])403([^[:alnum:]]|$)' <<< "$1"
+}
+
+check_blob_access() {
+  local output
+  # Container operations can succeed through Owner before blob data access is ready.
+  # Check the data permission Terraform needs, even when the state container is empty.
+  # shellcheck disable=SC2154
+  if output=$(az storage blob list \
+    --account-name "$TF_VAR_mgmt_storage_account_name" \
+    --container-name "$TF_VAR_terraform_state_container_name" \
+    --prefix bootstrap.tfstate --num-results 1 \
+    --auth-mode login --only-show-errors --output none 2>&1); then
     return 0
   fi
 
-  echo "Apply Retry mechanism on: ERROR- Unexpected output from terraform init: $terraform_output"
-  return 1
+  printf '%s\n' "$output" >&2
+  if is_storage_permission_error "$output"; then
+    return 1
+  fi
+  return 2
+}
+
+init_terraform() {
+  local terraform_output
+  local status
+  if terraform_output=$(terraform init -input=false -backend=true -reconfigure -no-color 2>&1); then
+    printf '%s\n' "$terraform_output"
+    return 0
+  else
+    status=$?
+  fi
+
+  printf 'ERROR: terraform init failed (exit %s).\n%s\n' "$status" "$terraform_output" >&2
+  # An unlock failure can also contain a 403. Never hide it or retry it as role propagation.
+  if grep -Eiq 'Error (acquiring|releasing|locking|unlocking)|failed to (lock|unlock)|state blob is already locked|Lock Info:|Lock ID:' <<< "$terraform_output"; then
+    echo "ERROR: Check the reported lock owner before attempting state recovery. No lock has been released by bootstrap." >&2
+    return 2
+  fi
+  # Retry only workspace-listing permission failures, not unknown state errors.
+  if grep -Fq 'Failed to get existing workspaces' <<< "$terraform_output" \
+    && is_storage_permission_error "$terraform_output"; then
+    return 1
+  fi
+  return 2
 }
 
 check_role_assignments() {
@@ -113,6 +155,11 @@ for container in "${containers[@]}"; do
   done
 done
 
+echo "Checking blob data access before initialising Terraform..."
+if ! retry_with_backoff check_blob_access; then
+  echo "ERROR: Bootstrap blob access check failed. Terraform has not been started." >&2
+  exit 1
+fi
 
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 # shellcheck disable=SC2154
@@ -129,7 +176,7 @@ BOOTSTRAP_BACKEND
 
 # shellcheck disable=SC2154
 if ! retry_with_backoff init_terraform; then
-  echo "ERROR: Timeout waiting for Terraform backend role assignments."
+  echo "ERROR: Terraform backend initialisation failed. See the error above." >&2
   exit 1
 fi
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."
