@@ -1,4 +1,4 @@
-"""Run bootstrap with mocked Azure, Terraform and sleep commands."""
+"""Run bootstrap and management deployment with mocked external commands."""
 
 import json
 import os
@@ -46,6 +46,7 @@ state = json.loads(state_path.read_text()) if state_path.exists() else {
     "containers": config.get("containers", []),
     "role_created": False,
     "blob_checks": 0,
+    "network_blob_checks": 0,
     "init_calls": 0,
 }
 command = Path(sys.argv[0]).name
@@ -69,9 +70,12 @@ def response(name, index):
 
 if command == "sleep":
     finish()
+elif command == "update_tags.sh":
+    finish()
 elif command == "terraform":
     if args[0] == "init":
-        if state["blob_checks"] == 0:
+        check = "blob_checks" if config["script"] == "bootstrap.sh" else "network_blob_checks"
+        if not state["public"] or state[check] == 0:
             finish(99, "Terraform started before checking blob access")
         index = state["init_calls"]
         state["init_calls"] += 1
@@ -80,6 +84,8 @@ elif command == "terraform":
         finish(1)
     elif args[0] == "import":
         finish()
+    elif args[0] in ("plan", "apply"):
+        response(f"{args[0]}_responses", 0)
 elif command == "az":
     if args[:2] == ["group", "create"]:
         finish()
@@ -112,6 +118,7 @@ elif command == "az":
             finish(1, "AuthorizationFailure")
         if "--prefix" not in args:
             # Existing containers may be checked by the network-access helper.
+            state["network_blob_checks"] += 1
             finish()
         if not state["role_created"] or "tfstate" not in state["containers"]:
             finish(99, "Blob readiness checked before role/container setup")
@@ -123,7 +130,7 @@ finish(99, "Unexpected command: " + " ".join([command, *args]))
 '''
 
 
-class BootstrapTests(unittest.TestCase):
+class TerraformScriptTests(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -139,14 +146,18 @@ class BootstrapTests(unittest.TestCase):
         self.terraform_dir.mkdir(parents=True)
         scripts = self.root / "devops" / "scripts"
         scripts.mkdir()
-        shutil.copy2(DEVOPS / "terraform" / "bootstrap.sh", self.terraform_dir)
-        for script in ("storage_enable_public_access.sh", "bash_trap_helper.sh"):
+        for script in ("bootstrap.sh", "deploy.sh"):
+            shutil.copy2(DEVOPS / "terraform" / script, self.terraform_dir)
+        # Tag updates are outside these tests; record when deployment reaches them.
+        (self.terraform_dir / "update_tags.sh").symlink_to(mock)
+        for script in ("storage_enable_public_access.sh", "bash_trap_helper.sh", "terraform_init.sh"):
             shutil.copy2(DEVOPS / "scripts" / script, scripts)
 
-    def run_bootstrap(self, **config):
+    def run_script(self, script, **config):
+        config["script"] = script
         (self.root / "config.json").write_text(json.dumps(config))
         result = subprocess.run(
-            ["/bin/bash", "bootstrap.sh"],
+            ["/bin/bash", script],
             cwd=self.terraform_dir,
             env={
                 "PATH": f"{self.bin_dir}{os.pathsep}/usr/bin{os.pathsep}/bin",
@@ -188,6 +199,11 @@ class BootstrapTests(unittest.TestCase):
 
     def assert_no_imports(self):
         self.assertEqual(self.commands("terraform", "import"), [])
+
+
+class BootstrapTests(TerraformScriptTests):
+    def run_bootstrap(self, **config):
+        return self.run_script("bootstrap.sh", **config)
 
     def test_new_empty_account_checks_blob_data_before_init(self):
         result = self.run_bootstrap()
@@ -391,6 +407,127 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
         self.assert_no_imports()
+
+
+class ManagementDeployTests(TerraformScriptTests):
+    def run_deploy(self, **config):
+        return self.run_script("deploy.sh", account_exists=True, containers=["tfstate", "tflogs"], **config)
+
+    def assert_no_deployment(self):
+        self.assertEqual(self.commands("terraform", "plan"), [])
+        self.assertEqual(self.commands("terraform", "apply"), [])
+        self.assertEqual(self.commands("update_tags.sh"), [])
+
+    def assert_deployed_once(self):
+        self.assertEqual(self.commands("terraform", "plan"), [["terraform", "plan", "-out", "devops.tfplan"]])
+        self.assertEqual(self.commands("terraform", "apply"), [["terraform", "apply", "-auto-approve", "devops.tfplan"]])
+        self.assertEqual(self.commands("update_tags.sh"), [["update_tags.sh"]])
+        last_init = max(index for index, call in enumerate(self.calls) if call[:2] == ["terraform", "init"])
+        plan = self.calls.index(self.commands("terraform", "plan")[0])
+        apply = self.calls.index(self.commands("terraform", "apply")[0])
+        tags = self.calls.index(self.commands("update_tags.sh")[0])
+        self.assertLess(last_init, plan)
+        self.assertLess(plan, apply)
+        self.assertLess(apply, tags)
+
+    def test_success_runs_plan_apply_and_tags_once_without_sleep(self):
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertIn("-no-color", self.commands("terraform", "init")[0])
+        self.assertEqual(self.sleeps(), [])
+        self.assert_deployed_once()
+
+    def test_workspace_permission_failure_after_access_probe_is_retried(self):
+        error = "Failed to get existing workspaces: listing blobs: executing request: unexpected status 403 (403 This request is not authorized to perform this operation.) with AuthorizationFailure: This request is not authorized to perform this operation."
+        result = self.run_deploy(init_responses=[
+            {"code": 1, "output": error},
+            {"code": 0, "output": "Backend ready"},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assert_deployed_once()
+
+    def test_permission_timeout_stops_before_plan(self):
+        error = "Failed to get existing workspaces: HTTP 403 AuthorizationFailure"
+        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.output.count(error), 6)
+        self.assertIn("Terraform backend initialisation failed", self.output)
+        self.assert_no_deployment()
+
+    def test_final_init_attempt_can_succeed(self):
+        result = self.run_deploy(init_responses=[
+            *[{"code": 1, "output": "Failed to get existing workspaces: HTTP 403"}] * 5,
+            {"code": 0, "output": "Backend ready"},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 6)
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assert_deployed_once()
+
+    def test_failed_unlock_takes_priority_over_workspace_permission_failure(self):
+        error = "Failed to get existing workspaces: HTTP 403\nError unlocking Azure state. Lock ID: test-lock"
+        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertIn("Check the reported lock owner", self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_existing_lock_is_not_retried(self):
+        error = "Error loading state: failed to lock azure state: state blob is already locked"
+        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_state_permission_error_is_not_retried(self):
+        error = "Error loading state: HTTP 403"
+        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_unexpected_init_error_retains_diagnostics(self):
+        result = self.run_deploy(init_responses=[{"code": 2, "output": "Invalid backend configuration"}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("terraform init failed (exit 2)", self.output)
+        self.assertIn("Invalid backend configuration", self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assert_no_deployment()
+
+    def test_plan_permission_failure_is_not_retried(self):
+        error = "Failed to get existing workspaces: HTTP 403"
+        result = self.run_deploy(plan_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(len(self.commands("terraform", "plan")), 1)
+        self.assertEqual(self.commands("terraform", "apply"), [])
+        self.assertEqual(self.commands("update_tags.sh"), [])
+        self.assertEqual(self.sleeps(), [])
+
+    def test_apply_permission_failure_is_not_retried(self):
+        error = "Failed to get existing workspaces: HTTP 403"
+        result = self.run_deploy(apply_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(len(self.commands("terraform", "plan")), 1)
+        self.assertEqual(len(self.commands("terraform", "apply")), 1)
+        self.assertEqual(self.commands("update_tags.sh"), [])
+        self.assertEqual(self.sleeps(), [])
 
 
 if __name__ == "__main__":

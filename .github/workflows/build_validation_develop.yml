@@ -52,7 +52,9 @@ jobs:
               - 'devops/scripts/clean_ci_validation_envs.sh'
               - 'devops/scripts/storage_enable_public_access.sh'
               - 'devops/scripts/bash_trap_helper.sh'
+              - 'devops/scripts/terraform_init.sh'
               - 'devops/terraform/bootstrap.sh'
+              - 'devops/terraform/deploy.sh'
               - 'devops/tests/**'
               - '.github/workflows/build_validation_develop.yml'
 
