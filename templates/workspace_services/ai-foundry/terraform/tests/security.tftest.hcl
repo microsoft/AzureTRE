@@ -30,7 +30,12 @@ mock_provider "azurerm" {
   mock_resource "azurerm_cognitive_account" {
     defaults = {
       id                 = "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test/providers/Microsoft.CognitiveServices/accounts/aif-test"
-      primary_access_key = "mock-api-key-for-tests"
+      primary_access_key = null
+    }
+  }
+  mock_data "azurerm_cognitive_account" {
+    defaults = {
+      primary_access_key = "synthetic-key-from-account-lookup"
     }
   }
   mock_resource "azurerm_key_vault_secret" {
@@ -119,6 +124,46 @@ run "private_model_only" {
   }
 }
 
+# These mocks check module wiring. Real provider null preservation and destroy
+# behaviour also need provider validation and lifecycle tests.
+run "initial_entra_null_key" {
+  command = apply
+
+  override_resource {
+    target = azurerm_cognitive_account.ai_foundry
+    values = {
+      id                 = "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test/providers/Microsoft.CognitiveServices/accounts/aif-test"
+      primary_access_key = null
+    }
+  }
+
+  assert {
+    condition = (
+      !azurerm_cognitive_account.ai_foundry.local_auth_enabled
+      && azurerm_cognitive_account.ai_foundry.primary_access_key == null
+      && length(azurerm_key_vault_secret.openai_api_key) == 0
+      && length(azurerm_role_assignment.api_key_reader) == 0
+    )
+    error_message = "The first Entra-only installation must have a null key and no secret or reader grants."
+  }
+}
+
+run "first_enable_plan" {
+  command = plan
+  variables {
+    local_auth_enabled = true
+  }
+
+  assert {
+    condition = (
+      azurerm_cognitive_account.ai_foundry.local_auth_enabled
+      && length(azurerm_key_vault_secret.openai_api_key) == 1
+      && length(azurerm_role_assignment.api_key_reader) == 2
+    )
+    error_message = "The first key-enabled plan must create one secret and two reader grants."
+  }
+}
+
 run "private_api_key" {
   command = apply
   variables {
@@ -139,7 +184,7 @@ run "private_api_key" {
     condition = (
       length(azurerm_key_vault_secret.openai_api_key) == 1
       && azurerm_key_vault_secret.openai_api_key[0].key_vault_id == data.azurerm_key_vault.ws[0].id
-      && azurerm_key_vault_secret.openai_api_key[0].value == azurerm_cognitive_account.ai_foundry.primary_access_key
+      && azurerm_key_vault_secret.openai_api_key[0].value == "synthetic-key-from-account-lookup"
       && output.openai_api_key_secret_id == azurerm_key_vault_secret.openai_api_key[0].versionless_id
     )
     error_message = "Store the account key in the workspace Key Vault and output only its versionless secret URI."
@@ -188,6 +233,7 @@ run "reenable_api_key" {
       azurerm_cognitive_account.ai_foundry.local_auth_enabled
       && length(azurerm_key_vault_secret.openai_api_key) == 1
       && length(azurerm_role_assignment.api_key_reader) == 2
+      && azurerm_key_vault_secret.openai_api_key[0].value == "synthetic-key-from-account-lookup"
       && output.openai_api_key_secret_id != ""
     )
     error_message = "Re-enabling keys must restore the secret, reader grants and secret URI."
@@ -284,4 +330,36 @@ run "reject_fractional_capacity" {
     openai_model_capacity = 1.5
   }
   expect_failures = [var.openai_model_capacity]
+}
+
+# Terraform automatically destroys each separate state after its final run.
+run "destroy_keys_enabled" {
+  command   = apply
+  state_key = "destroy_keys_enabled"
+  variables {
+    local_auth_enabled = true
+  }
+
+  assert {
+    condition = (
+      azurerm_cognitive_account.ai_foundry.local_auth_enabled
+      && length(azurerm_key_vault_secret.openai_api_key) == 1
+      && length(azurerm_role_assignment.api_key_reader) == 2
+    )
+    error_message = "Key-enabled teardown must start with the account, secret and both reader grants."
+  }
+}
+
+run "destroy_entra_only" {
+  command   = apply
+  state_key = "destroy_entra_only"
+
+  assert {
+    condition = (
+      !azurerm_cognitive_account.ai_foundry.local_auth_enabled
+      && length(azurerm_key_vault_secret.openai_api_key) == 0
+      && length(azurerm_role_assignment.api_key_reader) == 0
+    )
+    error_message = "Entra-only teardown must start without a secret or reader grants."
+  }
 }
