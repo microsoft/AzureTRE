@@ -48,6 +48,11 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
+              - '.github/workflows/build_all_dockerfiles.yml'
+              - '.devcontainer/Dockerfile'
+              - '.devcontainer/scripts/porter-v1.sh'
+              - 'devops/scripts/porter_build_bundle.sh'
+              - '**/porter-build-context.env'
             ci_cleanup:
               - 'devops/scripts/clean_ci_validation_envs.sh'
               - 'devops/tests/**'
