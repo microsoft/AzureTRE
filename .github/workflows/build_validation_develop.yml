@@ -48,6 +48,10 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
+            ci_cleanup:
+              - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/tests/**'
+              - '.github/workflows/build_validation_develop.yml'
 
             terraform_core:
               - core/**/terraform/**/*.tf
@@ -74,6 +78,10 @@ jobs:
           npm ci
           npm test -- --runInBand
 
+      - name: Test CI environment cleanup
+        if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
+        run: python3 -m unittest discover -s devops/tests -v
+
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
         if: ${{ steps.filter.outputs.terraform == 'true' }}
         with:
@@ -96,9 +104,6 @@ jobs:
         if: ${{ steps.filter.outputs.core == 'true' &&
           steps.filter.outputs.core_version == 'false' }}
         run: echo "::error::Code update without version change" && exit 1
-
-      - name: Test CI environment cleanup
-        run: python3 -m unittest discover -s devops/tests -v
 
       - name: Lint code base
         # the slim image is 2GB smaller and we don't use the extra stuff
