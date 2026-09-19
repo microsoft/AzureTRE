@@ -1,0 +1,185 @@
+---
+name: Dockerfile build check
+
+# Builds every Dockerfile and every Porter bundle image in the repository as a
+# matrix, and reports the targets that fail. The weekly run finds breakage that
+# comes from outside the repository, for example a base image whose package
+# repositories moved or went away (see issue #5083). A pull request that
+# changes a Dockerfile, a porter.yaml or the dev container builds only the
+# targets it touches. The target list comes from
+# .github/scripts/dockerfile_build_matrix.sh.
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+    paths:
+      - "**/Dockerfile"
+      - "**/Dockerfile.tmpl"
+      - "**/porter.yaml"
+      - ".devcontainer/**"
+      - ".github/scripts/dockerfile_build_matrix.sh"
+      - ".github/workflows/build_all_dockerfiles.yml"
+
+# for each ref (branch/pr) run just the most recent, cancel
+# other pending/running ones
+concurrency:
+  group: "${{ github.workflow }}-${{ github.head_ref || github.run_id }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover build targets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # For path filter
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Filter changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          list-files: shell
+          filters: |
+            workflow:
+              - '.github/scripts/dockerfile_build_matrix.sh'
+              - '.github/workflows/build_all_dockerfiles.yml'
+            build_inputs:
+              - '**/Dockerfile'
+              - '**/Dockerfile.tmpl'
+              - '**/porter.yaml'
+              - '.devcontainer/**'
+
+      - name: Build matrix
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_CHANGED: ${{ steps.filter.outputs.workflow }}
+          CHANGED_FILES: ${{ steps.filter.outputs.build_inputs_files }}
+        run: .github/scripts/dockerfile_build_matrix.sh
+
+  build:
+    name: ${{ matrix.target.name }}
+    needs: discover
+    if: needs.discover.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      # Same Porter and mixin versions as the dev container, read from its
+      # Dockerfile so the two cannot drift apart.
+      - name: Install Porter
+        if: matrix.target.kind == 'porter'
+        run: |
+          arg() { sed -n "s/^ARG $1=//p" .devcontainer/Dockerfile; }
+          PORTER_HOME="$HOME/.porter"
+          PORTER_VERSION="$(arg PORTER_VERSION)"
+          PORTER_TERRAFORM_MIXIN_VERSION="$(arg PORTER_TERRAFORM_MIXIN_VERSION)"
+          PORTER_AZ_MIXIN_VERSION="$(arg PORTER_AZ_MIXIN_VERSION)"
+          PORTER_AZURE_PLUGIN_VERSION="$(arg PORTER_AZURE_PLUGIN_VERSION)"
+          USERNAME="$(id -un)"
+          export PORTER_HOME PORTER_VERSION PORTER_TERRAFORM_MIXIN_VERSION
+          export PORTER_AZ_MIXIN_VERSION PORTER_AZURE_PLUGIN_VERSION USERNAME
+          .devcontainer/scripts/porter-v1.sh
+          echo "$PORTER_HOME" >> "$GITHUB_PATH"
+
+      # No build cache on purpose: a cached layer would hide a package
+      # repository that has gone away.
+      - name: Build image
+        if: matrix.target.kind == 'docker'
+        env:
+          DOCKERFILE: ${{ matrix.target.dockerfile }}
+          CONTEXT: ${{ matrix.target.context }}
+          BUILD_ARGS: ${{ matrix.target.build_args }}
+        run: |
+          args=()
+          for arg in $BUILD_ARGS; do
+            args+=(--build-arg "$arg")
+          done
+          docker buildx build --pull "${args[@]}" --file "$DOCKERFILE" "$CONTEXT"
+
+      - name: Build bundle
+        if: matrix.target.kind == 'porter'
+        working-directory: ${{ matrix.target.dir }}
+        run: |
+          "${GITHUB_WORKSPACE}/devops/scripts/porter_build_bundle.sh"
+
+      - name: Record result
+        if: always()
+        env:
+          NAME: ${{ matrix.target.name }}
+          SAFE_NAME: ${{ matrix.target.safe_name }}
+          KIND: ${{ matrix.target.kind }}
+          RESULT: ${{ job.status }}
+        run: |
+          mkdir -p build-results
+          printf '%s\t%s\t%s\n' "$NAME" "$KIND" "$RESULT" > "build-results/${SAFE_NAME}.tsv"
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: dockerfile-build-result-${{ matrix.target.safe_name }}
+          path: build-results
+          retention-days: 7
+
+  report:
+    name: Report
+    needs:
+      - discover
+      - build
+    if: always() && needs.discover.result == 'success' && needs.discover.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: dockerfile-build-result-*
+          path: build-results
+          merge-multiple: true
+
+      - name: Write summary
+        run: |
+          {
+            echo "## Dockerfile build check"
+            echo
+            echo "| Target | Kind | Result |"
+            echo "| --- | --- | --- |"
+            sort build-results/*.tsv | awk -F '\t' '{ printf "| `%s` | %s | %s |\n", $1, $2, $3 }'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          failed="$(awk -F '\t' '$3 != "success" { print $1 }' build-results/*.tsv)"
+          if [ -n "$failed" ]; then
+            while IFS= read -r target; do
+              echo "::error::Build failed: ${target}"
+            done <<< "$failed"
+            exit 1
+          fi
+          echo "All $(cat build-results/*.tsv | wc -l) targets built."
