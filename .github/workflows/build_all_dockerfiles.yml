@@ -1,5 +1,5 @@
 ---
-name: Dockerfile build check
+name: Dockerfile Build Check
 
 # Builds every Dockerfile and every Porter bundle image in the repository as a
 # matrix, and reports the targets that fail. The weekly run finds breakage that
@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   discover:
-    name: Discover build targets
+    name: Discover Targets
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,7 +74,7 @@ jobs:
         run: .github/scripts/dockerfile_build_matrix.sh
 
   build:
-    name: ${{ matrix.target.name }}
+    name: Build ${{ matrix.target.name }}
     needs: discover
     if: needs.discover.outputs.matrix != '[]'
     runs-on: ubuntu-latest
@@ -149,7 +149,7 @@ jobs:
           retention-days: 7
 
   report:
-    name: Report
+    name: Build Report
     needs:
       - discover
       - build
@@ -168,7 +168,7 @@ jobs:
       - name: Write summary
         run: |
           {
-            echo "## Dockerfile build check"
+            echo "## Dockerfile Build Check"
             echo
             echo "| Target | Kind | Result |"
             echo "| --- | --- | --- |"

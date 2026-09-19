@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prints the build matrix for the "Dockerfile build check" workflow as a JSON
+# Prints the build matrix for the "Dockerfile Build Check" workflow as a JSON
 # array. Each entry is one build target:
 #
 #   name        Label shown in the GitHub Actions UI
@@ -41,8 +41,9 @@ plain_targets=(
   "templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile|templates/workspace_services/guacamole/guacamole-server|"
 )
 
-# Fail when a plain Dockerfile exists that the list above does not know, so a
-# new Dockerfile cannot slip past the check.
+# Fail when a tracked plain Dockerfile exists that the list above does not
+# know, so a new Dockerfile cannot slip past the check. git ls-files skips
+# ignored and untracked paths such as node_modules, .cnab and worktrees.
 while IFS= read -r found; do
   known=false
   for entry in "${plain_targets[@]}"; do
@@ -55,9 +56,7 @@ while IFS= read -r found; do
     echo "::error::${found} is not listed in $0. Add it with its build context." >&2
     exit 1
   fi
-done < <(find . -name Dockerfile -type f \
-  -not -path '*/node_modules/*' -not -path '*/.cnab/*' -not -path './.git/*' \
-  | sed 's|^\./||' | sort)
+done < <(git ls-files | grep -E '(^|/)Dockerfile$' | sort)
 
 select_all=true
 if [ "$EVENT_NAME" = "pull_request" ] && [ "$WORKFLOW_CHANGED" != "true" ]; then
@@ -119,7 +118,7 @@ while IFS= read -r dockerfile; do
       --arg dir "$dir" \
       '{name: $name, safe_name: $safe_name, kind: "porter", dir: $dir}')")
   fi
-done < <(find templates -name Dockerfile.tmpl -type f -not -path '*/.cnab/*' | sort)
+done < <(git ls-files -- templates | grep -E '/Dockerfile\.tmpl$' | sort)
 
 matrix="$(printf '%s\n' "${targets[@]}" | jq -c -s '.')"
 if [ "${#targets[@]}" -eq 0 ]; then
