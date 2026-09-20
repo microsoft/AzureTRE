@@ -129,7 +129,13 @@ resource "azurerm_cognitive_account_project" "default" {
     type = "SystemAssigned"
   }
 
-  depends_on = [azurerm_private_endpoint.ai_foundry]
+  # AzureRM 4.81.0 does not lock project operations against other account children.
+  # Serialise these operations, and delete the project before the model.
+  # https://github.com/hashicorp/terraform-provider-azurerm/pull/33151
+  depends_on = [
+    azurerm_private_endpoint.ai_foundry,
+    azurerm_cognitive_deployment.openai
+  ]
 
   timeouts {
     create = "30m"
