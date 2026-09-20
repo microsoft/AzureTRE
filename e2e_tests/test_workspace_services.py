@@ -104,6 +104,9 @@ async def test_ai_foundry_model_service_lifecycle(verify, setup_test_foundry_wor
             "properties": {
                 "display_name": "Private Foundry model test",
                 "description": "Model-only service lifecycle",
+                "openai_model": "gpt-5.1 | 2025-11-13",
+                "is_exposed_externally": False,
+                "local_auth_enabled": False,
                 "openai_model_capacity": 1
             }
         },

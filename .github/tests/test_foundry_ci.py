@@ -1,3 +1,6 @@
+import asyncio
+import copy
+import importlib
 import itertools
 import json
 import os
@@ -5,6 +8,7 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+from unittest.mock import AsyncMock, patch
 
 from jsonschema import Draft7Validator
 import yaml
@@ -72,6 +76,84 @@ class FoundryTemplateTests(unittest.TestCase):
                     "BUNDLE_TYPE": "workspace_service",
                     "BUNDLE_DIR": "./templates/workspace_services/ai-foundry",
                 }, bundles)
+
+
+class FoundryLifecycleTests(unittest.TestCase):
+    def run_lifecycle(self, stage=None, setting=None, value=None):
+        with patch.object(sys, "path", [str(ROOT), str(ROOT / "e2e_tests"), *sys.path]):
+            lifecycle = importlib.import_module("e2e_tests.test_workspace_services")
+        workspace_path = "/workspaces/offline"
+        service_path = workspace_path + "/workspace-services/foundry"
+        properties = {}
+        calls = []
+        reads = 0
+
+        async def post(payload, path, token, verify, method="POST"):
+            self.assertIs(verify, True)
+            calls.append((method, path, copy.deepcopy(payload)))
+            if method == "POST":
+                self.assertEqual(path, "/api" + workspace_path + "/workspace-services")
+                self.assertEqual(payload["templateName"], lifecycle.strings.AI_FOUNDRY_SERVICE)
+                properties.update(copy.deepcopy(payload["properties"]))
+                # Deployment outputs supplement the inputs. No input defaults are inserted.
+                properties.update(ai_foundry_id="/subscriptions/offline/accounts/foundry",
+                                  openai_endpoint="https://offline.openai.azure.com/",
+                                  openai_model_deployment="gpt-5.1", openai_api_key_secret_id="")
+            else:
+                self.assertEqual(method, "PATCH")
+                self.assertEqual(path, "/api" + service_path)
+                self.assertEqual(payload, {"properties": {"openai_model_capacity": 1}})
+                properties.update(copy.deepcopy(payload["properties"]))
+            return service_path, {}
+
+        async def get(path, token, verify):
+            nonlocal reads
+            self.assertEqual(path, "/api" + service_path)
+            self.assertIs(verify, True)
+            reads += 1
+            returned = copy.deepcopy(properties)
+            if reads == stage:
+                returned[setting] = value
+            return {"workspaceService": {"properties": returned}}
+
+        cleanup = AsyncMock()
+        with patch.object(lifecycle, "post_resource", side_effect=post), \
+                patch.object(lifecycle, "get_resource", side_effect=get), \
+                patch.object(lifecycle, "get_workspace_owner_token", new=AsyncMock(return_value="offline-token")), \
+                patch.object(lifecycle, "disable_and_delete_ws_resource", new=cleanup):
+            invocation = lifecycle.test_ai_foundry_model_service_lifecycle(True, (workspace_path, "offline"))
+            if stage:
+                with self.assertRaises(AssertionError):
+                    asyncio.run(invocation)
+            else:
+                asyncio.run(invocation)
+        cleanup.assert_awaited_once_with(service_path, "offline", True)
+        self.assertEqual(reads, stage or 2)
+        self.assertEqual([call[0] for call in calls], ["POST"] if stage == 1 else ["POST", "PATCH"])
+        supplied = calls[0][2]["properties"]
+        self.assertEqual(supplied["openai_model"], "gpt-5.1 | 2025-11-13")
+        self.assertEqual(supplied["openai_model_capacity"], 1)
+        for name in ACCESS_SETTINGS:
+            self.assertIs(supplied[name], False)
+
+    def test_lifecycle_preserves_inputs_upgrades_and_cleans_up(self):
+        self.run_lifecycle()
+
+    def test_lifecycle_rejects_incorrect_initial_settings(self):
+        for setting, value in (("openai_model", "wrong-model"), ("openai_model_capacity", 2),
+                               ("is_exposed_externally", True), ("local_auth_enabled", True),
+                               ("openai_api_key_secret_id", "unexpected-secret-reference")):
+            with self.subTest(setting=setting):
+                self.run_lifecycle(1, setting, value)
+
+    def test_lifecycle_rejects_incorrect_upgraded_settings(self):
+        for setting, value in (("is_exposed_externally", True), ("local_auth_enabled", True),
+                               ("openai_api_key_secret_id", "unexpected-secret-reference"),
+                               ("ai_foundry_id", "/subscriptions/changed"),
+                               ("openai_endpoint", "https://changed.invalid"),
+                               ("openai_model_deployment", "changed-deployment")):
+            with self.subTest(setting=setting):
+                self.run_lifecycle(2, setting, value)
 
 
 class FoundryTestSelectionTests(unittest.TestCase):
