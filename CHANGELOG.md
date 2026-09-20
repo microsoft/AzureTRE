@@ -9,6 +9,7 @@ ENHANCEMENTS:
 * Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. (`core` 0.16.19, `tre-workspace-base` 2.10.2, `tre-workspace-service-ai-foundry` 0.4.2) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
+* Defer scheduled CI environment cleanup while other GitHub Actions runs are active or queued, including PR tests started by comments. (`devops` 0.6.5) ([#5087](https://github.com/microsoft/AzureTRE/pull/5087))
 * Pin the API Starlette dependency to 1.6.0 and align the end-to-end test dependency. (`API` 0.26.10) ([#5043](https://github.com/microsoft/AzureTRE/pull/5043))
 * Keep Airlock and user-assignment navigation within the workspace when a child panel is already open. ([#5082](https://github.com/microsoft/AzureTRE/pull/5082))
 * Update React Router to 7.18.4 to address routing security advisories and add navigation regression tests. ([#5081](https://github.com/microsoft/AzureTRE/pull/5081))

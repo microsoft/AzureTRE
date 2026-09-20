@@ -48,6 +48,10 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
+            ci_cleanup:
+              - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/tests/**'
+              - '.github/workflows/build_validation_develop.yml'
 
             foundry:
               - 'templates/workspace_services/ai-foundry/**'
@@ -82,6 +86,10 @@ jobs:
         run: |
           npm ci
           npm test -- --runInBand
+
+      - name: Test CI environment cleanup
+        if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
+        run: python3 -m unittest discover -s devops/tests -v
 
       - name: Set up Python for Foundry checks
         if: ${{ steps.filter.outputs.foundry == 'true' }}
