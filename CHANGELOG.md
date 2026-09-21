@@ -3,24 +3,73 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
-* Update UI dependencies: `brace-expansion` to 1.1.18, `fast-uri` to 3.1.5, `immutable` to 5.1.9, `js-yaml` to 4.3.1, `nanoid` to 3.3.18, and `postcss` to 8.5.26. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
-* Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and `cli`. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045))
 * Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. (`core` 0.16.19, `tre-workspace-base` 2.10.2, `tre-workspace-service-ai-foundry` 0.4.4) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
+
+## (0.29.1)
+**BREAKING CHANGES**
+
+None.
+
+ENHANCEMENTS:
+* Add `skip_deployment` to the `/test` and `/test-extended` PR bot commands to run tests against an existing validation environment. ([#4947](https://github.com/microsoft/AzureTRE/pull/4947))
+* Expand Dependabot Docker scanning from the repository root to subdirectories. ([#5047](https://github.com/microsoft/AzureTRE/pull/5047))
+* Enable Dependabot security updates for npm dependencies in `.github/scripts`. ([#5046](https://github.com/microsoft/AzureTRE/pull/5046))
+* Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
+
+BUG FIXES:
 * Defer scheduled CI environment cleanup while other GitHub Actions runs are active or queued, including PR tests started by comments. (`devops` 0.6.5) ([#5087](https://github.com/microsoft/AzureTRE/pull/5087))
+* Patch `brace-expansion`, `fast-uri`, `immutable`, `js-yaml`, `nanoid`, and `postcss` in the UI dependencies. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
+* Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and the CLI requirements and package metadata. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045), [#5062](https://github.com/microsoft/AzureTRE/pull/5062))
 * Pin the API Starlette dependency to 1.6.0 and align the end-to-end test dependency. (`API` 0.26.10) ([#5043](https://github.com/microsoft/AzureTRE/pull/5043))
 * Keep Airlock and user-assignment navigation within the workspace when a child panel is already open. ([#5082](https://github.com/microsoft/AzureTRE/pull/5082))
 * Update React Router to 7.18.4 to address routing security advisories and add navigation regression tests. ([#5081](https://github.com/microsoft/AzureTRE/pull/5081))
 * Patch `fast-uri` to 3.1.6 in the UI form validator and add URI and resource-form regression tests. ([#5080](https://github.com/microsoft/AzureTRE/pull/5080))
 * Patch `js-yaml`, `browserslist`, `baseline-browser-mapping`, `@humanfs/node` and `brace-expansion` in the UI build and lint dependencies. ([#5079](https://github.com/microsoft/AzureTRE/pull/5079))
 * Update the UI Vitest packages to 4.1.11 to fix redirect mock file access outside permitted paths. ([#5078](https://github.com/microsoft/AzureTRE/pull/5078))
-* Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5065](https://github.com/microsoft/AzureTRE/issues/5065))
+* Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5071](https://github.com/microsoft/AzureTRE/pull/5071))
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
-* Fix pytest warnings ([#5066](https://github.com/microsoft/AzureTRE/issues/5066))
-* Fix inconsistent ServiceBusClient lifecycle management in deployment_status_updater.py, airlock_request_status_update.py, and runner.py to prevent connection socket and AMQP channel leaks ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
+* Fix pytest deprecation warnings in API test fixtures. ([#5069](https://github.com/microsoft/AzureTRE/pull/5069))
+* Fix Service Bus client lifecycle management in the API and resource processor to prevent connection socket and AMQP channel leaks. Close credentials on errors and handle cancellation and retry delays. ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.5 |
+| core | 0.16.18 |
+| ui | 0.8.37 |
+| api | 0.26.10 |
+| resource_processor | 0.13.8 |
+| tre-service-guacamole-linuxvm | 1.4.5 |
+| tre-service-guacamole-import-reviewvm | 2.0.2 |
+| tre-service-guacamole-export-reviewvm | 2.0.2 |
+| tre-service-guacamole-windowsvm | 3.0.2 |
+| tre-service-guacamole | 0.14.4 |
+| tre-service-databricks | 1.0.18 |
+| tre-workspace-service-ohdsi | 0.3.9 |
+| tre-workspace-service-gitea | 1.3.5 |
+| tre-workspace-service-mysql | 1.0.14 |
+| tre-workspace-service-azuresql | 1.0.19 |
+| tre-user-resource-aml-compute-instance | 0.5.13 |
+| tre-service-azureml | 1.1.6 |
+| tre-workspace-service-health | 0.3.7 |
+| tre-workspace-service-openai | 1.0.10 |
+| tre-workspace-airlock-import-review | 0.16.1 |
+| tre-workspace-unrestricted | 0.14.1 |
+| tre-workspace-base | 2.10.1 |
+| tre-shared-service-cyclecloud | 0.7.6 |
+| tre-shared-service-databricks-private-auth | 0.1.15 |
+| tre-shared-service-sonatype-nexus | 3.10.3 |
+| tre-shared-service-admin-vm | 0.5.6 |
+| tre-shared-service-firewall | 1.6.2 |
+| tre-shared-service-gitea | 1.2.4 |
+| tre-shared-service-certs | 0.7.12 |
+| tre-shared-service-airlock-notifier | 1.0.12 |
+
+**Full Changelog**: [v0.29.0...v0.29.1](https://github.com/microsoft/AzureTRE/compare/v0.29.0...v0.29.1)
 
 ## (0.29.0) (August 14, 2026)
 **BREAKING CHANGES**
