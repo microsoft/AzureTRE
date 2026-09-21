@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Assignment id."
+        },
+        "userId": {
+            "type": "string",
+            "description": "User id.",
+            "format": "uuid"
+        },
+        "ResourceId": {
+            "type": "string",
+            "description": "Resource id.",
+            "format": "uuid"
+        },
+        "permissions": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "WorkspaceWrite",
+                    "WorkspaceRead", 
+                    "WorkspaceDelete", 
+                    "WorkspaceCreateService",
+                    "WorkspaceUserRead",
+                    "WorkspaceUserManage",
+                    "ServiceRead",
+                    "ServiceWrite",  
+                    "ServiceDelete"
+                ]
+            }
+        },
+        "etag": {
+            "type": "string",
+            "description": "ETag."
+        }
+    },
+    "required": [
+        "id",
+        "userId",
+        "resourceId",
+        "permissions",
+        "etag"
+    ],
+    "additionalProperties": false
+}
