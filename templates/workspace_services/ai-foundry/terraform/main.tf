@@ -20,6 +20,8 @@ terraform {
 }
 
 provider "azurerm" {
+  subscription_id = local.workspace_subscription_id
+
   features {
     cognitive_account {
       purge_soft_delete_on_destroy = false
@@ -31,14 +33,23 @@ provider "azurerm" {
   }
 }
 
-provider "azapi" {}
+provider "azurerm" {
+  alias = "core"
+  features {}
+}
+
+provider "azapi" {
+  subscription_id = local.workspace_subscription_id
+}
 
 module "terraform_azurerm_environment_configuration" {
   source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.7.0"
   arm_environment = var.arm_environment
 }
 
-data "azurerm_client_config" "current" {}
+data "azurerm_client_config" "current" {
+  provider = azurerm.core
+}
 
 # Read the existing workspace resources.
 data "azurerm_resource_group" "ws" {
@@ -59,11 +70,13 @@ data "azurerm_subnet" "services" {
 # Read the private DNS zone names from the environment configuration module.
 # This keeps the names correct in each Azure cloud.
 data "azurerm_private_dns_zone" "cognitive_services" {
+  provider            = azurerm.core
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.cognitiveservices.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
 
 data "azurerm_private_dns_zone" "openai" {
+  provider            = azurerm.core
   name                = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
   resource_group_name = local.core_resource_group_name
 }
@@ -71,6 +84,7 @@ data "azurerm_private_dns_zone" "openai" {
 # The environment configuration module does not include this zone. Use the same
 # explicit name as the core configuration.
 data "azurerm_private_dns_zone" "ai_services" {
+  provider            = azurerm.core
   name                = "privatelink.services.ai.azure.com"
   resource_group_name = local.core_resource_group_name
 }

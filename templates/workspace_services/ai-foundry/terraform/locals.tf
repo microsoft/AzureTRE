@@ -1,4 +1,5 @@
 locals {
+  workspace_subscription_id      = coalesce(var.workspace_subscription_id, data.azurerm_client_config.current.subscription_id)
   short_service_id               = substr(var.tre_resource_id, -4, -1)
   short_workspace_id             = substr(var.workspace_id, -4, -1)
   workspace_resource_name_suffix = "${var.tre_id}-ws-${local.short_workspace_id}"

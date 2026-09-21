@@ -6,6 +6,7 @@ import importlib.util
 import itertools
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -88,6 +89,16 @@ class FoundryTemplateTests(unittest.TestCase):
                     variables = self.porter[action][0]["terraform"]["vars"]
                     self.assertEqual(variables[name], "${ bundle.parameters." + name + " }")
 
+    def test_workspace_subscription_reaches_every_action_without_ui_input(self):
+        name = "workspace_subscription_id"
+        self.assertEqual(self.parameters[name]["type"], "string")
+        self.assertEqual(self.parameters[name]["default"], "")
+        self.assertNotIn(name, self.schema["properties"])
+        for action in ("install", "upgrade", "uninstall"):
+            with self.subTest(action=action):
+                self.assertEqual(self.porter[action][0]["terraform"]["vars"][name],
+                                 "${ bundle.parameters.workspace_subscription_id }")
+
     def test_secret_reference_is_returned_on_install_and_upgrade(self):
         output = next(item for item in self.porter["outputs"] if item["name"] == "openai_api_key_secret_id")
         self.assertEqual(output["type"], "string")
@@ -107,6 +118,73 @@ class FoundryTemplateTests(unittest.TestCase):
                 }, bundles)
 
 
+class FoundrySubscriptionTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.files = {path.name: path.read_text() for path in (BUNDLE / "terraform").glob("*.tf")}
+
+    def block(self, filename, header):
+        # Top-level closing braces delimit these Terraform blocks.
+        return re.search(re.escape(header) + r" \{\n(.*?)^\}",
+                         self.files[filename], re.MULTILINE | re.DOTALL).group(1)
+
+    def test_default_providers_and_purge_use_workspace_subscription(self):
+        for provider in ("azurerm", "azapi"):
+            with self.subTest(provider=provider):
+                self.assertRegex(self.block("main.tf", f'provider "{provider}"'),
+                                 r"subscription_id\s*=\s*local.workspace_subscription_id")
+        self.assertRegex(self.files["locals.tf"],
+                         r"workspace_subscription_id\s*=\s*coalesce\(var.workspace_subscription_id, "
+                         r"data.azurerm_client_config.current.subscription_id\)")
+        self.assertRegex(self.block("variables.tf", 'variable "workspace_subscription_id"'),
+                         r'default\s*=\s*""')
+        purge = self.block("ai_foundry.tf", 'resource "azapi_resource_action" "purge_ai_foundry"')
+        self.assertIn('"/subscriptions/", local.workspace_subscription_id,', purge)
+        self.assertNotIn("data.azurerm_client_config.current.subscription_id", purge)
+
+    def test_core_client_config_avoids_provider_cycle(self):
+        main = self.files["main.tf"]
+        core = next(block for block in re.findall(r'provider "azurerm" \{\n(.*?)^\}',
+                                                  main, re.MULTILINE | re.DOTALL)
+                    if re.search(r'alias\s*=\s*"core"', block))
+        self.assertNotIn("subscription_id", core)
+        self.assertRegex(self.block("main.tf", 'data "azurerm_client_config" "current"'),
+                         r"provider\s*=\s*azurerm.core")
+
+    def test_subscription_runs_map_all_providers_to_mocks(self):
+        content = (BUNDLE / "terraform/tests/subscription.tftest.hcl").read_text()
+        for provider, alias in (("azurerm", None), ("azurerm", "core"),
+                                ("azurerm", "distinct"), ("azapi", None), ("time", None)):
+            blocks = re.findall(r'mock_provider "' + provider + r'" \{(.*?)^\}',
+                                content, re.MULTILINE | re.DOTALL)
+            self.assertTrue(any((f'alias = "{alias}"' in block) if alias else 'alias' not in block
+                                for block in blocks) or f'mock_provider "{provider}" {{}}' in content)
+        runs = re.findall(r'run "([^"]+)" \{\n(.*?)^\}', content, re.MULTILINE | re.DOTALL)
+        self.assertEqual({name for name, _ in runs}, {"default_subscription", "distinct_subscription"})
+        for name, block in runs:
+            with self.subTest(run=name):
+                mappings = re.search(r"providers = \{(.*?)\}", block, re.DOTALL).group(1)
+                actual = dict(re.findall(r"(\S+)\s*=\s*(\S+)", mappings))
+                self.assertEqual(actual, {
+                    "azurerm": "azurerm.distinct" if name == "distinct_subscription" else "azurerm",
+                    "azurerm.core": "azurerm.core", "azapi": "azapi", "time": "time",
+                })
+
+    def test_only_core_lookups_use_core_provider(self):
+        expected = {'data "azurerm_client_config" "current"',
+                    *(f'data "azurerm_private_dns_zone" "{name}"'
+                      for name in ("cognitive_services", "openai", "ai_services"))}
+        actual = set()
+        for content in self.files.values():
+            for header, block in re.findall(r'((?:data|resource) "[^"]+" "[^"]+") \{\n(.*?)^\}',
+                                            content, re.MULTILINE | re.DOTALL):
+                provider = re.search(r"^  provider\s*=\s*(\S+)", block, re.MULTILINE)
+                if provider:
+                    self.assertEqual(provider.group(1), "azurerm.core")
+                    actual.add(header)
+        self.assertEqual(actual, expected)
+
+
 class FoundryGraphTests(unittest.TestCase):
     def test_ci_runs_graph_check_after_initialisation(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/build_validation_develop.yml").read_text())
@@ -123,7 +201,7 @@ class FoundryGraphTests(unittest.TestCase):
         self.assertIn("templates/workspace_services/ai-foundry/**", filters["foundry"])
         self.assertIn(".github/tests/**", filters["foundry"])
 
-    def run_graph(self, remove_model_dependency=False):
+    def run_graph(self, removed_edge=None):
         spec = importlib.util.spec_from_file_location(
             "foundry_graph_runner", BUNDLE / "terraform/tests/run_dependency_graph.py")
         runner = importlib.util.module_from_spec(spec)
@@ -133,9 +211,12 @@ class FoundryGraphTests(unittest.TestCase):
             ('azurerm_cognitive_account_project.default', 'azurerm_private_endpoint.ai_foundry'),
             ('azurerm_cognitive_deployment.openai', 'azurerm_cognitive_account.ai_foundry'),
             ('azurerm_cognitive_account.ai_foundry', 'azapi_resource_action.purge_ai_foundry'),
+            ('azurerm_cognitive_deployment.openai', 'data.azapi_resource_action.available_models'),
+            ('data.azapi_resource_action.available_models', 'time_sleep.wait_for_ai_foundry'),
+            ('time_sleep.wait_for_ai_foundry', 'azurerm_cognitive_account.ai_foundry'),
         ]
-        if remove_model_dependency:
-            edges.pop(0)
+        if removed_edge is not None:
+            edges.pop(removed_edge)
         real_run = subprocess.run
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory)
@@ -167,7 +248,7 @@ class FoundryGraphTests(unittest.TestCase):
                 return real_run(command, capture_output=True, text=True, **kwargs)
 
             with patch.object(runner.subprocess, "run", side_effect=execute):
-                if remove_model_dependency:
+                if removed_edge is not None:
                     with self.assertRaises(subprocess.CalledProcessError) as failure:
                         runner.check_graph(source)
                     self.assertIn("No dependency path", failure.exception.stderr)
@@ -181,7 +262,9 @@ class FoundryGraphTests(unittest.TestCase):
         self.run_graph()
 
     def test_missing_required_dependency_fails(self):
-        self.run_graph(remove_model_dependency=True)
+        for edge in (0, 1, 3, 4, 5, 6):
+            with self.subTest(removed_edge=edge):
+                self.run_graph(removed_edge=edge)
 
 
 class FoundryLifecycleTests(unittest.TestCase):

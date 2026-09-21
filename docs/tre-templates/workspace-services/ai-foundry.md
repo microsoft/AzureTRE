@@ -23,6 +23,15 @@ Fresh installations do not require custom role definition permissions. Upgrades 
 The service creates a private endpoint for Cognitive Services, OpenAI and Foundry account endpoints.
 The core and base workspace changes supply the Foundry private DNS zone and its VNet links.
 
+## Workspace subscription
+
+The TRE API supplies `workspace_subscription_id` from the parent workspace.
+An empty value uses the core subscription.
+The account, project, model, private endpoint, Key Vault secret and role assignments use the workspace subscription.
+Private DNS zone lookups use the core subscription. Account deletion and purge target the workspace subscription.
+For local Porter commands, set `WORKSPACE_SUBSCRIPTION_ID` to the workspace subscription, or leave it empty to use core.
+The deployment identity needs access to workspace resources and the core private DNS zones.
+
 ## Access settings
 
 | Setting | Default | Effect when enabled |
@@ -50,6 +59,7 @@ Use a token-aware SDK or client. Keep tokens out of command output, source code 
 The service does not expose a browser Connect link. Subscription discovery through Azure Resource Manager is outside the supported client flow.
 
 Initial account provisioning includes a ten-minute readiness wait.
+The model catalogue read and model deployment depend on this wait.
 Allow time for Azure to apply new group memberships and role assignments.
 If access fails, check the failed operation and effective identity permissions before changing a role.
 

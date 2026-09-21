@@ -3,7 +3,7 @@
 resource "azapi_resource_action" "purge_ai_foundry" {
   type = "Microsoft.CognitiveServices/locations/resourceGroups/deletedAccounts@2024-10-01"
   resource_id = join("", [
-    "/subscriptions/", data.azurerm_client_config.current.subscription_id,
+    "/subscriptions/", local.workspace_subscription_id,
     "/providers/Microsoft.CognitiveServices/locations/", data.azurerm_resource_group.ws.location,
     "/resourceGroups/", data.azurerm_resource_group.ws.name,
     "/deletedAccounts/aif-", local.service_resource_name_suffix
@@ -157,6 +157,8 @@ data "azapi_resource_action" "available_models" {
   action                 = "models"
   method                 = "GET"
   response_export_values = ["value"]
+
+  depends_on = [time_sleep.wait_for_ai_foundry]
 }
 
 # Deploy the OpenAI model.

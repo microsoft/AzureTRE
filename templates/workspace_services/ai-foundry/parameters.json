@@ -11,6 +11,12 @@
       }
     },
     {
+      "name": "workspace_subscription_id",
+      "source": {
+        "env": "WORKSPACE_SUBSCRIPTION_ID"
+      }
+    },
+    {
       "name": "tre_id",
       "source": {
         "env": "TRE_ID"

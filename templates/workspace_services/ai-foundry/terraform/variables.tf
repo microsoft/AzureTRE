@@ -1,3 +1,9 @@
+variable "workspace_subscription_id" {
+  type        = string
+  description = "Workspace subscription ID. An empty value uses the core subscription."
+  default     = ""
+}
+
 variable "workspace_id" {
   type        = string
   description = "ID of the parent workspace."

@@ -31,6 +31,14 @@ class FoundryDependencyTests(unittest.TestCase):
                         f"No dependency path from {dependent} to {dependency}; operations can overlap")
         self.assertFalse(reaches(dependency, dependent), "The dependency graph contains a cycle")
 
+    def test_catalogue_waits_for_account_readiness(self):
+        self.assert_ordered("data.azapi_resource_action.available_models", "time_sleep.wait_for_ai_foundry")
+        self.assert_ordered("time_sleep.wait_for_ai_foundry", "azurerm_cognitive_account.ai_foundry")
+
+    def test_model_waits_for_catalogue_and_account_readiness(self):
+        self.assert_ordered("azurerm_cognitive_deployment.openai", "data.azapi_resource_action.available_models")
+        self.assert_ordered("azurerm_cognitive_deployment.openai", "time_sleep.wait_for_ai_foundry")
+
     def test_project_waits_for_model_and_is_destroyed_first(self):
         self.assert_ordered("azurerm_cognitive_account_project.default", "azurerm_cognitive_deployment.openai")
 

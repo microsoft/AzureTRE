@@ -1,4 +1,19 @@
 mock_provider "azurerm" {
+  alias = "core"
+  mock_data "azurerm_client_config" {
+    defaults = {
+      subscription_id = "00000000-0000-0000-0000-000000000001"
+      tenant_id       = "00000000-0000-0000-0000-000000000002"
+    }
+  }
+  mock_data "azurerm_private_dns_zone" {
+    defaults = {
+      id = "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test/providers/Microsoft.Network/privateDnsZones/privatelink.openai.azure.com"
+    }
+  }
+}
+
+mock_provider "azurerm" {
   mock_data "azurerm_resource_group" {
     defaults = {
       id       = "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg-test"

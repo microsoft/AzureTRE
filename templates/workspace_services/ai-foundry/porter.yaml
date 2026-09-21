@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ai-foundry
-version: 0.4.5
+version: 0.4.6
 description: "Deploy Azure AI Foundry with configurable network access and authentication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -20,6 +20,10 @@ credentials:
 parameters:
   - name: workspace_id
     type: string
+  - name: workspace_subscription_id
+    type: string
+    default: ""
+    description: "Workspace subscription ID. An empty value uses the core subscription."
   - name: tre_id
     type: string
 
@@ -114,6 +118,7 @@ install:
       description: "Create the AI Foundry model service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
@@ -143,6 +148,7 @@ upgrade:
       description: "Upgrade the AI Foundry workspace service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
@@ -172,6 +178,7 @@ uninstall:
       description: "Delete the AI Foundry workspace service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         arm_environment: ${ bundle.parameters.arm_environment }
