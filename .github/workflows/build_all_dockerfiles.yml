@@ -144,6 +144,7 @@ jobs:
           name: dockerfile-build-result-${{ matrix.target.safe_name }}
           path: build-results
           if-no-files-found: error
+          overwrite: true
           retention-days: 7
 
   report:
