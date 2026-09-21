@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Add weekly and manual builds for all Dockerfiles and Porter bundle images, with selected pull request builds and checks for failed or missing results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
+* Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))

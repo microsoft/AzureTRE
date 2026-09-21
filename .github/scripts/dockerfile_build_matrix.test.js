@@ -133,6 +133,9 @@ describe('Dockerfile build selection', () => {
     '.github/scripts/dockerfile_build_matrix.test.js',
     '.github/scripts/dockerfile_build_report.js',
     '.github/scripts/dockerfile_build_report.test.js',
+    '.github/scripts/dockerfile_build_retry.sh',
+    '.github/scripts/dockerfile_build_retry.test.js',
+    '.github/scripts/dockerfile_build_target.sh',
     '.github/workflows/build_all_dockerfiles.yml',
   ])('changes to %s select all targets through the workflow filter', filename => {
     expect(picomatch(workflow.on.pull_request.paths, { dot: true })(filename)).toBe(true);

@@ -10,7 +10,11 @@ The `Dockerfile Build Check` workflow builds Dockerfiles and Porter bundle image
 
 Pull requests to `main` or `feature/**` select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.
 
-These checks run without Azure deployment credentials and do not publish images. Each build uses a fresh GitHub-hosted runner without an imported build cache. The report lists every selected target and fails if any build fails or a result is missing or invalid. Result artifacts are retained for seven days.
+These checks run without Azure deployment credentials and do not publish images. Each target starts on a fresh GitHub-hosted runner without an imported build cache.
+
+If a target fails, the job waits ten seconds and retries it once. The retry includes Porter installation and the build, with a new Porter directory to avoid an incomplete installation. Both attempts remain in the job log. A successful retry passes the build check.
+
+The report lists every selected target. It fails if both build attempts fail, a job is cancelled, or a result is missing or invalid. Result artifacts are retained for seven days and replaced when a job runs again.
 
 If a build fails, open its job log to identify the failed command. Package or base-image failures can occur without repository changes. The existing deployment validation remains necessary to test deployed services.
 
