@@ -5,6 +5,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 
 ## (0.29.1)
 **BREAKING CHANGES**
