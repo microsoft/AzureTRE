@@ -340,7 +340,7 @@ class CleanupTests(unittest.TestCase):
 
     def test_real_destroy_keeps_similarly_named_groups(self):
         self.use_real_destroy_helper()
-        neighbours = ["rg-tretestother-mgmt", "rg-tretest-mgmt-copy", "rg-tretest-backup", "rg-tretest-wsother-abcd"]
+        neighbours = ["rg-tretestother-mgmt", "rg-tretest-mgmt-copy", "rg-tretest-backup", "rg-tretest-wsother-abcd", "rg-tretest-svcother-abcd"]
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge", *neighbours], open_prs=[])
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -352,13 +352,13 @@ class CleanupTests(unittest.TestCase):
     def test_real_destroy_deletes_only_the_environment_groups_once(self):
         self.use_real_destroy_helper()
         groups = ["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt\trefs/pull/5085/merge",
-                  "rg-tretest-ws-abcd", "rg-tretestother", "rg-tretestother-ws-abcd"]
+                  "rg-tretest-ws-abcd", "rg-tretest-svc-abcd", "rg-tretestother", "rg-tretestother-ws-abcd", "rg-tretestother-svc-abcd"]
         for rows in (groups, list(reversed(groups))):
             with self.subTest(rows=rows):
                 self.config.update(groups=rows, open_prs=[])
                 result = self.run_cleanup()
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-ws-abcd", "rg-tretest-mgmt", "rg-tretest"])
+                self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-ws-abcd", "rg-tretest-svc-abcd", "rg-tretest-mgmt", "rg-tretest"])
 
     def test_real_destroy_skips_when_only_neighbour_remains(self):
         self.use_real_destroy_helper()

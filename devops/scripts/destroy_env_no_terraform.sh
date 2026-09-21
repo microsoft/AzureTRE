@@ -2,7 +2,7 @@
 
 # This script deletes a specific deployment of TRE including resource
 # groups of the managment (ops) part, core as well as all workspace ones.
-# It selects the exact core and management names, plus the workspace prefix.
+# It selects core and management groups, plus workspace and shared-service prefixes.
 # If possible it will purge the keyvault making it possible to reuse the same
 # TRE_ID for a later deployment.
 
@@ -74,7 +74,8 @@ group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo
 # Resolve groups once. A longer TRE name must not match this environment.
 matching_resource_groups=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv |
   while IFS= read -r rg_name; do
-    if [[ "$rg_name" == "$core_tre_rg" || "$rg_name" == "${core_tre_rg}-mgmt" || "$rg_name" == "${core_tre_rg}-ws-"* ]]; then
+    if [[ "$rg_name" == "$core_tre_rg" || "$rg_name" == "${core_tre_rg}-mgmt" ||
+          "$rg_name" == "${core_tre_rg}-ws-"* || "$rg_name" == "${core_tre_rg}-svc-"* ]]; then
       printf '%s\n' "$rg_name"
     fi
   done | sort -r)
