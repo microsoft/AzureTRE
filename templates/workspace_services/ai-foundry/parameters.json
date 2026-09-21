@@ -1,0 +1,86 @@
+{
+  "schemaType": "ParameterSet",
+  "schemaVersion": "1.0.0",
+  "namespace": "",
+  "name": "tre-workspace-service-ai-foundry",
+  "parameters": [
+    {
+      "name": "workspace_id",
+      "source": {
+        "env": "WORKSPACE_ID"
+      }
+    },
+    {
+      "name": "tre_id",
+      "source": {
+        "env": "TRE_ID"
+      }
+    },
+    {
+      "name": "id",
+      "source": {
+        "env": "ID"
+      }
+    },
+    {
+      "name": "tfstate_resource_group_name",
+      "source": {
+        "env": "MGMT_RESOURCE_GROUP_NAME"
+      }
+    },
+    {
+      "name": "tfstate_storage_account_name",
+      "source": {
+        "env": "MGMT_STORAGE_ACCOUNT_NAME"
+      }
+    },
+    {
+      "name": "tfstate_container_name",
+      "source": {
+        "env": "TERRAFORM_STATE_CONTAINER_NAME"
+      }
+    },
+    {
+      "name": "arm_environment",
+      "source": {
+        "env": "ARM_ENVIRONMENT"
+      }
+    },
+    {
+      "name": "is_exposed_externally",
+      "source": {
+        "env": "IS_EXPOSED_EXTERNALLY"
+      }
+    },
+    {
+      "name": "local_auth_enabled",
+      "source": {
+        "env": "LOCAL_AUTH_ENABLED"
+      }
+    },
+    {
+      "name": "openai_model",
+      "source": {
+        "env": "OPENAI_MODEL"
+      }
+    },
+    {
+      "name": "openai_model_capacity",
+      "source": {
+        "env": "OPENAI_MODEL_CAPACITY"
+      }
+    },
+    {
+      "name": "workspace_owners_group_id",
+      "source": {
+        "env": "WORKSPACE_OWNERS_GROUP_ID"
+      }
+    },
+    {
+      "name": "workspace_researchers_group_id",
+      "source": {
+        "env": "WORKSPACE_RESEARCHERS_GROUP_ID"
+      }
+    }
+  ]
+}

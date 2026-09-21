@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import copy
 import importlib
 import importlib.util
@@ -53,6 +54,32 @@ class FoundryTemplateTests(unittest.TestCase):
                 self.assertIs(field["default"], False)
                 self.assertEqual(parameter["type"], field["type"])
                 self.assertEqual(parameter["default"], field["default"])
+
+    def test_local_parameter_set_covers_bundle(self):
+        parameter_set = json.loads((BUNDLE / "parameters.json").read_text())
+        self.assertEqual(parameter_set["schemaType"], "ParameterSet")
+        self.assertEqual(parameter_set["name"], self.porter["name"])
+        expected = set(self.parameters)
+        built_path = BUNDLE / ".cnab/bundle.json"
+        if built_path.exists():
+            built = json.loads(built_path.read_text())
+            manifest = yaml.safe_load(base64.b64decode(built["custom"]["sh.porter"]["manifest"]))
+            # A cached bundle must have the same inputs before it can check generated parameters.
+            for field in ("name", "parameters", "mixins", "install", "upgrade", "uninstall"):
+                self.assertEqual(manifest[field], self.porter[field], f"Stale bundle field: {field}")
+            expected.update(name for name, parameter in built["parameters"].items()
+                            if built["definitions"][parameter["definition"]].get("$comment") != "porter-internal")
+        supplied = [item["name"] for item in parameter_set["parameters"]]
+        self.assertEqual(len(supplied), len(set(supplied)), "Duplicate parameter mappings")
+        self.assertCountEqual((name for name in supplied if name != "arm_use_msi"), expected - {"arm_use_msi"})
+
+    def test_local_parameter_sources_follow_environment_conventions(self):
+        parameter_set = json.loads((BUNDLE / "parameters.json").read_text())
+        sibling = json.loads((BUNDLE.parent / "openai/parameters.json").read_text())
+        conventions = {item["name"]: item["source"] for item in sibling["parameters"]}
+        for item in parameter_set["parameters"]:
+            with self.subTest(name=item["name"]):
+                self.assertEqual(item["source"], conventions.get(item["name"], {"env": item["name"].upper()}))
 
     def test_access_settings_reach_every_terraform_action(self):
         for action in ("install", "upgrade", "uninstall"):

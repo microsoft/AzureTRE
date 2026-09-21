@@ -11,8 +11,8 @@ The service does not receive access to shared workspace storage.
 
 ## Prerequisites
 
-- Deploy core `0.16.19` or later before creating or upgrading the base workspace.
-- Use base workspace `2.10.2` or later with `auth_type=Automatic` and `create_aad_groups=true`.
+- Deploy core `0.17.0` or later before creating or upgrading the base workspace.
+- Use base workspace `2.11.0` or later with `auth_type=Automatic` and `create_aad_groups=true`.
 - Add users to the appropriate parent workspace group. A TRE application role alone does not grant Azure model access.
 - Use Azure public cloud and a region that supports the template's model and Standard deployment tier.
 - Check model quota before installation. The default capacity is 10 units of 1,000 tokens per minute.
