@@ -8,6 +8,25 @@ const picomatch = require('picomatch');
 const script = path.join(__dirname, 'dockerfile_build_matrix.sh');
 const workflow = yaml.load(fs.readFileSync(path.join(__dirname, '../workflows/build_all_dockerfiles.yml'), 'utf8'));
 const filters = yaml.load(workflow.jobs.discover.steps.find(step => step.id === 'filter').with.filters);
+const repository = path.resolve(__dirname, '../..');
+const contextFiles = execFileSync('git', ['ls-files', '*porter-build-context.env'], {
+  cwd: repository, encoding: 'utf8',
+}).trim().split('\n').filter(Boolean);
+const contextDependencies = contextFiles.flatMap(filename => {
+  const contents = fs.readFileSync(path.join(repository, filename), 'utf8');
+  const declaration = contents.match(/^export PORTER_BUILD_CONTEXT=(["'])(.+)\1\s*$/m);
+  if (!declaration) throw new Error(`Cannot read named contexts from ${filename}`);
+  const consumer = path.posix.dirname(filename);
+  return declaration[2].split(/\s+/).map(context => {
+    const separator = context.indexOf('=');
+    const directory = context.slice(separator + 1);
+    if (separator < 1 || !directory.startsWith('.')) {
+      throw new Error(`Expected a local named context in ${filename}: ${context}`);
+    }
+    return { consumer, source: path.posix.normalize(path.posix.join(consumer, directory)) };
+  });
+});
+const contextSources = [...new Set(contextDependencies.map(dependency => dependency.source))];
 
 describe('Dockerfile build selection', () => {
   let fixture;
@@ -55,6 +74,21 @@ describe('Dockerfile build selection', () => {
     return result.matrix.map(target => target.name).sort();
   }
 
+  function addContextBundles() {
+    const directories = new Set(contextDependencies.flatMap(({ consumer, source }) => [consumer, source]));
+    for (const directory of directories) {
+      addFile(`${directory}/Dockerfile.tmpl`);
+      addFile(`${directory}/porter.yaml`);
+    }
+  }
+
+  function contextTargets(source) {
+    return [...new Set([
+      source,
+      ...contextDependencies.filter(dependency => dependency.source === source).map(dependency => dependency.consumer),
+    ])].map(directory => directory.replace(/^templates\//, '')).sort();
+  }
+
   test.each(['schedule', 'workflow_dispatch'])('%s selects every tracked target', event => {
     expect(names([], { EVENT_NAME: event })).toEqual(allNames);
   });
@@ -85,6 +119,24 @@ describe('Dockerfile build selection', () => {
 
   test('other dev-container files select only the dev container', () => {
     expect(names(['.devcontainer/a file with spaces.json'])).toEqual(['.devcontainer']);
+  });
+
+  test.each(contextSources)('changes within %s select its bundle and every named-context consumer', source => {
+    addContextBundles();
+    expect(names([`${source}/nested/source.tf`])).toEqual(contextTargets(source));
+  });
+
+  test.each(contextSources)('deleted files within %s still select every affected bundle', source => {
+    addContextBundles();
+    const filename = `${source}/nested/deleted.tf`;
+    addFile(filename);
+    execFileSync('git', ['rm', '-f', filename], { cwd: fixture });
+    expect(names([filename])).toEqual(contextTargets(source));
+  });
+
+  test('a sibling with a shared directory prefix does not select named-context consumers', () => {
+    addContextBundles();
+    expect(names(['templates/workspaces/base-other/terraform/main.tf'])).toEqual([]);
   });
 
   test.each([{ changes: [] }, { changes: ['README.md'] }])('unrelated changes select nothing: $changes', ({ changes }) => {
@@ -123,6 +175,7 @@ describe('Dockerfile build selection', () => {
     '.devcontainer/Dockerfile', '.devcontainer/scripts/porter-v1.sh',
     'devops/scripts/porter_build_bundle.sh',
     'templates/workspaces/unrestricted/porter-build-context.env',
+    ...contextSources.map(source => `${source}/nested/source.tf`),
   ])('the trigger and file filter include %s', filename => {
     expect(picomatch(workflow.on.pull_request.paths, { dot: true })(filename)).toBe(true);
     expect(picomatch(filters.build_inputs, { dot: true })(filename)).toBe(true);

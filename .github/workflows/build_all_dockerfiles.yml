@@ -17,6 +17,9 @@ on:  # yamllint disable-line rule:truthy
       - "**/Dockerfile.tmpl"
       - "**/porter.yaml"
       - "**/porter-build-context.env"
+      - "templates/workspaces/base/**"
+      - "templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/**"
+      - "templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/**"
       - ".devcontainer/**"
       - "devops/scripts/porter_build_bundle.sh"
       - ".github/scripts/dockerfile_build*"
@@ -24,7 +27,7 @@ on:  # yamllint disable-line rule:truthy
 
 # Cancel superseded PR runs. Keep manual and scheduled runs independent.
 concurrency:
-  group: "${{ github.workflow }}-${{ github.head_ref || github.run_id }}"
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
   cancel-in-progress: true
 
 permissions:
@@ -60,6 +63,9 @@ jobs:
               - '**/Dockerfile.tmpl'
               - '**/porter.yaml'
               - '**/porter-build-context.env'
+              - 'templates/workspaces/base/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/**'
               - '.devcontainer/**'
               - 'devops/scripts/porter_build_bundle.sh'
 

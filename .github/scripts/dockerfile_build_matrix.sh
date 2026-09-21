@@ -49,6 +49,16 @@ plain_targets=(
   "templates/workspace_services/guacamole/guacamole-server/docker/Dockerfile|templates/workspace_services/guacamole/guacamole-server|"
 )
 
+# Consumer and source directories declared in porter-build-context.env files.
+# Tests check these dependencies and the workflow filters against those files.
+named_contexts=(
+  "templates/workspaces/airlock-import-review|templates/workspaces/base"
+  "templates/workspaces/unrestricted|templates/workspaces/base"
+  "templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm|templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+  "templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm|templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
+  "templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm|templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm"
+)
+
 # Fail when a tracked plain Dockerfile exists that the list above does not
 # know, so a new Dockerfile cannot slip past the check. git ls-files skips
 # ignored and untracked paths such as node_modules, .cnab and worktrees.
@@ -71,7 +81,7 @@ if [ "$EVENT_NAME" = "pull_request" ] && [ "$WORKFLOW_CHANGED" != "true" ]; then
   select_all=false
 fi
 
-# Shared Porter inputs affect every bundle. Other inputs select their owner.
+# Shared Porter tools affect every bundle. Named contexts also select consumers.
 is_selected() {
   local dir="$1"
   local dockerfile="$2"
@@ -79,7 +89,7 @@ is_selected() {
   if [ "$select_all" = true ]; then
     return 0
   fi
-  local file
+  local file dependency consumer source
   for file in "${changed_files[@]}"; do
     if [ "$file" = "$dockerfile" ] || [ "$file" = "${dir}/porter.yaml" ]; then
       return 0
@@ -93,6 +103,12 @@ is_selected() {
       if [ "$file" = "${dir}/porter-build-context.env" ]; then
         return 0
       fi
+      for dependency in "${named_contexts[@]}"; do
+        IFS='|' read -r consumer source <<< "$dependency"
+        if [[ "$file" == "$source/"* ]] && { [ "$dir" = "$source" ] || [ "$dir" = "$consumer" ]; }; then
+          return 0
+        fi
+      done
     fi
     if [ "$dir" = ".devcontainer" ] && [[ "$file" == .devcontainer/* ]]; then
       return 0
