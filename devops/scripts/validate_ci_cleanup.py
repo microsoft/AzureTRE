@@ -267,9 +267,6 @@ class Validation:
                 # Return both fixtures so the real helper must exclude the neighbour.
                 print("\n".join(names))
                 return 0
-            if args == ["group", "show", "--name", core]:
-                require(self.azure_json(["group", "exists", "--name", core]) is False, "An unexpected core group exists.")
-                return self.forward(args, check=False)
             if args == ["keyvault", "list", "--query", f"[?name=='kv-{core.removeprefix('rg-')}'].id", "--output", "tsv"]:
                 require(not self.azure(args).stdout.strip(), "An unexpected core Key Vault exists.")
                 return 0

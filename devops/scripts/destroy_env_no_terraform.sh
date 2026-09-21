@@ -70,7 +70,6 @@ script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 # shellcheck disable=SC1091
 source "$script_dir/kv_add_network_exception.sh"
 
-group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
 # Resolve groups once. A longer TRE name must not match this environment.
 matching_resource_groups=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv |
   while IFS= read -r rg_name; do
@@ -84,7 +83,16 @@ if [[ -z "${matching_resource_groups}" ]]; then
   exit 0
 fi
 
-if [[ "$group_show_result" == "0" ]]; then
+# Use the same successful inventory for core existence and deletion decisions.
+core_group_exists=false
+while IFS= read -r rg_name; do
+  if [[ "$rg_name" == "$core_tre_rg" ]]; then
+    core_group_exists=true
+    break
+  fi
+done <<< "${matching_resource_groups}"
+
+if "${core_group_exists}"; then
   locks=$(az group lock list -g "${core_tre_rg}" --query [].id -o tsv | tr -d \')
   if [ -n "${locks:-}" ]; then
     for lock in $locks

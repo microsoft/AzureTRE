@@ -144,6 +144,7 @@ class ValidationTests(unittest.TestCase):
             ["group", "delete", "--resource-group", "rg-production", "--yes", "--no-wait"],
             ["group", "delete", "--resource-group", self.target, "--yes", "--no-wait", "--subscription", "other"],
             ["resource", "delete", "--ids", "/subscriptions/other"],
+            ["group", "show", "--name", self.runner.state["core"]],
             ["account", "get-access-token"], ["group", "list"],
         ]
         with patch.object(self.runner, "azure") as azure:

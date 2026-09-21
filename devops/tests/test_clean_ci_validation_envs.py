@@ -84,10 +84,13 @@ elif command == "az":
         else:
             print("rg-main-ws-old")
     elif config.get("real_destroy") and args[:2] == ["group", "show"]:
+        if config.get("group_show_error"):
+            sys.exit(1)
         name = args[args.index("--name") + 1]
         sys.exit(0 if any(row.split("\t")[0] == name for row in config["groups"]) else 3)
     elif config.get("real_destroy") and args[:3] == ["group", "lock", "list"]:
-        pass
+        if config.get("core_lock_list_error"):
+            sys.exit(1)
     elif config.get("real_destroy") and args[:2] in (["resource", "list"], ["acr", "list"], ["lock", "list"]):
         pass
     elif config.get("real_destroy") and args[:2] == ["keyvault", "list"]:
@@ -375,6 +378,34 @@ class CleanupTests(unittest.TestCase):
         result = self.run_cleanup()
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_real_destroy_inventory_requires_core_preparation_despite_lookup_error(self):
+        self.use_real_destroy_helper()
+        self.config.update(groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"],
+                           group_show_error=True, open_prs=[])
+        core_inspection = ["az", "group", "lock", "list", "-g", "rg-tretest", "--query", "[].id", "-o", "tsv"]
+        for inspection_error in (False, True):
+            with self.subTest(inspection_error=inspection_error):
+                self.config["core_lock_list_error"] = inspection_error
+                result = self.run_cleanup()
+                self.assertIn(core_inspection, self.calls)
+                if inspection_error:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+                else:
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-mgmt", "rg-tretest"])
+                    first_delete = next(index for index, call in enumerate(self.calls) if call[:3] == ["az", "group", "delete"])
+                    self.assertLess(self.calls.index(core_inspection), first_delete)
+
+    def test_real_destroy_uses_latest_inventory_when_core_disappears(self):
+        self.use_real_destroy_helper()
+        self.config.update(groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"],
+                           destroy_groups=["rg-tretest-mgmt"], core_lock_list_error=True, open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-mgmt"])
+        self.assertFalse(any(call[:4] == ["az", "group", "lock", "list"] for call in self.calls))
 
     def test_management_only_expired_pr_is_destroyed(self):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=49)
