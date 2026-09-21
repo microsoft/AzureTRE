@@ -30,7 +30,8 @@ if args[:2] == ["group", "exists"]:
 elif args[:2] in (["group", "create"], ["group", "update"]):
     if config.get("write_error"):
         sys.exit(38)
-    tags = config.get("tags", {}).copy()
+    # Azure group create replaces tags, including clearing them when omitted.
+    tags = {} if args[:2] == ["group", "create"] else (config.get("tags") or {}).copy()
     if "--tags" in args:
         key, value = args[args.index("--tags") + 1].split("=", 1)
         tags = {key: value}
@@ -76,7 +77,8 @@ class BootstrapCiTagsTests(unittest.TestCase):
         return result
 
     def tags(self):
-        return json.loads((self.root / "tags.json").read_text())
+        path = self.root / "tags.json"
+        return json.loads(path.read_text()) if path.exists() else (self.config.get("tags") or {})
 
     def test_new_group_is_tagged_before_storage_creation_fails(self):
         self.env["TF_VAR_ci_git_ref"] = "refs/pull/5033/merge"
@@ -108,16 +110,44 @@ class BootstrapCiTagsTests(unittest.TestCase):
         result = self.run_bootstrap()
         self.assertEqual(result.returncode, 39, result.stderr)
         self.assertEqual(self.tags(), {})
-        self.assertEqual(self.calls[0][:2], ["group", "create"])
-        self.assertNotIn("--tags", self.calls[0])
+        self.assertEqual(self.calls[1][:2], ["group", "create"])
+        self.assertNotIn("--tags", self.calls[1])
 
     def test_empty_ci_reference_does_not_overwrite_tags(self):
         self.env["TF_VAR_ci_git_ref"] = ""
         self.config = {"exists": True, "tags": {"owner": "platform", "ci_git_ref": "refs/heads/main"}}
         result = self.run_bootstrap()
         self.assertEqual(result.returncode, 39, result.stderr)
-        self.assertNotIn("--tags", self.calls[0])
+        self.assertFalse(any(call[:2] in (["group", "create"], ["group", "update"]) for call in self.calls))
         self.assertEqual(self.tags(), self.config["tags"])
+
+    def test_unset_ci_reference_does_not_overwrite_tags(self):
+        self.config = {"exists": True, "tags": {"owner": "platform", "ci_git_ref": "refs/heads/main"}}
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+        self.assertFalse(any(call[:2] in (["group", "create"], ["group", "update"]) for call in self.calls))
+        self.assertEqual(self.tags(), self.config["tags"])
+
+    def test_existing_untagged_group_accepts_ci_reference(self):
+        self.config = {"exists": True, "tags": None}
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/5033/merge"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+        self.assertEqual(self.tags(), {"ci_git_ref": "refs/pull/5033/merge"})
+
+    def test_non_ci_lookup_failure_stops_bootstrap(self):
+        self.config["exists_error"] = True
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 37, result.stderr)
+        self.assertEqual(len(self.calls), 1)
+
+    def test_failed_new_group_creation_stops_bootstrap(self):
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/5033/merge"
+        self.config["write_error"] = True
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 38, result.stderr)
+        self.assertEqual(len(self.calls), 2)
+        self.assertEqual(self.calls[-1][:2], ["group", "create"])
 
     def test_failed_group_lookup_does_not_attempt_creation(self):
         self.env["TF_VAR_ci_git_ref"] = "refs/pull/5033/merge"

@@ -1,4 +1,4 @@
-"""Exercise cleanup decisions with mocked Azure, GitHub, Git and date commands."""
+"""Exercise cleanup decisions and the real destroy helper with mocked services."""
 
 import json
 from pathlib import Path
@@ -15,6 +15,7 @@ MOCK_COMMAND = r'''
 import json
 import os
 from pathlib import Path
+import re
 import sys
 from urllib.parse import parse_qs, urlsplit
 
@@ -72,8 +73,28 @@ elif command == "az":
                 "name": row.split("\t")[0],
                 "ci_git_ref": row.split("\t")[1] if "\t" in row else None,
             } for row in config["groups"]]))
+        elif config.get("real_destroy") and query.endswith(".[name]"):
+            if config.get("destroy_list_error"):
+                sys.exit(1)
+            prefix = re.search(r"starts_with\(name, '([^']+)'\)", query).group(1)
+            for row in config.get("destroy_groups", config["groups"]):
+                name = row.split("\t")[0]
+                if name.startswith(prefix):
+                    print(name)
         else:
             print("rg-main-ws-old")
+    elif config.get("real_destroy") and args[:2] == ["group", "show"]:
+        name = args[args.index("--name") + 1]
+        sys.exit(0 if any(row.split("\t")[0] == name for row in config["groups"]) else 3)
+    elif config.get("real_destroy") and args[:3] == ["group", "lock", "list"]:
+        pass
+    elif config.get("real_destroy") and args[:2] in (["resource", "list"], ["acr", "list"], ["lock", "list"]):
+        pass
+    elif config.get("real_destroy") and args[:2] == ["keyvault", "list"]:
+        if "--resource-group" in args:
+            print(0)
+    elif config.get("real_destroy") and (args[:2] == ["keyvault", "show"] or args[:4] == ["monitor", "log-analytics", "workspace", "show"]):
+        sys.exit(3)
     elif args[:2] not in (["config", "set"], ["group", "delete"]):
         sys.exit("Unexpected az command")
 elif command == "git":
@@ -146,6 +167,24 @@ class CleanupTests(unittest.TestCase):
         )
         self.calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
         return result
+
+    def use_real_destroy_helper(self):
+        self.config["real_destroy"] = True
+        scripts = self.root / "devops/scripts"
+        (scripts / "destroy_env_no_terraform.sh").unlink()
+        for name in ("destroy_env_no_terraform.sh", "kv_add_network_exception.sh", "bash_trap_helper.sh"):
+            shutil.copy2(CLEANUP_SCRIPT.parent / name, scripts / name)
+        for command in ("bash", "dirname", "realpath", "sed", "sort", "tr", "xargs"):
+            executable = shutil.which(command)
+            if not executable:
+                self.fail(f"Required command is missing: {command}")
+            (self.root / "bin" / command).symlink_to(executable)
+
+    def deleted_environment_groups(self):
+        return [
+            call[call.index("--resource-group") + 1] for call in self.calls
+            if call[:3] == ["az", "group", "delete"] and "--resource-group" in call
+        ]
 
     @staticmethod
     def workflow_run(run_id=456, branch="main"):
@@ -298,6 +337,44 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(self.environment_actions(), [
             ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
         ])
+
+    def test_real_destroy_keeps_similarly_named_groups(self):
+        self.use_real_destroy_helper()
+        neighbours = ["rg-tretestother-mgmt", "rg-tretest-mgmt-copy", "rg-tretest-backup", "rg-tretest-wsother-abcd"]
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge", *neighbours], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-mgmt"])
+        for call in self.calls:
+            if call[:3] in (["az", "acr", "list"], ["az", "lock", "list"]):
+                self.assertNotIn(call[call.index("--resource-group") + 1], neighbours)
+
+    def test_real_destroy_deletes_only_the_environment_groups_once(self):
+        self.use_real_destroy_helper()
+        groups = ["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt\trefs/pull/5085/merge",
+                  "rg-tretest-ws-abcd", "rg-tretestother", "rg-tretestother-ws-abcd"]
+        for rows in (groups, list(reversed(groups))):
+            with self.subTest(rows=rows):
+                self.config.update(groups=rows, open_prs=[])
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-ws-abcd", "rg-tretest-mgmt", "rg-tretest"])
+
+    def test_real_destroy_skips_when_only_neighbour_remains(self):
+        self.use_real_destroy_helper()
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"],
+                           destroy_groups=["rg-tretestother-mgmt"], open_prs=[])
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deleted_environment_groups(), [])
+        self.assertIn("No resource groups found for environment", result.stdout)
+
+    def test_real_destroy_inventory_failure_prevents_deletion(self):
+        self.use_real_destroy_helper()
+        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], destroy_list_error=True, open_prs=[])
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
 
     def test_management_only_expired_pr_is_destroyed(self):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=49)

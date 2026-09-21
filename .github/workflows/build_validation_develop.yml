@@ -50,6 +50,9 @@ jobs:
               - '.github/workflows/build_validation_develop.yml'
             ci_cleanup:
               - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/scripts/destroy_env_no_terraform.sh'
+              - 'devops/scripts/kv_add_network_exception.sh'
+              - 'devops/scripts/bash_trap_helper.sh'
               - 'devops/terraform/**'
               - '.github/actions/devcontainer_run_command/action.yml'
               - '.github/workflows/deploy_tre_reusable.yml'

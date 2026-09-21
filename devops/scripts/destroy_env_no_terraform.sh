@@ -2,8 +2,7 @@
 
 # This script deletes a specific deployment of TRE including resource
 # groups of the managment (ops) part, core as well as all workspace ones.
-# It's doing this by finding all resource groups that start with the same
-# name as the core one!
+# It selects the exact core and management names, plus the workspace prefix.
 # If possible it will purge the keyvault making it possible to reuse the same
 # TRE_ID for a later deployment.
 
@@ -72,11 +71,15 @@ script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "$script_dir/kv_add_network_exception.sh"
 
 group_show_result=$(az group show --name "${core_tre_rg}" > /dev/null 2>&1; echo $?)
-# We resolve matching groups up front so we can skip early when none exist,
-# and then reuse the same list for deletion at the end of the script.
-matching_resource_groups=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv | sort -r)
+# Resolve groups once. A longer TRE name must not match this environment.
+matching_resource_groups=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv |
+  while IFS= read -r rg_name; do
+    if [[ "$rg_name" == "$core_tre_rg" || "$rg_name" == "${core_tre_rg}-mgmt" || "$rg_name" == "${core_tre_rg}-ws-"* ]]; then
+      printf '%s\n' "$rg_name"
+    fi
+  done | sort -r)
 if [[ -z "${matching_resource_groups}" ]]; then
-  echo "No resource groups found with prefix ${core_tre_rg} - skipping destroy"
+  echo "No resource groups found for environment ${core_tre_rg} - skipping destroy"
   exit 0
 fi
 
