@@ -128,6 +128,11 @@ jobs:
           terraform init -backend=false -input=false
           terraform test
 
+      - name: Test Foundry dependency ordering
+        if: ${{ steps.filter.outputs.foundry == 'true' }}
+        working-directory: templates/workspace_services/ai-foundry/terraform
+        run: python tests/run_dependency_graph.py
+
       - name: "Stale version: core"
         if: ${{ steps.filter.outputs.core == 'true' &&
           steps.filter.outputs.core_version == 'false' }}

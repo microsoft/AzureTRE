@@ -1,11 +1,13 @@
 import asyncio
 import copy
 import importlib
+import importlib.util
 import itertools
 import json
 import os
 from pathlib import Path
 import subprocess
+import tempfile
 import sys
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -76,6 +78,83 @@ class FoundryTemplateTests(unittest.TestCase):
                     "BUNDLE_TYPE": "workspace_service",
                     "BUNDLE_DIR": "./templates/workspace_services/ai-foundry",
                 }, bundles)
+
+
+class FoundryGraphTests(unittest.TestCase):
+    def test_ci_runs_graph_check_after_initialisation(self):
+        workflow = yaml.safe_load((ROOT / ".github/workflows/build_validation_develop.yml").read_text())
+        steps = next(job["steps"] for job in workflow["jobs"].values() if "steps" in job)
+        graph_index = next(i for i, step in enumerate(steps)
+                           if step.get("run") == "python tests/run_dependency_graph.py")
+        graph_step = steps[graph_index]
+        self.assertEqual(graph_step["if"], "${{ steps.filter.outputs.foundry == 'true' }}")
+        self.assertEqual(graph_step["working-directory"], str(BUNDLE.relative_to(ROOT) / "terraform"))
+        self.assertTrue(any("terraform init -backend=false" in step.get("run", "")
+                            and step.get("working-directory") == graph_step["working-directory"]
+                            and step.get("if") == graph_step["if"] for step in steps[:graph_index]))
+        filters = yaml.safe_load(next(step["with"]["filters"] for step in steps if step.get("id") == "filter"))
+        self.assertIn("templates/workspace_services/ai-foundry/**", filters["foundry"])
+        self.assertIn(".github/tests/**", filters["foundry"])
+
+    def run_graph(self, remove_model_dependency=False):
+        spec = importlib.util.spec_from_file_location(
+            "foundry_graph_runner", BUNDLE / "terraform/tests/run_dependency_graph.py")
+        runner = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(runner)
+        edges = [
+            ('azurerm_cognitive_account_project.default', 'azurerm_cognitive_deployment.openai'),
+            ('azurerm_cognitive_account_project.default', 'azurerm_private_endpoint.ai_foundry'),
+            ('azurerm_cognitive_deployment.openai', 'azurerm_cognitive_account.ai_foundry'),
+            ('azurerm_cognitive_account.ai_foundry', 'azapi_resource_action.purge_ai_foundry'),
+        ]
+        if remove_model_dependency:
+            edges.pop(0)
+        real_run = subprocess.run
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory)
+            original = (BUNDLE / "terraform/main.tf").read_text()
+            (source / "main.tf").write_text(original)
+            (source / ".terraform.lock.hcl").write_text("# Test lock\n")
+            for name in ("modules", "providers"):
+                (source / ".terraform" / name).mkdir(parents=True)
+            (source / ".terraform/terraform.tfstate").write_text("backend metadata")
+            (source / "terraform.tfstate").write_text("resource state")
+            (source / "tests").mkdir()
+            (source / "tests/check_dependency_graph.py").write_text(
+                (BUNDLE / "terraform/tests/check_dependency_graph.py").read_text())
+            offline_paths = []
+
+            def execute(command, **kwargs):
+                if command[0] == "terraform":
+                    self.assertEqual(command, ["terraform", "graph"])
+                    offline = kwargs["cwd"]
+                    offline_paths.append(offline)
+                    self.assertEqual((offline / "main.tf").read_text(),
+                                     original.replace('  backend "azurerm" {}\n', "", 1))
+                    self.assertFalse((offline / "terraform.tfstate").exists())
+                    self.assertFalse((offline / ".terraform/terraform.tfstate").exists())
+                    for dependent, dependency in edges:
+                        kwargs["stdout"].write(f'"{dependent}" -> "{dependency}";\n')
+                    return subprocess.CompletedProcess(command, 0)
+                self.assertEqual(Path(command[1]).name, "check_dependency_graph.py")
+                return real_run(command, capture_output=True, text=True, **kwargs)
+
+            with patch.object(runner.subprocess, "run", side_effect=execute):
+                if remove_model_dependency:
+                    with self.assertRaises(subprocess.CalledProcessError) as failure:
+                        runner.check_graph(source)
+                    self.assertIn("No dependency path", failure.exception.stderr)
+                else:
+                    runner.check_graph(source)
+            self.assertEqual((source / "main.tf").read_text(), original)
+            self.assertEqual(len(offline_paths), 1)
+            self.assertFalse(offline_paths[0].exists())
+
+    def test_default_graph_passes_without_copying_backend_or_state(self):
+        self.run_graph()
+
+    def test_missing_required_dependency_fails(self):
+        self.run_graph(remove_model_dependency=True)
 
 
 class FoundryLifecycleTests(unittest.TestCase):

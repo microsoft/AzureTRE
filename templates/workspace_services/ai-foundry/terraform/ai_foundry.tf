@@ -124,9 +124,14 @@ resource "azurerm_cognitive_account_project" "default" {
   cognitive_account_id = azurerm_cognitive_account.ai_foundry.id
   location             = data.azurerm_resource_group.ws.location
   display_name         = "Default Project"
+  tags                 = local.workspace_service_tags
 
   identity {
     type = "SystemAssigned"
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 
   # AzureRM 4.81.0 does not lock project operations against other account children.
@@ -158,8 +163,9 @@ data "azapi_resource_action" "available_models" {
 resource "azurerm_cognitive_deployment" "openai" {
   # Include the model version in the name. The create_before_destroy setting can
   # then keep the active model until Azure creates its replacement.
-  name                 = replace("${local.openai_model.name}-${local.openai_model.version}", ".", "-")
-  cognitive_account_id = azurerm_cognitive_account.ai_foundry.id
+  name                   = replace("${local.openai_model.name}-${local.openai_model.version}", ".", "-")
+  cognitive_account_id   = azurerm_cognitive_account.ai_foundry.id
+  version_upgrade_option = "NoAutoUpgrade"
 
   model {
     format  = "OpenAI"

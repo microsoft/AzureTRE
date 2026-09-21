@@ -97,6 +97,20 @@ run "private_model_only" {
   }
 
   assert {
+    condition     = azurerm_cognitive_deployment.openai.version_upgrade_option == "NoAutoUpgrade"
+    error_message = "Azure must not automatically upgrade the selected model version."
+  }
+
+  assert {
+    condition = (
+      azurerm_cognitive_account_project.default.tags["tre_id"] == var.tre_id
+      && azurerm_cognitive_account_project.default.tags["tre_workspace_id"] == var.workspace_id
+      && azurerm_cognitive_account_project.default.tags["tre_workspace_service_id"] == var.tre_resource_id
+    )
+    error_message = "The project must carry the TRE, workspace and workspace service identifiers as tags."
+  }
+
+  assert {
     condition = (
       length(data.azurerm_key_vault.ws) == 0
       && length(azurerm_key_vault_secret.openai_api_key) == 0
