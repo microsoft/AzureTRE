@@ -6,6 +6,7 @@ ENHANCEMENTS:
 * Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. (`core` 0.16.19, `tre-workspace-base` 2.10.2, `tre-workspace-service-ai-foundry` 0.4.4) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
+* Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 
 ## (0.29.1)
 **BREAKING CHANGES**
