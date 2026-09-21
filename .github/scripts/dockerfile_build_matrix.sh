@@ -76,6 +76,21 @@ while IFS= read -r found; do
   fi
 done < <(printf '%s\n' "$tracked_files" | grep -E '(^|/)Dockerfile$' | sort)
 
+# Check tracked pairs before selection so an incomplete bundle cannot disappear
+# from the matrix. Removing both files still removes the bundle cleanly.
+while IFS= read -r bundle_file; do
+  dir="$(dirname "$bundle_file")"
+  if [ "${bundle_file##*/}" = "porter.yaml" ]; then
+    required="${dir}/Dockerfile.tmpl"
+  else
+    required="${dir}/porter.yaml"
+  fi
+  if ! grep -Fxq "$required" <<< "$tracked_files"; then
+    echo "::error::Incomplete Porter bundle: ${dir}. Track ${required} or remove both bundle files." >&2
+    exit 1
+  fi
+done < <(printf '%s\n' "$tracked_files" | grep -E '^templates/.*/(porter\.yaml|Dockerfile\.tmpl)$' | sort)
+
 select_all=true
 if [ "$EVENT_NAME" = "pull_request" ] && [ "$WORKFLOW_CHANGED" != "true" ]; then
   select_all=false
@@ -146,9 +161,6 @@ done
 
 while IFS= read -r dockerfile; do
   dir="$(dirname "$dockerfile")"
-  if [ ! -f "${dir}/porter.yaml" ]; then
-    continue
-  fi
   if is_selected "$dir" "$dockerfile" porter; then
     name="$(label "$dir")"
     safe_name="${name//\//_}"

@@ -12,6 +12,8 @@ Pull requests to `main` or `feature/**` select targets when their Dockerfile, Po
 
 Changes within a named context source select its own bundle and every consuming bundle. These sources include the base workspace, Guacamole Windows VM and import review VM directories. Runs use the PR number for cancellation, so identical branch names in different forks remain independent.
 
+Discovery fails if a tracked Porter bundle under `templates/` has only one of `porter.yaml` and `Dockerfile.tmpl`. Removing both files removes the bundle from the build matrix.
+
 These checks run without Azure deployment credentials and do not publish images. Each target starts on a fresh GitHub-hosted runner without an imported build cache.
 
 If a target fails, the job waits ten seconds and retries it once. The retry includes Porter installation and the build, with a new Porter directory to avoid an incomplete installation. Both attempts remain in the job log. A successful retry passes the build check.

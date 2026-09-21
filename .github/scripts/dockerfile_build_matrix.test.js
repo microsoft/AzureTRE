@@ -55,6 +55,7 @@ describe('Dockerfile build selection', () => {
 
   function run(changes = [], overrides = {}) {
     const output = path.join(fixture, 'output');
+    fs.rmSync(output, { force: true });
     const result = spawnSync('bash', [script], {
       cwd: fixture, encoding: 'utf8',
       env: {
@@ -152,6 +153,46 @@ describe('Dockerfile build selection', () => {
   test('deleted plain Dockerfiles are excluded', () => {
     execFileSync('git', ['rm', '-f', 'api_app/Dockerfile'], { cwd: fixture });
     expect(names(['api_app/Dockerfile'])).toEqual([]);
+  });
+
+  test.each(['Dockerfile.tmpl', 'porter.yaml'])('deleting only %s fails discovery before target selection', filename => {
+    const removed = `templates/workspace_services/alpha/${filename}`;
+    execFileSync('git', ['rm', '-f', removed], { cwd: fixture });
+    for (const [changes, overrides] of [
+      [[removed], {}],
+      [['README.md'], {}],
+      [[], { EVENT_NAME: 'schedule' }],
+    ]) {
+      const result = run(changes, overrides);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('Incomplete Porter bundle');
+      expect(result.stderr).toContain(removed);
+      expect(result.matrix).toBeNull();
+    }
+  });
+
+  test.each(['Dockerfile.tmpl', 'porter.yaml'])('an untracked %s cannot complete a tracked bundle', filename => {
+    const untracked = `templates/workspace_services/alpha/${filename}`;
+    execFileSync('git', ['rm', '--cached', untracked], { cwd: fixture });
+    expect(fs.existsSync(path.join(fixture, untracked))).toBe(true);
+    const result = run([untracked]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain(untracked);
+  });
+
+  test.each(['Dockerfile.tmpl', 'porter.yaml'])('a new bundle with only %s fails discovery', filename => {
+    const added = `templates/workspace_services/incomplete/${filename}`;
+    addFile(added);
+    const result = run([added]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('Incomplete Porter bundle: templates/workspace_services/incomplete');
+  });
+
+  test('removing both bundle files excludes the target without failing discovery', () => {
+    const removed = ['Dockerfile.tmpl', 'porter.yaml'].map(filename => `templates/workspace_services/alpha/${filename}`);
+    execFileSync('git', ['rm', '-f', ...removed], { cwd: fixture });
+    expect(names(removed)).toEqual([]);
+    expect(names([], { EVENT_NAME: 'schedule' })).toEqual(allNames.filter(name => name !== 'workspace_services/alpha'));
   });
 
   test('unknown tracked Dockerfiles fail discovery', () => {
