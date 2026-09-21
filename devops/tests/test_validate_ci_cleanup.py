@@ -78,13 +78,15 @@ elif operation == ["group", "create"]:
                      "tags": tags, "properties": {"provisioningState": "Succeeded"}}
     result = groups[group]
 elif operation == ["group", "update"]:
+    if "--remove" in args:
+        sys.exit("az group update does not support --remove")
     if "--set" in args:
         for value in values("--set"):
             key, value = value.split("=", 1)
             assert key.startswith("tags.")
             groups[group]["tags"][key.removeprefix("tags.")] = value
-    if "--remove" in args:
-        groups[group]["tags"].pop(option("--remove").removeprefix("tags."))
+    if "--tags" in args:
+        groups[group]["tags"] = dict(value.split("=", 1) for value in values("--tags"))
     result = groups[group]
 elif operation == ["group", "delete"]:
     del groups[group]
@@ -155,6 +157,13 @@ class ValidationTests(unittest.TestCase):
             with self.assertRaisesRegex(validation.ValidationError, "ownership reference"):
                 self.runner.guard(["group", "delete", "--resource-group", self.target, "--yes", "--no-wait"])
             azure.assert_not_called()
+
+    def test_azure_failure_reports_operation_without_private_arguments_or_output(self):
+        result = subprocess.CompletedProcess([], 2, "private stdout", "private stderr")
+        with patch.object(validation.subprocess, "run", return_value=result):
+            with self.assertRaises(validation.ValidationError) as raised:
+                self.runner.azure(["group", "update", "--name", "private-group"])
+        self.assertEqual(str(raised.exception), "Azure CLI group update failed (exit 2). Raw Azure output is withheld.")
 
     def test_empty_group_checks_reject_mismatched_identity_tags_contents_and_locks(self):
         cases = [
@@ -235,7 +244,9 @@ class ValidationTests(unittest.TestCase):
     def test_real_scripts_complete_guarded_lifecycle_without_creating_storage(self):
         path = self.fake_services()
         self.runner.scenarios()
-        self.assertEqual(len(self.runner.state["checks"]), 8)
+        self.assertEqual(len(self.runner.state["checks"]), 9)
+        self.assertEqual(json.loads(path.read_text())["groups"][self.neighbour]["tags"],
+                         {validation.OWNER_TAG: self.runner.state["owner"], "validation_keep": "preserved"})
         self.runner.cleanup_script(preview=True)
         self.assertEqual(len(json.loads(path.read_text())["groups"]), 2)
         self.runner.cleanup_script(preview=False)

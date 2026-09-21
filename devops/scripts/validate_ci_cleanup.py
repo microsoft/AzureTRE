@@ -57,7 +57,7 @@ class Validation:
         result = subprocess.run([self.state["az"], *args, "--subscription", self.state["subscription"], "--only-show-errors"],
                                 capture_output=True, text=True, timeout=150)
         if check:
-            require(result.returncode == 0, "An Azure CLI operation failed. No raw Azure output is published.")
+            require(result.returncode == 0, f"Azure CLI {' '.join(args[:2])} failed (exit {result.returncode}). Raw Azure output is withheld.")
         return result
 
     def azure_json(self, args):
@@ -167,9 +167,12 @@ class Validation:
         self.bootstrap("Unset CI reference preserves tags", neighbour, None, expected)
         self.bootstrap("CI reference can be restored", target, ref, expected)
         self.bootstrap("Repeated CI bootstrap preserves tags", target, ref, expected)
-        self.owned_empty(neighbour)
-        self.azure(["group", "update", "--name", neighbour, "--remove", "tags.ci_git_ref"])
-        self.state["neighbour_tags"] = self.owned_empty(neighbour)["tags"]
+        tags = dict(self.owned_empty(neighbour)["tags"])
+        del tags["ci_git_ref"]
+        # az group update supports replacing tags, but rejects --remove.
+        self.azure(["group", "update", "--name", neighbour, "--tags", *[f"{key}={value}" for key, value in tags.items()]])
+        self.check("Neighbour CI reference removed without changing other tags", self.owned_empty(neighbour)["tags"] == tags)
+        self.state["neighbour_tags"] = tags
         self.save()
 
     def cleanup_script(self, preview):
