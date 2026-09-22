@@ -10,7 +10,8 @@ from db.errors import VersionDowngradeDenied, EntityDoesNotExist, MajorVersionUp
 from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.base import BaseRepository
 from db.repositories.resource_templates import ResourceTemplateRepository
-from jsonschema import ValidationError, validate
+from jsonschema import Draft7Validator, Draft202012Validator, ValidationError, validate
+from jsonschema.validators import extend, validator_for
 from models.domain.authentication import User
 from models.domain.resource import Resource, ResourceType
 from models.domain.resource_template import ResourceTemplate
@@ -21,6 +22,12 @@ from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
 from pydantic import UUID4, TypeAdapter
+
+
+# Keep Draft 7 keyword semantics while enforcing TRE's restriction on extra fields.
+Draft7TREValidator = extend(Draft7Validator, {
+    "unevaluatedProperties": Draft202012Validator.VALIDATORS["unevaluatedProperties"]
+})
 
 
 class ResourceRepository(BaseRepository):
@@ -98,7 +105,10 @@ class ResourceRepository(BaseRepository):
     @staticmethod
     def _validate_resource_parameters(resource_input, resource_template):
         normalized_template = ResourceRepository._normalize_template_schema(resource_template)
-        validate(instance=resource_input["properties"], schema=normalized_template)
+        validator_class = validator_for(normalized_template)
+        if validator_class is Draft7Validator:
+            validator_class = Draft7TREValidator
+        validate(instance=resource_input["properties"], schema=normalized_template, cls=validator_class)
 
     async def _get_enriched_template(self, template_name: str, resource_type: ResourceType, parent_template_name: str = "") -> dict:
         template_repo = await ResourceTemplateRepository.create()
