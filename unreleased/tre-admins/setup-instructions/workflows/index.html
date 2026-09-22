@@ -3786,6 +3786,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#dockerfile-build-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dockerfile build checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setup-instructions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4578,6 +4589,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#dockerfile-build-checks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dockerfile build checks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setup-instructions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4702,6 +4724,15 @@
 <h1 id="github-actions-workflows-cicd">GitHub Actions workflows (CI/CD)</h1>
 <p>To deploy the Azure TRE using GitHub workflows, create a fork of the repository.</p>
 <p>Deployment is done using the <code>/.github/workflows/deploy_tre.yml</code> workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.</p>
+<h2 id="dockerfile-build-checks">Dockerfile build checks</h2>
+<p>The <code>Dockerfile Build Check</code> workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.</p>
+<p>Pull requests to <code>main</code> or <code>feature/**</code> select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.</p>
+<p>Changes within a named context source select its own bundle and every consuming bundle. These sources include the base workspace, Guacamole Windows VM and import review VM directories. Runs use the PR number for cancellation, so identical branch names in different forks remain independent.</p>
+<p>Discovery fails if a tracked Porter bundle under <code>templates/</code> has only one of <code>porter.yaml</code> and <code>Dockerfile.tmpl</code>. Removing both files removes the bundle from the build matrix.</p>
+<p>These checks run without Azure deployment credentials and do not publish images. Each target starts on a fresh GitHub-hosted runner without an imported build cache.</p>
+<p>If a target fails, the job waits ten seconds and retries it once. The retry includes Porter installation and the build, with a new Porter directory to avoid an incomplete installation. Both attempts remain in the job log. A successful retry passes the build check.</p>
+<p>The report lists every selected target. It fails if both build attempts fail, a job is cancelled, or a result is missing or invalid. Result artifacts are retained for seven days and replaced when a job runs again.</p>
+<p>If a build fails, open its job log to identify the failed command. Package or base-image failures can occur without repository changes. The existing deployment validation remains necessary to test deployed services.</p>
 <h2 id="setup-instructions">Setup instructions</h2>
 <p>Before you can run the <code>deploy_tre.yml</code> workflow there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.</p>
 <div class="admonition tip">
