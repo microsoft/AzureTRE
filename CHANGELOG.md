@@ -5,6 +5,7 @@
 ENHANCEMENTS:
 
 BUG FIXES:
+* Check blob data access before Terraform bootstrap, share bounded init permission retries with management deployment, and preserve initialisation and lock errors. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. Preserve tags on bootstrap reruns and restrict cleanup to the environment's core, management, workspace and shared-service groups. Add manual validation with disposable empty groups. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 
@@ -20,7 +21,6 @@ ENHANCEMENTS:
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 
 BUG FIXES:
-* Check blob data access before Terraform bootstrap, share bounded init permission retries with management deployment, and preserve initialisation and lock errors. (`devops` 0.6.6) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Defer scheduled CI environment cleanup while other GitHub Actions runs are active or queued, including PR tests started by comments. (`devops` 0.6.5) ([#5087](https://github.com/microsoft/AzureTRE/pull/5087))
 * Patch `brace-expansion`, `fast-uri`, `immutable`, `js-yaml`, `nanoid`, and `postcss` in the UI dependencies. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and the CLI requirements and package metadata. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045), [#5062](https://github.com/microsoft/AzureTRE/pull/5062))
