@@ -3,6 +3,7 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
+* Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
 * Check blob data access before Terraform bootstrap, share bounded init permission retries with management deployment, and preserve initialisation and lock errors. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
