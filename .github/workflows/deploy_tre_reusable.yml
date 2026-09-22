@@ -277,6 +277,7 @@ jobs:
         uses: ./.github/actions/devcontainer_run_command
         with:
           COMMAND: "make bootstrap mgmt-deploy"
+          CI_GIT_REF: ${{ inputs.ciGitRef }}
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
