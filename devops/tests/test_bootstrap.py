@@ -87,7 +87,9 @@ elif command == "terraform":
     elif args[0] in ("plan", "apply"):
         response(f"{args[0]}_responses", 0)
 elif command == "az":
-    if args[:2] == ["group", "create"]:
+    if args[:2] == ["group", "exists"]:
+        finish(output="true" if state["account_exists"] else "false")
+    elif args[:2] in (["group", "create"], ["group", "update"]):
         finish()
     elif args[:3] == ["storage", "account", "show"]:
         finish(0 if state["account_exists"] else 1, "mock-account" if state["account_exists"] else "")

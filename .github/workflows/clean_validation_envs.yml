@@ -3,15 +3,29 @@ name: Clean Validation Environments
 
 on: # yamllint disable-line rule:truthy
   schedule:
-    # Every 2 hours
+    # Every hour
     - cron: "0 */1 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Validate disposable groups, or run the normal cleanup sweep
+        type: choice
+        default: validate
+        options:
+          - validate
+          - cleanup
+      validation_location:
+        description: Azure location for disposable validation groups
+        type: string
+        default: westeurope
+        required: true
 
 permissions:
   contents: read
 
 jobs:
   clean:
+    if: github.event_name == 'schedule' || inputs.mode == 'cleanup'
     name: Clean
     runs-on: ubuntu-latest
     environment: CICD
@@ -44,3 +58,59 @@ jobs:
           BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP: 4
           BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY: 48
         run: devops/scripts/clean_ci_validation_envs.sh
+
+  validate:
+    name: Validate cleanup with disposable groups
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'validate'
+    runs-on: ubuntu-latest
+    environment: CICD
+    timeout-minutes: 25
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+      actions: read
+    env:
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test cleanup and validation guards
+        run: python3 -m unittest discover -s devops/tests -p 'test_*.py' -v
+
+      - name: Azure Login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Validate bootstrap and cleanup
+        timeout-minutes: 15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATION_LOCATION: ${{ inputs.validation_location }}
+        run: >-
+          python3 devops/scripts/validate_ci_cleanup.py run
+          --state-dir "$RUNNER_TEMP/ci-cleanup-validation" --location "$VALIDATION_LOCATION"
+
+      - name: Remove disposable groups
+        if: always()
+        run: python3 devops/scripts/validate_ci_cleanup.py cleanup --state-dir "$RUNNER_TEMP/ci-cleanup-validation"
+
+      - name: Write validation summary
+        if: always()
+        run: python3 devops/scripts/validate_ci_cleanup.py summary --state-dir "$RUNNER_TEMP/ci-cleanup-validation"
+
+      - name: Upload sanitised validation evidence
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: ci-cleanup-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci-cleanup-validation/evidence/
+          retention-days: 7
