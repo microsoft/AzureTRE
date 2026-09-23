@@ -352,7 +352,9 @@ export const pruneSchemaNode = (schemaNode: any, activeKeys: string[]): any => {
 // Utility to build a reduced schema with only given keys, recursively pruning object schemas
 export const buildReducedSchema = (fullSchema: any, keys: string[]): any => {
   if (!fullSchema || !fullSchema.properties) return null;
-  return pruneSchemaNode(fullSchema, keys);
+  const reducedSchema = pruneSchemaNode(fullSchema, keys);
+  delete reducedSchema.id;
+  return reducedSchema;
 };
 
 // Utility to collect direct property keys referenced inside conditional schemas

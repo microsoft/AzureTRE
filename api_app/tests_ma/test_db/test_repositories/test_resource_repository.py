@@ -107,6 +107,12 @@ def sample_resource_template() -> ResourceTemplate:
                             actions=[]).model_dump(exclude_none=True)
 
 
+def test_validate_resource_parameters_ignores_template_document_id():
+    resource_input = {"properties": {"title": "test", "os_image": "Windows 11"}}
+
+    ResourceRepository._validate_resource_parameters(resource_input, sample_resource_template())
+
+
 def sample_nested_template() -> ResourceTemplate:
     return ResourceTemplate(
         id="123",

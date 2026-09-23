@@ -49,6 +49,7 @@ class ResourceRepository(BaseRepository):
     @staticmethod
     def _normalize_template_schema(resource_template: dict) -> dict:
         normalized_template = copy.deepcopy(resource_template)
+        normalized_template.pop("id", None)
 
         def normalize_node(node, is_root=False):
             if isinstance(node, dict):

@@ -1354,6 +1354,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
   it("prunes existing array item fields from the reduced upgrade schema", () => {
     const schema = {
+      id: "78fcb427-6b71-4b73-9643-382ca2547e3d",
       properties: {
         redirect_uris: {
           type: "array",
@@ -1370,6 +1371,7 @@ describe("ConfirmUpgradeResource Component", () => {
 
     const reducedSchema = buildReducedSchema(schema, ["redirect_uris.0.value"]);
 
+    expect(reducedSchema.id).toBeUndefined();
     expect(reducedSchema.properties.redirect_uris.items.properties).toEqual({
       value: { type: "string" },
     });
