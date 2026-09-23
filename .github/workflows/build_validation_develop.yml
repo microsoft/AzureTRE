@@ -48,10 +48,23 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/workflows/build_validation_develop.yml'
+              - '.github/workflows/build_all_dockerfiles.yml'
+              - '.devcontainer/Dockerfile'
+              - '.devcontainer/scripts/porter-v1.sh'
+              - 'devops/scripts/porter_build_bundle.sh'
+              - '**/porter-build-context.env'
             ci_cleanup:
               - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/scripts/destroy_env_no_terraform.sh'
+              - 'devops/scripts/validate_ci_cleanup.py'
+              - 'devops/scripts/kv_add_network_exception.sh'
+              - 'devops/scripts/bash_trap_helper.sh'
+              - 'devops/terraform/**'
+              - '.github/actions/devcontainer_run_command/action.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
               - 'devops/tests/**'
               - '.github/workflows/build_validation_develop.yml'
+              - '.github/workflows/clean_validation_envs.yml'
 
             terraform_core:
               - core/**/terraform/**/*.tf
