@@ -35,7 +35,7 @@ class Property(AzureTREModel):
         _strip_none_recursive(data)
         return data
 
-    type: Optional[str] = Field(default=None, title="Property type")
+    type: Optional[Union[str, List[str]]] = Field(default=None, title="Property type")
     title: str = Field(default="", title="Property description")
     description: Optional[str] = Field(default=None, title="Property description")
     default: Any = Field(default=None, title="Default value for the property")
@@ -91,6 +91,9 @@ class ResourceTemplate(AzureTREModel):
     def _serialize(self, handler: Any, info: Any) -> dict:
         data = handler(self)
         _strip_none_recursive(data)  # covers allOf and other plain-dict fields missed by exclude_none
+        for field_name, schema_key in (("schema_uri", "$schema"), ("schema_id", "$id"), ("defs", "$defs")):
+            if field_name in data:
+                data[schema_key] = data.pop(field_name)
         return data
 
     id: str
@@ -101,6 +104,9 @@ class ResourceTemplate(AzureTREModel):
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")
     current: bool = Field(title="Is this the current version of this template")
     type: str = "object"
+    schema_uri: Optional[str] = Field(default=None, alias="$schema")
+    schema_id: Optional[str] = Field(default=None, alias="$id")
+    defs: Optional[dict] = Field(default=None, alias="$defs")
     required: List[str] = Field(title="List of properties which must be provided")
     authorizedRoles: Optional[List[str]] = Field(default_factory=list, title="If not empty, the user is required to have one of these roles to install the template")
     properties: Dict[str, Property] = Field(title="Template properties")
