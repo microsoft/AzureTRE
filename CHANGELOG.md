@@ -4,6 +4,7 @@
 
 ENHANCEMENTS:
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
+* Update template schemas to Draft 2020-12, preserve legacy input restrictions, and support local schema definitions in resource forms. (`API` 0.27.0, `ui` 0.9.0) ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:

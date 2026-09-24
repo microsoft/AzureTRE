@@ -74,6 +74,38 @@ async def test_create_workspace_template_succeeds_without_required(uuid_mock, sa
     assert expected_resource_template == returned_template
 
 
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
+@patch('uuid.uuid4')
+async def test_create_workspace_template_preserves_json_schema_metadata(uuid_mock, save_item_mock, resource_template_repo):
+    uuid_mock.return_value = "1234"
+    input_workspace_template = WorkspaceTemplateInCreate(
+        name="schema-metadata-template",
+        version="0.0.1",
+        current=True,
+        json_schema={
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://example.com/schema-metadata-template",
+            "$defs": {"nullable_string": {"type": ["string", "null"]}},
+            "title": "Schema metadata template",
+            "description": "A template using Draft 2020-12 metadata",
+            "properties": {"value": {"type": ["string", "null"]}},
+        },
+        customActions=[],
+    )
+
+    returned_template = await resource_template_repo.create_template(input_workspace_template, ResourceType.Workspace)
+
+    assert returned_template.schema_uri == input_workspace_template.json_schema["$schema"]
+    assert returned_template.schema_id == input_workspace_template.json_schema["$id"]
+    assert returned_template.defs == input_workspace_template.json_schema["$defs"]
+    assert returned_template.properties["value"].type == ["string", "null"]
+    serialized_template = returned_template.model_dump()
+    assert serialized_template["$schema"] == input_workspace_template.json_schema["$schema"]
+    assert serialized_template["$id"] == input_workspace_template.json_schema["$id"]
+    assert serialized_template["$defs"] == input_workspace_template.json_schema["$defs"]
+    save_item_mock.assert_called_once_with(returned_template)
+
+
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
     expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version'
@@ -190,6 +222,8 @@ async def test_create_workspace_template_item_calls_create_item_with_the_correct
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.version,
         resourceType=ResourceType.Workspace,
+        schema_uri=input_workspace_template.json_schema["$schema"],
+        schema_id=input_workspace_template.json_schema["$id"],
         properties=input_workspace_template.json_schema["properties"],
         allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
@@ -213,6 +247,8 @@ async def test_create_item_created_with_the_expected_type(uuid_mock, save_item_m
         description=input_workspace_template.json_schema["description"],
         version=input_workspace_template.version,
         resourceType=expected_type,
+        schema_uri=input_workspace_template.json_schema["$schema"],
+        schema_id=input_workspace_template.json_schema["$id"],
         properties=input_workspace_template.json_schema["properties"],
         allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
@@ -243,6 +279,8 @@ async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, res
         description=input_user_resource_template.json_schema["description"],
         version=input_user_resource_template.version,
         resourceType=expected_type,
+        schema_uri=input_user_resource_template.json_schema["$schema"],
+        schema_id=input_user_resource_template.json_schema["$id"],
         properties=input_user_resource_template.json_schema["properties"],
         customActions=input_user_resource_template.customActions,
         required=input_user_resource_template.json_schema["required"],
