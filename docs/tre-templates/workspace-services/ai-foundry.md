@@ -194,6 +194,7 @@ Create a fresh service for validation. Retain prototype data until its owner app
 | Terraform mock tests | The same PR validation | All four access combinations, setting transitions, private endpoints, built-in role selection and scope, and conditional secret creation. |
 | Template smoke tests | Deployment smoke suite | Registered Foundry template and its access-setting defaults. No model deployment. |
 | Service lifecycle test | `extended_aad`, including the main-push and nightly suites | Install, repeatable upgrade and removal in a separate Automatic-auth workspace with groups enabled. Private access and Entra authentication remain enabled throughout. |
+| Outbound image URL policy checks | Opt-in `foundry_egress` pytest selection against existing accounts | Inline-image controls, explicit domain-policy rejection with empty and unrelated allowlists, and successful retrieval from an allowed domain. No deployment. |
 
 Run the template and CI integration checks locally with Python 3.12:
 
@@ -211,13 +212,70 @@ terraform test
 
 The lifecycle test deploys a model at capacity 1. It requires the region, quota and deployment permissions listed above.
 For a focused deployed test run, use `make test-e2e-custom SELECTOR=foundry` in the configured development environment.
-This selects the Foundry template checks and lifecycle test.
+This selects the Foundry template checks and lifecycle test. Outbound inference checks skip unless explicitly configured as described below.
 
 Before the bundle-matrix changes reach `main`, PR comment commands cannot build and register Foundry in a fresh validation environment.
 They use workflow definitions from `main`, even when testing PR code.
 A maintainer must run `deploy_tre_branch.yml` from a reviewed branch in the main repository with `e2eTestsCustomSelector=foundry`.
 See [PR bot commands](../../tre-developers/github-pr-bot-commands.md) for the workflow and secret-access restrictions.
 After merge, `/test-extended-aad` also selects the lifecycle test.
+
+### Outbound image URL policy checks
+
+The Terraform mocks already assert `outbound_network_access_restricted = true` and `fqdns = []`.
+Only live model calls can establish whether Azure enforces those settings.
+The checks use the existing E2E suite and pytest JUnit reporting. Their offline tests run in the existing PR Build Validation workflow.
+
+Provide three existing `AIServices` accounts in one subscription, with identical vision-capable OpenAI model names and versions:
+
+| Account label | Outbound restriction | Allowed FQDNs | External image expectation |
+| --- | --- | --- | --- |
+| `empty` | Enabled | `[]` | Explicit domain-policy rejection |
+| `unrelated` | Enabled | `["example.com"]` | Explicit domain-policy rejection |
+| `allowed` | Enabled | `["raw.githubusercontent.com"]` | Successful image processing |
+
+The accounts can reside in different resource groups and use public or private endpoints.
+The runner must reach every endpoint and use an Azure CLI identity with account/deployment read access and model inference permission.
+The test makes six billable inference calls. It creates, updates and deletes no Azure resources.
+Use dedicated control accounts. Do not change a production account's policy to provide a positive control.
+
+1. Wait at least 15 minutes after the accounts' last modification.
+2. Save the following JSON outside the checkout, replacing the placeholders:
+
+```json
+{
+  "subscription_id": "<subscription-id>",
+  "tenant_id": "<tenant-id>",
+  "model_name": "gpt-5.1",
+  "model_version": "2025-11-13",
+  "accounts": {
+    "empty": {"id": "<empty-account-resource-id>", "deployment": "<deployment-name>"},
+    "unrelated": {"id": "<unrelated-account-resource-id>", "deployment": "<deployment-name>"},
+    "allowed": {"id": "<allowed-account-resource-id>", "deployment": "<deployment-name>"}
+  }
+}
+```
+
+3. Sign in with Azure CLI to the selected tenant and subscription.
+4. Run only the outbound tests from the repository root:
+
+```bash
+PYTHONPATH=.:e2e_tests python -m pytest e2e_tests/test_foundry_egress.py -m foundry_egress -n 0 \
+  --foundry-egress-config /tmp/foundry-egress.json --junitxml=/tmp/foundry-egress.xml
+```
+
+This command does not invoke the TRE workspace or service deployment fixtures.
+Keep pytest worker parallelism disabled so the six cases share one set of probes.
+It reads the account and model settings before and after the probes and uses fresh image URLs for each run.
+An optional top-level `image_url` can select another public HTTPS PNG. Set the `allowed` account's FQDN list to that hostname.
+The URL must not contain credentials or query parameters. Redirects are rejected.
+Corporate proxy users must supply a trusted combined CA bundle through `REQUESTS_CA_BUNDLE` or `SSL_CERT_FILE`. TLS verification stays enabled.
+
+Successful processing of an external image outside the configured allowlist is a normal pytest failure.
+For both restricted cases, a pass requires explicit domain-policy rejection and healthy controls.
+Authentication errors, throttling, inbound firewall rejection, unknown policy errors and changed settings are inconclusive pytest errors, never passing rejections.
+Without `--foundry-egress-config`, the six live tests skip. Missing or malformed supplied configuration produces errors.
+Six passes establish API enforcement for this run, not proof that no outbound fetch occurred. That requires receiver-side logs.
 
 ### Runtime access checks
 

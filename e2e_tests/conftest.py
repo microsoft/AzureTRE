@@ -17,6 +17,8 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
+    parser.addoption("--foundry-egress-config", metavar="PATH",
+                     help="Run live outbound checks against the existing Foundry accounts in this JSON file")
 
 
 @pytest.fixture(scope="session")

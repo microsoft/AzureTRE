@@ -352,7 +352,7 @@ class FoundryTestSelectionTests(unittest.TestCase):
         environment["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "e2e_tests")))
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "--collect-only", "-q", "-m", selector,
-             "test_workspace_services.py", "test_workspace_service_templates.py"],
+             "test_workspace_services.py", "test_workspace_service_templates.py", "test_foundry_egress.py"],
             cwd=ROOT / "e2e_tests", env=environment, text=True, capture_output=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout
@@ -369,7 +369,15 @@ class FoundryTestSelectionTests(unittest.TestCase):
         self.assertIn("test_ai_foundry_template_access_settings", collected)
         self.assertIn("test_get_workspace_service_templates[tre-workspace-service-ai-foundry]", collected)
         self.assertIn("test_get_workspace_service_template[tre-workspace-service-ai-foundry]", collected)
+        self.assertIn("test_foundry_image_url[empty_external]", collected)
         self.assertNotIn("test_create_guacamole_service", collected)
+
+    def test_egress_selector_does_not_deploy_tre_resources(self):
+        collected = self.collect("foundry_egress")
+        self.assertIn("test_foundry_image_url[empty_external]", collected)
+        self.assertEqual(collected.count("test_foundry_image_url["), 6)
+        self.assertNotIn(LIFECYCLE_TEST, collected)
+        self.assertNotIn("test_ai_foundry_template_access_settings", collected)
 
     def test_smoke_checks_template_without_deploying_a_model(self):
         collected = self.collect("smoke")
