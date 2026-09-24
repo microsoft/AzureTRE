@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -54,6 +55,12 @@ class BootstrapCiTagsTests(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
+        terraform_dir = self.root / "devops" / "terraform"
+        scripts_dir = self.root / "devops" / "scripts"
+        terraform_dir.mkdir(parents=True)
+        scripts_dir.mkdir()
+        shutil.copy2(BOOTSTRAP, terraform_dir / "bootstrap.sh")
+        shutil.copy2(ROOT / "devops/scripts/terraform_init.sh", scripts_dir / "terraform_init.sh")
         mock = self.root / "az"
         mock.write_text(f"#!{sys.executable}\n" + MOCK_AZ)
         mock.chmod(0o755)
@@ -64,12 +71,13 @@ class BootstrapCiTagsTests(unittest.TestCase):
             "TF_VAR_mgmt_storage_account_name": "mockstorage",
             "LOCATION": "mock-location",
         }
+        self.terraform_dir = self.root / "devops" / "terraform"
         self.config = {}
 
     def run_bootstrap(self):
         (self.root / "config.json").write_text(json.dumps(self.config))
         result = subprocess.run(
-            ["/bin/bash", str(BOOTSTRAP)], cwd=self.root, env=self.env,
+            ["/bin/bash", str(BOOTSTRAP)], cwd=self.terraform_dir, env=self.env,
             capture_output=True, text=True, timeout=10,
         )
         self.calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
