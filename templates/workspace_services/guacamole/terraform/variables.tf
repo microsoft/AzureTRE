@@ -61,6 +61,7 @@ variable "guac_server_layout" {
 variable "guac_api_timeout_seconds" {
   type        = number
   description = "Timeout in seconds for Guacamole user-resources API calls"
+  default     = 30
 }
 variable "is_exposed_externally" {
   type        = bool
