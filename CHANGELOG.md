@@ -110,7 +110,7 @@ BUG FIXES:
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
 * Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
 * Pin MKDocs to v1 to prevent incompatible upgrade. ([#5009](https://github.com/microsoft/AzureTRE/issues/5009))
-* Fix `OSError: [Errno 7] Argument list too long` when deploying many workspaces by switching to `porter installation apply` with a temporary parameter set file; the first run after upgrade of each existing installation also clears legacy installation-resource parameter overrides. Parameter set cleanup is best-effort, no longer logs warnings/errors when the set was never applied, and cleanup failures no longer mask deployment status handling ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
+* Fix `OSError: [Errno 7] Argument list too long` ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 
 
 COMPONENTS:
