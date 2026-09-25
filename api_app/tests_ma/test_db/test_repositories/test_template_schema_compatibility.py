@@ -93,3 +93,45 @@ def test_draft7_keeps_legacy_dependency_validation():
     ResourceRepository._validate_resource_parameters({"properties": {"settings": {"first": "a", "second": "b"}}}, schema)
     with pytest.raises(ValidationError, match="dependency"):
         ResourceRepository._validate_resource_parameters({"properties": {"settings": {"first": "a"}}}, schema)
+
+
+@pytest.mark.asyncio
+async def test_registered_template_preserves_array_defaults_and_constraints():
+    # API Docker builds contain only api_app, so keep this runtime fixture self-contained.
+    schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Array compatibility",
+        "description": "Registration and resource validation for updateable arrays",
+        "properties": {"choices": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["alpha", "beta"]},
+            "uniqueItems": True,
+            "default": ["alpha"],
+            "updateable": True,
+        }},
+    }
+    template_input = ResourceTemplateInCreate(
+        name="array-compatibility", version="1.0.0", current=True, json_schema=schema)
+    repository = ResourceTemplateRepository()
+    repository.save_item = AsyncMock()
+    await repository.create_template(template_input, ResourceType.WorkspaceService, "")
+    saved = repository.save_item.call_args.args[0].model_dump(mode="json")
+    repository.query = AsyncMock(return_value=[saved])
+    template = await repository.get_template_by_name_and_version(template_input.name, "1.0.0", ResourceType.WorkspaceService)
+    reloaded = template.model_dump()
+    assert reloaded["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert reloaded["properties"]["choices"] == schema["properties"]["choices"]
+    enriched = repository.enrich_template(template)
+    resources = ResourceRepository()
+    defaults = {"display_name": "Example", "description": "Example", "choices": reloaded["properties"]["choices"]["default"]}
+    resources._validate_resource_parameters({"properties": defaults}, enriched)
+
+    for choices in ([], ["alpha"], ["beta"], ["alpha", "beta"]):
+        resources._validate_resource_parameters({"properties": {**defaults, "choices": choices}}, enriched)
+        resources.validate_patch(ResourcePatch(properties={"choices": choices}), repository, template, RESOURCE_ACTION_UPDATE)
+    for properties in ({"choices": ["unknown"]}, {"choices": None}, {"choices": [1]},
+                       {"choices": ["alpha", "alpha"]}, {"unexpected": "value"}):
+        with pytest.raises(ValidationError):
+            resources._validate_resource_parameters({"properties": {**defaults, **properties}}, enriched)
+        with pytest.raises(ValidationError):
+            resources.validate_patch(ResourcePatch(properties=properties), repository, template, RESOURCE_ACTION_UPDATE)

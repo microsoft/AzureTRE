@@ -22,6 +22,41 @@ When deploying a workspace the following properties need to be configured.
 | `client_id` | Valid client ID of the Workspace App Registration. | The OpenID client ID which should be submitted to the OpenID service when necessary. This value is typically provided to you by the OpenID service when OpenID credentials are generated for your application. |
 | `client_secret` | Valid client secret. | |
 
+## Blocked Azure resource types
+
+Base workspace `2.12.0` adds the updateable `blocked_resource_types` setting.
+It defaults to `[]`, which creates no policy assignment and preserves existing deployment behaviour.
+Set the list when creating or updating a workspace through TRE. For example:
+
+```json
+{
+  "blocked_resource_types": ["Microsoft.Bing/accounts"]
+}
+```
+
+This example denies creation and updates of all Bing account kinds in this workspace's resource group.
+The workspace assigns the built-in **Not allowed resource types** policy with effect `Deny` and enforcement enabled.
+The assignment uses the workspace subscription, including when it differs from the core subscription.
+Multiple exact resource types can be listed. Wildcards and resource IDs are not accepted.
+Do not block resource types required by the workspace or its services: that can prevent installation and upgrades.
+
+The deployment identity needs permission to manage Azure Policy assignments at the workspace resource group when this option is used.
+The template does not grant itself that permission or create a custom policy definition.
+An administrator can grant the required policy-assignment permissions at the narrowest applicable scope.
+
+The policy belongs to the workspace, not to an individual Foundry service.
+Changing the list updates the assignment. Clearing the list removes it. Deleting a workspace also removes its assignment.
+Deleting a Foundry service does not change it. Inherited policy assignments remain effective.
+Workspace Owners who can change workspace settings can change this list. Use administrator-owned inherited policies for mandatory restrictions.
+
+For direct Porter use, `blocked_resource_types` is a base64-encoded JSON array, following the existing complex-parameter convention.
+The default is `W10=`. The local parameter-set environment variable is `BLOCKED_RESOURCE_TYPES`.
+The TRE API accepts an ordinary JSON array and the resource processor performs the encoding.
+
+A [Deny policy](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effect-deny) does not disable existing resources or revoke their credentials.
+It does not block data-plane calls or resources in other resource groups or subscriptions.
+For Foundry, Bing resource policy, web-search registration and remote MCP restrictions are [separate controls](../workspace-services/ai-foundry.md#hosted-tool-controls).
+
 ## Backup
 
 When `enable_backup` is set (the default) the base workspace deploys a Recovery Services Vault into the workspace resource group and protects the workspace's shared storage (and any VMs configured for backup).

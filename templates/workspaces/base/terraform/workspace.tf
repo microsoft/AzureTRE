@@ -12,6 +12,12 @@ resource "azurerm_resource_group" "ws" {
   lifecycle { ignore_changes = [tags] }
 }
 
+module "resource_policy" {
+  source                 = "./resource-policy"
+  resource_group_id      = azurerm_resource_group.ws.id
+  blocked_resource_types = jsondecode(base64decode(var.blocked_resource_types))
+}
+
 // Networking is causing dependencies issues when some parts are deployed from
 // Azure, especially for storage shares. It became quite difficult to figure out the needed
 // dependencies for each resource seperatly, so to make it easier we packed all network

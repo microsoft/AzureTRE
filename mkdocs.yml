@@ -94,6 +94,7 @@ nav:
           - Unrestricted: tre-templates/workspaces/unrestricted.md
           - Airlock Import Review: tre-templates/workspaces/airlock-import-review.md
       - Workspace Services:
+          - Azure AI Foundry: tre-templates/workspace-services/ai-foundry.md
           - Azure ML: tre-templates/workspace-services/azure-ml.md
           - Gitea: tre-templates/workspace-services/gitea.md
           - Guacamole: tre-templates/workspace-services/guacamole.md

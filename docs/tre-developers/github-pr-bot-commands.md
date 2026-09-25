@@ -40,6 +40,11 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 
 This command runs the build, deploy, and smoke & extended / shared services tests for a PR.
 
+`/test-extended-aad` includes the Foundry service lifecycle test.
+For Foundry's initial contribution, run `deploy_tre_branch.yml` with `e2eTestsCustomSelector=foundry` from a reviewed branch in the main repository.
+PR comment commands cannot build and register the new bundle until its workflow changes reach `main`.
+See the [Foundry validation guidance](../tre-templates/workspace-services/ai-foundry.md#validation-before-approval) for prerequisites and coverage.
+
 For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test-extended` is sufficient.
 
 If a change has been made which would affect any of the core shared services, make sure you run `/test-shared-services`.

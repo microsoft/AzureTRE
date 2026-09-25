@@ -17,6 +17,10 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
+    parser.addoption("--foundry-egress-config", metavar="PATH",
+                     help="Run live outbound checks against the existing Foundry accounts in this JSON file")
+    parser.addoption("--foundry-mcp-config", metavar="PATH",
+                     help="Run live MCP checks against existing Foundry accounts with the documented MCP control policies")
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +37,8 @@ async def create_or_get_test_workspace(
         template_name: str = resource_strings.BASE_WORKSPACE,
         pre_created_workspace_id: str = "",
         client_id: str = "",
-        client_secret: str = "") -> Tuple[str, str]:
+        client_secret: str = "",
+        create_aad_groups: bool = False) -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
@@ -49,6 +54,9 @@ async def create_or_get_test_workspace(
             "address_space_size": "small"
         }
     }
+
+    if auth_type == "Automatic" and create_aad_groups:
+        payload["properties"]["create_aad_groups"] = True
 
     admin_token = await get_admin_token(verify=verify)
     async with get_template(template_name, resource_strings.API_WORKSPACE_TEMPLATES, admin_token, verify) as response:
@@ -155,6 +163,17 @@ async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
 
     # Tear-down
     await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+
+
+@pytest.fixture(scope="session")
+async def setup_test_foundry_workspace(verify):
+    # Keep Foundry's group requirement separate from the existing fixtures.
+    workspace_path, workspace_id = await create_or_get_test_workspace(
+        auth_type="Automatic", verify=verify, create_aad_groups=True)
+    try:
+        yield workspace_path, workspace_id
+    finally:
+        await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)
 
 
 async def get_workspace_owner_token(workspace_id, verify):

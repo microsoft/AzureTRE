@@ -171,6 +171,12 @@
       "source": {
         "env": "ENABLE_DNS_POLICY"
       }
+    },
+    {
+      "name": "blocked_resource_types",
+      "source": {
+        "env": "BLOCKED_RESOURCE_TYPES"
+      }
     }
   ]
 }

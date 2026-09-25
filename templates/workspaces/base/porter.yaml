@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.10.2
+version: 2.12.0
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -152,6 +152,12 @@ parameters:
     type: boolean
     default: false
     description: "Whether to enable DNS security policy for the workspace."
+  - name: blocked_resource_types
+    type: string
+    default: "W10=" # Base64-encoded [] as used for complex TRE properties.
+    description: >-
+      Base64-encoded JSON array of Azure resource types to deny in this workspace.
+      An empty array creates no policy.
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
@@ -274,6 +280,7 @@ install:
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        blocked_resource_types: ${ bundle.parameters.blocked_resource_types }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -334,6 +341,7 @@ upgrade:
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        blocked_resource_types: ${ bundle.parameters.blocked_resource_types }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }
@@ -432,6 +440,7 @@ uninstall:
         storage_account_redundancy: ${ bundle.parameters.storage_account_redundancy }
         enable_backup: ${ bundle.parameters.enable_backup }
         enable_dns_policy: ${ bundle.parameters.enable_dns_policy }
+        blocked_resource_types: ${ bundle.parameters.blocked_resource_types }
         auto_grant_workspace_consent: ${ bundle.parameters.auto_grant_workspace_consent }
         enable_airlock_malware_scanning: ${ bundle.parameters.enable_airlock_malware_scanning }
         airlock_malware_scan_result_topic_name: ${ bundle.parameters.airlock_malware_scan_result_topic_name }

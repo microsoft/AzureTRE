@@ -89,3 +89,55 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
     workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
 
     await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)
+
+
+@pytest.mark.workspace_services
+@pytest.mark.extended_aad
+@pytest.mark.foundry
+@pytest.mark.timeout(75 * 60)
+async def test_ai_foundry_model_service_lifecycle(verify, setup_test_foundry_workspace) -> None:
+    workspace_path, workspace_id = setup_test_foundry_workspace
+    workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+    workspace_service_path, _ = await post_resource(
+        {
+            "templateName": strings.AI_FOUNDRY_SERVICE,
+            "properties": {
+                "display_name": "Private Foundry model test",
+                "description": "Model-only service lifecycle",
+                "openai_model": "gpt-5.1 | 2025-11-13",
+                "is_exposed_externally": False,
+                "local_auth_enabled": False,
+                "openai_model_capacity": 1
+            }
+        },
+        f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
+        workspace_owner_token,
+        verify
+    )
+    try:
+        service = await get_resource(f"/api{workspace_service_path}", workspace_owner_token, verify)
+        properties = service["workspaceService"]["properties"]
+        assert properties["ai_foundry_id"].startswith("/subscriptions/")
+        assert properties["openai_model"] == "gpt-5.1 | 2025-11-13"
+        assert properties["openai_model_capacity"] == 1
+        assert properties["is_exposed_externally"] is False
+        assert properties["local_auth_enabled"] is False
+        assert properties["openai_endpoint"].startswith("https://")
+        assert properties["openai_model_deployment"]
+        assert properties["openai_api_key_secret_id"] == ""
+
+        # Exercise the upgrade action without opening public access or enabling keys.
+        workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
+        await post_resource(
+            {"properties": {"openai_model_capacity": 1}},
+            f"/api{workspace_service_path}", workspace_owner_token, verify, method="PATCH")
+        updated = await get_resource(f"/api{workspace_service_path}", workspace_owner_token, verify)
+        updated_properties = updated["workspaceService"]["properties"]
+        assert updated_properties["ai_foundry_id"] == properties["ai_foundry_id"]
+        assert updated_properties["openai_endpoint"] == properties["openai_endpoint"]
+        assert updated_properties["openai_model_deployment"] == properties["openai_model_deployment"]
+        assert updated_properties["is_exposed_externally"] is False
+        assert updated_properties["local_auth_enabled"] is False
+        assert updated_properties["openai_api_key_secret_id"] == ""
+    finally:
+        await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)

@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile-upstream:1.4.0
+FROM --platform=linux/amd64 debian:bookworm-slim
+
+# PORTER_INIT
+
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+# Terraform uses Git to download modules during terraform init.
+RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y ca-certificates git jq --no-install-recommends
+
+# PORTER_MIXINS
+
+# Copy the selected bundle directory into the image.
+COPY --link . ${BUNDLE_DIR}/
