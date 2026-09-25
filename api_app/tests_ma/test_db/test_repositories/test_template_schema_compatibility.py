@@ -1,6 +1,4 @@
 import copy
-import json
-from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -98,11 +96,22 @@ def test_draft7_keeps_legacy_dependency_validation():
 
 
 @pytest.mark.asyncio
-async def test_foundry_template_preserves_outbound_settings_after_registration():
-    root = Path(__file__).resolve().parents[4]
-    schema = json.loads((root / "templates/workspace_services/ai-foundry/template_schema.json").read_text())
+async def test_registered_template_preserves_array_defaults_and_constraints():
+    # API Docker builds contain only api_app, so keep this runtime fixture self-contained.
+    schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Array compatibility",
+        "description": "Registration and resource validation for updateable arrays",
+        "properties": {"choices": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["alpha", "beta"]},
+            "uniqueItems": True,
+            "default": ["alpha"],
+            "updateable": True,
+        }},
+    }
     template_input = ResourceTemplateInCreate(
-        name="tre-workspace-service-ai-foundry", version="1.0.0", current=True, json_schema=schema)
+        name="array-compatibility", version="1.0.0", current=True, json_schema=schema)
     repository = ResourceTemplateRepository()
     repository.save_item = AsyncMock()
     await repository.create_template(template_input, ResourceType.WorkspaceService, "")
@@ -111,16 +120,17 @@ async def test_foundry_template_preserves_outbound_settings_after_registration()
     template = await repository.get_template_by_name_and_version(template_input.name, "1.0.0", ResourceType.WorkspaceService)
     reloaded = template.model_dump()
     assert reloaded["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-    assert reloaded["properties"]["allowed_fqdns"] == schema["properties"]["allowed_fqdns"]
+    assert reloaded["properties"]["choices"] == schema["properties"]["choices"]
     enriched = repository.enrich_template(template)
     resources = ResourceRepository()
-    defaults = {name: field["default"] for name, field in schema["properties"].items() if "default" in field}
+    defaults = {"display_name": "Example", "description": "Example", "choices": reloaded["properties"]["choices"]["default"]}
     resources._validate_resource_parameters({"properties": defaults}, enriched)
 
-    for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"]):
-        resources._validate_resource_parameters({"properties": {**defaults, "allowed_fqdns": hosts}}, enriched)
-        resources.validate_patch(ResourcePatch(properties={"allowed_fqdns": hosts}), repository, template, RESOURCE_ACTION_UPDATE)
-    for properties in ({"allowed_fqdns": ["https://example.com"]}, {"allowed_fqdns": None}, {"unexpected": "value"}):
+    for choices in ([], ["alpha"], ["beta"], ["alpha", "beta"]):
+        resources._validate_resource_parameters({"properties": {**defaults, "choices": choices}}, enriched)
+        resources.validate_patch(ResourcePatch(properties={"choices": choices}), repository, template, RESOURCE_ACTION_UPDATE)
+    for properties in ({"choices": ["unknown"]}, {"choices": None}, {"choices": [1]},
+                       {"choices": ["alpha", "alpha"]}, {"unexpected": "value"}):
         with pytest.raises(ValidationError):
             resources._validate_resource_parameters({"properties": {**defaults, **properties}}, enriched)
         with pytest.raises(ValidationError):
