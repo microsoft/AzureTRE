@@ -43,8 +43,8 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
         operation_endpoint = response.headers["Location"]
 
         if wait:
-            wait_auth_headers = get_auth_header(access_token_for_wait) if access_token_for_wait else auth_headers
-            await wait_for(check_method, client, operation_endpoint, wait_auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
+            wait_token = access_token_for_wait if access_token_for_wait is not None else access_token
+            await wait_for(check_method, client, operation_endpoint, wait_token, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
 
         return resource_path, resource_id
 
@@ -61,26 +61,28 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be disabled")
         operation_endpoint = response.headers["Location"]
-        await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
+        await wait_for(patch_done, client, operation_endpoint, access_token, [strings.RESOURCE_STATUS_UPDATING_FAILED])
 
         # delete
+        auth_headers = get_auth_header(access_token)
+        auth_headers["etag"] = "*"
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_200_OK], "The resource couldn't be deleted")
 
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        await wait_for(delete_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_DELETING_FAILED])
+        await wait_for(delete_done, client, operation_endpoint, access_token, [strings.RESOURCE_STATUS_DELETING_FAILED])
         return resource_id
 
 
-async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
-    done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
+async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
+    done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
     LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
     while not done:
         await asyncio.sleep(30)
 
-        done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
+        done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state not in failure_states
