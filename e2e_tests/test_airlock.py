@@ -12,6 +12,7 @@ from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
 from e2e_tests.conftest import get_workspace_owner_token
 from helpers import get_admin_token
+from e2e_tests.token_provider import TokenProvider
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
@@ -20,7 +21,7 @@ BLOB_FILE_PATH = "./test_airlock_sample.txt"
 BLOB_NAME = os.path.basename(BLOB_FILE_PATH)
 
 
-async def submit_airlock_import_request(workspace_path: str, workspace_owner_token: str, verify: bool):
+async def submit_airlock_import_request(workspace_path: str, workspace_owner_token: TokenProvider, verify: bool):
     LOGGER.info("Creating airlock import request")
     payload = {
         "type": airlock_strings.IMPORT,
