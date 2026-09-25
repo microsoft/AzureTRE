@@ -1,8 +1,14 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
+Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Existing workspaces upgrade in place and stay on `airlock_version=1` (a minor, non-destructive `tre-workspace-base`
+  upgrade to `2.11.1`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
+See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Update template schemas to Draft 2020-12, preserve legacy input restrictions, and support local schema definitions in resource forms. (`API` 0.27.0, `ui` 0.9.0) ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
@@ -22,6 +28,20 @@ ENHANCEMENTS:
 * Update case-study documentation by removing an obsolete entry and adding Oxford University Hospitals/TVS SDE and UNC Health SHIRE case studies. ([#5072](https://github.com/microsoft/AzureTRE/pull/5072))
 
 BUG FIXES:
+* Discover the export-review VM's storage NSG destination from workspace private endpoints so install, upgrade, and uninstall support both legacy per-stage and v2 consolidated Airlock storage (`tre-service-guacamole-export-reviewvm` 2.0.5) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Use available Dsv7 VM sizes for Guacamole user-resource bundles to avoid Dsv6 VM start timeouts (`tre-service-guacamole-import-reviewvm` 2.0.3, `tre-service-guacamole-export-reviewvm` 2.0.5, `tre-service-guacamole-linuxvm` 1.4.6, `tre-service-guacamole-windowsvm` 3.0.3) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Use the current environment configuration mappings for v2 Airlock workspaces so signer and private-link deployment supports all configured sovereign clouds (`tre-workspace-base` 2.11.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Prevent disabling Airlock on v2 workspaces because removing the per-workspace signer would make retained shared request containers impossible to clean up safely, and reject an explicit null `airlock_version` patch before it can silently select the bundle default ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Mark Airlock import-review workspaces as not exposing their own Airlock, allowing them to be created when legacy Airlock is disabled (`tre-workspace-airlock-import-review` 0.17.1) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Make v2 Airlock submission retries preserve an already sealed blob while recovering from failed or aborted copies, retain legacy import-review Terraform resource state, and reject malformed `airlock_version` patches with HTTP 400 (`airlock-processor` 0.8.33, API 0.27.29) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Derive a new workspace's `airlock_version` from its template rather than always defaulting to 2, so a workspace created from a legacy (pre-v2) template is correctly stamped `airlock_version=1` instead of being marked v2 while deploying v1 storage. The version guard now validates the resolved value, and the "missing means legacy (1)" default is applied consistently ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Remove incorrect Terraform `moved` blocks for the legacy airlock role assignments and Defender action, which already used `count` on `main` (moving an unindexed address to `[0]` was a no-op at best and misleading) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Raise a clear error when an Event Grid topic/subject or blob URL can't be parsed (including the BlobCreated trigger), and fix a malformed log statement, so unexpected airlock scan/blob events are diagnosable instead of failing with an opaque `NoneType` error (`airlock-processor` 0.8.31) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Fail an airlock submission cleanly with `NoDataInRequestException` when neither the draft nor the sealed container exists, instead of raising `ResourceNotFoundError` that leaves the request retrying/dead-lettered while stuck in `Submitted` (`airlock-processor` 0.8.31) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Stop logging the full blob URL (including the SAS query string) in the airlock E2E upload/delete helpers, so short-lived read/write/delete credentials aren't exposed in test logs ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Reject creating an airlock request on a legacy (`airlock_version=1`) workspace when `enable_legacy_airlock=false`, instead of letting it silently stall in `Submitted` because the legacy storage no longer exists ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Emit airlock malware scan verdicts without reading the scanned blob, so a verdict arriving after the draft container is sealed no longer strands the request in `Submitted` ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Use the cloud-specific workload identity token exchange audience so v2 airlock SAS signing works in sovereign clouds ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Defer scheduled CI environment cleanup while other GitHub Actions runs are active or queued, including PR tests started by comments. (`devops` 0.6.5) ([#5087](https://github.com/microsoft/AzureTRE/pull/5087))
 * Patch `brace-expansion`, `fast-uri`, `immutable`, `js-yaml`, `nanoid`, and `postcss` in the UI dependencies. ([#5056](https://github.com/microsoft/AzureTRE/pull/5056))
 * Bump `aiohttp` from 3.14.1 to 3.14.3 in `api_app`, `resource_processor`, and the CLI requirements and package metadata. ([#5045](https://github.com/microsoft/AzureTRE/pull/5045), [#5062](https://github.com/microsoft/AzureTRE/pull/5062))

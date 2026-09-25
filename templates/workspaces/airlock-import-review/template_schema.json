@@ -30,6 +30,12 @@
       "default": true,
       "updateable": true
     },
+    "enable_airlock": {
+      "type": "boolean",
+      "title": "Enable Airlock",
+      "description": "Airlock review workspaces review requests from other workspaces and do not expose their own Airlock.",
+      "default": false
+    },
     "address_space_size": {
       "type": "string",
       "title": "Address space size",
@@ -192,6 +198,9 @@
   "pipeline": null,
   "uiSchema": {
     "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    },
+    "enable_airlock": {
       "classNames": "tre-hidden"
     },
     "address_spaces": {

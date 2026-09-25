@@ -23,6 +23,16 @@
       "default": true,
       "updateable": true
     },
+    "airlock_version": {
+      "type": "integer",
+      "title": "Airlock Version",
+      "description": "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage. Leave unset to use the default (2). Version 1 requires legacy airlock to be enabled in core.",
+      "enum": [
+        1,
+        2
+      ],
+      "updateable": true
+    },
     "app_service_plan_sku": {
       "type": "string",
       "title": "App Service Plan SKU",

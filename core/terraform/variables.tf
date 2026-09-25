@@ -174,6 +174,12 @@ variable "enable_airlock_malware_scanning" {
   description = "If False, Airlock requests will skip the malware scanning stage"
 }
 
+variable "enable_legacy_airlock" {
+  type        = bool
+  default     = true
+  description = "Deploy v1 legacy per-stage airlock storage accounts in core. Required for workspaces using airlock_version=1."
+}
+
 variable "enable_airlock_email_check" {
   type        = bool
   default     = false

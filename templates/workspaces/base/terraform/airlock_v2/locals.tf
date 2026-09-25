@@ -1,0 +1,5 @@
+locals {
+  core_resource_group_name = "rg-${var.tre_id}"
+
+  airlock_workspace_global_storage_name = lower(replace("stalairlockg${var.tre_id}", "-", ""))
+}
