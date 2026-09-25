@@ -49,14 +49,15 @@ resource "azurerm_linux_web_app" "guacamole" {
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL = "INFO"
 
     # Guacmole configuration
-    GUAC_DISABLE_COPY     = var.guac_disable_copy
-    GUAC_DISABLE_PASTE    = var.guac_disable_paste
-    GUAC_ENABLE_DRIVE     = var.guac_enable_drive
-    GUAC_DRIVE_NAME       = var.guac_drive_name
-    GUAC_DRIVE_PATH       = var.guac_drive_path
-    GUAC_DISABLE_DOWNLOAD = var.guac_disable_download
-    GUAC_DISABLE_UPLOAD   = var.guac_disable_upload
-    GUAC_SERVER_LAYOUT    = var.guac_server_layout
+    GUAC_DISABLE_COPY        = var.guac_disable_copy
+    GUAC_DISABLE_PASTE       = var.guac_disable_paste
+    GUAC_ENABLE_DRIVE        = var.guac_enable_drive
+    GUAC_DRIVE_NAME          = var.guac_drive_name
+    GUAC_DRIVE_PATH          = var.guac_drive_path
+    GUAC_DISABLE_DOWNLOAD    = var.guac_disable_download
+    GUAC_DISABLE_UPLOAD      = var.guac_disable_upload
+    GUAC_SERVER_LAYOUT       = var.guac_server_layout
+    GUAC_API_TIMEOUT_SECONDS = var.guac_api_timeout_seconds
 
     AUDIENCE = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault_secret.workspace_client_id.id})"
     ISSUER   = local.issuer

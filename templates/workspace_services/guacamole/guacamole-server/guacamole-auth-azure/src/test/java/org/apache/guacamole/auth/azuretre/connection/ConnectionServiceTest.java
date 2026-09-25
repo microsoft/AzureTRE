@@ -5,10 +5,13 @@ import org.apache.guacamole.auth.azuretre.user.AzureTREAuthenticatedUser;
 import org.apache.guacamole.net.auth.AuthenticatedUser;
 import org.apache.guacamole.net.auth.Connection;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.ClearEnvironmentVariable;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +63,30 @@ class ConnectionServiceTest {
             assertThrows(GuacamoleException.class, () -> 
                 ConnectionService.getConnections((AzureTREAuthenticatedUser) authenticatedUser));
         }
+    }
+
+    @Test
+    @ClearEnvironmentVariable(key = "GUAC_API_TIMEOUT_SECONDS")
+    public void getApiTimeoutUsesDefaultWhenUnset() {
+        assertEquals(Duration.ofSeconds(30), ConnectionService.getApiTimeout());
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "GUAC_API_TIMEOUT_SECONDS", value = "45")
+    public void getApiTimeoutUsesConfiguredValue() {
+        assertEquals(Duration.ofSeconds(45), ConnectionService.getApiTimeout());
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "GUAC_API_TIMEOUT_SECONDS", value = "0")
+    public void getApiTimeoutFallsBackToDefaultWhenConfiguredValueIsNotPositive() {
+        assertEquals(Duration.ofSeconds(30), ConnectionService.getApiTimeout());
+    }
+
+    @Test
+    @SetEnvironmentVariable(key = "GUAC_API_TIMEOUT_SECONDS", value = "invalid")
+    public void getApiTimeoutFallsBackToDefaultWhenConfiguredValueIsInvalid() {
+        assertEquals(Duration.ofSeconds(30), ConnectionService.getApiTimeout());
     }
 
     private void testGetConnections(final Map<String, Connection> connectionList) {

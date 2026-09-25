@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole
-version: 0.14.5
+version: 0.14.6
 description: "An Azure TRE service for Guacamole"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -81,6 +81,11 @@ parameters:
     default: ""
     env: GUAC_SERVER_LAYOUT
     description: "Guacamole server keyboard layout  (defaults to en-us-qwerty when not set)"
+  - name: guac_api_timeout_seconds
+    type: integer
+    default: 30
+    env: GUAC_API_TIMEOUT_SECONDS
+    description: "Timeout in seconds for Guacamole user-resources API calls"
   - name: is_exposed_externally
     type: boolean
     default: true
@@ -154,6 +159,7 @@ install:
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         guac_server_layout: ${ bundle.parameters.guac_server_layout }
+        guac_api_timeout_seconds: ${ bundle.parameters.guac_api_timeout_seconds }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
@@ -189,6 +195,7 @@ upgrade:
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         guac_server_layout: ${ bundle.parameters.guac_server_layout }
+        guac_api_timeout_seconds: ${ bundle.parameters.guac_api_timeout_seconds }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }

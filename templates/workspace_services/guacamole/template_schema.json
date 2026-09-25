@@ -60,6 +60,14 @@
       "updateable": true,
       "default": true
     },
+    "guac_api_timeout_seconds": {
+      "type": "integer",
+      "title": "API timeout in seconds",
+      "description": "Timeout for Guacamole user-resources API calls",
+      "updateable": true,
+      "default": 30,
+      "minimum": 1
+    },
     "is_exposed_externally": {
       "type": "boolean",
       "title": "Expose externally",
