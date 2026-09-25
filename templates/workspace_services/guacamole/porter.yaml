@@ -231,7 +231,6 @@ uninstall:
         guac_disable_download: ${ bundle.parameters.guac_disable_download }
         guac_disable_upload: ${ bundle.parameters.guac_disable_upload }
         guac_server_layout: ${ bundle.parameters.guac_server_layout }
-        guac_api_timeout_seconds: ${ bundle.parameters.guac_api_timeout_seconds }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         tre_resource_id: ${ bundle.parameters.id }
         aad_authority_url: ${ bundle.parameters.aad_authority_url }
