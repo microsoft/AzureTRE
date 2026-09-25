@@ -89,6 +89,18 @@
       "default": false,
       "updateable": true
     },
+    "blocked_resource_types": {
+      "type": "array",
+      "title": "Blocked Azure resource types",
+      "description": "Deny creation and updates of these Azure resource types in this workspace. Use Microsoft.Bing/accounts to block Bing accounts. An empty list creates no policy. Existing resources are not disabled.",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9.]+/[A-Za-z0-9]+(/[A-Za-z0-9]+)*$"
+      },
+      "uniqueItems": true,
+      "default": [],
+      "updateable": true
+    },
     "deploy_to_another_subscription": {
       "type": "boolean",
       "title": "Deploy workspace to another subscription",

@@ -17,6 +17,7 @@ The service does not receive access to shared workspace storage.
 - Use Azure public cloud and a region that supports the template's model and Standard deployment tier.
 - Check model quota before installation. The default capacity is 10 units of 1,000 tokens per minute.
 - The deployment identity needs permission to manage role assignments on the Foundry account and, when keys are enabled, its Key Vault secret.
+- Before using sensitive data, review the [hosted-tool controls](#hosted-tool-controls) and verify every required runtime restriction.
 
 Fresh installations do not require custom role definition permissions. Upgrades from the earlier custom-role version require cleanup permissions described below.
 
@@ -136,7 +137,9 @@ Workspace model requests use the private endpoint in both network modes.
 When `is_exposed_externally=true`, the account also accepts authenticated requests from all public networks.
 When it is `false`, public network access is disabled and the account's network ACL defaults to Deny.
 The template adds no portal, Azure management, package or image-registry destinations.
-The account's [outbound restriction](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention) is enabled with no allowed external hosts.
+The account's [outbound restriction](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention) is enabled with `deny-all.invalid` as its only allowed hostname.
+The [reserved `.invalid` domain](https://www.rfc-editor.org/rfc/rfc6761#section-6.4) does not resolve publicly. This sentinel allows no usable public destination.
+Version `0.4.7` uses this non-empty list because live validation found that an empty list did not enforce the required restriction.
 External image URLs and other service-initiated URL fetches are outside the supported scope. Verify their rejection in the deployment.
 
 ### Why the browser playground is excluded
@@ -158,6 +161,89 @@ The local-authentication policy supports Deny, which can prevent key authenticat
 Terraform disables key authentication by default. An applicable Deny policy can prevent an operator from enabling the optional key setting.
 A policy assignment is an additional operator governance decision, not a prerequisite imposed by this service.
 An Audit effect reports non-compliance without blocking it. Neither effect replaces runtime RBAC permissions.
+
+### Hosted-tool controls
+
+The built-in inference role permits Responses API requests, including requests that specify hosted tools.
+Excluding these tools from the supported client flow does not disable them for direct API callers.
+The account's outbound restriction, Bing resource policies and subscription web-search block are separate controls.
+
+#### Bing resource policy
+
+Base workspace `2.12.0` provides an optional [blocked resource types setting](../workspaces/base.md#blocked-azure-resource-types).
+Set the following workspace property to deny Bing account creation and updates in that workspace:
+
+```json
+{
+  "blocked_resource_types": ["Microsoft.Bing/accounts"]
+}
+```
+
+The list defaults to empty, so the policy is opt-in. It denies all Bing account kinds, not only one grounding tool.
+The base workspace owns the enforced Deny assignment. Deleting a Foundry service does not remove it.
+It does not apply outside the workspace resource group. Subscription-wide restrictions require an administrator-owned assignment at that scope.
+
+A [Deny policy](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effect-deny) blocks matching resource creation and updates.
+It does not disable existing accounts, remove their keys or block connections to resources outside its scope.
+Review existing Bing accounts and Foundry connections separately using Microsoft's [Bing governance guidance](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/bing-tools#manage-grounding-with-bing-search-and-grounding-with-bing-custom-search).
+Do not delete shared resources or unregister their provider as part of this service's uninstall.
+This resource policy does not replace the Responses web-search block below.
+
+#### Subscription web-search prerequisite
+
+Microsoft provides a [subscription-wide block for web search](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/web-search#manage-web-search-tool).
+It applies to every Foundry account in the selected subscription, including accounts unrelated to this TRE.
+For deployments that prohibit web search, the subscription administrator must configure and validate this control before sensitive use.
+Registration is outside this workspace-service template's lifecycle. Installation does not register it, and uninstall must not unregister it.
+
+After approving the subscription-wide impact, register the block in the **workspace subscription**, which may differ from the core subscription:
+
+```bash
+az feature register --namespace Microsoft.CognitiveServices \
+  --name OpenAI.BlockedTools.web_search --subscription "<workspace-subscription-id>"
+```
+
+Check the registration state:
+
+```bash
+az feature show --namespace Microsoft.CognitiveServices \
+  --name OpenAI.BlockedTools.web_search --subscription "<workspace-subscription-id>" \
+  --query properties.state -o tsv
+```
+
+When the state is `Registered`, [refresh provider registration](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/preview-features#register-preview-feature):
+
+```bash
+az provider register --namespace Microsoft.CognitiveServices --subscription "<workspace-subscription-id>"
+```
+
+Allow propagation, then verify explicit administrative rejection of both `web_search` and `web_search_preview` with a healthy text-only control.
+Registration state alone is not runtime evidence. Throttling, unsupported tools and authentication errors are inconclusive.
+The automated outbound suite does not validate web-search enforcement.
+
+#### Remote MCP boundary
+
+The [Responses API accepts remote MCP servers](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/responses#using-remote-mcp-servers) supplied directly in a request.
+It does not require the caller to create a persistent Foundry connection first.
+A policy denying connection resources therefore does not close this route.
+Tool approval and omission of tools are caller-controlled options, not an administrative deny boundary.
+The web-search feature registration does not establish an MCP block.
+
+This template does not configure a separate MCP-disable control.
+It sets `restrictOutboundNetworkAccess = true` with `allowedFqdnList = ["deny-all.invalid"]`.
+Live validation on 25 September 2026 confirmed explicit domain-policy rejection of Microsoft Learn MCP metadata retrieval and tool invocation with this setting.
+The checks used `gpt-5.1` version `2025-11-13` in `switzerlandnorth`.
+Text and inline-image controls succeeded. An account that explicitly allowed `learn.microsoft.com` imported metadata and completed the same public documentation search.
+The empty-list account accepted both MCP operations and the external image request. The regression tests retain ordinary failures for this behaviour.
+Keep the sentinel until repeated empty-list checks confirm enforcement in the target deployment.
+These results validate the tested API paths, not every tool or outbound channel. Revalidate before approving a deployment that prohibits remote MCP access.
+
+If the outbound restriction does not enforce the required boundary, a hard restriction requires a reviewed alternative.
+A chat-only custom role could remove Responses access for its assignees, but it would replace the selected built-in role and require live permission tests.
+API keys must remain disabled, and other assignments must not independently grant Responses access.
+Alternatively, an enforcing gateway must reject remote MCP requests and prevent callers from bypassing it to reach Foundry directly.
+Neither alternative is implemented by this template. We retain the Microsoft-maintained role and avoid custom roles in this change.
+Both alternatives change the current access design and require a separate decision.
 
 ## Updates and removal
 
@@ -195,6 +281,8 @@ Create a fresh service for validation. Retain prototype data until its owner app
 | Template smoke tests | Deployment smoke suite | Registered Foundry template and its access-setting defaults. No model deployment. |
 | Service lifecycle test | `extended_aad`, including the main-push and nightly suites | Install, repeatable upgrade and removal in a separate Automatic-auth workspace with groups enabled. Private access and Entra authentication remain enabled throughout. |
 | Outbound image URL policy checks | Opt-in `foundry_egress` pytest selection against existing accounts | Inline-image controls, explicit domain-policy rejection with empty and unrelated allowlists, and successful retrieval from an allowed domain. No deployment. |
+| Outbound MCP policy checks | The same suite with `--foundry-mcp-config` | Text controls, public Microsoft Learn tool discovery and one public documentation search, with explicit domain-policy rejection for restricted accounts. No deployment. |
+| Workspace resource policy checks | Existing PR Build Validation when Foundry or base workspace files change | Schema and Porter parameter wiring, opt-in defaults, workspace scope, Deny enforcement, setting changes and assignment removal. Mocked, not live policy enforcement. |
 
 Run the template and CI integration checks locally with Python 3.12:
 
@@ -222,9 +310,10 @@ After merge, `/test-extended-aad` also selects the lifecycle test.
 
 ### Outbound image URL policy checks
 
-The Terraform mocks already assert `outbound_network_access_restricted = true` and `fqdns = []`.
+The Terraform mocks assert `outbound_network_access_restricted = true` and the production sentinel `fqdns = ["deny-all.invalid"]`.
 Only live model calls can establish whether Azure enforces those settings.
 The checks use the existing E2E suite and pytest JUnit reporting. Their offline tests run in the existing PR Build Validation workflow.
+The empty-list control below deliberately remains empty so it detects restored enforcement without a test change.
 
 Provide three existing `AIServices` accounts in one subscription, with identical vision-capable OpenAI model names and versions:
 
@@ -276,6 +365,36 @@ For both restricted cases, a pass requires explicit domain-policy rejection and 
 Authentication errors, throttling, inbound firewall rejection, unknown policy errors and changed settings are inconclusive pytest errors, never passing rejections.
 Without `--foundry-egress-config`, the six live tests skip. Missing or malformed supplied configuration produces errors.
 Six passes establish API enforcement for this run, not proof that no outbound fetch occurred. That requires receiver-side logs.
+
+### Outbound MCP policy checks
+
+Use the same JSON account configuration format as the image URL checks, but supply accounts with these policies:
+
+| Account label | Outbound restriction | Allowed FQDNs |
+| --- | --- | --- |
+| `empty` | Enabled | `[]` |
+| `unrelated` | Enabled | `["deny-all.invalid"]` |
+| `allowed` | Enabled | `["raw.githubusercontent.com", "learn.microsoft.com"]` |
+
+Use dedicated test accounts with identical model names and versions, and wait at least 15 minutes after policy changes.
+The image and MCP matrices have different allowlists. Use separate control accounts if running both matrices together.
+Do not change production policies to create these controls. The runner reads settings before and after the requests and changes no Azure resources.
+The nine billable Responses requests use only synthetic prompts and Microsoft's public `https://learn.microsoft.com/api/mcp` endpoint.
+Discovery requests set `tool_choice: none`. Invocation requests permit one `microsoft_docs_search` call with a fixed public-documentation query.
+The test needs enough model quota for the public tool descriptions and results. Rate limiting makes the affected checks inconclusive.
+
+Run the MCP checks from the repository root:
+
+```bash
+PYTHONPATH=.:e2e_tests python -m pytest e2e_tests/test_foundry_mcp.py -m foundry_egress -n 0 \
+  --foundry-mcp-config /tmp/foundry-mcp.json --junitxml=/tmp/foundry-mcp.xml
+```
+
+Both restricted accounts must reject discovery and invocation with an explicit MCP domain-policy error.
+Text-only requests must succeed on all accounts. The allowed account must import tool metadata and complete the public search.
+Unexpected acceptance is an ordinary test failure. Authentication failures, throttling and unhealthy positive controls are inconclusive fixture errors.
+The empty-list checks remain unchanged in purpose: they must pass through actual enforcement, never through an expected-failure marker.
+This validates the named API paths and target, not every possible outbound channel. Receiver-side logs are needed to prove absence of network traffic.
 
 ### Runtime access checks
 

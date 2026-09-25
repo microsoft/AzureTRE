@@ -19,6 +19,8 @@ def pytest_addoption(parser):
     parser.addoption("--verify", action="store", default="true")
     parser.addoption("--foundry-egress-config", metavar="PATH",
                      help="Run live outbound checks against the existing Foundry accounts in this JSON file")
+    parser.addoption("--foundry-mcp-config", metavar="PATH",
+                     help="Run live MCP checks against existing Foundry accounts with the documented MCP control policies")
 
 
 @pytest.fixture(scope="session")

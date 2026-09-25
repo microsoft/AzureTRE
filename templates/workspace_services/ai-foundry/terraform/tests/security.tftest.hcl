@@ -104,7 +104,7 @@ run "private_model_only" {
       azurerm_cognitive_account.ai_foundry.public_network_access_enabled == false
       && azurerm_cognitive_account.ai_foundry.local_auth_enabled == false
       && azurerm_cognitive_account.ai_foundry.outbound_network_access_restricted == true
-      && length(azurerm_cognitive_account.ai_foundry.fqdns) == 0
+      && toset(azurerm_cognitive_account.ai_foundry.fqdns) == toset(["deny-all.invalid"])
       && one(azurerm_cognitive_account.ai_foundry.network_acls).default_action == "Deny"
       && one(azurerm_cognitive_account.ai_foundry.network_acls).bypass == "None"
     )
@@ -303,7 +303,7 @@ run "public_api_key" {
       && one(azurerm_cognitive_account.ai_foundry.network_acls).default_action == "Allow"
       && one(azurerm_cognitive_account.ai_foundry.network_acls).bypass == "None"
       && azurerm_cognitive_account.ai_foundry.outbound_network_access_restricted
-      && length(azurerm_cognitive_account.ai_foundry.fqdns) == 0
+      && toset(azurerm_cognitive_account.ai_foundry.fqdns) == toset(["deny-all.invalid"])
       && length(azurerm_role_assignment.inference) == 2
       && length(azurerm_role_assignment.api_key_reader) == 2
     )

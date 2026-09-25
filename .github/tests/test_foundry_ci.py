@@ -352,7 +352,7 @@ class FoundryTestSelectionTests(unittest.TestCase):
         environment["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "e2e_tests")))
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "--collect-only", "-q", "-m", selector,
-             "test_workspace_services.py", "test_workspace_service_templates.py", "test_foundry_egress.py"],
+             "test_workspace_services.py", "test_workspace_service_templates.py", "test_foundry_egress.py", "test_foundry_mcp.py"],
             cwd=ROOT / "e2e_tests", env=environment, text=True, capture_output=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout
@@ -376,6 +376,7 @@ class FoundryTestSelectionTests(unittest.TestCase):
         collected = self.collect("foundry_egress")
         self.assertIn("test_foundry_image_url[empty_external]", collected)
         self.assertEqual(collected.count("test_foundry_image_url["), 6)
+        self.assertEqual(collected.count("test_foundry_mcp_access["), 9)
         self.assertNotIn(LIFECYCLE_TEST, collected)
         self.assertNotIn("test_ai_foundry_template_access_settings", collected)
 

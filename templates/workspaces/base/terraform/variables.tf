@@ -172,6 +172,21 @@ variable "enable_dns_policy" {
   default     = false
 }
 
+variable "blocked_resource_types" {
+  type        = string
+  description = "Base64-encoded JSON array of Azure resource types to deny in this workspace."
+  default     = "W10="
+
+  validation {
+    condition = try(
+      startswith(trimspace(base64decode(var.blocked_resource_types)), "[")
+      && can(tolist(jsondecode(base64decode(var.blocked_resource_types)))),
+      false
+    )
+    error_message = "blocked_resource_types must be a base64-encoded JSON array. Use W10= for an empty array."
+  }
+}
+
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false

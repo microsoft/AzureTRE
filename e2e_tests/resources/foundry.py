@@ -148,8 +148,12 @@ def verify_account(account, expected_id, fqdns, now=None):
         raise ValueError("Wait 15 minutes after the account's last modification before testing")
 
 
-def verify_live(config):
+def verify_live(config, expected_fqdns=None):
     policies = verify_config(config)
+    if expected_fqdns is not None:
+        if set(expected_fqdns) != set(policies):
+            raise ValueError("Outbound expectations must cover the three configured accounts")
+        policies = expected_fqdns
     subscription = config["subscription_id"]
     context = azure(["account", "show"], subscription)
     if (context["id"].lower() != subscription.lower()

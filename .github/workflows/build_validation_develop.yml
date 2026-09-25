@@ -55,6 +55,7 @@ jobs:
 
             foundry:
               - 'templates/workspace_services/ai-foundry/**'
+              - 'templates/workspaces/base/**'
               - '.github/tests/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/deploy_tre*.yml'
@@ -132,6 +133,13 @@ jobs:
         if: ${{ steps.filter.outputs.foundry == 'true' }}
         working-directory: templates/workspace_services/ai-foundry/terraform
         run: python tests/run_dependency_graph.py
+
+      - name: Test workspace resource policy
+        if: ${{ steps.filter.outputs.foundry == 'true' }}
+        working-directory: templates/workspaces/base/terraform/resource-policy
+        run: |
+          terraform init -backend=false -input=false
+          terraform test
 
       - name: "Stale version: core"
         if: ${{ steps.filter.outputs.core == 'true' &&
