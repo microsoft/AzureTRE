@@ -45,8 +45,11 @@ public final class ConnectionService {
     /** Maximum HTTP status code that still indicates success. */
     private static final int HTTP_SUCCESS_MAX = 299;
 
-    /** API call timeout in seconds. */
-    private static final int API_TIMEOUT_SECONDS = 5;
+    /** Default API call timeout in seconds. */
+    private static final int DEFAULT_API_TIMEOUT_SECONDS = 30;
+
+    /** Environment variable that overrides the API call timeout in seconds. */
+    private static final String API_TIMEOUT_ENV_VAR = "GUAC_API_TIMEOUT_SECONDS";
 
     /** Logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(
@@ -174,6 +177,35 @@ public final class ConnectionService {
         }
     }
 
+    static Duration getApiTimeout() {
+        final String timeoutFromEnvironment = System.getenv(API_TIMEOUT_ENV_VAR);
+        if (timeoutFromEnvironment == null || timeoutFromEnvironment.isBlank()) {
+            return Duration.ofSeconds(DEFAULT_API_TIMEOUT_SECONDS);
+        }
+
+        try {
+            final int timeoutSeconds = Integer.parseInt(timeoutFromEnvironment);
+            if (timeoutSeconds < 1) {
+                LOGGER.warn(
+                    "Ignoring {} value '{}' because it must be greater than zero. "
+                        + "Using default timeout of {} seconds.",
+                    API_TIMEOUT_ENV_VAR,
+                    timeoutFromEnvironment,
+                    DEFAULT_API_TIMEOUT_SECONDS);
+                return Duration.ofSeconds(DEFAULT_API_TIMEOUT_SECONDS);
+            }
+            return Duration.ofSeconds(timeoutSeconds);
+        } catch (final NumberFormatException ex) {
+            LOGGER.warn(
+                "Ignoring {} value '{}' because it is not a valid integer. "
+                    + "Using default timeout of {} seconds.",
+                API_TIMEOUT_ENV_VAR,
+                timeoutFromEnvironment,
+                DEFAULT_API_TIMEOUT_SECONDS);
+            return Duration.ofSeconds(DEFAULT_API_TIMEOUT_SECONDS);
+        }
+    }
+
     private static JSONArray getVMsFromProjectAPI(
         final AzureTREAuthenticatedUser user) throws GuacamoleException {
         final String url = String.format(
@@ -186,7 +218,7 @@ public final class ConnectionService {
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
             .header("Accept", "application/json")
             .header("Authorization", "Bearer " + user.getAccessToken())
-            .timeout(Duration.ofSeconds(API_TIMEOUT_SECONDS))
+            .timeout(getApiTimeout())
             .build();
 
         final HttpResponse<String> response;

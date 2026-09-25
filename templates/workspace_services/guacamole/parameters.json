@@ -101,6 +101,12 @@
       }
     },
     {
+      "name": "guac_api_timeout_seconds",
+      "source": {
+        "env": "GUAC_API_TIMEOUT_SECONDS"
+      }
+    },
+    {
       "name": "image_tag",
       "source": {
         "env": "IMAGE_TAG"
@@ -132,4 +138,3 @@
     }
   ]
 }
-
