@@ -10,7 +10,7 @@ from types import ModuleType
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from jsonschema import Draft7Validator
+from jsonschema import Draft202012Validator
 import yaml
 
 
@@ -26,7 +26,7 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
         cls.porter = yaml.safe_load((BASE / "porter.yaml").read_text())
 
     def test_setting_is_optional_updateable_and_disabled_by_default(self):
-        Draft7Validator.check_schema(self.schema)
+        Draft202012Validator.check_schema(self.schema)
         self.assertNotIn("blocked_resource_types", self.schema["required"])
         self.assertEqual(self.field["default"], [])
         self.assertTrue(self.field["updateable"])
@@ -36,7 +36,7 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
         self.assertEqual(json.loads(base64.b64decode(parameter["default"])), [])
 
     def test_valid_resource_types(self):
-        validator = Draft7Validator(self.field)
+        validator = Draft202012Validator(self.field)
         for value in ([], ["Microsoft.Bing/accounts"],
                       ["Microsoft.Bing/accounts", "Microsoft.Search/searchServices"],
                       ["Microsoft.CognitiveServices/accounts/projects/connections"]):
@@ -44,7 +44,7 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
                 validator.validate(value)
 
     def test_rejects_invalid_and_duplicate_types(self):
-        validator = Draft7Validator(self.field)
+        validator = Draft202012Validator(self.field)
         for value in (None, "Microsoft.Bing/accounts", {}, [1], [True], [None], [""],
                       ["Microsoft.Bing/*"], [" Microsoft.Bing/accounts"], ["/subscriptions/example"],
                       ["Microsoft.Bing/accounts", "Microsoft.Bing/accounts"]):

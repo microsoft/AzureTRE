@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ai-foundry
-version: 0.5.0
+version: 0.5.1
 description: "Deploy Azure AI Foundry with configurable network access and authentication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl

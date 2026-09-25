@@ -15,7 +15,7 @@ from types import ModuleType
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
-from jsonschema import Draft7Validator
+from jsonschema import Draft202012Validator
 import yaml
 
 
@@ -33,14 +33,14 @@ class FoundryTemplateTests(unittest.TestCase):
         cls.parameters = {item["name"]: item for item in cls.porter["parameters"]}
 
     def test_access_combinations_are_valid(self):
-        Draft7Validator.check_schema(self.schema)
-        validator = Draft7Validator(self.schema)
+        Draft202012Validator.check_schema(self.schema)
+        validator = Draft202012Validator(self.schema)
         for values in itertools.product((False, True), repeat=2):
             with self.subTest(values=values):
                 validator.validate(dict(zip(ACCESS_SETTINGS, values)))
 
     def test_access_settings_reject_non_boolean_values(self):
-        validator = Draft7Validator(self.schema)
+        validator = Draft202012Validator(self.schema)
         for name in ACCESS_SETTINGS:
             for value in ("true", "false", 0, 1, None):
                 with self.subTest(name=name, value=value):
@@ -56,6 +56,11 @@ class FoundryTemplateTests(unittest.TestCase):
                 self.assertIs(field["default"], False)
                 self.assertEqual(parameter["type"], field["type"])
                 self.assertEqual(parameter["default"], field["default"])
+
+    def test_schema_matches_current_workspace_dialect(self):
+        workspace = json.loads((ROOT / "templates/workspaces/base/template_schema.json").read_text())
+        self.assertEqual(self.schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
+        self.assertEqual(self.schema["$schema"], workspace["$schema"])
 
     def test_local_parameter_set_covers_bundle(self):
         parameter_set = json.loads((BUNDLE / "parameters.json").read_text())
@@ -95,7 +100,7 @@ class FoundryTemplateTests(unittest.TestCase):
         self.assertIn('default     = "' + parameter["default"] + '"', block)
 
     def test_outbound_allowlist_accepts_explicit_empty_and_hostname_lists(self):
-        validator = Draft7Validator(self.schema)
+        validator = Draft202012Validator(self.schema)
         validator.validate({})
         for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"],
                       ["deny-all.invalid", "learn.microsoft.com"],
@@ -104,7 +109,7 @@ class FoundryTemplateTests(unittest.TestCase):
                 validator.validate({"allowed_fqdns": hosts})
 
     def test_outbound_allowlist_rejects_invalid_hosts_and_duplicates(self):
-        validator = Draft7Validator(self.schema)
+        validator = Draft202012Validator(self.schema)
         for value in (None, "example.com", {}, [1], [True], [None], [""], ["localhost"],
                       ["https://example.com"], ["example.com/path"], ["example.com:443"], ["*.example.com"],
                       [" example.com"], ["example.com "], ["-bad.example"], ["bad-.example"],

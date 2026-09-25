@@ -1,5 +1,5 @@
 import { Spinner, SpinnerSize } from "@fluentui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
 import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
@@ -9,7 +9,7 @@ import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
-import validator from "@rjsf/validator-ajv8";
+import { createResourceTemplateValidator } from "../../../models/resourceTemplateValidator";
 
 interface ResourceFormProps {
   templateName: string;
@@ -22,6 +22,7 @@ interface ResourceFormProps {
 
 export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
   const [template, setTemplate] = useState<any | null>(null);
+  const validator = useMemo(() => createResourceTemplateValidator(template), [template]);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
   const [sendingData, setSendingData] = useState(false);
