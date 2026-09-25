@@ -37,6 +37,27 @@ variable "local_auth_enabled" {
   default     = false
 }
 
+variable "allowed_fqdns" {
+  type        = string
+  description = "Base64-encoded JSON array of allowed outbound hostnames. The default deny-all.invalid sentinel preserves outbound blocking. An explicit empty list removes the workaround and allowed external image and MCP requests in live tests on 25 September 2026."
+  default     = "WyJkZW55LWFsbC5pbnZhbGlkIl0="
+  nullable    = false
+
+  validation {
+    condition = try(
+      startswith(trimspace(base64decode(var.allowed_fqdns)), "[")
+      && length(jsondecode(base64decode(var.allowed_fqdns))) <= 1000
+      && length(distinct(jsondecode(base64decode(var.allowed_fqdns)))) == length(jsondecode(base64decode(var.allowed_fqdns)))
+      && alltrue([
+        for fqdn in jsondecode(base64decode(var.allowed_fqdns)) :
+        length(fqdn) <= 253 && can(regex("^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$", fqdn))
+      ]),
+      false
+    )
+    error_message = "allowed_fqdns must be a base64-encoded JSON array of up to 1000 unique hostnames, each at most 253 characters. Use exact hostnames, not URLs, wildcards or blank entries. An explicit empty array (W10=) removes the deny-all workaround."
+  }
+}
+
 variable "openai_model" {
   type        = string
   description = "OpenAI model in the format 'model_name | version'."

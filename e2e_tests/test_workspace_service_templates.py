@@ -49,6 +49,9 @@ async def test_ai_foundry_template_access_settings(verify) -> None:
             assert properties[name]["type"] == "boolean"
             assert properties[name]["default"] is False
             assert properties[name]["updateable"] is True
+        assert properties["allowed_fqdns"]["type"] == "array"
+        assert properties["allowed_fqdns"]["default"] == ["deny-all.invalid"]
+        assert properties["allowed_fqdns"]["updateable"] is True
 
 
 @pytest.mark.smoke

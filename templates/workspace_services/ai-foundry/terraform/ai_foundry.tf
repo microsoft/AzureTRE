@@ -37,12 +37,12 @@ resource "azurerm_cognitive_account" "ai_foundry" {
   local_auth_enabled            = var.local_auth_enabled
   project_management_enabled    = true
 
-  # Model-only use needs no service-initiated requests to external hosts.
-  # A reserved, non-resolving sentinel keeps deny-all enforcement active.
-  # Retain the empty-list live regression checks before removing this workaround.
+  # Default to a non-resolving sentinel to keep outbound blocking active.
+  # Explicit operator allowlists, including [], reach Azure unchanged.
+  # Empty-list live regression checks track enforcement without the workaround.
   # https://learn.microsoft.com/azure/ai-services/cognitive-services-data-loss-prevention
   outbound_network_access_restricted = true
-  fqdns                              = ["deny-all.invalid"]
+  fqdns                              = jsondecode(base64decode(var.allowed_fqdns))
 
   identity {
     type = "SystemAssigned"

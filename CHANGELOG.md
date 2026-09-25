@@ -3,8 +3,8 @@
 **BREAKING CHANGES**
 
 ENHANCEMENTS:
-* Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. Support separate workspace subscriptions and wait before reading available models. (`core` 0.17.0, `tre-workspace-base` 2.12.0, `tre-workspace-service-ai-foundry` 0.4.7) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
-* Add an optional workspace resource-type deny policy, a validated Foundry outbound allowlist workaround, MCP policy checks and hosted-tool governance guidance. (`tre-workspace-base` 2.12.0, `tre-workspace-service-ai-foundry` 0.4.7) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
+* Add an Azure AI Foundry model service with private Entra access by default and optional public access and API keys. Use account-scoped `Cognitive Services OpenAI User` assignments. Support separate workspace subscriptions and wait before reading available models. (`core` 0.17.0, `tre-workspace-base` 2.12.0, `tre-workspace-service-ai-foundry` 0.5.0) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
+* Add an optional workspace resource-type deny policy, a validated Foundry outbound allowlist workaround, MCP policy checks and hosted-tool governance guidance. Expose `allowed_fqdns` through TRE and Porter with the `deny-all.invalid` default and an empty-list warning. (`tre-workspace-base` 2.12.0, `tre-workspace-service-ai-foundry` 0.5.0) ([#4509](https://github.com/microsoft/AzureTRE/issues/4509))
 
 BUG FIXES:
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))

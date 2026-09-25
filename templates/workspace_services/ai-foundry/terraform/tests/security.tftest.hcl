@@ -328,6 +328,101 @@ run "return_to_private_entra_only" {
   }
 }
 
+run "allow_selected_outbound_hosts" {
+  command = apply
+  variables {
+    allowed_fqdns = base64encode(jsonencode(["raw.githubusercontent.com", "learn.microsoft.com"]))
+  }
+  assert {
+    condition = (
+      azurerm_cognitive_account.ai_foundry.outbound_network_access_restricted
+      && toset(azurerm_cognitive_account.ai_foundry.fqdns) == toset(["raw.githubusercontent.com", "learn.microsoft.com"])
+    )
+    error_message = "An explicit allowlist must reach Azure without a forced sentinel or disabling the restriction flag."
+  }
+}
+
+run "clear_outbound_allowlist" {
+  command = apply
+  variables {
+    allowed_fqdns = base64encode(jsonencode([]))
+  }
+  assert {
+    condition = (
+      azurerm_cognitive_account.ai_foundry.outbound_network_access_restricted
+      && length(azurerm_cognitive_account.ai_foundry.fqdns) == 0
+    )
+    error_message = "An explicit empty list must reach Azure unchanged, as described by the warning."
+  }
+}
+
+run "restore_default_outbound_allowlist" {
+  command = apply
+  assert {
+    condition = (
+      azurerm_cognitive_account.ai_foundry.outbound_network_access_restricted
+      && toset(azurerm_cognitive_account.ai_foundry.fqdns) == toset(["deny-all.invalid"])
+    )
+    error_message = "Omitting the Terraform input must use the default non-resolving sentinel."
+  }
+}
+
+run "reject_outbound_url" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode(["https://example.com"]))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_outbound_wildcard" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode(["*.example.com"]))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_blank_outbound_entry" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode([""]))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_duplicate_outbound_entries" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode(["example.com", "example.com"]))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_outbound_object" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode({ hostname = "example.com" }))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_non_string_outbound_entry" {
+  command = plan
+  variables {
+    allowed_fqdns = base64encode(jsonencode([123]))
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
+run "reject_unencoded_outbound_input" {
+  command = plan
+  variables {
+    allowed_fqdns = "not-base64"
+  }
+  expect_failures = [var.allowed_fqdns]
+}
+
 run "reject_missing_workspace_groups" {
   command = plan
   variables {

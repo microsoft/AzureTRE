@@ -41,6 +41,20 @@
       "default": false,
       "updateable": true
     },
+    "allowed_fqdns": {
+      "type": "array",
+      "title": "Allowed outbound FQDNs",
+      "description": "Defaults to deny-all.invalid, a non-resolving hostname used to enforce outbound blocking. Removing the last entry or setting [] removes this workaround. Live tests on 25 September 2026 allowed external image and MCP requests with an empty list, despite outbound restriction remaining enabled. Real hostnames permit outbound access to those hosts. Enter exact hostnames, not URLs or wildcards.",
+      "items": {
+        "type": "string",
+        "maxLength": 253,
+        "pattern": "^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$"
+      },
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "default": ["deny-all.invalid"],
+      "updateable": true
+    },
     "openai_model": {
       "type": "string",
       "title": "OpenAI model",

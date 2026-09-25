@@ -137,10 +137,51 @@ Workspace model requests use the private endpoint in both network modes.
 When `is_exposed_externally=true`, the account also accepts authenticated requests from all public networks.
 When it is `false`, public network access is disabled and the account's network ACL defaults to Deny.
 The template adds no portal, Azure management, package or image-registry destinations.
-The account's [outbound restriction](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention) is enabled with `deny-all.invalid` as its only allowed hostname.
+The account's [outbound restriction](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention) remains enabled for every `allowed_fqdns` value.
+The default list contains only `deny-all.invalid`.
 The [reserved `.invalid` domain](https://www.rfc-editor.org/rfc/rfc6761#section-6.4) does not resolve publicly. This sentinel allows no usable public destination.
 Version `0.4.7` uses this non-empty list because live validation found that an empty list did not enforce the required restriction.
 External image URLs and other service-initiated URL fetches are outside the supported scope. Verify their rejection in the deployment.
+
+### Allowed outbound FQDNs
+
+Version `0.5.0` exposes `allowed_fqdns` through the TRE service settings and Porter.
+The TRE property is an updateable array of exact hostnames, defaulting to `["deny-all.invalid"]`.
+It controls Foundry's service-initiated requests, not the workspace firewall or client network access.
+Adding hosts permits outbound access to them and can allow data to leave Foundry. Review each destination before adding it.
+Allowing a host does not add its tools or API features to this template's supported scope.
+
+**Warning:** removing the last hostname, including the sole `deny-all.invalid` entry, leaves `[]` and removes the workaround.
+In live tests on 25 September 2026, an empty list allowed external image requests, MCP metadata retrieval and MCP tool invocation.
+The outbound restriction flag remained enabled. Do not rely on an empty list to block outbound access while this behaviour persists.
+The template passes an explicit empty list to Azure unchanged. It does not silently restore the sentinel.
+
+| Value | Effect |
+| --- | --- |
+| `["deny-all.invalid"]` | Default. The tested external image and MCP requests were explicitly rejected. |
+| `["deny-all.invalid", "learn.microsoft.com"]` | Permits the named real host. The sentinel does not override another allowed entry. |
+| `["learn.microsoft.com"]` | Removes the sentinel but keeps a non-empty allowlist permitting the named host. |
+| `[]` | Removes the workaround. The tested external requests were accepted despite the restriction flag. |
+
+Use the following TRE service property to restore the default:
+
+```json
+{
+  "allowed_fqdns": ["deny-all.invalid"]
+}
+```
+
+Use hostnames only, without a scheme, port, path, wildcard or blank entry. Duplicate entries are rejected.
+Microsoft [documents a maximum of 1,000 entries and up to 15 minutes for propagation](https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-data-loss-prevention#enabling-data-loss-prevention).
+Wait for propagation, then validate the required API paths. Configured values alone do not prove enforcement.
+
+For direct Porter use, the parameter is a base64-encoded JSON array, following TRE's complex-parameter convention.
+Its default is `WyJkZW55LWFsbC5pbnZhbGlkIl0=`, encoding `["deny-all.invalid"]`.
+An explicit empty array is `W10=`. An empty string is invalid and is not the same as an empty array.
+The local parameter-set environment variable is `ALLOWED_FQDNS`. The TRE resource processor performs the encoding for API-supplied arrays.
+The default applies when no value is supplied or retained from a previous run.
+[Porter remembers previous values during upgrades](https://porter.sh/docs/introduction/concepts-and-components/intro-parameters/), so omission does not reset an existing value.
+To restore the default, explicitly supply `["deny-all.invalid"]` through TRE, or its base64 encoding through Porter.
 
 ### Why the browser playground is excluded
 
@@ -230,7 +271,8 @@ Tool approval and omission of tools are caller-controlled options, not an admini
 The web-search feature registration does not establish an MCP block.
 
 This template does not configure a separate MCP-disable control.
-It sets `restrictOutboundNetworkAccess = true` with `allowedFqdnList = ["deny-all.invalid"]`.
+By default, it sets `restrictOutboundNetworkAccess = true` with `allowedFqdnList = ["deny-all.invalid"]`.
+Changing [`allowed_fqdns`](#allowed-outbound-fqdns) changes this boundary, including for MCP requests.
 Live validation on 25 September 2026 confirmed explicit domain-policy rejection of Microsoft Learn MCP metadata retrieval and tool invocation with this setting.
 The checks used `gpt-5.1` version `2025-11-13` in `switzerlandnorth`.
 Text and inline-image controls succeeded. An account that explicitly allowed `learn.microsoft.com` imported metadata and completed the same public documentation search.
@@ -276,8 +318,8 @@ Create a fresh service for validation. Retain prototype data until its owner app
 
 | Check | When it runs | Coverage |
 | --- | --- | --- |
-| Template and CI integration tests | PR Build Validation when Foundry, E2E or related CI files change | Boolean schema validation, private/Entra defaults, Porter settings and secret-reference outputs, bundle registration and pytest selection. |
-| Terraform mock tests | The same PR validation | All four access combinations, setting transitions, private endpoints, built-in role selection and scope, and conditional secret creation. |
+| Template and CI integration tests | PR Build Validation when Foundry, E2E or related CI files change | Schema validation, private/Entra defaults, outbound allowlist defaults and encoding, Porter settings and secret-reference outputs, bundle registration and pytest selection. |
+| Terraform mock tests | The same PR validation | All four access combinations, setting transitions, custom and empty allowlists, private endpoints, built-in role selection and scope, and conditional secret creation. |
 | Template smoke tests | Deployment smoke suite | Registered Foundry template and its access-setting defaults. No model deployment. |
 | Service lifecycle test | `extended_aad`, including the main-push and nightly suites | Install, repeatable upgrade and removal in a separate Automatic-auth workspace with groups enabled. Private access and Entra authentication remain enabled throughout. |
 | Outbound image URL policy checks | Opt-in `foundry_egress` pytest selection against existing accounts | Inline-image controls, explicit domain-policy rejection with empty and unrelated allowlists, and successful retrieval from an allowed domain. No deployment. |
@@ -310,7 +352,7 @@ After merge, `/test-extended-aad` also selects the lifecycle test.
 
 ### Outbound image URL policy checks
 
-The Terraform mocks assert `outbound_network_access_restricted = true` and the production sentinel `fqdns = ["deny-all.invalid"]`.
+The Terraform mocks assert `outbound_network_access_restricted = true`, the default sentinel `fqdns = ["deny-all.invalid"]`, and explicit custom and empty lists.
 Only live model calls can establish whether Azure enforces those settings.
 The checks use the existing E2E suite and pytest JUnit reporting. Their offline tests run in the existing PR Build Validation workflow.
 The empty-list control below deliberately remains empty so it detects restored enforcement without a test change.

@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ai-foundry
-version: 0.4.7
+version: 0.5.0
 description: "Deploy Azure AI Foundry with configurable network access and authentication."
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -61,6 +61,15 @@ parameters:
     type: boolean
     default: false
     description: "Allow API key authentication alongside Microsoft Entra ID."
+  - name: allowed_fqdns
+    type: string
+    default: "WyJkZW55LWFsbC5pbnZhbGlkIl0=" # Base64-encoded ["deny-all.invalid"].
+    description: >-
+      Base64-encoded JSON array of allowed outbound hostnames, defaulting to
+      ["deny-all.invalid"]. Removing the last entry or setting [] removes the
+      workaround: live tests on 25 September 2026 allowed external image and MCP
+      requests with an empty list, despite outbound restriction remaining enabled.
+      Real hostnames permit outbound access to those hosts. Use hostnames, not URLs.
   - name: openai_model
     type: string
     default: "gpt-5.1 | 2025-11-13"
@@ -124,6 +133,7 @@ install:
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
@@ -154,6 +164,7 @@ upgrade:
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
@@ -184,6 +195,7 @@ uninstall:
         arm_environment: ${ bundle.parameters.arm_environment }
         is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
         local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
         openai_model: ${ bundle.parameters.openai_model }
         openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
         workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }

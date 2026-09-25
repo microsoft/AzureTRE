@@ -11,8 +11,9 @@ from pathlib import Path
 import subprocess
 import tempfile
 import sys
+from types import ModuleType
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from jsonschema import Draft7Validator
 import yaml
@@ -73,6 +74,71 @@ class FoundryTemplateTests(unittest.TestCase):
         supplied = [item["name"] for item in parameter_set["parameters"]]
         self.assertEqual(len(supplied), len(set(supplied)), "Duplicate parameter mappings")
         self.assertCountEqual((name for name in supplied if name != "arm_use_msi"), expected - {"arm_use_msi"})
+
+    def test_outbound_allowlist_defaults_and_action_wiring(self):
+        field = self.schema["properties"]["allowed_fqdns"]
+        parameter = self.parameters["allowed_fqdns"]
+        self.assertEqual(field["type"], "array")
+        self.assertTrue(field["updateable"])
+        self.assertNotIn("allowed_fqdns", self.schema["required"])
+        self.assertEqual(field["default"], ["deny-all.invalid"])
+        self.assertEqual(parameter["type"], "string")
+        self.assertEqual(json.loads(base64.b64decode(parameter["default"])), field["default"])
+        for action in ("install", "upgrade", "uninstall"):
+            self.assertEqual(self.porter[action][0]["terraform"]["vars"]["allowed_fqdns"],
+                             "${ bundle.parameters.allowed_fqdns }")
+        terraform = (BUNDLE / "terraform/ai_foundry.tf").read_text()
+        self.assertRegex(terraform, r'fqdns\s*=\s*jsondecode\(base64decode\(var.allowed_fqdns\)\)')
+        self.assertRegex(terraform, r'outbound_network_access_restricted\s*=\s*true')
+        variables = (BUNDLE / "terraform/variables.tf").read_text()
+        block = variables.split('variable "allowed_fqdns" {', 1)[1].split('\nvariable ', 1)[0]
+        self.assertIn('default     = "' + parameter["default"] + '"', block)
+
+    def test_outbound_allowlist_accepts_explicit_empty_and_hostname_lists(self):
+        validator = Draft7Validator(self.schema)
+        validator.validate({})
+        for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"],
+                      ["deny-all.invalid", "learn.microsoft.com"],
+                      ["raw.githubusercontent.com", "learn.microsoft.com"], ["xn--bcher-kva.example"]):
+            with self.subTest(hosts=hosts):
+                validator.validate({"allowed_fqdns": hosts})
+
+    def test_outbound_allowlist_rejects_invalid_hosts_and_duplicates(self):
+        validator = Draft7Validator(self.schema)
+        for value in (None, "example.com", {}, [1], [True], [None], [""], ["localhost"],
+                      ["https://example.com"], ["example.com/path"], ["example.com:443"], ["*.example.com"],
+                      [" example.com"], ["example.com "], ["-bad.example"], ["bad-.example"],
+                      ["127.0.0.1"], ["a" * 64 + ".example"], ["example.com", "example.com"],
+                      ["a" * 63 + "." + "b" * 63 + "." + "c" * 63 + "." + "d" * 62 + ".com"],
+                      [f"host{number}.example" for number in range(1001)]):
+            with self.subTest(value=value):
+                self.assertFalse(validator.is_valid({"allowed_fqdns": value}))
+
+    def test_outbound_warning_explains_empty_list_without_claiming_flag_is_disabled(self):
+        for description in (self.schema["properties"]["allowed_fqdns"]["description"],
+                            self.parameters["allowed_fqdns"]["description"]):
+            for phrase in ("deny-all.invalid", "Removing the last entry", "[]", "workaround",
+                           "25 September 2026", "image and MCP", "outbound restriction remaining enabled"):
+                self.assertIn(phrase, description)
+
+    def test_resource_processor_preserves_explicit_outbound_lists(self):
+        spec = importlib.util.spec_from_file_location("foundry_allowlist_commands", ROOT / "resource_processor/helpers/commands.py")
+        commands = importlib.util.module_from_spec(spec)
+        logging = ModuleType("shared.logging")
+        logging.logger = Mock()
+        logging.shell_output_logger = Mock()
+        with patch.dict(sys.modules, {"shared": ModuleType("shared"), "shared.logging": logging}):
+            spec.loader.exec_module(commands)
+        for action in ("install", "upgrade", "uninstall"):
+            for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"],
+                          ["deny-all.invalid", "learn.microsoft.com"]):
+                with self.subTest(action=action, hosts=hosts):
+                    message = {"id": "synthetic", "name": self.porter["name"], "version": self.porter["version"],
+                               "action": action, "parameters": {"allowed_fqdns": hosts}}
+                    with patch.object(commands, "get_porter_parameter_keys", AsyncMock(return_value=["allowed_fqdns"])):
+                        result = asyncio.run(commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message))
+                    argument = next(item for item in result[0] if item.startswith("allowed_fqdns="))
+                    self.assertEqual(json.loads(base64.b64decode(argument.split("=", 1)[1])), hosts)
 
     def test_local_parameter_sources_follow_environment_conventions(self):
         parameter_set = json.loads((BUNDLE / "parameters.json").read_text())

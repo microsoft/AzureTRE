@@ -65,6 +65,12 @@
       }
     },
     {
+      "name": "allowed_fqdns",
+      "source": {
+        "env": "ALLOWED_FQDNS"
+      }
+    },
+    {
       "name": "openai_model",
       "source": {
         "env": "OPENAI_MODEL"
