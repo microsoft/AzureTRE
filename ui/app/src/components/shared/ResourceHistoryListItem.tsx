@@ -5,9 +5,9 @@ interface ResourceHistoryListItemProps {
   val: string;
 }
 
-export const ResourceHistoryListItem: React.FunctionComponent<
-  ResourceHistoryListItemProps
-> = (props: ResourceHistoryListItemProps) => {
+export const ResourceHistoryListItem: React.FunctionComponent<ResourceHistoryListItemProps> = (
+  props: ResourceHistoryListItemProps,
+) => {
   const stackItemStyles: IStackItemStyles = {
     root: {
       padding: "5px 0",

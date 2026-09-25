@@ -18,9 +18,7 @@ interface WorkspaceServicesProps {
   removeWorkspaceService: (workspaceService: WorkspaceService) => void;
 }
 
-export const WorkspaceServices: React.FunctionComponent<
-  WorkspaceServicesProps
-> = (props: WorkspaceServicesProps) => {
+export const WorkspaceServices: React.FunctionComponent<WorkspaceServicesProps> = (props: WorkspaceServicesProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
   const createFormCtx = useContext(CreateUpdateResourceContext);
 
@@ -37,18 +35,15 @@ export const WorkspaceServices: React.FunctionComponent<
                   iconProps={{ iconName: "Add" }}
                   text="Create new"
                   disabled={
-                    successStates.indexOf(
-                      workspaceCtx.workspace.deploymentStatus,
-                    ) === -1 || !workspaceCtx.workspace.isEnabled
+                    successStates.indexOf(workspaceCtx.workspace.deploymentStatus) === -1 ||
+                    !workspaceCtx.workspace.isEnabled
                   }
                   onClick={() => {
                     createFormCtx.openCreateForm({
                       resourceType: ResourceType.WorkspaceService,
                       resourceParent: workspaceCtx.workspace,
-                      onAdd: (r: Resource) =>
-                        props.addWorkspaceService(r as WorkspaceService),
-                      workspaceApplicationIdURI:
-                        workspaceCtx.workspaceApplicationIdURI,
+                      onAdd: (r: Resource) => props.addWorkspaceService(r as WorkspaceService),
+                      workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI,
                     });
                   }}
                 />
@@ -59,15 +54,9 @@ export const WorkspaceServices: React.FunctionComponent<
         <Stack.Item>
           <ResourceCardList
             resources={props.workspaceServices}
-            selectResource={(r: Resource) =>
-              props.setWorkspaceService(r as WorkspaceService)
-            }
-            updateResource={(r: Resource) =>
-              props.updateWorkspaceService(r as WorkspaceService)
-            }
-            removeResource={(r: Resource) =>
-              props.removeWorkspaceService(r as WorkspaceService)
-            }
+            selectResource={(r: Resource) => props.setWorkspaceService(r as WorkspaceService)}
+            updateResource={(r: Resource) => props.updateWorkspaceService(r as WorkspaceService)}
+            removeResource={(r: Resource) => props.removeWorkspaceService(r as WorkspaceService)}
             emptyText="This workspace has no workspace services."
           />
         </Stack.Item>

@@ -1,13 +1,18 @@
 import pytest
 from mock import patch
 
-from fastapi import status
+from fastapi import HTTPException, status
 
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 
 from resources import strings
+from auth.rbac import (
+    require_tre_admin,
+    require_workspace_owner,
+    require_workspace_owner_or_researcher_or_airlock_manager,
+)
 
 
 pytestmark = pytest.mark.asyncio
@@ -16,6 +21,10 @@ pytestmark = pytest.mark.asyncio
 WORKSPACE_ID = '933ad738-7265-4b5f-9eae-a1a62928772e'
 SERVICE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
 USER_RESOURCE_ID = 'abcad738-7265-4b5f-9eae-a1a62928772e'
+
+
+def forbidden():
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
 
 def sample_workspace():
@@ -33,10 +42,11 @@ def sample_user_resource():
 # TEMPLATES
 class TestTemplateRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_admin(self, app, non_admin_user):
-        # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=non_admin_user()):
-            yield
+    @classmethod
+    def log_in_with_non_admin(cls, app, non_admin_user):
+        app.dependency_overrides[require_tre_admin] = forbidden
+        yield
+        app.dependency_overrides = {}
 
     async def test_post_workspace_templates_requires_admin_rights(self, app, client):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE_TEMPLATES), json='{}')
@@ -54,11 +64,12 @@ class TestTemplateRoutesThatRequireAdminRights:
 # RESOURCES
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
-        # try accessing the route with a non-owner user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
-            with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
-                yield
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
+        app.dependency_overrides[require_tre_admin] = forbidden
+        with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
+            yield
+        app.dependency_overrides = {}
 
     async def test_post_workspace_requires_admin_rights(self, app, client):
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json='{}')
@@ -75,11 +86,12 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
 class TestWorkspaceServiceOwnerRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
-        # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
-            with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
-                yield
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
+        app.dependency_overrides[require_workspace_owner] = forbidden
+        with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
+            yield
+        app.dependency_overrides = {}
 
     # [POST] /workspaces/{workspace_id}/workspace-services/
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id", return_value=sample_workspace_service())
@@ -102,11 +114,12 @@ class TestWorkspaceServiceOwnerRoutesAccess:
 
 class TestWorkspaceServiceOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
-        # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=no_workspace_role_user()):
-            with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
-                yield
+    @classmethod
+    def log_in_with_non_owner_or_researcher(cls, app, no_workspace_role_user):
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
+        with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
+            yield
+        app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/workspace-services
     @patch("api.routes.workspaces.WorkspaceServiceRepository.get_active_workspace_services_for_workspace", return_value=[])
@@ -129,11 +142,12 @@ class TestWorkspaceServiceOwnerOrResearcherRoutesAccess:
 
 class TestUserResourcesOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
-        # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=no_workspace_role_user()):
-            with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
-                yield
+    @classmethod
+    def log_in_with_non_owner_or_researcher(cls, app, no_workspace_role_user):
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
+        with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
+            yield
+        app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")
@@ -172,11 +186,13 @@ class TestUserResourcesOwnerOrResearcherRoutesAccess:
 
 class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
         # try accessing the route with a non-admin user
-        with patch('services.aad_authentication.AzureADAuthorization._get_user_from_token', return_value=researcher_user()):
-            with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
-                yield
+        app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
+        with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
+            yield
+        app.dependency_overrides = {}
 
     # [GET] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.dependencies.workspaces.UserResourceRepository.get_user_resource_by_id")

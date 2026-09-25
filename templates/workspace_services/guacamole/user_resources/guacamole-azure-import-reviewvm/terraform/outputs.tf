@@ -1,27 +1,27 @@
 output "ip" {
-  value = azurerm_network_interface.internal.private_ip_address
+  value = module.windows_vm.ip
 }
 
 output "hostname" {
-  value = azurerm_windows_virtual_machine.windowsvm.name
+  value = module.windows_vm.hostname
 }
 
 output "azure_resource_id" {
-  value = azurerm_windows_virtual_machine.windowsvm.id
+  value = module.windows_vm.azure_resource_id
 }
 
 output "connection_uri" {
-  value = "https://${data.azurerm_linux_web_app.guacamole.default_hostname}/?/client/${textencodebase64("${azurerm_windows_virtual_machine.windowsvm.name}\u0000c\u0000azuretre", "UTF-8")}"
+  value = module.windows_vm.connection_uri
 }
 
 output "vm_username" {
-  value = random_string.username.result
+  value = module.windows_vm.vm_username
 }
 
 output "vm_password_secret_name" {
-  value = local.vm_password_secret_name
+  value = module.windows_vm.vm_password_secret_name
 }
 
 output "keyvault_name" {
-  value = local.keyvault_name
+  value = module.windows_vm.keyvault_name
 }

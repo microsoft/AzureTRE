@@ -4,6 +4,24 @@ To deploy the Azure TRE using GitHub workflows, create a fork of the repository.
 
 Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.
 
+## Dockerfile build checks
+
+The `Dockerfile Build Check` workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.
+
+Pull requests to `main` or `feature/**` select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.
+
+Changes within a named context source select its own bundle and every consuming bundle. These sources include the base workspace, Guacamole Windows VM and import review VM directories. Runs use the PR number for cancellation, so identical branch names in different forks remain independent.
+
+Discovery fails if a tracked Porter bundle under `templates/` has only one of `porter.yaml` and `Dockerfile.tmpl`. Removing both files removes the bundle from the build matrix.
+
+These checks run without Azure deployment credentials and do not publish images. Each target starts on a fresh GitHub-hosted runner without an imported build cache.
+
+If a target fails, the job waits ten seconds and retries it once. The retry includes Porter installation and the build, with a new Porter directory to avoid an incomplete installation. Both attempts remain in the job log. A successful retry passes the build check.
+
+The report lists every selected target. It fails if both build attempts fail, a job is cancelled, or a result is missing or invalid. Result artifacts are retained for seven days and replaced when a job runs again.
+
+If a build fails, open its job log to identify the failed command. Package or base-image failures can occur without repository changes. The existing deployment validation remains necessary to test deployed services.
+
 ## Setup instructions
 
 Before you can run the `deploy_tre.yml` workflow there are some one-time configuration steps that we need to do, similar to the Pre-deployment steps for manual deployment.

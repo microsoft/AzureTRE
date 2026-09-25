@@ -1,11 +1,10 @@
 import copy
 import json
-from unittest.mock import MagicMock, ANY
-from pydantic import parse_obj_as
+from unittest.mock import AsyncMock, MagicMock, ANY, patch
+from pydantic import TypeAdapter
 import pytest
 import uuid
 
-from mock import AsyncMock, patch
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
@@ -15,6 +14,12 @@ from models.domain.workspace import Workspace
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
+from tests_ma.test_service_bus.test_helpers import (
+    StopReceiveMessages,
+    credential_context,
+    queue_receiver_context,
+    service_bus_client_context,
+)
 
 
 pytestmark = pytest.mark.asyncio
@@ -79,6 +84,89 @@ class ServiceBusReceivedMessageMock:
         return self.message
 
 
+async def run_receive_messages_with_mocks(service_bus_client, time_values, client_side_effect=None):
+    credential = credential_context()
+    receiver = queue_receiver_context(session=True, iterate=True)
+    service_bus_client.get_queue_receiver.return_value = receiver
+    renewer = MagicMock()
+
+    with patch("service_bus.deployment_status_updater.credentials.get_credential_async_context", return_value=credential), \
+            patch("service_bus.deployment_status_updater.ServiceBusClient", return_value=service_bus_client, side_effect=client_side_effect), \
+            patch("service_bus.deployment_status_updater.time.time", side_effect=time_values), \
+            patch("service_bus.deployment_status_updater.asyncio.sleep", new_callable=AsyncMock), \
+            patch("service_bus.deployment_status_updater.AutoLockRenewer") as auto_lock_renewer:
+        auto_lock_renewer.return_value.__aenter__ = AsyncMock(return_value=renewer)
+        auto_lock_renewer.return_value.__aexit__ = AsyncMock(return_value=False)
+        await DeploymentStatusUpdater().receive_messages()
+
+
+async def test_receive_messages_reuses_client_for_multiple_polls():
+    service_bus_client = service_bus_client_context()
+    time_call_count = 0
+    client_call_count = 0
+
+    def time_after_two_polls():
+        nonlocal time_call_count
+        time_call_count += 1
+        return 0 if time_call_count <= 5 else 3601
+
+    def create_client(*args, **kwargs):
+        nonlocal client_call_count
+        client_call_count += 1
+        if client_call_count == 1:
+            return service_bus_client
+        raise StopReceiveMessages()
+
+    with pytest.raises(StopReceiveMessages):
+        await run_receive_messages_with_mocks(service_bus_client, time_after_two_polls, create_client)
+
+    assert service_bus_client.get_queue_receiver.call_count == 2
+    service_bus_client.__aenter__.assert_awaited_once()
+    service_bus_client.__aexit__.assert_awaited_once()
+
+
+async def test_receive_messages_closes_client_before_hourly_recreation():
+    first_client = service_bus_client_context()
+
+    def create_client(*args, **kwargs):
+        if create_client.called:
+            raise StopReceiveMessages()
+        create_client.called = True
+        return first_client
+
+    create_client.called = False
+
+    with pytest.raises(StopReceiveMessages):
+        with patch("service_bus.deployment_status_updater.credentials.get_credential_async_context", return_value=credential_context()), \
+                patch("service_bus.deployment_status_updater.ServiceBusClient", side_effect=create_client), \
+                patch("service_bus.deployment_status_updater.time.time", side_effect=[0, 0, 0, 3601]), \
+                patch("service_bus.deployment_status_updater.asyncio.sleep", new_callable=AsyncMock):
+            first_client.get_queue_receiver.return_value = queue_receiver_context()
+            await DeploymentStatusUpdater().receive_messages()
+
+    first_client.__aexit__.assert_awaited_once()
+    assert first_client.get_queue_receiver.call_count == 1
+
+
+async def test_receive_messages_closes_client_after_receiver_failure():
+    service_bus_client = service_bus_client_context()
+    service_bus_client.get_queue_receiver.side_effect = RuntimeError("receiver failed")
+    client_call_count = 0
+
+    def create_client(*args, **kwargs):
+        nonlocal client_call_count
+        client_call_count += 1
+        if client_call_count == 1:
+            return service_bus_client
+        raise StopReceiveMessages()
+
+    with pytest.raises(StopReceiveMessages):
+        await run_receive_messages_with_mocks(service_bus_client, lambda: 0, create_client)
+
+    service_bus_client.__aenter__.assert_awaited_once()
+    service_bus_client.__aexit__.assert_awaited_once()
+
+
 def create_sample_workspace_object(workspace_id):
     return Workspace(
         id=workspace_id,
@@ -139,7 +227,7 @@ async def test_receiving_bad_json_logs_error(logging_mock, payload):
 @patch('services.logging.logger.exception')
 async def test_receiving_good_message(logging_mock, resource_repo, operation_repo, _, __):
     expected_workspace = create_sample_workspace_object(test_sb_message["id"])
-    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = expected_workspace.model_dump()
 
     operation = create_sample_operation(test_sb_message["id"], RequestAction.Install)
     operation_repo.return_value.get_operation_by_id.return_value = operation
@@ -150,7 +238,7 @@ async def test_receiving_good_message(logging_mock, resource_repo, operation_rep
 
     assert complete_message is True
     resource_repo.return_value.get_resource_dict_by_id.assert_called_once_with(uuid.UUID(test_sb_message["id"]))
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_workspace.dict())
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_workspace.model_dump())
     logging_mock.assert_not_called()
 
 
@@ -205,7 +293,7 @@ async def test_state_transitions_from_deployed_to_deleted(resource_repo, operati
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
 
     workspace = create_sample_workspace_object(test_sb_message["id"])
-    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = workspace.model_dump()
 
     operation = create_sample_operation(workspace.id, RequestAction.UnInstall)
     operation.steps[0].status = Status.Deployed
@@ -236,7 +324,7 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
-    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.model_dump()
 
     new_params = {
         "string1": "value1",
@@ -259,7 +347,7 @@ async def test_outputs_are_added_to_resource_item(resource_repo, operations_repo
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource)
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
@@ -273,7 +361,7 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
 
     resource = create_sample_workspace_object(received_message["id"])
     resource.properties = {"exitingName": "exitingValue"}
-    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = resource.model_dump()
 
     operation = create_sample_operation(resource.id, RequestAction.UnInstall)
     operations_repo.return_value.get_operation_by_id.return_value = operation
@@ -285,7 +373,7 @@ async def test_properties_dont_change_with_no_outputs(resource_repo, operations_
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.dict())
+    resource_repo.return_value.update_item_dict.assert_called_once_with(expected_resource.model_dump())
 
 
 @patch('service_bus.deployment_status_updater.ResourceHistoryRepository.create')
@@ -301,7 +389,7 @@ async def test_multi_step_operation_sends_next_step(sb_sender_client, resource_r
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 1 resource
-    resource_repo.return_value.get_resource_dict_by_id.return_value = basic_shared_service.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = basic_shared_service.model_dump()
 
     # step 2 resource
     resource_repo.return_value.get_resource_by_id.return_value = user_resource_multi
@@ -355,7 +443,7 @@ async def test_multi_step_operation_ends_at_last_step(sb_sender_client, resource
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     # step 2 resource
-    resource_repo.return_value.get_resource_dict_by_id.return_value = user_resource_multi.dict()
+    resource_repo.return_value.get_resource_dict_by_id.return_value = user_resource_multi.model_dump()
 
     # step 3 resource
     resource_repo.return_value.get_resource_by_id.return_value = basic_shared_service
@@ -401,7 +489,7 @@ async def test_convert_outputs_to_dict():
     assert status_updater.convert_outputs_to_dict(outputs_list) == expected_result
 
     # Test case 2: List of outputs with mixed types
-    deployment_status_update_message = parse_obj_as(DeploymentStatusUpdateMessage, test_sb_message_with_outputs)
+    deployment_status_update_message = TypeAdapter(DeploymentStatusUpdateMessage).validate_python(test_sb_message_with_outputs)
 
     expected_result = {
         'string1': 'value1',

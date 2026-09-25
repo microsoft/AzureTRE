@@ -23,5 +23,5 @@ export enum ApiEndpoint {
   Health = "health",
   Users = "users",
   AssignableUsers = "assignable-users",
-  Roles = "roles"
+  Roles = "roles",
 }

@@ -1,22 +1,15 @@
 import { Spinner, SpinnerSize } from "@fluentui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LoadingState } from "../../../models/loadingState";
-import {
-  HttpMethod,
-  ResultType,
-  useAuthApiCall,
-} from "../../../hooks/useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import Form from "@rjsf/fluent-ui";
 import { Operation } from "../../../models/operation";
 import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
-import {
-  ResourceTemplate,
-  sanitiseTemplateForRJSF,
-} from "../../../models/resourceTemplate";
-import validator from "@rjsf/validator-ajv8";
+import { ResourceTemplate, sanitiseTemplateForRJSF } from "../../../models/resourceTemplate";
+import { createResourceTemplateValidator } from "../../../models/resourceTemplateValidator";
 
 interface ResourceFormProps {
   templateName: string;
@@ -27,10 +20,9 @@ interface ResourceFormProps {
   workspaceApplicationIdURI?: string;
 }
 
-export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
-  props: ResourceFormProps,
-) => {
+export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (props: ResourceFormProps) => {
   const [template, setTemplate] = useState<any | null>(null);
+  const validator = useMemo(() => createResourceTemplateValidator(template), [template]);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(LoadingState.Loading as LoadingState);
   const [sendingData, setSendingData] = useState(false);
@@ -74,13 +66,21 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
     let allProps = {} as any;
 
     const recurseTemplate = (templateFragment: any) => {
+      if (!templateFragment || typeof templateFragment !== "object") {
+        return;
+      }
+
       Object.keys(templateFragment).forEach((key) => {
         if (key === "properties") {
+          if (!templateFragment[key] || typeof templateFragment[key] !== "object") {
+            return;
+          }
+
           Object.keys(templateFragment[key]).forEach((prop) => {
             allProps[prop] = templateFragment[key][prop];
           });
         }
-        if (typeof templateFragment[key] === "object" && key !== "if") {
+        if (key !== "if" && templateFragment[key] && typeof templateFragment[key] === "object") {
           recurseTemplate(templateFragment[key]);
         }
       });
@@ -158,12 +158,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
         template && (
           <div style={{ marginTop: 20 }}>
             {sendingData ? (
-              <Spinner
-                label="Sending request"
-                ariaLive="assertive"
-                labelPosition="bottom"
-                size={SpinnerSize.large}
-              />
+              <Spinner label="Sending request" ariaLive="assertive" labelPosition="bottom" size={SpinnerSize.large} />
             ) : (
               <Form
                 omitExtraData={true}
@@ -184,12 +179,7 @@ export const ResourceForm: React.FunctionComponent<ResourceFormProps> = (
     default:
       return (
         <div style={{ marginTop: 20 }}>
-          <Spinner
-            label="Loading template"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading template" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }

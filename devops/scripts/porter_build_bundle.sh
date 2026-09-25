@@ -6,7 +6,15 @@ if [ -f "porter-build-context.env" ]; then
     source "porter-build-context.env"
 
     echo "Found additional porter build context PORTER_BUILD_CONTEXT of $PORTER_BUILD_CONTEXT"
-    porter build --build-context "$PORTER_BUILD_CONTEXT"
+
+    # PORTER_BUILD_CONTEXT may declare more than one named build context,
+    # separated by whitespace (e.g. "a=../x b=../y"). Pass each as its own
+    # --build-context flag.
+    build_context_args=()
+    for context in $PORTER_BUILD_CONTEXT; do
+        build_context_args+=(--build-context "$context")
+    done
+    porter build "${build_context_args[@]}"
 
 else
     if [ -n "${CI_CACHE_ACR_FQDN}" ]; then

@@ -29,7 +29,7 @@ AppTraces
 
 [![App Insights](../assets/app_insights.png)](../assets/app_insights.png)
 
-For a successful deployment you should see a message similiar to:
+For a successful deployment you should see a message similar to:
 
 ```text
 Received deployment status update message with correlation ID 70b09db1-30c4-475c-b1a1-8f9599a5a2f4: {'id': '70b09db1-30c4-475c-b1a1-8f9599a5a2f4', 'status': 'deployed', 'message': 'cse-msr-dev-b7f6: Workspace was deployed successfully...'}

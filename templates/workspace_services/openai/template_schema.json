@@ -1,6 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/sql/template_schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/openai/template_schema.json",
   "type": "object",
   "title": "OpenAI Workspace Service",
   "description": "Provides OpenAI within the workspace",
@@ -28,7 +28,6 @@
       "updateable": true
     },
     "is_exposed_externally": {
-      "$id": "#/properties/is_exposed_externally",
       "type": "boolean",
       "title": "Expose externally",
       "description": "Should the OpenAI instance be publicly accessible?",
@@ -36,7 +35,6 @@
       "updateable": true
     },
     "openai_model": {
-      "$id": "#/properties/openai_model",
       "type": "string",
       "title": "OpenAI Model",
       "description": "Which OpenAI Model should be used? (be mindful of subscription limits)",

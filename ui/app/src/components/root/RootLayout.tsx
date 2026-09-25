@@ -4,11 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { Admin } from "../../App";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { Workspace } from "../../models/workspace";
-import {
-  useAuthApiCall,
-  HttpMethod,
-  ResultType,
-} from "../../hooks/useAuthApiCall";
+import { useAuthApiCall, HttpMethod, ResultType } from "../../hooks/useAuthApiCall";
 import { RootDashboard } from "./RootDashboard";
 import { LeftNav } from "./LeftNav";
 import { LoadingState } from "../../models/loadingState";
@@ -26,9 +22,7 @@ import config from "../../config.json";
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
-  const [loadingCostState, setLoadingCostState] = useState(
-    LoadingState.Loading,
-  );
+  const [loadingCostState, setLoadingCostState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
   const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
@@ -38,13 +32,7 @@ export const RootLayout: React.FunctionComponent = () => {
   useEffect(() => {
     const getWorkspaces = async () => {
       try {
-        const r = await apiCall(
-          ApiEndpoint.Workspaces,
-          HttpMethod.Get,
-          undefined,
-          undefined,
-          ResultType.JSON,
-        );
+        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
         setLoadingState(LoadingState.Ok);
         r && r.workspaces && setWorkspaces(r.workspaces);
       } catch (e: any) {
@@ -62,18 +50,9 @@ export const RootLayout: React.FunctionComponent = () => {
       try {
         if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
           costsWriteCtx.current.setLoadingState(LoadingState.Loading);
-          const r = await apiCall(
-            ApiEndpoint.Costs,
-            HttpMethod.Get,
-            undefined,
-            undefined,
-            ResultType.JSON,
-          );
+          const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
 
-          costsWriteCtx.current.setCosts([
-            ...r.workspaces,
-            ...r.shared_services,
-          ]);
+          costsWriteCtx.current.setCosts([...r.workspaces, ...r.shared_services]);
 
           costsWriteCtx.current.setLoadingState(LoadingState.Ok);
           setLoadingCostState(LoadingState.Ok);
@@ -86,14 +65,10 @@ export const RootLayout: React.FunctionComponent = () => {
           if (e.status === 404 /*subscription not supported*/) {
             config.debug && console.warn(e.message);
             setLoadingCostState(LoadingState.NotSupported);
-          } else if (
-            e.status === 429 /*too many requests*/ ||
-            e.status === 503 /*service unavaiable*/
-          ) {
+          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavailable*/) {
             let msg = JSON.parse(e.message);
             let retryAfter = Number(msg.error["retry-after"]);
-            config.debug &&
-              console.info("retrying after " + retryAfter + " seconds");
+            config.debug && console.info("retrying after " + retryAfter + " seconds");
             setTimeout(getCosts, retryAfter * 1000);
           } else {
             e.userMessage = "Error retrieving costs";
@@ -141,9 +116,7 @@ export const RootLayout: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          {loadingCostState === LoadingState.Error && (
-            <ExceptionLayout e={costApiError} />
-          )}
+          {loadingCostState === LoadingState.Error && <ExceptionLayout e={costApiError} />}
           <Stack horizontal className="tre-body-inner">
             <Stack.Item className="tre-left-nav" style={{ marginTop: 2 }}>
               <LeftNav />
@@ -172,9 +145,7 @@ export const RootLayout: React.FunctionComponent = () => {
                           <SecuredByRole
                             element={<SharedServices />}
                             allowedAppRoles={[RoleName.TREAdmin]}
-                            errorString={
-                              "You must be a TRE Admin to access this area"
-                            }
+                            errorString={"You must be a TRE Admin to access this area"}
                           />
                         }
                       />
@@ -184,9 +155,7 @@ export const RootLayout: React.FunctionComponent = () => {
                           <SecuredByRole
                             element={<SharedServiceItem />}
                             allowedAppRoles={[RoleName.TREAdmin]}
-                            errorString={
-                              "You must be a TRE Admin to access this area"
-                            }
+                            errorString={"You must be a TRE Admin to access this area"}
                           />
                         }
                       />
@@ -212,12 +181,7 @@ export const RootLayout: React.FunctionComponent = () => {
     default:
       return (
         <div style={{ marginTop: "20px" }}>
-          <Spinner
-            label="Loading TRE"
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Loading TRE" ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         </div>
       );
   }

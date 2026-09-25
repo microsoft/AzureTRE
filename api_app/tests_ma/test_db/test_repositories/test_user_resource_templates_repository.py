@@ -30,7 +30,7 @@ def sample_user_resource_template_as_dict(name: str, version: str = "1.0") -> di
         properties={},
         customActions=[],
         parentWorkspaceService="parent_service")
-    return template.dict()
+    return template.model_dump()
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
@@ -113,6 +113,8 @@ async def test_create_user_resource_template_item_calls_create_item_with_the_cor
         customActions=input_user_resource_template.customActions,
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current,
+        schema_uri=input_user_resource_template.json_schema["$schema"],
+        schema_id=input_user_resource_template.json_schema["$id"],
         parentWorkspaceService="parent_service_template_name"
     )
     save_item_mock.assert_called_once_with(expected_resource_template)

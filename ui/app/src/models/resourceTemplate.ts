@@ -1,6 +1,9 @@
 import { ResourceType } from "./resourceType";
 
 export interface ResourceTemplate {
+  $schema?: string;
+  $id?: string;
+  $defs?: Record<string, any>;
   id: string;
   name: string;
   type: string;
@@ -22,6 +25,10 @@ export interface ResourceTemplate {
 export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
   if (template.properties) {
     Object.keys(template.properties).forEach((key: string) => {
+      if (!template.properties[key] || typeof template.properties[key] !== "object") {
+        return;
+      }
+
       Object.keys(template.properties[key]).forEach((name: string) => {
         if (template.properties[key][name] === null) {
           delete template.properties[key][name];
@@ -31,6 +38,9 @@ export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
   }
 
   const sanitised = {
+    ...(template.$schema ? { $schema: template.$schema } : {}),
+    ...(template.$id ? { $id: template.$id } : {}),
+    ...(template.$defs ? { $defs: template.$defs } : {}),
     name: template.name,
     type: template.type,
     description: template.description,

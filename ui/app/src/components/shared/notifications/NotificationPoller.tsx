@@ -11,9 +11,9 @@ interface NotificationPollerProps {
   updateOperation: (n: Operation) => void;
 }
 
-export const NotificationPoller: React.FunctionComponent<
-  NotificationPollerProps
-> = (props: NotificationPollerProps) => {
+export const NotificationPoller: React.FunctionComponent<NotificationPollerProps> = (
+  props: NotificationPollerProps,
+) => {
   const apiCall = useAuthApiCall();
 
   useInterval(async () => {
@@ -22,9 +22,7 @@ export const NotificationPoller: React.FunctionComponent<
         await apiCall(
           `${props.notification.operation.resourcePath}/${ApiEndpoint.Operations}/${props.notification.operation.id}`,
           HttpMethod.Get,
-          props.notification.workspace
-            ? props.notification.workspace.properties.scope_id
-            : null,
+          props.notification.workspace ? props.notification.workspace.properties.scope_id : null,
         )
       ).operation as Operation;
 

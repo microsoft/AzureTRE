@@ -1,5 +1,5 @@
 {
-    "$schema": "https://json-schema.org/draft/2019-09/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
         "id": {
@@ -32,7 +32,7 @@
             "format": "uuid"
         },
         "resourceVersion": {
-            "type": "string",
+            "type": "integer",
             "description": "Resource version."
         },
         "createdAt": {
@@ -73,7 +73,7 @@
                     "type": "string",
                     "description": "Event timestamp."
                 },
-                "description": {
+                "message": {
                     "type": "string",
                     "description": "Event message."
                 },

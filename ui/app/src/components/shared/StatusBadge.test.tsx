@@ -10,13 +10,7 @@ vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    ...createPartialFluentUIMock([
-      'Stack',
-      'Text',
-      'Spinner',
-      'FontIcon',
-      'TooltipHost',
-    ]),
+    ...createPartialFluentUIMock(["Stack", "Text", "Spinner", "FontIcon", "TooltipHost"]),
   };
 });
 

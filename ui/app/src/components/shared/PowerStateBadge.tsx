@@ -5,9 +5,7 @@ interface PowerStateBadgeProps {
   state: VMPowerStates;
 }
 
-export const PowerStateBadge: React.FunctionComponent<PowerStateBadgeProps> = (
-  props: PowerStateBadgeProps,
-) => {
+export const PowerStateBadge: React.FunctionComponent<PowerStateBadgeProps> = (props: PowerStateBadgeProps) => {
   let stateClass = "tre-power-off";
   if (props.state === VMPowerStates.Running) stateClass = " tre-power-on";
 

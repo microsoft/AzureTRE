@@ -1,6 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/unrestricted/template_schema.json",
   "type": "object",
   "title": "Unrestricted Workspace",
   "description": "Workspace with unrestricted access to the Internet",
@@ -83,6 +83,29 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "enable_backup": {
+            "const": true
+          }
+        },
+        "required": [
+          "enable_backup"
+        ]
+      },
+      "then": {
+        "properties": {
+          "delete_backups_on_uninstall": {
+            "type": "boolean",
+            "title": "Delete Backups on Deletion",
+            "description": "When the workspace is deleted, also delete its backups: the backup containers are unregistered and the Recovery Services Vault (with its recovery points) is deleted. When unchecked, protection is stopped but the vault and its resource group are retained so the backed up data is kept.",
+            "default": false,
+            "updateable": true
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {
@@ -233,6 +256,7 @@
       "client_id",
       "client_secret",
       "enable_backup",
+      "delete_backups_on_uninstall",
       "*"
     ]
   },

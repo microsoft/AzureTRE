@@ -9,3 +9,8 @@ Dockerfile.tmpl
 .env*
 
 terraform/destroy.sh
+
+# Shared files are provided by the windowsvm build context, not this one
+terraform/vm
+reset_password.sh
+delete_vm_extensions.sh

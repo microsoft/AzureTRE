@@ -23,11 +23,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
-import {
-  AirlockRequest,
-  AirlockRequestType,
-  NewAirlockRequest,
-} from "../../../models/airlock";
+import { AirlockRequest, AirlockRequestType, NewAirlockRequest } from "../../../models/airlock";
 import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { APIError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
@@ -36,12 +32,8 @@ interface AirlockNewRequestProps {
   onCreateRequest: (request: AirlockRequest) => void;
 }
 
-export const AirlockNewRequest: React.FunctionComponent<
-  AirlockNewRequestProps
-> = (props: AirlockNewRequestProps) => {
-  const [newRequest, setNewRequest] = useState<NewAirlockRequest>(
-    {} as NewAirlockRequest,
-  );
+export const AirlockNewRequest: React.FunctionComponent<AirlockNewRequestProps> = (props: AirlockNewRequestProps) => {
+  const [newRequest, setNewRequest] = useState<NewAirlockRequest>({} as NewAirlockRequest);
   const [requestValid, setRequestValid] = useState(false);
   const [hideCreateDialog, setHideCreateDialog] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -52,10 +44,7 @@ export const AirlockNewRequest: React.FunctionComponent<
   const apiCall = useAuthApiCall();
 
   const onChangetitle = useCallback(
-    (
-      event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
-      newValue?: string,
-    ) => {
+    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
       setNewRequest((request) => {
         return {
           ...request,
@@ -67,10 +56,7 @@ export const AirlockNewRequest: React.FunctionComponent<
   );
 
   const onChangeBusinessJustification = useCallback(
-    (
-      event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
-      newValue?: string,
-    ) => {
+    (event: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, newValue?: string) => {
       setNewRequest((request) => {
         return {
           ...request,
@@ -82,11 +68,7 @@ export const AirlockNewRequest: React.FunctionComponent<
   );
 
   useEffect(
-    () =>
-      setRequestValid(
-        newRequest.title?.length > 0 &&
-          newRequest.businessJustification?.length > 0,
-      ),
+    () => setRequestValid(newRequest.title?.length > 0 && newRequest.businessJustification?.length > 0),
     [newRequest, setRequestValid],
   );
 
@@ -121,16 +103,10 @@ export const AirlockNewRequest: React.FunctionComponent<
       footer = (
         <>
           <div style={{ textAlign: "end" }}>
-            <DefaultButton
-              onClick={() => setNewRequest({} as NewAirlockRequest)}
-              styles={{ root: { marginRight: 8 } }}
-            >
+            <DefaultButton onClick={() => setNewRequest({} as NewAirlockRequest)} styles={{ root: { marginRight: 8 } }}>
               Back
             </DefaultButton>
-            <PrimaryButton
-              onClick={() => setHideCreateDialog(false)}
-              disabled={!requestValid}
-            >
+            <PrimaryButton onClick={() => setHideCreateDialog(false)} disabled={!requestValid}>
               Create
             </PrimaryButton>
           </div>
@@ -248,19 +224,11 @@ export const AirlockNewRequest: React.FunctionComponent<
       >
         {createError && <ExceptionLayout e={apiCreateError} />}
         {creating ? (
-          <Spinner
-            label="Creating..."
-            ariaLive="assertive"
-            labelPosition="top"
-            size={SpinnerSize.large}
-          />
+          <Spinner label="Creating..." ariaLive="assertive" labelPosition="top" size={SpinnerSize.large} />
         ) : (
           <DialogFooter>
             <PrimaryButton onClick={create} text="Create" />
-            <DefaultButton
-              onClick={() => setHideCreateDialog(true)}
-              text="Cancel"
-            />
+            <DefaultButton onClick={() => setHideCreateDialog(true)} text="Cancel" />
           </DialogFooter>
         )}
       </Dialog>

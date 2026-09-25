@@ -1,11 +1,4 @@
-import {
-  Dialog,
-  PrimaryButton,
-  DialogType,
-  Stack,
-  TooltipHost,
-  TextField,
-} from "@fluentui/react";
+import { Dialog, PrimaryButton, DialogType, Stack, TooltipHost, TextField } from "@fluentui/react";
 import React, { useState } from "react";
 import { Resource } from "../../models/resource";
 
@@ -15,14 +8,12 @@ interface ConfirmCopyUrlToClipboardProps {
 }
 
 // show a explanation about why connect is disabled, and show a copy to clipboard tool tip
-export const ConfirmCopyUrlToClipboard: React.FunctionComponent<
-  ConfirmCopyUrlToClipboardProps
-> = (props: ConfirmCopyUrlToClipboardProps) => {
+export const ConfirmCopyUrlToClipboard: React.FunctionComponent<ConfirmCopyUrlToClipboardProps> = (
+  props: ConfirmCopyUrlToClipboardProps,
+) => {
   const COPY_TOOL_TIP_DEFAULT_MESSAGE = "Copy to clipboard";
 
-  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(
-    COPY_TOOL_TIP_DEFAULT_MESSAGE,
-  );
+  const [copyToolTipMessage, setCopyToolTipMessage] = useState<string>(COPY_TOOL_TIP_DEFAULT_MESSAGE);
 
   const copyUrlToClipboardProps = {
     type: DialogType.normal,
@@ -42,10 +33,7 @@ export const ConfirmCopyUrlToClipboard: React.FunctionComponent<
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(props.resource.properties.connection_uri);
     setCopyToolTipMessage("Copied");
-    setTimeout(
-      () => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE),
-      3000,
-    );
+    setTimeout(() => setCopyToolTipMessage(COPY_TOOL_TIP_DEFAULT_MESSAGE), 3000);
   };
 
   return (
@@ -56,15 +44,9 @@ export const ConfirmCopyUrlToClipboard: React.FunctionComponent<
         dialogContentProps={copyUrlToClipboardProps}
         modalProps={modalProps}
       >
-        <Stack
-          horizontal
-          styles={{ root: { alignItems: "center", paddingTop: "7px" } }}
-        >
+        <Stack horizontal styles={{ root: { alignItems: "center", paddingTop: "7px" } }}>
           <Stack.Item grow>
-            <TextField
-              readOnly
-              value={props.resource.properties.connection_uri}
-            />
+            <TextField readOnly value={props.resource.properties.connection_uri} />
           </Stack.Item>
           <TooltipHost content={copyToolTipMessage}>
             <PrimaryButton

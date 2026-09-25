@@ -28,3 +28,19 @@ When deploying a Guacamole service into a workspace the following properties nee
 | `guac_disable_download` | `true`/`false` (Default: `true`) | Disable files download |
 | `guac_disable_upload` | `true`/`false` (Default: `true`) | Disable files upload |
 | `is_exposed_externally` | `true`/`false` (Default: `true`) | Is the Guacamole service exposed outside of the vnet |
+
+## Notes
+
+### VM tooling and bootstrap time
+
+The Windows and Linux VM user resources provided with Guacamole install their
+tooling (for example Azure CLI, Visual Studio Code, Azure Storage Explorer and
+data science packages) via a bootstrap script that runs at deploy time. This
+download-and-install step typically adds **10-15 minutes (or more)** to VM
+provisioning, depending on how many tools are selected.
+
+To provision VMs faster and to avoid transient issues downloading and installing
+packages, we recommend using a custom VM image with the tooling pre-installed.
+The included user resource templates that rely on bootstrap scripts should only
+be used for trial/demonstration purposes. More info can be found in the
+[custom templates documentation](../user-resources/custom.md).

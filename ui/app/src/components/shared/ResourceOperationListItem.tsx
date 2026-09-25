@@ -8,9 +8,9 @@ interface ResourceOperationListItemProps {
   isError?: boolean;
 }
 
-export const ResourceOperationListItem: React.FunctionComponent<
-  ResourceOperationListItemProps
-> = (props: ResourceOperationListItemProps) => {
+export const ResourceOperationListItem: React.FunctionComponent<ResourceOperationListItemProps> = (
+  props: ResourceOperationListItemProps,
+) => {
   const stackItemStyles: IStackItemStyles = {
     root: {
       padding: "5px 0",

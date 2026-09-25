@@ -48,7 +48,7 @@ To log in using the device code flow, run:
 tre login device-code --base-url https://mytre.westeurope.cloudapp.azure.com/ 
 ```
 
-This will prompt you to copy a device code and nagivate to <https://microsoft.com/devicelogin> to complete the login flow interactively.
+This will prompt you to copy a device code and navigate to <https://microsoft.com/devicelogin> to complete the login flow interactively.
 
 You can specify `--no-verify` to disable SSL cert verification.
 

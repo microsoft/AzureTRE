@@ -1,6 +1,6 @@
 markdown
 mdx-truly-sane-lists
-mkdocs
+mkdocs<2.0.0
 mkdocs-material
 mkdocs-material-extensions
 mkdocstrings

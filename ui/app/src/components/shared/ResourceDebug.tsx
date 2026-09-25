@@ -6,9 +6,7 @@ interface ResourceDebugProps {
   resource: Resource;
 }
 
-export const ResourceDebug: React.FunctionComponent<ResourceDebugProps> = (
-  props: ResourceDebugProps,
-) => {
+export const ResourceDebug: React.FunctionComponent<ResourceDebugProps> = (props: ResourceDebugProps) => {
   return config.debug === true ? (
     <>
       <hr />

@@ -1,5 +1,5 @@
-import React from 'react';
-import { vi } from 'vitest';
+import React from "react";
+import { vi } from "vitest";
 
 /**
  * Creates a mock for the useAuthApiCall hook.
@@ -34,7 +34,7 @@ export const createAuthApiCallMock = (mockApiCall?: any) => {
       Post: "POST",
       Patch: "PATCH",
       Delete: "DELETE",
-      Put: "PUT"
+      Put: "PUT",
     },
     ResultType: { JSON: "JSON", Text: "TEXT" },
     mockApiCall: apiCall, // Expose the mock for testing
@@ -113,7 +113,7 @@ export const createReduxHookMocks = (mockDispatch?: any) => ({
 export const createReactRouterMocks = (mockNavigate?: any, params?: any) => ({
   useNavigate: () => mockNavigate || vi.fn(),
   useParams: () => params || {},
-  useLocation: () => ({ pathname: '/test', search: '', hash: '', state: null }),
+  useLocation: () => ({ pathname: "/test", search: "", hash: "", state: null }),
   BrowserRouter: ({ children }: any) => <div data-testid="browser-router">{children}</div>,
 });
 
@@ -122,19 +122,13 @@ export const createReactRouterMocks = (mockNavigate?: any, params?: any) => ({
  */
 export const createContextMocks = () => ({
   WorkspaceContext: {
-    Provider: ({ children, _value }: any) => (
-      <div data-testid="workspace-context-provider">{children}</div>
-    ),
+    Provider: ({ children, _value }: any) => <div data-testid="workspace-context-provider">{children}</div>,
   },
   AppRolesContext: {
-    Provider: ({ children, _value }: any) => (
-      <div data-testid="app-roles-context-provider">{children}</div>
-    ),
+    Provider: ({ children, _value }: any) => <div data-testid="app-roles-context-provider">{children}</div>,
   },
   CostsContext: {
-    Provider: ({ children, _value }: any) => (
-      <div data-testid="costs-context-provider">{children}</div>
-    ),
+    Provider: ({ children, _value }: any) => <div data-testid="costs-context-provider">{children}</div>,
   },
 });
 
@@ -142,11 +136,12 @@ export const createContextMocks = () => ({
  * Creates a mock for the useComponentManager hook.
  */
 export const createComponentManagerMock = (mockImplementation?: any) => ({
-  useComponentManager: () => mockImplementation || {
-    loading: false,
-    latestUpdate: null,
-    componentAction: vi.fn(),
-  },
+  useComponentManager: () =>
+    mockImplementation || {
+      loading: false,
+      latestUpdate: null,
+      componentAction: vi.fn(),
+    },
 });
 
 /**
@@ -159,21 +154,21 @@ export const createAuthMocks = () => ({
       initialize: vi.fn().mockResolvedValue(undefined),
       getAllAccounts: vi.fn().mockReturnValue([]),
       getActiveAccount: vi.fn().mockReturnValue(null),
-      acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'test-token' }),
+      acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: "test-token" }),
       loginRedirect: vi.fn(),
       logoutRedirect: vi.fn(),
     })),
-    InteractionType: { Redirect: 'redirect', Popup: 'popup' },
+    InteractionType: { Redirect: "redirect", Popup: "popup" },
   },
   msalReact: {
     useMsal: () => ({
       instance: {
         getAllAccounts: vi.fn().mockReturnValue([]),
         getActiveAccount: vi.fn().mockReturnValue(null),
-        acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'test-token' }),
+        acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: "test-token" }),
       },
       accounts: [],
-      inProgress: 'none',
+      inProgress: "none",
     }),
     MsalProvider: ({ children }: any) => <div data-testid="msal-provider">{children}</div>,
     AuthenticatedTemplate: ({ children }: any) => <div data-testid="authenticated-template">{children}</div>,

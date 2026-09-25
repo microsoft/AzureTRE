@@ -100,7 +100,7 @@ async def test_get_workspace_by_id_raises_entity_does_not_exist_if_workspace_is_
 @pytest.mark.asyncio
 async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_query_item_result = AsyncMock()
-    workspace_query_item_result.__aiter__.return_value = [workspace.dict()]
+    workspace_query_item_result.__aiter__.return_value = [workspace.model_dump()]
     workspace_repo.container.query_items = MagicMock(return_value=workspace_query_item_result)
     expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus'
     expected_parameters = [

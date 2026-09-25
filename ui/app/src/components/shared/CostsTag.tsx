@@ -4,9 +4,7 @@ import { CostsContext } from "../../contexts/CostsContext";
 import { LoadingState } from "../../models/loadingState";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { CostResource } from "../../models/costs";
-import {
-  useAuthApiCall
-} from "../../hooks/useAuthApiCall";
+import { useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { ResourceType } from "../../models/resourceType";
 
 interface CostsTagProps {
@@ -14,16 +12,12 @@ interface CostsTagProps {
   resourceType?: ResourceType;
 }
 
-export const CostsTag: React.FunctionComponent<CostsTagProps> = (
-  props: CostsTagProps,
-) => {
+export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTagProps) => {
   const costsCtx = useContext(CostsContext);
   const workspaceCtx = useContext(WorkspaceContext);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const apiCall = useAuthApiCall();
-  const [formattedCost, setFormattedCost] = useState<string | undefined>(
-    undefined,
-  );
+  const [formattedCost, setFormattedCost] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     async function fetchCostData() {
@@ -51,13 +45,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
       setLoadingState(LoadingState.Ok);
     }
     fetchCostData();
-  }, [
-    apiCall,
-    props.resourceId,
-    workspaceCtx.costs,
-    costsCtx.costs,
-    workspaceCtx.workspace.id,
-  ]);
+  }, [apiCall, props.resourceId, workspaceCtx.costs, costsCtx.costs, workspaceCtx.workspace.id]);
 
   // Generate tooltip content based on resource type and cost availability
   const getTooltipContent = () => {
@@ -74,8 +62,8 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
     return baseMessage;
   };
 
-  const showShimmer = loadingState === LoadingState.Loading ||
-    (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+  const showShimmer =
+    loadingState === LoadingState.Loading || (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
 
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">
@@ -84,9 +72,7 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (
       ) : (
         <>
           {formattedCost ? (
-            <TooltipHost content={getTooltipContent()}>
-              {formattedCost}
-            </TooltipHost>
+            <TooltipHost content={getTooltipContent()}>{formattedCost}</TooltipHost>
           ) : (
             <TooltipHost content={getTooltipContent()}>
               <Icon iconName="Clock" />

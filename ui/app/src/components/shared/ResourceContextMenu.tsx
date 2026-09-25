@@ -1,15 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
-import {
-  ComponentAction,
-  VMPowerStates,
-  Resource,
-} from "../../models/resource";
-import {
-  CommandBar,
-  IconButton,
-  IContextualMenuItem,
-  IContextualMenuProps,
-} from "@fluentui/react";
+import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
+import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { SecuredByRole } from "./SecuredByRole";
 import { ResourceType } from "../../models/resourceType";
@@ -17,11 +8,7 @@ import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { UserResource } from "../../models/userResource";
-import {
-  getActionIcon,
-  ResourceTemplate,
-  TemplateAction,
-} from "../../models/resourceTemplate";
+import { getActionIcon, ResourceTemplate, TemplateAction } from "../../models/resourceTemplate";
 import { ConfirmDeleteResource } from "./ConfirmDeleteResource";
 import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
@@ -40,22 +27,18 @@ interface ResourceContextMenuProps {
   commandBar?: boolean;
 }
 
-export const ResourceContextMenu: React.FunctionComponent<
-  ResourceContextMenuProps
-> = (props: ResourceContextMenuProps) => {
+export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuProps> = (
+  props: ResourceContextMenuProps,
+) => {
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [resourceTemplate, setResourceTemplate] = useState(
-    {} as ResourceTemplate,
-  );
+  const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
-  const [parentResource, setParentResource] = useState(
-    {} as WorkspaceService | Workspace,
-  );
+  const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
   const [roles, setRoles] = useState([] as Array<string>);
   const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
   const dispatch = useAppDispatch();
@@ -118,10 +101,7 @@ export const ResourceContextMenu: React.FunctionComponent<
       // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
       const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
       if (userRoles && r.filter((x) => userRoles.includes(x)).length > 0) {
-        const template = await apiCall(
-          `${templatesPath}/${props.resource.templateName}`,
-          HttpMethod.Get,
-        );
+        const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
         setResourceTemplate(template);
       }
     };
@@ -134,9 +114,7 @@ export const ResourceContextMenu: React.FunctionComponent<
       HttpMethod.Post,
       workspaceCtx.workspaceApplicationIdURI,
     );
-    action &&
-      action.operation &&
-      dispatch(addUpdateOperation(action.operation));
+    action && action.operation && dispatch(addUpdateOperation(action.operation));
   };
 
   // context menu
@@ -168,14 +146,10 @@ export const ResourceContextMenu: React.FunctionComponent<
     {
       key: "delete",
       text: "Delete",
-      title: props.resource.isEnabled
-        ? "Resource must be disabled before deleting"
-        : "Delete this resource",
+      title: props.resource.isEnabled ? "Resource must be disabled before deleting" : "Delete this resource",
       iconProps: { iconName: "Delete" },
       onClick: () => setShowDelete(true),
-      disabled:
-        props.resource.isEnabled ||
-        props.componentAction === ComponentAction.Lock,
+      disabled: props.resource.isEnabled || props.componentAction === ComponentAction.Lock,
     },
   ];
 
@@ -184,8 +158,7 @@ export const ResourceContextMenu: React.FunctionComponent<
       props.componentAction === ComponentAction.Lock ||
       actionsDisabledStates.includes(props.resource.deploymentStatus) ||
       !props.resource.isEnabled ||
-      (props.resource.azureStatus?.powerState &&
-        props.resource.azureStatus.powerState !== VMPowerStates.Running)
+      (props.resource.azureStatus?.powerState && props.resource.azureStatus.powerState !== VMPowerStates.Running)
     );
   };
 
@@ -227,11 +200,7 @@ export const ResourceContextMenu: React.FunctionComponent<
   };
 
   // add custom actions if we have any
-  if (
-    resourceTemplate &&
-    resourceTemplate.customActions &&
-    resourceTemplate.customActions.length > 0
-  ) {
+  if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
     let customActions: Array<IContextualMenuItem> = [];
     resourceTemplate.customActions.forEach((a: TemplateAction) => {
       customActions.push({
@@ -248,9 +217,7 @@ export const ResourceContextMenu: React.FunctionComponent<
     menuItems.push({
       key: "custom-actions",
       text: "Actions",
-      title: shouldDisableActions()
-        ? "Resource must be deployed and enabled to perform actions"
-        : "Custom Actions",
+      title: shouldDisableActions() ? "Resource must be deployed and enabled to perform actions" : "Custom Actions",
       iconProps: { iconName: "Asterisk" },
       disabled: shouldDisableActions(),
       subMenuProps: { items: customActions },
@@ -258,9 +225,7 @@ export const ResourceContextMenu: React.FunctionComponent<
   }
 
   // add 'upgrade' button if we have available template upgrades
-  const nonMajorUpgrades = props.resource.availableUpgrades?.filter(
-    (upgrade) => !upgrade.forceUpdateRequired,
-  );
+  const nonMajorUpgrades = props.resource.availableUpgrades?.filter((upgrade) => !upgrade.forceUpdateRequired);
   if (nonMajorUpgrades?.length > 0) {
     menuItems.push({
       key: "upgrade",
@@ -302,24 +267,9 @@ export const ResourceContextMenu: React.FunctionComponent<
           isEnabled={!props.resource.isEnabled}
         />
       )}
-      {showDelete && (
-        <ConfirmDeleteResource
-          onDismiss={() => setShowDelete(false)}
-          resource={props.resource}
-        />
-      )}
-      {showCopyUrl && (
-        <ConfirmCopyUrlToClipboard
-          onDismiss={() => setShowCopyUrl(false)}
-          resource={props.resource}
-        />
-      )}
-      {showUpgrade && (
-        <ConfirmUpgradeResource
-          onDismiss={() => setShowUpgrade(false)}
-          resource={props.resource}
-        />
-      )}
+      {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
+      {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
+      {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
     </>
   );
 };

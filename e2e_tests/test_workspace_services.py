@@ -32,7 +32,13 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
             "display_name": "My VM",
             "description": "Will be using this VM for my research",
             "os_image": "Windows 11",
-            "admin_username": "researcher"
+            "admin_username": "researcher",
+            "install_azure_cli": False,
+            "install_vscode": False,
+            "install_storage_explorer": False,
+            "install_git": False,
+            "install_python_tools": False,
+            "install_r_tools": False
         }
     }
 

@@ -15,9 +15,7 @@ interface UserResourceItemProps {
   removeUserResource: (u: UserResource) => void;
 }
 
-export const UserResourceItem: React.FunctionComponent<
-  UserResourceItemProps
-> = (props: UserResourceItemProps) => {
+export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = (props: UserResourceItemProps) => {
   const { workspaceServiceId, userResourceId } = useParams();
   const [userResource, setUserResource] = useState({} as UserResource);
   const apiCall = useAuthApiCall();

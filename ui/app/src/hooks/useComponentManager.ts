@@ -1,16 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { WorkspaceContext } from "../contexts/WorkspaceContext";
-import {
-  completedStates,
-  inProgressStates,
-  Operation,
-} from "../models/operation";
-import {
-  ResourceUpdate,
-  ComponentAction,
-  getResourceFromResult,
-  Resource,
-} from "../models/resource";
+import { completedStates, inProgressStates, Operation } from "../models/operation";
+import { ResourceUpdate, ComponentAction, getResourceFromResult, Resource } from "../models/resource";
 import { ResourceType } from "../models/resourceType";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 import { useAppSelector } from "./customReduxHooks";
@@ -40,9 +31,7 @@ export const useComponentManager = (
   useEffect(() => {
     const checkOps = async () => {
       if (resource) {
-        let resourceOps = operations.items.filter(
-          (o: Operation) => o.resourceId === resource.id,
-        );
+        let resourceOps = operations.items.filter((o: Operation) => o.resourceId === resource.id);
         if (resourceOps && resourceOps.length > 0) {
           let latestOp = resourceOps[resourceOps.length - 1];
 
@@ -68,15 +57,9 @@ export const useComponentManager = (
                 let scopeId;
                 if (resource.resourceType !== ResourceType.Workspace) {
                   // If a workspaceScopeId has been passed, use that, otherwise fall back to workspace context
-                  scopeId = workspaceScopeId
-                    ? workspaceScopeId
-                    : workspaceCtx.workspaceApplicationIdURI;
+                  scopeId = workspaceScopeId ? workspaceScopeId : workspaceCtx.workspaceApplicationIdURI;
                 }
-                let result = await apiCall(
-                  resource.resourcePath,
-                  HttpMethod.Get,
-                  scopeId,
-                );
+                let result = await apiCall(resource.resourcePath, HttpMethod.Get, scopeId);
                 onUpdate(getResourceFromResult(result));
               }
             }

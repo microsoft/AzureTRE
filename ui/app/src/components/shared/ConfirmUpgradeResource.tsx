@@ -11,11 +11,7 @@ import {
 } from "@fluentui/react";
 import React, { useContext, useState } from "react";
 import { AvailableUpgrade, Resource } from "../../models/resource";
-import {
-  HttpMethod,
-  ResultType,
-  useAuthApiCall,
-} from "../../hooks/useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { ResourceType } from "../../models/resourceType";
 import { APIError } from "../../models/exceptions";
@@ -29,15 +25,11 @@ interface ConfirmUpgradeProps {
   onDismiss: () => void;
 }
 
-export const ConfirmUpgradeResource: React.FunctionComponent<
-  ConfirmUpgradeProps
-> = (props: ConfirmUpgradeProps) => {
+export const ConfirmUpgradeResource: React.FunctionComponent<ConfirmUpgradeProps> = (props: ConfirmUpgradeProps) => {
   const apiCall = useAuthApiCall();
   const [selectedVersion, setSelectedVersion] = useState("");
   const [apiError, setApiError] = useState({} as APIError);
-  const [requestLoadingState, setRequestLoadingState] = useState(
-    LoadingState.Ok,
-  );
+  const [requestLoadingState, setRequestLoadingState] = useState(LoadingState.Ok);
   const workspaceCtx = useContext(WorkspaceContext);
   const dispatch = useAppDispatch();
 
@@ -109,9 +101,7 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
 
   const getDropdownOptions = () => {
     const options = [];
-    const nonMajorUpgrades = props.resource.availableUpgrades.filter(
-      (upgrade) => !upgrade.forceUpdateRequired,
-    );
+    const nonMajorUpgrades = props.resource.availableUpgrades.filter((upgrade) => !upgrade.forceUpdateRequired);
     options.push(...convertToDropDownOptions(nonMajorUpgrades));
     return options;
   };
@@ -140,24 +130,14 @@ export const ConfirmUpgradeResource: React.FunctionComponent<
                 }}
                 selectedKey={selectedVersion}
               />
-              <PrimaryButton
-                primaryDisabled={!selectedVersion}
-                text="Upgrade"
-                onClick={() => upgradeCall()}
-              />
+              <PrimaryButton primaryDisabled={!selectedVersion} text="Upgrade" onClick={() => upgradeCall()} />
             </DialogFooter>
           </>
         )}
         {requestLoadingState === LoadingState.Loading && (
-          <Spinner
-            label="Sending request..."
-            ariaLive="assertive"
-            labelPosition="right"
-          />
+          <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
-        {requestLoadingState === LoadingState.Error && (
-          <ExceptionLayout e={apiError} />
-        )}
+        {requestLoadingState === LoadingState.Error && <ExceptionLayout e={apiError} />}
       </Dialog>
     </>
   );

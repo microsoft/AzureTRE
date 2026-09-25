@@ -85,7 +85,7 @@ def sample_airlock_user_resource_object():
 def sample_status_changed_event(new_status="draft", previous_status=None):
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).__dict__,
+        data=StatusChangedData(request_id=AIRLOCK_REQUEST_ID, new_status=new_status, previous_status=previous_status, type=AirlockRequestType.Import, workspace_id=WORKSPACE_ID[-4:]).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/statusChanged",
         data_version="2.0"
     )
@@ -122,7 +122,7 @@ def sample_airlock_notification_event(status="draft"):
                 id=WORKSPACE_ID,
                 display_name="my research workspace",
                 description="for science!"
-            )),
+            )).model_dump(mode="json"),
         subject=f"{AIRLOCK_REQUEST_ID}/airlockNotification",
         data_version="4.0"
     )
@@ -586,3 +586,149 @@ async def test_delete_review_user_resource_disables_the_resource_before_deletion
                                       resource_history_repo=AsyncMock(),
                                       user=create_test_user())
     disable_user_resource.assert_called_once()
+
+
+# --- Graph / role-assignment error separation tests ---
+
+@pytest.mark.asyncio
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment",
+       side_effect=Exception("Graph call failed"))
+async def test_save_and_publish_event_airlock_request_raises_503_if_graph_call_fails(_, airlock_request_repo_mock):
+    """A Graph/auth failure during role-assignment lookup returns a distinct 503 before DB or Event Grid are touched."""
+    airlock_request_mock = sample_airlock_request()
+    airlock_request_repo_mock.save_item = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as ex:
+        await save_and_publish_event_airlock_request(
+            airlock_request=airlock_request_mock,
+            airlock_request_repo=airlock_request_repo_mock,
+            user=create_test_user(),
+            workspace=sample_workspace())
+
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert "Graph" in ex.value.detail
+    # DB should never have been touched
+    airlock_request_repo_mock.save_item.assert_not_called()
+
+
+@pytest.mark.asyncio
+@patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment",
+       return_value={"WorkspaceResearcher": ["r@example.com"], "WorkspaceOwner": ["o@example.com"], "AirlockManager": ["m@example.com"]})
+async def test_save_and_publish_event_airlock_request_503_includes_underlying_error(_, event_grid_publisher_client_mock,
+                                                                                    airlock_request_repo_mock):
+    """The 503 detail from an Event Grid failure includes the underlying exception message."""
+    underlying_msg = "connection reset by peer"
+    airlock_request_mock = sample_airlock_request()
+    airlock_request_repo_mock.save_item = AsyncMock(return_value=None)
+    airlock_request_repo_mock.delete_item = AsyncMock(return_value=None)
+    event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
+    event_grid_sender_client_mock.send = AsyncMock(side_effect=Exception(underlying_msg))
+
+    with pytest.raises(HTTPException) as ex:
+        await save_and_publish_event_airlock_request(
+            airlock_request=airlock_request_mock,
+            airlock_request_repo=airlock_request_repo_mock,
+            user=create_test_user(),
+            workspace=sample_workspace())
+
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert underlying_msg in ex.value.detail
+
+
+@pytest.mark.asyncio
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment",
+       side_effect=Exception("Graph call failed"))
+async def test_update_and_publish_event_airlock_request_raises_503_if_graph_call_fails(_, airlock_request_repo_mock):
+    """A Graph failure during role-assignment lookup in update_and_publish raises a distinct 503."""
+    airlock_request_mock = sample_airlock_request()
+    updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
+    airlock_request_repo_mock.update_airlock_request = AsyncMock(return_value=updated_airlock_request_mock)
+
+    with patch("services.airlock.send_status_changed_event", new_callable=AsyncMock):
+        with pytest.raises(HTTPException) as ex:
+            await update_and_publish_event_airlock_request(
+                airlock_request=airlock_request_mock,
+                airlock_request_repo=airlock_request_repo_mock,
+                updated_by=create_test_user(),
+                new_status=AirlockRequestStatus.Submitted,
+                workspace=sample_workspace())
+
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert "Graph" in ex.value.detail
+
+
+@pytest.mark.asyncio
+@patch("event_grid.helpers.EventGridPublisherClient", return_value=AsyncMock())
+@patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment",
+       return_value={"WorkspaceResearcher": ["r@example.com"], "WorkspaceOwner": ["o@example.com"], "AirlockManager": ["m@example.com"]})
+async def test_update_and_publish_event_airlock_request_503_includes_underlying_error(_, event_grid_publisher_client_mock,
+                                                                                      airlock_request_repo_mock):
+    """The 503 detail from an Event Grid failure in update_and_publish includes the underlying exception message."""
+    underlying_msg = "topic endpoint unreachable"
+    airlock_request_mock = sample_airlock_request()
+    updated_airlock_request_mock = sample_airlock_request(status=AirlockRequestStatus.Submitted)
+    airlock_request_repo_mock.update_airlock_request = AsyncMock(return_value=updated_airlock_request_mock)
+    event_grid_sender_client_mock = event_grid_publisher_client_mock.return_value
+    event_grid_sender_client_mock.send = AsyncMock(side_effect=Exception(underlying_msg))
+
+    with pytest.raises(HTTPException) as ex:
+        await update_and_publish_event_airlock_request(
+            airlock_request=airlock_request_mock,
+            airlock_request_repo=airlock_request_repo_mock,
+            updated_by=create_test_user(),
+            new_status=AirlockRequestStatus.Submitted,
+            workspace=sample_workspace())
+
+    assert ex.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert underlying_msg in ex.value.detail
+
+
+def test_authenticated_user_with_empty_email_persists_and_builds_notification():
+    """Regression: an AuthenticatedUser with an empty email and tuple roles is a
+    valid createdBy/updatedBy for an airlock request and does not break the
+    Event Grid airlock notification payload (which requires a string email).
+
+    A missing `email`/`preferred_username` claim previously yielded a None email
+    that failed AirlockNotificationUserData validation, surfacing as a 503.
+    """
+    from auth.models import AuthenticatedUser
+
+    user = AuthenticatedUser(
+        id="user-oid",
+        name="No Email User",
+        email="",
+        roles=("WorkspaceResearcher",),
+        audience="api://workspace",
+        is_workspace_token=True,
+    )
+
+    airlock_request = AirlockRequest(
+        id=AIRLOCK_REQUEST_ID,
+        workspaceId=WORKSPACE_ID,
+        type=AirlockRequestType.Import,
+        createdBy=user,
+        updatedBy=user,
+        createdWhen=CURRENT_TIME,
+        updatedWhen=CURRENT_TIME,
+    )
+
+    # createdBy/updatedBy are coerced to plain dicts, roles remain a tuple.
+    assert isinstance(airlock_request.createdBy, dict)
+    assert airlock_request.createdBy["email"] == ""
+    assert airlock_request.createdBy["roles"] == ("WorkspaceResearcher",)
+
+    # Building the notification payload from the persisted user must not raise.
+    notification = AirlockNotificationRequestData(
+        id=airlock_request.id,
+        created_when=airlock_request.createdWhen,
+        created_by=airlock_request.createdBy,
+        updated_when=airlock_request.updatedWhen,
+        updated_by=airlock_request.updatedBy,
+        request_type=airlock_request.type,
+        files=airlock_request.files,
+        status=airlock_request.status,
+        business_justification=airlock_request.businessJustification)
+
+    assert notification.created_by.email == ""
+    assert notification.updated_by.email == ""

@@ -8,13 +8,7 @@ vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
   return {
     ...actual,
-    ...createPartialFluentUIMock([
-      'Stack',
-      'Text',
-      'IconButton',
-      'TooltipHost',
-      'Spinner'
-    ]),
+    ...createPartialFluentUIMock(["Stack", "Text", "IconButton", "TooltipHost", "Spinner"]),
   };
 });
 
@@ -32,51 +26,27 @@ describe("CliCommand Component", () => {
   });
 
   it("renders the title", () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     expect(screen.getByText("Create Workspace")).toBeInTheDocument();
   });
 
   it("renders copy button with copy icon", () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     const copyButton = screen.getByTestId("icon-button");
     expect(copyButton).toHaveAttribute("data-icon-name", "copy");
   });
 
   it("shows default tooltip message initially", () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     const tooltip = screen.getByTestId("tooltip");
     expect(tooltip).toHaveAttribute("title", "Copy to clipboard");
   });
 
   it("displays spinner when loading", () => {
-    render(
-      <CliCommand
-        command=""
-        title="Create Workspace"
-        isLoading={true}
-      />
-    );
+    render(<CliCommand command="" title="Create Workspace" isLoading={true} />);
 
     expect(screen.getByTestId("spinner")).toBeInTheDocument();
     expect(screen.getByText("Generating command...")).toBeInTheDocument();
@@ -85,13 +55,7 @@ describe("CliCommand Component", () => {
   it("copies command to clipboard when copy button is clicked", async () => {
     const command = "tre workspace new --template-name base";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     const copyButton = screen.getByTestId("icon-button");
     fireEvent.click(copyButton);
@@ -100,13 +64,7 @@ describe("CliCommand Component", () => {
   });
 
   it("shows 'Copied' tooltip message after clicking copy button", async () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     const copyButton = screen.getByTestId("icon-button");
     fireEvent.click(copyButton);
@@ -118,13 +76,7 @@ describe("CliCommand Component", () => {
   });
 
   it("does not copy empty command", () => {
-    render(
-      <CliCommand
-        command=""
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="" title="Create Workspace" isLoading={false} />);
 
     const copyButton = screen.getByTestId("icon-button");
     fireEvent.click(copyButton);
@@ -133,13 +85,7 @@ describe("CliCommand Component", () => {
   });
 
   it("renders simple command without parameters", () => {
-    render(
-      <CliCommand
-        command="tre workspace list"
-        title="List Workspaces"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace list" title="List Workspaces" isLoading={false} />);
 
     expect(screen.getByText("tre workspace list")).toBeInTheDocument();
   });
@@ -147,13 +93,7 @@ describe("CliCommand Component", () => {
   it("renders command with parameters correctly", () => {
     const command = "tre workspace new --template-name base --display-name MyWorkspace";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     // Should render base command
     expect(screen.getByText("tre workspace new")).toBeInTheDocument();
@@ -168,13 +108,7 @@ describe("CliCommand Component", () => {
   it("handles command with comment-style parameter values", () => {
     const command = "tre workspace new --template-name <workspace-template-name>";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     // Should render base command
     expect(screen.getByText("tre workspace new")).toBeInTheDocument();
@@ -187,13 +121,7 @@ describe("CliCommand Component", () => {
   it("handles command with long parameter values that need to break", () => {
     const command = "tre workspace new --very-long-parameter-name very-long-parameter-value-that-should-wrap";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     expect(screen.getByText("tre workspace new")).toBeInTheDocument();
     expect(screen.getByText("--very-long-parameter-name")).toBeInTheDocument();
@@ -203,13 +131,7 @@ describe("CliCommand Component", () => {
   it("handles command with multiple parameters", () => {
     const command = "tre workspace new --template-name base --display-name MyWorkspace --description Test";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     // Should render all parameters
     expect(screen.getByText("--template-name")).toBeInTheDocument();
@@ -223,13 +145,7 @@ describe("CliCommand Component", () => {
   it("handles command with parameters that have no values", () => {
     const command = "tre workspace new --template-name --display-name";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     expect(screen.getByText("tre workspace new")).toBeInTheDocument();
     expect(screen.getByText("--template-name")).toBeInTheDocument();
@@ -239,13 +155,7 @@ describe("CliCommand Component", () => {
   it("handles malformed command gracefully", () => {
     const command = "   tre workspace    new   --template-name    base   ";
 
-    render(
-      <CliCommand
-        command={command}
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command={command} title="Create Workspace" isLoading={false} />);
 
     // Should still parse and render correctly
     expect(screen.getByText(/tre workspace.*new/)).toBeInTheDocument();
@@ -254,13 +164,7 @@ describe("CliCommand Component", () => {
   });
 
   it("renders correct styling for header", () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     const headerStack = screen.getAllByTestId("stack")[1]; // Second stack is the header
     expect(headerStack).toHaveAttribute("data-horizontal", "true");
@@ -268,22 +172,16 @@ describe("CliCommand Component", () => {
   });
 
   it("renders stack items with correct properties", () => {
-    render(
-      <CliCommand
-        command="tre workspace new"
-        title="Create Workspace"
-        isLoading={false}
-      />
-    );
+    render(<CliCommand command="tre workspace new" title="Create Workspace" isLoading={false} />);
 
     const stackItems = screen.getAllByTestId("stack-item");
 
     // Check title stack item has grow property
-    const titleItem = stackItems.find(item => item.getAttribute("data-grow") === "true");
+    const titleItem = stackItems.find((item) => item.getAttribute("data-grow") === "true");
     expect(titleItem).toBeTruthy();
 
     // Check button stack item has align end
-    const buttonItem = stackItems.find(item => item.getAttribute("data-align") === "end");
+    const buttonItem = stackItems.find((item) => item.getAttribute("data-align") === "end");
     expect(buttonItem).toBeTruthy();
   });
 });

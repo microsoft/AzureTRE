@@ -3,7 +3,7 @@ from typing import List, Tuple
 import asyncio
 from azure.mgmt.storage.aio import StorageManagementClient
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -58,12 +58,12 @@ class WorkspaceRepository(ResourceRepository):
     async def get_workspaces(self) -> List[Workspace]:
         query, parameters = WorkspaceRepository.workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[Workspace], workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_active_workspaces(self) -> List[Workspace]:
         query, parameters = WorkspaceRepository.active_workspaces_query_string()
         workspaces = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[Workspace], workspaces)
+        return TypeAdapter(List[Workspace]).validate_python(workspaces)
 
     async def get_deployed_workspace_by_id(self, workspace_id: str, operations_repo: OperationRepository) -> Workspace:
         workspace = await self.get_workspace_by_id(workspace_id)
@@ -81,7 +81,7 @@ class WorkspaceRepository(ResourceRepository):
         workspaces = await self.query(query=query, parameters=parameters)
         if not workspaces:
             raise EntityDoesNotExist
-        return parse_obj_as(Workspace, workspaces[0])
+        return TypeAdapter(Workspace).validate_python(workspaces[0])
 
     # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
     async def is_workspace_storage_account_available(self, credential, workspace_id: str) -> bool:

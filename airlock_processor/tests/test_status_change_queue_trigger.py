@@ -20,6 +20,14 @@ class TestPropertiesExtraction():
         assert req_prop.type == "101112"
         assert req_prop.workspace_id == "ws1"
 
+    def test_extract_prop_defaults_missing_previous_status_to_none(self):
+        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"draft\", \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message = _mock_service_bus_message(body=message_body)
+
+        req_prop = extract_properties(message)
+
+        assert req_prop.previous_status is None
+
     def test_extract_prop_missing_arg_throws(self):
         message_body = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
         message = _mock_service_bus_message(body=message_body)

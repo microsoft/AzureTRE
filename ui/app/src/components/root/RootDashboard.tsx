@@ -17,9 +17,7 @@ interface RootDashboardProps {
   addWorkspace: (w: Workspace) => void;
 }
 
-export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (
-  props: RootDashboardProps,
-) => {
+export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (props: RootDashboardProps) => {
   const createFormCtx = useContext(CreateUpdateResourceContext);
 
   return (
@@ -40,8 +38,7 @@ export const RootDashboard: React.FunctionComponent<RootDashboardProps> = (
                     onClick={() => {
                       createFormCtx.openCreateForm({
                         resourceType: ResourceType.Workspace,
-                        onAdd: (r: Resource) =>
-                          props.addWorkspace(r as Workspace),
+                        onAdd: (r: Resource) => props.addWorkspace(r as Workspace),
                       });
                     }}
                   />

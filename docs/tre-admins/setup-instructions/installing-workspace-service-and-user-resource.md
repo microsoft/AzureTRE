@@ -32,7 +32,7 @@ Now that we have published and registered both workspace service and user resour
 2. Log into the Swagger UI by clicking `Authorize`, then `Authorize` again. You will be redirected to the login page.
 
 !!! info
-    You need to log in with a user with assigned the WorkspaceOwner role in the app regsitration used when deploying your workspace.
+    You need to log in with a user with assigned the WorkspaceOwner role in the app registration used when deploying your workspace.
 
 3. Once logged in, click `Try it out` on the `POST` `/api/workspaces/<workspace_id>/workspace-services` operation.
 

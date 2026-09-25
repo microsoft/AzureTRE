@@ -84,9 +84,7 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
 
         switch (sortBy) {
           case "name":
-            comparison = (a.properties?.display_name || a.id).localeCompare(
-              b.properties?.display_name || b.id,
-            );
+            comparison = (a.properties?.display_name || a.id).localeCompare(b.properties?.display_name || b.id);
             break;
           case "id":
             comparison = a.id.localeCompare(b.id);
@@ -233,11 +231,7 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
     <>
       <Stack>
         <Stack.Item>
-          <CommandBar
-            items={commandBarItems}
-            farItems={farCommandBarItems}
-            ariaLabel="Workspace list controls"
-          />
+          <CommandBar items={commandBarItems} farItems={farCommandBarItems} ariaLabel="Workspace list controls" />
         </Stack.Item>
         <Stack.Item>
           <ResourceCardList

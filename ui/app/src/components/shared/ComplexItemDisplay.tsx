@@ -14,9 +14,9 @@ interface ComplexPropertyModalProps {
   val: any;
   title: string;
 }
-export const ComplexPropertyModal: React.FunctionComponent<
-  ComplexPropertyModalProps
-> = (props: ComplexPropertyModalProps) => {
+export const ComplexPropertyModal: React.FunctionComponent<ComplexPropertyModalProps> = (
+  props: ComplexPropertyModalProps,
+) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -40,11 +40,7 @@ export const ComplexPropertyModal: React.FunctionComponent<
             />
           </div>
           <div className={contentStyles.body}>
-            <NestedDisplayItem
-              val={props.val}
-              isExpanded={true}
-              topLayer={true}
-            />
+            <NestedDisplayItem val={props.val} isExpanded={true} topLayer={true} />
           </div>
         </Modal>
       )}
@@ -58,9 +54,7 @@ interface NestedDisplayItemProps {
   topLayer?: boolean;
 }
 
-const NestedDisplayItem: React.FunctionComponent<NestedDisplayItemProps> = (
-  props: NestedDisplayItemProps,
-) => {
+const NestedDisplayItem: React.FunctionComponent<NestedDisplayItemProps> = (props: NestedDisplayItemProps) => {
   const [isExpanded, setIsExpanded] = useState(props.isExpanded === true);
 
   return (
@@ -76,10 +70,7 @@ const NestedDisplayItem: React.FunctionComponent<NestedDisplayItemProps> = (
           {Object.keys(props.val).map((key: string, i) => {
             if (typeof props.val[key] === "object") {
               return (
-                <li
-                  key={i}
-                  className={props.topLayer ? "tre-complex-list-border" : ""}
-                >
+                <li key={i} className={props.topLayer ? "tre-complex-list-border" : ""}>
                   <span style={{ fontSize: "16px" }}>{key}:</span>
                   <NestedDisplayItem val={props.val[key]} isExpanded={false} />
                 </li>

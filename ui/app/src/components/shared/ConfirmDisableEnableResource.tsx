@@ -1,18 +1,7 @@
-import {
-  Dialog,
-  DialogFooter,
-  PrimaryButton,
-  DefaultButton,
-  DialogType,
-  Spinner,
-} from "@fluentui/react";
+import { Dialog, DialogFooter, PrimaryButton, DefaultButton, DialogType, Spinner } from "@fluentui/react";
 import React, { useContext, useState } from "react";
 import { Resource } from "../../models/resource";
-import {
-  HttpMethod,
-  ResultType,
-  useAuthApiCall,
-} from "../../hooks/useAuthApiCall";
+import { HttpMethod, ResultType, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { ResourceType } from "../../models/resourceType";
 import { LoadingState } from "../../models/loadingState";
@@ -28,9 +17,9 @@ interface ConfirmDisableEnableResourceProps {
 }
 
 // show a 'are you sure' modal, and then send a patch if the user confirms
-export const ConfirmDisableEnableResource: React.FunctionComponent<
-  ConfirmDisableEnableResourceProps
-> = (props: ConfirmDisableEnableResourceProps) => {
+export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisableEnableResourceProps> = (
+  props: ConfirmDisableEnableResourceProps,
+) => {
   const apiCall = useAuthApiCall();
   const [loading, setLoading] = useState(LoadingState.Ok);
   const [apiError, setApiError] = useState({} as APIError);
@@ -97,25 +86,15 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<
         {loading === LoadingState.Ok && (
           <DialogFooter>
             {props.isEnabled ? (
-              <PrimaryButton
-                text="Enable"
-                onClick={() => toggleDisableCall()}
-              />
+              <PrimaryButton text="Enable" onClick={() => toggleDisableCall()} />
             ) : (
-              <PrimaryButton
-                text="Disable"
-                onClick={() => toggleDisableCall()}
-              />
+              <PrimaryButton text="Disable" onClick={() => toggleDisableCall()} />
             )}
             <DefaultButton text="Cancel" onClick={() => props.onDismiss()} />
           </DialogFooter>
         )}
         {loading === LoadingState.Loading && (
-          <Spinner
-            label="Sending request..."
-            ariaLive="assertive"
-            labelPosition="right"
-          />
+          <Spinner label="Sending request..." ariaLive="assertive" labelPosition="right" />
         )}
         {loading === LoadingState.Error && <ExceptionLayout e={apiError} />}
       </Dialog>

@@ -7,3 +7,6 @@ set -o nounset
 
 # docker socket fixup
 sudo bash ./devops/scripts/set_docker_sock_permission.sh
+
+# Enable pre-commit hooks
+pre-commit install

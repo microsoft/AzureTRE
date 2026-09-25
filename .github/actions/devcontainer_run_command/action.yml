@@ -55,6 +55,10 @@ inputs:
   MGMT_STORAGE_ACCOUNT_NAME:
     description: "The storage account used to store the Terraform state."
     required: false
+  CI_GIT_REF:
+    description: "Git reference owning a CI validation environment. Leave empty for non-CI deployments."
+    required: false
+    default: ""
   CORE_ADDRESS_SPACE:
     description: "Core address space."
     required: false
@@ -228,6 +232,8 @@ runs:
 
     - name: Run command in DevContainer
       shell: bash
+      env:
+        TF_VAR_ci_git_ref: ${{ inputs.CI_GIT_REF }}
       run: |
         # Write command to a command.sh script file
         cat <<EOF > ./command.sh
@@ -266,6 +272,7 @@ runs:
             && inputs.TERRAFORM_STATE_CONTAINER_NAME) || 'tfstate' }}" \
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
           -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
+          -e TF_VAR_ci_git_ref \
           -e ACR_NAME=${{ inputs.ACR_NAME }} \
           -e TF_VAR_acr_name=${{ inputs.ACR_NAME }} \
           -e TF_VAR_aad_tenant_id="${{ inputs.AAD_TENANT_ID }}" \
