@@ -364,6 +364,8 @@
       
         
       
+        
+      
     
     
     
@@ -503,6 +505,34 @@
     
   
     Airlock
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../azure-tre-overview/airlock-legacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Airlock (Legacy)
   
 
     
@@ -4669,6 +4699,10 @@
 <tr>
 <td><code>ENABLE_AIRLOCK_MALWARE_SCANNING</code></td>
 <td>If False, Airlock requests will skip the malware scanning stage. If set to True, Defender for Storage will be enabled.</td>
+</tr>
+<tr>
+<td><code>ENABLE_LEGACY_AIRLOCK</code></td>
+<td>Set to <code>true</code> by default. Deploys the legacy per-stage airlock storage accounts alongside the consolidated accounts. Set to <code>false</code> only once no <code>airlock_version=1</code> workspaces or in-flight v1 requests remain; doing so permanently deletes the legacy accounts and any data still in them.</td>
 </tr>
 <tr>
 <td><code>ENABLE_LOCAL_DEBUGGING</code></td>

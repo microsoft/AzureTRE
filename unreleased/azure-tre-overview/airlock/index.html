@@ -18,7 +18,7 @@
         <link rel="prev" href="../tre-resources-breakdown/">
       
       
-        <link rel="next" href="../cost-reporting/">
+        <link rel="next" href="../airlock-legacy/">
       
       
         
@@ -368,6 +368,8 @@
       
         
       
+        
+      
     
     
     
@@ -559,6 +561,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#storage-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingressegress-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -573,10 +586,38 @@
   <a href="#data-movement" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data movement
+        Data Movement
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Data Movement">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -592,10 +633,38 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Access Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-metadata-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container Metadata Stages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#approval-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Approval mechanism
+        Approval Mechanism
       
     </span>
   </a>
@@ -614,10 +683,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#api-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airlock-processor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airlock Processor
       
     </span>
   </a>
@@ -628,10 +708,121 @@
   <a href="#airlock-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Airlock flow
+        Airlock Flow
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-airlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy Airlock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-settings-configyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Settings (config.yaml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workspace-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-at-each-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens at Each Level
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-workspace-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Workspace Isolation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cross-Workspace Isolation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-abac-conditions-azure-attribute-based-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. ABAC Conditions (Azure Attribute-Based Access Control)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-network-isolation-private-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Network Isolation (Private Endpoints)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-container-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Container Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -639,6 +830,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../airlock-legacy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Airlock (Legacy)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4548,6 +4767,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#storage-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ingressegress-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4562,10 +4792,38 @@
   <a href="#data-movement" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Data movement
+        Data Movement
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Data Movement">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#import-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#export-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Export Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4581,10 +4839,38 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access Control
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Access Control">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#container-metadata-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container Metadata Stages
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#approval-mechanism" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Approval mechanism
+        Approval Mechanism
       
     </span>
   </a>
@@ -4603,10 +4889,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
+  <a href="#api-endpoints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture
+        API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#airlock-processor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airlock Processor
       
     </span>
   </a>
@@ -4617,10 +4914,121 @@
   <a href="#airlock-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Airlock flow
+        Airlock Flow
       
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-airlock" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy Airlock
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-settings-configyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Settings (config.yaml)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workspace-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workspace Settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-at-each-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Happens at Each Level
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cross-workspace-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cross-Workspace Isolation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cross-Workspace Isolation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-abac-conditions-azure-attribute-based-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. ABAC Conditions (Azure Attribute-Based Access Control)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-network-isolation-private-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Network Isolation (Private Endpoints)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-container-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Container Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4644,50 +5052,131 @@
 <h1 id="airlock">Airlock</h1>
 <p>In a Trusted Research Environment (TRE) the workspaces represent a security boundary that enables researchers to access data, execute analysis, apply algorithms and collect reports. The airlock capability is the only mechanism that allows users to <code>import</code> or <code>export</code> data, tools or other file based artefacts in a secure fashion with a human approval.
 This constitutes the mechanism focused on preventing data exfiltration and securing TRE and its workspaces from inappropriate data, while allowing researchers to work on their projects and execute their tasks.
-The airlock feature brings several actions: ingress/egress Mechanism; Data movement; Security gates; Approval mechanism and Notifications. As part of TRE's Safe settings all activity must be tracked for auditing purposes.</p>
+The airlock feature brings several actions: ingress/egress mechanism, data movement, security gates, approval mechanism and notifications. As part of TRE's Safe Settings all activity must be tracked for auditing purposes.</p>
 <p>The Airlock feature aims to address these goals:</p>
 <ul>
 <li>Prevent unauthorised data import or export.</li>
-</ul>
-<ul>
 <li>Provide a process to allow approved data to be imported through the security boundary of a TRE Workspace.</li>
-</ul>
-<ul>
-<li>TRE provides functionality to track requests and decisions, supporting cycles of revision, approval or rejection.</li>
-</ul>
-<ul>
-<li>Data being imported with an airlock import process can be automatically scanned for security issues.</li>
-</ul>
-<ul>
-<li>Data being exported or imported must be manually reviewed by the Airlock Manager.</li>
-</ul>
-<ul>
-<li>Notify the requesting researcher of the process progress and/or required actions.</li>
-</ul>
-<ul>
-<li>All steps within the airlock process are audited.</li>
+<li>Track requests and decisions, supporting cycles of revision, approval or rejection.</li>
+<li>Automatically scan data being imported for security issues.</li>
+<li>Require manual review by the Airlock Manager for data being exported or imported.</li>
+<li>Notify the requesting researcher of progress and required actions.</li>
+<li>Audit all steps within the airlock process.</li>
 </ul>
 <p>Typically in a TRE, the Airlock feature would be used to allow a researcher to export the outputs of a research project such as summary results. With the airlock, data to be exported must go through a human review, typically undertaken by a data governance team.</p>
-<p>The Airlock feature will create events on every meaningful step of the process. This will enable increased flexibility by allowing an organization to extend the notification mechanism.</p>
+<p>The Airlock feature creates events on every meaningful step of the process, enabling organisations to extend the notification mechanism.</p>
+<h2 id="storage-architecture">Storage Architecture</h2>
+<p>The airlock uses a consolidated storage architecture with <strong>2 storage accounts</strong> and metadata-based stage management. Each airlock request gets a dedicated container (named with the request ID), and the request's stage is tracked via container metadata rather than by copying data between storage accounts.</p>
+<pre class="mermaid"><code>graph TB
+    subgraph External["External"]
+        researcher["fa:fa-user Researcher"]
+        reviewer["fa:fa-user-shield Airlock Manager"]
+    end
+
+    appgw["fa:fa-shield-alt App Gateway"]
+
+    subgraph Core["TRE Core"]
+        direction TB
+        subgraph CoreStorage["Core: stalairlock"]
+            ie{{"stage: import-external"}}
+            eapp{{"stage: export-approved"}}
+            iip{{"stage: import-in-progress"}}
+            irej{{"stage: import-rejected"}}
+            iblk{{"stage: import-blocked"}}
+        end
+        processor["fa:fa-cog Airlock Processor"]
+    end
+
+    subgraph WSStorage["Workspace: stalairlockg"]
+        iappr{{"stage: import-approved"}}
+        eint{{"stage: export-internal"}}
+        eip{{"stage: export-in-progress"}}
+        erej{{"stage: export-rejected"}}
+        eblk{{"stage: export-blocked"}}
+    end
+
+    subgraph Workspace["TRE Workspace"]
+        vm["fa:fa-desktop Researcher VM"]
+    end
+
+    researcher -- "SAS token" --&gt; appgw
+    reviewer -- "SAS token" --&gt; appgw
+    appgw -- "Public stages only" --&gt; CoreStorage
+    processor -. "All stages" .-&gt; CoreStorage
+    processor -. "All stages" .-&gt; WSStorage
+    vm -- "Private Endpoint" --&gt; WSStorage
+
+    style Core fill:#1a3d6d,stroke:#0d2240,color:#fff
+    style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
+    style WSStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
+    style External fill:#444,stroke:#333,color:#fff
+    style Workspace fill:#1a5c1a,stroke:#0d330d,color:#fff
+    style appgw fill:#0078d4,stroke:#005a9e,color:#fff
+    style processor fill:#cc7000,stroke:#995300,color:#fff
+    style vm fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style ie fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style eapp fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style iip fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style irej fill:#b85450,stroke:#8b3e3b,color:#fff
+    style iblk fill:#b85450,stroke:#8b3e3b,color:#fff
+    style iappr fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style eint fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style eip fill:#8b7800,stroke:#5c5000,color:#fff
+    style erej fill:#b85450,stroke:#8b3e3b,color:#fff
+    style eblk fill:#b85450,stroke:#8b3e3b,color:#fff
+    style researcher fill:#0078d4,stroke:#005a9e,color:#fff
+    style reviewer fill:#0078d4,stroke:#005a9e,color:#fff</code></pre>
+<blockquote>
+<p>Airlock architecture overview. Hexagon shapes represent container metadata stages. Green = user-accessible, yellow = processing, red = terminal.</p>
+</blockquote>
+<p><strong>Storage Accounts:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Storage Account</th>
+<th>Name Pattern</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Core Storage</strong></td>
+<td><code>stalairlock{tre_id}</code></td>
+<td>All core-managed stages: import external, in-progress, rejected, blocked; export approved</td>
+</tr>
+<tr>
+<td><strong>Global Workspace Storage</strong></td>
+<td><code>stalairlockg{tre_id}</code></td>
+<td>All workspace-managed stages: import approved; export internal, in-progress, rejected, blocked</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key design principles:</strong></p>
+<ul>
+<li><strong>Metadata over movement</strong> — In-account stage transitions (submitted→in-review, in-review→rejected/blocked) simply update container metadata, providing near-instant transitions. Data is physically copied in only two places: when a request is <strong>submitted</strong> the writable draft container is <em>sealed</em> (its file is copied into an immutable
+  request-id container and the draft is deleted, structurally revoking the researcher's SAS), and again on <strong>approval</strong> when data crosses the core/workspace boundary.</li>
+<li><strong>ABAC security</strong> — Azure Attribute-Based Access Control conditions restrict which stages each identity can access on the storage account, enforced at the Azure RBAC layer.</li>
+<li><strong>Shared infrastructure</strong> — All workspaces share the same workspace storage account, with network isolation via per-workspace private endpoints and ABAC conditions filtering by <code>workspace_id</code>.</li>
+</ul>
 <h2 id="ingressegress-mechanism">Ingress/Egress Mechanism</h2>
 <p>The Airlock allows a TRE user to start the <code>import</code> or <code>export</code> process to a given workspace. A number of milestones must be reached in order to complete a successful import or export. These milestones are defined using the following states:</p>
 <ol>
-<li><strong>Draft</strong>: An Airlock request has been created but has not yet started. The TRE User/Researcher has now access to a storage location and they must identify the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).</li>
+<li><strong>Draft</strong>: An Airlock request has been created but has not yet started. The TRE User/Researcher has access to a storage container and must upload the data to be processed. At this point the airlock import/export processes allow a single file to be processed. However a compressed file may be used (zip).</li>
 <li><strong>Submitted</strong>: The request was submitted by the researcher (not yet processed).</li>
 <li><strong>In-Review</strong>: The request is ready to be reviewed. This state can be reached directly from Submitted state or after going through a successful security scan (found clean).</li>
 <li><strong>Approval In-progress</strong>: The Airlock request has been approved, however data movement is still ongoing.</li>
-<li><strong>Approved</strong>: The Airlock request has been approved. At this state, data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is now available in the TRE workspace, it can be accessed by the requestor from within the workspace.</li>
+<li><strong>Approved</strong>: The Airlock request has been approved. Data has been securely verified and manually reviewed. The data is now in its final location. For an import process the data is available in the TRE workspace and can be accessed by the requestor from within the workspace.</li>
 <li><strong>Rejection In-progress</strong>: The Airlock request has been rejected, however data movement is still ongoing.</li>
-<li><strong>Rejected</strong>: The Airlock request has been rejected. The data in the process was rejected manually by the Airlock Manager.</li>
-<li><strong>Cancelled</strong>: The Airlock request was manually cancelled by the requestor TRE user, a Workspace owner or a TRE administrator. The cancellation is only allowed when the request is not actively changing (i.e. <strong>Draft</strong> or <strong>In-Review</strong> state).</li>
+<li><strong>Rejected</strong>: The Airlock request has been rejected. The data was rejected manually by the Airlock Manager.</li>
+<li><strong>Cancelled</strong>: The Airlock request was manually cancelled by the requestor, a Workspace Owner, or a TRE administrator. Cancellation is allowed while the request is not actively moving data — that is, in <strong>Draft</strong> or <strong>In-Review</strong> state.</li>
 <li><strong>Blocking In-progress</strong>: The Airlock request has been blocked, however data movement is still ongoing.</li>
 <li><strong>Blocked By Scan</strong>: The Airlock request has been blocked. The security analysis found issues in the submitted data and consequently quarantined the data.</li>
 </ol>
-<pre class="mermaid"><code>graph TD 
-  A[Researcher wants to export data from TRE Workspace] --&gt;|Request created| B[Request in state Draft] 
+<pre class="mermaid"><code>graph TD
+  A[Researcher wants to export data from TRE Workspace] --&gt;|Request created| B[Request in state Draft]
   B--&gt;|Researcher gets link to storage container and uploads data| B
   B--&gt;|Request submitted| C[Submitted]
-  C--&gt; D{Security issues found?} 
+  C--&gt; D{Security issues found?}
   D--&gt;|Yes| E[Blocking In-progress]
   D--&gt;|No| G[In-Review]
   E:::temporary--&gt; F((Blocked By Scan))
@@ -4701,124 +5190,296 @@ The airlock feature brings several actions: ingress/egress Mechanism; Data movem
   H--&gt;|Request Canceled| X
   classDef temporary stroke-dasharray: 5 5</code></pre>
 <blockquote>
-<p>Airlock state flow diagram for an Airlock export request</p>
+<p>Airlock state flow diagram for an export request. Import follows the same flow.</p>
 </blockquote>
-<p>When an airlock process is created the initial state is <strong>Draft</strong> and the required infrastructure will get created providing a single container to isolate the data in the request. Once completed, the user will be able to get a link for this container inside the storage account (URL + SAS token) that they can use to upload the desired data to be processed (import or export).</p>
-<p>This storage location is external for import (<code>stalimex</code>) or internal for export (<code>stalexint</code>), however only accessible to the requestor (ex: a TRE user/researcher).
-The user will be able to upload a file to the provided storage location, using any tool of their preference: <a href="https://azure.microsoft.com/en-us/features/storage-explorer/">Azure Storage Explorer</a> or <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a> which is a command line tool.</p>
-<p>The user Submits the request (TRE API call) starting the data movement (to the <code>stalimip</code> - import in-progress or <code>stalexip</code> - export in-progress). The airlock request is now in state <strong>Submitted</strong>.
-If enabled, the Malware Scanning is started. The scan is done using Microsoft Defender for Storage, which is described in detail in the <a href="https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction">Microsoft Defender for Storage documentation</a>.
-In the case that security flaws are found, the request state becomes <strong>Blocking In-progress</strong> while the data is moved to blocked storage  (either import blocked <code>stalimblocked</code> or export blocked <code>stalexblocked</code>). In this case, the request is finalized with the state <strong>Blocked By Scan</strong>.
-If the Security Scanning does not identify any security flaws, the request state becomes <strong>In-Review</strong>. Simultaneously, a notification is sent to the Airlock Manager user. The user needs to ask for the container URL using the TRE API (SAS token + URL with READ permission).</p>
+<p>When an airlock process is created the initial state is <strong>Draft</strong> and the airlock processor creates a storage container with the appropriate stage metadata. The user receives a link to this container (URL + SAS token) that they can use to upload data.</p>
+<p>For import, the container is created in core storage (<code>stalairlock</code>) with metadata <code>stage=import-external</code>. For export, the container is created in global workspace storage (<code>stalairlockg</code>) with metadata <code>stage=export-internal</code>, accessible only from within the workspace via private endpoint.</p>
+<p>The user uploads a file using any tool of their preference: <a href="https://azure.microsoft.com/en-us/features/storage-explorer/">Azure Storage Explorer</a> or <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azcopy-v10">AzCopy</a>.</p>
+<p>The user submits the request (TRE API call). On submission the processor <strong>seals</strong> the draft: it copies the draft container's file into a new, immutable container named after the request ID (with <code>stage=import-in-progress</code> / <code>export-in-progress</code>) and deletes the writable draft container (<code>&lt;request-id&gt;-draft</code>). This structurally revokes
+the researcher's upload SAS, so the data under review can no longer be modified. The airlock request is now in state <strong>Submitted</strong>.</p>
+<p>If enabled, malware scanning is started using Microsoft Defender for Storage
+(see <a href="https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-storage-introduction">Microsoft Defender for Storage documentation</a>).
+If security flaws are found, the container metadata is updated to blocked status and the request is finalised with state <strong>Blocked By Scan</strong>.
+If no issues are found, the metadata is updated to in-review status and the request state becomes <strong>In-Review</strong>.
+A notification is sent to the Airlock Manager.</p>
 <blockquote>
 <p>The Security Scanning can be disabled, changing the request state from <strong>Submitted</strong> straight to <strong>In-Review</strong>.</p>
 </blockquote>
-<p>The Airlock Manager will manually review the data using the tools of their choice available in the TRE workspace. Once review is completed, the Airlock Manager will have to <em>Approve</em> or <em>Reject</em> the airlock process, through a TRE API call.
-At this point, the request will change state to either <strong>Approval In-progress</strong> or <strong>Rejection In-progress</strong>, while the data movement occurs moving afterwards to <strong>Approved</strong> or <strong>Rejected</strong> accordingly. The data will now be in the final storage destination: <code>stalexapp</code> - export approved  or <code>stalimapp</code> - import approved.
-With this state change, a notification will be triggered to the requestor including the location of the processed data in the form of an URL + SAS token.</p>
-<h2 id="data-movement">Data movement</h2>
-<p>For any airlock process, there is data movement either <strong>into</strong> a TRE workspace (in import process) or <strong>from</strong> a TRE workspace (in export process). Being a TRE Workspace boundary, there are networking configurations designed to achieve this goal. The data movement will guarantee that the data is automatically verified for security flaws and manually reviewed, before placing data inside the TRE Workspace.
-Also, the process guarantees that data is not tampered with throughout the process.</p>
-<p>In an import process, data will transition from more public locations (yet confined to the requestor) to TRE workspace storage, after guaranteeing security automatically and by manual review.</p>
-<p>In an export process, data will transition from internal locations (available to the requestor) to public locations in the TRE, after going through a manual review.</p>
-<p>Considering that the Airlock requests may require large data movements, the operations can have longer durations, hence becoming the operations asynchronous. This is why states like <strong>Approval In-progress</strong>, <strong>Rejection In-progress</strong> or <strong>Blocking In-progress</strong> will be set while there are data movement operations.</p>
+<p>The Airlock Manager manually reviews the data using tools available in the TRE workspace. Once review is completed, the Airlock Manager approves or rejects the request through a TRE API call. For approval, data is copied to the final destination. For rejection, only metadata is updated.</p>
+<h2 id="data-movement">Data Movement</h2>
+<p>For any airlock process, there is data movement either <strong>into</strong> a TRE workspace (import) or <strong>from</strong> a TRE workspace (export). The data movement guarantees that data is automatically verified for security flaws and manually reviewed before being placed inside or taken outside the TRE Workspace.</p>
+<p><strong>Metadata-based stage management</strong> means most transitions are near-instantaneous metadata updates. Data is physically copied in only two places:</p>
+<ul>
+<li><strong>On submit (seal)</strong>: the writable draft container (<code>&lt;request-id&gt;-draft</code>) is copied into a new immutable <code>&lt;request-id&gt;</code> container on the <em>same</em> account and the draft is deleted. This revokes the researcher's upload SAS structurally, so content under review cannot be altered.</li>
+<li><strong>On approval (boundary crossing)</strong>: Core storage → Workspace storage for imports, Workspace storage → Core storage for exports (one server-side copy).</li>
+</ul>
+<p>All other transitions — submitted→in-review, in-review→rejected/blocked — update metadata only, with no data movement.</p>
+<p>The cross-account approval copy is driven by the <code>StatusChangedQueueTrigger</code>: it creates the destination container (with stage metadata) and starts a server-side copy with <code>start_copy_from_url</code>, waiting for it to finish (and aborting, so the Service Bus message retries, if it exceeds the copy timeout). Completion is signalled by a
+<code>BlobCreated</code> Event Grid event on the destination account: the <code>BlobCreatedTrigger</code> maps the destination approval stage to the completed step (<code>V2_STAGE_COMPLETION_MAP</code>) and emits the <code>StepResult</code> that advances the request to <strong>Approved</strong>, plus a data-deletion event for the source container.</p>
+<h3 id="import-data-flow">Import Data Flow</h3>
+<pre class="mermaid"><code>graph LR
+    subgraph External["External"]
+        data("fa:fa-file Data to import")
+    end
+
+    subgraph CoreStorage["Core: stalairlock"]
+        A{{"stage: import-external"}}
+        B{{"stage: import-in-progress"}}
+        D{{"stage: import-blocked"}}
+        C{{"stage: import-rejected"}}
+    end
+
+    subgraph WorkspaceStorage["Workspace: stalairlockg"]
+        E{{"stage: import-approved"}}
+    end
+
+    data -- "Upload via SAS" --&gt; A
+    A == "Submitted - seal (copy + delete draft)" ==&gt; B
+    B -. "Threat found - metadata only" .-&gt; D
+    B -. "Clean scan - metadata only" .-&gt; review{"Review"}
+    review -. "Rejected - metadata only" .-&gt; C
+    review == "Approved - cross-account copy" ==&gt; E
+
+    style External fill:#444,stroke:#333,color:#fff
+    style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
+    style WorkspaceStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
+    style data fill:#0078d4,stroke:#005a9e,color:#fff
+    style A fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style B fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style C fill:#b85450,stroke:#8b3e3b,color:#fff
+    style D fill:#b85450,stroke:#8b3e3b,color:#fff
+    style E fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style review fill:#6b5900,stroke:#4a3d00,color:#fff</code></pre>
 <blockquote>
-<p>The data movement mechanism is data-driven, allowing an organization to extend how request data transitions between</p>
+<p>Import data flow. Dashed lines = metadata-only transitions. Thick lines = data copies: the submit <em>seal</em> (same-account, deletes the writable draft) and the cross-account copy on approval. Hexagons = container metadata stages.</p>
+</blockquote>
+<h3 id="export-data-flow">Export Data Flow</h3>
+<pre class="mermaid"><code>graph LR
+    subgraph Workspace["TRE Workspace"]
+        data("fa:fa-file Data to export")
+    end
+
+    subgraph WorkspaceStorage["Workspace: stalairlockg"]
+        A{{"stage: export-internal"}}
+        B{{"stage: export-in-progress"}}
+        D{{"stage: export-blocked"}}
+        C{{"stage: export-rejected"}}
+    end
+
+    subgraph CoreStorage["Core: stalairlock"]
+        E{{"stage: export-approved"}}
+    end
+
+    data -- "Upload via PE" --&gt; A
+    A == "Submitted - seal (copy + delete draft)" ==&gt; B
+    B -. "Threat found - metadata only" .-&gt; D
+    B -. "Clean scan - metadata only" .-&gt; review{"Review"}
+    review -. "Rejected - metadata only" .-&gt; C
+    review == "Approved - cross-account copy" ==&gt; E
+
+    style Workspace fill:#1a5c1a,stroke:#0d330d,color:#fff
+    style WorkspaceStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
+    style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
+    style data fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style A fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style B fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style C fill:#b85450,stroke:#8b3e3b,color:#fff
+    style D fill:#b85450,stroke:#8b3e3b,color:#fff
+    style E fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style review fill:#6b5900,stroke:#4a3d00,color:#fff</code></pre>
+<blockquote>
+<p>Export data flow. Dashed lines = metadata-only transitions. Thick lines = data copies: the submit <em>seal</em> (same-account, deletes the writable draft) and the cross-account copy on approval. Hexagons = container metadata stages.</p>
 </blockquote>
 <h2 id="security-scan">Security Scan</h2>
-<p>The identified data in an airlock process, will be submitted to a security scan. If the security scan identifies issues the data is quarantined and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, the data will remain in state <strong>In-progress</strong>, and accessible to the Workspace Owner.</p>
+<p>Data in an airlock process is submitted to a security scan. If the scan identifies issues, the container metadata is updated to blocked status and a report is added to the process metadata. Both the requestor and Workspace Owner are notified. For a successful security scan, data remains accessible to the Workspace Owner for review.</p>
 <blockquote>
 <ul>
-<li>The Security scan will be optional, behind a feature flag enabled by a script</li>
-<li>The outcome of the security scan will be either the in-progress (<code>stalexip</code>) storage or blocked (<code>stalexblocked</code>)</li>
-<li>An airlock process will guarantee that the content being imported/exported is secure. It is envisioned that a set of <strong>security gates</strong> are identified to be executed successfully for a process to be approved.</li>
+<li>The security scan is optional, behind a feature flag enabled by a script.</li>
+<li>The outcome of the security scan will be either the in-progress metadata status or blocked metadata status.</li>
+<li>An airlock process guarantees that the content being imported/exported is secure.</li>
 </ul>
 </blockquote>
-<h2 id="approval-mechanism">Approval mechanism</h2>
-<p>The approval mechanism, is bundled with any airlock process, providing a specific way to <code>approve</code> or <code>reject</code> the data. This mechanism will allow the Airlock Managers to explicitly approve/reject the process, after having access to the data. The Airlock Manager users will be able to execute a manual review on the data using the tools available to them in a review TRE Workspace.
-Once this manual review is executed, Airlock Managers can proactively approve or reject the airlock request.</p>
-<p>The only goal of the Approval mechanism is to provide a cycle of revision, approval or rejection while tracking the decision.</p>
-<p>This mechanism will provide access to the data in the airlock process, and will be able to use a VM in TRE workspace. The data review will be the Airlock Manager responsibility</p>
+<h2 id="access-control">Access Control</h2>
+<p>The airlock uses Azure Attribute-Based Access Control (ABAC) to restrict access at the storage account level. This ensures that identities can only access containers matching specific stage metadata values.</p>
+<pre class="mermaid"><code>graph LR
+    api["fa:fa-key TRE API"]
+    proc["fa:fa-cog Airlock Processor"]
+    wspe["fa:fa-lock Workspace PE"]
+
+    subgraph CoreStorage["Core: stalairlock"]
+        cs_ie{{"stage: import-external"}}
+        cs_eapp{{"stage: export-approved"}}
+        cs_iip{{"stage: import-in-progress"}}
+        cs_irej{{"stage: import-rejected"}}
+        cs_iblk{{"stage: import-blocked"}}
+    end
+
+    subgraph WorkspaceStorage["Workspace: stalairlockg"]
+        ws_iapp{{"stage: import-approved"}}
+        ws_eint{{"stage: export-internal"}}
+        ws_eip{{"stage: export-in-progress"}}
+        ws_erej{{"stage: export-rejected"}}
+        ws_eblk{{"stage: export-blocked"}}
+    end
+
+    api -- "ABAC: import-external OR export-approved" --&gt; CoreStorage
+    proc == "Unrestricted access" ==&gt; CoreStorage
+    proc == "Unrestricted access" ==&gt; WorkspaceStorage
+    wspe -- "ABAC: workspace_id + stage" --&gt; WorkspaceStorage
+
+    style api fill:#b85450,stroke:#8b3e3b,color:#fff
+    style proc fill:#cc7000,stroke:#995300,color:#fff
+    style wspe fill:#6a3d9a,stroke:#4a2b6d,color:#fff
+    style CoreStorage fill:#2c5f9e,stroke:#1a3d6d,color:#fff
+    style WorkspaceStorage fill:#8b5c00,stroke:#5c3d00,color:#fff
+    style cs_ie fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style cs_eapp fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style cs_iip fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style cs_irej fill:#8b3e3b,stroke:#6b2e2b,color:#fff
+    style cs_iblk fill:#8b3e3b,stroke:#6b2e2b,color:#fff
+    style ws_iapp fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style ws_eint fill:#2d8a2d,stroke:#1a5c1a,color:#fff
+    style ws_eip fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style ws_erej fill:#8b3e3b,stroke:#6b2e2b,color:#fff
+    style ws_eblk fill:#8b3e3b,stroke:#6b2e2b,color:#fff</code></pre>
+<blockquote>
+<p>ABAC access control. The API can only access public stages (green). The Processor has full access. Workspace PEs are scoped by workspace_id.</p>
+</blockquote>
+<p><strong>Identity access summary:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Identity</th>
+<th>Core Storage</th>
+<th>Workspace Storage</th>
+<th>ABAC Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TRE API</td>
+<td><code>Storage Blob Data Contributor</code></td>
+<td>—</td>
+<td>Only <code>import-external</code> and <code>export-approved</code> stages</td>
+</tr>
+<tr>
+<td>Airlock Processor</td>
+<td><code>Storage Blob Data Contributor</code></td>
+<td><code>Storage Blob Data Contributor</code></td>
+<td>None (unrestricted)</td>
+</tr>
+<tr>
+<td>Workspace PE</td>
+<td>—</td>
+<td><code>Storage Blob Data Contributor</code></td>
+<td><code>workspace_id</code> must match + stage restrictions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Network access:</strong></p>
+<ul>
+<li>Core storage allows public access for import-external and export-approved stages via SAS tokens (through the App Gateway).</li>
+<li>Global workspace storage uses <code>Deny</code> as the default network action. Access is only possible via per-workspace private endpoints from within the workspace VNet.</li>
+<li>The airlock processor has a private endpoint on the airlock storage subnet for internal processing on both accounts.</li>
+<li>User Delegation SAS tokens inherit the ABAC restrictions of the signing identity, so even a valid SAS token cannot access stages outside the identity's ABAC scope.</li>
+</ul>
+<h3 id="container-metadata-stages">Container Metadata Stages</h3>
+<p>Each container has a <code>stage</code> metadata key that tracks the current stage of the airlock request:</p>
+<p><strong>Core Storage (<code>stalairlock</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>import-external</code></td>
+<td>Initial upload location for imports</td>
+<td>Public via SAS</td>
+</tr>
+<tr>
+<td><code>import-in-progress</code></td>
+<td>After submission, during review</td>
+<td>Processor only</td>
+</tr>
+<tr>
+<td><code>import-rejected</code></td>
+<td>Import rejected by reviewer</td>
+<td>Processor only</td>
+</tr>
+<tr>
+<td><code>import-blocked</code></td>
+<td>Import blocked by security scan</td>
+<td>Processor only</td>
+</tr>
+<tr>
+<td><code>export-approved</code></td>
+<td>Final location for approved exports</td>
+<td>Public via SAS</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Global Workspace Storage (<code>stalairlockg</code>):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Description</th>
+<th>Access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>import-approved</code></td>
+<td>Final location for approved imports</td>
+<td>Workspace PE</td>
+</tr>
+<tr>
+<td><code>export-internal</code></td>
+<td>Initial upload location for exports</td>
+<td>Workspace PE</td>
+</tr>
+<tr>
+<td><code>export-in-progress</code></td>
+<td>After submission, during review</td>
+<td>Processor only</td>
+</tr>
+<tr>
+<td><code>export-rejected</code></td>
+<td>Export rejected by reviewer</td>
+<td>Processor only</td>
+</tr>
+<tr>
+<td><code>export-blocked</code></td>
+<td>Export blocked by security scan</td>
+<td>Processor only</td>
+</tr>
+</tbody>
+</table>
+<h2 id="approval-mechanism">Approval Mechanism</h2>
+<p>The approval mechanism is bundled with any airlock process, providing a specific way to <code>approve</code> or <code>reject</code> the data. Airlock Managers can explicitly approve/reject the process after reviewing the data using tools available in a review TRE Workspace.</p>
+<p>The only goal of the approval mechanism is to provide a cycle of revision, approval or rejection while tracking the decision.</p>
 <blockquote>
 <ul>
-<li>It is envisioned that this mechanism to be more flexible and extensible.</li>
-<li>The <code>Airlock Manager</code> is a role defined at the workspace instance level and assigned to identities. Initially, the <code>Owner</code> role will be used.</li>
+<li>It is envisioned that this mechanism will be more flexible and extensible.</li>
+<li>The <code>Airlock Manager</code> is a role defined at the workspace instance level and assigned to identities.</li>
 </ul>
 </blockquote>
 <h2 id="notifications">Notifications</h2>
-<p>Throughout the airlock process, the notification mechanism will notify the relevant people of the process. Both the requestor (TRE User/Researcher) and the Workspace Owner will be notified by email of the relevant process events.</p>
+<p>Throughout the airlock process, the notification mechanism notifies the relevant people. Both the requestor (TRE User/Researcher) and the Workspace Owner are notified by email of relevant process events.</p>
 <p>Whenever the airlock process changes to a state of <strong>Draft</strong>, <strong>Submitted</strong>, <strong>Approved</strong>, <strong>Rejected</strong>, <strong>Approval In-progress</strong>, <strong>Rejection In-progress</strong>, <strong>Blocked By Scan</strong> or <strong>Cancelled</strong>, the process requestor gets notified.
-When the state changes to <code>In-progress</code> the Workspace Owner (Airlock Manager) gets notified.</p>
+When the state changes to <strong>In-Review</strong>, the Workspace Owner (Airlock Manager) gets notified.</p>
 <blockquote>
 <ul>
-<li>The Notification mechanism is also data-driven, allowing an organization to extend the notifications behavior. The mechanism is exemplified with a Logic App determining the notifications logic.</li>
-<li>Notifications will work with All TRE users being Microsoft Entra ID users (guests or not), with email defined – if not, notifications will not be sent.</li>
+<li>The notification mechanism is data-driven, allowing an organisation to extend the notifications behaviour. The mechanism is exemplified with a Logic App determining the notifications logic.</li>
+<li>Notifications work with all TRE users being Microsoft Entra ID users (guests or not), with email defined — if not, notifications will not be sent.</li>
 </ul>
 </blockquote>
-<h2 id="architecture">Architecture</h2>
-<p>The Airlock feature is supported by infrastructure at the TRE and workspace level, containing a set of storage accounts. Each Airlock request will provision and use unique storage containers with the request id in its name.</p>
-<pre class="mermaid"><code>graph LR
-  subgraph TRE Workspace
-  E[(stalimapp&lt;/br&gt;import approved)]
-  end
-  subgraph TRE
-  A[(stalimex&lt;/br&gt;import external)]--&gt;|Request Submitted| B
-  B[(stalimip&lt;/br&gt;import in-progress)]--&gt;|Security issues found| D[(stalimblocked&lt;/br&gt;import blocked)] 
-  B--&gt;|No security issues found| review{Manual&lt;/br&gt;Approval} 
-  review--&gt;|Rejected| C[(stalimrej&lt;/br&gt;import rejected)]
-  review--&gt;|Approved| E
-  end
-  subgraph External
-      data(Data to import)--&gt;A
-  end</code></pre>
-<blockquote>
-<p>Data movement in an Airlock import request</p>
-</blockquote>
-<pre class="mermaid"><code>graph LR
-  subgraph TRE workspace
-  data(Data to export)--&gt;A
-  A[(stalexint&lt;/br&gt;export internal)]--&gt;|Request Submitted| B
-  B[(stalexip&lt;/br&gt;export in-progress)]--&gt;|Security issues found| D[(stalexblocked&lt;/br&gt;export blocked)] 
-  B--&gt;|No security issues found| review{Manual&lt;/br&gt;Approval} 
-  review--&gt;|Rejected| C[(stalexrej&lt;/br&gt;export rejected)]
-  end
-  subgraph External
-  review--&gt;|Approved| E[(stalexapp&lt;/br&gt;export approved)]
-  end</code></pre>
-<blockquote>
-<p>Data movement in an Airlock export request</p>
-</blockquote>
-<p>TRE:</p>
-<ul>
-<li><code>stalimex</code> - storage (st) airlock (al) import (im) external (ex)</li>
-<li><code>stalimip</code> - storage (st) airlock (al) import (im) in-progress (ip)</li>
-<li><code>stalimrej</code> - storage (st) airlock (al) import (im) rejected (rej)</li>
-<li><code>stalimblocked</code> - storage (st) airlock (al) import (im) blocked</li>
-<li><code>stalexapp</code> - storage (st) airlock (al) export (ex) approved (app)</li>
-</ul>
-<p>Workspace:</p>
-<ul>
-<li><code>stalimapp</code> - workspace storage (st) airlock (al) import (im) approved (app)</li>
-<li><code>stalexint</code> - workspace storage (st) airlock (al) export (ex) internal (int)</li>
-<li><code>stalexip</code> - workspace storage (st) airlock (al) export (ex) in-progress (ip)</li>
-<li><code>stalexrej</code> - workspace storage (st) airlock (al) export (ex) rejected (rej)</li>
-<li><code>stalexblocked</code> - workspace storage (st) airlock (al) export (ex) blocked</li>
-</ul>
-<blockquote>
-<ul>
-<li>The external storage accounts (<code>stalimex</code>, <code>stalexapp</code>), are not bound to any vnet and are accessible (with SAS token) via the internet</li>
-<li>The internal storage account (<code>stalexint</code>) is bound to the workspace vnet, so ONLY TRE Users/Researchers on that workspace can access it</li>
-<li>The (export) in-progress storage account (<code>stalexip</code>) is bound to the workspace vnet</li>
-<li>The (export) blocked storage account (<code>stalexblocked</code>) is bound to the workspace vnet</li>
-<li>The (export) rejected storage account (<code>stalexrej</code>) is bound to the workspace vnet</li>
-<li>The (import) in-progress storage account (<code>stalimip</code>) is bound to the TRE CORE vnet</li>
-<li>The (import) blocked storage account (<code>stalimblocked</code>) is bound to the TRE CORE vnet</li>
-<li>The (import) rejected storage account (<code>stalimrej</code>) is bound to the TRE CORE vnet</li>
-<li>The (import) approved storage account (<code>stalimapp</code>) is bound to the workspace vnet</li>
-</ul>
-</blockquote>
-<p><a href="../../assets/airlock-networking.png"><img alt="Airlock networking" src="../../assets/airlock-networking.png" /></a></p>
-<p>In the TRE Core, the TRE API will provide the airlock API endpoints allowing to advance the process. The TRE API will expose the following methods:</p>
+<h2 id="api-endpoints">API Endpoints</h2>
+<p>The TRE API exposes the following airlock endpoints:</p>
 <table>
 <thead>
 <tr>
@@ -4834,31 +5495,244 @@ When the state changes to <code>In-progress</code> the Workspace Owner (Airlock 
 <td>Create an Airlock request (in <strong>Draft</strong>)</td>
 </tr>
 <tr>
-<td><code>POST</code></td>
+<td><code>GET</code></td>
 <td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/link</code></td>
 <td>Get the url and token to access an Airlock Request</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/submit</code></td>
-<td>Submits an Airlock request</td>
+<td>Submit an Airlock request</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/review</code></td>
-<td>Reviews an Airlock request</td>
+<td>Review an Airlock request</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/workspaces/{workspace_id}/requests/{airlock_request_id}/cancel</code></td>
-<td>Cancels an Airlock request</td>
+<td>Cancel an Airlock request</td>
 </tr>
 </tbody>
 </table>
-<p>Also in the airlock feature there is the <strong>Airlock Processor</strong> which handles the events that are created throughout the process, signalling state changes from blobs created, status changed or security scans finalized.</p>
-<h2 id="airlock-flow">Airlock flow</h2>
-<p>The following sequence diagram detailing the Airlock feature and its event driven behaviour:</p>
-<p><a href="../../assets/airlock-swimlanes.png"><img alt="Airlock flow" src="../../assets/airlock-swimlanes.png" /></a></p>
+<h2 id="airlock-processor">Airlock Processor</h2>
+<p>The <strong>Airlock Processor</strong> is a set of Azure Functions that handle the events created throughout the airlock process:</p>
+<ul>
+<li><strong>StatusChangedQueueTrigger</strong> — Consumes status change events from the Service Bus queue and orchestrates container creation, sealing, metadata updates, and cross-account data copies. On <strong>submit</strong> it seals the draft (copies <code>&lt;request-id&gt;-draft</code> into an immutable <code>&lt;request-id&gt;</code> container and deletes the draft). For same-account
+  transitions (in-review→rejected/blocked) it updates container metadata directly. For the cross-account approval copy it creates the destination container and runs a server-side copy, waiting for it to finish (aborting and letting the message retry on timeout).</li>
+<li><strong>BlobCreatedTrigger</strong> — Fires when a blob appears in a storage account (via EventGrid → Service Bus). For the v1 per-stage flow it signals each stage's copy completion. For v2 it handles <strong>only</strong> the cross-account approval copies (<code>V2_STAGE_COMPLETION_MAP</code>): when the copied blob lands in the approved container it emits the <code>StepResult</code>
+  advancing the request to <strong>Approved</strong> and a data-deletion event for the source. Other v2 completions are emitted directly by the StatusChangedQueueTrigger.</li>
+<li><strong>ScanResultTrigger</strong> — Consumes malware scan results from Microsoft Defender for Storage. If threats are found, emits a StepResult to block the request. If clean, emits a StepResult to advance to in-review.</li>
+<li><strong>DataDeletionTrigger</strong> — Cleans up source containers after data has been copied to the destination.</li>
+</ul>
+<p>This event-driven design keeps stage transitions responsive: same-account transitions are metadata-only (except the submit seal, a fast same-account copy that deletes the draft), while the less frequent cross-account approval copy is confirmed via a <code>BlobCreated</code> event before the request advances to <strong>Approved</strong>.</p>
+<h2 id="airlock-flow">Airlock Flow</h2>
+<p>The following sequence diagram details the airlock feature and its event-driven behaviour:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant R as Researcher
+    participant API as TRE API
+    participant CS as Core Storage&lt;br/&gt;(stalairlock)
+    participant WS as Workspace Storage&lt;br/&gt;(stalairlockg)
+    participant AP as Airlock Processor
+    participant EG as Event Grid
+    participant SB as Service Bus
+    participant DB as Cosmos DB
+
+    Note over R,DB: Creating a Draft Request (Import Example)
+    R-&gt;&gt;API: POST /requests (type=import)
+    API-&gt;&gt;DB: Save request (status: draft)
+    API-&gt;&gt;EG: StatusChangedEvent(draft)
+    EG-&gt;&gt;SB: Queue status change
+    SB-&gt;&gt;AP: Consume event
+    AP-&gt;&gt;CS: Create container with metadata stage=import-external
+    API--&gt;&gt;R: OK + request details
+
+    Note over R,DB: Getting Upload Link
+    R-&gt;&gt;API: GET /requests/{id}/link
+    API-&gt;&gt;CS: Generate User Delegation SAS (ABAC: import-external)
+    API--&gt;&gt;R: SAS URL for container
+
+    Note over R,DB: Uploading File
+    R-&gt;&gt;CS: Upload file via SAS token
+
+    Note over R,DB: Submitting Request
+    R-&gt;&gt;API: POST /requests/{id}/submit
+    API-&gt;&gt;DB: Update status → submitted
+    API-&gt;&gt;EG: StatusChangedEvent(submitted)
+    EG-&gt;&gt;SB: Queue status change
+    SB-&gt;&gt;AP: StatusChangedQueueTrigger
+    AP-&gt;&gt;CS: Update metadata → import-in-progress
+
+    Note over R,DB: Security Scan
+    alt Malware Scanning Enabled
+        CS--&gt;&gt;EG: Defender scan result
+        EG-&gt;&gt;SB: Queue scan result
+        SB-&gt;&gt;AP: ScanResultTrigger
+        alt Threat Found
+            AP-&gt;&gt;EG: StepResult(blocking_in_progress)
+            Note over AP,CS: StatusChangedQueueTrigger updates metadata → import-blocked
+            AP-&gt;&gt;EG: StepResult(blocked)
+        else No Threat
+            AP-&gt;&gt;EG: StepResult(in-review)
+        end
+    else Malware Scanning Disabled
+        AP-&gt;&gt;EG: StepResult(submitted → in-review)
+    end
+    AP-&gt;&gt;DB: Update status → in-review
+    AP-&gt;&gt;EG: NotificationEvent (to reviewer)
+
+    Note over R,DB: Approval (Synchronous Copy)
+    R-&gt;&gt;API: POST /requests/{id}/review (approve)
+    API-&gt;&gt;DB: Update status → approval_in_progress
+    API-&gt;&gt;EG: StatusChangedEvent(approval_in_progress)
+    EG-&gt;&gt;SB: Queue status change
+    SB-&gt;&gt;AP: StatusChangedQueueTrigger
+    AP-&gt;&gt;WS: Create container with metadata stage=import-approved
+    AP-&gt;&gt;WS: Server-side copy from Core → Workspace storage
+    Note over AP,WS: Trigger waits (polls) for copy to complete
+    AP-&gt;&gt;EG: StepResult(approved)
+    AP-&gt;&gt;DB: Update status → approved
+    AP-&gt;&gt;EG: DataDeletion event (source container)
+    AP-&gt;&gt;EG: NotificationEvent (to researcher)</code></pre>
+<h2 id="legacy-airlock">Legacy Airlock</h2>
+<p>For details on the legacy airlock architecture (per-stage storage accounts) and migration guidance, see <a href="../airlock-legacy/">Legacy Airlock Architecture</a>.</p>
+<h2 id="configuration">Configuration</h2>
+<h3 id="core-settings-configyaml">Core Settings (<code>config.yaml</code>)</h3>
+<p>The following settings in <code>config.yaml</code> control the airlock infrastructure at the TRE core level:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># config.yaml</span>
+<span class="nt">tre_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mytre</span>
+
+<span class="c1"># Set to false to remove legacy per-stage storage accounts.</span>
+<span class="c1"># Default: true (keeps legacy accounts for backward compatibility)</span>
+<span class="nt">enable_legacy_airlock</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_legacy_airlock</code></td>
+<td>bool</td>
+<td><code>true</code></td>
+<td>When <code>true</code>, deploys legacy per-stage storage accounts alongside the consolidated accounts for backward compatibility. When <code>false</code>, only the consolidated accounts (<code>stalairlock</code>, <code>stalairlockg</code>) are deployed. See <a href="../airlock-legacy/">Legacy Airlock Architecture</a> for details.</td>
+</tr>
+</tbody>
+</table>
+<p>The consolidated storage accounts (<code>stalairlock{tre_id}</code> and <code>stalairlockg{tre_id}</code>) are <strong>always</strong> provisioned regardless of this setting.</p>
+<h3 id="workspace-settings">Workspace Settings</h3>
+<p>The airlock is enabled per workspace via the following properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Default</th>
+<th>Values</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enable_airlock</code></td>
+<td>bool</td>
+<td><code>false</code></td>
+<td><code>true</code> / <code>false</code></td>
+<td>Enables or disables the airlock feature for the workspace</td>
+</tr>
+<tr>
+<td><code>airlock_version</code></td>
+<td>int</td>
+<td><code>2</code></td>
+<td><code>1</code> or <code>2</code></td>
+<td><code>2</code> = Consolidated metadata-based storage (recommended), <code>1</code> = Legacy per-stage storage accounts</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>airlock_version</code> property only appears when <code>enable_airlock</code> is set to <code>true</code>.</p>
+<p><strong>Enabling airlock via the API:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="err">PATCH</span><span class="w"> </span><span class="err">/api/workspaces/</span><span class="p">{</span><span class="err">workspace_id</span><span class="p">}</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"enable_airlock"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"airlock_version"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Enabling airlock via the UI:</strong></p>
+<p>When creating or updating a workspace, the airlock version is available as a dropdown under the airlock configuration section.</p>
+<h3 id="what-happens-at-each-level">What Happens at Each Level</h3>
+<div class="highlight"><pre><span></span><code>config.yaml                          Workspace Properties
+┌─────────────────────────┐          ┌─────────────────────────────┐
+│ enable_legacy_airlock:  │          │ enable_airlock: true        │
+│   false → v2 infra only│          │ airlock_version: 2 → v2 TF │
+└─────────────────────────┘          └─────────────────────────────┘
+        Core Terraform                     Workspace Terraform
+</code></pre></div>
+<ul>
+<li><strong>Core level</strong> (<code>enable_legacy_airlock</code>): Controls whether legacy per-stage storage accounts are also deployed (for backward compatibility only)</li>
+<li><strong>Workspace level</strong> (<code>airlock_version</code>): Controls which workspace Terraform module runs — <code>airlock_v2/</code> for consolidated storage with ABAC</li>
+</ul>
+<h2 id="cross-workspace-isolation">Cross-Workspace Isolation</h2>
+<p>A common question: if all workspaces share the same storage account (<code>stalairlockg{tre_id}</code>), what prevents Workspace A from accessing Workspace B's data?</p>
+<p>The answer is <strong>three layers of isolation</strong>:</p>
+<h3 id="1-abac-conditions-azure-attribute-based-access-control">1. ABAC Conditions (Azure Attribute-Based Access Control)</h3>
+<p>Each workspace deployment creates a role assignment on the global workspace storage account with an ABAC condition that requires <strong>all three</strong> of the following to be true for blob operations:</p>
+<ul>
+<li>The request must come through <strong>that workspace's specific private endpoint</strong></li>
+<li>The container's <code>workspace_id</code> metadata must match <strong>that workspace's ID</strong></li>
+<li>The container's <code>stage</code> metadata must be one of the allowed stages (<code>import-approved</code>, <code>export-internal</code>, <code>export-in-progress</code>)</li>
+</ul>
+<div class="highlight"><pre><span></span><code>ABAC condition (per workspace):
+  @Environment[Microsoft.Network/privateEndpoints]
+    == '/subscriptions/.../pe-sa-airlock-ws-global-{workspace_short_id}'
+  AND
+  @Resource[...containers/metadata:workspace_id]
+    == '{workspace_id}'
+  AND
+  @Resource[...containers/metadata:stage]
+    IN ('import-approved', 'export-internal', 'export-in-progress')
+</code></pre></div>
+<p>This means even if Workspace A somehow obtained a SAS token referencing Workspace B's container, the ABAC condition would deny the operation because the private endpoint wouldn't match.</p>
+<h3 id="2-network-isolation-private-endpoints">2. Network Isolation (Private Endpoints)</h3>
+<p>Each workspace creates its own private endpoint to the global workspace storage account, connected to the workspace's VNet. The ABAC condition references this specific private endpoint ID, so requests from a different workspace's PE are rejected.</p>
+<h3 id="3-container-metadata">3. Container Metadata</h3>
+<p>The airlock processor stamps every container with <code>workspace_id</code> metadata at creation time. This metadata is immutable in practice (only the processor identity can modify it, and researcher identities have no direct access to the storage account).</p>
+<pre class="mermaid"><code>graph TB
+    subgraph WS_A["Workspace A"]
+        pe_a["PE: pe-sa-airlock-ws-global-ab12"]
+    end
+
+    subgraph WS_B["Workspace B"]
+        pe_b["PE: pe-sa-airlock-ws-global-cd34"]
+    end
+
+    subgraph GlobalStorage["Workspace: stalairlockg"]
+        c1("req-001&lt;br/&gt;workspace_id: ws-ab12&lt;br/&gt;stage: import-approved")
+        c2("req-002&lt;br/&gt;workspace_id: ws-cd34&lt;br/&gt;stage: export-internal")
+    end
+
+    pe_a -- "ABAC: ws-ab12 + PE match" --&gt; c1
+    pe_a -. "DENIED by ABAC" .-&gt; c2
+    pe_b -. "DENIED by ABAC" .-&gt; c1
+    pe_b -- "ABAC: ws-cd34 + PE match" --&gt; c2
+
+    style WS_A fill:#2c5f9e,stroke:#1a3d6d,color:#fff
+    style WS_B fill:#8b5c00,stroke:#5c3d00,color:#fff
+    style GlobalStorage fill:#444,stroke:#333,color:#fff
+    style pe_a fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style pe_b fill:#cc7000,stroke:#995300,color:#fff
+    style c1 fill:#4a6fa5,stroke:#2c5f9e,color:#fff
+    style c2 fill:#cc7000,stroke:#995300,color:#fff</code></pre>
+<blockquote>
+<p>Cross-workspace isolation. Each workspace can only access containers matching its own workspace_id, through its own private endpoint. ABAC enforces both conditions at the Azure RBAC layer.</p>
+</blockquote>
 
 
 
