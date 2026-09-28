@@ -547,6 +547,31 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.patch(app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID), json='{"isEnabled": true}', headers={"etag": "some-etag-value"})
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_patch_workspaces_returns_400_for_non_integer_airlock_version(self, _, app, client):
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"properties": {"airlock_version": "2"}},
+            headers={"etag": "some-etag-value"})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.text == "airlock_version must be an integer with a value of 1 or 2"
+
+    # [PATCH] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.ensure_airlock_version_change_allowed")
+    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    async def test_patch_workspace_rejects_v2_on_a_template_that_does_not_support_it(self, _, target_template_mock, __, app, client, basic_resource_template):
+        target_template_mock.return_value = basic_resource_template
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"properties": {"airlock_version": 2}},
+            headers={"etag": "some-etag-value"})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "supports Airlock v2" in response.text
+
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list", return_value=[sample_workspace().__dict__])
     @patch("api.routes.workspaces.ResourceHistoryRepository.save_item", return_value=AsyncMock())
