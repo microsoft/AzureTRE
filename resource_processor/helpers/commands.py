@@ -2,12 +2,14 @@ import asyncio
 import json
 import base64
 import logging
+import tempfile
+import uuid
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
 
 
-async def run_command_helper(cmd_parts: list, config: dict, description: str):
+async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
@@ -28,10 +30,14 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str):
 
     if stderr:
         stderr_text = stderr.decode()
-        shell_output_logger(stderr_text, '[stderr]', logging.WARN)
+        stderr_log_level = logging.WARN if log_error else logging.DEBUG
+        shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
 
     if proc.returncode != 0:
-        logger.error(f"{description} failed with return code {proc.returncode}")
+        if log_error:
+            logger.error(f"{description} failed with return code {proc.returncode}")
+        else:
+            logger.debug(f"{description} failed with return code {proc.returncode}")
     else:
         logger.debug(f"{description} completed successfully")
 
@@ -78,7 +84,7 @@ def azure_acr_login_command(config):
 
 async def build_porter_command(config, msg_body, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
-    porter_parameters = []
+    param_set_entries = []
 
     if porter_parameter_keys is None:
         logger.warning("Unknown porter parameters - explain probably failed.")
@@ -117,29 +123,80 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters.extend(["--param", f"{parameter_name}={parameter_value}"])
+                param_set_entries.append({
+                    "name": parameter_name,
+                    "source": {"value": str(parameter_value)}
+                })
 
     installation_id = msg_body['id']
+    param_set_name = f"tre-params-{installation_id}-{uuid.uuid4().hex[:8]}"
 
-    command = ["porter"]
+    param_set_file = None
+    if param_set_entries:
+        param_set = {
+            "schemaType": "ParameterSet",
+            "schemaVersion": "1.0.1",
+            "name": param_set_name,
+            "namespace": "",
+            "parameters": param_set_entries
+        }
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(param_set, f)
+            param_set_file = f.name
+
+    installation_file = None
+    if not custom_action and msg_body['action'] in ("install", "upgrade"):
+        installation = {
+            "schemaType": "Installation",
+            "schemaVersion": "1.0.2",
+            "name": installation_id,
+            "bundle": {
+                "repository": f"{config['registry_server']}/{msg_body['name']}",
+                "version": msg_body['version']
+            },
+            "parameters": {},
+            "parameterSets": [param_set_name] if param_set_entries else [],
+            "credentialSets": ["arm_auth", "aad_auth"]
+        }
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(installation, f)
+            installation_file = f.name
+
+    commands = []
+    if param_set_file:
+        commands.append(["porter", "parameters", "apply", param_set_file])
+
     if custom_action:
-        command.extend(["invoke", "--action"])
+        command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
+        command.extend([
+            "--reference",
+            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+        ])
+        if param_set_file:
+            command.extend(["--parameter-set", param_set_name])
+        command.append("--force")
+        command.extend(["--credential-set", "arm_auth"])
+        command.extend(["--credential-set", "aad_auth"])
+        commands.append(command)
+    elif installation_file:
+        # porter installation apply is declarative: it creates the installation if it
+        # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
+        # replaces the previous explicit upgrade->install fallback for built-in actions.
+        commands.append(["porter", "installation", "apply", installation_file, "--force"])
+    else:
+        command = ["porter", msg_body['action'], installation_id]
+        command.extend([
+            "--reference",
+            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+        ])
+        if param_set_file:
+            command.extend(["--parameter-set", param_set_name])
+        command.append("--force")
+        command.extend(["--credential-set", "arm_auth"])
+        command.extend(["--credential-set", "aad_auth"])
+        commands.append(command)
 
-    command.append(msg_body['action'])
-    command.append(installation_id)
-    command.extend([
-        "--reference",
-        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-    ])
-    command.extend(porter_parameters)
-    command.append("--force")
-    command.extend(["--credential-set", "arm_auth"])
-    command.extend(["--credential-set", "aad_auth"])
-
-    if msg_body['action'] == 'upgrade':
-        command.append("--force-upgrade")
-
-    return [command]
+    return (commands, param_set_file, param_set_name, installation_file)
 
 
 async def build_porter_command_for_outputs(msg_body):
