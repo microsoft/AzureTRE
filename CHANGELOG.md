@@ -13,6 +13,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Restore Dsv6 sizes for Guacamole Windows VMs after the Dsv7 default failed in Switzerland North. (`tre-service-guacamole-windowsvm` 3.0.4) ([#5095](https://github.com/microsoft/AzureTRE/issues/5095))
 * Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. Preserve tags on bootstrap reruns and restrict cleanup to the environment's core, management, workspace and shared-service groups. Add manual validation with disposable empty groups. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 
