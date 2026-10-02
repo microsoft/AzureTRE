@@ -7,6 +7,7 @@ import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostResource } from "../../models/costs";
+import { WorkspaceRoleName } from "../../models/roleNames";
 
 // Mock child components
 vi.mock("./ResourceDebug", () => {
@@ -243,9 +244,24 @@ describe("ResourceBody Component", () => {
 
     renderWithWorkspaceContext(<ResourceBody resource={sharedServiceResource} />);
 
-    // Should still render all tabs for shared service
+    // History and Operations for shared services are TRE Admin only, so a Workspace Owner doesn't get those tabs
     const tabs = screen.getAllByTestId("pivot-item");
-    expect(tabs).toHaveLength(4); // Overview, Details, History, Operations
+    expect(tabs).toHaveLength(2); // Overview, Details
+  });
+
+  it("hides Details and Operations of a workspace service from researchers", () => {
+    const serviceResource = { ...mockResource, resourceType: ResourceType.WorkspaceService };
+
+    render(
+      <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider value={{ ...mockWorkspaceContext, roles: [WorkspaceRoleName.WorkspaceResearcher] }}>
+          <ResourceBody resource={serviceResource} />
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
+    const headers = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+    expect(headers).toEqual(["Overview"]);
   });
 
   it("handles user resource type", () => {

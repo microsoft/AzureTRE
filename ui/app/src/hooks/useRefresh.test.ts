@@ -23,6 +23,29 @@ describe("useRefresh", () => {
     visibility.mockRestore();
   });
 
+  it("refreshes once when the tab becomes visible after missing a poll", () => {
+    vi.useFakeTimers();
+    const onRefresh = vi.fn();
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
+    renderHook(() => useRefresh(onRefresh, 1000));
+
+    act(() => vi.advanceTimersByTime(3000));
+    expect(onRefresh).not.toHaveBeenCalled();
+
+    visibility.mockReturnValue("visible");
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    visibility.mockRestore();
+  });
+
   it("returns a manual refresh callback", () => {
     const onRefresh = vi.fn();
     const { result, unmount } = renderHook(() => useRefresh(onRefresh));

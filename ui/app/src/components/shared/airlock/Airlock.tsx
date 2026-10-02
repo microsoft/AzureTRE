@@ -37,6 +37,7 @@ import { WorkspaceRoleName } from "../../../models/roleNames";
 import { useAccount, useMsal } from "@azure/msal-react";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
 import { useRefresh } from "../../../hooks/useRefresh";
+import { RefreshButton } from "../RefreshButton";
 
 export const Airlock: React.FunctionComponent = () => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
@@ -242,7 +243,7 @@ export const Airlock: React.FunctionComponent = () => {
         onColumnContextMenu: (column, ev) =>
           column && ev && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         isFiltered: filters.has("status"),
-        onRender: (request: AirlockRequest) => request.status.replace("_", " "),
+        onRender: (request: AirlockRequest) => request.status.replace(/_/g, " "),
       },
       {
         key: "createdTime",
@@ -326,17 +327,12 @@ export const Airlock: React.FunctionComponent = () => {
               <CommandBar items={quickFilters} ariaLabel="Quick filters" />
             </Stack.Item>
             <CommandBarButton
-              iconProps={{ iconName: "refresh" }}
-              text="Refresh"
-              style={{ background: "none", color: theme.palette.themePrimary }}
-              onClick={refresh}
-            />
-            <CommandBarButton
               iconProps={{ iconName: "add" }}
               text="New request"
               style={{ background: "none", color: theme.palette.themePrimary }}
               onClick={() => navigate(`/workspaces/${workspaceCtx.workspace.id}/requests/new`)}
             />
+            <RefreshButton onClick={refresh} />
           </Stack>
         </Stack.Item>
       </Stack>

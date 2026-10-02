@@ -28,6 +28,7 @@ import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
 import { useRefresh } from "../../hooks/useRefresh";
+import { RefreshButton } from "./RefreshButton";
 
 interface Workspace {
   id: string;
@@ -314,7 +315,7 @@ export const RequestsList: React.FunctionComponent = () => {
         onColumnContextMenu: (column, ev) =>
           column && ev && openContextMenu(column, ev, Object.values(AirlockRequestStatus)),
         isFiltered: filters.has("status"),
-        onRender: (request: AirlockRequest) => request.status.replace("_", " "),
+        onRender: (request: AirlockRequest) => request.status.replace(/_/g, " "),
       },
       {
         key: "createdTime",
@@ -478,14 +479,7 @@ export const RequestsList: React.FunctionComponent = () => {
           <Stack tokens={{ childrenGap: 12 }}>
             <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
               <h1 style={{ marginBottom: 0 }}>Airlock Requests</h1>
-              <CommandBarButton
-                iconProps={{ iconName: "refresh" }}
-                text="Refresh"
-                style={{ background: "none", color: theme.palette.themePrimary }}
-                onClick={() => {
-                  getAirlockRequests();
-                }}
-              />
+              <RefreshButton onClick={refresh} />
             </Stack>
             <CommandBar items={quickFilterCommandBarItems} ariaLabel="Quick filters" />
             <CommandBar

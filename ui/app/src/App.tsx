@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DefaultPalette, IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
 import "./App.scss";
 import { TopNav } from "./components/shared/TopNav";
@@ -21,6 +21,7 @@ import { initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { CostResource } from "./models/costs";
 import { CostsContext } from "./contexts/CostsContext";
 import { LoadingState } from "./models/loadingState";
+import { isEqualJson } from "./utils/isEqualJson";
 
 export const App: React.FunctionComponent = () => {
   const [appRoles, setAppRoles] = useState([] as Array<string>);
@@ -56,6 +57,42 @@ export const App: React.FunctionComponent = () => {
 
   useEffect(() => initializeFileTypeIcons(), []);
 
+  const appRolesContextValue = useMemo(() => ({ roles: appRoles, setAppRoles }), [appRoles]);
+
+  const setWorkspaceIfChanged = useCallback(
+    (w: Workspace) => setSelectedWorkspace((prev) => (isEqualJson(prev, w) ? prev : w)),
+    [],
+  );
+  const setWorkspaceRolesIfChanged = useCallback(
+    (roles: Array<string>) => setWorkspaceRoles((prev) => (isEqualJson(prev, roles) ? prev : roles)),
+    [],
+  );
+  const setWorkspaceCostsIfChanged = useCallback(
+    (c: Array<CostResource>) => setWorkspaceCosts((prev) => (isEqualJson(prev, c) ? prev : c)),
+    [],
+  );
+
+  // Provided above TopNav so the user menu can show the current workspace's roles.
+  const workspaceContextValue = useMemo(
+    () => ({
+      roles: workspaceRoles,
+      setRoles: setWorkspaceRolesIfChanged,
+      costs: workspaceCosts,
+      setCosts: setWorkspaceCostsIfChanged,
+      workspace: selectedWorkspace,
+      setWorkspace: setWorkspaceIfChanged,
+      workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id,
+    }),
+    [
+      workspaceRoles,
+      workspaceCosts,
+      selectedWorkspace,
+      setWorkspaceIfChanged,
+      setWorkspaceRolesIfChanged,
+      setWorkspaceCostsIfChanged,
+    ],
+  );
+
   return (
     <>
       <Routes>
@@ -63,14 +100,7 @@ export const App: React.FunctionComponent = () => {
           path="*"
           element={
             <MsalAuthenticationTemplate interactionType={InteractionType.Redirect}>
-              <AppRolesContext.Provider
-                value={{
-                  roles: appRoles,
-                  setAppRoles: (roles: Array<string>) => {
-                    setAppRoles(roles);
-                  },
-                }}
-              >
+              <AppRolesContext.Provider value={appRolesContextValue}>
                 <CreateUpdateResourceContext.Provider
                   value={{
                     openCreateForm: (createFormResource: CreateFormResource) => {
@@ -88,58 +118,37 @@ export const App: React.FunctionComponent = () => {
                     workspaceApplicationIdURI={createFormResource.workspaceApplicationIdURI}
                     updateResource={createFormResource.updateResource}
                   />
-                  <Stack styles={stackStyles} className="tre-root">
-                    <Stack.Item grow className="tre-top-nav">
-                      <TopNav />
-                    </Stack.Item>
-                    <Stack.Item grow={100} className="tre-body">
-                      <GenericErrorBoundary>
-                        <CostsContext.Provider
-                          value={{
-                            loadingState: costsLoadingState,
-                            costs: costs,
-                            setCosts: (costs: Array<CostResource>) => {
-                              setCosts(costs);
-                            },
-                            setLoadingState: (loadingState: LoadingState) => {
-                              setCostsLoadingState(loadingState);
-                            },
-                          }}
-                        >
-                          <Routes>
-                            <Route path="*" element={<RootLayout />} />
-                            <Route
-                              path="/workspaces/:workspaceId//*"
-                              element={
-                                <WorkspaceContext.Provider
-                                  value={{
-                                    roles: workspaceRoles,
-                                    setRoles: (roles: Array<string>) => {
-                                      setWorkspaceRoles(roles);
-                                    },
-                                    costs: workspaceCosts,
-                                    setCosts: (costs: Array<CostResource>) => {
-                                      setWorkspaceCosts(costs);
-                                    },
-                                    workspace: selectedWorkspace,
-                                    setWorkspace: (w: Workspace) => {
-                                      setSelectedWorkspace(w);
-                                    },
-                                    workspaceApplicationIdURI: selectedWorkspace.properties?.scope_id,
-                                  }}
-                                >
-                                  <WorkspaceProvider />
-                                </WorkspaceContext.Provider>
-                              }
-                            />
-                          </Routes>
-                        </CostsContext.Provider>
-                      </GenericErrorBoundary>
-                    </Stack.Item>
-                    <Stack.Item grow>
-                      <Footer />
-                    </Stack.Item>
-                  </Stack>
+                  <WorkspaceContext.Provider value={workspaceContextValue}>
+                    <Stack styles={stackStyles} className="tre-root">
+                      <Stack.Item grow className="tre-top-nav">
+                        <TopNav />
+                      </Stack.Item>
+                      <Stack.Item grow={100} className="tre-body">
+                        <GenericErrorBoundary>
+                          <CostsContext.Provider
+                            value={{
+                              loadingState: costsLoadingState,
+                              costs: costs,
+                              setCosts: (costs: Array<CostResource>) => {
+                                setCosts(costs);
+                              },
+                              setLoadingState: (loadingState: LoadingState) => {
+                                setCostsLoadingState(loadingState);
+                              },
+                            }}
+                          >
+                            <Routes>
+                              <Route path="*" element={<RootLayout />} />
+                              <Route path="/workspaces/:workspaceId//*" element={<WorkspaceProvider />} />
+                            </Routes>
+                          </CostsContext.Provider>
+                        </GenericErrorBoundary>
+                      </Stack.Item>
+                      <Stack.Item grow>
+                        <Footer />
+                      </Stack.Item>
+                    </Stack>
+                  </WorkspaceContext.Provider>
                 </CreateUpdateResourceContext.Provider>
               </AppRolesContext.Provider>
             </MsalAuthenticationTemplate>

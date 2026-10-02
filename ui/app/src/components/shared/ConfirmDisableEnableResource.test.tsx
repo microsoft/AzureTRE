@@ -118,9 +118,25 @@ describe("ConfirmDisableEnableResource Component", () => {
 
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Disable Resource?");
     expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
-      "Disable Test Resource in TRE? This resource must be disabled before it can be deleted. Disabling it does not power off its VM.",
+      "Disable Test Resource in TRE? This resource must be disabled before it can be deleted.",
     );
+    expect(screen.getByTestId("dialog-subtext")).not.toHaveTextContent("power off");
     expect(screen.getByTestId("primary-button")).toHaveTextContent("Disable");
+  });
+
+  it("explains that disabling a VM does not power it off", () => {
+    const vmResource = {
+      ...mockResource,
+      resourceType: ResourceType.UserResource,
+      azureStatus: { powerState: "VM running" },
+    } as Resource;
+    renderWithWorkspaceContext(
+      <ConfirmDisableEnableResource resource={vmResource} isEnabled={false} onDismiss={mockOnDismiss} />,
+    );
+
+    expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
+      "Disabling it does not power off the VM; use Stop to do that.",
+    );
   });
 
   it("renders enable dialog for disabled resource", () => {

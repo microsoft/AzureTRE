@@ -43,6 +43,14 @@ vi.mock("./PowerStateBadge", () => {
   return { PowerStateBadge };
 });
 
+vi.mock("./RefreshButton", () => ({
+  RefreshButton: ({ onClick }: any) => <button onClick={onClick}>Refresh</button>,
+}));
+
+vi.mock("./VMPowerButton", () => ({
+  VMPowerButton: ({ resource }: any) => <div data-testid="vm-power-button">{resource.id}</div>,
+}));
+
 // Mock FluentUI components
 vi.mock("@fluentui/react", () => {
   const MockStack = ({ children, horizontal }: any) => (

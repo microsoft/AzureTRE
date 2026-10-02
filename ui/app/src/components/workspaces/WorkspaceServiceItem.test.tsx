@@ -1,6 +1,6 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { render } from "../../test-utils";
 import { WorkspaceServiceItem } from "./WorkspaceServiceItem";
 import { WorkspaceService } from "../../models/workspaceService";
@@ -26,7 +26,12 @@ vi.mock("../../hooks/useComponentManager", () => ({
 }));
 
 vi.mock("../shared/ResourceHeader", () => ({
-  ResourceHeader: ({ resource }: any) => <div data-testid="resource-header">{resource.id}</div>,
+  ResourceHeader: ({ resource, onRefresh }: any) => (
+    <div data-testid="resource-header">
+      {resource.id}
+      <button onClick={onRefresh}>Refresh</button>
+    </div>
+  ),
 }));
 
 vi.mock("../shared/ResourceBody", () => ({
@@ -34,9 +39,18 @@ vi.mock("../shared/ResourceBody", () => ({
 }));
 
 vi.mock("../shared/ResourceCardList", () => ({
-  ResourceCardList: ({ resources }: any) => (
-    <div data-testid="resource-card-list">{resources.map((resource: any) => resource.id).join(",")}</div>
-  ),
+  ResourceCardList: ({ resources, emptyText }: any) => {
+    const React = require("react");
+    // Count mounts so tests can check the list isn't unmounted by a refresh.
+    React.useEffect(() => {
+      (globalThis as any).resourceCardListMounts = ((globalThis as any).resourceCardListMounts || 0) + 1;
+    }, []);
+    return (
+      <div data-testid="resource-card-list">
+        {resources.length ? resources.map((resource: any) => resource.id).join(",") : emptyText}
+      </div>
+    );
+  },
 }));
 
 const workspaceService = {
@@ -63,6 +77,12 @@ const workspaceService = {
   },
 } as WorkspaceService;
 
+// Switch the owner's view from the default "My resources" to "All resources".
+const showAllResources = async () => {
+  fireEvent.click(screen.getByLabelText(/Showing my resources/));
+  fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: "All resources", hidden: true }));
+};
+
 describe("WorkspaceServiceItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -85,13 +105,95 @@ describe("WorkspaceServiceItem", () => {
       return Promise.reject(new Error(`Unexpected API call: ${endpoint}`));
     });
 
-    render(<WorkspaceServiceItem workspaceService={workspaceService} updateWorkspaceService={vi.fn()} removeWorkspaceService={vi.fn()} />, {
-      children: null,
-      initialEntries: ["/workspaces/test-workspace/workspace-services/test-service"],
-    });
+    render(
+      <WorkspaceServiceItem
+        workspaceService={workspaceService}
+        updateWorkspaceService={vi.fn()}
+        removeWorkspaceService={vi.fn()}
+      />,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-workspace/workspace-services/test-service"],
+      },
+    );
 
     await waitFor(() => expect(screen.getByTestId("resource-card-list")).toBeInTheDocument());
+    await showAllResources();
     expect(screen.getByTestId("resource-card-list")).toHaveTextContent("test-user-resource");
     expect(screen.queryByText("Error retrieving resources")).not.toBeInTheDocument();
+  });
+
+  const mockApi = (userResources: Array<any>) =>
+    mockApiCall.mockImplementation((endpoint: string) => {
+      if (endpoint.endsWith("/workspace-services/test-service")) return Promise.resolve({ workspaceService });
+      if (endpoint.endsWith("/user-resources")) return Promise.resolve({ userResources });
+      if (endpoint.endsWith("/user-resource-templates")) return Promise.resolve({ templates: [{}] });
+      if (endpoint.endsWith("/users")) return Promise.resolve({ users: [] });
+      return Promise.reject(new Error(`Unexpected API call: ${endpoint}`));
+    });
+
+  const renderItem = () =>
+    render(
+      <WorkspaceServiceItem
+        workspaceService={workspaceService}
+        updateWorkspaceService={vi.fn()}
+        removeWorkspaceService={vi.fn()}
+      />,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-workspace/workspace-services/test-service"],
+      },
+    );
+
+  it("defaults owners to their own resources", async () => {
+    mockApi([{ id: "test-user-resource", ownerId: "someone-else" }]);
+    renderItem();
+
+    await waitFor(() => expect(screen.getByLabelText(/Showing my resources/)).toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "Resources" })).toBeInTheDocument();
+    expect(screen.getByText("You do not own any resources in this workspace service.")).toBeInTheDocument();
+
+    await showAllResources();
+
+    await waitFor(() => expect(screen.getByTestId("resource-card-list")).toHaveTextContent("test-user-resource"));
+  });
+
+  it("refreshes only the service and its user resources without remounting the list", async () => {
+    mockApi([{ id: "test-user-resource" }]);
+    (globalThis as any).resourceCardListMounts = 0;
+    renderItem();
+    await waitFor(() => expect(screen.getByTestId("resource-card-list")).toBeInTheDocument());
+    await showAllResources();
+    expect(screen.getByTestId("resource-card-list")).toHaveTextContent("test-user-resource");
+    mockApiCall.mockClear();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    });
+
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledTimes(2));
+    const endpoints = mockApiCall.mock.calls.map((call) => call[0]);
+    expect(endpoints.some((e: string) => e.endsWith("/user-resources"))).toBe(true);
+    expect(endpoints.some((e: string) => e.endsWith("/workspace-services/test-service"))).toBe(true);
+    expect((globalThis as any).resourceCardListMounts).toBe(1);
+  });
+
+  it("searches resources by name and owner", async () => {
+    mockApi([
+      { id: "vm-alpha", ownerId: "owner-a", properties: { display_name: "Alpha VM" } },
+      { id: "vm-beta", ownerId: "owner-b", properties: { display_name: "Beta VM" } },
+    ]);
+    renderItem();
+    await waitFor(() => expect(screen.getByTestId("resource-card-list")).toBeInTheDocument());
+    await showAllResources();
+    expect(screen.getByTestId("resource-card-list")).toHaveTextContent("vm-alpha,vm-beta");
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "beta" } });
+    expect(screen.getByTestId("resource-card-list")).toHaveTextContent("vm-beta");
+    expect(screen.getByTestId("resource-card-list")).not.toHaveTextContent("vm-alpha");
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "owner-a" } });
+    expect(screen.getByTestId("resource-card-list")).toHaveTextContent("vm-alpha");
+    expect(screen.getByTestId("resource-card-list")).not.toHaveTextContent("vm-beta");
   });
 });

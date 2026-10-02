@@ -5,7 +5,14 @@ import { AirlockReviewRequest } from "./AirlockReviewRequest";
 
 describe("AirlockReviewRequest", () => {
   it("separates the review reason from the approve/reject decision", () => {
-    render(<AirlockReviewRequest request={undefined} onUpdateRequest={vi.fn()} onReviewRequest={vi.fn()} onClose={vi.fn()} />);
+    render(
+      <AirlockReviewRequest
+        request={undefined}
+        onUpdateRequest={vi.fn()}
+        onReviewRequest={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Proceed to review" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Reason for decision" }), {

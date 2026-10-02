@@ -21,10 +21,20 @@ interface ResourceBodyProps {
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
   const appRolesCtx = useContext(AppRolesContext);
-  const canSeeWorkspaceOwnerContent =
-    props.resource.resourceType !== ResourceType.Workspace ||
-    appRolesCtx.roles.includes(RoleName.TREAdmin) ||
-    workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner);
+  const userRoles = [...appRolesCtx.roles, ...workspaceCtx.roles];
+  const hasAnyRole = (roles?: Array<string>) => !!roles && roles.some((r) => userRoles.includes(r));
+
+  // Researchers can see details of their own user resources, but not of workspaces or workspace services.
+  const detailsRolesByResourceType = {
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.SharedService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.WorkspaceService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.UserResource]: [
+      WorkspaceRoleName.WorkspaceOwner,
+      WorkspaceRoleName.WorkspaceResearcher,
+      WorkspaceRoleName.AirlockManager,
+    ],
+  };
 
   const operationsRolesByResourceType = {
     [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
@@ -34,12 +44,17 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
   };
 
   const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
+    [ResourceType.Workspace]: [
+      RoleName.TREAdmin,
+      WorkspaceRoleName.WorkspaceOwner,
+      WorkspaceRoleName.WorkspaceResearcher,
+    ],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
   };
 
+  const detailsRoles = detailsRolesByResourceType[props.resource.resourceType];
   const operationsRoles = operationsRolesByResourceType[props.resource.resourceType];
   const historyRoles = historyRolesByResourceType[props.resource.resourceType];
   const workspaceId = workspaceCtx.workspace?.id || "";
@@ -60,13 +75,13 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
           </ReactMarkdown>
         </div>
       </PivotItem>
-      {!props.readonly && canSeeWorkspaceOwnerContent && (
+      {!props.readonly && hasAnyRole(detailsRoles) && (
         <PivotItem headerText="Details">
           <ResourcePropertyPanel resource={props.resource} />
           <ResourceDebug resource={props.resource} />
         </PivotItem>
       )}
-      {!props.readonly && historyRoles && (
+      {!props.readonly && hasAnyRole(historyRoles) && (
         <PivotItem headerText="History">
           <SecuredByRole
             allowedAppRoles={historyRoles}
@@ -77,7 +92,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
           />
         </PivotItem>
       )}
-      {!props.readonly && operationsRoles && canSeeWorkspaceOwnerContent && (
+      {!props.readonly && hasAnyRole(operationsRoles) && (
         <PivotItem headerText="Operations">
           <SecuredByRole
             allowedAppRoles={operationsRoles}

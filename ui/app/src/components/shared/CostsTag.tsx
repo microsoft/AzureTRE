@@ -65,8 +65,11 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
     return baseMessage;
   };
 
+  // Inside a workspace, costs come from the workspace context; the TRE-wide costs may never be loaded there.
+  const inWorkspace = !!workspaceCtx.workspace?.id;
   const showShimmer =
-    loadingState === LoadingState.Loading || (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+    loadingState === LoadingState.Loading ||
+    (!inWorkspace && costsCtx.loadingState === LoadingState.Loading && !formattedCost);
 
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">

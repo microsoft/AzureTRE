@@ -4,20 +4,32 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { UserAccessPanel } from "./UserAccessPanel";
 
 vi.mock("@fluentui/react", () => ({
-  Panel: ({ isOpen, headerText, children }: any) =>
+  Panel: ({ isOpen, headerText, children, onRenderFooterContent }: any) =>
     isOpen ? (
       <div data-testid="panel">
         <h1>{headerText}</h1>
         {children}
+        {onRenderFooterContent?.()}
       </div>
     ) : null,
   PanelType: { smallFixedFar: 1 },
   MessageBar: ({ children }: any) => <div data-testid="message-bar">{children}</div>,
   MessageBarType: { info: 0, warning: 5 },
   DefaultButton: ({ text, onClick }: any) => <button onClick={onClick}>{text}</button>,
-  Stack: ({ children }: any) => <div>{children}</div>,
+  Stack: ({ children, "data-testid": testId }: any) => <div data-testid={testId}>{children}</div>,
   Text: ({ children, className }: any) => <span className={className}>{children}</span>,
-  getTheme: () => ({ palette: { green: "green", neutralLight: "grey", neutralTertiary: "grey" } }),
+  Icon: () => null,
+  Persona: ({ text, secondaryText }: any) => (
+    <div data-testid="persona">
+      <span>{text}</span>
+      <span>{secondaryText}</span>
+    </div>
+  ),
+  PersonaSize: { size40: 40 },
+  FontWeights: { semibold: 600 },
+  getTheme: () => ({
+    palette: { green: "green", neutralLight: "grey", neutralSecondary: "grey", neutralTertiary: "grey" },
+  }),
   mergeStyles: () => "",
 }));
 
@@ -41,7 +53,8 @@ describe("UserAccessPanel", () => {
     render(<UserAccessPanel {...baseProps} tokenIssuedAt={1700000000} />);
 
     expect(screen.getByText("Your access")).toBeInTheDocument();
-    expect(screen.getByText("Jane Doe · jane@contoso.com")).toBeInTheDocument();
+    expect(screen.getByTestId("persona")).toHaveTextContent("Jane Doe");
+    expect(screen.getByTestId("persona")).toHaveTextContent("jane@contoso.com");
     expect(screen.getByText(/Roles come from your sign-in token/)).toBeInTheDocument();
     expect(screen.getByText(/issued at/)).toBeInTheDocument();
   });
@@ -75,7 +88,7 @@ describe("UserAccessPanel", () => {
 
   it("hides the workspace section outside a workspace", () => {
     render(<UserAccessPanel {...baseProps} coreRoles={["TREUser"]} />);
-    expect(screen.queryByText(/Workspace ·/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Workspace roles")).not.toBeInTheDocument();
   });
 
   it("shows workspace roles in a workspace", () => {
@@ -88,7 +101,8 @@ describe("UserAccessPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Workspace · My Workspace")).toBeInTheDocument();
+    expect(screen.getByText("Workspace roles")).toBeInTheDocument();
+    expect(screen.getByText("My Workspace")).toBeInTheDocument();
     expect(screen.getByTestId("role-held-WorkspaceOwner")).toBeInTheDocument();
     expect(screen.getByTestId("role-held-AirlockManager")).toBeInTheDocument();
     expect(screen.getByTestId("role-not-held-WorkspaceResearcher")).toBeInTheDocument();

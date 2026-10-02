@@ -22,6 +22,7 @@ import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { useRefresh } from "../../hooks/useRefresh";
+import { isEqualJson } from "../../utils/isEqualJson";
 
 export const WorkspaceProvider: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
@@ -78,7 +79,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
           workspaceCtx.current.setWorkspace(ws);
           workspaceCtx.current.setRoles(wsRoles);
-          setWSRoles(wsRoles);
+          setWSRoles((prev) => (isEqualJson(prev, wsRoles) ? prev : wsRoles));
           setRolesWorkspaceId(workspaceId || "");
 
           // get workspace services to pass to nav + ws services page
@@ -87,13 +88,17 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             HttpMethod.Get,
             ws.properties.scope_id,
           );
-          setWorkspaceServices(workspaceServices.workspaceServices);
+          setWorkspaceServices((prev) =>
+            isEqualJson(prev, workspaceServices.workspaceServices) ? prev : workspaceServices.workspaceServices,
+          );
           // Shared services are only available to workspace owners in this scope.
           if (wsRoles.includes(WorkspaceRoleName.WorkspaceOwner)) {
             const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
-            setSharedServices(sharedServices.sharedServices);
+            setSharedServices((prev) =>
+              isEqualJson(prev, sharedServices.sharedServices) ? prev : sharedServices.sharedServices,
+            );
           } else {
-            setSharedServices([]);
+            setSharedServices((prev) => (prev.length ? [] : prev));
           }
           setLoadingState(LoadingState.Ok);
         } else if (appRoles.roles.includes(RoleName.TREAdmin)) {
@@ -120,7 +125,6 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       }
     };
     getWorkspace();
-
   }, [apiCall, workspaceId, isTREAdminUser, appRoles.roles, workspaceRefreshKey]);
 
   useEffect(() => {
@@ -184,7 +188,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          <WorkspaceHeader onRefresh={refreshWorkspace} />
+          <WorkspaceHeader />
           <Stack horizontal className="tre-body-inner">
             <Stack.Item className="tre-left-nav">
               <WorkspaceLeftNav
@@ -203,7 +207,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                       path="/"
                       element={
                         <>
-                          <WorkspaceItem />
+                          <WorkspaceItem onRefresh={refreshWorkspace} />
                           {!isTREAdminUser ? (
                             <WorkspaceServices
                               workspaceServices={workspaceServices}
@@ -235,6 +239,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                               addWorkspaceService={(ws: WorkspaceService) => addWorkspaceService(ws)}
                               updateWorkspaceService={(ws: WorkspaceService) => updateWorkspaceService(ws)}
                               removeWorkspaceService={(ws: WorkspaceService) => removeWorkspaceService(ws)}
+                              onRefresh={refreshWorkspace}
                             />
                           }
                         />

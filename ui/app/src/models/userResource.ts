@@ -7,6 +7,4 @@ export interface UserResource extends Resource {
 
 export const isOwnedByUser = (resource: UserResource, userId: string): boolean =>
   !!userId &&
-  (resource.ownerId === userId ||
-    resource.properties?.owner_id === userId ||
-    resource.properties?.ownerId === userId);
+  (resource.ownerId === userId || resource.properties?.owner_id === userId || resource.properties?.ownerId === userId);

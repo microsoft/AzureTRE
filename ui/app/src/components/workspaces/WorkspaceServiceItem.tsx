@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { useAuthApiCall, HttpMethod } from "../../hooks/useAuthApiCall";
 import { UserResource } from "../../models/userResource";
 import { WorkspaceService } from "../../models/workspaceService";
-import { DefaultButton, PrimaryButton, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { PrimaryButton, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { ComponentAction, Resource } from "../../models/resource";
 import { ResourceCardList } from "../shared/ResourceCardList";
 import { LoadingState } from "../../models/loadingState";
@@ -24,7 +24,15 @@ import { CachedUser } from "../../models/user";
 import { useAccount, useMsal } from "@azure/msal-react";
 import { isOwnedByUser } from "../../models/userResource";
 import { useRefresh } from "../../hooks/useRefresh";
-import { RefreshButton } from "../shared/RefreshButton";
+import { isEqualJson } from "../../utils/isEqualJson";
+import {
+  nameSortOption,
+  ResourceListControls,
+  ResourceSortOption,
+  statusSortOption,
+  updatedSortOption,
+  useResourceListFilter,
+} from "../shared/ResourceListControls";
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService;
@@ -47,7 +55,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
-  const [showMyResources, setShowMyResources] = useState(false);
+  const [showMyResources, setShowMyResources] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
   const { accounts } = useMsal();
@@ -68,88 +76,148 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     (account?.idTokenClaims as Record<string, unknown> | undefined)?.oid?.toString() ||
     account?.localAccountId.split(".")[0] ||
     "";
-  const displayedUserResources = showMyResources
-    ? userResources.filter((resource) => isOwnedByUser(resource, currentUserId))
-    : userResources;
+  const workspaceId = workspaceCtx.workspace.id;
+  const workspaceScopeId = workspaceCtx.workspaceApplicationIdURI;
+  const isWorkspaceOwner = workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner);
+
+  const getOwnerName = useCallback(
+    (r: UserResource) =>
+      usersCache.get(r.ownerId)?.displayName ||
+      (r.ownerId && r.ownerId === currentUserId ? account?.name : undefined) ||
+      r.ownerId ||
+      "",
+    [usersCache, currentUserId, account],
+  );
+  const sortOptions = useMemo<Array<ResourceSortOption<UserResource>>>(
+    () => [
+      nameSortOption<UserResource>(),
+      { key: "owner", text: "Owner", compare: (a, b) => getOwnerName(a).localeCompare(getOwnerName(b)) },
+      statusSortOption<UserResource>(),
+      updatedSortOption<UserResource>(),
+    ],
+    [getOwnerName],
+  );
+  const extraSearchText = useCallback((r: UserResource) => [getOwnerName(r)], [getOwnerName]);
+  // Only Workspace Owners see other users' resources, so the owner filter applies to them alone.
+  const filterToMine = showMyResources && isWorkspaceOwner;
+  const preFilter = useCallback(
+    (r: UserResource) => !filterToMine || isOwnedByUser(r, currentUserId),
+    [filterToMine, currentUserId],
+  );
+  const { visibleResources: displayedUserResources, controlsProps } = useResourceListFilter(userResources, {
+    storageKey: "user-resource",
+    sortOptions,
+    extraSearchText,
+    preFilter,
+  });
+  const [loadKey, setLoadKey] = useState(0);
 
   useEffect(() => {
+    setLoadingState(LoadingState.Loading);
+  }, [workspaceServiceId]);
+
+  // Read the latest service passed from the parent without re-running the load when its identity changes.
+  const passedWorkspaceService = useRef(props.workspaceService);
+  passedWorkspaceService.current = props.workspaceService;
+
+  const servicePath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`;
+
+  // Full load: the service, its user resources and whether it has user resource templates.
+  useEffect(() => {
+    if (!workspaceId) return;
+    let cancelled = false;
     const getData = async () => {
-      if (!workspaceCtx.workspace.id) return;
-
-      setHasUserResourceTemplates(false);
       try {
-        let svc = props.workspaceService || ({} as WorkspaceService);
-        // did we get passed the workspace service, or shall we get it from the api?
-        if (props.workspaceService && props.workspaceService.id && props.workspaceService.id === workspaceServiceId) {
-          setWorkspaceService(props.workspaceService);
-        } else {
-          let ws = await apiCall(
-            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`,
+        let svc = passedWorkspaceService.current;
+        if (!svc || svc.id !== workspaceServiceId) {
+          svc = (await apiCall(servicePath, HttpMethod.Get, workspaceScopeId)).workspaceService as WorkspaceService;
+        }
+        const [u, ut] = await Promise.all([
+          apiCall(`${servicePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceScopeId),
+          apiCall(
+            `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`,
             HttpMethod.Get,
-            workspaceCtx.workspaceApplicationIdURI,
-          );
-          setWorkspaceService(ws.workspaceService);
-          svc = ws.workspaceService;
-        }
-
-        // get the user resources
-        const u = await apiCall(
-          `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}`,
-          HttpMethod.Get,
-          workspaceCtx.workspaceApplicationIdURI,
-        );
-
-        // get user resource templates - to check
-        const ut = await apiCall(
-          `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServiceTemplates}/${svc.templateName}/${ApiEndpoint.UserResourceTemplates}`,
-          HttpMethod.Get,
-          workspaceCtx.workspaceApplicationIdURI,
-        );
-        setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
+            workspaceScopeId,
+          ),
+        ]);
+        if (cancelled) return;
+        setWorkspaceService(svc);
+        setHasUserResourceTemplates(!!(ut && ut.templates && ut.templates.length > 0));
         setUserResources(u.userResources);
-
-        if (workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner)) {
-          try {
-            const usersResponse = await apiCall(
-              `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-              HttpMethod.Get,
-              workspaceCtx.workspaceApplicationIdURI,
-            );
-
-            const cache = new Map<string, CachedUser>();
-            if (usersResponse.users) {
-              usersResponse.users.forEach((user: any) => {
-                cache.set(user.id, {
-                  displayName: user.displayName,
-                  email: user.email || user.userPrincipalName,
-                });
-              });
-            }
-            setUsersCache(cache);
-          } catch {
-            setUsersCache(new Map());
-          }
-        } else {
-          setUsersCache(new Map());
-        }
-
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
+        if (cancelled) return;
         err.userMessage = "Error retrieving resources";
         setApiError(err);
         setLoadingState(LoadingState.Error);
       }
     };
     getData();
-  }, [
-    apiCall,
-    props.workspaceService,
-    workspaceCtx.workspace.id,
-    workspaceCtx.workspaceApplicationIdURI,
-    workspaceCtx.roles,
-    workspaceServiceId,
-    refreshKey,
-  ]);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiCall, servicePath, workspaceId, workspaceScopeId, workspaceServiceId, loadKey]);
+
+  // Owner display names. Only Workspace Owners can list workspace users.
+  useEffect(() => {
+    if (!workspaceId || !isWorkspaceOwner) {
+      setUsersCache((prev) => (prev.size ? new Map() : prev));
+      return;
+    }
+    let cancelled = false;
+    const getUsers = async () => {
+      try {
+        const usersResponse = await apiCall(
+          `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.Users}`,
+          HttpMethod.Get,
+          workspaceScopeId,
+        );
+        const cache = new Map<string, CachedUser>();
+        usersResponse.users?.forEach((user: any) => {
+          cache.set(user.id, {
+            displayName: user.displayName,
+            email: user.email || user.userPrincipalName,
+          });
+        });
+        if (!cancelled) setUsersCache(cache);
+      } catch {
+        if (!cancelled) setUsersCache(new Map());
+      }
+    };
+    getUsers();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiCall, workspaceId, workspaceScopeId, isWorkspaceOwner]);
+
+  // Latest request parameters for refresh, read without re-running the refresh effect when they change.
+  const refreshParams = useRef({ apiCall, servicePath, workspaceId, workspaceScopeId });
+  refreshParams.current = { apiCall, servicePath, workspaceId, workspaceScopeId };
+
+  // Manual and automatic refresh: re-read only the service and its user resources, keeping state when unchanged.
+  useEffect(() => {
+    const { apiCall, servicePath, workspaceId, workspaceScopeId } = refreshParams.current;
+    if (refreshKey === 0 || !workspaceId) return;
+    let cancelled = false;
+    const refreshData = async () => {
+      try {
+        const [ws, u] = await Promise.all([
+          apiCall(servicePath, HttpMethod.Get, workspaceScopeId),
+          apiCall(`${servicePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceScopeId),
+        ]);
+        if (cancelled) return;
+        setWorkspaceService((prev) => (isEqualJson(prev, ws.workspaceService) ? prev : ws.workspaceService));
+        setUserResources((prev) => (isEqualJson(prev, u.userResources) ? prev : u.userResources));
+      } catch (err: any) {
+        // Keep showing the last good data; the next refresh will try again.
+        console.warn("Failed to refresh workspace service", err);
+      }
+    };
+    refreshData();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey, refreshParams]);
 
   const addUserResource = (u: UserResource) => {
     let ur = [...userResources];
@@ -180,21 +248,14 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               path="*"
               element={
                 <>
-                  <ResourceHeader
-                    resource={workspaceService}
-                    latestUpdate={latestUpdate}
-                    onRefresh={refresh}
-                  />
+                  <ResourceHeader resource={workspaceService} latestUpdate={latestUpdate} onRefresh={refresh} />
                   <ResourceBody resource={workspaceService} />
                   {hasUserResourceTemplates && (
                     <Stack className="tre-panel">
                       <Stack.Item>
-                        <Stack horizontal horizontalAlign="space-between">
+                        <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
+                          <h1>Resources</h1>
                           <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                            <h1>Resources</h1>
-                            <RefreshButton onClick={refresh} />
-                          </Stack>
-                          <Stack horizontal tokens={{ childrenGap: 8 }}>
                             <SecuredByRole
                               allowedWorkspaceRoles={[
                                 WorkspaceRoleName.WorkspaceOwner,
@@ -228,15 +289,17 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                                 />
                               }
                             />
-                            {workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner) && (
-                              <DefaultButton
-                                text={showMyResources ? "All resources" : "My resources"}
-                                ariaLabel={showMyResources ? "Show all resources" : "Show my resources"}
-                                onClick={() => setShowMyResources((showing) => !showing)}
-                              />
-                            )}
                           </Stack>
                         </Stack>
+                      </Stack.Item>
+                      <Stack.Item>
+                        <ResourceListControls
+                          {...controlsProps}
+                          searchPlaceholder="Search by name, owner or status..."
+                          ariaLabel="Resource list controls"
+                          showMine={showMyResources}
+                          onShowMineChange={isWorkspaceOwner ? setShowMyResources : undefined}
+                        />
                       </Stack.Item>
                       <Stack.Item>
                         {userResources && (
@@ -246,9 +309,11 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
                             updateResource={(r: Resource) => updateUserResource(r as UserResource)}
                             removeResource={(r: Resource) => removeUserResource(r as UserResource)}
                             emptyText={
-                              showMyResources
-                                ? "You do not own any resources in this workspace service."
-                                : "This workspace service contains no user resources."
+                              controlsProps.search
+                                ? `No resources found matching "${controlsProps.search}".`
+                                : filterToMine
+                                  ? "You do not own any resources in this workspace service."
+                                  : "This workspace service contains no user resources."
                             }
                             isExposedExternally={workspaceService.properties.is_exposed_externally}
                             usersCache={usersCache}
@@ -275,7 +340,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         </>
       );
     case LoadingState.Error:
-      return <ExceptionLayout e={apiError} onRetry={refresh} />;
+      return <ExceptionLayout e={apiError} onRetry={() => setLoadKey((key) => key + 1)} />;
     default:
       return (
         <div style={{ marginTop: "20px" }}>

@@ -37,10 +37,10 @@ You may have data pre-provisioned into your workspace, or you may import data vi
 When you are no longer using a VM, it is good practice to stop it so that the VM is deallocated and no unnecessary costs will be applied.
 To do this, navigate to the UI and find your VM.
 
-1. Click on the three small dots in the top right of the user resource card, choose Actions, and then Stop. Stop powers off the VM; it remains enabled in TRE and can be started again.
+1. Select **Stop** on the virtual machine's card (or choose Actions, and then Stop, from the card's **...** menu) and confirm. Stop powers off the VM; it remains enabled in TRE and can be started again with **Start**.
 2. It will take a few minutes to take effect and the card should then display 'VM deallocated'.
 
-The same steps can be followed to Start your VM.
+To start it again, select **Start** on the card.
 
 [![Start and Stop VM](../../assets/using-tre/vm-start-stop.png)](../../assets/using-tre/vm-access.png)
 
@@ -68,7 +68,7 @@ Whilst the VM is currently updating due to an invoked action it will display a m
 
 You can also view any current operations by clicking on the bell in the top right hand corner of the screen.
 
-Use Refresh on a resource detail page to fetch its latest state. Resource status is also refreshed automatically while the UI tab is visible.
+Use **Refresh**, at the right of each page's action bar, to fetch the latest state. Resource status is also refreshed automatically while the UI tab is visible, and once more when you return to the tab.
 
 
 ## How to Contribute to our Documentation

@@ -365,11 +365,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         />
       ) : (
         <DialogFooter>
-          <DefaultButton
-            onClick={() => setProceedToDecision(false)}
-            text="Back to reason"
-            styles={{ root: { float: "left" } }}
-          />
+          <DefaultButton onClick={() => setProceedToDecision(false)} text="Back" styles={{ root: { float: "left" } }} />
           <DefaultButton
             iconProps={{ iconName: "Cancel" }}
             onClick={() => setShowRejectConfirmation(true)}

@@ -30,6 +30,8 @@ import { SecuredByRole } from "./SecuredByRole";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { UserResource } from "../../models/userResource";
 import { CachedUser } from "../../models/user";
+import { useAccount, useMsal } from "@azure/msal-react";
+import { VMPowerButton } from "./VMPowerButton";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -58,27 +60,29 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   );
   const navigate = useNavigate();
 
+  const { accounts } = useMsal();
+  const account = useAccount(accounts[0] || {});
+  const currentUserId =
+    (account?.idTokenClaims as Record<string, unknown> | undefined)?.oid?.toString() ||
+    account?.localAccountId.split(".")[0] ||
+    "";
+
+  // The workspace users list is only available to Workspace Owners, so fall back to the signed-in user's own details.
+  const getOwner = useCallback((): CachedUser | undefined => {
+    if (props.resource.resourceType !== ResourceType.UserResource) return undefined;
+    const ownerId = (props.resource as UserResource).ownerId;
+    if (!ownerId || !ownerId.trim()) return undefined;
+    const cached = props.usersCache?.get(ownerId);
+    if (cached) return cached;
+    if (ownerId === currentUserId && account?.name) return { displayName: account.name, email: account.username };
+    return { displayName: ownerId } as CachedUser;
+  }, [props.resource, props.usersCache, currentUserId, account]);
+
   // Get owner display name from cache or fallback to ownerId
-  const getOwnerDisplayName = useCallback(() => {
-    if (props.resource.resourceType === ResourceType.UserResource) {
-      const userResource = props.resource as UserResource;
-      if (userResource.ownerId && userResource.ownerId.trim()) {
-        return props.usersCache?.get(userResource.ownerId)?.displayName || userResource.ownerId;
-      }
-    }
-    return null;
-  }, [props.resource, props.usersCache]);
+  const getOwnerDisplayName = useCallback(() => getOwner()?.displayName || null, [getOwner]);
 
   // Get owner email from cache
-  const getOwnerEmail = useCallback(() => {
-    if (props.resource.resourceType === ResourceType.UserResource) {
-      const userResource = props.resource as UserResource;
-      if (userResource.ownerId && userResource.ownerId.trim()) {
-        return props.usersCache?.get(userResource.ownerId)?.email;
-      }
-    }
-    return null;
-  }, [props.resource, props.usersCache]);
+  const getOwnerEmail = useCallback(() => getOwner()?.email || null, [getOwner]);
 
   const costTagRolesByResourceType = {
     [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
@@ -190,6 +194,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   <Stack.Item>
                     <IconButton
                       iconProps={{ iconName: "Info" }}
+                      ariaLabel="Resource details"
+                      title="Resource details"
                       id={`item-${props.itemId}`}
                       onClick={(e) => {
                         // Stop onClick triggering parent handler
@@ -203,6 +209,15 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                       <ResourceContextMenu resource={props.resource} componentAction={latestUpdate.componentAction} />
                     )}
                   </Stack.Item>
+                  {!props.readonly && (
+                    <Stack.Item>
+                      <VMPowerButton
+                        resource={props.resource}
+                        componentAction={latestUpdate.componentAction}
+                        iconOnly
+                      />
+                    </Stack.Item>
+                  )}
                 </Stack>
               </Stack.Item>
               <SecuredByRole

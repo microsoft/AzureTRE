@@ -37,6 +37,20 @@ vi.mock("./ResourceContextMenu", () => {
   return { ResourceContextMenu };
 });
 
+vi.mock("./VMPowerButton", () => ({
+  VMPowerButton: () => <div data-testid="vm-power-button" />,
+}));
+
+const mockAccount = vi.hoisted(() => ({ current: null as any }));
+vi.mock("@azure/msal-react", () => {
+  const React = require("react");
+  return {
+    MsalProvider: ({ children }: any) => React.createElement(React.Fragment, null, children),
+    useMsal: () => ({ instance: {}, accounts: mockAccount.current ? [mockAccount.current] : [] }),
+    useAccount: () => mockAccount.current,
+  };
+});
+
 vi.mock("./StatusBadge", () => {
   const StatusBadge = ({ _resource, status }: any) => <div data-testid="status-badge">{status}</div>;
   StatusBadge.displayName = "StatusBadge";
@@ -242,6 +256,7 @@ describe("ResourceCard Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAccount.current = null;
     mockUseComponentManager.mockReturnValue({
       componentAction: ComponentAction.None,
       operation: null,
@@ -427,5 +442,37 @@ describe("ResourceCard Component", () => {
 
     // Should not navigate if auth not provisioned and user is not admin
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("shows the signed-in user's name for their own resource when the users list isn't available", () => {
+    mockAccount.current = {
+      name: "Rosie Researcher",
+      username: "rosie@example.com",
+      localAccountId: "owner-oid",
+      idTokenClaims: { oid: "owner-oid" },
+    };
+    const ownResource = { ...mockResource, resourceType: ResourceType.UserResource, ownerId: "owner-oid" } as Resource;
+
+    renderWithContexts(<ResourceCard {...defaultProps} resource={ownResource} usersCache={new Map()} />);
+
+    expect(screen.getByText("Rosie Researcher")).toBeInTheDocument();
+    expect(screen.queryByText("owner-oid")).not.toBeInTheDocument();
+  });
+
+  it("shows the owner ID for another user's resource when the users list isn't available", () => {
+    mockAccount.current = {
+      name: "Rosie Researcher",
+      localAccountId: "owner-oid",
+      idTokenClaims: { oid: "owner-oid" },
+    };
+    const otherResource = {
+      ...mockResource,
+      resourceType: ResourceType.UserResource,
+      ownerId: "other-oid",
+    } as Resource;
+
+    renderWithContexts(<ResourceCard {...defaultProps} resource={otherResource} usersCache={new Map()} />);
+
+    expect(screen.getByText("other-oid")).toBeInTheDocument();
   });
 });

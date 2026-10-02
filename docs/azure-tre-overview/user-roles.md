@@ -67,7 +67,7 @@ Expected skills:
 
 Owns a specific workspace and has additional privileges than the researcher within the workspace. Is most likely also a *Researcher*.
 
-In a workspace service's resource list, Workspace Owners can select **My resources** to filter to resources they own.
+Resource lists can be searched and sorted. In a workspace service's resource list, Workspace Owners see **My resources** by default and can switch to **All resources** from the list controls.
 
 Example tasks:
 
