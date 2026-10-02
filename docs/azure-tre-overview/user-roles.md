@@ -6,7 +6,7 @@ Before you deploy a Trusted Research Environment based on the Azure TRE solution
 
 ## Role overview
 
-The Azure TRE UI shows your assigned TRE roles in the user menu. When you are viewing a workspace, the menu also shows your roles in that workspace. A TRE administrator without a workspace role is identified as such; workspace-level actions still require a workspace role.
+To see your roles in the Azure TRE UI, open the user menu and select **Your access...**. The panel lists the TRE roles you hold, what each role permits, and the roles you do not hold. When you are viewing a workspace, it also lists your roles in that workspace. A TRE administrator without a workspace role is identified as such; workspace-level actions still require a workspace role. Roles come from your sign-in token, so a role assigned after you signed in appears only after you sign out and back in.
 
 While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  
 

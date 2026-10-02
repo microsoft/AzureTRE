@@ -14,6 +14,7 @@ const mockAccount = {
   environment: "test-environment",
   tenantId: "test-tenant-id",
   localAccountId: "test-local-account-id",
+  idTokenClaims: { iat: 1700000000 },
 };
 let mockAccounts = [mockAccount];
 let mockCurrentAccount: typeof mockAccount | null = mockAccount;
@@ -26,6 +27,18 @@ vi.mock("@azure/msal-react", () => ({
     accounts: mockAccounts,
   }),
   useAccount: () => mockCurrentAccount,
+}));
+
+let lastPanelProps: any;
+vi.mock("./UserAccessPanel", () => ({
+  UserAccessPanel: (props: any) => {
+    lastPanelProps = props;
+    return props.isOpen ? (
+      <div data-testid="access-panel">
+        <button data-testid="panel-signout" onClick={props.onSignOut} />
+      </div>
+    ) : null;
+  },
 }));
 
 // Mock FluentUI components
@@ -56,6 +69,7 @@ vi.mock("@fluentui/react", () => {
   Persona.displayName = "Persona";
 
   return {
+    ContextualMenuItemType: { Header: 2 },
     PrimaryButton,
     Persona,
     PersonaSize: {
@@ -166,23 +180,43 @@ describe("UserMenu Component", () => {
     expect(screen.getByTestId("persona")).toBeInTheDocument();
   });
 
-  it("shows friendly core and workspace roles", () => {
-    renderWithRoles(["TREAdmin"], ["WorkspaceResearcher", "AirlockManager"], "workspace-id");
+  it("does not show a role subtitle on the persona", () => {
+    renderWithRoles(["TREAdmin"], ["WorkspaceOwner"], "workspace-id");
 
-    expect(screen.getByTestId("persona")).toHaveTextContent(
-      "TRE Administrator · Workspace Researcher · Airlock Manager",
-    );
+    expect(screen.getByTestId("persona")).not.toHaveTextContent("Administrator");
   });
 
-  it("shows when a TRE admin has no workspace roles", () => {
-    renderWithRoles(["TREAdmin"], [], "workspace-id");
+  it("shows the user name and email as the menu header", () => {
+    render(<UserMenu />);
 
-    expect(screen.getByTestId("persona")).toHaveTextContent("TRE Administrator · No workspace roles assigned");
+    expect(screen.getByTestId("menu-item-user")).toHaveTextContent("Test User (test@example.com)");
   });
 
-  it("shows no roles when the user has none", () => {
-    renderWithRoles();
+  it("opens the Your access panel with the token roles", () => {
+    renderWithRoles(["TREUser"], ["WorkspaceOwner"], "workspace-id");
 
-    expect(screen.getByTestId("persona")).toHaveTextContent("No roles assigned");
+    expect(screen.queryByTestId("access-panel")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("menu-item-access"));
+
+    expect(screen.getByTestId("access-panel")).toBeInTheDocument();
+    expect(lastPanelProps.coreRoles).toEqual(["TREUser"]);
+    expect(lastPanelProps.workspaceRoles).toEqual(["WorkspaceOwner"]);
+    expect(lastPanelProps.workspaceName).toBe("workspace-id");
+    expect(lastPanelProps.tokenIssuedAt).toBe(1700000000);
+    expect(lastPanelProps.userEmail).toBe("test@example.com");
+  });
+
+  it("does not pass a workspace outside a workspace", () => {
+    renderWithRoles(["TREUser"]);
+
+    expect(lastPanelProps.workspaceName).toBeUndefined();
+  });
+
+  it("signs out from the panel", () => {
+    renderWithRoles(["TREUser"]);
+    fireEvent.click(screen.getByTestId("menu-item-access"));
+    fireEvent.click(screen.getByTestId("panel-signout"));
+
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 });
