@@ -129,7 +129,7 @@ resource "fabric_workspace_managed_private_endpoint" "blob" {
   name                            = "pe-blob-${local.short_service_id}"
   target_private_link_resource_id = data.azurerm_storage_account.stg.id
   target_subresource_type         = "blob"
-  request_message                 = "TRE Fabric workspace service - blob access for workspace ${var.workspace_id}"
+  request_message                 = local.managed_pe_request_messages.blob
 
   depends_on = [time_sleep.wait_for_managed_vnet]
 
@@ -144,7 +144,7 @@ resource "fabric_workspace_managed_private_endpoint" "dfs" {
   name                            = "pe-dfs-${local.short_service_id}"
   target_private_link_resource_id = data.azurerm_storage_account.stg.id
   target_subresource_type         = "dfs"
-  request_message                 = "TRE Fabric workspace service - dfs access for workspace ${var.workspace_id}"
+  request_message                 = local.managed_pe_request_messages.dfs
 
   depends_on = [fabric_workspace_managed_private_endpoint.blob]
 
@@ -155,54 +155,67 @@ resource "fabric_workspace_managed_private_endpoint" "dfs" {
 }
 
 # -------------------------------------------------------------------
-# Auto-approve managed PE connections on the workspace storage account.
+# Approve the managed PE connections on the workspace storage account.
 #
 # Fabric creates managed PEs from its managed VNet, but these appear
 # as "Pending" on the target storage account and require explicit
-# approval. This resource obtains an ARM token and approves any
-# pending connections that match our managed PE request messages.
+# approval. Only connections whose request message exactly matches
+# the ones set above are approved, and each must resolve to exactly
+# one connection, so unrelated pending requests are never approved.
 # -------------------------------------------------------------------
-resource "terraform_data" "approve_managed_pe_connections" {
-  depends_on = [fabric_workspace_managed_private_endpoint.dfs]
+data "azapi_resource_list" "storage_pe_connections" {
+  type      = "Microsoft.Storage/storageAccounts/privateEndpointConnections@2023-05-01"
+  parent_id = data.azurerm_storage_account.stg.id
 
-  # Re-run if managed PEs are recreated
-  input = {
-    blob_id = fabric_workspace_managed_private_endpoint.blob.id
-    dfs_id  = fabric_workspace_managed_private_endpoint.dfs.id
+  response_export_values = {
+    connections = "value[].{id: id, status: properties.privateLinkServiceConnectionState.status, description: properties.privateLinkServiceConnectionState.description}"
   }
 
-  provisioner "local-exec" {
-    interpreter = ["/bin/sh", "-e", "-c"]
-    command     = <<-EOT
-      # Obtain an ARM access token using the service principal credentials
-      if [ "$${ARM_USE_MSI}" = "true" ]; then
-        TOKEN=$(curl -s 'http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/' \
-          -H 'Metadata: true' | jq -r '.access_token')
-      else
-        TOKEN=$(curl -s -X POST \
-          "https://login.microsoftonline.com/$${ARM_TENANT_ID}/oauth2/v2.0/token" \
-          -d "client_id=$${ARM_CLIENT_ID}&client_secret=$${ARM_CLIENT_SECRET}&scope=https://management.azure.com/.default&grant_type=client_credentials" \
-          | jq -r '.access_token')
-      fi
+  depends_on = [
+    fabric_workspace_managed_private_endpoint.blob,
+    fabric_workspace_managed_private_endpoint.dfs,
+  ]
 
-      STORAGE_ID="${data.azurerm_storage_account.stg.id}"
-      API_URL="https://management.azure.com$${STORAGE_ID}/privateEndpointConnections?api-version=2023-05-01"
+  lifecycle {
+    postcondition {
+      condition = alltrue([
+        for msg in values(local.managed_pe_request_messages) : length(try([
+          for c in self.output.connections : c.id
+          if c.description == msg && contains(["Pending", "Approved"], c.status)
+        ], [])) == 1
+      ])
+      error_message = "Expected exactly one Pending or Approved private endpoint connection per Fabric managed private endpoint request message on storage account ${data.azurerm_storage_account.stg.name}."
+    }
+  }
+}
 
-      # List PE connections and find pending ones matching our workspace
-      CONNECTIONS=$(curl -s -H "Authorization: Bearer $${TOKEN}" "$${API_URL}")
+resource "azapi_resource_action" "approve_managed_pe_connection" {
+  for_each = local.managed_pe_request_messages
 
-      echo "$${CONNECTIONS}" | jq -r '.value[] | select(.properties.privateLinkServiceConnectionState.status == "Pending") | .id' | while read -r CONN_ID; do
-        echo "Approving PE connection: $${CONN_ID}"
-        curl -s -X PUT \
-          -H "Authorization: Bearer $${TOKEN}" \
-          -H "Content-Type: application/json" \
-          "https://management.azure.com$${CONN_ID}?api-version=2023-05-01" \
-          -d '{"properties":{"privateLinkServiceConnectionState":{"status":"Approved","description":"Auto-approved by TRE Fabric workspace service"}}}' \
-          | jq -r '.properties.privateLinkServiceConnectionState.status'
-      done
+  type        = "Microsoft.Storage/storageAccounts/privateEndpointConnections@2023-05-01"
+  resource_id = local.managed_pe_connection_ids[each.key]
+  method      = "PUT"
 
-      echo "Managed PE approval complete."
-    EOT
+  # Keep the request message as the description so the connection can
+  # still be matched on subsequent plans.
+  body = {
+    properties = {
+      privateLinkServiceConnectionState = {
+        status      = "Approved"
+        description = each.value
+      }
+    }
+  }
+
+  response_export_values = {
+    status = "properties.privateLinkServiceConnectionState.status"
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = self.output.status == "Approved"
+      error_message = "Failed to approve the Fabric managed private endpoint connection ${each.key} on storage account ${data.azurerm_storage_account.stg.name}."
+    }
   }
 }
 
@@ -235,7 +248,7 @@ resource "fabric_spark_custom_pool" "default" {
     max_executors = 1
   }
 
-  depends_on = [terraform_data.approve_managed_pe_connections]
+  depends_on = [azapi_resource_action.approve_managed_pe_connection]
 
   timeouts = {
     create = "10m"
@@ -275,4 +288,49 @@ resource "fabric_spark_workspace_settings" "default" {
   }
 
   depends_on = [fabric_spark_custom_pool.default]
+}
+
+# -------------------------------------------------------------------
+# Provision the Fabric managed VNet.
+#
+# The managed VNet is only provisioned when the first Spark session
+# starts. There is no Fabric Terraform resource to run a notebook on
+# demand, so this runs a temporary notebook via the Fabric REST API.
+# It must complete before outbound public access is denied below.
+# -------------------------------------------------------------------
+resource "terraform_data" "provision_managed_vnet" {
+  input = fabric_workspace.researchers.id
+
+  provisioner "local-exec" {
+    command = "/bin/sh ${path.module}/../provision_managed_vnet.sh ${fabric_workspace.researchers.id}"
+  }
+
+  depends_on = [fabric_spark_workspace_settings.default]
+}
+
+# -------------------------------------------------------------------
+# Workspace network communication policy
+#
+# Outbound public access is denied so Fabric workloads can only reach
+# resources via approved managed private endpoints. Inbound public
+# access is kept as Allow so the resource processor can continue to
+# manage the workspace through the Fabric API (it does not route via
+# the workspace private link endpoint).
+# -------------------------------------------------------------------
+resource "fabric_workspace_network_communication_policy" "default" {
+  workspace_id = fabric_workspace.researchers.id
+
+  inbound = {
+    public_access_rules = {
+      default_action = "Allow"
+    }
+  }
+
+  outbound = {
+    public_access_rules = {
+      default_action = "Deny"
+    }
+  }
+
+  depends_on = [terraform_data.provision_managed_vnet]
 }

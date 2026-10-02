@@ -16,7 +16,7 @@ All traffic between the TRE workspace and Fabric stays on the private network:
 
 - **Inbound (workspace → Fabric):** A workspace-level private endpoint is created in `ServicesSubnet` using `Microsoft.Fabric/privateLinkServicesForFabric`. DNS resolves via `privatelink.fabric.microsoft.com` zone linked to the workspace VNet.
 - **Outbound (Fabric → storage):** Managed private endpoints connect the Fabric workspace to the workspace's shared ADLS Gen2 storage account for both blob and DFS access.
-- **Firewall rules:** Application rules allow workspace VMs to reach the Fabric portal (`app.fabric.microsoft.com`, `*.powerbi.com`, etc.) and network rules allow access to the `AzureActiveDirectory` service tag for authentication.
+- **Firewall rules:** Application rules allow workspace VMs to reach a minimal set of Fabric portal, API and sign-in hosts (e.g. `app.fabric.microsoft.com`, `api.fabric.microsoft.com`, `login.microsoftonline.com`) and network rules allow access to the `AzureActiveDirectory` service tag for authentication. Multi-tenant wildcards such as `*.fabric.microsoft.com`, `*.powerbi.com` and `*.analysis.windows.net` are deliberately not allowed, as they would let researchers send data to Fabric or Power BI resources in other tenants. Any additional hosts required in your environment should be reviewed and added as explicit FQDNs. To also prevent sign-in to other tenants via the allowed hosts, consider [Microsoft Entra tenant restrictions](https://learn.microsoft.com/en-us/entra/external-id/tenant-restrictions-v2).
 
 ## Prerequisites
 
@@ -97,14 +97,9 @@ All traffic between the TRE workspace and Fabric stays on the private network:
 
 ## Managed Private Endpoint Approval
 
-After deployment, the managed private endpoints (blob and DFS) targeting the workspace storage account will be in a **Pending** state. They must be approved before Fabric Spark workloads can access workspace storage:
+The managed private endpoints (blob and DFS) targeting the workspace storage account are created in a **Pending** state. The deployment approves them automatically, but only the connections whose request message exactly matches the one set by this workspace service. The deployment fails if a matching connection cannot be uniquely identified or is not approved, and other pending connections on the storage account are left untouched.
 
-1. Navigate to the workspace storage account in the Azure Portal
-2. Go to **Networking** → **Private endpoint connections**
-3. Find the pending connections from the Fabric workspace
-4. Select and **Approve** them
-
-If the deploying service principal has `Microsoft.Storage/storageAccounts/privateEndpointConnectionsApproval/action` permission on the storage account, approval may happen automatically.
+The identity used by the resource processor requires `Microsoft.Storage/storageAccounts/privateEndpointConnectionsApproval/action` permission on the workspace storage account.
 
 ## Restricting Public Access
 
@@ -112,7 +107,7 @@ Public access to the Fabric workspace is restricted at multiple levels:
 
 ### Outbound access protection (automated)
 
-During deployment, this service automatically calls the Fabric [Set Network Communication Policy](https://learn.microsoft.com/en-us/rest/api/fabric/core/workspaces/set-network-communication-policy) API to set the workspace outbound public access to **Deny**. This prevents Fabric workloads from making outbound connections to public endpoints, blocking data exfiltration from the workspace.
+During deployment, this service uses the `fabric_workspace_network_communication_policy` Terraform resource to set the workspace [network communication policy](https://learn.microsoft.com/en-us/rest/api/fabric/core/workspaces/set-network-communication-policy) outbound public access to **Deny**. This is applied after the Fabric managed VNet has been provisioned. This prevents Fabric workloads from making outbound connections to public endpoints, blocking data exfiltration from the workspace.
 
 !!! note
     Inbound public access is left as **Allow** because the TRE resource processor (VMSS) needs to manage the workspace via the Fabric API from core infrastructure. Users inside workspace VMs still access Fabric exclusively through the private endpoint, enforced by the workspace VNet and firewall rules.
@@ -145,7 +140,6 @@ The workspace's shared ADLS Gen2 storage account is accessible from Fabric via t
 
 - **OneLake shortcuts to ADLS Gen2 do not work through managed private endpoints.** This is a [documented Fabric limitation](https://learn.microsoft.com/en-us/fabric/security/security-managed-private-endpoints-overview). Spark notebooks and other compute workloads can access storage directly via the managed PEs.
 - **Newly created capacity** may take up to 24 hours before the workspace private endpoint is fully functional.
-- The `fabric_workspace_managed_private_endpoint` and `fabric_lakehouse` Terraform resources are in **preview** in the Microsoft Fabric Terraform provider.
 - Fabric capacity is billed per hour. Consider scaling down to F2 when not in active use.
 
 ## References

@@ -5,8 +5,9 @@ set -e
 # temporary Spark notebook. The managed VNet provisions automatically when
 # the first Spark session starts in a workspace with managed private endpoints.
 #
-# This MUST run BEFORE setting inbound networking policy to Deny, because
-# the Deny policy blocks Fabric's backend from completing VNet provisioning.
+# This is invoked from Terraform and MUST run BEFORE the workspace network
+# communication policy denies outbound public access, otherwise Fabric's
+# backend may not be able to complete VNet provisioning.
 #
 # Usage: provision_managed_vnet.sh <workspace_id>
 # Requires: ARM_USE_MSI, ARM_TENANT_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET

@@ -143,27 +143,19 @@
               "rules": [
                 {
                   "name": "Fabric",
-                  "description": "Microsoft Fabric portal and services. NOTE: FQDN list needs review for data exfiltration risk before merge - wildcards like *.powerbi.com, *.analysis.windows.net, *.notebooks.azure.net, and CDN domains (res.cdn.office.net, aznb-ame-prod.azureedge.net) should be assessed.",
+                  "description": "Microsoft Fabric portal, API and sign-in. Multi-tenant Fabric/Power BI wildcards (e.g. *.fabric.microsoft.com, *.powerbi.com, *.analysis.windows.net) are intentionally not allowed to prevent data exfiltration to other tenants.",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "app.fabric.microsoft.com",
                     "api.fabric.microsoft.com",
-                    "*.fabric.microsoft.com",
-                    "*.powerbi.com",
-                    "*.analysis.windows.net",
-                    "*.pbidedicated.windows.net",
-                    "*.frontend.clouddatahub.net",
                     "content.powerapps.com",
+                    "res.cdn.office.net",
+                    "aznb-ame-prod.azureedge.net",
                     "login.microsoftonline.com",
                     "login.microsoft.com",
                     "aadcdn.msauth.net",
                     "*.msftauth.net",
-                    "*.msauth.net",
-                    "*.notebooks.azure.net",
-                    "aznb-ame-prod.azureedge.net",
-                    "dc.services.visualstudio.com",
-                    "res.cdn.office.net",
-                    "arc.msn.com"
+                    "*.msauth.net"
                   ],
                   "protocols": [
                     {
@@ -239,27 +231,19 @@
               "rules": [
                 {
                   "name": "Fabric",
-                  "description": "Microsoft Fabric portal and services. NOTE: FQDN list needs review for data exfiltration risk before merge - wildcards like *.powerbi.com, *.analysis.windows.net, *.notebooks.azure.net, and CDN domains (res.cdn.office.net, aznb-ame-prod.azureedge.net) should be assessed.",
+                  "description": "Microsoft Fabric portal, API and sign-in. Multi-tenant Fabric/Power BI wildcards (e.g. *.fabric.microsoft.com, *.powerbi.com, *.analysis.windows.net) are intentionally not allowed to prevent data exfiltration to other tenants.",
                   "source_addresses": "{{ resource.properties.workspace_address_spaces }}",
                   "target_fqdns": [
                     "app.fabric.microsoft.com",
                     "api.fabric.microsoft.com",
-                    "*.fabric.microsoft.com",
-                    "*.powerbi.com",
-                    "*.analysis.windows.net",
-                    "*.pbidedicated.windows.net",
-                    "*.frontend.clouddatahub.net",
                     "content.powerapps.com",
+                    "res.cdn.office.net",
+                    "aznb-ame-prod.azureedge.net",
                     "login.microsoftonline.com",
                     "login.microsoft.com",
                     "aadcdn.msauth.net",
                     "*.msftauth.net",
-                    "*.msauth.net",
-                    "*.notebooks.azure.net",
-                    "aznb-ame-prod.azureedge.net",
-                    "dc.services.visualstudio.com",
-                    "res.cdn.office.net",
-                    "arc.msn.com"
+                    "*.msauth.net"
                   ],
                   "protocols": [
                     {

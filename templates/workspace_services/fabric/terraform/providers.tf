@@ -10,7 +10,7 @@ terraform {
     }
     fabric = {
       source  = "microsoft/fabric"
-      version = "~> 1.0"
+      version = "= 1.14.0"
     }
     time = {
       source  = "hashicorp/time"
@@ -45,12 +45,11 @@ provider "azurerm" {
 provider "azapi" {}
 
 provider "fabric" {
-  tenant_id                          = var.arm_tenant_id
-  client_id                          = var.arm_client_id
-  client_secret                      = var.arm_use_msi ? null : var.arm_client_secret
-  use_msi                            = var.arm_use_msi
-  use_cli                            = !var.arm_use_msi
-  preview                            = true # Required for managed private endpoints and shortcuts
+  tenant_id     = var.arm_tenant_id
+  client_id     = var.arm_client_id
+  client_secret = var.arm_use_msi ? null : var.arm_client_secret
+  use_msi       = var.arm_use_msi
+  preview       = true
   # NOTE: use_workspace_private_link_endpoint is intentionally disabled.
   # The resource processor VMSS runs in the core VNet and cannot reliably
   # route through the workspace private endpoint, causing context deadline

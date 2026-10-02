@@ -4,8 +4,8 @@
 * _No changes yet_
 
 ENHANCEMENTS:
-* Add Microsoft Fabric workspace service with per-workspace capacity, Lakehouse, and managed private endpoints
-* Add Fabric private DNS zone (`privatelink.fabric.microsoft.com`) to core infrastructure
+* Add Microsoft Fabric workspace service with per-workspace capacity, Lakehouse, and managed private endpoints ([#5104](https://github.com/microsoft/AzureTRE/pull/5104))
+* Add Fabric private DNS zone (`privatelink.fabric.microsoft.com`) to core infrastructure ([#5104](https://github.com/microsoft/AzureTRE/pull/5104))
 
 ## (0.28.0) (March 2, 2026)
 **BREAKING CHANGES**

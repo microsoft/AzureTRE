@@ -267,15 +267,35 @@ while read -r rg_item; do
 done
 
 # Retry any remaining resource groups that may have been blocked by deny assignments
-# (e.g. Databricks-managed RGs that are released after the parent workspace is deleted)
-remaining_rgs=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name]" -o tsv 2>/dev/null | sort -r)
+# (e.g. Databricks-managed RGs that are released after the parent workspace is deleted).
+# Only a deny-assignment failure on a managed resource group is tolerated; any other
+# failure is reported and the script exits with a non-zero status.
+remaining_rgs=$(az group list --query "[?starts_with(name, '${core_tre_rg}')].[name, managedBy, properties.provisioningState]" -o tsv | sort -r)
+failed_rgs=()
 if [ -n "${remaining_rgs:-}" ]; then
   echo "Retrying deletion of remaining resource groups..."
-  while IFS= read -r rg_item; do
+  while IFS=$'\t' read -r rg_item managed_by rg_state; do
     if [ -z "$rg_item" ]; then continue; fi
+    if [ "$rg_state" = "Deleting" ]; then
+      echo "Resource group ${rg_item} is already being deleted."
+      continue
+    fi
     echo "Retrying deletion of resource group: ${rg_item}"
     az lock list --resource-group "${rg_item}" --query "[].id" -o tsv 2>/dev/null | xargs -r -I {} az lock delete --id "{}"
-    az group delete --resource-group "${rg_item}" --yes ${no_wait_option} || \
-      echo "Warning: Could not delete ${rg_item} on retry."
+    if ! delete_output=$(az group delete --resource-group "${rg_item}" --yes ${no_wait_option} 2>&1); then
+      if echo "$delete_output" | grep -q "ResourceGroupNotFound"; then
+        echo "Resource group ${rg_item} no longer exists."
+      elif [ -n "$managed_by" ] && [ "$managed_by" != "None" ] && echo "$delete_output" | grep -q "DenyAssignmentAuthorizationFailed"; then
+        echo "Warning: ${rg_item} is managed by ${managed_by} and protected by a deny assignment. It will be deleted with its parent."
+      else
+        echo "$delete_output" >&2
+        failed_rgs+=("$rg_item")
+      fi
+    fi
   done <<< "$remaining_rgs"
+fi
+
+if [ ${#failed_rgs[@]} -gt 0 ]; then
+  echo "Error: Failed to delete resource groups: ${failed_rgs[*]}" >&2
+  exit 1
 fi

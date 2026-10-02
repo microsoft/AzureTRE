@@ -25,6 +25,19 @@ locals {
     data.azurerm_client_config.current.object_id,
   ]
 
+  # Request messages identifying this service's managed PE connections on the workspace storage account
+  managed_pe_request_messages = {
+    blob = "TRE Fabric workspace service ${var.tre_resource_id} - blob access for workspace ${var.workspace_id}"
+    dfs  = "TRE Fabric workspace service ${var.tre_resource_id} - dfs access for workspace ${var.workspace_id}"
+  }
+
+  managed_pe_connection_ids = {
+    for k, msg in local.managed_pe_request_messages : k => one(try([
+      for c in data.azapi_resource_list.storage_pe_connections.output.connections : c.id
+      if c.description == msg && contains(["Pending", "Approved"], c.status)
+    ], []))
+  }
+
   # Extract the workspace-scoped API FQDN from the private endpoint DNS config
   # e.g. "9522917d...z95.w.api.privatelink.fabric.microsoft.com" → "9522917d...z95.w.api.fabric.microsoft.com"
   fabric_pe_record_sets = flatten([
