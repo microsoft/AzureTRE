@@ -109,22 +109,26 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         setUserResources(u.userResources);
 
         if (workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner)) {
-          const usersResponse = await apiCall(
-            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
-            HttpMethod.Get,
-            workspaceCtx.workspaceApplicationIdURI,
-          );
+          try {
+            const usersResponse = await apiCall(
+              `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
+              HttpMethod.Get,
+              workspaceCtx.workspaceApplicationIdURI,
+            );
 
-          const cache = new Map<string, CachedUser>();
-          if (usersResponse.users) {
-            usersResponse.users.forEach((user: any) => {
-              cache.set(user.id, {
-                displayName: user.displayName,
-                email: user.email || user.userPrincipalName,
+            const cache = new Map<string, CachedUser>();
+            if (usersResponse.users) {
+              usersResponse.users.forEach((user: any) => {
+                cache.set(user.id, {
+                  displayName: user.displayName,
+                  email: user.email || user.userPrincipalName,
+                });
               });
-            });
+            }
+            setUsersCache(cache);
+          } catch {
+            setUsersCache(new Map());
           }
-          setUsersCache(cache);
         } else {
           setUsersCache(new Map());
         }
