@@ -1,4 +1,5 @@
 import random
+import threading
 from unittest.mock import AsyncMock
 import uuid
 from pydantic import Field
@@ -976,6 +977,39 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["userResources"][0]["id"] == user_resources[0].id
         assert response.json()["userResources"][1]["id"] == user_resources[1].id
+
+    @patch("api.routes.workspaces.get_azure_resource_status")
+    @patch("api.routes.workspaces.enrich_resources_with_available_upgrades", return_value=None)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.UserResourceRepository.get_user_resources_for_workspace_service")
+    async def test_get_user_resources_queries_azure_status_concurrently(self, get_user_resources_mock, _, __, get_azure_resource_status_mock, app, client):
+        user_resources = [
+            sample_user_resource_object(user_resource_id="a33ad738-7265-4b5f-9eae-a1a62928772a"),
+            sample_user_resource_object(user_resource_id="b33ad738-7265-4b5f-9eae-a1a62928772a"),
+            sample_user_resource_object(user_resource_id="c33ad738-7265-4b5f-9eae-a1a62928772a"),
+        ]
+        user_resources[0].properties = {"azure_resource_id": "vm-a"}
+        user_resources[1].properties = {"azure_resource_id": "vm-b"}
+        get_user_resources_mock.return_value = user_resources
+
+        # both lookups must be in flight at the same time to pass the barrier
+        barrier = threading.Barrier(2, timeout=5)
+
+        def get_status(resource_id):
+            barrier.wait()
+            return {"powerState": f"{resource_id} running"}
+
+        get_azure_resource_status_mock.side_effect = get_status
+
+        response = await client.get(app.url_path_for(strings.API_GET_MY_USER_RESOURCES, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [r["azureStatus"] for r in response.json()["userResources"]] == [
+            {"powerState": "vm-a running"},
+            {"powerState": "vm-b running"},
+            {},
+        ]
+        assert get_azure_resource_status_mock.call_count == 2
 
     # GET /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources/{resource_id}
     @patch("api.routes.workspaces.enrich_resource_with_available_upgrades", return_value=None)
