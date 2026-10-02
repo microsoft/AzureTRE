@@ -7,11 +7,19 @@ Early projects have already yielded impact—one study identified previously mis
 
 [Read the launch announcement](https://bartslifesciences.org/launching-the-barts-health-data-platform/){target="_blank"} and the [PA Consulting client story](https://www.paconsulting.com/client-story/barts-health-nhs-trust-powering-ai-driven-healthcare-research-with-microsoft-azure){target="_blank"} for more information.
 
-## CloudKubed and Imperial College London
-Imperial College London partnered with CloudKubed to address the increasing demands for scalable and centralised research solutions. The challenge was to enhance project visibility, streamline end-to-end research, and improve the management of research projects. CloudKubed implemented a cloud-based Azure Trusted Research Environment (TRE) aligned with Imperial’s strategy and needs.
-This TRE integrated approval processes and provided a secure, compliant environment for research. The outcome allowed Imperial to efficiently provision workspaces, facilitate access to research tools, and streamline the entire research process. The partnership significantly improved the efficiency of research operations and compliance with data security measures.
+## Oxford University Hospitals and the Thames Valley and Surrey SDE
+Oxford University Hospitals NHS Foundation Trust uses Azure TRE within the Thames Valley and Surrey Secure Data Environment (SDE), serving a regional population of 4.3 million people.
+The wider platform had processed more than 30 billion records from over 25 source systems and supported 35+ live research projects and 100+ approved researchers by December 2025.
+Secure research workspaces and controlled data movement enable researchers to analyse sensitive data while keeping underlying health records within the NHS. Research spans cancer, mental health, dementia and lung disease, with patients and the public helping shape how data is used safely and responsibly.
 
-[Read the full CloudKubed and Imperial College London case study](https://cloudkubed.com/case-studies/imperial-college-london-trusted-research-environment/ "CloudKubed and Imperial College London"){target="_blank"}.
+[Watch the TVS SDE case-study videos](https://www.ouh.nhs.uk/research/tvssde/){target="_blank"} and read the [Telefónica Tech customer story](https://telefonicatech.uk/case-studies/tvssde/){target="_blank"} for more information.
+
+## UNC Health and UNC School of Medicine
+UNC Health, UNC School of Medicine and NC TraCS Institute use Azure TRE to power the Secure Health Informatics Research Environment (SHIRE), enabling research with sensitive electronic health record data.
+SHIRE brings together familiar tools, including RStudio, SAS, Jupyter and Databricks, with scalable computing, including GPUs, and support for large language models within a controlled research environment.
+Its phased rollout began in November 2025. By May 2026, Microsoft reported 25 active studies using SHIRE, with Microsoft Fabric providing the governed data foundation for clinical and operational research datasets. The environment allows researchers to analyse data within a defined security perimeter rather than relying on local copies.
+
+[Read the UNC Health SHIRE launch announcement](https://news.unchealthcare.org/2025/10/new-secure-cloud-computing-environment-to-change-how-researchers-work-with-unc-health-electronic-health-record-data/){target="_blank"} and the [Microsoft customer story](https://www.microsoft.com/en/customers/story/26599-unc-health-microsoft-fabric){target="_blank"} for more information.
 
 ## Building the Trusted Research Environment with Azure Databricks
 The importance of secure and scalable data environments in healthcare research has grown, particularly highlighted by the COVID-19 pandemic. The Trusted Research Environments (TREs) enable secure collaboration on sensitive data while maintaining patient privacy. Azure Databricks enhances TREs by offering scalable, secure, and flexible data processing capabilities.
