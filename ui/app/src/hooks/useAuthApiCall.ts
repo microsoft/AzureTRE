@@ -1,7 +1,7 @@
 import { AuthenticationResult, InteractionRequiredAuthError } from "@azure/msal-browser";
 import { useMsal, useAccount } from "@azure/msal-react";
 import { useCallback } from "react";
-import { APIError } from "../models/exceptions";
+import { APIError, API_UNAVAILABLE_MESSAGE } from "../models/exceptions";
 import config from "../config.json";
 
 export enum ResultType {
@@ -119,14 +119,23 @@ export const useAuthApiCall = () => {
       if (body) opts.body = JSON.stringify(body);
 
       let resp;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 30000);
       try {
+        opts.signal = controller.signal;
         resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
       } catch (err: any) {
-        let e = err as APIError;
+        const e = new APIError();
         e.name = "API call failure";
-        e.message = "Unable to make call to API Backend";
+        e.message = err?.message || "Unable to reach the TRE API";
+        e.status = err?.name === "AbortError" ? 408 : 503;
+        e.userMessage = API_UNAVAILABLE_MESSAGE;
         e.endpoint = `${config.treUrl}/${endpoint}`;
+        e.stack = err?.stack;
+        e.exception = err;
         throw e;
+      } finally {
+        window.clearTimeout(timeout);
       }
 
       if (!resp.ok) {
@@ -134,6 +143,9 @@ export const useAuthApiCall = () => {
         e.message = await resp.text();
         e.status = resp.status;
         e.endpoint = endpoint;
+        if (resp.status === 408 || resp.status >= 500) {
+          e.userMessage = API_UNAVAILABLE_MESSAGE;
+        }
         throw e;
       }
 

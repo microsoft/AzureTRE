@@ -5,6 +5,7 @@ import { ResourceBody } from "./ResourceBody";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostResource } from "../../models/costs";
 
 // Mock child components
@@ -33,7 +34,11 @@ vi.mock("./ResourceOperationsList", () => {
 });
 
 vi.mock("./SecuredByRole", () => {
-  const SecuredByRole = ({ element }: any) => element;
+  const SecuredByRole = ({ element, allowedWorkspaceRoles }: any) => (
+    <div data-testid="secured-by-role" data-allowed-workspace-roles={allowedWorkspaceRoles?.join(",")}>
+      {element}
+    </div>
+  );
   SecuredByRole.displayName = "SecuredByRole";
   return { SecuredByRole };
 });
@@ -117,19 +122,23 @@ const mockWorkspaceContext = {
       name: "Test User",
       email: "test@example.com",
       roleAssignments: [],
-      roles: ["workspace_owner"],
+      roles: ["WorkspaceOwner"],
     },
     workspaceURL: "https://workspace.example.com",
   },
   workspaceApplicationIdURI: "test-app-id-uri",
-  roles: ["workspace_owner"],
+  roles: ["WorkspaceOwner"],
   setCosts: vi.fn(),
   setRoles: vi.fn(),
   setWorkspace: vi.fn(),
 };
 
 const renderWithWorkspaceContext = (component: React.ReactElement) => {
-  return render(<WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>);
+  return render(
+    <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+      <WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>
+    </AppRolesContext.Provider>,
+  );
 };
 
 describe("ResourceBody Component", () => {
@@ -263,6 +272,32 @@ describe("ResourceBody Component", () => {
     // Should render all tabs for workspace
     const tabs = screen.getAllByTestId("pivot-item");
     expect(tabs).toHaveLength(4); // Overview, Details, History, Operations
+  });
+
+  it("allows researchers to see workspace history without allowing workspace operations", () => {
+    const workspaceResource = {
+      ...mockResource,
+      resourceType: ResourceType.Workspace,
+    };
+    const researcherContext = {
+      ...mockWorkspaceContext,
+      roles: ["WorkspaceResearcher"],
+    };
+    render(
+      <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider value={researcherContext}>
+          <ResourceBody resource={workspaceResource} />
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
+    const history = screen.getByTestId("resource-history-list").parentElement;
+    expect(history?.getAttribute("data-allowed-workspace-roles")).toContain("WorkspaceResearcher");
+    const tabs = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+    expect(tabs).toContain("Overview");
+    expect(tabs).toContain("History");
+    expect(tabs).not.toContain("Details");
+    expect(tabs).not.toContain("Operations");
   });
 
   it("renders only overview tab when readonly", () => {

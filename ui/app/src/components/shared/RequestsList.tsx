@@ -27,6 +27,7 @@ import { LoadingState } from "../../models/loadingState";
 import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
+import { useRefresh } from "../../hooks/useRefresh";
 
 interface Workspace {
   id: string;
@@ -115,9 +116,10 @@ export const RequestsList: React.FunctionComponent = () => {
       setLoadingState(LoadingState.Error);
     }
   }, [apiCall, buildQuery]);
+  const refresh = useRefresh(getAirlockRequests);
 
   useEffect(() => {
-    getAirlockRequests();
+    refresh();
   }, [getAirlockRequests]);
 
   useEffect(() => {

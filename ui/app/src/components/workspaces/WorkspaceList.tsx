@@ -19,11 +19,13 @@ import { Workspace } from "../../models/workspace";
 import { ResourceCardList } from "../shared/ResourceCardList";
 import { Resource } from "../../models/resource";
 import { CostsContext } from "../../contexts/CostsContext";
+import { RefreshButton } from "../shared/RefreshButton";
 interface WorkspaceListProps {
   workspaces: Array<Workspace>;
   updateWorkspace: (w: Workspace) => void;
   removeWorkspace: (w: Workspace) => void;
   addWorkspace: (w: Workspace) => void;
+  onRefresh?: () => void;
 }
 
 type SortOption = "name" | "id" | "created" | "cost";
@@ -33,6 +35,7 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
   updateWorkspace,
   removeWorkspace,
   addWorkspace,
+  onRefresh,
 }) => {
   // State for sorting and filtering
   const [sortBy, setSortBy] = useState<SortOption>("name");
@@ -226,6 +229,12 @@ export const WorkspaceList: React.FunctionComponent<WorkspaceListProps> = ({
       onClick: () => setSearchFilter(""),
     },
   ];
+  if (onRefresh) {
+    farCommandBarItems.push({
+      key: "refresh",
+      onRender: () => <RefreshButton onClick={onRefresh} />,
+    });
+  }
 
   return (
     <>

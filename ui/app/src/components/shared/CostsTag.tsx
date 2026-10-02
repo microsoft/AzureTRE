@@ -49,6 +49,9 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
 
   // Generate tooltip content based on resource type and cost availability
   const getTooltipContent = () => {
+    if (costsCtx.loadingState === LoadingState.NotSupported) {
+      return "Costs unavailable";
+    }
     if (!formattedCost) {
       return "Cost data not yet available";
     }

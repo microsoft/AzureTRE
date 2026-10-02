@@ -6,6 +6,7 @@ import { WorkspaceService } from "../../models/workspaceService";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { SharedService } from "../../models/sharedService";
 import { successStates } from "../../models/operation";
+import { WorkspaceRoleName } from "../../models/roleNames";
 
 // TODO:
 // - active item is sometimes lost
@@ -63,13 +64,17 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
             isExpanded: true,
             links: serviceLinkArray,
           },
-          {
-            name: "Shared Services",
-            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-            isExpanded: false,
-            links: sharedServiceLinkArray,
-          },
+          ...(workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner)
+            ? [
+                {
+                  name: "Shared Services",
+                  key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+                  url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+                  isExpanded: false,
+                  links: sharedServiceLinkArray,
+                },
+              ]
+            : []),
         );
 
         // Only show airlock link if enabled for workspace
@@ -83,7 +88,10 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       }
 
       // Only add Users link if workspace is fully deployed
-      if (successStates.includes(workspaceCtx.workspace.deploymentStatus)) {
+      if (
+        successStates.includes(workspaceCtx.workspace.deploymentStatus) &&
+        workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner)
+      ) {
         navLinks[0].links.push({
           name: "Users",
           key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
@@ -101,6 +109,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
     workspaceCtx.workspace.id,
     workspaceCtx.workspace.properties,
     workspaceCtx.workspace.deploymentStatus,
+    workspaceCtx.roles,
   ]);
 
   return (

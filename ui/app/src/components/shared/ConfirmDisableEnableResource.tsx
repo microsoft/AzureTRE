@@ -30,7 +30,7 @@ export const ConfirmDisableEnableResource: React.FunctionComponent<ConfirmDisabl
     type: DialogType.normal,
     title: "Disable Resource?",
     closeButtonAriaLabel: "Close",
-    subText: `Are you sure you want to disable ${props.resource.properties.display_name}?`,
+    subText: `Disable ${props.resource.properties.display_name} in TRE? This resource must be disabled before it can be deleted. Disabling it does not power off its VM.`,
   };
 
   const enableProps = {

@@ -8,9 +8,11 @@ import { ResourceHeader } from "../shared/ResourceHeader";
 import { Resource } from "../../models/resource";
 import { useComponentManager } from "../../hooks/useComponentManager";
 import { ResourceBody } from "../shared/ResourceBody";
+import { useRefresh } from "../../hooks/useRefresh";
 
 interface UserResourceItemProps {
   userResource?: UserResource;
+  isExposedExternally?: boolean;
   updateUserResource: (u: UserResource) => void;
   removeUserResource: (u: UserResource) => void;
 }
@@ -21,6 +23,8 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   const latestUpdate = useComponentManager(
     userResource,
@@ -59,11 +63,17 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
     userResourceId,
     workspaceServiceId,
     workspaceCtx.workspace.id,
+    refreshKey,
   ]);
 
   return userResource && userResource.id ? (
     <>
-      <ResourceHeader resource={userResource} latestUpdate={latestUpdate} />
+      <ResourceHeader
+        resource={userResource}
+        latestUpdate={latestUpdate}
+        isExposedExternally={props.isExposedExternally}
+        onRefresh={refresh}
+      />
       <ResourceBody resource={userResource} />
     </>
   ) : (

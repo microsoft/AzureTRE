@@ -1,6 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
-import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
+import {
+  CommandBar,
+  DefaultButton,
+  Dialog,
+  DialogFooter,
+  IconButton,
+  IContextualMenuItem,
+  IContextualMenuProps,
+  PrimaryButton,
+} from "@fluentui/react";
 import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { SecuredByRole } from "./SecuredByRole";
 import { ResourceType } from "../../models/resourceType";
@@ -25,6 +34,7 @@ interface ResourceContextMenuProps {
   resource: Resource;
   componentAction: ComponentAction;
   commandBar?: boolean;
+  isExposedExternally?: boolean;
 }
 
 export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuProps> = (
@@ -36,6 +46,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const [showDelete, setShowDelete] = useState(false);
   const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [stopActionName, setStopActionName] = useState("");
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
@@ -137,6 +148,9 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     {
       key: "disable",
       text: props.resource.isEnabled ? "Disable" : "Enable",
+      title: props.resource.isEnabled
+        ? "Disable this resource in TRE. It must be disabled before it can be deleted."
+        : "Enable this resource in TRE.",
       iconProps: {
         iconName: props.resource.isEnabled ? "CirclePause" : "PlayResume",
       },
@@ -163,8 +177,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   };
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.connection_uri) {
-    if (props.resource.properties.is_exposed_externally === true) {
+  if (props.resource.properties.connection_uri && !props.commandBar) {
+    const isExposedExternally =
+      props.resource.properties.is_exposed_externally ?? props.isExposedExternally ?? true;
+    if (isExposedExternally) {
       menuItems.push({
         key: "connect",
         text: "Connect",
@@ -177,7 +193,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
         },
         disabled: shouldDisableConnect(),
       });
-    } else if (props.resource.properties.is_exposed_externally === false) {
+    } else {
       menuItems.push({
         key: "connect",
         text: "Connect",
@@ -206,11 +222,18 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       customActions.push({
         key: a.name,
         text: a.name,
-        title: a.description,
+        title:
+          a.name.toLowerCase() === "stop"
+            ? "Power off the VM. You can start it again later."
+            : a.description,
         iconProps: { iconName: getActionIcon(a.name) },
         className: "tre-context-menu",
         onClick: () => {
-          doAction(a.name);
+          if (a.name.toLowerCase() === "stop") {
+            setStopActionName(a.name);
+          } else {
+            doAction(a.name);
+          }
         },
       });
     });
@@ -270,6 +293,28 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
       {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
       {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
+      {stopActionName && (
+        <Dialog
+          hidden={false}
+          onDismiss={() => setStopActionName("")}
+          dialogContentProps={{
+            title: "Stop VM?",
+            subText: "This powers off the VM. The resource remains enabled in TRE and can be started again.",
+          }}
+        >
+          <DialogFooter>
+            <PrimaryButton
+              text="Stop VM"
+              onClick={() => {
+                const actionName = stopActionName;
+                setStopActionName("");
+                doAction(actionName);
+              }}
+            />
+            <DefaultButton text="Cancel" onClick={() => setStopActionName("")} />
+          </DialogFooter>
+        </Dialog>
+      )}
     </>
   );
 };

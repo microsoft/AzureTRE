@@ -11,6 +11,7 @@ import { Resource } from "../../models/resource";
 import { ResourceBody } from "./ResourceBody";
 import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
+import { useRefresh } from "../../hooks/useRefresh";
 
 interface SharedServiceItemProps {
   readonly?: boolean;
@@ -23,6 +24,8 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   const latestUpdate = useComponentManager(
     sharedService,
@@ -43,18 +46,23 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
       }
     };
     getData();
-  }, [apiCall, sharedServiceId]);
+  }, [apiCall, sharedServiceId, refreshKey]);
 
   switch (loadingState) {
     case LoadingState.Ok:
       return (
         <>
-          <ResourceHeader resource={sharedService} latestUpdate={latestUpdate} readonly={props.readonly} />
+          <ResourceHeader
+            resource={sharedService}
+            latestUpdate={latestUpdate}
+            readonly={props.readonly}
+            onRefresh={refresh}
+          />
           <ResourceBody resource={sharedService} readonly={props.readonly} />
         </>
       );
     case LoadingState.Error:
-      return <ExceptionLayout e={apiError} />;
+      return <ExceptionLayout e={apiError} onRetry={refresh} />;
     default:
       return (
         <div style={{ marginTop: "20px" }}>

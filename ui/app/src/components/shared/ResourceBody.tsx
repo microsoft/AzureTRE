@@ -11,6 +11,7 @@ import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { ResourceType } from "../../models/resourceType";
 import { SecuredByRole } from "./SecuredByRole";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 
 interface ResourceBodyProps {
   resource: Resource;
@@ -19,6 +20,11 @@ interface ResourceBodyProps {
 
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
+  const appRolesCtx = useContext(AppRolesContext);
+  const canSeeWorkspaceOwnerContent =
+    props.resource.resourceType !== ResourceType.Workspace ||
+    appRolesCtx.roles.includes(RoleName.TREAdmin) ||
+    workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner);
 
   const operationsRolesByResourceType = {
     [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
@@ -28,7 +34,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
   };
 
   const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
@@ -54,7 +60,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
           </ReactMarkdown>
         </div>
       </PivotItem>
-      {!props.readonly && (
+      {!props.readonly && canSeeWorkspaceOwnerContent && (
         <PivotItem headerText="Details">
           <ResourcePropertyPanel resource={props.resource} />
           <ResourceDebug resource={props.resource} />
@@ -71,7 +77,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
           />
         </PivotItem>
       )}
-      {!props.readonly && operationsRoles && (
+      {!props.readonly && operationsRoles && canSeeWorkspaceOwnerContent && (
         <PivotItem headerText="Operations">
           <SecuredByRole
             allowedAppRoles={operationsRoles}

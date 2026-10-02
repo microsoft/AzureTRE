@@ -57,6 +57,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [reviewResourceError, setReviewResourceError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
   const [proceedToReview, setProceedToReview] = useState(false);
+  const [proceedToDecision, setProceedToDecision] = useState(false);
   const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
   const [otherReviewers, setOtherReviewers] = useState<Array<string>>();
@@ -316,7 +317,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         <PrimaryButton onClick={() => setProceedToReview(true)} text="Proceed to review" />
       </DialogFooter>
     </>
-  ) : (
+  ) : !proceedToDecision ? (
     <>
       <TextField
         label="Reason for decision"
@@ -339,19 +340,47 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       ) : (
         <DialogFooter>
           <DefaultButton onClick={() => setProceedToReview(false)} text="Back" styles={{ root: { float: "left" } }} />
+          <PrimaryButton
+            text="Continue to decision"
+            onClick={() => setProceedToDecision(true)}
+            disabled={reviewExplanation.trim().length === 0}
+          />
+        </DialogFooter>
+      )}
+    </>
+  ) : (
+    <>
+      <p>Do you wish to approve or reject this Airlock request?</p>
+      <p>
+        <b>Reason for decision:</b> {reviewExplanation}
+      </p>
+      {reviewError && <ExceptionLayout e={apiError} />}
+      {reviewing ? (
+        <Spinner
+          label="Submitting review..."
+          ariaLive="assertive"
+          labelPosition="top"
+          size={SpinnerSize.large}
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <DialogFooter>
+          <DefaultButton
+            onClick={() => setProceedToDecision(false)}
+            text="Back to reason"
+            styles={{ root: { float: "left" } }}
+          />
           <DefaultButton
             iconProps={{ iconName: "Cancel" }}
             onClick={() => setShowRejectConfirmation(true)}
             text="Reject"
             styles={destructiveButtonStyles}
-            disabled={reviewExplanation.length <= 0}
           />
           <DefaultButton
             iconProps={{ iconName: "Accept" }}
             onClick={() => setShowApproveConfirmation(true)}
             text="Approve"
             styles={successButtonStyles}
-            disabled={reviewExplanation.length <= 0}
           />
         </DialogFooter>
       )}
@@ -377,7 +406,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         onDismiss={() => setShowApproveConfirmation(false)}
         dialogContentProps={{
           title: "Approve Airlock Request?",
-          subText: `Are you sure you want to approve "${request?.title}"? This will allow the data to be downloaded.`,
+          subText: `This submits your review reason and approves "${request?.title}", allowing the data to be downloaded.`,
         }}
       >
         <DialogFooter>
@@ -399,7 +428,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         onDismiss={() => setShowRejectConfirmation(false)}
         dialogContentProps={{
           title: "Reject Airlock Request?",
-          subText: `Are you sure you want to reject "${request?.title}"?`,
+          subText: `This submits your review reason and rejects "${request?.title}".`,
         }}
       >
         <DialogFooter>

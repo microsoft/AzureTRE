@@ -1,14 +1,20 @@
 import { getTheme, Icon, mergeStyles, Stack } from "@fluentui/react";
 import React, { useContext } from "react";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { RefreshButton } from "../shared/RefreshButton";
 
-export const WorkspaceHeader: React.FunctionComponent = () => {
+interface WorkspaceHeaderProps {
+  onRefresh: () => void;
+}
+
+export const WorkspaceHeader: React.FunctionComponent<WorkspaceHeaderProps> = ({ onRefresh }) => {
   const workspaceCtx = useContext(WorkspaceContext);
 
   return (
     <>
       <Stack className={contentClass}>
         <Stack.Item className="tre-workspace-header">
+          <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
           <h4 style={{ fontWeight: "400" }}>
             <Icon
               iconName="CubeShape"
@@ -20,6 +26,8 @@ export const WorkspaceHeader: React.FunctionComponent = () => {
             />
             {workspaceCtx.workspace?.properties?.display_name}
           </h4>
+            <RefreshButton onClick={onRefresh} />
+          </Stack>
         </Stack.Item>
       </Stack>
     </>

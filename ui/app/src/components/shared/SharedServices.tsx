@@ -10,6 +10,8 @@ import { ApiEndpoint } from "../../models/apiEndpoints";
 import { CreateUpdateResourceContext } from "../../contexts/CreateUpdateResourceContext";
 import { RoleName } from "../../models/roleNames";
 import { SecuredByRole } from "./SecuredByRole";
+import { useRefresh } from "../../hooks/useRefresh";
+import { RefreshButton } from "./RefreshButton";
 
 interface SharedServiceProps {
   readonly?: boolean;
@@ -19,7 +21,9 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [refreshKey, setRefreshKey] = useState(0);
   const apiCall = useAuthApiCall();
+  const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   useEffect(() => {
     const getSharedServices = async () => {
@@ -32,7 +36,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
       }
     };
     getSharedServices();
-  }, [apiCall]);
+  }, [apiCall, refreshKey]);
 
   const updateSharedService = (ss: SharedService) => {
     let ssList = [...sharedServices];
@@ -61,6 +65,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
           <Stack.Item>
             <Stack horizontal horizontalAlign="space-between">
               <h1>Shared Services</h1>
+              <RefreshButton onClick={refresh} />
               {!props.readonly && (
                 <SecuredByRole
                   allowedAppRoles={[RoleName.TREAdmin]}

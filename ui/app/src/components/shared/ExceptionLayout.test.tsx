@@ -5,7 +5,7 @@ import { ExceptionLayout } from "./ExceptionLayout";
 import { APIError } from "../../models/exceptions";
 
 // Mock FluentUI components using centralized utility
-vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon"]));
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon", "DefaultButton"]));
 
 describe("ExceptionLayout Component", () => {
   const createMockError = (overrides: Partial<APIError> = {}): APIError => {
@@ -48,7 +48,7 @@ describe("ExceptionLayout Component", () => {
     expect(container!.firstChild).toBeNull();
   });
 
-  it("renders default error message for other status codes", async () => {
+  it("renders a friendly retry message for API unavailability", async () => {
     const error = createMockError({
       status: 500,
       userMessage: "Internal server error",
@@ -60,9 +60,23 @@ describe("ExceptionLayout Component", () => {
     });
 
     expect(screen.getByTestId("message-bar")).toBeInTheDocument();
-    expect(screen.getByText("Internal server error")).toBeInTheDocument();
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    expect(
+      screen.getByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
     expect(screen.getByTestId("dismiss-button")).toBeInTheDocument();
+  });
+
+  it("calls the retry callback when requested", async () => {
+    const retry = vi.fn();
+    await act(async () => {
+      render(<ExceptionLayout e={createMockError()} onRetry={retry} />);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("shows and hides details when toggle link is clicked", async () => {

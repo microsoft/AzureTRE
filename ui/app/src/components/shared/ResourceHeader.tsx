@@ -1,17 +1,48 @@
-import React from "react";
-import { ProgressIndicator, Stack } from "@fluentui/react";
+import React, { useState } from "react";
+import { PrimaryButton, ProgressIndicator, Stack } from "@fluentui/react";
 import { ResourceContextMenu } from "../shared/ResourceContextMenu";
-import { ComponentAction, Resource, ResourceUpdate } from "../../models/resource";
+import { actionsDisabledStates } from "../../models/operation";
+import { ComponentAction, Resource, ResourceUpdate, VMPowerStates } from "../../models/resource";
+import { RefreshButton } from "./RefreshButton";
 import { StatusBadge } from "./StatusBadge";
 import { PowerStateBadge } from "./PowerStateBadge";
+import { SecuredByRole } from "./SecuredByRole";
+import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { ResourceType } from "../../models/resourceType";
+import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 
 interface ResourceHeaderProps {
   resource: Resource;
   latestUpdate: ResourceUpdate;
   readonly?: boolean;
+  isExposedExternally?: boolean;
+  onRefresh?: () => void;
 }
 
 export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (props: ResourceHeaderProps) => {
+  const [showCopyUrl, setShowCopyUrl] = useState(false);
+  const connectionUri = props.resource.properties?.connection_uri;
+  const isExposedExternally =
+    props.resource.properties?.is_exposed_externally ?? props.isExposedExternally ?? true;
+  const canConnect =
+    props.latestUpdate.componentAction !== ComponentAction.Lock &&
+    !actionsDisabledStates.includes(props.resource.deploymentStatus) &&
+    props.resource.isEnabled &&
+    (!props.resource.azureStatus?.powerState ||
+      props.resource.azureStatus.powerState === VMPowerStates.Running);
+  const allowedWorkspaceRoles =
+    props.resource.resourceType === ResourceType.SharedService
+      ? [WorkspaceRoleName.WorkspaceOwner]
+      : [
+          WorkspaceRoleName.WorkspaceOwner,
+          WorkspaceRoleName.WorkspaceResearcher,
+          WorkspaceRoleName.AirlockManager,
+        ];
+  const allowedAppRoles =
+    props.resource.resourceType === ResourceType.SharedService || props.resource.resourceType === ResourceType.Workspace
+      ? [RoleName.TREAdmin]
+      : [];
+
   return (
     <>
       {props.resource && props.resource.id && (
@@ -50,13 +81,39 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
                 )}
               </Stack>
             </Stack.Item>
-            {!props.readonly && (
+            {(!props.readonly || props.onRefresh) && (
               <Stack.Item>
-                <ResourceContextMenu
-                  resource={props.resource}
-                  commandBar={true}
-                  componentAction={props.latestUpdate.componentAction}
-                />
+                <Stack horizontal verticalAlign="center">
+                  {props.onRefresh && <RefreshButton onClick={props.onRefresh} />}
+                  {connectionUri && (
+                    <SecuredByRole
+                      allowedAppRoles={allowedAppRoles}
+                      allowedWorkspaceRoles={allowedWorkspaceRoles}
+                      element={
+                        <PrimaryButton
+                          text="Connect"
+                          disabled={!canConnect}
+                          title={
+                            canConnect
+                              ? "Connect to resource"
+                              : "Resource must be enabled, successfully deployed, and powered on to connect"
+                          }
+                          onClick={() =>
+                            isExposedExternally ? window.open(connectionUri) : setShowCopyUrl(true)
+                          }
+                        />
+                      }
+                    />
+                  )}
+                  {!props.readonly && (
+                    <ResourceContextMenu
+                      resource={props.resource}
+                      commandBar={true}
+                      componentAction={props.latestUpdate.componentAction}
+                      isExposedExternally={props.isExposedExternally}
+                    />
+                  )}
+                </Stack>
               </Stack.Item>
             )}
 
@@ -67,6 +124,9 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
             )}
           </Stack>
         </div>
+      )}
+      {showCopyUrl && (
+        <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />
       )}
     </>
   );

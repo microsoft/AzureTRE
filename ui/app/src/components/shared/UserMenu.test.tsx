@@ -2,6 +2,8 @@ import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { UserMenu } from "./UserMenu";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
+import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 
 // Mock MSAL
 const mockLogout = vi.fn();
@@ -46,9 +48,9 @@ vi.mock("@fluentui/react", () => {
   );
   PrimaryButton.displayName = "PrimaryButton";
 
-  const Persona = ({ text, size, imageAlt }: any) => (
+  const Persona = ({ text, secondaryText, size, imageAlt }: any) => (
     <div data-testid="persona" data-size={size} data-alt={imageAlt}>
-      {text}
+      {text} {secondaryText}
     </div>
   );
   Persona.displayName = "Persona";
@@ -63,6 +65,25 @@ vi.mock("@fluentui/react", () => {
 });
 
 describe("UserMenu Component", () => {
+  const renderWithRoles = (appRoles: string[] = [], workspaceRoles: string[] = [], workspaceId = "") =>
+    render(
+      <AppRolesContext.Provider value={{ roles: appRoles, setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider
+          value={{
+            roles: workspaceRoles,
+            costs: [],
+            setCosts: vi.fn(),
+            setRoles: vi.fn(),
+            setWorkspace: vi.fn(),
+            workspace: { id: workspaceId } as any,
+            workspaceApplicationIdURI: "",
+          }}
+        >
+          <UserMenu />
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockAccounts = [mockAccount];
@@ -143,5 +164,25 @@ describe("UserMenu Component", () => {
     // Should still render the menu structure
     expect(screen.getByTestId("primary-button")).toBeInTheDocument();
     expect(screen.getByTestId("persona")).toBeInTheDocument();
+  });
+
+  it("shows friendly core and workspace roles", () => {
+    renderWithRoles(["TREAdmin"], ["WorkspaceResearcher", "AirlockManager"], "workspace-id");
+
+    expect(screen.getByTestId("persona")).toHaveTextContent(
+      "TRE Administrator · Workspace Researcher · Airlock Manager",
+    );
+  });
+
+  it("shows when a TRE admin has no workspace roles", () => {
+    renderWithRoles(["TREAdmin"], [], "workspace-id");
+
+    expect(screen.getByTestId("persona")).toHaveTextContent("TRE Administrator · No workspace roles assigned");
+  });
+
+  it("shows no roles when the user has none", () => {
+    renderWithRoles();
+
+    expect(screen.getByTestId("persona")).toHaveTextContent("No roles assigned");
   });
 });

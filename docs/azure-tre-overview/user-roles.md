@@ -6,6 +6,8 @@ Before you deploy a Trusted Research Environment based on the Azure TRE solution
 
 ## Role overview
 
+The Azure TRE UI shows your assigned TRE roles in the user menu. When you are viewing a workspace, the menu also shows your roles in that workspace. A TRE administrator without a workspace role is identified as such; workspace-level actions still require a workspace role.
+
 While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  
 
 | Role | Key task | TRE RBAC |
@@ -64,6 +66,8 @@ Expected skills:
 ## TRE workspace owner
 
 Owns a specific workspace and has additional privileges than the researcher within the workspace. Is most likely also a *Researcher*.
+
+In a workspace service's resource list, Workspace Owners can select **My resources** to filter to resources they own.
 
 Example tasks:
 

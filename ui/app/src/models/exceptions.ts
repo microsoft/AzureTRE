@@ -11,3 +11,6 @@ export class APIError extends TREError {
   userMessage?: string;
   endpoint?: string;
 }
+
+export const API_UNAVAILABLE_MESSAGE =
+  "The TRE API is currently unavailable. Please try again later or contact your administrator.";

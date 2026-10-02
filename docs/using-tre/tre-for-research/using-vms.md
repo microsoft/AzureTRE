@@ -37,7 +37,7 @@ You may have data pre-provisioned into your workspace, or you may import data vi
 When you are no longer using a VM, it is good practice to stop it so that the VM is deallocated and no unnecessary costs will be applied.
 To do this, navigate to the UI and find your VM.
 
-1. Click on the three small dots in the top right of the user resource card and choose Actions and then Stop.
+1. Click on the three small dots in the top right of the user resource card, choose Actions, and then Stop. Stop powers off the VM; it remains enabled in TRE and can be started again.
 2. It will take a few minutes to take effect and the card should then display 'VM deallocated'.
 
 The same steps can be followed to Start your VM.
@@ -49,7 +49,7 @@ The same steps can be followed to Start your VM.
 
 
 ## Deleting your VM
-If you no longer wish to use the VM you have created there is an option to delete it. First you'll need to disable the VM, similar to above when stopping it:
+If you no longer wish to use the VM you have created there is an option to delete it. Disable is different from Stop: it disables the resource in TRE and is required before deletion, but it does not power off the VM in Azure.
 
 1. Click on the three small dots in the top right and choose Disable.
 2. Once it is disabled (this can take a few minutes), click on the three dots again and you should then have the option to delete it.
@@ -67,6 +67,8 @@ Whilst the VM is currently updating due to an invoked action it will display a m
 [![Update VM](../../assets/using-tre/updating-vm.png)](../../assets/using-tre/updating-vm.png)
 
 You can also view any current operations by clicking on the bell in the top right hand corner of the screen.
+
+Use Refresh on a resource detail page to fetch its latest state. Resource status is also refreshed automatically while the UI tab is visible.
 
 
 ## How to Contribute to our Documentation

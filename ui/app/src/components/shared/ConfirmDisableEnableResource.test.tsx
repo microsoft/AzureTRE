@@ -117,7 +117,9 @@ describe("ConfirmDisableEnableResource Component", () => {
     );
 
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Disable Resource?");
-    expect(screen.getByTestId("dialog-subtext")).toHaveTextContent("Are you sure you want to disable Test Resource?");
+    expect(screen.getByTestId("dialog-subtext")).toHaveTextContent(
+      "Disable Test Resource in TRE? This resource must be disabled before it can be deleted. Disabling it does not power off its VM.",
+    );
     expect(screen.getByTestId("primary-button")).toHaveTextContent("Disable");
   });
 

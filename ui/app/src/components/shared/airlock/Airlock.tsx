@@ -36,6 +36,7 @@ import { AirlockNewRequest } from "./AirlockNewRequest";
 import { WorkspaceRoleName } from "../../../models/roleNames";
 import { useAccount, useMsal } from "@azure/msal-react";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
+import { useRefresh } from "../../../hooks/useRefresh";
 
 export const Airlock: React.FunctionComponent = () => {
   const [airlockRequests, setAirlockRequests] = useState([] as AirlockRequest[]);
@@ -99,6 +100,7 @@ export const Airlock: React.FunctionComponent = () => {
       setLoadingState(LoadingState.Error);
     }
   }, [apiCall, workspaceCtx.workspace, workspaceCtx.workspaceApplicationIdURI, filters, orderBy, orderAscending]);
+  const refresh = useRefresh(getAirlockRequests);
 
   // Fetch new requests on first load and whenever filters/orderBy selection changes
   useEffect(() => {
@@ -327,7 +329,7 @@ export const Airlock: React.FunctionComponent = () => {
               iconProps={{ iconName: "refresh" }}
               text="Refresh"
               style={{ background: "none", color: theme.palette.themePrimary }}
-              onClick={() => getAirlockRequests()}
+              onClick={refresh}
             />
             <CommandBarButton
               iconProps={{ iconName: "add" }}

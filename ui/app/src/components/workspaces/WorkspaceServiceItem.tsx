@@ -4,7 +4,7 @@ import { ApiEndpoint } from "../../models/apiEndpoints";
 import { useAuthApiCall, HttpMethod } from "../../hooks/useAuthApiCall";
 import { UserResource } from "../../models/userResource";
 import { WorkspaceService } from "../../models/workspaceService";
-import { PrimaryButton, Spinner, SpinnerSize, Stack } from "@fluentui/react";
+import { DefaultButton, PrimaryButton, Spinner, SpinnerSize, Stack } from "@fluentui/react";
 import { ComponentAction, Resource } from "../../models/resource";
 import { ResourceCardList } from "../shared/ResourceCardList";
 import { LoadingState } from "../../models/loadingState";
@@ -21,6 +21,10 @@ import { WorkspaceRoleName } from "../../models/roleNames";
 import { APIError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { CachedUser } from "../../models/user";
+import { useAccount, useMsal } from "@azure/msal-react";
+import { isOwnedByUser } from "../../models/userResource";
+import { useRefresh } from "../../hooks/useRefresh";
+import { RefreshButton } from "../shared/RefreshButton";
 
 interface WorkspaceServiceItemProps {
   workspaceService?: WorkspaceService;
@@ -43,6 +47,11 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   const navigate = useNavigate();
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
+  const [showMyResources, setShowMyResources] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
+  const { accounts } = useMsal();
+  const account = useAccount(accounts[0] || {});
 
   const latestUpdate = useComponentManager(
     workspaceService,
@@ -55,6 +64,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
       navigate(`/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}`);
     },
   );
+  const currentUserId =
+    (account?.idTokenClaims as Record<string, unknown> | undefined)?.oid?.toString() ||
+    account?.localAccountId.split(".")[0] ||
+    "";
+  const displayedUserResources = showMyResources
+    ? userResources.filter((resource) => isOwnedByUser(resource, currentUserId))
+    : userResources;
 
   useEffect(() => {
     const getData = async () => {
@@ -92,8 +108,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         setHasUserResourceTemplates(ut && ut.templates && ut.templates.length > 0);
         setUserResources(u.userResources);
 
-        // Fetch users for caching owner information
-        try {
+        if (workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner)) {
           const usersResponse = await apiCall(
             `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
             HttpMethod.Get,
@@ -110,9 +125,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
             });
           }
           setUsersCache(cache);
-        } catch (userError) {
-          console.warn("Failed to fetch workspace users for owner cache:", userError);
-          // Continue without user cache - owner will show as ID
+        } else {
+          setUsersCache(new Map());
         }
 
         setLoadingState(LoadingState.Ok);
@@ -128,7 +142,9 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     props.workspaceService,
     workspaceCtx.workspace.id,
     workspaceCtx.workspaceApplicationIdURI,
+    workspaceCtx.roles,
     workspaceServiceId,
+    refreshKey,
   ]);
 
   const addUserResource = (u: UserResource) => {
@@ -160,56 +176,76 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               path="*"
               element={
                 <>
-                  <ResourceHeader resource={workspaceService} latestUpdate={latestUpdate} />
+                  <ResourceHeader
+                    resource={workspaceService}
+                    latestUpdate={latestUpdate}
+                    onRefresh={refresh}
+                  />
                   <ResourceBody resource={workspaceService} />
                   {hasUserResourceTemplates && (
                     <Stack className="tre-panel">
                       <Stack.Item>
                         <Stack horizontal horizontalAlign="space-between">
-                          <h1>Resources</h1>
-                          <SecuredByRole
-                            allowedWorkspaceRoles={[
-                              WorkspaceRoleName.WorkspaceOwner,
-                              WorkspaceRoleName.WorkspaceResearcher,
-                              WorkspaceRoleName.AirlockManager,
-                            ]}
-                            element={
-                              <PrimaryButton
-                                iconProps={{ iconName: "Add" }}
-                                text="Create new"
-                                disabled={
-                                  !workspaceService.isEnabled ||
-                                  latestUpdate.componentAction === ComponentAction.Lock ||
-                                  successStates.indexOf(workspaceService.deploymentStatus) === -1
-                                }
-                                title={
-                                  !workspaceService.isEnabled ||
-                                  latestUpdate.componentAction === ComponentAction.Lock ||
-                                  successStates.indexOf(workspaceService.deploymentStatus) === -1
-                                    ? "Service must be enabled, successfully deployed, and not locked"
-                                    : "Create a User Resource"
-                                }
-                                onClick={() => {
-                                  createFormCtx.openCreateForm({
-                                    resourceType: ResourceType.UserResource,
-                                    resourceParent: workspaceService,
-                                    onAdd: (r: Resource) => addUserResource(r as UserResource),
-                                    workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI,
-                                  });
-                                }}
+                          <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+                            <h1>Resources</h1>
+                            <RefreshButton onClick={refresh} />
+                          </Stack>
+                          <Stack horizontal tokens={{ childrenGap: 8 }}>
+                            <SecuredByRole
+                              allowedWorkspaceRoles={[
+                                WorkspaceRoleName.WorkspaceOwner,
+                                WorkspaceRoleName.WorkspaceResearcher,
+                                WorkspaceRoleName.AirlockManager,
+                              ]}
+                              element={
+                                <PrimaryButton
+                                  iconProps={{ iconName: "Add" }}
+                                  text="Create new"
+                                  disabled={
+                                    !workspaceService.isEnabled ||
+                                    latestUpdate.componentAction === ComponentAction.Lock ||
+                                    successStates.indexOf(workspaceService.deploymentStatus) === -1
+                                  }
+                                  title={
+                                    !workspaceService.isEnabled ||
+                                    latestUpdate.componentAction === ComponentAction.Lock ||
+                                    successStates.indexOf(workspaceService.deploymentStatus) === -1
+                                      ? "Service must be enabled, successfully deployed, and not locked"
+                                      : "Create a User Resource"
+                                  }
+                                  onClick={() => {
+                                    createFormCtx.openCreateForm({
+                                      resourceType: ResourceType.UserResource,
+                                      resourceParent: workspaceService,
+                                      onAdd: (r: Resource) => addUserResource(r as UserResource),
+                                      workspaceApplicationIdURI: workspaceCtx.workspaceApplicationIdURI,
+                                    });
+                                  }}
+                                />
+                              }
+                            />
+                            {workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner) && (
+                              <DefaultButton
+                                text={showMyResources ? "All resources" : "My resources"}
+                                ariaLabel={showMyResources ? "Show all resources" : "Show my resources"}
+                                onClick={() => setShowMyResources((showing) => !showing)}
                               />
-                            }
-                          />
+                            )}
+                          </Stack>
                         </Stack>
                       </Stack.Item>
                       <Stack.Item>
                         {userResources && (
                           <ResourceCardList
-                            resources={userResources}
+                            resources={displayedUserResources}
                             selectResource={(r: Resource) => setSelectedUserResource(r as UserResource)}
                             updateResource={(r: Resource) => updateUserResource(r as UserResource)}
                             removeResource={(r: Resource) => removeUserResource(r as UserResource)}
-                            emptyText="This workspace service contains no user resources."
+                            emptyText={
+                              showMyResources
+                                ? "You do not own any resources in this workspace service."
+                                : "This workspace service contains no user resources."
+                            }
                             isExposedExternally={workspaceService.properties.is_exposed_externally}
                             usersCache={usersCache}
                           />
@@ -225,6 +261,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
               element={
                 <UserResourceItem
                   userResource={selectedUserResource}
+                  isExposedExternally={workspaceService.properties.is_exposed_externally}
                   updateUserResource={(u: UserResource) => updateUserResource(u)}
                   removeUserResource={(u: UserResource) => removeUserResource(u)}
                 />
@@ -234,7 +271,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         </>
       );
     case LoadingState.Error:
-      return <ExceptionLayout e={apiError} />;
+      return <ExceptionLayout e={apiError} onRetry={refresh} />;
     default:
       return (
         <div style={{ marginTop: "20px" }}>
