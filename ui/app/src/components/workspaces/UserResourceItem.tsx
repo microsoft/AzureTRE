@@ -23,7 +23,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   const { workspaceServiceId, userResourceId } = useParams();
   const [userResource, setUserResource] = useState({} as UserResource);
   const [apiError, setApiError] = useState<APIError>();
-  const hasLoadedResource = useRef(false);
+  const loadedResourceId = useRef<string>();
   const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
@@ -48,9 +48,10 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   useEffect(() => {
     const getData = async () => {
       // did we get passed the workspace service, or shall we get it from the api?
-      if (!refreshKey && props.userResource && props.userResource.id) {
-        hasLoadedResource.current = true;
-        setUserResource(props.userResource);
+      const passedResource = props.userResource;
+      if (!refreshKey && passedResource && passedResource.id === userResourceId) {
+        loadedResourceId.current = passedResource.id;
+        setUserResource(passedResource);
         setApiError(undefined);
       } else if (workspaceCtx.workspace.id) {
         try {
@@ -59,11 +60,11 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI,
           );
-          hasLoadedResource.current = true;
+          loadedResourceId.current = ur.userResource.id;
           setUserResource(ur.userResource);
           setApiError(undefined);
         } catch (e) {
-          if (!hasLoadedResource.current) setApiError(e as APIError);
+          if (loadedResourceId.current !== userResourceId) setApiError(e as APIError);
         }
       }
     };
@@ -78,7 +79,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
     refreshKey,
   ]);
 
-  return userResource && userResource.id ? (
+  return userResource && userResource.id === userResourceId ? (
     <>
       <ResourceHeader
         resource={userResource}

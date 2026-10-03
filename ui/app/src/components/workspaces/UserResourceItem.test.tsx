@@ -1,7 +1,7 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { Route, Routes } from "react-router-dom";
+import { Link, Route, Routes } from "react-router-dom";
 import { render } from "../../test-utils";
 import { UserResource } from "../../models/userResource";
 import { UserResourceItem } from "./UserResourceItem";
@@ -145,5 +145,35 @@ describe("UserResourceItem", () => {
 
     await waitFor(() => expect(screen.getByTestId("power-state")).toHaveTextContent("VM stopped"));
     expect(mockApiCall).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not show a previously loaded resource when the route changes and the new load fails", async () => {
+    mockApiCall.mockRejectedValueOnce({ status: 503 });
+
+    render(
+      <Routes>
+        <Route
+          path="/workspaces/:workspaceServiceId/user-resources/:userResourceId"
+          element={
+            <>
+              <Link to="/workspaces/test-service/user-resources/another-user-resource">Another resource</Link>
+              <UserResourceItem userResource={userResource} updateUserResource={vi.fn()} removeUserResource={vi.fn()} />
+            </>
+          }
+        />
+      </Routes>,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-service/user-resources/test-user-resource"],
+        workspaceContext: workspaceContext as any,
+      },
+    );
+
+    expect(screen.getByTestId("power-state")).toHaveTextContent("VM running");
+    fireEvent.click(screen.getByRole("link", { name: "Another resource" }));
+
+    expect(await screen.findByText("503")).toBeInTheDocument();
+    expect(screen.queryByTestId("power-state")).not.toBeInTheDocument();
+    expect(mockApiCall).toHaveBeenCalledOnce();
   });
 });
