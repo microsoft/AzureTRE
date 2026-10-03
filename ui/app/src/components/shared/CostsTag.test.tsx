@@ -282,4 +282,32 @@ describe("CostsTag Component", () => {
 
     expect(screen.getByTestId("icon-Clock")).toBeInTheDocument();
   });
+
+  it.each(["cleared", "missing resource", "empty costs"])(
+    "clears a previously displayed cost when %s",
+    async (state) => {
+      const costsContext = createMockCostsContext();
+      const workspaceContext = createMockWorkspaceContext([
+        { id: "test-resource-id", name: "Test", costs: [{ cost: 123.45, currency: "USD" }] },
+      ]);
+      const view = (costs: CostResource[]) => (
+        <CostsContext.Provider value={costsContext as any}>
+          <WorkspaceContext.Provider value={{ ...workspaceContext, costs } as any}>
+            <CostsTag resourceId="test-resource-id" />
+          </WorkspaceContext.Provider>
+        </CostsContext.Provider>
+      );
+      const { rerender } = render(view(workspaceContext.costs));
+      expect(await screen.findByText("$123.45")).toBeInTheDocument();
+
+      const costs =
+        state === "cleared"
+          ? []
+          : [{ id: state === "missing resource" ? "other" : "test-resource-id", name: "Test", costs: [] }];
+      rerender(view(costs));
+
+      await waitFor(() => expect(screen.queryByText("$123.45")).not.toBeInTheDocument());
+      expect(screen.getByTestId("icon-Clock")).toBeInTheDocument();
+    },
+  );
 });

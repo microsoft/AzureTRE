@@ -41,6 +41,8 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
           maximumFractionDigits: 2,
         }).format(resourceCosts.costs[0].cost);
         setFormattedCost(formattedCost);
+      } else {
+        setFormattedCost(undefined);
       }
       setLoadingState(LoadingState.Ok);
     }
@@ -49,6 +51,9 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
 
   // Generate tooltip content based on resource type and cost availability
   const getTooltipContent = () => {
+    if (costsCtx.loadingState === LoadingState.NotSupported) {
+      return "Costs unavailable";
+    }
     if (!formattedCost) {
       return "Cost data not yet available";
     }
@@ -62,8 +67,11 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
     return baseMessage;
   };
 
+  // Inside a workspace, costs come from the workspace context; the TRE-wide costs may never be loaded there.
+  const inWorkspace = !!workspaceCtx.workspace?.id;
   const showShimmer =
-    loadingState === LoadingState.Loading || (costsCtx.loadingState === LoadingState.Loading && !formattedCost);
+    loadingState === LoadingState.Loading ||
+    (!inWorkspace && costsCtx.loadingState === LoadingState.Loading && !formattedCost);
 
   const costBadge = (
     <Stack.Item style={{ maxHeight: 18 }} className="tre-badge">

@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 import { useAuthApiCall, HttpMethod, ResultType } from "./useAuthApiCall";
+import { API_UNAVAILABLE_MESSAGE } from "../models/exceptions";
 import { useMsal, useAccount } from "@azure/msal-react";
 
 // Mock MSAL hooks
@@ -89,6 +90,7 @@ describe("useAuthApiCall Hook", () => {
         etag: "",
       },
       method: "GET",
+      signal: expect.any(AbortSignal),
     });
 
     expect(response).toEqual({ data: "test" });
@@ -187,6 +189,45 @@ describe("useAuthApiCall Hook", () => {
     const apiCall = result.current;
 
     await expect(apiCall("/api/test", HttpMethod.Get)).rejects.toThrow();
+  });
+
+  it("returns a friendly API unavailable error when the network request fails", async () => {
+    (global.fetch as Mock).mockRejectedValue(new TypeError("Failed to fetch"));
+    const { result } = renderHook(() => useAuthApiCall());
+
+    await expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
+      status: 503,
+      userMessage: API_UNAVAILABLE_MESSAGE,
+      exception: "Failed to fetch",
+    });
+  });
+
+  it("marks server errors as API unavailable", async () => {
+    (global.fetch as Mock).mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: vi.fn().mockResolvedValue("Internal server error"),
+    });
+    const { result } = renderHook(() => useAuthApiCall());
+
+    await expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
+      status: 500,
+      userMessage: API_UNAVAILABLE_MESSAGE,
+    });
+  });
+
+  it("marks rate-limit errors as API unavailable", async () => {
+    (global.fetch as Mock).mockResolvedValue({
+      ok: false,
+      status: 429,
+      text: vi.fn().mockResolvedValue("Too many requests"),
+    });
+    const { result } = renderHook(() => useAuthApiCall());
+
+    await expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
+      status: 429,
+      userMessage: API_UNAVAILABLE_MESSAGE,
+    });
   });
 
   it("returns early when no account is available", async () => {

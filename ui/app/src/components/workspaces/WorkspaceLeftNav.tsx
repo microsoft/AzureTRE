@@ -6,6 +6,8 @@ import { WorkspaceService } from "../../models/workspaceService";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { SharedService } from "../../models/sharedService";
 import { successStates } from "../../models/operation";
+import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 
 // TODO:
 // - active item is sometimes lost
@@ -23,6 +25,10 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
   const emptyLinks: INavLinkGroup[] = [{ links: [] }];
   const [serviceLinks, setServiceLinks] = useState(emptyLinks);
   const workspaceCtx = useContext(WorkspaceContext);
+  const appRolesCtx = useContext(AppRolesContext);
+  // TRE Admins keep owner-level navigation even when they also hold a non-owner workspace role.
+  const canManageWorkspace =
+    workspaceCtx.roles.includes(WorkspaceRoleName.WorkspaceOwner) || appRolesCtx.roles.includes(RoleName.TREAdmin);
 
   useEffect(() => {
     const getWorkspaceServices = async () => {
@@ -63,13 +69,17 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
             isExpanded: true,
             links: serviceLinkArray,
           },
-          {
-            name: "Shared Services",
-            key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-            url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
-            isExpanded: false,
-            links: sharedServiceLinkArray,
-          },
+          ...(canManageWorkspace
+            ? [
+                {
+                  name: "Shared Services",
+                  key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+                  url: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.SharedServices}`,
+                  isExpanded: false,
+                  links: sharedServiceLinkArray,
+                },
+              ]
+            : []),
         );
 
         // Only show airlock link if enabled for workspace
@@ -83,7 +93,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
       }
 
       // Only add Users link if workspace is fully deployed
-      if (successStates.includes(workspaceCtx.workspace.deploymentStatus)) {
+      if (successStates.includes(workspaceCtx.workspace.deploymentStatus) && canManageWorkspace) {
         navLinks[0].links.push({
           name: "Users",
           key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,
@@ -101,6 +111,7 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
     workspaceCtx.workspace.id,
     workspaceCtx.workspace.properties,
     workspaceCtx.workspace.deploymentStatus,
+    canManageWorkspace,
   ]);
 
   return (

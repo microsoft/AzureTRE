@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { ResourceHeader } from "./ResourceHeader";
 import { Resource, ComponentAction, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -18,6 +18,14 @@ vi.mock("./ResourceContextMenu", () => {
   return { ResourceContextMenu };
 });
 
+vi.mock("./SecuredByRole", () => ({
+  SecuredByRole: ({ element, allowedWorkspaceRoles }: any) => (
+    <div data-testid="secured-connect" data-roles={allowedWorkspaceRoles?.join(",")}>
+      {element}
+    </div>
+  ),
+}));
+
 vi.mock("./StatusBadge", () => {
   const StatusBadge = ({ resource, status }: any) => (
     <div data-testid="status-badge">
@@ -34,6 +42,14 @@ vi.mock("./PowerStateBadge", () => {
   PowerStateBadge.displayName = "PowerStateBadge";
   return { PowerStateBadge };
 });
+
+vi.mock("./RefreshButton", () => ({
+  RefreshButton: ({ onClick }: any) => <button onClick={onClick}>Refresh</button>,
+}));
+
+vi.mock("./VMPowerButton", () => ({
+  VMPowerButton: ({ resource }: any) => <div data-testid="vm-power-button">{resource.id}</div>,
+}));
 
 // Mock FluentUI components
 vi.mock("@fluentui/react", () => {
@@ -53,6 +69,11 @@ vi.mock("@fluentui/react", () => {
   return {
     Stack: MockStack,
     ProgressIndicator: ({ description }: any) => <div data-testid="progress-indicator">{description}</div>,
+    PrimaryButton: ({ text, onClick, disabled, title }: any) => (
+      <button onClick={onClick} disabled={disabled} title={title}>
+        {text}
+      </button>
+    ),
   };
 });
 
@@ -138,6 +159,28 @@ describe("ResourceHeader Component", () => {
 
     expect(screen.getByTestId("status-badge")).toBeInTheDocument();
     expect(screen.getByText("Status: deployed")).toBeInTheDocument();
+  });
+
+  it("shows Connect for researchers on resource details", () => {
+    const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    const connectableResource = {
+      ...mockResource,
+      resourceType: ResourceType.UserResource,
+      properties: {
+        ...mockResource.properties,
+        connection_uri: "https://resource.example.com",
+        is_exposed_externally: true,
+      },
+    };
+
+    render(<ResourceHeader resource={connectableResource} latestUpdate={mockLatestUpdate} />);
+
+    const connectButton = screen.getByRole("button", { name: "Connect" });
+    expect(connectButton).toBeEnabled();
+    expect(screen.getByTestId("secured-connect").getAttribute("data-roles")).toContain("WorkspaceResearcher");
+    fireEvent.click(connectButton);
+    expect(windowOpenSpy).toHaveBeenCalledWith("https://resource.example.com", "_blank", "noopener,noreferrer");
+    windowOpenSpy.mockRestore();
   });
 
   it("renders status badge with operation status when available", () => {
