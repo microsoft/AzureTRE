@@ -8,6 +8,7 @@ import { getActionDisplayName, getActionIcon, TemplateAction } from "../../model
 import { useResourceTemplate } from "../../hooks/useResourceTemplate";
 import { useInvokeResourceAction } from "../../hooks/useInvokeResourceAction";
 import { ConfirmStopVM } from "./ConfirmStopVM";
+import { hasVMPowerControl, isVirtualMachineResource } from "./VMPowerButton";
 import { ConfirmDeleteResource } from "./ConfirmDeleteResource";
 import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
@@ -124,13 +125,16 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     );
   };
 
-  // add custom actions if we have any
-  if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
+  // add custom actions if we have any; Start/Stop are left to the dedicated VM power button when it is shown
+  const powerControlShown = hasVMPowerControl(props.resource, resourceTemplate?.customActions);
+  const menuCustomActions = (resourceTemplate?.customActions || []).filter(
+    (a: TemplateAction) => !(powerControlShown && ["start", "stop"].includes(a.name.toLowerCase())),
+  );
+  if (menuCustomActions.length > 0) {
     let customActions: Array<IContextualMenuItem> = [];
     // Only VM user resources get the VM-specific Stop confirmation; other templates' "stop" runs as described.
-    const isVirtualMachine =
-      props.resource.resourceType === ResourceType.UserResource && !!props.resource.azureStatus?.powerState;
-    resourceTemplate.customActions.forEach((a: TemplateAction) => {
+    const isVirtualMachine = isVirtualMachineResource(props.resource);
+    menuCustomActions.forEach((a: TemplateAction) => {
       const isVmStop = isVirtualMachine && a.name.toLowerCase() === "stop";
       customActions.push({
         key: a.name,

@@ -22,9 +22,16 @@ interface VMPowerButtonProps {
 const findAction = (actions: Array<TemplateAction> | undefined, name: string) =>
   actions?.find((a) => a.name.toLowerCase() === name);
 
+export const isVirtualMachineResource = (resource: Resource) =>
+  resource.resourceType === ResourceType.UserResource && !!resource.azureStatus?.powerState;
+
+// True when VMPowerButton renders for this resource, so Start/Stop shouldn't be duplicated elsewhere.
+export const hasVMPowerControl = (resource: Resource, actions: Array<TemplateAction> | undefined) =>
+  isVirtualMachineResource(resource) && !!findAction(actions, "start") && !!findAction(actions, "stop");
+
 // Start/Stop for virtual machine user resources, shown when the template provides start and stop actions.
 export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props: VMPowerButtonProps) => {
-  const isVM = props.resource.resourceType === ResourceType.UserResource && !!props.resource.azureStatus?.powerState;
+  const isVM = isVirtualMachineResource(props.resource);
   const { resourceTemplate, roles } = useResourceTemplate(isVM ? props.resource : undefined);
   const invokeAction = useInvokeResourceAction();
   const [confirmStop, setConfirmStop] = useState(false);
@@ -36,9 +43,9 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
   // Allow another request once the power state or operation lock changes.
   useEffect(() => setRequested(false), [powerState, props.componentAction]);
 
-  const startAction = findAction(resourceTemplate.customActions, "start");
-  const stopAction = findAction(resourceTemplate.customActions, "stop");
-  if (!isVM || !startAction || !stopAction) return null;
+  if (!hasVMPowerControl(props.resource, resourceTemplate.customActions)) return null;
+  const startAction = findAction(resourceTemplate.customActions, "start") as TemplateAction;
+  const stopAction = findAction(resourceTemplate.customActions, "stop") as TemplateAction;
 
   const isRunning = powerState === VMPowerStates.Running;
   const isStopped = powerState === VMPowerStates.Deallocated || powerState === VMPowerStates.Stopped;

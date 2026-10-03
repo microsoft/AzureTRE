@@ -6,10 +6,11 @@ import { ComponentAction, Resource, VMPowerStates } from "../../models/resource"
 import { ResourceType } from "../../models/resourceType";
 
 const mockInvokeAction = vi.fn().mockResolvedValue(undefined);
+const templateActions = vi.hoisted(() => ({ current: [{ name: "stop", description: "Stop the pipeline" }] as any[] }));
 
 vi.mock("../../hooks/useResourceTemplate", () => ({
   useResourceTemplate: () => ({
-    resourceTemplate: { customActions: [{ name: "stop", description: "Stop the pipeline" }] },
+    resourceTemplate: { customActions: templateActions.current },
     parentResource: {},
     roles: ["WorkspaceOwner"],
   }),
@@ -55,7 +56,29 @@ const resource = (overrides: Partial<Resource>) =>
   }) as unknown as Resource;
 
 describe("ResourceContextMenu custom actions", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    templateActions.current = [{ name: "stop", description: "Stop the pipeline" }];
+  });
+
+  it("leaves Start/Stop to the VM power button when the VM has both actions", () => {
+    templateActions.current = [
+      { name: "start", description: "Start" },
+      { name: "stop", description: "Stop" },
+      { name: "resize", description: "Resize the VM" },
+    ];
+    render(
+      <ResourceContextMenu
+        resource={resource({ azureStatus: { powerState: VMPowerStates.Running } })}
+        componentAction={ComponentAction.None}
+        commandBar
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Start" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Stop" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Resize" })).toBeInTheDocument();
+  });
 
   it("asks for VM confirmation before stopping a virtual machine", () => {
     render(
