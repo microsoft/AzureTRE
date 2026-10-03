@@ -132,7 +132,7 @@ export const useAuthApiCall = () => {
         e.userMessage = API_UNAVAILABLE_MESSAGE;
         e.endpoint = `${config.treUrl}/${endpoint}`;
         e.stack = err?.stack;
-        e.exception = err;
+        e.exception = err instanceof Error ? err.message : String(err);
         throw e;
       } finally {
         window.clearTimeout(timeout);

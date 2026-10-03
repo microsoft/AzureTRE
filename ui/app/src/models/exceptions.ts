@@ -7,7 +7,7 @@ class TREError extends Error {
 
 export class APIError extends TREError {
   status?: number;
-  exception?: any;
+  exception?: string;
   userMessage?: string;
   endpoint?: string;
 }

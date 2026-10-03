@@ -198,6 +198,7 @@ describe("useAuthApiCall Hook", () => {
     await expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
       status: 503,
       userMessage: API_UNAVAILABLE_MESSAGE,
+      exception: "Failed to fetch",
     });
   });
 
