@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
+import { act, render, screen, fireEvent, waitFor, createPartialFluentUIMock } from "../../test-utils";
 import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -196,6 +196,11 @@ describe("ConfirmDisableEnableResource Component", () => {
 
     expect(screen.getByTestId("spinner")).toBeInTheDocument();
     expect(screen.getByText("Sending request...")).toBeInTheDocument();
+
+    // Let the pending request settle before the test ends so no state update runs after teardown.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    });
   });
 
   it("displays error when API call fails", async () => {

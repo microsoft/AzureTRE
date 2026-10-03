@@ -83,3 +83,15 @@ export const StatusIcon: React.FunctionComponent<{ status?: string }> = ({ statu
   }
   return <FontIcon iconName={iconName} aria-hidden style={{ color, fontSize: 16 }} />;
 };
+
+// API scope for a role-restricted list: the workspace scope when a workspace role grants access, otherwise the
+// core scope (""), which carries TRE-level roles such as TREAdmin.
+export const getListApiScope = (
+  workspaceRoles: Array<string> | undefined,
+  workspaceScopeId: string | undefined,
+  allowedRoles?: Array<string>,
+) => {
+  const roles = workspaceRoles || [];
+  const grantedByWorkspace = allowedRoles ? roles.some((r) => allowedRoles.includes(r)) : roles.length > 0;
+  return grantedByWorkspace ? workspaceScopeId || "" : "";
+};

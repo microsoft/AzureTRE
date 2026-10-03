@@ -18,37 +18,38 @@ interface ResourceBodyProps {
   readonly?: boolean;
 }
 
+// Module-level so the role arrays keep a stable identity across renders (they are effect dependencies downstream).
+// Researchers can see details of their own user resources, but not of workspaces or workspace services.
+const detailsRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.SharedService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.WorkspaceService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
+};
+
+const operationsRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.SharedService]: [RoleName.TREAdmin],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
+};
+
+const historyRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.SharedService]: [RoleName.TREAdmin],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
+};
+
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
   const appRolesCtx = useContext(AppRolesContext);
   const userRoles = [...appRolesCtx.roles, ...workspaceCtx.roles];
   const hasAnyRole = (roles?: Array<string>) => !!roles && roles.some((r) => userRoles.includes(r));
-
-  // Researchers can see details of their own user resources, but not of workspaces or workspace services.
-  const detailsRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.SharedService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.WorkspaceService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [
-      WorkspaceRoleName.WorkspaceOwner,
-      WorkspaceRoleName.WorkspaceResearcher,
-      WorkspaceRoleName.AirlockManager,
-    ],
-  };
-
-  const operationsRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.SharedService]: [RoleName.TREAdmin],
-    [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
-  };
-
-  const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.SharedService]: [RoleName.TREAdmin],
-    [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
-  };
 
   const detailsRoles = detailsRolesByResourceType[props.resource.resourceType];
   const operationsRoles = operationsRolesByResourceType[props.resource.resourceType];
@@ -84,7 +85,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
             allowedWorkspaceRoles={historyRoles}
             workspaceId={workspaceId}
             errorString={`Must have ${historyRoles.join(" or ")} role`}
-            element={<ResourceHistoryList resource={props.resource} />}
+            element={<ResourceHistoryList resource={props.resource} allowedRoles={historyRoles} />}
           />
         </PivotItem>
       )}
@@ -95,7 +96,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
             allowedWorkspaceRoles={operationsRoles}
             workspaceId={workspaceId}
             errorString={`Must have ${operationsRoles.join(" or ")} role`}
-            element={<ResourceOperationsList resource={props.resource} />}
+            element={<ResourceOperationsList resource={props.resource} allowedRoles={operationsRoles} />}
           />
         </PivotItem>
       )}

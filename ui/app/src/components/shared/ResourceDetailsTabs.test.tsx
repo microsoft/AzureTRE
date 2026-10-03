@@ -6,6 +6,7 @@ import { ResourceOperationsList } from "./ResourceOperationsList";
 import { ResourceHistoryList } from "./ResourceHistoryList";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
+import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 
 const mockApiCall = vi.fn();
 vi.mock("../../hooks/useAuthApiCall", () => ({
@@ -96,6 +97,20 @@ describe("ResourceHistoryList", () => {
     expect(rows[1]).toHaveTextContent("Template version: 0.14.5 → 0.14.6");
     expect(rows[2]).toHaveTextContent("Created");
     expect(screen.queryByText("svc-1")).not.toBeInTheDocument();
+  });
+});
+
+describe("history and operations API scope", () => {
+  it("uses the core token for a TRE Admin whose workspace role doesn't grant access", async () => {
+    mockApiCall.mockResolvedValue({ resource_history: [] });
+    const ctx = { roles: ["WorkspaceResearcher"], workspaceApplicationIdURI: "ws-scope", workspace: { id: "ws" } };
+    render(
+      <WorkspaceContext.Provider value={ctx as any}>
+        <ResourceHistoryList resource={resource} allowedRoles={["TREAdmin", "WorkspaceOwner"]} />
+      </WorkspaceContext.Provider>,
+    );
+
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledWith(expect.stringMatching(/history$/), "GET", ""));
   });
 });
 

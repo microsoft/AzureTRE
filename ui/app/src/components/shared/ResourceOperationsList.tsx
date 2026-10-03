@@ -6,6 +6,7 @@ import { Operation, failedStates, inProgressStates } from "../../models/operatio
 import { Resource } from "../../models/resource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { getListApiScope } from "./ResourceDetailsLayout";
 import config from "../../config.json";
 import { APIError } from "../../models/exceptions";
 import { LoadingState } from "../../models/loadingState";
@@ -16,6 +17,9 @@ import { RelativeTime, statusLabel, StatusIcon, userDisplayName } from "./Resour
 
 interface ResourceOperationsListProps {
   resource: Resource;
+  // Roles that grant access to this list. The workspace token is used only when a workspace role grants it, so a
+  // TRE Administrator who also holds another workspace role still calls the API with the core (TREAdmin) token.
+  allowedRoles?: Array<string>;
 }
 
 const theme = getTheme();
@@ -101,8 +105,7 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
   useEffect(() => {
     const getOperations = async () => {
       try {
-        const scopeId =
-          workspaceCtx.roles && workspaceCtx.roles.length > 0 ? workspaceCtx.workspaceApplicationIdURI : "";
+        const scopeId = getListApiScope(workspaceCtx.roles, workspaceCtx.workspaceApplicationIdURI, props.allowedRoles);
         const ops = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.Operations}`, HttpMethod.Get, scopeId);
         config.debug && console.log(`Got resource operations, for resource:${props.resource.id}: ${ops.operations}`);
         setResourceOperations(ops.operations.reverse());
@@ -114,7 +117,14 @@ export const ResourceOperationsList: React.FunctionComponent<ResourceOperationsL
       }
     };
     getOperations();
-  }, [apiCall, props.resource, resourceId, workspaceCtx.roles, workspaceCtx.workspaceApplicationIdURI]);
+  }, [
+    apiCall,
+    props.resource,
+    resourceId,
+    workspaceCtx.roles,
+    workspaceCtx.workspaceApplicationIdURI,
+    props.allowedRoles,
+  ]);
 
   switch (loadingState) {
     case LoadingState.Ok:

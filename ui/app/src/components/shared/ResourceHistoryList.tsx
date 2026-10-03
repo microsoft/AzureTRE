@@ -16,6 +16,7 @@ import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { HistoryItem, Resource } from "../../models/resource";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { getListApiScope } from "./ResourceDetailsLayout";
 import config from "../../config.json";
 import { APIError } from "../../models/exceptions";
 import { LoadingState } from "../../models/loadingState";
@@ -24,6 +25,9 @@ import { RelativeTime, userDisplayName } from "./ResourceDetailsLayout";
 
 interface ResourceHistoryListProps {
   resource: Resource;
+  // Roles that grant access to this list. The workspace token is used only when a workspace role grants it, so a
+  // TRE Administrator who also holds another workspace role still calls the API with the core (TREAdmin) token.
+  allowedRoles?: Array<string>;
 }
 
 const theme = getTheme();
@@ -143,7 +147,7 @@ export const ResourceHistoryList: React.FunctionComponent<ResourceHistoryListPro
   useEffect(() => {
     const getResourceHistory = async () => {
       try {
-        const scopeId = workspaceCtx.roles.length > 0 ? workspaceCtx.workspaceApplicationIdURI : "";
+        const scopeId = getListApiScope(workspaceCtx.roles, workspaceCtx.workspaceApplicationIdURI, props.allowedRoles);
         const history = await apiCall(`${props.resource.resourcePath}/${ApiEndpoint.History}`, HttpMethod.Get, scopeId);
         config.debug &&
           console.log(`Got resource history, for resource:${props.resource.id}: ${history.resource_history}`);
@@ -156,7 +160,14 @@ export const ResourceHistoryList: React.FunctionComponent<ResourceHistoryListPro
       }
     };
     getResourceHistory();
-  }, [apiCall, props.resource, resourceId, workspaceCtx.workspaceApplicationIdURI, workspaceCtx.roles]);
+  }, [
+    apiCall,
+    props.resource,
+    resourceId,
+    workspaceCtx.workspaceApplicationIdURI,
+    workspaceCtx.roles,
+    props.allowedRoles,
+  ]);
 
   // History holds earlier snapshots; add the current state so the latest change is shown too.
   const rows = useMemo(() => {
