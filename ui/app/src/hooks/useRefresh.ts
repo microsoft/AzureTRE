@@ -8,6 +8,16 @@ export const useRefresh = (onRefresh: () => void | Promise<void>, interval = AUT
   const onRefreshRef = useRef(onRefresh);
   const refreshInProgress = useRef(false);
   const refreshQueued = useRef(false);
+  const disposed = useRef(false);
+
+  // Drop queued work when the component unmounts so no API calls or state updates run afterwards.
+  useEffect(() => {
+    disposed.current = false;
+    return () => {
+      disposed.current = true;
+      refreshQueued.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     onRefreshRef.current = onRefresh;
@@ -16,6 +26,7 @@ export const useRefresh = (onRefresh: () => void | Promise<void>, interval = AUT
   // Refreshes never overlap. A request made while one is running is queued and runs once, with the latest
   // callback, when it finishes, so changed queries (filters, sort) are never dropped.
   const refresh = useCallback(() => {
+    if (disposed.current) return;
     if (refreshInProgress.current) {
       refreshQueued.current = true;
       return;

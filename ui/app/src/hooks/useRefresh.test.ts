@@ -108,6 +108,22 @@ describe("useRefresh", () => {
     expect(second).toHaveBeenCalledOnce();
   });
 
+  it("does not run a queued refresh after unmount", async () => {
+    let completeRefresh: () => void = () => {};
+    const onRefresh = vi.fn(() => new Promise<void>((resolve) => (completeRefresh = resolve)));
+    const { result, unmount } = renderHook(() => useRefresh(onRefresh));
+
+    act(() => result.current());
+    act(() => result.current());
+    unmount();
+
+    await act(async () => {
+      completeRefresh();
+      await Promise.resolve();
+    });
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
+
   it("refreshes on a short hidden-to-visible transition without a missed poll", () => {
     vi.useFakeTimers();
     const onRefresh = vi.fn();
