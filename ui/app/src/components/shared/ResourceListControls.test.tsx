@@ -34,6 +34,20 @@ describe("useResourceListFilter", () => {
     expect(result.current.visibleResources.map((r) => r.id)).toEqual(["c"]);
   });
 
+  it("matches names anywhere but IDs only from the start", () => {
+    const uuidResources = [
+      res("3de133f4-805d-45e3-9ff1-a6ef5b13487e", "Cloud-account owned VM", "deployed", 1),
+      res("11111111-2222-4333-8444-555555555555", "pr5100-scale-4", "deployed", 2),
+    ];
+    const { result } = renderHook(() => useResourceListFilter(uuidResources, { storageKey: "test", sortOptions }));
+
+    act(() => result.current.controlsProps.onSearchChange("-4"));
+    expect(result.current.visibleResources.map((r) => r.properties.display_name)).toEqual(["pr5100-scale-4"]);
+
+    act(() => result.current.controlsProps.onSearchChange("3de1"));
+    expect(result.current.visibleResources.map((r) => r.properties.display_name)).toEqual(["Cloud-account owned VM"]);
+  });
+
   it("remembers the sort choice per list", () => {
     const first = renderHook(() => useResourceListFilter(resources, { storageKey: "test", sortOptions }));
     act(() => first.result.current.controlsProps.onSortChange("updated"));

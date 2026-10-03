@@ -89,17 +89,19 @@ export const useResourceListFilter = <T extends Resource>(
     const term = search.trim().toLowerCase();
     const candidates = preFilter ? resources.filter(preFilter) : resources;
     const matched = term
-      ? candidates.filter((r) =>
-          [
-            r.properties?.display_name,
-            r.properties?.description,
-            r.id,
-            r.templateName,
-            resourceStatus(r),
-            ...(extraSearchText ? extraSearchText(r) : []),
-          ]
-            .filter(Boolean)
-            .some((value) => String(value).toLowerCase().includes(term)),
+      ? candidates.filter(
+          (r) =>
+            // IDs are prefix-matched only: every UUID v4 contains "-4", so substring matching would match everything
+            (r.id || "").toLowerCase().startsWith(term) ||
+            [
+              r.properties?.display_name,
+              r.properties?.description,
+              r.templateName,
+              resourceStatus(r),
+              ...(extraSearchText ? extraSearchText(r) : []),
+            ]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(term)),
         )
       : candidates;
     const option = sortOptions.find((o) => o.key === sortKey) || sortOptions[0];
