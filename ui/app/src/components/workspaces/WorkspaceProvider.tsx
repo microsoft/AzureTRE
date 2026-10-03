@@ -44,6 +44,8 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
     if (!workspaceLoadPending.current) setWorkspaceRefreshKey((key) => key + 1);
   });
   const loadedWorkspaceId = useRef<string>();
+  const canManageWorkspace =
+    wsRoles.includes(WorkspaceRoleName.WorkspaceOwner) || appRoles.roles.includes(RoleName.TREAdmin);
 
   // set workspace context from url
   useEffect(() => {
@@ -100,8 +102,8 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           );
           if (!active) return;
           let sharedServices: SharedService[] = [];
-          // Shared services are only available to workspace owners in this scope.
-          if (wsRoles.includes(WorkspaceRoleName.WorkspaceOwner)) {
+          // Shared services are only shown to workspace owners and TRE Admins.
+          if (wsRoles.includes(WorkspaceRoleName.WorkspaceOwner) || appRoles.roles.includes(RoleName.TREAdmin)) {
             sharedServices = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices;
           }
           if (!active) return;
@@ -290,7 +292,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                           }
                         />
 
-                        {wsRoles.includes(WorkspaceRoleName.WorkspaceOwner) && (
+                        {canManageWorkspace && (
                           <>
                             <Route path="shared-services" element={<SharedServices readonly={true} />} />
                             <Route
@@ -302,9 +304,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         <Route path="requests/*" element={<Airlock />} />
                       </>
                     )}
-                    {wsRoles.includes(WorkspaceRoleName.WorkspaceOwner) && (
-                      <Route path="users/*" element={<WorkspaceUsers />} />
-                    )}
+                    {canManageWorkspace && <Route path="users/*" element={<WorkspaceUsers />} />}
                   </Routes>
                 </Stack.Item>
               </Stack>

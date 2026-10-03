@@ -4,7 +4,8 @@ import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceProvider } from "./WorkspaceProvider";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
-import { WorkspaceRoleName } from "../../models/roleNames";
+import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 
 const apiCall = vi.hoisted(() => vi.fn());
 vi.mock("../../hooks/useAuthApiCall", () => ({
@@ -73,6 +74,7 @@ describe("WorkspaceProvider refresh", () => {
         return;
       }
       if (path.endsWith("/workspace-services")) return { workspaceServices: [] };
+      if (path === "shared-services") return { sharedServices: [] };
       return { workspace: workspace(path.split("/").pop()!) };
     });
   });
@@ -103,6 +105,22 @@ describe("WorkspaceProvider refresh", () => {
     expect(screen.getByText("Loaded workspace")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
     expect(context.setRoles).toHaveBeenCalledTimes(calls);
+  });
+
+  it("loads shared services for a TRE Admin who is also a workspace researcher", async () => {
+    render(
+      <AppRolesContext.Provider value={{ roles: [RoleName.TREAdmin], setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider value={context as any}>
+          <MemoryRouter initialEntries={["/workspaces/first"]}>
+            <Routes>
+              <Route path="/workspaces/:workspaceId/*" element={<WorkspaceProvider />} />
+            </Routes>
+          </MemoryRouter>
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+    await screen.findByText("Loaded workspace");
+    expect(apiCall).toHaveBeenCalledWith("shared-services", "GET");
   });
 
   it("shows an error when a refresh finds the workspace has been deleted", async () => {
