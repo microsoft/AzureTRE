@@ -179,7 +179,7 @@ describe("ResourceHeader Component", () => {
     expect(connectButton).toBeEnabled();
     expect(screen.getByTestId("secured-connect").getAttribute("data-roles")).toContain("WorkspaceResearcher");
     fireEvent.click(connectButton);
-    expect(windowOpenSpy).toHaveBeenCalledWith("https://resource.example.com");
+    expect(windowOpenSpy).toHaveBeenCalledWith("https://resource.example.com", "_blank", "noopener,noreferrer");
     windowOpenSpy.mockRestore();
   });
 

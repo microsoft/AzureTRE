@@ -372,7 +372,7 @@ describe("ResourceCard Component", () => {
     const connectButton = screen.getByTestId("primary-button");
     fireEvent.click(connectButton);
 
-    expect(windowOpenSpy).toHaveBeenCalledWith(mockResource.properties.connection_uri);
+    expect(windowOpenSpy).toHaveBeenCalledWith(mockResource.properties.connection_uri, "_blank", "noopener,noreferrer");
 
     windowOpenSpy.mockRestore();
   });

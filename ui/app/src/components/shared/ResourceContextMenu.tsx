@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
 import { SecuredByRole } from "./SecuredByRole";
+import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { getActionDisplayName, getActionIcon, TemplateAction } from "../../models/resourceTemplate";
 import { useResourceTemplate } from "../../hooks/useResourceTemplate";
@@ -13,6 +14,7 @@ import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
 import { CreateUpdateResourceContext } from "../../contexts/CreateUpdateResourceContext";
 import { actionsDisabledStates } from "../../models/operation";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
+import { openExternalUrl } from "../../utils/openExternalUrl";
 
 interface ResourceContextMenuProps {
   resource: Resource;
@@ -96,7 +98,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           : "Connect to resource",
         iconProps: { iconName: "PlugConnected" },
         onClick: () => {
-          window.open(props.resource.properties.connection_uri, "_blank");
+          openExternalUrl(props.resource.properties.connection_uri);
         },
         disabled: shouldDisableConnect(),
       });
@@ -125,15 +127,19 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   // add custom actions if we have any
   if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
     let customActions: Array<IContextualMenuItem> = [];
+    // Only VM user resources get the VM-specific Stop confirmation; other templates' "stop" runs as described.
+    const isVirtualMachine =
+      props.resource.resourceType === ResourceType.UserResource && !!props.resource.azureStatus?.powerState;
     resourceTemplate.customActions.forEach((a: TemplateAction) => {
+      const isVmStop = isVirtualMachine && a.name.toLowerCase() === "stop";
       customActions.push({
         key: a.name,
         text: getActionDisplayName(a.name),
-        title: a.name.toLowerCase() === "stop" ? "Power off the VM. You can start it again later." : a.description,
+        title: isVmStop ? "Power off the VM. You can start it again later." : a.description,
         iconProps: { iconName: getActionIcon(a.name) },
         className: "tre-context-menu",
         onClick: () => {
-          if (a.name.toLowerCase() === "stop") {
+          if (isVmStop) {
             setStopActionName(a.name);
           } else {
             doAction(a.name);

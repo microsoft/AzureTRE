@@ -18,6 +18,15 @@ vi.mock("react-router-dom", async () => {
   };
 });
 
+// Expose the refresh callback so tests can simulate a polling tick.
+const refreshHook = vi.hoisted(() => ({ trigger: () => undefined as void }));
+vi.mock("../../hooks/useRefresh", () => ({
+  useRefresh: (callback: () => void) => {
+    refreshHook.trigger = callback;
+    return callback;
+  },
+}));
+
 vi.mock("../../hooks/useAuthApiCall", () => ({
   useAuthApiCall: () => mockApiCall,
   HttpMethod: { Get: "GET" },
@@ -258,5 +267,38 @@ describe("WorkspaceServiceItem", () => {
       fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     });
     await waitFor(() => expect(screen.queryByTestId("resource-header")).not.toBeInTheDocument());
+  });
+
+  it("does not let a polling refresh race the initial full load", async () => {
+    let resolveUserResources: (value: any) => void = () => undefined;
+    let initialLoad = true;
+    mockApiCall.mockImplementation((endpoint: string) => {
+      if (endpoint.endsWith("/workspace-services/test-service")) return Promise.resolve({ workspaceService });
+      if (endpoint.endsWith("/user-resources")) {
+        return initialLoad
+          ? new Promise((resolve) => (resolveUserResources = resolve))
+          : Promise.resolve({ userResources: [{ id: "newer" }] });
+      }
+      if (endpoint.endsWith("/user-resource-templates")) return Promise.resolve({ templates: [{}] });
+      if (endpoint.endsWith("/users")) return Promise.resolve({ users: [] });
+      return Promise.reject(new Error(`Unexpected API call: ${endpoint}`));
+    });
+    renderItem();
+    await waitFor(() =>
+      expect(mockApiCall.mock.calls.some((c) => String(c[0]).endsWith("/user-resources"))).toBe(true),
+    );
+    const callsDuringLoad = mockApiCall.mock.calls.length;
+
+    // A polling tick while the initial load is still pending makes no requests.
+    await act(async () => refreshHook.trigger());
+    expect(mockApiCall).toHaveBeenCalledTimes(callsDuringLoad);
+
+    initialLoad = false;
+    await act(async () => resolveUserResources({ userResources: [{ id: "initial" }] }));
+    await waitFor(() => expect(screen.getByTestId("resource-header")).toBeInTheDocument());
+
+    // Once loaded, refreshes run normally.
+    await act(async () => refreshHook.trigger());
+    await waitFor(() => expect(mockApiCall.mock.calls.length).toBeGreaterThan(callsDuringLoad + 1));
   });
 });

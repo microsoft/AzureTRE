@@ -32,6 +32,7 @@ import { UserResource } from "../../models/userResource";
 import { CachedUser } from "../../models/user";
 import { useAccount, useMsal } from "@azure/msal-react";
 import { VMPowerButton } from "./VMPowerButton";
+import { openExternalUrl } from "../../utils/openExternalUrl";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -234,7 +235,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                 <PrimaryButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    props.isExposedExternally === false ? setShowCopyUrl(true) : window.open(connectUri);
+                    props.isExposedExternally === false ? setShowCopyUrl(true) : openExternalUrl(connectUri);
                   }}
                   disabled={shouldDisable()}
                   title={

@@ -11,6 +11,7 @@ import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { ResourceType } from "../../models/resourceType";
 import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { VMPowerButton } from "./VMPowerButton";
+import { openExternalUrl } from "../../utils/openExternalUrl";
 
 interface ResourceHeaderProps {
   resource: Resource;
@@ -92,7 +93,7 @@ export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (pro
                               ? "Connect to resource"
                               : "Resource must be enabled, successfully deployed, and powered on to connect"
                           }
-                          onClick={() => (isExposedExternally ? window.open(connectionUri) : setShowCopyUrl(true))}
+                          onClick={() => (isExposedExternally ? openExternalUrl(connectionUri) : setShowCopyUrl(true))}
                         />
                       }
                     />

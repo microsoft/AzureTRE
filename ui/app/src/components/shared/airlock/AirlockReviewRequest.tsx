@@ -37,6 +37,7 @@ import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
 import vmImage from "../../../assets/virtual_machine.svg";
 import { useAccount, useMsal } from "@azure/msal-react";
+import { openExternalUrl } from "../../../utils/openExternalUrl";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined;
@@ -266,7 +267,9 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       if (resourceNotConnectable) {
         action = <PrimaryButton onClick={createReviewResource} text="Re-deploy" title="Re-deploy resource" />;
       } else {
-        action = <PrimaryButton onClick={() => window.open(connectUri)} text="View data" title="Connect to resource" />;
+        action = (
+          <PrimaryButton onClick={() => openExternalUrl(connectUri)} text="View data" title="Connect to resource" />
+        );
       }
       break;
   }

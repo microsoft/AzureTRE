@@ -121,10 +121,13 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   passedWorkspaceService.current = props.workspaceService;
 
   const servicePath = `${ApiEndpoint.Workspaces}/${workspaceId}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}`;
+  // The service whose full load has completed; refreshes wait for it so they can't race the initial load.
+  const fullyLoadedServicePath = useRef<string>();
 
   // Full load: the service, its user resources and whether it has user resource templates.
   useEffect(() => {
     if (!workspaceId) return;
+    fullyLoadedServicePath.current = undefined;
     let cancelled = false;
     const getData = async () => {
       try {
@@ -144,6 +147,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         setWorkspaceService(svc);
         setHasUserResourceTemplates(!!(ut && ut.templates && ut.templates.length > 0));
         setUserResources(u.userResources);
+        fullyLoadedServicePath.current = servicePath;
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
         if (cancelled) return;
@@ -197,7 +201,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
   // Manual and automatic refresh: re-read only the service and its user resources, keeping state when unchanged.
   useEffect(() => {
     const { apiCall, servicePath, workspaceId, workspaceScopeId } = refreshParams.current;
-    if (refreshKey === 0 || !workspaceId) return;
+    if (refreshKey === 0 || !workspaceId || fullyLoadedServicePath.current !== servicePath) return;
     let cancelled = false;
     const refreshData = async () => {
       try {
