@@ -106,6 +106,8 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
   }, [navigate, props, workspaceCtx.workspace]);
 
   let connectUri = props.resource.properties && props.resource.properties.connection_uri;
+  // Same precedence as the resource header and context menu: the resource's own setting wins.
+  const isExposedExternally = props.resource.properties?.is_exposed_externally ?? props.isExposedExternally ?? true;
   const shouldDisable = () => {
     return (
       latestUpdate.componentAction === ComponentAction.Lock ||
@@ -235,7 +237,7 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                 <PrimaryButton
                   onClick={(e) => {
                     e.stopPropagation();
-                    props.isExposedExternally === false ? setShowCopyUrl(true) : openExternalUrl(connectUri);
+                    isExposedExternally ? openExternalUrl(connectUri) : setShowCopyUrl(true);
                   }}
                   disabled={shouldDisable()}
                   title={

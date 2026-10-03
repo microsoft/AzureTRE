@@ -19,7 +19,12 @@ export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperati
         const isError = step.status && failedStates.includes(step.status);
         return (
           <Stack as="li" key={i} horizontal tokens={{ childrenGap: 10 }}>
-            <div style={{ paddingTop: 2 }} title={statusLabel(step.status)}>
+            <div
+              style={{ paddingTop: 2 }}
+              role="img"
+              aria-label={`Status: ${statusLabel(step.status)}`}
+              title={statusLabel(step.status)}
+            >
               <StatusIcon status={step.status} />
             </div>
             <Stack styles={{ root: { minWidth: 0 } }}>

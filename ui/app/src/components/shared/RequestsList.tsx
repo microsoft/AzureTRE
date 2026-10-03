@@ -48,7 +48,7 @@ export const RequestsList: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
-  const hasLoaded = useRef(false);
+  const lastLoadedQuery = useRef<string>();
   const [activeFilter, setActiveFilter] = useState<string>("myRequests");
   const [searchText, setSearchText] = useState("");
   const apiCall = useAuthApiCall();
@@ -94,8 +94,8 @@ export const RequestsList: React.FunctionComponent = () => {
   const getAirlockRequests = useCallback(async () => {
     const generation = ++requestGeneration.current;
     setApiError(undefined);
+    const query = buildQuery();
     try {
-      const query = buildQuery();
       const workspacePromise = apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);
       const myRequestsPromise = apiCall(`${ApiEndpoint.Requests}${query}`, HttpMethod.Get);
       const managerRequestsPromise = apiCall(
@@ -115,11 +115,12 @@ export const RequestsList: React.FunctionComponent = () => {
 
       setMyAirlockRequests(mappedMyRequests);
       setAirlockManagerRequests(mappedManagerRequests);
-      hasLoaded.current = true;
+      lastLoadedQuery.current = query;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
       if (generation !== requestGeneration.current) return;
-      if (hasLoaded.current && isRetryableApiError(err)) {
+      // Keep rows only when refreshing the same query; a failed new filter or sort shows the error instead.
+      if (lastLoadedQuery.current === query && isRetryableApiError(err)) {
         return;
       }
       err.userMessage = "Error fetching airlock requests";

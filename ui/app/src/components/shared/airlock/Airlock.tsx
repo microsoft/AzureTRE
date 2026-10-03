@@ -49,7 +49,7 @@ export const Airlock: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
-  const hasLoaded = useRef(false);
+  const lastLoadedQuery = useRef<string>();
   const requestGeneration = useRef(0);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
@@ -62,6 +62,13 @@ export const Airlock: React.FunctionComponent = () => {
   const getAirlockRequests = useCallback(async () => {
     const requestId = ++requestGeneration.current;
     setApiError(undefined);
+    // Identifies the filters and sort, so stale rows are only kept for refreshes of the same query.
+    const queryKey = JSON.stringify([
+      workspaceCtx.workspace?.id,
+      Array.from(filters.entries()),
+      orderBy,
+      orderAscending,
+    ]);
 
     try {
       let requests: AirlockRequest[];
@@ -97,11 +104,11 @@ export const Airlock: React.FunctionComponent = () => {
       }
 
       setAirlockRequests(requests);
-      hasLoaded.current = true;
+      lastLoadedQuery.current = queryKey;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
       if (requestId !== requestGeneration.current) return;
-      if (hasLoaded.current && isRetryableApiError(err)) {
+      if (lastLoadedQuery.current === queryKey && isRetryableApiError(err)) {
         return;
       }
       err.userMessage = "Error fetching airlock requests";

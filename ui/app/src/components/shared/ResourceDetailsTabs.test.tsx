@@ -137,6 +137,7 @@ describe("ResourceOperationsList", () => {
     expect(screen.getByRole("button", { name: "1 step" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByText("Step deployed")).not.toBeInTheDocument();
 
+    expect(screen.getByRole("img", { name: "Status: updating failed" })).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: "View error details" })[0]);
     expect(screen.getByRole("dialog")).toHaveTextContent("Terraform failed");
 

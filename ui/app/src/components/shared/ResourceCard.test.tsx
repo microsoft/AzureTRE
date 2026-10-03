@@ -359,6 +359,21 @@ describe("ResourceCard Component", () => {
     expect(screen.getByTestId("resource-context-menu")).toHaveAttribute("data-exposed", "false");
   });
 
+  it("uses the resource's own exposure setting when no override is passed", () => {
+    const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    const internalResource = {
+      ...mockResource,
+      properties: { ...mockResource.properties, is_exposed_externally: false },
+    } as Resource;
+
+    renderWithContexts(<ResourceCard {...defaultProps} resource={internalResource} />);
+    fireEvent.click(screen.getByText("Connect"));
+
+    expect(windowOpenSpy).not.toHaveBeenCalled();
+    expect(screen.getByTestId("confirm-copy-url")).toBeInTheDocument();
+    windowOpenSpy.mockRestore();
+  });
+
   it("opens external URL directly for external connections", () => {
     const windowOpenSpy = vi.spyOn(window, "open").mockImplementation(() => null);
 
