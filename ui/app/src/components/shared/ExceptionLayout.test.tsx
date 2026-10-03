@@ -120,11 +120,17 @@ describe("ExceptionLayout Component", () => {
   });
 
   it("displays '(none)' for missing status code", async () => {
-    const error = createMockError({ status: undefined });
+    const error = createMockError({ status: undefined, userMessage: "No operations found" });
 
     await act(async () => {
       render(<ExceptionLayout e={error} />);
     });
+
+    expect(screen.getByText("No operations found")).toBeInTheDocument();
+    expect(
+      screen.queryByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
 
     // Show details to see the status code
     await act(async () => {

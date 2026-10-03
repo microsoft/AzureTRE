@@ -44,7 +44,7 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   useEffect(() => {
     const getData = async () => {
       // did we get passed the workspace service, or shall we get it from the api?
-      if (props.userResource && props.userResource.id) {
+      if (!refreshKey && props.userResource && props.userResource.id) {
         setUserResource(props.userResource);
       } else if (workspaceCtx.workspace.id) {
         let ur = await apiCall(

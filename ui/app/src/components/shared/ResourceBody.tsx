@@ -44,11 +44,7 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
   };
 
   const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [
-      RoleName.TREAdmin,
-      WorkspaceRoleName.WorkspaceOwner,
-      WorkspaceRoleName.WorkspaceResearcher,
-    ],
+    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.SharedService]: [RoleName.TREAdmin],
     [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
     [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],

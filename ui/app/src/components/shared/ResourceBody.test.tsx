@@ -290,7 +290,7 @@ describe("ResourceBody Component", () => {
     expect(tabs).toHaveLength(4); // Overview, Details, History, Operations
   });
 
-  it("allows researchers to see workspace history without allowing workspace operations", () => {
+  it("does not show workspace history or operations to researchers", () => {
     const workspaceResource = {
       ...mockResource,
       resourceType: ResourceType.Workspace,
@@ -307,13 +307,12 @@ describe("ResourceBody Component", () => {
       </AppRolesContext.Provider>,
     );
 
-    const history = screen.getByTestId("resource-history-list").parentElement;
-    expect(history?.getAttribute("data-allowed-workspace-roles")).toContain("WorkspaceResearcher");
     const tabs = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
     expect(tabs).toContain("Overview");
-    expect(tabs).toContain("History");
+    expect(tabs).not.toContain("History");
     expect(tabs).not.toContain("Details");
     expect(tabs).not.toContain("Operations");
+    expect(screen.queryByTestId("resource-history-list")).not.toBeInTheDocument();
   });
 
   it("renders only overview tab when readonly", () => {

@@ -10,8 +10,7 @@ interface ExceptionLayoutProps {
 export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (props: ExceptionLayoutProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showMessageBar, setShowMessageBar] = useState(true);
-  const apiUnavailable =
-    props.e.status === undefined || props.e.status === 408 || (props.e.status !== undefined && props.e.status >= 500);
+  const apiUnavailable = props.e.status === 408 || (props.e.status !== undefined && props.e.status >= 500);
 
   switch (props.e.status) {
     case 403:
