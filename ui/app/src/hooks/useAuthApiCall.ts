@@ -143,7 +143,7 @@ export const useAuthApiCall = () => {
         e.message = await resp.text();
         e.status = resp.status;
         e.endpoint = endpoint;
-        if (resp.status === 408 || resp.status >= 500) {
+        if (resp.status === 408 || resp.status === 429 || resp.status >= 500) {
           e.userMessage = API_UNAVAILABLE_MESSAGE;
         }
         throw e;

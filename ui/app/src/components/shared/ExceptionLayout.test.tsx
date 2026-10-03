@@ -37,15 +37,19 @@ describe("ExceptionLayout Component", () => {
     expect(screen.getByText("Attempted resource: /test/endpoint")).toBeInTheDocument();
   });
 
-  it("renders nothing for 429 status (rate limiting)", async () => {
+  it("renders a retry message for 429 status (rate limiting)", async () => {
     const error = createMockError({ status: 429 });
+    const retry = vi.fn();
 
-    let container: HTMLElement | null = null;
     await act(async () => {
-      container = render(<ExceptionLayout e={error} />).container;
+      render(<ExceptionLayout e={error} onRetry={retry} />);
     });
 
-    expect(container!.firstChild).toBeNull();
+    expect(
+      screen.getByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("renders a friendly retry message for API unavailability", async () => {

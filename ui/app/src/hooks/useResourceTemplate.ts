@@ -58,6 +58,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const appRoles = useContext(AppRolesContext);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
+  const [loadedParentServiceId, setLoadedParentServiceId] = useState<string>();
 
   const resourceId = resource?.id;
   const resourceType = resource?.resourceType;
@@ -94,6 +95,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
           ).workspaceService as WorkspaceService;
           if (cancelled) return;
           setParentResource(parentService);
+          setLoadedParentServiceId(parentServiceId);
           templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
           break;
         }
@@ -114,5 +116,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
     };
   }, [apiCall, resourceId, resourceType, templateName, parentServiceId, workspaceId, workspaceScopeId, hasRole]);
 
-  return { resourceTemplate, parentResource, roles };
+  const parentServiceLoaded =
+    resourceType !== ResourceType.UserResource || (!!parentResource.id && loadedParentServiceId === parentServiceId);
+  return { resourceTemplate, parentResource, roles: parentServiceLoaded ? roles : [] };
 };

@@ -216,6 +216,20 @@ describe("useAuthApiCall Hook", () => {
     });
   });
 
+  it("marks rate-limit errors as API unavailable", async () => {
+    (global.fetch as Mock).mockResolvedValue({
+      ok: false,
+      status: 429,
+      text: vi.fn().mockResolvedValue("Too many requests"),
+    });
+    const { result } = renderHook(() => useAuthApiCall());
+
+    await expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
+      status: 429,
+      userMessage: API_UNAVAILABLE_MESSAGE,
+    });
+  });
+
   it("returns early when no account is available", async () => {
     (useAccount as Mock).mockReturnValue(null);
 

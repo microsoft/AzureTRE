@@ -34,6 +34,15 @@ vi.mock("../shared/ResourceBody", () => ({
   ResourceBody: () => null,
 }));
 
+vi.mock("../shared/ExceptionLayout", () => ({
+  ExceptionLayout: ({ e, onRetry }: any) => (
+    <div>
+      <span>{e.status}</span>
+      <button onClick={onRetry}>Retry</button>
+    </div>
+  ),
+}));
+
 const userResource = {
   id: "test-user-resource",
   resourceType: "user-resource",
@@ -110,5 +119,31 @@ describe("UserResourceItem", () => {
 
     await waitFor(() => expect(mockApiCall).toHaveBeenCalledOnce());
     expect(screen.getByTestId("power-state")).toHaveTextContent("VM running");
+  });
+
+  it("shows an error and retries when the initial direct load fails", async () => {
+    mockApiCall
+      .mockRejectedValueOnce({ status: 503 })
+      .mockResolvedValueOnce({ userResource: { ...userResource, azureStatus: { powerState: "VM stopped" } } });
+
+    render(
+      <Routes>
+        <Route
+          path="/workspaces/:workspaceServiceId/user-resources/:userResourceId"
+          element={<UserResourceItem updateUserResource={vi.fn()} removeUserResource={vi.fn()} />}
+        />
+      </Routes>,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-service/user-resources/test-user-resource"],
+        workspaceContext: workspaceContext as any,
+      },
+    );
+
+    expect(await screen.findByText("503")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    await waitFor(() => expect(screen.getByTestId("power-state")).toHaveTextContent("VM stopped"));
+    expect(mockApiCall).toHaveBeenCalledTimes(2);
   });
 });
