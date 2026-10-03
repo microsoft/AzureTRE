@@ -46,9 +46,10 @@ export const RootLayout: React.FunctionComponent = () => {
   }, [apiCall]);
   const refreshWorkspaces = useRefresh(getWorkspaces);
 
+  // Load through the refresh hook so the initial request is serialized with manual and polling refreshes.
   useEffect(() => {
-    getWorkspaces();
-  }, [getWorkspaces]);
+    refreshWorkspaces();
+  }, [getWorkspaces, refreshWorkspaces]);
 
   useEffect(() => {
     const getCosts = async () => {

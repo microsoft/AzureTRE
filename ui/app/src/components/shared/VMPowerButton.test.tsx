@@ -97,6 +97,16 @@ describe("VMPowerButton", () => {
     expect(mockInvokeAction).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: "vm-1" }), "start");
   });
 
+  it("describes a failed stop correctly", async () => {
+    mockInvokeAction.mockRejectedValueOnce({ status: 400 });
+    render(<VMPowerButton resource={vm(VMPowerStates.Running)} componentAction={ComponentAction.None} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Stop VM" }));
+
+    expect(await screen.findByText("Error stopping virtual machine")).toBeInTheDocument();
+  });
+
   it("asks for confirmation before stopping a running VM", () => {
     render(<VMPowerButton resource={vm(VMPowerStates.Running)} componentAction={ComponentAction.None} />);
 

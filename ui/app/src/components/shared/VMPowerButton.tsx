@@ -59,7 +59,8 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
     } catch (e) {
       setRequested(false);
       const error = e as APIError;
-      error.userMessage = error.userMessage || `Error ${action.name}ing virtual machine`;
+      const verb = action.name.toLowerCase() === "stop" ? "stopping" : "starting";
+      error.userMessage = error.userMessage || `Error ${verb} virtual machine`;
       setApiError(error);
       setFailedAction(action);
     }
