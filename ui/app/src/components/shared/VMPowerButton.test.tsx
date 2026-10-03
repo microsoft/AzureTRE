@@ -1,6 +1,6 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { VMPowerButton } from "./VMPowerButton";
 import { ComponentAction, Resource, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -29,6 +29,15 @@ vi.mock("./ConfirmStopVM", () => ({
     <div role="dialog">
       <button onClick={onConfirm}>Stop VM</button>
       <button onClick={onDismiss}>Cancel</button>
+    </div>
+  ),
+}));
+
+vi.mock("./ExceptionLayout", () => ({
+  ExceptionLayout: ({ e, onRetry }: any) => (
+    <div>
+      <span>{e.userMessage}</span>
+      <button onClick={onRetry}>Retry action</button>
     </div>
   ),
 }));
@@ -72,6 +81,20 @@ describe("VMPowerButton", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start" }));
 
     expect(mockInvokeAction).toHaveBeenCalledWith(expect.objectContaining({ id: "vm-1" }), "start");
+  });
+
+  it("shows a retryable error when a VM action fails and retries that action", async () => {
+    mockInvokeAction.mockRejectedValueOnce({ status: 503, userMessage: "API unavailable" });
+    mockInvokeAction.mockResolvedValueOnce(undefined);
+    render(<VMPowerButton resource={vm(VMPowerStates.Deallocated)} componentAction={ComponentAction.None} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(await screen.findByText("API unavailable")).toBeInTheDocument();
+    expect(mockInvokeAction).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry action" }));
+    await waitFor(() => expect(mockInvokeAction).toHaveBeenCalledTimes(2));
+    expect(mockInvokeAction).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: "vm-1" }), "start");
   });
 
   it("asks for confirmation before stopping a running VM", () => {

@@ -8,6 +8,8 @@ import { useResourceTemplate } from "../../hooks/useResourceTemplate";
 import { useInvokeResourceAction } from "../../hooks/useInvokeResourceAction";
 import { SecuredByRole } from "./SecuredByRole";
 import { ConfirmStopVM } from "./ConfirmStopVM";
+import { APIError } from "../../models/exceptions";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 interface VMPowerButtonProps {
   resource: Resource;
@@ -27,6 +29,8 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
   const invokeAction = useInvokeResourceAction();
   const [confirmStop, setConfirmStop] = useState(false);
   const [requested, setRequested] = useState(false);
+  const [apiError, setApiError] = useState<APIError>();
+  const [failedAction, setFailedAction] = useState<TemplateAction>();
   const powerState = props.resource.azureStatus?.powerState;
 
   // Allow another request once the power state or operation lock changes.
@@ -48,11 +52,16 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
 
   const run = async (action: TemplateAction) => {
     setRequested(true);
+    setApiError(undefined);
     try {
       await invokeAction(props.resource, action.name);
+      setFailedAction(undefined);
     } catch (e) {
       setRequested(false);
-      throw e;
+      const error = e as APIError;
+      error.userMessage = error.userMessage || `Error ${action.name}ing virtual machine`;
+      setApiError(error);
+      setFailedAction(action);
     }
   };
 
@@ -105,6 +114,7 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
               }}
             />
           )}
+          {apiError && failedAction && <ExceptionLayout e={apiError} onRetry={() => run(failedAction)} />}
         </span>
       }
     />

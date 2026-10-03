@@ -25,7 +25,8 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
   const [refreshKey, setRefreshKey] = useState(0);
-  const hasLoaded = useRef(false);
+  const loadedServiceId = useRef<string | undefined>(undefined);
+  const errorServiceId = useRef<string | undefined>(undefined);
   const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   const latestUpdate = useComponentManager(
@@ -35,25 +36,43 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
   );
 
   useEffect(() => {
+    let cancelled = false;
     const getData = async () => {
       try {
         let ss = await apiCall(`${ApiEndpoint.SharedServices}/${sharedServiceId}`, HttpMethod.Get);
+        if (cancelled) return;
         setSharedService(ss.sharedService);
-        hasLoaded.current = true;
+        loadedServiceId.current = sharedServiceId;
+        errorServiceId.current = undefined;
+        setApiError({} as APIError);
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
-        if (hasLoaded.current && isRetryableApiError(err)) {
+        if (cancelled) return;
+        if (loadedServiceId.current === sharedServiceId && isRetryableApiError(err)) {
           return;
         }
+        errorServiceId.current = sharedServiceId;
         err.userMessage = "Error retrieving shared service";
         setApiError(err);
         setLoadingState(LoadingState.Error);
       }
     };
     getData();
+    return () => {
+      cancelled = true;
+    };
   }, [apiCall, sharedServiceId, refreshKey]);
 
-  switch (loadingState) {
+  const currentLoadingState =
+    loadingState === LoadingState.Error && errorServiceId.current !== sharedServiceId
+      ? loadedServiceId.current === sharedServiceId
+        ? LoadingState.Ok
+        : LoadingState.Loading
+      : loadingState === LoadingState.Ok && loadedServiceId.current !== sharedServiceId
+        ? LoadingState.Loading
+        : loadingState;
+
+  switch (currentLoadingState) {
     case LoadingState.Ok:
       return (
         <>

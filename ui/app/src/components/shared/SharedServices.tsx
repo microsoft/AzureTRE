@@ -13,7 +13,8 @@ import { SecuredByRole } from "./SecuredByRole";
 import { useRefresh } from "../../hooks/useRefresh";
 import { RefreshButton } from "./RefreshButton";
 import { defaultSortOptions, ResourceListControls, useResourceListFilter } from "./ResourceListControls";
-import { isRetryableApiError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 const sortOptions = defaultSortOptions<SharedService>();
 
@@ -25,8 +26,10 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
   const createFormCtx = useContext(CreateUpdateResourceContext);
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
+  const [apiError, setApiError] = useState<APIError>();
   const [refreshKey, setRefreshKey] = useState(0);
   const hasLoaded = useRef(false);
+  const requestGeneration = useRef(0);
   const { visibleResources, controlsProps } = useResourceListFilter(sharedServices, {
     storageKey: "shared-service",
     sortOptions,
@@ -35,20 +38,31 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
   const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   useEffect(() => {
+    let cancelled = false;
+    const requestId = ++requestGeneration.current;
     const getSharedServices = async () => {
       try {
         const ss = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices;
+        if (cancelled || requestId !== requestGeneration.current) return;
         setSharedServices(ss);
+        setApiError(undefined);
         hasLoaded.current = true;
         setLoadingState(LoadingState.Ok);
       } catch (err) {
+        if (cancelled || requestId !== requestGeneration.current) return;
         if (hasLoaded.current && isRetryableApiError(err)) {
           return;
         }
+        const error = err as APIError;
+        error.userMessage = error.userMessage || "Error loading shared services";
+        setApiError(error);
         setLoadingState(LoadingState.Error);
       }
     };
     getSharedServices();
+    return () => {
+      cancelled = true;
+    };
   }, [apiCall, refreshKey]);
 
   const updateSharedService = (ss: SharedService) => {
@@ -123,11 +137,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
         </Stack>
       );
     case LoadingState.Error:
-      return (
-        <div style={{ marginTop: "20px" }}>
-          <span>Error loading shared services</span>
-        </div>
-      );
+      return apiError ? <ExceptionLayout e={apiError} onRetry={refresh} /> : null;
     default:
       return (
         <div style={{ marginTop: "20px" }}>

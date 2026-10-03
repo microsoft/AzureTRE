@@ -14,7 +14,6 @@ import {
   getTheme,
   mergeStyles,
 } from "@fluentui/react";
-import moment from "moment";
 import {
   coreRoleNames,
   getFriendlyRoleName,
@@ -29,7 +28,6 @@ interface UserAccessPanelProps {
   onSignOut: () => void;
   userName?: string;
   userEmail?: string;
-  tokenIssuedAt?: number;
   coreRoles: Array<string>;
   workspaceRoles: Array<string>;
   workspaceName?: string;
@@ -95,13 +93,10 @@ const RoleList: React.FunctionComponent<{ allRoles: Array<string>; heldRoles: Ar
 };
 
 export const UserAccessPanel: React.FunctionComponent<UserAccessPanelProps> = (props) => {
-  const issuedAt = props.tokenIssuedAt ? moment.unix(props.tokenIssuedAt).format("HH:mm") : undefined;
-
   const footer = () => (
     <Stack tokens={{ childrenGap: 8 }}>
       <Text variant="small" className={mutedClass}>
-        Roles come from your sign-in token{issuedAt ? `, issued at ${issuedAt}` : ""}. A role assigned after that time
-        appears only after you sign in again.
+        Roles come from your sign-in token. Role changes made after sign-in appear only after you sign in again.
       </Text>
       <Stack horizontal>
         <DefaultButton iconProps={{ iconName: "SignOut" }} text="Sign out and back in" onClick={props.onSignOut} />

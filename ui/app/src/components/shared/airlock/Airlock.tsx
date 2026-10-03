@@ -50,6 +50,7 @@ export const Airlock: React.FunctionComponent = () => {
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
   const hasLoaded = useRef(false);
+  const requestGeneration = useRef(0);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const theme = getTheme();
@@ -59,6 +60,7 @@ export const Airlock: React.FunctionComponent = () => {
 
   // Get the airlock request data from API
   const getAirlockRequests = useCallback(async () => {
+    const requestId = ++requestGeneration.current;
     setApiError(undefined);
 
     try {
@@ -79,6 +81,7 @@ export const Airlock: React.FunctionComponent = () => {
           HttpMethod.Get,
           workspaceCtx.workspaceApplicationIdURI,
         );
+        if (requestId !== requestGeneration.current) return;
 
         // Map the inner requests and the allowed user actions to state
         requests = result.airlockRequests.map(
@@ -97,6 +100,7 @@ export const Airlock: React.FunctionComponent = () => {
       hasLoaded.current = true;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
+      if (requestId !== requestGeneration.current) return;
       if (hasLoaded.current && isRetryableApiError(err)) {
         return;
       }

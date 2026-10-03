@@ -49,18 +49,13 @@ describe("UserAccessPanel", () => {
     expect(screen.queryByTestId("panel")).not.toBeInTheDocument();
   });
 
-  it("shows the user identity and the sign-in hint", () => {
-    render(<UserAccessPanel {...baseProps} tokenIssuedAt={1700000000} />);
+  it("shows the user identity and the sign-in hint without attributing a time to current roles", () => {
+    render(<UserAccessPanel {...baseProps} />);
 
     expect(screen.getByText("Your access")).toBeInTheDocument();
     expect(screen.getByTestId("persona")).toHaveTextContent("Jane Doe");
     expect(screen.getByTestId("persona")).toHaveTextContent("jane@contoso.com");
     expect(screen.getByText(/Roles come from your sign-in token/)).toBeInTheDocument();
-    expect(screen.getByText(/issued at/)).toBeInTheDocument();
-  });
-
-  it("omits the issue time when unknown", () => {
-    render(<UserAccessPanel {...baseProps} />);
     expect(screen.queryByText(/issued at/)).not.toBeInTheDocument();
   });
 

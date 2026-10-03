@@ -202,7 +202,7 @@ describe("UserMenu Component", () => {
     expect(lastPanelProps.coreRoles).toEqual(["TREUser"]);
     expect(lastPanelProps.workspaceRoles).toEqual(["WorkspaceOwner"]);
     expect(lastPanelProps.workspaceName).toBe("workspace-id");
-    expect(lastPanelProps.tokenIssuedAt).toBe(1700000000);
+    expect(lastPanelProps.tokenIssuedAt).toBeUndefined();
     expect(lastPanelProps.userEmail).toBe("test@example.com");
   });
 

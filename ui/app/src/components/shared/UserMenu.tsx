@@ -12,7 +12,6 @@ export const UserMenu: React.FunctionComponent = () => {
   const workspace = useContext(WorkspaceContext);
   const [showAccess, setShowAccess] = useState(false);
 
-  const tokenIssuedAt = Number((account?.idTokenClaims as Record<string, unknown> | undefined)?.iat) || undefined;
   const workspaceName = workspace.workspace?.id
     ? workspace.workspace.properties?.display_name || workspace.workspace.id
     : undefined;
@@ -56,7 +55,6 @@ export const UserMenu: React.FunctionComponent = () => {
         onSignOut={logout}
         userName={account?.name}
         userEmail={account?.username}
-        tokenIssuedAt={tokenIssuedAt}
         coreRoles={appRoles.roles || []}
         workspaceRoles={workspace.roles || []}
         workspaceName={workspaceName}
