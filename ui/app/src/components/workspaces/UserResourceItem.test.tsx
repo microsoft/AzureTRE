@@ -85,4 +85,30 @@ describe("UserResourceItem", () => {
       expect(screen.getByTestId("power-state")).toHaveTextContent("VM stopped");
     });
   });
+
+  it("keeps the last resource visible when a refresh fails", async () => {
+    mockApiCall.mockRejectedValueOnce({ status: 503 });
+
+    render(
+      <Routes>
+        <Route
+          path="/workspaces/:workspaceServiceId/user-resources/:userResourceId"
+          element={
+            <UserResourceItem userResource={userResource} updateUserResource={vi.fn()} removeUserResource={vi.fn()} />
+          }
+        />
+      </Routes>,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-service/user-resources/test-user-resource"],
+        workspaceContext: workspaceContext as any,
+      },
+    );
+
+    expect(screen.getByTestId("power-state")).toHaveTextContent("VM running");
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledOnce());
+    expect(screen.getByTestId("power-state")).toHaveTextContent("VM running");
+  });
 });

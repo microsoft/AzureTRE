@@ -47,12 +47,16 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
       if (!refreshKey && props.userResource && props.userResource.id) {
         setUserResource(props.userResource);
       } else if (workspaceCtx.workspace.id) {
-        let ur = await apiCall(
-          `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}/${userResourceId}`,
-          HttpMethod.Get,
-          workspaceCtx.workspaceApplicationIdURI,
-        );
-        setUserResource(ur.userResource);
+        try {
+          let ur = await apiCall(
+            `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${workspaceServiceId}/${ApiEndpoint.UserResources}/${userResourceId}`,
+            HttpMethod.Get,
+            workspaceCtx.workspaceApplicationIdURI,
+          );
+          setUserResource(ur.userResource);
+        } catch {
+          return;
+        }
       }
     };
     getData();

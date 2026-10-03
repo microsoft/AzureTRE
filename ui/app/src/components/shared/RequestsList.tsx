@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ColumnActionsMode,
   CommandBar,
@@ -24,7 +24,7 @@ import { AirlockRequest, AirlockRequestStatus, AirlockRequestType } from "../../
 import moment from "moment";
 import { useNavigate } from "react-router-dom";
 import { LoadingState } from "../../models/loadingState";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { getFileTypeIconProps } from "@fluentui/react-file-type-icons";
 import { useRefresh } from "../../hooks/useRefresh";
@@ -48,6 +48,7 @@ export const RequestsList: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
+  const hasLoaded = useRef(false);
   const [activeFilter, setActiveFilter] = useState<string>("myRequests");
   const [searchText, setSearchText] = useState("");
   const apiCall = useAuthApiCall();
@@ -109,8 +110,12 @@ export const RequestsList: React.FunctionComponent = () => {
 
       setMyAirlockRequests(mappedMyRequests);
       setAirlockManagerRequests(mappedManagerRequests);
+      hasLoaded.current = true;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
+      if (hasLoaded.current && isRetryableApiError(err)) {
+        return;
+      }
       err.userMessage = "Error fetching airlock requests";
       setApiError(err);
       setLoadingState(LoadingState.Error);

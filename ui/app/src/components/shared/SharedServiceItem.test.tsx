@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { SharedServiceItem } from "./SharedServiceItem";
 import { SharedService } from "../../models/sharedService";
@@ -32,10 +32,11 @@ vi.mock("../../hooks/useComponentManager", () => ({
 
 // Mock child components
 vi.mock("./ResourceHeader", () => {
-  const ResourceHeader = ({ resource, _latestUpdate, readonly }: any) => (
+  const ResourceHeader = ({ resource, _latestUpdate, readonly, onRefresh }: any) => (
     <div data-testid="resource-header">
       <div>Resource: {resource.id}</div>
       <div>Readonly: {readonly?.toString()}</div>
+      <button onClick={onRefresh}>Refresh</button>
     </div>
   );
   ResourceHeader.displayName = "ResourceHeader";
@@ -173,6 +174,21 @@ describe("SharedServiceItem Component", () => {
       expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
       expect(screen.getByText("Error retrieving shared service")).toBeInTheDocument();
     });
+  });
+
+  it("preserves the loaded service after a retryable refresh failure", async () => {
+    mockApiCall.mockResolvedValueOnce({ sharedService: mockSharedService });
+    mockApiCall.mockRejectedValueOnce({ status: 503 });
+
+    renderWithRouter(<SharedServiceItem />);
+    await screen.findByTestId("resource-header");
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId("resource-header")).toBeInTheDocument();
+    expect(screen.getByTestId("resource-body")).toBeInTheDocument();
+    expect(screen.queryByTestId("exception-layout")).not.toBeInTheDocument();
   });
 
   it("makes API call with correct parameters", async () => {

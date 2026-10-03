@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ColumnActionsMode,
   CommandBar,
@@ -30,7 +30,7 @@ import moment from "moment";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { AirlockViewRequest } from "./AirlockViewRequest";
 import { LoadingState } from "../../../models/loadingState";
-import { APIError } from "../../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../../models/exceptions";
 import { ExceptionLayout } from "../ExceptionLayout";
 import { AirlockNewRequest } from "./AirlockNewRequest";
 import { WorkspaceRoleName } from "../../../models/roleNames";
@@ -49,6 +49,7 @@ export const Airlock: React.FunctionComponent = () => {
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [contextMenuProps, setContextMenuProps] = useState<IContextualMenuProps>();
   const [apiError, setApiError] = useState<APIError>();
+  const hasLoaded = useRef(false);
   const workspaceCtx = useContext(WorkspaceContext);
   const apiCall = useAuthApiCall();
   const theme = getTheme();
@@ -93,8 +94,12 @@ export const Airlock: React.FunctionComponent = () => {
       }
 
       setAirlockRequests(requests);
+      hasLoaded.current = true;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
+      if (hasLoaded.current && isRetryableApiError(err)) {
+        return;
+      }
       err.userMessage = "Error fetching airlock requests";
       setApiError(err);
       setLoadingState(LoadingState.Error);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiEndpoint } from "../../models/apiEndpoints";
 import { useAuthApiCall, HttpMethod } from "../../hooks/useAuthApiCall";
@@ -9,7 +9,7 @@ import { ResourceHeader } from "./ResourceHeader";
 import { useComponentManager } from "../../hooks/useComponentManager";
 import { Resource } from "../../models/resource";
 import { ResourceBody } from "./ResourceBody";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "./ExceptionLayout";
 import { useRefresh } from "../../hooks/useRefresh";
 
@@ -25,6 +25,7 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
   const apiCall = useAuthApiCall();
   const [apiError, setApiError] = useState({} as APIError);
   const [refreshKey, setRefreshKey] = useState(0);
+  const hasLoaded = useRef(false);
   const refresh = useRefresh(() => setRefreshKey((key) => key + 1));
 
   const latestUpdate = useComponentManager(
@@ -38,8 +39,12 @@ export const SharedServiceItem: React.FunctionComponent<SharedServiceItemProps> 
       try {
         let ss = await apiCall(`${ApiEndpoint.SharedServices}/${sharedServiceId}`, HttpMethod.Get);
         setSharedService(ss.sharedService);
+        hasLoaded.current = true;
         setLoadingState(LoadingState.Ok);
       } catch (err: any) {
+        if (hasLoaded.current && isRetryableApiError(err)) {
+          return;
+        }
         err.userMessage = "Error retrieving shared service";
         setApiError(err);
         setLoadingState(LoadingState.Error);

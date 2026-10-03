@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { Resource } from "../../models/resource";
 import { ResourceCardList } from "../shared/ResourceCardList";
 import { PrimaryButton, Stack, Spinner, SpinnerSize } from "@fluentui/react";
@@ -13,6 +13,7 @@ import { SecuredByRole } from "./SecuredByRole";
 import { useRefresh } from "../../hooks/useRefresh";
 import { RefreshButton } from "./RefreshButton";
 import { defaultSortOptions, ResourceListControls, useResourceListFilter } from "./ResourceListControls";
+import { isRetryableApiError } from "../../models/exceptions";
 
 const sortOptions = defaultSortOptions<SharedService>();
 
@@ -25,6 +26,7 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
   const [sharedServices, setSharedServices] = useState([] as Array<SharedService>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [refreshKey, setRefreshKey] = useState(0);
+  const hasLoaded = useRef(false);
   const { visibleResources, controlsProps } = useResourceListFilter(sharedServices, {
     storageKey: "shared-service",
     sortOptions,
@@ -37,8 +39,12 @@ export const SharedServices: React.FunctionComponent<SharedServiceProps> = (prop
       try {
         const ss = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices;
         setSharedServices(ss);
+        hasLoaded.current = true;
         setLoadingState(LoadingState.Ok);
       } catch (err) {
+        if (hasLoaded.current && isRetryableApiError(err)) {
+          return;
+        }
         setLoadingState(LoadingState.Error);
       }
     };
