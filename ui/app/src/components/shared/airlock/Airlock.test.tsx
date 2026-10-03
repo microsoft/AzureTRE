@@ -94,6 +94,7 @@ describe("Airlock request list", () => {
     fireEvent.click(screen.getByRole("button", { name: "Awaiting my review" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Error fetching airlock requests"));
+    expect(screen.queryByText("First request")).not.toBeInTheDocument();
     expect(mockApiCall).toHaveBeenLastCalledWith(expect.stringContaining("status=in_review"), "GET", "scope");
   });
 });

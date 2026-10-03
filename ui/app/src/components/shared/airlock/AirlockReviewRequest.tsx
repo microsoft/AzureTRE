@@ -72,6 +72,18 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   useEffect(() => setRequest(props.request), [props.request]);
 
+  // The component is reused across :requestId changes; start each request's review afresh.
+  const requestId = props.request?.id;
+  useEffect(() => {
+    setReviewExplanation("");
+    setReviewing(false);
+    setReviewError(false);
+    setProceedToReview(false);
+    setProceedToDecision(false);
+    setShowApproveConfirmation(false);
+    setShowRejectConfirmation(false);
+  }, [requestId]);
+
   // Check if Review Resources are configured for the current workspace
   useEffect(() => {
     if (

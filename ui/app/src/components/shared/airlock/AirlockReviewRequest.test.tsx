@@ -29,4 +29,22 @@ describe("AirlockReviewRequest", () => {
     expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
   });
+
+  it("restarts the review when a different request is shown", () => {
+    const props = { onUpdateRequest: vi.fn(), onReviewRequest: vi.fn(), onClose: vi.fn() };
+    const { rerender } = render(<AirlockReviewRequest request={{ id: "a" } as any} {...props} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Proceed to review" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason for decision" }), {
+      target: { value: "Reason for A" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to decision" }));
+    expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+
+    rerender(<AirlockReviewRequest request={{ id: "b" } as any} {...props} />);
+
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Reason for A")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Proceed to review" })).toBeInTheDocument();
+  });
 });

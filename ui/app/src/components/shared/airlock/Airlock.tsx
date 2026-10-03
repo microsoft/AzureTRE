@@ -112,6 +112,7 @@ export const Airlock: React.FunctionComponent = () => {
         return;
       }
       err.userMessage = "Error fetching airlock requests";
+      setAirlockRequests([]);
       setApiError(err);
       setLoadingState(LoadingState.Error);
     }
