@@ -32,7 +32,11 @@ vi.mock("../../hooks/useComponentManager", () => ({
 
 // Mock child components
 vi.mock("./ResourceContextMenu", () => {
-  const ResourceContextMenu = ({ resource }: any) => <div data-testid="resource-context-menu">{resource.id}</div>;
+  const ResourceContextMenu = ({ resource, isExposedExternally }: any) => (
+    <div data-testid="resource-context-menu" data-exposed={isExposedExternally}>
+      {resource.id}
+    </div>
+  );
   ResourceContextMenu.displayName = "ResourceContextMenu";
   return { ResourceContextMenu };
 });
@@ -352,6 +356,7 @@ describe("ResourceCard Component", () => {
     fireEvent.click(connectButton);
 
     expect(screen.getByTestId("confirm-copy-url")).toBeInTheDocument();
+    expect(screen.getByTestId("resource-context-menu")).toHaveAttribute("data-exposed", "false");
   });
 
   it("opens external URL directly for external connections", () => {

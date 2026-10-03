@@ -40,14 +40,20 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const [isTREAdminUser, setIsTREAdminUser] = useState(false);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const refreshWorkspace = useRefresh(() => setWorkspaceRefreshKey((key) => key + 1));
+  const loadedWorkspaceId = useRef<string>();
 
   // set workspace context from url
   useEffect(() => {
+    let active = true;
+    if (loadedWorkspaceId.current !== workspaceId) {
+      setLoadingState(LoadingState.Loading);
+    }
     const getWorkspace = async () => {
       try {
         // get the workspace - first we get the scope_id so we can auth against the right aad app
         let scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}/scopeid`, HttpMethod.Get)).workspaceAuth
           .scopeId;
+        if (!active) return;
 
         let authProvisioned: boolean = false;
 
@@ -74,13 +80,11 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             authProvisioned = false;
           }
         }
+        if (!active) return;
 
         if (authProvisioned && wsRoles && wsRoles.length > 0) {
           ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get, scopeId)).workspace;
-          workspaceCtx.current.setWorkspace(ws);
-          workspaceCtx.current.setRoles(wsRoles);
-          setWSRoles((prev) => (isEqualJson(prev, wsRoles) ? prev : wsRoles));
-          setRolesWorkspaceId(workspaceId || "");
+          if (!active) return;
 
           // get workspace services to pass to nav + ws services page
           const workspaceServices = await apiCall(
@@ -88,22 +92,34 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             HttpMethod.Get,
             ws.properties.scope_id,
           );
+          if (!active) return;
+          let sharedServices: SharedService[] = [];
+          // Shared services are only available to workspace owners in this scope.
+          if (wsRoles.includes(WorkspaceRoleName.WorkspaceOwner)) {
+            sharedServices = (await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get)).sharedServices;
+          }
+          if (!active) return;
+          workspaceCtx.current.setWorkspace(ws);
+          workspaceCtx.current.setRoles(wsRoles);
+          setWSRoles((prev) => (isEqualJson(prev, wsRoles) ? prev : wsRoles));
+          setRolesWorkspaceId(workspaceId || "");
           setWorkspaceServices((prev) =>
             isEqualJson(prev, workspaceServices.workspaceServices) ? prev : workspaceServices.workspaceServices,
           );
-          // Shared services are only available to workspace owners in this scope.
-          if (wsRoles.includes(WorkspaceRoleName.WorkspaceOwner)) {
-            const sharedServices = await apiCall(ApiEndpoint.SharedServices, HttpMethod.Get);
-            setSharedServices((prev) =>
-              isEqualJson(prev, sharedServices.sharedServices) ? prev : sharedServices.sharedServices,
-            );
-          } else {
-            setSharedServices((prev) => (prev.length ? [] : prev));
-          }
+          setSharedServices((prev) => (isEqualJson(prev, sharedServices) ? prev : sharedServices));
+          setIsTREAdminUser(false);
+          loadedWorkspaceId.current = workspaceId;
           setLoadingState(LoadingState.Ok);
         } else if (appRoles.roles.includes(RoleName.TREAdmin)) {
           ws = (await apiCall(`${ApiEndpoint.Workspaces}/${workspaceId}`, HttpMethod.Get)).workspace;
+          if (!active) return;
           workspaceCtx.current.setWorkspace(ws);
+          workspaceCtx.current.setRoles([]);
+          setWSRoles([]);
+          setRolesWorkspaceId(workspaceId || "");
+          setWorkspaceServices([]);
+          setSharedServices([]);
+          loadedWorkspaceId.current = workspaceId;
           setLoadingState(LoadingState.Ok);
           setIsTREAdminUser(true);
         } else {
@@ -114,10 +130,11 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           throw e;
         }
       } catch (e: any) {
+        if (!active) return;
         if (e.status === 401 || e.status === 403) {
           setApiError(e);
           setLoadingState(LoadingState.AccessDenied);
-        } else {
+        } else if (loadedWorkspaceId.current !== workspaceId) {
           e.userMessage = "Error retrieving workspace";
           setApiError(e);
           setLoadingState(LoadingState.Error);
@@ -125,17 +142,23 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
       }
     };
     getWorkspace();
-  }, [apiCall, workspaceId, isTREAdminUser, appRoles.roles, workspaceRefreshKey]);
+    return () => {
+      active = false;
+    };
+  }, [apiCall, workspaceId, appRoles.roles, workspaceRefreshKey]);
 
   useEffect(() => {
     const ctx = workspaceCtx.current;
     return () => {
       ctx.setRoles([]);
       ctx.setWorkspace({} as Workspace);
+      ctx.setCosts([]);
+      loadedWorkspaceId.current = undefined;
     };
   }, [workspaceId]);
 
   useEffect(() => {
+    let active = true;
     const getWorkspaceCosts = async () => {
       try {
         // TODO: amend when costs enabled in API for WorkspaceRoleName.Researcher
@@ -154,14 +177,17 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             ...r.workspace_services,
             ...r.workspace_services.flatMap((ws: { user_resources: any }) => [...ws.user_resources]),
           ];
-          workspaceCtx.current.setCosts(costs);
+          if (active) workspaceCtx.current.setCosts(costs);
         }
       } catch (e: any) {
-        workspaceCtx.current.setCosts([]);
+        if (active) workspaceCtx.current.setCosts([]);
       }
     };
 
     getWorkspaceCosts();
+    return () => {
+      active = false;
+    };
   }, [apiCall, workspaceId, rolesWorkspaceId, wsRoles]);
 
   const addWorkspaceService = (w: WorkspaceService) => {

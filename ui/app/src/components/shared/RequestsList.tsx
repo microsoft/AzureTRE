@@ -89,7 +89,6 @@ export const RequestsList: React.FunctionComponent = () => {
 
   const getAirlockRequests = useCallback(async () => {
     setApiError(undefined);
-    setLoadingState(LoadingState.Loading);
     try {
       const query = buildQuery();
       const workspacePromise = apiCall(ApiEndpoint.Workspaces, HttpMethod.Get);

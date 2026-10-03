@@ -41,6 +41,8 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
           maximumFractionDigits: 2,
         }).format(resourceCosts.costs[0].cost);
         setFormattedCost(formattedCost);
+      } else {
+        setFormattedCost(undefined);
       }
       setLoadingState(LoadingState.Ok);
     }

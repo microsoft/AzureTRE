@@ -54,4 +54,23 @@ describe("useRefresh", () => {
     expect(onRefresh).toHaveBeenCalledOnce();
     unmount();
   });
+
+  it("refreshes on a short hidden-to-visible transition without a missed poll", () => {
+    vi.useFakeTimers();
+    const onRefresh = vi.fn();
+    const visibility = vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const { unmount } = renderHook(() => useRefresh(onRefresh));
+
+    visibility.mockReturnValue("hidden");
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    act(() => vi.advanceTimersByTime(100));
+    expect(onRefresh).not.toHaveBeenCalled();
+
+    visibility.mockReturnValue("visible");
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(onRefresh).toHaveBeenCalledOnce();
+
+    unmount();
+    visibility.mockRestore();
+  });
 });

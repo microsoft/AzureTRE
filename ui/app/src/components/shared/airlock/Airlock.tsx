@@ -59,7 +59,6 @@ export const Airlock: React.FunctionComponent = () => {
   // Get the airlock request data from API
   const getAirlockRequests = useCallback(async () => {
     setApiError(undefined);
-    setLoadingState(LoadingState.Loading);
 
     try {
       let requests: AirlockRequest[];

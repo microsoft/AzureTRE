@@ -206,7 +206,11 @@ export const ResourceCard: React.FunctionComponent<ResourceCardProps> = (props: 
                   </Stack.Item>
                   <Stack.Item>
                     {!props.readonly && (
-                      <ResourceContextMenu resource={props.resource} componentAction={latestUpdate.componentAction} />
+                      <ResourceContextMenu
+                        resource={props.resource}
+                        componentAction={latestUpdate.componentAction}
+                        isExposedExternally={props.isExposedExternally}
+                      />
                     )}
                   </Stack.Item>
                   {!props.readonly && (

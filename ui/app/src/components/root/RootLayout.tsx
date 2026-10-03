@@ -28,16 +28,20 @@ export const RootLayout: React.FunctionComponent = () => {
   const apiCall = useAuthApiCall();
   const appRolesCtx = useContext(AppRolesContext);
   const costsWriteCtx = useRef(useContext(CostsContext));
+  const hasLoadedWorkspaces = useRef(false);
 
   const getWorkspaces = useCallback(async () => {
     try {
       const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+      hasLoadedWorkspaces.current = true;
       setLoadingState(LoadingState.Ok);
       r && r.workspaces && setWorkspaces(r.workspaces);
     } catch (e: any) {
       e.userMessage = "Error retrieving resources";
       setApiError(e);
-      setLoadingState(LoadingState.Error);
+      if (!hasLoadedWorkspaces.current || e.status === 401 || e.status === 403) {
+        setLoadingState(LoadingState.Error);
+      }
     }
   }, [apiCall]);
   const refreshWorkspaces = useRefresh(getWorkspaces);
