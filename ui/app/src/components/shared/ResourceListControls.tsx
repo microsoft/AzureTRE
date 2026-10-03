@@ -6,6 +6,7 @@ import {
   ICommandBarItemProps,
   IContextualMenuProps,
   SearchBox,
+  Stack,
 } from "@fluentui/react";
 import { Resource } from "../../models/resource";
 
@@ -138,22 +139,6 @@ export const ResourceListControls: React.FunctionComponent<ResourceListControlsP
   const [sortMenu, setSortMenu] = useState<IContextualMenuProps>();
   const sortText = props.sortOptions.find((o) => o.key === props.sortKey)?.text || props.sortKey;
 
-  const items: Array<ICommandBarItemProps> = [
-    {
-      key: "search",
-      onRender: () => (
-        <SearchBox
-          placeholder={props.searchPlaceholder || "Search by name, ID or status..."}
-          ariaLabel={props.searchPlaceholder || "Search"}
-          value={props.search}
-          onChange={(_, value) => props.onSearchChange(value || "")}
-          onClear={() => props.onSearchChange("")}
-          styles={{ root: { width: 300, marginRight: 10 } }}
-        />
-      ),
-    },
-  ];
-
   const farItems: Array<ICommandBarItemProps> = [];
   if (props.onShowMineChange) {
     const onShowMineChange = props.onShowMineChange;
@@ -217,7 +202,20 @@ export const ResourceListControls: React.FunctionComponent<ResourceListControlsP
 
   return (
     <>
-      <CommandBar items={items} farItems={farItems} ariaLabel={props.ariaLabel || "Resource list controls"} />
+      {/* SearchBox is kept outside the CommandBar so ResizeGroup re-measuring can't remount it mid-typing */}
+      <Stack horizontal verticalAlign="center" wrap tokens={{ childrenGap: 10 }}>
+        <SearchBox
+          placeholder={props.searchPlaceholder || "Search by name, ID or status..."}
+          ariaLabel={props.searchPlaceholder || "Search"}
+          value={props.search}
+          onChange={(_, value) => props.onSearchChange(value || "")}
+          onClear={() => props.onSearchChange("")}
+          styles={{ root: { width: 300 } }}
+        />
+        <Stack.Item grow>
+          <CommandBar items={[]} farItems={farItems} ariaLabel={props.ariaLabel || "Resource list controls"} />
+        </Stack.Item>
+      </Stack>
       {sortMenu && <ContextualMenu {...sortMenu} />}
     </>
   );
