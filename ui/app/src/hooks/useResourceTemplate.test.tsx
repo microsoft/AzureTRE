@@ -59,4 +59,26 @@ describe("useResourceTemplate", () => {
       ]);
     });
   });
+
+  it("drops the previous resource's template when the resource changes, even if the new fetch fails", async () => {
+    mockApiCall.mockImplementation((path: string) => {
+      if (path.includes("workspace-services")) {
+        return Promise.resolve({ workspaceService: { id: "workspace-service", templateName: "service-template" } });
+      }
+      return path.endsWith("/user-template")
+        ? Promise.resolve({ name: "user-template", customActions: [{ name: "stop", description: "" }] })
+        : Promise.reject(new Error("template unavailable"));
+    });
+    const { result, rerender } = renderHook(({ r }) => useResourceTemplate(r), {
+      wrapper,
+      initialProps: { r: resource },
+    });
+    await waitFor(() => expect(result.current.resourceTemplate.customActions).toHaveLength(1));
+
+    rerender({ r: { ...resource, id: "other-resource", templateName: "other-template" } as UserResource });
+
+    expect(result.current.resourceTemplate.customActions).toBeUndefined();
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledWith(expect.stringContaining("other-template"), "GET"));
+    expect(result.current.resourceTemplate.customActions).toBeUndefined();
+  });
 });

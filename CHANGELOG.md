@@ -5,7 +5,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
-* Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and when your sign-in token was issued, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
+* Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 * Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
 * Add search, sort and (for Workspace Owners) a My resources / All resources view to every resource list, defaulting owners to their own user resources. ([#2832](https://github.com/microsoft/AzureTRE/issues/2832))
 * Redesign the resource Details, History and Operations tabs: grouped details with copy buttons, a history table showing what changed in each version, and compact operations with collapsible steps. ([#2832](https://github.com/microsoft/AzureTRE/issues/2832))

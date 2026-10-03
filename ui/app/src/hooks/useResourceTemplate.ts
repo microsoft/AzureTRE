@@ -58,6 +58,8 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const appRoles = useContext(AppRolesContext);
   const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
   const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
+  // The resource the loaded template belongs to, so a previous resource's actions are never offered for another.
+  const [loadedTemplateKey, setLoadedTemplateKey] = useState<string>();
   const [loadedParentServiceId, setLoadedParentServiceId] = useState<string>();
 
   const resourceId = resource?.id;
@@ -70,7 +72,11 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
   const hasRole = !!userRoles && roles.some((r) => userRoles.includes(r));
 
+  const templateKey = `${resourceType}|${resourceId}|${templateName}|${parentServiceId}`;
+
   useEffect(() => {
+    setResourceTemplate({} as ResourceTemplate);
+    setLoadedTemplateKey(undefined);
     if (!resourceId || !resourceType || !templateName) return;
     let cancelled = false;
 
@@ -107,16 +113,33 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
       if (!hasRole) return;
       const templatePath = `${templatesPath}/${templateName}`;
       const template = await cachedGet(templatePath, TEMPLATE_TTL_MS, () => apiCall(templatePath, HttpMethod.Get));
-      if (!cancelled) setResourceTemplate(template);
+      if (!cancelled) {
+        setResourceTemplate(template);
+        setLoadedTemplateKey(templateKey);
+      }
     };
 
     getTemplate().catch((e) => console.warn("Failed to load resource template", e));
     return () => {
       cancelled = true;
     };
-  }, [apiCall, resourceId, resourceType, templateName, parentServiceId, workspaceId, workspaceScopeId, hasRole]);
+  }, [
+    apiCall,
+    resourceId,
+    resourceType,
+    templateName,
+    parentServiceId,
+    workspaceId,
+    workspaceScopeId,
+    hasRole,
+    templateKey,
+  ]);
 
   const parentServiceLoaded =
     resourceType !== ResourceType.UserResource || (!!parentResource.id && loadedParentServiceId === parentServiceId);
-  return { resourceTemplate, parentResource, roles: parentServiceLoaded ? roles : [] };
+  return {
+    resourceTemplate: loadedTemplateKey === templateKey ? resourceTemplate : ({} as ResourceTemplate),
+    parentResource,
+    roles: parentServiceLoaded ? roles : [],
+  };
 };

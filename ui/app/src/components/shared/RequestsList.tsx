@@ -88,7 +88,11 @@ export const RequestsList: React.FunctionComponent = () => {
     }
   }, [activeFilter, airlockManagerRequests, myAirlockRequests]);
 
+  // Each request gets a generation so a slower response for an older filter or sort can't overwrite a newer one.
+  const requestGeneration = useRef(0);
+
   const getAirlockRequests = useCallback(async () => {
+    const generation = ++requestGeneration.current;
     setApiError(undefined);
     try {
       const query = buildQuery();
@@ -105,6 +109,7 @@ export const RequestsList: React.FunctionComponent = () => {
         managerRequestsPromise,
       ]);
 
+      if (generation !== requestGeneration.current) return;
       const mappedMyRequests = mapRequestsToWorkspace(myRequests, fetchedWorkspaces || []);
       const mappedManagerRequests = mapRequestsToWorkspace(managerRequests, fetchedWorkspaces || []);
 
@@ -113,6 +118,7 @@ export const RequestsList: React.FunctionComponent = () => {
       hasLoaded.current = true;
       setLoadingState(LoadingState.Ok);
     } catch (err: any) {
+      if (generation !== requestGeneration.current) return;
       if (hasLoaded.current && isRetryableApiError(err)) {
         return;
       }

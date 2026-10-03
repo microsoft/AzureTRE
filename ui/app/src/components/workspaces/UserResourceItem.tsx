@@ -46,6 +46,8 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
   );
 
   useEffect(() => {
+    // Ignore responses for a previous route or refresh so they can't overwrite the current resource.
+    let cancelled = false;
     const getData = async () => {
       // did we get passed the workspace service, or shall we get it from the api?
       const passedResource = props.userResource;
@@ -60,15 +62,19 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
             HttpMethod.Get,
             workspaceCtx.workspaceApplicationIdURI,
           );
+          if (cancelled) return;
           loadedResourceId.current = ur.userResource.id;
           setUserResource(ur.userResource);
           setApiError(undefined);
         } catch (e) {
-          if (loadedResourceId.current !== userResourceId) setApiError(e as APIError);
+          if (!cancelled && loadedResourceId.current !== userResourceId) setApiError(e as APIError);
         }
       }
     };
     getData();
+    return () => {
+      cancelled = true;
+    };
   }, [
     apiCall,
     props.userResource,

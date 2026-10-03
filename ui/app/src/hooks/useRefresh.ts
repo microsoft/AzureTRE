@@ -7,34 +7,41 @@ export const isPageVisible = () => document.visibilityState === "visible";
 export const useRefresh = (onRefresh: () => void | Promise<void>, interval = AUTO_REFRESH_INTERVAL_MS) => {
   const onRefreshRef = useRef(onRefresh);
   const refreshInProgress = useRef(false);
+  const refreshQueued = useRef(false);
 
   useEffect(() => {
     onRefreshRef.current = onRefresh;
   }, [onRefresh]);
 
+  // Refreshes never overlap. A request made while one is running is queued and runs once, with the latest
+  // callback, when it finishes, so changed queries (filters, sort) are never dropped.
   const refresh = useCallback(() => {
-    if (refreshInProgress.current) return;
+    if (refreshInProgress.current) {
+      refreshQueued.current = true;
+      return;
+    }
 
     refreshInProgress.current = true;
+    const finish = () => {
+      refreshInProgress.current = false;
+      if (refreshQueued.current) {
+        refreshQueued.current = false;
+        refresh();
+      }
+    };
+
     let result: void | Promise<void>;
     try {
       result = onRefreshRef.current();
     } catch (error) {
-      refreshInProgress.current = false;
+      finish();
       throw error;
     }
 
     if (result && typeof result.then === "function") {
-      result.then(
-        () => {
-          refreshInProgress.current = false;
-        },
-        () => {
-          refreshInProgress.current = false;
-        },
-      );
+      result.then(finish, finish);
     } else {
-      refreshInProgress.current = false;
+      finish();
     }
   }, []);
 

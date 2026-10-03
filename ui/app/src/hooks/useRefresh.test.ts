@@ -73,14 +73,39 @@ describe("useRefresh", () => {
     });
     expect(onRefresh).toHaveBeenCalledOnce();
 
+    // The calls made while pending collapse into a single follow-up once the first refresh finishes.
     await act(async () => {
       completeRefresh();
       await Promise.resolve();
     });
-    act(() => vi.advanceTimersByTime(1000));
+    expect(onRefresh).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      completeRefresh();
+      await Promise.resolve();
+    });
     expect(onRefresh).toHaveBeenCalledTimes(2);
 
     visibility.mockRestore();
+  });
+
+  it("runs a refresh requested while pending with the latest callback", async () => {
+    let completeRefresh: () => void = () => {};
+    const first = vi.fn(() => new Promise<void>((resolve) => (completeRefresh = resolve)));
+    const second = vi.fn();
+    const { result, rerender } = renderHook(({ cb }) => useRefresh(cb), { initialProps: { cb: first as () => any } });
+
+    act(() => result.current());
+    rerender({ cb: second });
+    act(() => result.current());
+    expect(second).not.toHaveBeenCalled();
+
+    await act(async () => {
+      completeRefresh();
+      await Promise.resolve();
+    });
+    expect(first).toHaveBeenCalledOnce();
+    expect(second).toHaveBeenCalledOnce();
   });
 
   it("refreshes on a short hidden-to-visible transition without a missed poll", () => {

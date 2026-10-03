@@ -176,4 +176,40 @@ describe("UserResourceItem", () => {
     expect(screen.queryByTestId("power-state")).not.toBeInTheDocument();
     expect(mockApiCall).toHaveBeenCalledOnce();
   });
+
+  it("ignores a slower response for the previous route", async () => {
+    const other = { ...userResource, id: "another-user-resource", azureStatus: { powerState: "VM deallocated" } };
+    let resolveFirst: (value: any) => void = () => undefined;
+    mockApiCall
+      .mockImplementationOnce(() => new Promise((resolve) => (resolveFirst = resolve)))
+      .mockResolvedValueOnce({ userResource: other });
+
+    render(
+      <Routes>
+        <Route
+          path="/workspaces/:workspaceServiceId/user-resources/:userResourceId"
+          element={
+            <>
+              <Link to="/workspaces/test-service/user-resources/another-user-resource">Another resource</Link>
+              <UserResourceItem userResource={userResource} updateUserResource={vi.fn()} removeUserResource={vi.fn()} />
+            </>
+          }
+        />
+      </Routes>,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-service/user-resources/test-user-resource"],
+        workspaceContext: workspaceContext as any,
+      },
+    );
+
+    // Refresh resource A, then navigate to B before A's request finishes.
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    fireEvent.click(screen.getByRole("link", { name: "Another resource" }));
+    await waitFor(() => expect(screen.getByTestId("power-state")).toHaveTextContent("VM deallocated"));
+
+    resolveFirst({ userResource });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByTestId("power-state")).toHaveTextContent("VM deallocated");
+  });
 });
