@@ -39,12 +39,16 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
   const appRoles = useContext(AppRolesContext);
   const [isTREAdminUser, setIsTREAdminUser] = useState(false);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
-  const refreshWorkspace = useRefresh(() => setWorkspaceRefreshKey((key) => key + 1));
+  const workspaceLoadPending = useRef(false);
+  const refreshWorkspace = useRefresh(() => {
+    if (!workspaceLoadPending.current) setWorkspaceRefreshKey((key) => key + 1);
+  });
   const loadedWorkspaceId = useRef<string>();
 
   // set workspace context from url
   useEffect(() => {
     let active = true;
+    workspaceLoadPending.current = true;
     if (loadedWorkspaceId.current !== workspaceId) {
       setLoadingState(LoadingState.Loading);
     }
@@ -139,11 +143,14 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
           setApiError(e);
           setLoadingState(LoadingState.Error);
         }
+      } finally {
+        if (active) workspaceLoadPending.current = false;
       }
     };
     getWorkspace();
     return () => {
       active = false;
+      workspaceLoadPending.current = false;
     };
   }, [apiCall, workspaceId, appRoles.roles, workspaceRefreshKey]);
 

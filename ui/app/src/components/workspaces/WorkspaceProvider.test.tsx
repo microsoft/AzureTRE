@@ -1,7 +1,7 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WorkspaceProvider } from "./WorkspaceProvider";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
 import { WorkspaceRoleName } from "../../models/roleNames";
@@ -12,7 +12,6 @@ vi.mock("../../hooks/useAuthApiCall", () => ({
   HttpMethod: { Get: "GET" },
   ResultType: { JSON: "JSON" },
 }));
-vi.mock("../../hooks/useRefresh", () => ({ useRefresh: (callback: () => void) => callback }));
 vi.mock("@fluentui/react", async () => {
   const { createCompleteFluentUIMock } = await import("../../test-utils/fluentui-mocks");
   return createCompleteFluentUIMock();
@@ -59,6 +58,11 @@ const renderWorkspace = () =>
   );
 
 describe("WorkspaceProvider refresh", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     apiCall.mockReset();
@@ -91,7 +95,7 @@ describe("WorkspaceProvider refresh", () => {
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
-  it("ignores an obsolete refresh response that finishes after a newer response", async () => {
+  it("coalesces refreshes while a workspace load is pending", async () => {
     renderWorkspace();
     await screen.findByText("Loaded workspace");
     let resolveOld!: (result: any) => void;
@@ -102,11 +106,35 @@ describe("WorkspaceProvider refresh", () => {
         }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    const apiCalls = apiCall.mock.calls.length;
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    expect(apiCall).toHaveBeenCalledTimes(apiCalls);
     const calls = context.setWorkspace.mock.calls.length;
 
     await act(async () => resolveOld({ workspaceAuth: { scopeId: "old-scope" } }));
-    expect(context.setWorkspace).toHaveBeenCalledTimes(calls);
+    expect(context.setWorkspace).toHaveBeenCalledTimes(calls + 1);
+    expect(context.setWorkspace).toHaveBeenLastCalledWith(workspace("first"));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    expect(context.setWorkspace).toHaveBeenCalledTimes(calls + 2);
+  });
+
+  it("allows an initial load spanning multiple polling intervals to complete", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    let finish!: (result: any) => void;
+    apiCall.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderWorkspace();
+
+    act(() => vi.advanceTimersByTime(90000));
+    expect(apiCall).toHaveBeenCalledOnce();
+
+    await act(async () => finish({ workspaceAuth: { scopeId: "scope" } }));
+    expect(screen.getByText("Loaded workspace")).toBeInTheDocument();
     expect(context.setWorkspace).toHaveBeenLastCalledWith(workspace("first"));
   });
 
@@ -130,7 +158,7 @@ describe("WorkspaceProvider refresh", () => {
     expect(context.setRoles).toHaveBeenCalledTimes(roleCalls);
   });
 
-  it.each(["success", "failure"])("ignores an obsolete service %s after a newer refresh completes", async (result) => {
+  it.each(["success", "failure"])("ignores an obsolete service %s after navigation", async (result) => {
     renderWorkspace();
     await screen.findByText("Loaded workspace");
     const defaultCall = apiCall.getMockImplementation()!;
@@ -150,11 +178,12 @@ describe("WorkspaceProvider refresh", () => {
       );
 
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Next workspace" })));
     const calls = context.setWorkspace.mock.calls.length;
 
     await act(async () => finish());
     expect(context.setWorkspace).toHaveBeenCalledTimes(calls);
+    expect(context.setWorkspace).toHaveBeenLastCalledWith(workspace("second"));
     expect(screen.getByText("Loaded workspace")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
