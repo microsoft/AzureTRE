@@ -37,6 +37,9 @@ export const App: React.FunctionComponent = () => {
 
   const apiCall = useAuthApiCall();
 
+  // Entra omits the roles claim when the user has no app roles.
+  const setAppRolesNormalized = useCallback((roles?: Array<string>) => setAppRoles(roles ?? []), []);
+
   // set the app roles
   useEffect(() => {
     const setAppRolesOnLoad = async () => {
@@ -46,18 +49,21 @@ export const App: React.FunctionComponent = () => {
         undefined,
         undefined,
         ResultType.JSON,
-        (roles: Array<string>) => {
-          setAppRoles(roles);
+        (roles?: Array<string>) => {
+          setAppRolesNormalized(roles);
         },
         true,
       );
     };
     setAppRolesOnLoad();
-  }, [apiCall]);
+  }, [apiCall, setAppRolesNormalized]);
 
   useEffect(() => initializeFileTypeIcons(), []);
 
-  const appRolesContextValue = useMemo(() => ({ roles: appRoles, setAppRoles }), [appRoles]);
+  const appRolesContextValue = useMemo(
+    () => ({ roles: appRoles, setAppRoles: setAppRolesNormalized }),
+    [appRoles, setAppRolesNormalized],
+  );
 
   const setWorkspaceIfChanged = useCallback(
     (w: Workspace) => setSelectedWorkspace((prev) => (isEqualJson(prev, w) ? prev : w)),

@@ -81,6 +81,8 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
             authProvisioned = true;
           } catch (e: any) {
             console.error("Authorization provisioning failed:", e);
+            // On a background refresh keep the loaded workspace rather than switching to 403/admin-only mode.
+            if (loadedWorkspaceId.current === workspaceId) return;
             authProvisioned = false;
           }
         }

@@ -89,6 +89,22 @@ describe("WorkspaceProvider refresh", () => {
     expect(context.setWorkspace).toHaveBeenCalledTimes(calls);
   });
 
+  it("keeps the loaded workspace when token acquisition fails during a refresh", async () => {
+    renderWorkspace();
+    await screen.findByText("Loaded workspace");
+    const calls = context.setRoles.mock.calls.length;
+    const base = apiCall.getMockImplementation()!;
+    apiCall.mockImplementation(async (...args: any[]) => {
+      if (args[5]) throw new Error("interaction_required");
+      return base(...args);
+    });
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    expect(screen.getByText("Loaded workspace")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
+    expect(context.setRoles).toHaveBeenCalledTimes(calls);
+  });
+
   it("shows an error when a refresh finds the workspace has been deleted", async () => {
     renderWorkspace();
     await screen.findByText("Loaded workspace");
