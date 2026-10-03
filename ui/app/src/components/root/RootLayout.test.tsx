@@ -77,4 +77,18 @@ describe("RootLayout refresh", () => {
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
+
+  it("does not retain the loaded view for a terminal error", async () => {
+    apiCall.mockResolvedValueOnce({ workspaces: [] });
+    render(
+      <MemoryRouter>
+        <RootLayout />
+      </MemoryRouter>,
+    );
+    await screen.findByText("0 workspaces");
+
+    apiCall.mockRejectedValueOnce({ status: 404 });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
 });

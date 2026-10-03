@@ -13,7 +13,7 @@ import { SharedServices } from "../shared/SharedServices";
 import { SharedServiceItem } from "../shared/SharedServiceItem";
 import { SecuredByRole } from "../shared/SecuredByRole";
 import { RoleName } from "../../models/roleNames";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostsContext } from "../../contexts/CostsContext";
@@ -39,7 +39,8 @@ export const RootLayout: React.FunctionComponent = () => {
     } catch (e: any) {
       e.userMessage = "Error retrieving resources";
       setApiError(e);
-      if (!hasLoadedWorkspaces.current || e.status === 401 || e.status === 403) {
+      // Keep the loaded list only for transient failures; terminal errors replace it with the error view.
+      if (!hasLoadedWorkspaces.current || !isRetryableApiError(e)) {
         setLoadingState(LoadingState.Error);
       }
     }

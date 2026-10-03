@@ -212,4 +212,29 @@ describe("UserResourceItem", () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.getByTestId("power-state")).toHaveTextContent("VM deallocated");
   });
+
+  it("replaces the stale resource with the error when a refresh returns a terminal error", async () => {
+    mockApiCall.mockRejectedValueOnce({ status: 404 });
+
+    render(
+      <Routes>
+        <Route
+          path="/workspaces/:workspaceServiceId/user-resources/:userResourceId"
+          element={
+            <UserResourceItem userResource={userResource} updateUserResource={vi.fn()} removeUserResource={vi.fn()} />
+          }
+        />
+      </Routes>,
+      {
+        children: null,
+        initialEntries: ["/workspaces/test-service/user-resources/test-user-resource"],
+        workspaceContext: workspaceContext as any,
+      },
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+
+    expect(await screen.findByText("404")).toBeInTheDocument();
+    expect(screen.queryByTestId("power-state")).not.toBeInTheDocument();
+  });
 });

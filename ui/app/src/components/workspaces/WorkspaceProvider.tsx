@@ -16,7 +16,7 @@ import { SharedService } from "../../models/sharedService";
 import { SharedServices } from "../shared/SharedServices";
 import { SharedServiceItem } from "../shared/SharedServiceItem";
 import { Airlock } from "../shared/airlock/Airlock";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { LoadingState } from "../../models/loadingState";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
@@ -138,7 +138,8 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
         if (e.status === 401 || e.status === 403) {
           setApiError(e);
           setLoadingState(LoadingState.AccessDenied);
-        } else if (loadedWorkspaceId.current !== workspaceId) {
+        } else if (loadedWorkspaceId.current !== workspaceId || !isRetryableApiError(e)) {
+          // Keep the loaded workspace only for transient failures; e.g. a 404 after deletion shows the error.
           e.userMessage = "Error retrieving workspace";
           setApiError(e);
           setLoadingState(LoadingState.Error);

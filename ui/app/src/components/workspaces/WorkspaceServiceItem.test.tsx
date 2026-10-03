@@ -233,4 +233,30 @@ describe("WorkspaceServiceItem", () => {
     });
     expect(screen.getByTestId("resource-header")).toHaveTextContent("other-service");
   });
+
+  it("keeps the view for retryable refresh errors but shows terminal ones", async () => {
+    let refreshError: any;
+    mockApiCall.mockImplementation((endpoint: string) => {
+      if (refreshError && endpoint.endsWith("/workspace-services/test-service")) return Promise.reject(refreshError);
+      if (endpoint.endsWith("/workspace-services/test-service")) return Promise.resolve({ workspaceService });
+      if (endpoint.endsWith("/user-resources")) return Promise.resolve({ userResources: [] });
+      if (endpoint.endsWith("/user-resource-templates")) return Promise.resolve({ templates: [{}] });
+      if (endpoint.endsWith("/users")) return Promise.resolve({ users: [] });
+      return Promise.reject(new Error(`Unexpected API call: ${endpoint}`));
+    });
+    renderItem();
+    await waitFor(() => expect(screen.getByTestId("resource-header")).toBeInTheDocument());
+
+    refreshError = { status: 503, message: "unavailable" };
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    });
+    expect(screen.getByTestId("resource-header")).toBeInTheDocument();
+
+    refreshError = { status: 404, message: "not found" };
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    });
+    await waitFor(() => expect(screen.queryByTestId("resource-header")).not.toBeInTheDocument());
+  });
 });

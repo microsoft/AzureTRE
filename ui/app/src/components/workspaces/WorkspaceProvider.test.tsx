@@ -89,6 +89,16 @@ describe("WorkspaceProvider refresh", () => {
     expect(context.setWorkspace).toHaveBeenCalledTimes(calls);
   });
 
+  it("shows an error when a refresh finds the workspace has been deleted", async () => {
+    renderWorkspace();
+    await screen.findByText("Loaded workspace");
+    apiCall.mockRejectedValueOnce({ status: 404 });
+
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
+    expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText("Loaded workspace")).not.toBeInTheDocument();
+  });
+
   it("shows an error for a failed initial load", async () => {
     apiCall.mockRejectedValueOnce({ status: 503 });
     renderWorkspace();

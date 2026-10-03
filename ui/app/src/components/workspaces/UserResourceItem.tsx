@@ -9,7 +9,7 @@ import { Resource } from "../../models/resource";
 import { useComponentManager } from "../../hooks/useComponentManager";
 import { ResourceBody } from "../shared/ResourceBody";
 import { useRefresh } from "../../hooks/useRefresh";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 
 interface UserResourceItemProps {
@@ -67,7 +67,13 @@ export const UserResourceItem: React.FunctionComponent<UserResourceItemProps> = 
           setUserResource(ur.userResource);
           setApiError(undefined);
         } catch (e) {
-          if (!cancelled && loadedResourceId.current !== userResourceId) setApiError(e as APIError);
+          if (cancelled) return;
+          // Keep the loaded resource only for transient failures; e.g. a 403/404 after access is revoked or the
+          // resource is deleted replaces it with the error view.
+          if (loadedResourceId.current === userResourceId && isRetryableApiError(e)) return;
+          loadedResourceId.current = undefined;
+          setUserResource({} as UserResource);
+          setApiError(e as APIError);
         }
       }
     };

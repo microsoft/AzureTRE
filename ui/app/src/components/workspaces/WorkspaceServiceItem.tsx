@@ -18,7 +18,7 @@ import { UserResourceItem } from "./UserResourceItem";
 import { ResourceBody } from "../shared/ResourceBody";
 import { SecuredByRole } from "../shared/SecuredByRole";
 import { WorkspaceRoleName } from "../../models/roleNames";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { CachedUser } from "../../models/user";
 import { useAccount, useMsal } from "@azure/msal-react";
@@ -210,8 +210,16 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
         setWorkspaceService((prev) => (isEqualJson(prev, ws.workspaceService) ? prev : ws.workspaceService));
         setUserResources((prev) => (isEqualJson(prev, u.userResources) ? prev : u.userResources));
       } catch (err: any) {
-        // Keep showing the last good data; the next refresh will try again.
-        console.warn("Failed to refresh workspace service", err);
+        if (cancelled || refreshParams.current.servicePath !== servicePath) return;
+        if (isRetryableApiError(err)) {
+          // Keep showing the last good data; the next refresh will try again.
+          console.warn("Failed to refresh workspace service", err);
+          return;
+        }
+        // Terminal errors (e.g. the service was deleted or access revoked) replace the stale view.
+        err.userMessage = "Error retrieving resources";
+        setApiError(err);
+        setLoadingState(LoadingState.Error);
       }
     };
     refreshData();
