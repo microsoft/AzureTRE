@@ -205,7 +205,8 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
           apiCall(servicePath, HttpMethod.Get, workspaceScopeId),
           apiCall(`${servicePath}/${ApiEndpoint.UserResources}`, HttpMethod.Get, workspaceScopeId),
         ]);
-        if (cancelled) return;
+        // Ignore the response if the user has since navigated to another service.
+        if (cancelled || refreshParams.current.servicePath !== servicePath) return;
         setWorkspaceService((prev) => (isEqualJson(prev, ws.workspaceService) ? prev : ws.workspaceService));
         setUserResources((prev) => (isEqualJson(prev, u.userResources) ? prev : u.userResources));
       } catch (err: any) {

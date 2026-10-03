@@ -8,11 +8,13 @@ import { ResourceType } from "../../models/resourceType";
 
 const mockApiCall = vi.fn();
 
+const routeParams = vi.hoisted(() => ({ workspaceServiceId: "test-service" }));
+
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
     ...actual,
-    useParams: () => ({ workspaceServiceId: "test-service" }),
+    useParams: () => ({ ...routeParams }),
   };
 });
 
@@ -86,6 +88,7 @@ const showAllResources = async () => {
 describe("WorkspaceServiceItem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    routeParams.workspaceServiceId = "test-service";
   });
 
   it("keeps workspace resources visible when the optional workspace users lookup fails", async () => {
@@ -195,5 +198,39 @@ describe("WorkspaceServiceItem", () => {
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "owner-a" } });
     expect(screen.getByTestId("resource-card-list")).toHaveTextContent("vm-alpha");
     expect(screen.getByTestId("resource-card-list")).not.toHaveTextContent("vm-beta");
+  });
+
+  it("ignores a pending refresh for the previous service after navigating to another", async () => {
+    const otherService = { ...workspaceService, id: "other-service" };
+    let resolveStaleService: (value: any) => void = () => undefined;
+    let refreshing = false;
+    mockApiCall.mockImplementation((endpoint: string) => {
+      if (endpoint.endsWith("/workspace-services/test-service")) {
+        return refreshing
+          ? new Promise((resolve) => (resolveStaleService = resolve))
+          : Promise.resolve({ workspaceService });
+      }
+      if (endpoint.endsWith("/workspace-services/other-service"))
+        return Promise.resolve({ workspaceService: otherService });
+      if (endpoint.endsWith("/user-resources")) return Promise.resolve({ userResources: [] });
+      if (endpoint.endsWith("/user-resource-templates")) return Promise.resolve({ templates: [{}] });
+      if (endpoint.endsWith("/users")) return Promise.resolve({ users: [] });
+      return Promise.reject(new Error(`Unexpected API call: ${endpoint}`));
+    });
+    const { rerender } = renderItem();
+    await waitFor(() => expect(screen.getByTestId("resource-header")).toHaveTextContent("test-service"));
+
+    // Refresh service A, then navigate to service B before A's refresh responds.
+    refreshing = true;
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+    routeParams.workspaceServiceId = "other-service";
+    rerender(<WorkspaceServiceItem updateWorkspaceService={vi.fn()} removeWorkspaceService={vi.fn()} />);
+    await waitFor(() => expect(screen.getByTestId("resource-header")).toHaveTextContent("other-service"));
+
+    await act(async () => {
+      resolveStaleService({ workspaceService });
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("resource-header")).toHaveTextContent("other-service");
   });
 });
