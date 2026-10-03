@@ -22,4 +22,8 @@ describe("isOwnedByUser", () => {
     expect(isOwnedByUser(resource("another-user"), "user-id")).toBe(false);
     expect(isOwnedByUser(resource("user-id"), "")).toBe(false);
   });
+
+  it("ignores owner properties when ownerId is set", () => {
+    expect(isOwnedByUser(resource("another-user", { owner_id: "user-id" }), "user-id")).toBe(false);
+  });
 });
