@@ -67,6 +67,8 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const resourceId = resource?.id;
   const resourceType = resource?.resourceType;
   const templateName = resource?.templateName;
+  // Actions must come from the deployed template version; that is what the API validates custom actions against.
+  const templateVersion = resource?.templateVersion;
   const parentServiceId = (resource as UserResource | undefined)?.parentWorkspaceServiceId;
   const workspaceId = workspaceCtx.workspace?.id;
   const workspaceScopeId = workspaceCtx.workspaceApplicationIdURI;
@@ -74,7 +76,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
   const hasRole = !!userRoles && roles.some((r) => userRoles.includes(r));
 
-  const templateKey = `${resourceType}|${resourceId}|${templateName}|${parentServiceId}`;
+  const templateKey = `${resourceType}|${resourceId}|${templateName}|${templateVersion}|${parentServiceId}`;
   // Transient load failures are retried with backoff so actions recover without remounting.
   const [retryCount, setRetryCount] = useState(0);
   const retryState = useRef({ key: templateKey, attempts: 0 });
@@ -117,7 +119,9 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
 
       // If the user isn't in the right role they won't see the menu at all, so skip the template.
       if (!hasRole) return;
-      const templatePath = `${templatesPath}/${templateName}`;
+      const templatePath = `${templatesPath}/${templateName}${
+        templateVersion ? `?version=${encodeURIComponent(templateVersion)}` : ""
+      }`;
       const template = await cachedGet(templatePath, TEMPLATE_TTL_MS, () => apiCall(templatePath, HttpMethod.Get));
       if (!cancelled) {
         setResourceTemplate(template);
@@ -146,6 +150,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
     resourceId,
     resourceType,
     templateName,
+    templateVersion,
     parentServiceId,
     workspaceId,
     workspaceScopeId,

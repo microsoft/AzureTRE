@@ -105,4 +105,26 @@ describe("useResourceTemplate", () => {
       vi.useRealTimers();
     }
   });
+
+  it("loads actions for the deployed template version and refreshes them after an upgrade", async () => {
+    mockApiCall.mockImplementation((path: string) => {
+      if (path.includes("workspace-services")) {
+        return Promise.resolve({ workspaceService: { id: "workspace-service", templateName: "service-template" } });
+      }
+      return Promise.resolve({
+        customActions: path.endsWith("?version=2.0.0") ? [{ name: "resize", description: "" }] : [],
+      });
+    });
+    const { result, rerender } = renderHook(({ r }) => useResourceTemplate(r), {
+      wrapper,
+      initialProps: { r: { ...resource, templateVersion: "1.0.0" } as UserResource },
+    });
+    await waitFor(() =>
+      expect(mockApiCall).toHaveBeenCalledWith(expect.stringMatching(/\/user-template\?version=1\.0\.0$/), "GET"),
+    );
+    await waitFor(() => expect(result.current.resourceTemplate.customActions).toEqual([]));
+
+    rerender({ r: { ...resource, templateVersion: "2.0.0" } as UserResource });
+    await waitFor(() => expect(result.current.resourceTemplate.customActions).toHaveLength(1));
+  });
 });
