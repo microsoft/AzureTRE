@@ -118,54 +118,66 @@ export const useAuthApiCall = () => {
       // add a body if we're given one
       if (body) opts.body = JSON.stringify(body);
 
-      let resp;
       const controller = new AbortController();
+      // The timeout covers the whole call, including reading the response body.
       const timeout = window.setTimeout(() => controller.abort(), 30000);
-      try {
-        opts.signal = controller.signal;
-        resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
-      } catch (err: any) {
+      const unavailableError = (err: any) => {
         const e = new APIError();
         e.name = "API call failure";
         e.message = err?.message || "Unable to reach the TRE API";
-        e.status = err?.name === "AbortError" ? 408 : 503;
+        e.status = controller.signal.aborted || err?.name === "AbortError" ? 408 : 503;
         e.userMessage = API_UNAVAILABLE_MESSAGE;
         e.endpoint = `${config.treUrl}/${endpoint}`;
         e.stack = err?.stack;
         e.exception = err instanceof Error ? err.message : String(err);
-        throw e;
+        return e;
+      };
+      try {
+        let resp;
+        try {
+          opts.signal = controller.signal;
+          resp = await fetch(`${config.treUrl}/${endpoint}`, opts);
+        } catch (err: any) {
+          throw unavailableError(err);
+        }
+
+        if (!resp.ok) {
+          let e = new APIError();
+          try {
+            e.message = await resp.text();
+          } catch (err: any) {
+            if (controller.signal.aborted) throw unavailableError(err);
+            throw err;
+          }
+          e.status = resp.status;
+          e.endpoint = endpoint;
+          if (resp.status === 408 || resp.status === 429 || resp.status >= 500) {
+            e.userMessage = API_UNAVAILABLE_MESSAGE;
+          }
+          throw e;
+        }
+
+        try {
+          switch (resultType) {
+            case ResultType.Text:
+              let text = await resp.text();
+              config.debug && console.log(text);
+              return text;
+            case ResultType.JSON:
+              let json = await resp.json();
+              config.debug && console.log(json);
+              return json;
+            case ResultType.None:
+              return;
+          }
+        } catch (err: any) {
+          if (controller.signal.aborted) throw unavailableError(err);
+          let e = err as APIError;
+          e.name = "Error with response data";
+          throw e;
+        }
       } finally {
         window.clearTimeout(timeout);
-      }
-
-      if (!resp.ok) {
-        let e = new APIError();
-        e.message = await resp.text();
-        e.status = resp.status;
-        e.endpoint = endpoint;
-        if (resp.status === 408 || resp.status === 429 || resp.status >= 500) {
-          e.userMessage = API_UNAVAILABLE_MESSAGE;
-        }
-        throw e;
-      }
-
-      try {
-        switch (resultType) {
-          case ResultType.Text:
-            let text = await resp.text();
-            config.debug && console.log(text);
-            return text;
-          case ResultType.JSON:
-            let json = await resp.json();
-            config.debug && console.log(json);
-            return json;
-          case ResultType.None:
-            return;
-        }
-      } catch (err: any) {
-        let e = err as APIError;
-        e.name = "Error with response data";
-        throw e;
       }
     },
     [account, instance],

@@ -202,6 +202,28 @@ describe("useAuthApiCall Hook", () => {
     });
   });
 
+  it("times out when the response body stalls after the headers arrive", async () => {
+    vi.useFakeTimers();
+    try {
+      (global.fetch as Mock).mockImplementation(async (_url: string, opts: any) => ({
+        ok: true,
+        json: () =>
+          new Promise((_, reject) =>
+            opts.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))),
+          ),
+      }));
+      const { result } = renderHook(() => useAuthApiCall());
+      const call = expect(result.current("/api/test", HttpMethod.Get)).rejects.toMatchObject({
+        status: 408,
+        userMessage: API_UNAVAILABLE_MESSAGE,
+      });
+      await vi.advanceTimersByTimeAsync(30000);
+      await call;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("marks server errors as API unavailable", async () => {
     (global.fetch as Mock).mockResolvedValue({
       ok: false,
