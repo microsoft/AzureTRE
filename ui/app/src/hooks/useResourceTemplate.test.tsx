@@ -92,7 +92,7 @@ describe("useResourceTemplate", () => {
         }
         templateCalls += 1;
         return templateCalls === 1
-          ? Promise.reject(new Error("transient"))
+          ? Promise.reject({ status: 503 })
           : Promise.resolve({ customActions: [{ name: "stop", description: "" }] });
       });
       const { result } = renderHook(() => useResourceTemplate(resource), { wrapper });
@@ -126,5 +126,26 @@ describe("useResourceTemplate", () => {
 
     rerender({ r: { ...resource, templateVersion: "2.0.0" } as UserResource });
     await waitFor(() => expect(result.current.resourceTemplate.customActions).toHaveLength(1));
+  });
+
+  it("does not retry terminal template-load failures", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let templateCalls = 0;
+      mockApiCall.mockImplementation((path: string) => {
+        if (path.includes("workspace-services")) {
+          return Promise.resolve({ workspaceService: { id: "workspace-service", templateName: "service-template" } });
+        }
+        templateCalls += 1;
+        return Promise.reject({ status: 404 });
+      });
+      renderHook(() => useResourceTemplate(resource), { wrapper });
+      await waitFor(() => expect(templateCalls).toBe(1));
+
+      await vi.advanceTimersByTimeAsync(120000);
+      expect(templateCalls).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

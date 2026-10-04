@@ -10,6 +10,7 @@ import { UserResource } from "../models/userResource";
 import { Workspace } from "../models/workspace";
 import { WorkspaceService } from "../models/workspaceService";
 import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
+import { isRetryableApiError } from "../models/exceptions";
 
 const TEMPLATE_TTL_MS = 5 * 60 * 1000;
 const PARENT_TTL_MS = 60 * 1000;
@@ -136,7 +137,8 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
       })
       .catch((e) => {
         console.warn("Failed to load resource template", e);
-        if (cancelled) return;
+        // Only transient failures recover; terminal ones (e.g. 403/404) are not retried.
+        if (cancelled || !isRetryableApiError(e)) return;
         const delay = Math.min(RETRY_BASE_MS * 2 ** retryState.current.attempts, RETRY_MAX_MS);
         retryState.current.attempts += 1;
         retryTimer = setTimeout(() => setRetryCount((c) => c + 1), delay);
