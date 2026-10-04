@@ -19,11 +19,15 @@ interface ResourceBodyProps {
 }
 
 // Module-level so the role arrays keep a stable identity across renders (they are effect dependencies downstream).
-// Researchers can see details of their own user resources, but not of workspaces or workspace services.
+// Researchers get a simplified view: details of their own user resources, but not of workspaces or workspace services.
 const detailsRolesByResourceType = {
-  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
   [ResourceType.SharedService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-  [ResourceType.WorkspaceService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.WorkspaceService]: [
+    RoleName.TREAdmin,
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.AirlockManager,
+  ],
   [ResourceType.UserResource]: [
     WorkspaceRoleName.WorkspaceOwner,
     WorkspaceRoleName.WorkspaceResearcher,
