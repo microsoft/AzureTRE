@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DefaultButton, IButtonStyles, IconButton } from "@fluentui/react";
 import { ComponentAction, Resource, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -43,6 +43,17 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
   // Allow another request once the power state or operation lock changes.
   useEffect(() => setRequested(false), [powerState, props.componentAction]);
 
+  // The button is reused when a detail route switches resource; reset state that belongs to the previous one.
+  const resourceId = props.resource.id;
+  const currentResourceId = useRef(resourceId);
+  currentResourceId.current = resourceId;
+  useEffect(() => {
+    setConfirmStop(false);
+    setRequested(false);
+    setApiError(undefined);
+    setFailedAction(undefined);
+  }, [resourceId]);
+
   if (!hasVMPowerControl(props.resource, resourceTemplate.customActions)) return null;
   const startAction = findAction(resourceTemplate.customActions, "start") as TemplateAction;
   const stopAction = findAction(resourceTemplate.customActions, "stop") as TemplateAction;
@@ -58,12 +69,15 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
     !props.resource.isEnabled;
 
   const run = async (action: TemplateAction) => {
+    const invokedFor = props.resource.id;
     setRequested(true);
     setApiError(undefined);
     try {
       await invokeAction(props.resource, action.name);
+      if (currentResourceId.current !== invokedFor) return;
       setFailedAction(undefined);
     } catch (e) {
+      if (currentResourceId.current !== invokedFor) return;
       setRequested(false);
       const error = e as APIError;
       const verb = action.name.toLowerCase() === "stop" ? "stopping" : "starting";

@@ -97,6 +97,43 @@ describe("VMPowerButton", () => {
     expect(mockInvokeAction).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: "vm-1" }), "start");
   });
 
+  it("resets pending state and errors when the resource changes", async () => {
+    mockInvokeAction.mockRejectedValueOnce({ status: 503, userMessage: "API unavailable" });
+    const { rerender } = render(
+      <VMPowerButton resource={vm(VMPowerStates.Deallocated)} componentAction={ComponentAction.None} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(await screen.findByText("API unavailable")).toBeInTheDocument();
+
+    rerender(
+      <VMPowerButton
+        resource={vm(VMPowerStates.Deallocated, { id: "vm-2" } as Partial<Resource>)}
+        componentAction={ComponentAction.None}
+      />,
+    );
+    expect(screen.queryByText("API unavailable")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+  });
+
+  it("keeps the button usable after switching resource while a request is pending", async () => {
+    let resolve: () => void = () => undefined;
+    mockInvokeAction.mockImplementationOnce(() => new Promise<void>((r) => (resolve = r)));
+    const { rerender } = render(
+      <VMPowerButton resource={vm(VMPowerStates.Deallocated)} componentAction={ComponentAction.None} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    expect(screen.getByRole("button", { name: "Start" })).toBeDisabled();
+
+    rerender(
+      <VMPowerButton
+        resource={vm(VMPowerStates.Deallocated, { id: "vm-2" } as Partial<Resource>)}
+        componentAction={ComponentAction.None}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Start" })).toBeEnabled();
+    resolve();
+  });
+
   it("describes a failed stop correctly", async () => {
     mockInvokeAction.mockRejectedValueOnce({ status: 400 });
     render(<VMPowerButton resource={vm(VMPowerStates.Running)} componentAction={ComponentAction.None} />);

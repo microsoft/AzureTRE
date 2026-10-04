@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
 import { SecuredByRole } from "./SecuredByRole";
@@ -41,11 +41,26 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
 
   const [actionError, setActionError] = useState<{ error: APIError; actionName: string }>();
 
+  // The menu is reused when a detail route switches resource; drop dialogs and errors that belong to the previous one.
+  const resourceId = props.resource.id;
+  const currentResourceId = useRef(resourceId);
+  currentResourceId.current = resourceId;
+  useEffect(() => {
+    setShowDisable(false);
+    setShowDelete(false);
+    setShowCopyUrl(false);
+    setShowUpgrade(false);
+    setStopActionName("");
+    setActionError(undefined);
+  }, [resourceId]);
+
   const doAction = async (actionName: string) => {
+    const invokedFor = props.resource.id;
     setActionError(undefined);
     try {
       await invokeAction(props.resource, actionName);
     } catch (e) {
+      if (currentResourceId.current !== invokedFor) return;
       const error = e as APIError;
       error.userMessage = error.userMessage || `Error running ${getActionDisplayName(actionName)}`;
       setActionError({ error, actionName });

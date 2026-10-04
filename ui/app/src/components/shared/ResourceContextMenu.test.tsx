@@ -1,6 +1,6 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ResourceContextMenu } from "./ResourceContextMenu";
 import { ComponentAction, Resource, VMPowerStates } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
@@ -106,6 +106,44 @@ describe("ResourceContextMenu custom actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
     expect(mockInvokeAction).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears a previous resource's action error when the resource changes", async () => {
+    templateActions.current = [{ name: "resize", description: "Resize the VM" }];
+    mockInvokeAction.mockRejectedValueOnce({ status: 500 });
+    const props = { componentAction: ComponentAction.None, commandBar: true };
+    const { rerender } = render(
+      <ResourceContextMenu resource={resource({ resourceType: ResourceType.WorkspaceService })} {...props} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Resize" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    rerender(
+      <ResourceContextMenu
+        resource={resource({ id: "resource-2", resourceType: ResourceType.WorkspaceService })}
+        {...props}
+      />,
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("ignores a failure that arrives after switching resource", async () => {
+    templateActions.current = [{ name: "resize", description: "Resize the VM" }];
+    let reject: (e: unknown) => void = () => undefined;
+    mockInvokeAction.mockImplementationOnce(() => new Promise((_, r) => (reject = r)));
+    const props = { componentAction: ComponentAction.None, commandBar: true };
+    const { rerender } = render(
+      <ResourceContextMenu resource={resource({ resourceType: ResourceType.WorkspaceService })} {...props} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Resize" }));
+    rerender(
+      <ResourceContextMenu
+        resource={resource({ id: "resource-2", resourceType: ResourceType.WorkspaceService })}
+        {...props}
+      />,
+    );
+    await act(async () => reject({ status: 500 }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("keeps clicks on the action error from reaching a clickable parent card", async () => {
