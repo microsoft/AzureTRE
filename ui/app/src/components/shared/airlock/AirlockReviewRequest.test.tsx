@@ -1,7 +1,21 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "../../../test-utils";
+import { act, fireEvent, render, screen } from "../../../test-utils";
 import { AirlockReviewRequest } from "./AirlockReviewRequest";
+
+const mockApiCall = vi.hoisted(() => vi.fn());
+vi.mock("../../../hooks/useAuthApiCall", () => ({
+  useAuthApiCall: () => mockApiCall,
+  HttpMethod: { Get: "GET", Post: "POST" },
+  ResultType: { JSON: "JSON" },
+}));
+vi.mock("../../../hooks/useComponentManager", () => ({ useComponentManager: () => ({}) }));
+const msal = vi.hoisted(() => ({ account: { localAccountId: "reviewer.tenant" }, accounts: [{}] }));
+vi.mock("@azure/msal-react", () => ({
+  MsalProvider: ({ children }: any) => children,
+  useMsal: () => ({ accounts: msal.accounts }),
+  useAccount: () => msal.account,
+}));
 
 describe("AirlockReviewRequest", () => {
   it("separates the review reason from the approve/reject decision", () => {
@@ -46,5 +60,47 @@ describe("AirlockReviewRequest", () => {
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
     expect(screen.queryByText("Reason for A")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Proceed to review" })).toBeInTheDocument();
+  });
+
+  it("does not let a previous request's slow review VM lookup appear on the next request", async () => {
+    let resolveA: (v: unknown) => void = () => undefined;
+    mockApiCall.mockImplementation(() => new Promise((r) => (resolveA = r)));
+    const workspaceContext = {
+      workspace: { id: "ws", properties: { airlock_review_config: { import: {} } } },
+      workspaceApplicationIdURI: "scope",
+      roles: [],
+      costs: [],
+      setCosts: vi.fn(),
+      setRoles: vi.fn(),
+      setWorkspace: vi.fn(),
+    };
+    const props = { onUpdateRequest: vi.fn(), onReviewRequest: vi.fn(), onClose: vi.fn() };
+    const requestA = {
+      id: "a",
+      type: "import",
+      reviewUserResources: { reviewer: { workspaceId: "ws", workspaceServiceId: "svc", userResourceId: "vm-a" } },
+    } as any;
+    const requestB = { id: "b", type: "import", reviewUserResources: {} } as any;
+
+    const { rerender } = render(<AirlockReviewRequest request={requestA} {...props} />, {
+      children: null,
+      workspaceContext: workspaceContext as any,
+    });
+    rerender(<AirlockReviewRequest request={requestB} {...props} />);
+    expect(await screen.findByText("Not created")).toBeInTheDocument();
+
+    await act(async () =>
+      resolveA({
+        userResource: {
+          id: "vm-a",
+          deploymentStatus: "deployed",
+          isEnabled: true,
+          azureStatus: { powerState: "VM running" },
+          properties: { connection_uri: "https://vm-a" },
+        },
+      }),
+    );
+    expect(screen.getByText("Not created")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View data" })).not.toBeInTheDocument();
   });
 });

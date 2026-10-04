@@ -19,7 +19,7 @@ import {
   Stack,
   TextField,
 } from "@fluentui/react";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest } from "../../../models/airlock";
@@ -74,7 +74,15 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // The component is reused across :requestId changes; start each request's review afresh.
   const requestId = props.request?.id;
+  const currentRequestId = useRef(requestId);
+  currentRequestId.current = requestId;
   useEffect(() => {
+    setReviewResource(undefined);
+    setReviewWorkspaceScope(undefined);
+    setReviewResourceStatus(undefined);
+    setReviewResourceError(false);
+    setOtherReviewers(undefined);
+    setApiError({} as APIError);
     setReviewExplanation("");
     setReviewing(false);
     setReviewError(false);
@@ -99,6 +107,8 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Get the review user resource if present in the airlock request
   useEffect(() => {
+    // Ignore lookups that finish after the request (or its inputs) changed.
+    let active = true;
     const getReviewUserResource = async (userId: string) => {
       setReviewResourceError(false);
       try {
@@ -112,6 +122,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         if (reviewWorkspaceId !== workspaceCtx.workspace.id) {
           scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${reviewWorkspaceId}/scopeid`, HttpMethod.Get))
             .workspaceAuth.scopeId;
+          if (!active) return;
           if (!scopeId) {
             throw Error("Unable to get scope_id from review resource workspace - authentication not set up.");
           }
@@ -128,8 +139,10 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
             scopeId,
           )
         ).userResource;
+        if (!active) return;
         setReviewResource(resource);
       } catch (err: any) {
+        if (!active) return;
         err.userMessage = "Error retrieving resource";
         setApiError(err);
         setReviewResourceError(true);
@@ -145,6 +158,9 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       const otherReviewers = Object.keys(request.reviewUserResources).filter((id) => id !== userId);
       setOtherReviewers(otherReviewers);
     }
+    return () => {
+      active = false;
+    };
   }, [
     apiCall,
     request,
@@ -194,6 +210,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Create a review resource
   const createReviewResource = useCallback(async () => {
+    const createdFor = request?.id;
     setReviewResourceError(false);
     setReviewResourceStatus("creating");
     try {
@@ -205,6 +222,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       dispatch(addUpdateOperation(response.operation));
       props.onUpdateRequest(response.airlockRequest);
     } catch (err: any) {
+      if (currentRequestId.current !== createdFor) return;
       err.userMessage = "Error creating review resource";
       setApiError(err);
       setReviewResourceError(true);
@@ -231,11 +249,12 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
           );
           props.onReviewRequest(response.airlockRequest);
         } catch (err: any) {
+          if (currentRequestId.current !== request.id) return;
           err.userMessage = "Error reviewing airlock request";
           setApiError(err);
           setReviewError(true);
         }
-        setReviewing(false);
+        if (currentRequestId.current === request.id) setReviewing(false);
       }
     },
     [apiCall, request, workspaceCtx.workspaceApplicationIdURI, reviewExplanation, props],
