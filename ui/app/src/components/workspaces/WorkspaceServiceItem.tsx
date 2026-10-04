@@ -162,7 +162,7 @@ export const WorkspaceServiceItem: React.FunctionComponent<WorkspaceServiceItemP
     };
   }, [apiCall, servicePath, workspaceId, workspaceScopeId, workspaceServiceId, loadKey]);
 
-  // Owner display names. Only Workspace Owners can list workspace users.
+  // Owner display names. Only owners see other users' resources, so only they need the user list.
   useEffect(() => {
     if (!workspaceId || !isWorkspaceOwner) {
       setUsersCache((prev) => (prev.size ? new Map() : prev));

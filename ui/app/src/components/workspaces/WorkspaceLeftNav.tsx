@@ -92,8 +92,8 @@ export const WorkspaceLeftNav: React.FunctionComponent<WorkspaceLeftNavProps> = 
         }
       }
 
-      // Only add Users link if workspace is fully deployed
-      if (successStates.includes(workspaceCtx.workspace.deploymentStatus) && canManageWorkspace) {
+      // Only add Users link if workspace is fully deployed; every workspace role and TRE Admins can list users.
+      if (successStates.includes(workspaceCtx.workspace.deploymentStatus)) {
         navLinks[0].links.push({
           name: "Users",
           key: `/${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.Users}`,

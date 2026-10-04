@@ -108,6 +108,26 @@ describe("ResourceContextMenu custom actions", () => {
     expect(mockInvokeAction).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps clicks on the action error from reaching a clickable parent card", async () => {
+    templateActions.current = [{ name: "resize", description: "Resize the VM" }];
+    mockInvokeAction.mockRejectedValueOnce({ status: 500 }).mockRejectedValueOnce({ status: 500 });
+    const onCardClick = vi.fn();
+    render(
+      <div onClick={onCardClick}>
+        <ResourceContextMenu
+          resource={resource({ resourceType: ResourceType.WorkspaceService })}
+          componentAction={ComponentAction.None}
+          commandBar
+        />
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Resize" }));
+    onCardClick.mockClear();
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    expect(onCardClick).not.toHaveBeenCalled();
+  });
+
   it("asks for VM confirmation before stopping a virtual machine", () => {
     render(
       <ResourceContextMenu

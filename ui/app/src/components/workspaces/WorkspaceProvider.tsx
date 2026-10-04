@@ -304,7 +304,7 @@ export const WorkspaceProvider: React.FunctionComponent = () => {
                         <Route path="requests/*" element={<Airlock />} />
                       </>
                     )}
-                    {canManageWorkspace && <Route path="users/*" element={<WorkspaceUsers />} />}
+                    <Route path="users/*" element={<WorkspaceUsers />} />
                   </Routes>
                 </Stack.Item>
               </Stack>

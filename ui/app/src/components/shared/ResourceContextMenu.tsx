@@ -222,7 +222,12 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
       {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
       {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
-      {actionError && <ExceptionLayout e={actionError.error} onRetry={() => doAction(actionError.actionName)} />}
+      {actionError && (
+        // Keep clicks on the error bar from reaching a clickable parent card.
+        <span onClick={(e) => e.stopPropagation()}>
+          <ExceptionLayout e={actionError.error} onRetry={() => doAction(actionError.actionName)} />
+        </span>
+      )}
       {stopActionName && (
         <ConfirmStopVM
           onDismiss={() => setStopActionName("")}
