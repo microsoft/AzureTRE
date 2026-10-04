@@ -148,4 +148,10 @@ describe("useResourceTemplate", () => {
       vi.useRealTimers();
     }
   });
+
+  it("returns the current workspace as the parent of a workspace service", () => {
+    const service = { id: "svc", resourceType: ResourceType.WorkspaceService, templateName: "svc-template" } as any;
+    const { result } = renderHook(() => useResourceTemplate(service), { wrapper });
+    expect(result.current.parentResource).toBe(workspaceContext.workspace);
+  });
 });

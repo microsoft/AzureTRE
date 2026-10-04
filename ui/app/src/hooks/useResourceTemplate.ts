@@ -165,7 +165,8 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
     resourceType !== ResourceType.UserResource || (!!parentResource.id && loadedParentServiceId === parentServiceId);
   return {
     resourceTemplate: loadedTemplateKey === templateKey ? resourceTemplate : ({} as ResourceTemplate),
-    parentResource,
+    // A workspace service's parent is the current workspace; user resources load their parent service above.
+    parentResource: resourceType === ResourceType.WorkspaceService ? workspaceCtx.workspace : parentResource,
     roles: parentServiceLoaded ? roles : [],
   };
 };
