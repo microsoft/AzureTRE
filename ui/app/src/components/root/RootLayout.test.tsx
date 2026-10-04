@@ -138,4 +138,45 @@ describe("RootLayout costs", () => {
       vi.useRealTimers();
     }
   });
+
+  it("retries a transient cost failure without retry-after instead of marking costs unsupported", async () => {
+    vi.useFakeTimers();
+    try {
+      const costs = { costs: [], loadingState: LoadingState.Loading, setCosts: vi.fn(), setLoadingState: vi.fn() };
+      const unavailable = new APIError();
+      unavailable.status = 503;
+      unavailable.message = "Failed to fetch";
+      apiCall.mockImplementation(async (endpoint: string) => {
+        if (endpoint === "costs") {
+          if (apiCall.mock.calls.filter((c) => c[0] === "costs").length === 1) throw unavailable;
+          return { workspaces: [], shared_services: [] };
+        }
+        return { workspaces: [] };
+      });
+
+      renderAsAdmin(costs);
+      await act(async () => {});
+      expect(costs.setLoadingState).not.toHaveBeenCalledWith(LoadingState.NotSupported);
+
+      await act(async () => vi.advanceTimersByTime(5000));
+      expect(costs.setLoadingState).toHaveBeenLastCalledWith(LoadingState.Ok);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("only marks costs unsupported for a 404", async () => {
+    const costs = { costs: [], loadingState: LoadingState.Loading, setCosts: vi.fn(), setLoadingState: vi.fn() };
+    const forbidden = new APIError();
+    forbidden.status = 403;
+    apiCall.mockImplementation(async (endpoint: string) => {
+      if (endpoint === "costs") throw forbidden;
+      return { workspaces: [] };
+    });
+
+    renderAsAdmin(costs);
+    await act(async () => {});
+    expect(costs.setLoadingState).toHaveBeenLastCalledWith(LoadingState.Error);
+    expect(costs.setLoadingState).not.toHaveBeenCalledWith(LoadingState.NotSupported);
+  });
 });

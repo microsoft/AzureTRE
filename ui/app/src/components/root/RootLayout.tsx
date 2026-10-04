@@ -20,6 +20,10 @@ import { CostsContext } from "../../contexts/CostsContext";
 import config from "../../config.json";
 import { useRefresh } from "../../hooks/useRefresh";
 
+const COST_MAX_RETRIES = 5;
+const COST_RETRY_BASE_MS = 5 * 1000;
+const COST_RETRY_MAX_MS = 60 * 1000;
+
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
@@ -55,10 +59,11 @@ export const RootLayout: React.FunctionComponent = () => {
   useEffect(() => {
     let active = true;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
-    const markNotSupported = () => {
+    let attempts = 0;
+    const setCostState = (state: LoadingState) => {
       costsWriteCtx.current.setCosts([]);
-      setLoadingCostState(LoadingState.NotSupported);
-      costsWriteCtx.current.setLoadingState(LoadingState.NotSupported);
+      setLoadingCostState(state);
+      costsWriteCtx.current.setLoadingState(state);
     };
     const getCosts = async () => {
       if (!active) return;
@@ -77,23 +82,28 @@ export const RootLayout: React.FunctionComponent = () => {
         }
       } catch (e: any) {
         if (!active) return;
-        if (e instanceof APIError && (e.status === 429 || e.status === 503)) {
+        if (e?.status === 404 /*subscription not supported*/) {
+          config.debug && console.warn(e.message);
+          setCostState(LoadingState.NotSupported);
+          return;
+        }
+        if (isRetryableApiError(e) && attempts < COST_MAX_RETRIES) {
           let retryAfter = 0;
           try {
             retryAfter = Number(e.message && JSON.parse(e.message).error?.["retry-after"]);
           } catch {
             retryAfter = 0;
           }
-          if (retryAfter > 0) {
-            // Stay in the loading state while the server-requested retry is pending.
-            config.debug && console.info("retrying cost request after " + retryAfter + " seconds");
-            retryTimer = setTimeout(getCosts, retryAfter * 1000);
-            return;
-          }
-        } else if (e instanceof APIError && e.status === 404 /*subscription not supported*/) {
-          config.debug && console.warn(e.message);
+          // Honour the server's retry-after when given, otherwise back off; stay loading while waiting.
+          const delayMs =
+            retryAfter > 0 ? retryAfter * 1000 : Math.min(COST_RETRY_BASE_MS * 2 ** attempts, COST_RETRY_MAX_MS);
+          attempts += 1;
+          config.debug && console.info(`retrying cost request after ${delayMs / 1000} seconds`);
+          retryTimer = setTimeout(getCosts, delayMs);
+          return;
         }
-        markNotSupported();
+        // Other failures (or retries exhausted) leave costs unavailable for now, not permanently unsupported.
+        setCostState(LoadingState.Error);
       }
     };
 

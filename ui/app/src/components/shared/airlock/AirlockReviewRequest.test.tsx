@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "../../../test-utils";
+import { act, fireEvent, render, screen, waitFor } from "../../../test-utils";
 import { AirlockReviewRequest } from "./AirlockReviewRequest";
 
 const mockApiCall = vi.hoisted(() => vi.fn());
@@ -102,5 +102,28 @@ describe("AirlockReviewRequest", () => {
     );
     expect(screen.getByText("Not created")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "View data" })).not.toBeInTheDocument();
+  });
+
+  it("does not close the current review when an earlier request's review succeeds late", async () => {
+    let resolveReview: (v: unknown) => void = () => undefined;
+    mockApiCall.mockImplementation((path: string) =>
+      path.endsWith("/review") ? new Promise((r) => (resolveReview = r)) : Promise.resolve({}),
+    );
+    const props = { onUpdateRequest: vi.fn(), onReviewRequest: vi.fn(), onClose: vi.fn() };
+    const request = (id: string) => ({ id, workspaceId: "ws", title: id, reviewUserResources: {} }) as any;
+    const { rerender } = render(<AirlockReviewRequest request={request("a")} {...props} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Proceed to review" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Reason for decision" }), { target: { value: "OK" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to decision" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Yes, Approve" }));
+    await waitFor(() => expect(mockApiCall.mock.calls.map((c) => c[0])).toContain("workspaces/ws/requests/a/review"));
+
+    rerender(<AirlockReviewRequest request={request("b")} {...props} />);
+    await act(async () => resolveReview({ airlockRequest: { id: "a" } }));
+
+    expect(props.onReviewRequest).not.toHaveBeenCalled();
+    expect(props.onUpdateRequest).toHaveBeenCalledWith({ id: "a" });
   });
 });

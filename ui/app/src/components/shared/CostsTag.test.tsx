@@ -158,6 +158,20 @@ describe("CostsTag Component", () => {
     });
   });
 
+  it("does not let the TRE-wide unsupported state override workspace costs", async () => {
+    const workspaceCosts = [{ id: "test-resource-id", name: "Test Resource", costs: [{ cost: 1, currency: "USD" }] }];
+    render(
+      <CostsContext.Provider value={{ ...createMockCostsContext([]), loadingState: LoadingState.NotSupported } as any}>
+        <WorkspaceContext.Provider value={createMockWorkspaceContext(workspaceCosts) as any}>
+          <CostsTag resourceId="test-resource-id" />
+        </WorkspaceContext.Provider>
+      </CostsContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText("$1.00")).toBeInTheDocument());
+    expect(screen.getByTestId("tooltip")).toHaveAttribute("title", "Month-to-date costs");
+  });
+
   it("displays formatted cost when available in costs context", async () => {
     const costsContextCosts = [
       {

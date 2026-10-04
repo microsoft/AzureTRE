@@ -247,6 +247,11 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
             workspaceCtx.workspaceApplicationIdURI,
             review,
           );
+          // If the user has moved on to another request, just update the list rather than closing their current review.
+          if (currentRequestId.current !== request.id) {
+            props.onUpdateRequest(response.airlockRequest);
+            return;
+          }
           props.onReviewRequest(response.airlockRequest);
         } catch (err: any) {
           if (currentRequestId.current !== request.id) return;
