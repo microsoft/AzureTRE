@@ -3,6 +3,11 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RootLayout } from "./RootLayout";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
+import { CostsContext } from "../../contexts/CostsContext";
+import { RoleName } from "../../models/roleNames";
+import { LoadingState } from "../../models/loadingState";
+import { APIError } from "../../models/exceptions";
 
 const apiCall = vi.hoisted(() => vi.fn());
 vi.mock("../../hooks/useAuthApiCall", () => ({
@@ -90,5 +95,47 @@ describe("RootLayout refresh", () => {
     apiCall.mockRejectedValueOnce({ status: 404 });
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Refresh" })));
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+});
+
+describe("RootLayout costs", () => {
+  beforeEach(() => apiCall.mockReset());
+
+  const renderAsAdmin = (costs: any) =>
+    render(
+      <AppRolesContext.Provider value={{ roles: [RoleName.TREAdmin], setAppRoles: vi.fn() }}>
+        <CostsContext.Provider value={costs}>
+          <MemoryRouter>
+            <RootLayout />
+          </MemoryRouter>
+        </CostsContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
+  it("keeps costs loading while a server-requested retry is pending, then loads them", async () => {
+    vi.useFakeTimers();
+    try {
+      const costs = { costs: [], loadingState: LoadingState.Loading, setCosts: vi.fn(), setLoadingState: vi.fn() };
+      const throttled = new APIError();
+      throttled.status = 429;
+      throttled.message = JSON.stringify({ error: { "retry-after": 5 } });
+      apiCall.mockImplementation(async (endpoint: string) => {
+        if (endpoint === "costs") {
+          if (apiCall.mock.calls.filter((c) => c[0] === "costs").length === 1) throw throttled;
+          return { workspaces: [], shared_services: [] };
+        }
+        return { workspaces: [] };
+      });
+
+      renderAsAdmin(costs);
+      await act(async () => {});
+      expect(costs.setLoadingState).not.toHaveBeenCalledWith(LoadingState.NotSupported);
+
+      await act(async () => vi.advanceTimersByTime(5000));
+      expect(costs.setLoadingState).toHaveBeenLastCalledWith(LoadingState.Ok);
+      expect(costs.setLoadingState).not.toHaveBeenCalledWith(LoadingState.NotSupported);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
