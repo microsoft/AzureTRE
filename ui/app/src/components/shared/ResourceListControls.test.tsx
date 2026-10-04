@@ -32,6 +32,9 @@ describe("useResourceListFilter", () => {
 
     act(() => result.current.controlsProps.onSearchChange("alpha"));
     expect(result.current.visibleResources.map((r) => r.id)).toEqual(["c"]);
+
+    act(() => result.current.controlsProps.onSearchChange("deployment failed"));
+    expect(result.current.visibleResources.map((r) => r.id)).toEqual(["a"]);
   });
 
   it("matches names anywhere but IDs only from the start", () => {

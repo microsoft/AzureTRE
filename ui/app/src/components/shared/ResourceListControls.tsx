@@ -98,6 +98,8 @@ export const useResourceListFilter = <T extends Resource>(
               r.properties?.description,
               r.templateName,
               resourceStatus(r),
+              // Status is displayed with spaces (e.g. "deployment failed").
+              resourceStatus(r).replace(/_/g, " "),
               ...(extraSearchText ? extraSearchText(r) : []),
             ]
               .filter(Boolean)

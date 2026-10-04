@@ -37,7 +37,7 @@ You may have data pre-provisioned into your workspace, or you may import data vi
 When you are no longer using a VM, it is good practice to stop it so that the VM is deallocated and no unnecessary costs will be applied.
 To do this, navigate to the UI and find your VM.
 
-1. Select **Stop** on the virtual machine's card (or choose Actions, and then Stop, from the card's **...** menu) and confirm. Stop powers off the VM; it remains enabled in TRE and can be started again with **Start**.
+1. Select **Stop** on the virtual machine's card and confirm. Stop powers off the VM; it remains enabled in TRE and can be started again with **Start**.
 2. It will take a few minutes to take effect and the card should then display 'VM deallocated'.
 
 To start it again, select **Start** on the card.
