@@ -27,7 +27,10 @@ export const UserMenu: React.FunctionComponent = () => {
       {
         key: "user",
         itemType: ContextualMenuItemType.Header,
-        text: account?.username ? `${account?.name} (${account.username})` : account?.name,
+        text:
+          account?.name && account?.username
+            ? `${account.name} (${account.username})`
+            : account?.name || account?.username,
       },
       {
         key: "access",

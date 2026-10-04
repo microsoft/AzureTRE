@@ -81,4 +81,28 @@ describe("useResourceTemplate", () => {
     await waitFor(() => expect(mockApiCall).toHaveBeenCalledWith(expect.stringContaining("other-template"), "GET"));
     expect(result.current.resourceTemplate.customActions).toBeUndefined();
   });
+
+  it("retries a failed template load so actions recover without remounting", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      let templateCalls = 0;
+      mockApiCall.mockImplementation((path: string) => {
+        if (path.includes("workspace-services")) {
+          return Promise.resolve({ workspaceService: { id: "workspace-service", templateName: "service-template" } });
+        }
+        templateCalls += 1;
+        return templateCalls === 1
+          ? Promise.reject(new Error("transient"))
+          : Promise.resolve({ customActions: [{ name: "stop", description: "" }] });
+      });
+      const { result } = renderHook(() => useResourceTemplate(resource), { wrapper });
+      await waitFor(() => expect(templateCalls).toBe(1));
+      expect(result.current.resourceTemplate.customActions).toBeUndefined();
+
+      await vi.advanceTimersByTimeAsync(5000);
+      await waitFor(() => expect(result.current.resourceTemplate.customActions).toHaveLength(1));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { WorkspaceContext } from "../contexts/WorkspaceContext";
 import { AppRolesContext } from "../contexts/AppRolesContext";
 import { ApiEndpoint } from "../models/apiEndpoints";
@@ -13,6 +13,8 @@ import { HttpMethod, useAuthApiCall } from "./useAuthApiCall";
 
 const TEMPLATE_TTL_MS = 5 * 60 * 1000;
 const PARENT_TTL_MS = 60 * 1000;
+const RETRY_BASE_MS = 5 * 1000;
+const RETRY_MAX_MS = 60 * 1000;
 
 // Shared across cards so a list of N resources from the same template doesn't make N identical requests.
 const requestCache = new Map<string, { expires: number; promise: Promise<any> }>();
@@ -73,6 +75,10 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
   const hasRole = !!userRoles && roles.some((r) => userRoles.includes(r));
 
   const templateKey = `${resourceType}|${resourceId}|${templateName}|${parentServiceId}`;
+  // Transient load failures are retried with backoff so actions recover without remounting.
+  const [retryCount, setRetryCount] = useState(0);
+  const retryState = useRef({ key: templateKey, attempts: 0 });
+  if (retryState.current.key !== templateKey) retryState.current = { key: templateKey, attempts: 0 };
 
   useEffect(() => {
     setResourceTemplate({} as ResourceTemplate);
@@ -119,9 +125,21 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
       }
     };
 
-    getTemplate().catch((e) => console.warn("Failed to load resource template", e));
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    getTemplate()
+      .then(() => {
+        if (!cancelled) retryState.current.attempts = 0;
+      })
+      .catch((e) => {
+        console.warn("Failed to load resource template", e);
+        if (cancelled) return;
+        const delay = Math.min(RETRY_BASE_MS * 2 ** retryState.current.attempts, RETRY_MAX_MS);
+        retryState.current.attempts += 1;
+        retryTimer = setTimeout(() => setRetryCount((c) => c + 1), delay);
+      });
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
   }, [
     apiCall,
@@ -133,6 +151,7 @@ export const useResourceTemplate = (resource: Resource | undefined) => {
     workspaceScopeId,
     hasRole,
     templateKey,
+    retryCount,
   ]);
 
   const parentServiceLoaded =

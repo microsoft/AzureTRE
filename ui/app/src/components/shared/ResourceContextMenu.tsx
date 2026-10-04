@@ -16,6 +16,8 @@ import { CreateUpdateResourceContext } from "../../contexts/CreateUpdateResource
 import { actionsDisabledStates } from "../../models/operation";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
 import { openExternalUrl } from "../../utils/openExternalUrl";
+import { APIError } from "../../models/exceptions";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 interface ResourceContextMenuProps {
   resource: Resource;
@@ -37,7 +39,18 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   const { resourceTemplate, parentResource, roles } = useResourceTemplate(props.resource);
   const invokeAction = useInvokeResourceAction();
 
-  const doAction = (actionName: string) => invokeAction(props.resource, actionName);
+  const [actionError, setActionError] = useState<{ error: APIError; actionName: string }>();
+
+  const doAction = async (actionName: string) => {
+    setActionError(undefined);
+    try {
+      await invokeAction(props.resource, actionName);
+    } catch (e) {
+      const error = e as APIError;
+      error.userMessage = error.userMessage || `Error running ${getActionDisplayName(actionName)}`;
+      setActionError({ error, actionName });
+    }
+  };
 
   // context menu
   let menuItems: Array<any> = [];
@@ -209,6 +222,7 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
       {showDelete && <ConfirmDeleteResource onDismiss={() => setShowDelete(false)} resource={props.resource} />}
       {showCopyUrl && <ConfirmCopyUrlToClipboard onDismiss={() => setShowCopyUrl(false)} resource={props.resource} />}
       {showUpgrade && <ConfirmUpgradeResource onDismiss={() => setShowUpgrade(false)} resource={props.resource} />}
+      {actionError && <ExceptionLayout e={actionError.error} onRetry={() => doAction(actionError.actionName)} />}
       {stopActionName && (
         <ConfirmStopVM
           onDismiss={() => setStopActionName("")}

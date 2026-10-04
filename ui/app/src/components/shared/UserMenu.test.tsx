@@ -192,6 +192,13 @@ describe("UserMenu Component", () => {
     expect(screen.getByTestId("menu-item-user")).toHaveTextContent("Test User (test@example.com)");
   });
 
+  it("falls back to the username when the account has no display name", () => {
+    mockCurrentAccount = { ...mockAccount, name: undefined } as any;
+    render(<UserMenu />);
+
+    expect(screen.getByTestId("menu-item-user")).toHaveTextContent(/^test@example\.com$/);
+  });
+
   it("opens the Your access panel with the token roles", () => {
     renderWithRoles(["TREUser"], ["WorkspaceOwner"], "workspace-id");
 

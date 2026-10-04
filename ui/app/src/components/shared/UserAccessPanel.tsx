@@ -140,7 +140,7 @@ export const UserAccessPanel: React.FunctionComponent<UserAccessPanelProps> = (p
           {props.workspaceRoles.length === 0 && (
             <MessageBar messageBarType={MessageBarType.warning} isMultiline styles={{ root: { marginTop: 8 } }}>
               {props.coreRoles.includes(RoleName.TREAdmin)
-                ? "No workspace role. You are viewing this workspace as a TRE Administrator; workspace-level actions require a workspace role."
+                ? "No workspace role. You are viewing this workspace as a TRE Administrator; some workspace actions require a workspace role."
                 : "No workspace role assigned."}
             </MessageBar>
           )}
