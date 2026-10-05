@@ -2,6 +2,7 @@ import logging
 from httpx import AsyncClient, Timeout
 from typing import Tuple
 from e2e_tests.helpers import get_auth_header, get_full_endpoint, get_token
+from e2e_tests.token_provider import TokenProvider
 
 LOGGER = logging.getLogger(__name__)
 TIMEOUT = Timeout(10, read=30)
@@ -32,7 +33,7 @@ async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
     return f"api://{workspace['properties']['scope_id'].replace('api://', '')}"
 
 
-async def get_workspace_auth_details(admin_token, workspace_id, verify) -> Tuple[str, str]:
+async def get_workspace_auth_details(admin_token, workspace_id, verify) -> Tuple[TokenProvider, str]:
     async with AsyncClient(verify=verify) as client:
         auth_headers = get_auth_header(admin_token)
         scope_uri = await get_identifier_uri(client, workspace_id, auth_headers)
