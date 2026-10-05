@@ -85,7 +85,7 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
-    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    @patch("api.routes.shared_services.enrich_resources_with_available_upgrades", return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services_for_user(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
@@ -129,7 +129,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
-    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    @patch("api.routes.shared_services.enrich_resources_with_available_upgrades", return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services_for_admin_user(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services

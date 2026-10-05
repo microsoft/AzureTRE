@@ -36,7 +36,7 @@ from services.authentication import get_aad_service, extract_auth_information
 from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
-from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
+from .resource_helpers import cascaded_update_resource, delete_validation, enrich_resource_with_available_upgrades, enrich_resources_with_available_upgrades, get_identity_role_assignments, save_and_deploy_resource, construct_location_header, send_uninstall_message, \
     send_custom_action_message, send_resource_request_message, update_user_resource
 from models.domain.request_action import RequestAction
 from models.domain.operation import Status
@@ -64,7 +64,7 @@ async def retrieve_users_active_workspaces(user=Depends(require_tre_user_or_admi
 
     if "TREAdmin" in user.roles:
         workspaces = await workspace_repo.get_active_workspaces()
-        await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace, resource_template_repo) for workspace in workspaces])
+        await enrich_resources_with_available_upgrades(workspaces, resource_template_repo)
         return WorkspacesInList(workspaces=workspaces)
 
     workspaces = await workspace_repo.get_active_workspaces()
@@ -80,7 +80,7 @@ async def retrieve_users_active_workspaces(user=Depends(require_tre_user_or_admi
         except AuthConfigValidationError:
             return WorkspaceRole.NoRole
     user_workspaces = [workspace for workspace in workspaces if _safe_get_workspace_role(user, workspace, user_role_assignments) != WorkspaceRole.NoRole]
-    await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace, resource_template_repo) for workspace in user_workspaces])
+    await enrich_resources_with_available_upgrades(user_workspaces, resource_template_repo)
     return WorkspacesInList(workspaces=user_workspaces)
 
 
@@ -287,7 +287,7 @@ async def retrieve_workspace_history_by_workspace_id(workspace=Depends(get_works
 @workspace_services_workspace_router.get("/workspaces/{workspace_id}/workspace-services", response_model=WorkspaceServicesInList, name=strings.API_GET_ALL_WORKSPACE_SERVICES, dependencies=[Depends(require_workspace_owner_or_researcher_or_airlock_manager)])
 async def retrieve_users_active_workspace_services(workspace=Depends(get_workspace_by_id_from_path), workspace_services_repo=Depends(get_repository(WorkspaceServiceRepository)), resource_template_repo=Depends(get_repository(ResourceTemplateRepository))) -> WorkspaceServicesInList:
     workspace_services = await workspace_services_repo.get_active_workspace_services_for_workspace(workspace.id)
-    await asyncio.gather(*[enrich_resource_with_available_upgrades(workspace_service, resource_template_repo) for workspace_service in workspace_services])
+    await enrich_resources_with_available_upgrades(workspace_services, resource_template_repo)
     return WorkspaceServicesInList(workspaceServices=workspace_services)
 
 
@@ -433,11 +433,12 @@ async def retrieve_user_resources_for_workspace_service(
     if ("WorkspaceResearcher" in user.roles or "AirlockManager" in user.roles) and "WorkspaceOwner" not in user.roles:
         user_resources = [resource for resource in user_resources if resource.ownerId == user.id]
 
-    for user_resource in user_resources:
-        if 'azure_resource_id' in user_resource.properties:
-            user_resource.azureStatus = get_azure_resource_status(user_resource.properties['azure_resource_id'])
+    resources_with_status = [resource for resource in user_resources if 'azure_resource_id' in resource.properties]
+    statuses = await asyncio.gather(*[asyncio.to_thread(get_azure_resource_status, resource.properties['azure_resource_id']) for resource in resources_with_status])
+    for user_resource, azure_status in zip(resources_with_status, statuses):
+        user_resource.azureStatus = azure_status
 
-    await asyncio.gather(*[enrich_resource_with_available_upgrades(user_resource, resource_template_repo) for user_resource in user_resources])
+    await enrich_resources_with_available_upgrades(user_resources, resource_template_repo)
 
     return UserResourcesInList(userResources=user_resources)
 
