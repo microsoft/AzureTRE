@@ -38,15 +38,23 @@ const detailsRolesByResourceType = {
 const operationsRolesByResourceType = {
   [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
   [ResourceType.SharedService]: [RoleName.TREAdmin],
-  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-  [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
 };
 
 const historyRolesByResourceType = {
   [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
   [ResourceType.SharedService]: [RoleName.TREAdmin],
-  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-  [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
 };
 
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {

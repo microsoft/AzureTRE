@@ -280,6 +280,22 @@ describe("ResourceBody Component", () => {
     },
   );
 
+  it.each([ResourceType.WorkspaceService, ResourceType.UserResource])(
+    "shows History and Operations of a %s to airlock managers",
+    (resourceType) => {
+      render(
+        <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+          <WorkspaceContext.Provider value={{ ...mockWorkspaceContext, roles: [WorkspaceRoleName.AirlockManager] }}>
+            <ResourceBody resource={{ ...mockResource, resourceType }} />
+          </WorkspaceContext.Provider>
+        </AppRolesContext.Provider>,
+      );
+
+      const headers = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+      expect(headers).toEqual(expect.arrayContaining(["History", "Operations"]));
+    },
+  );
+
   it("handles user resource type", () => {
     const userResource = {
       ...mockResource,
