@@ -1,0 +1,263 @@
+"""Check ownership, activity and state-preservation gates for PR lease recovery."""
+
+from copy import deepcopy
+import importlib.util
+import io
+import os
+from pathlib import Path
+import subprocess
+import unittest
+from unittest.mock import patch
+import urllib.error
+
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/recover_bootstrap_lease.py"
+SPEC = importlib.util.spec_from_file_location("recover_bootstrap_lease", SCRIPT)
+recovery = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(recovery)
+
+ENV = {
+    "CI_BOOTSTRAP_LEASE_RECOVERY": "true", "GITHUB_ACTIONS": "true", "CI_RECOVERY_PR_NUMBER": "5092",
+    "GITHUB_REPOSITORY": "microsoft/AzureTRE", "GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "1",
+    "TF_VAR_ci_git_ref": "refs/pull/5092/merge", "TF_VAR_mgmt_resource_group_name": "rg-trea66984da-mgmt",
+    "TF_VAR_mgmt_storage_account_name": "trea66984damgmt", "TF_VAR_terraform_state_container_name": "tfstate",
+    "ARM_SUBSCRIPTION_ID": "test-subscription",
+}
+ORPHAN = {
+    "name": "bootstrap.tfstate", "metadata": {},
+    "properties": {"contentLength": 0, "blobType": "BlockBlob", "etag": '"test-etag"', "lastModified": "2026-10-05T08:35:23Z",
+                   "lease": {"duration": "infinite", "state": "leased", "status": "locked"}},
+}
+
+
+class RecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.env = patch.dict(os.environ, ENV, clear=True)
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.ctx = recovery.context()
+        self.state = deepcopy(ORPHAN)
+        self.calls = []
+        self.activity = []
+        self.exists = True
+        self.group_tag = self.ctx["ref"]
+        self.group_id = "/subscriptions/test-subscription/resourceGroups/rg-trea66984da-mgmt"
+        self.account_id = self.group_id + "/providers/Microsoft.Storage/storageAccounts/trea66984damgmt"
+        self.status_data = {}
+        self.after_break = None
+        self.break_error = None
+        self.group_reads = 0
+        self.change_on_second_group_read = None
+        self.show_reads = 0
+        self.change_on_second_show = None
+        self.current = {"id": 123, "run_attempt": 1, "status": "in_progress", "event": "issue_comment",
+                        "path": ".github/workflows/pr_comment_bot.yml", "repository": {"full_name": "microsoft/AzureTRE"},
+                        "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@abc"}]}
+        for name, implementation in (("azure", self.azure), ("github", self.github)):
+            mock = patch.object(recovery, name, side_effect=implementation)
+            mock.start()
+            self.addCleanup(mock.stop)
+        sleep = patch.object(recovery.time, "sleep")
+        self.sleep = sleep.start()
+        self.addCleanup(sleep.stop)
+
+    def azure(self, ctx, *args):
+        self.calls.append(args)
+        if args[:2] == ("group", "show"):
+            self.group_reads += 1
+            if self.group_reads == 2 and self.change_on_second_group_read:
+                self.group_tag = self.change_on_second_group_read
+            return {"id": self.group_id, "tags": {"ci_git_ref": self.group_tag}}
+        if args[:3] == ("storage", "account", "show"):
+            return {"id": self.account_id}
+        self.assertEqual(args[:2], ("storage", "blob"))
+        self.assertEqual(args[args.index("--auth-mode") + 1], "login")
+        self.assertEqual(args[args.index("--account-name") + 1], "trea66984damgmt")
+        self.assertEqual(args[args.index("--container-name") + 1], "tfstate")
+        if args[2] == "exists":
+            return {"exists": self.exists}
+        if args[2] == "show":
+            self.assertEqual(args[args.index("--name") + 1], "bootstrap.tfstate")
+            self.show_reads += 1
+            if self.show_reads == 2 and self.change_on_second_show:
+                self.change_on_second_show(self.state)
+            return deepcopy(self.state)
+        self.assertEqual(args[2:4], ("lease", "break"))
+        self.assertEqual(args[args.index("--blob-name") + 1], "bootstrap.tfstate")
+        self.assertEqual(args[args.index("--lease-break-period") + 1], "0")
+        self.assertEqual(args[args.index("--if-match") + 1], '"test-etag"')
+        if self.break_error:
+            raise self.break_error
+        self.state["properties"]["lease"] = {"duration": None, "state": "broken", "status": "unlocked"}
+        if self.after_break:
+            self.after_break(self.state)
+        return 0
+
+    def github(self, ctx, suffix):
+        self.activity.append(suffix)
+        if suffix == "/actions/runs/123":
+            return deepcopy(self.current)
+        status = suffix.split("status=")[1].split("&")[0]
+        if status in self.status_data:
+            value = self.status_data[status]
+            if isinstance(value, Exception):
+                raise value
+            return deepcopy(value)
+        runs = [{"id": 123}] if status == "in_progress" else []
+        return {"total_count": len(runs), "workflow_runs": runs}
+
+    def breaks(self):
+        return [call for call in self.calls if call[:4] == ("storage", "blob", "lease", "break")]
+
+    def assert_refused(self):
+        with self.assertRaises(recovery.RecoveryError):
+            recovery.recover(self.ctx)
+        self.assertEqual(self.breaks(), [])
+
+    def test_recovery_breaks_only_empty_bootstrap_lease_once_and_preserves_state(self):
+        before = deepcopy(self.state)
+        recovery.recover(self.ctx)
+        self.assertEqual(len(self.breaks()), 1)
+        self.assertEqual(recovery.snapshot(self.state), recovery.snapshot(before))
+        self.sleep.assert_called_once_with(10)
+        self.assertEqual(len(self.activity), 12)
+        self.assertEqual(self.calls[-1][2], "show")
+
+    def test_missing_blob_needs_no_recovery_or_workflow_queries(self):
+        self.exists = False
+        recovery.recover(self.ctx)
+        self.assertEqual(self.breaks(), [])
+        self.assertEqual(self.activity, [])
+
+    def test_unlocked_populated_state_is_not_touched(self):
+        self.state["properties"]["contentLength"] = 12345
+        self.state["properties"]["lease"] = {"status": "unlocked", "state": "available", "duration": None}
+        recovery.recover(self.ctx)
+        self.assertEqual(self.breaks(), [])
+        self.assertEqual(self.activity, [])
+
+    def test_non_ci_main_wrong_pr_and_wrong_backend_are_refused(self):
+        for key, value in (("CI_BOOTSTRAP_LEASE_RECOVERY", "false"), ("GITHUB_ACTIONS", "false"),
+                           ("TF_VAR_ci_git_ref", "refs/heads/main"), ("CI_RECOVERY_PR_NUMBER", "5005"),
+                           ("TF_VAR_mgmt_storage_account_name", "production"), ("TF_VAR_mgmt_resource_group_name", "production"),
+                           ("GITHUB_RUN_ID", ""), ("GITHUB_RUN_ATTEMPT", ""), ("ARM_SUBSCRIPTION_ID", ""),
+                           ("GITHUB_REPOSITORY", "../other"), ("TF_VAR_terraform_state_container_name", "")):
+            with self.subTest(key=key), patch.dict(os.environ, {key: value}):
+                with self.assertRaises(recovery.RecoveryError):
+                    recovery.context()
+        self.assertEqual(self.breaks(), [])
+
+    def test_wrong_resource_group_identity_or_tag_is_refused(self):
+        for key, value in (("group_id", "/subscriptions/other/resourceGroups/rg-trea66984da-mgmt"), ("group_tag", "refs/pull/5005/merge")):
+            with self.subTest(key=key):
+                original = getattr(self, key)
+                setattr(self, key, value)
+                self.assert_refused()
+                setattr(self, key, original)
+
+    def test_wrong_storage_account_identity_is_refused(self):
+        self.account_id += "other"
+        self.assert_refused()
+
+    def test_populated_state_and_any_lock_owner_are_refused(self):
+        for update in (lambda value: value["properties"].update(contentLength=1),
+                       lambda value: value.update(metadata={"terraformlockid": "owner"}),
+                       lambda value: value.update(metadata={"TerraformLockId": "owner"})):
+            self.state = deepcopy(ORPHAN)
+            update(self.state)
+            self.assert_refused()
+
+    def test_finite_breaking_expired_and_unknown_leases_are_refused(self):
+        for key, value in (("duration", "fixed"), ("state", "breaking"), ("state", "expired"), ("status", "unknown")):
+            self.state = deepcopy(ORPHAN)
+            self.state["properties"]["lease"][key] = value
+            self.assert_refused()
+
+    def test_incomplete_blob_data_is_refused(self):
+        for update in (lambda value: value.update(name="devops.tfstate"), lambda value: value.pop("metadata"),
+                       lambda value: value["properties"].pop("etag"), lambda value: value["properties"].pop("lastModified"),
+                       lambda value: value["properties"].update(contentLength=False), lambda value: value["properties"].pop("lease")):
+            self.state = deepcopy(ORPHAN)
+            update(self.state)
+            self.assert_refused()
+
+    def test_other_workflows_block_recovery_in_every_active_status(self):
+        for status in ("requested", "waiting", "pending", "queued", "in_progress"):
+            self.status_data = {status: {"total_count": 1, "workflow_runs": [{"id": 999}]}}
+            self.assert_refused()
+
+    def test_api_failure_and_rate_limit_refuse_recovery(self):
+        self.status_data["queued"] = recovery.RecoveryError("GitHub API rate limit")
+        self.assert_refused()
+
+    def test_incomplete_api_activity_is_refused(self):
+        for data in ({}, {"total_count": 0, "workflow_runs": None}, {"total_count": 1, "workflow_runs": []},
+                     {"total_count": 1001, "workflow_runs": []}, {"total_count": 1, "workflow_runs": [{"id": "123"}]},
+                     {"total_count": 2, "workflow_runs": [{"id": 123}, {"id": 123}]}):
+            self.status_data = {"in_progress": data}
+            self.assert_refused()
+
+    def test_api_must_include_the_current_active_run(self):
+        self.status_data["in_progress"] = {"total_count": 0, "workflow_runs": []}
+        self.assert_refused()
+
+    def test_completed_wrong_attempt_or_other_current_workflow_is_refused(self):
+        for key, value in (("status", "completed"), ("run_attempt", 2), ("event", "push"),
+                           ("path", ".github/workflows/other.yml"), ("repository", {"full_name": "other/repo"}),
+                           ("referenced_workflows", [])):
+            original = self.current[key]
+            self.current[key] = value
+            self.assert_refused()
+            self.current[key] = original
+
+    def test_owner_or_state_change_during_quiet_interval_refuses_recovery(self):
+        self.change_on_second_group_read = "refs/pull/5005/merge"
+        self.assert_refused()
+        self.group_tag = self.ctx["ref"]
+        self.group_reads = 0
+        self.show_reads = 0
+        self.state = deepcopy(ORPHAN)
+        self.change_on_second_group_read = None
+        self.change_on_second_show = lambda value: value["properties"].update(etag='"different"')
+        self.assert_refused()
+
+    def test_workflow_starting_during_quiet_interval_blocks_recovery(self):
+        self.sleep.side_effect = lambda _: self.status_data.update(queued={"total_count": 1, "workflow_runs": [{"id": 999}]})
+        self.assert_refused()
+
+    def test_conditional_break_failure_is_not_retried(self):
+        self.break_error = recovery.RecoveryError("ConditionNotMet")
+        with self.assertRaisesRegex(recovery.RecoveryError, "ConditionNotMet"):
+            recovery.recover(self.ctx)
+        self.assertEqual(len(self.breaks()), 1)
+
+    def test_failed_post_break_integrity_or_lease_check_stops_recovery(self):
+        for update in (lambda value: value["properties"].update(etag='"changed"'),
+                       lambda value: value.update(metadata={"unexpected": "value"}),
+                       lambda value: value["properties"]["lease"].update(status="locked", state="leased")):
+            self.calls = []
+            self.state = deepcopy(ORPHAN)
+            self.after_break = update
+            with self.assertRaises(recovery.RecoveryError):
+                recovery.recover(self.ctx)
+            self.assertEqual(len(self.breaks()), 1)
+
+
+class ExternalCommandTests(unittest.TestCase):
+    def test_public_github_api_http_and_json_failures_are_closed(self):
+        with patch.object(recovery.urllib.request, "urlopen", side_effect=urllib.error.URLError("unavailable")):
+            with self.assertRaises(recovery.RecoveryError):
+                recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
+        with patch.object(recovery.urllib.request, "urlopen", return_value=io.StringIO("invalid")):
+            with self.assertRaises(recovery.RecoveryError):
+                recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
+
+    def test_azure_failures_and_invalid_json_are_closed(self):
+        for result in (subprocess.CompletedProcess([], 1, "", "AuthorizationFailure"), subprocess.CompletedProcess([], 0, "invalid", "")):
+            with patch.object(recovery.subprocess, "run", return_value=result):
+                with self.assertRaises(recovery.RecoveryError):
+                    recovery.azure({"subscription": "test-subscription"}, "storage", "blob", "show")
+
+
+if __name__ == "__main__":
+    unittest.main()

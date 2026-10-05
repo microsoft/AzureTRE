@@ -132,8 +132,9 @@ class Validation:
             env.pop(name, None)
         return env
 
-    def script(self, name, env):
-        result = subprocess.run(["/bin/bash", str(SOURCE / name)], cwd=SOURCE, env=env, capture_output=True, text=True, timeout=240)
+    def script(self, name, env, cwd=None):
+        result = subprocess.run(["/bin/bash", str(SOURCE / name)], cwd=cwd or SOURCE, env=env,
+                                capture_output=True, text=True, timeout=240)
         # Source scripts can print subscription data. Keep raw output out of artifacts and the job log.
         return result
 
@@ -144,7 +145,7 @@ class Validation:
         env.pop("TF_VAR_ci_git_ref", None)
         if ref is not None:
             env["TF_VAR_ci_git_ref"] = ref
-        result = self.script("devops/terraform/bootstrap.sh", env)
+        result = self.script("devops/terraform/bootstrap.sh", env, cwd=SOURCE / "devops/terraform")
         require(result.returncode == 39, "Bootstrap did not stop at the injected storage failure.")
         metadata = self.owned_empty(group)
         self.check(name, metadata["tags"] == {OWNER_TAG: self.state["owner"], **expected})
