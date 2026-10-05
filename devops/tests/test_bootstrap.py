@@ -48,6 +48,9 @@ state = json.loads(state_path.read_text()) if state_path.exists() else {
     "blob_checks": 0,
     "network_blob_checks": 0,
     "init_calls": 0,
+    "probes": {},
+    "probe_calls": {},
+    "probe_completed": 0,
 }
 command = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -74,8 +77,7 @@ elif command == "update_tags.sh":
     finish()
 elif command == "terraform":
     if args[0] == "init":
-        check = "blob_checks" if config["script"] == "bootstrap.sh" else "network_blob_checks"
-        if not state["public"] or state[check] == 0:
+        if not state["public"] or state["blob_checks"] == 0 or state["probe_completed"] == 0:
             finish(99, "Terraform started before checking blob access")
         index = state["init_calls"]
         state["init_calls"] += 1
@@ -122,11 +124,65 @@ elif command == "az":
             # Existing containers may be checked by the network-access helper.
             state["network_blob_checks"] += 1
             finish()
-        if not state["role_created"] or "tfstate" not in state["containers"]:
+        if (config["script"] == "bootstrap.sh" and not state["role_created"]) or "tfstate" not in state["containers"]:
             finish(99, "Blob readiness checked before role/container setup")
         index = state["blob_checks"]
         state["blob_checks"] += 1
         response("blob_responses", index)
+    elif args[:2] == ["storage", "blob"]:
+        operation = "_".join(args[2:4]) if args[2] in ("lease", "metadata") else args[2]
+        name_flag = "--blob-name" if args[2] == "lease" else "--name"
+        name = args[args.index(name_flag) + 1]
+        if not name.startswith("azuretre-readiness-"):
+            finish(99, "Attempt to modify a Terraform state blob")
+        if args[args.index("--auth-mode") + 1] != "login":
+            finish(99, "Probe did not use Entra authentication")
+        if not state["public"]:
+            finish(1, "AuthorizationFailure")
+        index = state["probe_calls"].get(operation, 0)
+        state["probe_calls"][operation] = index + 1
+        responses = config.get(f"{operation}_responses", [{"code": 0, "output": ""}])
+        item = responses[min(index, len(responses) - 1)]
+        if item["code"]:
+            if config.get("expire_probe_lease") and operation == "lease_release":
+                state["probes"][name]["lease"] = None
+            finish(item["code"], item["output"])
+        if operation == "upload":
+            if name in state["probes"]:
+                finish(1, "BlobAlreadyExists")
+            if args[args.index("--overwrite") + 1] != "false" or args[args.index("--if-none-match") + 1] != "*":
+                finish(99, "Probe upload could overwrite an existing blob")
+            if Path(args[args.index("--file") + 1]).read_bytes() != b"":
+                finish(99, "Probe upload was not an empty file")
+            state["probes"][name] = {"lease": None, "metadata": False, "released": False}
+        elif operation == "lease_acquire":
+            if state["probes"][name]["lease"]:
+                finish(1, "LeaseAlreadyPresent")
+            if args[args.index("--lease-duration") + 1] != "60":
+                finish(99, "Probe lease is not finite")
+            state["probes"][name]["lease"] = args[args.index("--proposed-lease-id") + 1]
+        elif operation in ("metadata_update", "show"):
+            if state["probes"][name]["lease"] != args[args.index("--lease-id") + 1]:
+                finish(1, "LeaseIdMismatchWithBlobOperation")
+            if operation == "metadata_update":
+                state["probes"][name]["metadata"] = True
+        elif operation == "lease_release":
+            if not state["probes"][name]["lease"]:
+                state["probes"][name]["released"] = True
+                finish(1, "LeaseNotPresentWithLeaseOperation")
+            if state["probes"][name]["lease"] != args[args.index("--lease-id") + 1]:
+                finish(1, "LeaseIdMismatchWithLeaseOperation")
+            state["probes"][name]["lease"] = None
+            state["probes"][name]["released"] = True
+        elif operation == "delete":
+            if state["probes"][name]["lease"]:
+                finish(1, "LeaseIdMissing")
+            probe = state["probes"].pop(name)
+            if probe["metadata"] and probe["released"]:
+                state["probe_completed"] += 1
+        else:
+            finish(99, "Unexpected probe operation: " + operation)
+        finish()
 
 finish(99, "Unexpected command: " + " ".join([command, *args]))
 '''
@@ -186,8 +242,12 @@ class TerraformScriptTests(unittest.TestCase):
         self.assertEqual(len(updates), 2, self.output)
         self.assertIn("Disabled", updates[-1])
         self.assertIn("Deny", updates[-1])
-        self.assertEqual(self.commands("az", "storage", "blob", "lease"), [])
+        for call in self.commands("az", "storage", "blob", "lease"):
+            self.assertIn(call[4], ("acquire", "release"))
+            self.assertTrue(call[call.index("--blob-name") + 1].startswith("azuretre-readiness-"))
         self.assertEqual(self.commands("terraform", "force-unlock"), [])
+        for upload in self.commands("az", "storage", "blob", "upload"):
+            self.assertFalse(Path(upload[upload.index("--file") + 1]).exists(), "Probe tempfile was not removed")
         return result
 
     def commands(self, *prefix):
@@ -203,9 +263,165 @@ class TerraformScriptTests(unittest.TestCase):
         self.assertEqual(self.commands("terraform", "import"), [])
 
 
-class BootstrapTests(TerraformScriptTests):
+class BlobReadinessChecks:
+    def probe_state(self):
+        return json.loads((self.root / "state.json").read_text())["probes"]
+
+    def test_readiness_completes_before_terraform_touches_state(self):
+        result = self.run_readiness()
+        self.assertEqual(result.returncode, 0, self.output)
+        expected = [
+            ("upload",), ("lease", "acquire"), ("show",),
+            ("metadata", "update"), ("lease", "release"), ("delete",),
+        ]
+        calls = [self.commands("az", "storage", "blob", *operation)[0] for operation in expected]
+        self.assertEqual([self.calls.index(call) for call in calls], sorted(self.calls.index(call) for call in calls))
+        init = self.commands("terraform", "init")[0]
+        self.assertLess(self.calls.index(calls[-1]), self.calls.index(init))
+        name = calls[0][calls[0].index("--name") + 1]
+        lease_id = calls[1][calls[1].index("--proposed-lease-id") + 1]
+        self.assertEqual(name, f"azuretre-readiness-{lease_id}")
+        for call in calls:
+            self.assertEqual(call[call.index("--auth-mode") + 1], "login")
+            self.assertEqual(call[call.index("--container-name") + 1], "tfstate")
+        self.assertEqual(self.probe_state(), {})
+
+    def test_list_success_does_not_skip_delayed_write_permission(self):
+        result = self.run_readiness(upload_responses=[
+            {"code": 1, "output": "AuthorizationPermissionMismatch: blob writes are not ready"},
+            {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.blob_checks()), 2)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "upload")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.probe_state(), {})
+
+    def test_write_permission_timeout_never_starts_terraform(self):
+        result = self.run_readiness(upload_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "upload")), 6)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_lease_permission_denial_cleans_up_before_retry(self):
+        result = self.run_readiness(lease_acquire_responses=[
+            {"code": 1, "output": "AuthorizationPermissionMismatch: lease denied"},
+            {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "acquire")), 2)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "delete")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_metadata_denial_after_lease_cleans_up_before_retry(self):
+        error = "executing request: unexpected status 403 with AuthorizationPermissionMismatch"
+        result = self.run_readiness(metadata_update_responses=[
+            {"code": 1, "output": error}, {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertIn(error, self.output)
+        deletes = self.commands("az", "storage", "blob", "delete")
+        acquires = self.commands("az", "storage", "blob", "lease", "acquire")
+        self.assertLess(self.calls.index(deletes[0]), self.calls.index(acquires[1]))
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_metadata_permission_timeout_cleans_up_all_probes(self):
+        result = self.run_readiness(metadata_update_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(len(self.commands("az", "storage", "blob", "delete")), 6)
+        self.assertEqual(self.probe_state(), {})
+
+    def test_release_permission_delay_is_bounded_before_terraform(self):
+        result = self.run_readiness(lease_release_responses=[
+            {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
+            {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "release")), 2)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_expired_probe_lease_allows_cleanup(self):
+        result = self.run_readiness(expire_probe_lease=True, lease_release_responses=[
+            {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
+            {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(self.probe_state(), {})
+
+    def test_cleanup_release_timeout_stops_before_terraform(self):
+        result = self.run_readiness(lease_release_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "release")), 6)
+        self.assertEqual(self.commands("az", "storage", "blob", "delete"), [])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertIn("Could not confirm release", self.output)
+
+    def test_foreign_probe_lease_is_not_released_or_broken(self):
+        error = "LeaseIdMismatchWithLeaseOperation"
+        result = self.run_readiness(lease_release_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "release")), 1)
+        self.assertEqual(self.commands("az", "storage", "blob", "delete"), [])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.sleeps(), [])
+
+    def test_probe_deletion_permission_delay_is_retried(self):
+        result = self.run_readiness(delete_responses=[
+            {"code": 1, "output": CLI_PERMISSION_ERROR}, {"code": 0, "output": ""},
+        ])
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(self.sleeps(), [10])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_probe_deletion_timeout_stops_before_terraform(self):
+        result = self.run_readiness(delete_responses=[{"code": 1, "output": CLI_PERMISSION_ERROR}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.commands("az", "storage", "blob", "delete")), 6)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertIn("Could not clean up readiness probe", self.output)
+
+    def test_probe_collision_never_modifies_the_existing_blob(self):
+        result = self.run_readiness(upload_responses=[{"code": 1, "output": "BlobAlreadyExists"}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("az", "storage", "blob", "lease"), [])
+        self.assertEqual(self.commands("az", "storage", "blob", "delete"), [])
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.sleeps(), [])
+
+    def test_unknown_probe_error_retains_diagnostics_without_retry(self):
+        error = "AuthenticationFailed: invalid token"
+        result = self.run_readiness(metadata_update_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.sleeps(), [])
+        self.assertEqual(self.probe_state(), {})
+
+    def test_actual_state_lock_403_remains_fatal(self):
+        error = "Error loading state: failed to lock azure state: executing request: unexpected status 403 with AuthorizationPermissionMismatch"
+        result = self.run_readiness(init_responses=[{"code": 1, "output": error}])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(error, self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+        self.assertEqual(self.sleeps(), [])
+        self.assertEqual(self.commands("terraform", "import"), [])
+        self.assertEqual(self.commands("terraform", "plan"), [])
+
+
+class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
     def run_bootstrap(self, **config):
         return self.run_script("bootstrap.sh", **config)
+
+    def run_readiness(self, **config):
+        return self.run_bootstrap(**config)
 
     def test_new_empty_account_checks_blob_data_before_init(self):
         result = self.run_bootstrap()
@@ -411,9 +627,12 @@ class BootstrapTests(TerraformScriptTests):
         self.assert_no_imports()
 
 
-class ManagementDeployTests(TerraformScriptTests):
+class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
     def run_deploy(self, **config):
         return self.run_script("deploy.sh", account_exists=True, containers=["tfstate", "tflogs"], **config)
+
+    def run_readiness(self, **config):
+        return self.run_deploy(**config)
 
     def assert_no_deployment(self):
         self.assertEqual(self.commands("terraform", "plan"), [])

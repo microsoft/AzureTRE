@@ -6,26 +6,6 @@ set -o nounset
 # shellcheck disable=SC1091
 source ../scripts/terraform_init.sh
 
-check_blob_access() {
-  local output
-  # Container operations can succeed through Owner before blob data access is ready.
-  # Check the data permission Terraform needs, even when the state container is empty.
-  # shellcheck disable=SC2154
-  if output=$(az storage blob list \
-    --account-name "$TF_VAR_mgmt_storage_account_name" \
-    --container-name "$TF_VAR_terraform_state_container_name" \
-    --prefix bootstrap.tfstate --num-results 1 \
-    --auth-mode login --only-show-errors --output none 2>&1); then
-    return 0
-  fi
-
-  printf '%s\n' "$output" >&2
-  if is_storage_permission_error "$output"; then
-    return 1
-  fi
-  return 2
-}
-
 check_role_assignments() {
   local roles
   # shellcheck disable=SC2154
@@ -131,7 +111,7 @@ for container in "${containers[@]}"; do
   done
 done
 
-echo "Checking blob data access before initialising Terraform..."
+echo "Checking blob read, write and lease access before initialising Terraform..."
 if ! retry_with_backoff check_blob_access; then
   echo "ERROR: Bootstrap blob access check failed. Terraform has not been started." >&2
   exit 1
