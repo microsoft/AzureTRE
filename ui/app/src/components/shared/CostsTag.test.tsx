@@ -215,6 +215,18 @@ describe("CostsTag Component", () => {
     expect(tooltip).toHaveAttribute("title", "Cost data not yet available");
   });
 
+  it("describes costs as unavailable outside a workspace after a permanent cost error", async () => {
+    render(
+      <CostsContext.Provider value={{ ...createMockCostsContext([]), loadingState: LoadingState.Error } as any}>
+        <WorkspaceContext.Provider value={{ ...createMockWorkspaceContext(), workspace: {} } as any}>
+          <CostsTag resourceId="test-resource-id" />
+        </WorkspaceContext.Provider>
+      </CostsContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("tooltip")).toHaveAttribute("title", "Costs unavailable"));
+  });
+
   it("displays clock icon when resource is not found in costs", async () => {
     const workspaceCosts = [
       {

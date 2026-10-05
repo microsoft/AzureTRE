@@ -97,6 +97,17 @@ describe("VMPowerButton", () => {
     expect(mockInvokeAction).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: "vm-1" }), "start");
   });
 
+  it("closes a Stop confirmation when polling shows the VM has stopped", () => {
+    const { rerender } = render(
+      <VMPowerButton resource={vm(VMPowerStates.Running)} componentAction={ComponentAction.None} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    rerender(<VMPowerButton resource={vm(VMPowerStates.Deallocated)} componentAction={ComponentAction.None} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("resets pending state and errors when the resource changes", async () => {
     mockInvokeAction.mockRejectedValueOnce({ status: 503, userMessage: "API unavailable" });
     const { rerender } = render(

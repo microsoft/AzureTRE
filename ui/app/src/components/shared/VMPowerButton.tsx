@@ -40,8 +40,12 @@ export const VMPowerButton: React.FunctionComponent<VMPowerButtonProps> = (props
   const [failedAction, setFailedAction] = useState<TemplateAction>();
   const powerState = props.resource.azureStatus?.powerState;
 
-  // Allow another request once the power state or operation lock changes.
-  useEffect(() => setRequested(false), [powerState, props.componentAction]);
+  // Allow another request once the power state or operation lock changes, and drop a Stop confirmation that no
+  // longer matches the VM's state.
+  useEffect(() => {
+    setRequested(false);
+    setConfirmStop(false);
+  }, [powerState, props.componentAction]);
 
   // The button is reused when a detail route switches resource; reset state that belongs to the previous one.
   const resourceId = props.resource.id;

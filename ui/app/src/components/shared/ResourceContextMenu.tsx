@@ -54,6 +54,10 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     setActionError(undefined);
   }, [resourceId]);
 
+  // Drop a VM Stop confirmation once polling shows the power state has changed.
+  const powerState = props.resource.azureStatus?.powerState;
+  useEffect(() => setStopActionName(""), [powerState]);
+
   const doAction = async (actionName: string) => {
     const invokedFor = props.resource.id;
     setActionError(undefined);

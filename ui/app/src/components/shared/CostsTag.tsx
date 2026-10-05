@@ -51,8 +51,11 @@ export const CostsTag: React.FunctionComponent<CostsTagProps> = (props: CostsTag
 
   // Generate tooltip content based on resource type and cost availability
   const getTooltipContent = () => {
-    // The TRE-wide unsupported state only applies outside a workspace; inside one, costs come from the workspace.
-    if (!workspaceCtx.workspace?.id && costsCtx.loadingState === LoadingState.NotSupported) {
+    // The TRE-wide unsupported/failed state only applies outside a workspace; inside one, costs come from the workspace.
+    if (
+      !workspaceCtx.workspace?.id &&
+      (costsCtx.loadingState === LoadingState.NotSupported || costsCtx.loadingState === LoadingState.Error)
+    ) {
       return "Costs unavailable";
     }
     if (!formattedCost) {
