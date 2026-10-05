@@ -13,7 +13,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Check blob read, write, lease and metadata access on a disposable probe before Terraform initialisation. Share bounded readiness retries with management deployment and preserve state-lock errors. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
+* Check blob read, write, lease and metadata access before Terraform initialisation. Recover empty, unowned bootstrap leases only in verified PR CI backends with no other active workflows. Preserve state-lock errors and share bounded readiness retries with management deployment. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Renew E2E authentication tokens during operation polling and teardown to prevent failures caused by token expiry. ([#5097](https://github.com/microsoft/AzureTRE/issues/5097))
 * Restore Dsv6 sizes for Guacamole Windows VMs after the Dsv7 default failed in Switzerland North. (`tre-service-guacamole-windowsvm` 3.0.4) ([#5095](https://github.com/microsoft/AzureTRE/issues/5095))
 * Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. Preserve tags on bootstrap reruns and restrict cleanup to the environment's core, management, workspace and shared-service groups. Add manual validation with disposable empty groups. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))

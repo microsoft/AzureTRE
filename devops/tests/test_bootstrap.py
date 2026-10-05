@@ -51,6 +51,7 @@ state = json.loads(state_path.read_text()) if state_path.exists() else {
     "probes": {},
     "probe_calls": {},
     "probe_completed": 0,
+    "bootstrap_blob": config.get("bootstrap_blob"),
 }
 command = Path(sys.argv[0]).name
 args = sys.argv[1:]
@@ -73,6 +74,20 @@ def response(name, index):
 
 if command == "sleep":
     finish()
+elif command == "github_api":
+    if args[0] == "/actions/runs/123":
+        finish(output=json.dumps({
+            "id": 123, "run_attempt": 1, "status": "in_progress", "event": "issue_comment",
+            "path": ".github/workflows/pr_comment_bot.yml", "repository": {"full_name": "microsoft/AzureTRE"},
+            "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@abc"}],
+        }))
+    if config.get("recovery_api_error"):
+        finish(1, "GitHub API failed")
+    status = args[0].split("status=")[1].split("&")[0]
+    runs = [{"id": 123}] if status == "in_progress" else []
+    if config.get("other_active_workflow") and status == "queued":
+        runs.append({"id": 999})
+    finish(output=json.dumps({"total_count": len(runs), "workflow_runs": runs}))
 elif command == "update_tags.sh":
     finish()
 elif command == "terraform":
@@ -93,7 +108,16 @@ elif command == "az":
         finish(output="true" if state["account_exists"] else "false")
     elif args[:2] in (["group", "create"], ["group", "update"]):
         finish()
+    elif args[:2] == ["group", "show"]:
+        finish(output=json.dumps({
+            "id": "/subscriptions/" + os.environ["ARM_SUBSCRIPTION_ID"] + "/resourceGroups/" + os.environ["TF_VAR_mgmt_resource_group_name"],
+            "tags": {"ci_git_ref": os.environ["TF_VAR_ci_git_ref"]},
+        }))
     elif args[:3] == ["storage", "account", "show"]:
+        if "--output" in args and args[args.index("--output") + 1] == "json" and "--query" not in args:
+            finish(output=json.dumps({"id": "/subscriptions/" + os.environ["ARM_SUBSCRIPTION_ID"] + "/resourceGroups/"
+                                      + os.environ["TF_VAR_mgmt_resource_group_name"] + "/providers/Microsoft.Storage/storageAccounts/"
+                                      + os.environ["TF_VAR_mgmt_storage_account_name"]}))
         finish(0 if state["account_exists"] else 1, "mock-account" if state["account_exists"] else "")
     elif args[:3] == ["storage", "account", "create"]:
         state["account_exists"] = True
@@ -133,6 +157,22 @@ elif command == "az":
         operation = "_".join(args[2:4]) if args[2] in ("lease", "metadata") else args[2]
         name_flag = "--blob-name" if args[2] == "lease" else "--name"
         name = args[args.index(name_flag) + 1]
+        if name == "bootstrap.tfstate":
+            if args[args.index("--auth-mode") + 1] != "login":
+                finish(99, "State check did not use Entra authentication")
+            if operation == "exists":
+                finish(output=json.dumps({"exists": state["bootstrap_blob"] is not None}))
+            if operation == "show":
+                finish(output=json.dumps(state["bootstrap_blob"]))
+            if operation == "lease_break":
+                blob = state["bootstrap_blob"]
+                if blob["properties"]["contentLength"] or blob["metadata"].get("terraformlockid"):
+                    finish(99, "Attempt to break an owned or populated state lease")
+                if args[args.index("--if-match") + 1] != blob["properties"]["etag"]:
+                    finish(1, "ConditionNotMet")
+                blob["properties"]["lease"] = {"duration": None, "state": "broken", "status": "unlocked"}
+                finish(output="0")
+            finish(99, "Unexpected state blob operation")
         if not name.startswith("azuretre-readiness-"):
             finish(99, "Attempt to modify a Terraform state blob")
         if args[args.index("--auth-mode") + 1] != "login":
@@ -198,7 +238,7 @@ class TerraformScriptTests(unittest.TestCase):
         mock = self.root / "mock.py"
         mock.write_text(f"#!{sys.executable}\n" + MOCK_COMMAND)
         mock.chmod(0o755)
-        for command in ("az", "terraform", "sleep"):
+        for command in ("az", "terraform", "sleep", "github_api"):
             (self.bin_dir / command).symlink_to(mock)
         self.terraform_dir = self.root / "devops" / "terraform"
         self.terraform_dir.mkdir(parents=True)
@@ -210,8 +250,14 @@ class TerraformScriptTests(unittest.TestCase):
         (self.terraform_dir / "update_tags.sh").symlink_to(mock)
         for script in ("storage_enable_public_access.sh", "bash_trap_helper.sh", "terraform_init.sh"):
             shutil.copy2(DEVOPS / "scripts" / script, scripts)
+        shutil.copy2(DEVOPS / "scripts/recover_bootstrap_lease.py", scripts / "recover_bootstrap_lease.py")
 
     def run_script(self, script, **config):
+        env = config.pop("env", {})
+        if config.get("mock_recovery_api"):
+            scripts = self.root / "devops/scripts"
+            (scripts / "recover_bootstrap_lease.py").rename(scripts / "recover_bootstrap_lease_impl.py")
+            (scripts / "recover_bootstrap_lease.py").write_text(RECOVERY_WRAPPER)
         config["script"] = script
         (self.root / "config.json").write_text(json.dumps(config))
         result = subprocess.run(
@@ -227,6 +273,7 @@ class TerraformScriptTests(unittest.TestCase):
                 "TF_VAR_mgmt_storage_account_name": "mockstorage",
                 "TF_VAR_terraform_state_container_name": "tfstate",
                 "LOCATION": "mock-location",
+                **env,
             },
             capture_output=True,
             text=True,
@@ -243,6 +290,9 @@ class TerraformScriptTests(unittest.TestCase):
         self.assertIn("Disabled", updates[-1])
         self.assertIn("Deny", updates[-1])
         for call in self.commands("az", "storage", "blob", "lease"):
+            if config.get("mock_recovery_api") and call[4] == "break":
+                self.assertEqual(call[call.index("--blob-name") + 1], "bootstrap.tfstate")
+                continue
             self.assertIn(call[4], ("acquire", "release"))
             self.assertTrue(call[call.index("--blob-name") + 1].startswith("azuretre-readiness-"))
         self.assertEqual(self.commands("terraform", "force-unlock"), [])
@@ -261,6 +311,76 @@ class TerraformScriptTests(unittest.TestCase):
 
     def assert_no_imports(self):
         self.assertEqual(self.commands("terraform", "import"), [])
+
+
+RECOVERY_WRAPPER = '''
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+spec = importlib.util.spec_from_file_location("recovery", Path(__file__).with_name("recover_bootstrap_lease_impl.py"))
+recovery = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(recovery)
+
+def github(ctx, suffix):
+    result = subprocess.run(["github_api", suffix], capture_output=True, text=True)
+    if result.returncode:
+        raise recovery.RecoveryError(result.stderr)
+    return json.loads(result.stdout)
+
+recovery.github = github
+recovery.time.sleep = lambda seconds: subprocess.run(["sleep", str(seconds)], check=True)
+sys.exit(recovery.main())
+'''
+
+
+class CiLeaseRecoveryTests(TerraformScriptTests):
+    def run_recovery(self, script="bootstrap.sh", **config):
+        from test_recover_bootstrap_lease import ENV, ORPHAN
+        return self.run_script(script, env=ENV, account_exists=True, containers=["tfstate", "tflogs"],
+                               mock_recovery_api=True, bootstrap_blob=config.pop("bootstrap_blob", ORPHAN), **config)
+
+    def test_orphan_is_recovered_before_single_terraform_init(self):
+        result = self.run_recovery()
+        self.assertEqual(result.returncode, 0, self.output)
+        breaks = self.commands("az", "storage", "blob", "lease", "break")
+        self.assertEqual(len(breaks), 1)
+        self.assertLess(self.calls.index(breaks[0]), self.calls.index(self.commands("terraform", "init")[0]))
+        self.assertIn("Bootstrap lease recovery verified", self.output)
+        self.assertEqual(len(self.commands("terraform", "init")), 1)
+
+    def test_owned_or_populated_state_stops_before_terraform(self):
+        from copy import deepcopy
+        from test_recover_bootstrap_lease import ORPHAN
+        blob = deepcopy(ORPHAN)
+        blob["properties"]["contentLength"] = 1000
+        result = self.run_recovery(bootstrap_blob=blob)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+        self.assertIn("requires manual recovery", self.output)
+
+    def test_other_workflow_stops_before_break_and_terraform(self):
+        result = self.run_recovery(other_active_workflow=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+        self.assertIn("Another workflow is queued", self.output)
+
+    def test_activity_api_failure_stops_before_break_and_terraform(self):
+        result = self.run_recovery(recovery_api_error=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("terraform"), [])
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+        self.assertIn("GitHub API failed", self.output)
+
+    def test_management_deploy_never_attempts_state_lease_recovery(self):
+        result = self.run_recovery(script="deploy.sh")
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+        self.assertEqual(self.commands("github_api"), [])
 
 
 class BlobReadinessChecks:

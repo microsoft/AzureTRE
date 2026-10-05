@@ -83,6 +83,9 @@ jobs:
       pull-requests: write
     environment: CICD
     name: Destroy PR env
+    concurrency:
+      group: deploy-${{ needs.pr_comment.outputs.ciGitRef }}
+      cancel-in-progress: false
     steps:
       # Ensure we have the script files
       - name: Checkout

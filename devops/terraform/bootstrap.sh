@@ -6,6 +6,10 @@ set -o nounset
 # shellcheck disable=SC1091
 source ../scripts/terraform_init.sh
 
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  python3 ../scripts/recover_bootstrap_lease.py context
+fi
+
 check_role_assignments() {
   local roles
   # shellcheck disable=SC2154
@@ -26,6 +30,10 @@ echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e
 group_exists=$(az group exists --name "$TF_VAR_mgmt_resource_group_name" --output json)
 case "$group_exists" in
   true)
+    # Verify existing ownership before bootstrap can update the CI tag.
+    if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+      python3 ../scripts/recover_bootstrap_lease.py verify-owner
+    fi
     # Creating an existing group without tags clears its tags. Preserve them on reruns.
     if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
       az group update --name "$TF_VAR_mgmt_resource_group_name" \
@@ -115,6 +123,13 @@ echo "Checking blob read, write and lease access before initialising Terraform..
 if ! retry_with_backoff check_blob_access; then
   echo "ERROR: Bootstrap blob access check failed. Terraform has not been started." >&2
   exit 1
+fi
+
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  if ! python3 ../scripts/recover_bootstrap_lease.py recover; then
+    echo "ERROR: Bootstrap lease recovery failed. Terraform has not been started." >&2
+    exit 1
+  fi
 fi
 
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."

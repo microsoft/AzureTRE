@@ -58,6 +58,7 @@ jobs:
               - 'devops/scripts/storage_enable_public_access.sh'
               - 'devops/scripts/bash_trap_helper.sh'
               - 'devops/scripts/terraform_init.sh'
+              - 'devops/scripts/recover_bootstrap_lease.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
               - 'devops/scripts/kv_add_network_exception.sh'
