@@ -250,7 +250,8 @@ class TerraformScriptTests(unittest.TestCase):
         (self.terraform_dir / "update_tags.sh").symlink_to(mock)
         for script in ("storage_enable_public_access.sh", "bash_trap_helper.sh", "terraform_init.sh"):
             shutil.copy2(DEVOPS / "scripts" / script, scripts)
-        shutil.copy2(DEVOPS / "scripts/recover_bootstrap_lease.py", scripts / "recover_bootstrap_lease.py")
+        for script in ("recover_bootstrap_lease.py", "ci_environment_id.py"):
+            shutil.copy2(DEVOPS / "scripts" / script, scripts / script)
 
     def run_script(self, script, **config):
         env = config.pop("env", {})
@@ -339,8 +340,19 @@ sys.exit(recovery.main())
 class CiLeaseRecoveryTests(TerraformScriptTests):
     def run_recovery(self, script="bootstrap.sh", **config):
         from test_recover_bootstrap_lease import ENV, ORPHAN
-        return self.run_script(script, env=ENV, account_exists=True, containers=["tfstate", "tflogs"],
+        return self.run_script(script, env=config.pop("env", ENV), account_exists=True, containers=["tfstate", "tflogs"],
                                mock_recovery_api=True, bootstrap_blob=config.pop("bootstrap_blob", ORPHAN), **config)
+
+    def test_regional_orphan_is_recovered_before_terraform(self):
+        from test_recover_bootstrap_lease import ENV
+        env = {**ENV, "CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth", "AZURE_ENVIRONMENT": "AzureCloud",
+               "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt", "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt"}
+        result = self.run_recovery(env=env)
+        self.assertEqual(result.returncode, 0, self.output)
+        breaks = self.commands("az", "storage", "blob", "lease", "break")
+        self.assertEqual(len(breaks), 1)
+        self.assertIn("tree06583c4mgmt", breaks[0])
+        self.assertLess(self.calls.index(breaks[0]), self.calls.index(self.commands("terraform", "init")[0]))
 
     def test_orphan_is_recovered_before_single_terraform_init(self):
         result = self.run_recovery()

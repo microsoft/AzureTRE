@@ -281,6 +281,7 @@ runs:
           -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
           -e TF_VAR_ci_git_ref \
           -e CI_BOOTSTRAP_LEASE_RECOVERY \
+          -e CI_ENVIRONMENT_ID \
           -e CI_RECOVERY_PR_NUMBER \
           -e GITHUB_ACTIONS \
           -e GITHUB_REPOSITORY \

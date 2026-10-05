@@ -6,12 +6,14 @@ import io
 import os
 from pathlib import Path
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 import urllib.error
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/recover_bootstrap_lease.py"
+sys.path.insert(0, str(SCRIPT.parent))
 SPEC = importlib.util.spec_from_file_location("recover_bootstrap_lease", SCRIPT)
 recovery = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(recovery)
@@ -31,6 +33,21 @@ ORPHAN = {
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_regional_context_uses_the_matching_backend(self):
+        regional = {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth", "AZURE_ENVIRONMENT": "AzureCloud",
+                    "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt", "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt"}
+        with patch.dict(os.environ, regional):
+            self.assertEqual(recovery.context()["group"], "rg-tree06583c4-mgmt")
+            self.assertEqual(recovery.context()["account"], "tree06583c4mgmt")
+
+    def test_regional_context_refuses_foreign_regions_or_legacy_backend(self):
+        cases = [{"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "swedencentral"},
+                 {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth"},
+                 {"CI_ENVIRONMENT_ID": "637595c5", "TF_VAR_location": ""}]
+        for env in cases:
+            with self.subTest(env=env), patch.dict(os.environ, env), self.assertRaises(recovery.RecoveryError):
+                recovery.context()
+
     def setUp(self):
         self.env = patch.dict(os.environ, ENV, clear=True)
         self.env.start()
