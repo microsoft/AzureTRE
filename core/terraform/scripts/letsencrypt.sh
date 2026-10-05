@@ -76,7 +76,8 @@ fi
 echo "Requesting certificate for $CERT_FQDN..."
 
 # Initiate the ACME challange
-/opt/certbot/bin/certbot certonly \
+CERTBOT_BIN="${CERTBOT_BIN:-/opt/certbot/bin/certbot}"
+"${CERTBOT_BIN}" certonly \
     --config-dir "${ledir}" \
     --work-dir "${ledir}" \
     --logs-dir "${ledir}"/logs \

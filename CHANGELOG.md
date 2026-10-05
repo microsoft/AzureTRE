@@ -5,6 +5,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Existing workspaces upgrade in place and stay on `airlock_version=1` (a minor, non-destructive `tre-workspace-base`
   upgrade to `2.11.1`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
 See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
