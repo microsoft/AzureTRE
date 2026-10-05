@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import validator from "@rjsf/validator-ajv8";
 import { ResourceForm } from "./ResourceForm";
 import { Resource } from "../../../models/resource";
 import { ResourceType } from "../../../models/resourceType";
@@ -31,13 +30,12 @@ const operation = { id: "test-operation" };
 const templatePath = "/workspace-templates/test-template";
 const properties = { display_name: "Research", description: "", overview: "", endpoint: "https://example.test/" };
 
-// Keep Fluent UI, RJSF and its default Ajv validator real. Only the TRE API boundary is mocked.
+// Keep Fluent UI, RJSF and the selected Ajv validator real. Only the TRE API boundary is mocked.
 describe("ResourceForm validation and submission", () => {
   const fetch = vi.fn();
   let xhrOpen: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    validator.reset();
     apiCall
       .mockReset()
       .mockImplementation(async (_path, method) => (method === "GET" ? structuredClone(template) : { operation }));
@@ -104,6 +102,59 @@ describe("ResourceForm validation and submission", () => {
     );
     expect(apiCall).toHaveBeenCalledTimes(2);
   });
+
+  describe.each([undefined, "http://json-schema.org/draft-07/schema", "https://json-schema.org/draft/2020-12/schema"])(
+    "schema dialect %s",
+    ($schema) => {
+      it.each([false, true])("renders local definitions and validates submission (update=%s)", async (isUpdate) => {
+        const referencedTemplate = {
+          ...template,
+          ...($schema ? { $schema } : {}),
+          $id: "https://example.test/resource-template.json",
+          $defs: { label: { type: "string", title: "Name", minLength: 3 } },
+          properties: { ...template.properties, display_name: { $ref: "#/$defs/label" } },
+        };
+        apiCall.mockImplementation(async (_path, method) =>
+          method === "GET" ? structuredClone(referencedTemplate) : { operation },
+        );
+        const onCreateResource = vi.fn();
+        const updateResource = isUpdate
+          ? ({
+              resourceType: ResourceType.Workspace,
+              resourcePath: "/workspaces/workspace",
+              templateVersion: "1.0.0",
+              _etag: "test-etag",
+              properties: { ...properties, generated: "server-value" },
+            } as Resource)
+          : undefined;
+        const { container } = render(
+          <ResourceForm
+            templateName="test-template"
+            templatePath={templatePath}
+            resourcePath="/workspaces"
+            updateResource={updateResource}
+            onCreateResource={onCreateResource}
+          />,
+        );
+        const name = await screen.findByRole("textbox", { name: /^Name/ });
+        fireEvent.change(name, { target: { value: "x" } });
+        fireEvent.submit(container.querySelector("form")!);
+        await screen.findAllByText(/must NOT have fewer than 3 characters/);
+        expect(apiCall).toHaveBeenCalledTimes(1);
+        expect(onCreateResource).not.toHaveBeenCalled();
+
+        fireEvent.change(name, { target: { value: "Research" } });
+        fireEvent.submit(container.querySelector("form")!);
+        await waitFor(() => expect(onCreateResource).toHaveBeenCalledWith(operation));
+        expect(apiCall).toHaveBeenCalledTimes(2);
+        const submitted = apiCall.mock.calls[1];
+        expect(submitted[0]).toBe(isUpdate ? "/workspaces/workspace" : "/workspaces");
+        expect(submitted[1]).toBe(isUpdate ? "PATCH" : "POST");
+        expect(submitted[3]).toEqual(isUpdate ? { properties } : { templateName: "test-template", properties });
+        if (isUpdate) expect(submitted[7]).toBe("test-etag");
+      });
+    },
+  );
 
   it.each([
     [ResourceType.Workspace, "/workspaces/workspace", undefined],
