@@ -238,6 +238,9 @@ runs:
       shell: bash
       env:
         TF_VAR_ci_git_ref: ${{ inputs.CI_GIT_REF }}
+        CI_BOOTSTRAP_LEASE_RECOVERY: >-
+          ${{ github.event_name == 'issue_comment' && startsWith(inputs.CI_GIT_REF, 'refs/pull/') }}
+        CI_RECOVERY_PR_NUMBER: ${{ github.event.issue.number }}
       run: |
         # Write command to a command.sh script file
         cat <<EOF > ./command.sh
@@ -277,6 +280,12 @@ runs:
           -e TF_VAR_mgmt_storage_account_name="${{ inputs.MGMT_STORAGE_ACCOUNT_NAME }}" \
           -e TF_VAR_mgmt_resource_group_name="${{ inputs.MGMT_RESOURCE_GROUP_NAME }}" \
           -e TF_VAR_ci_git_ref \
+          -e CI_BOOTSTRAP_LEASE_RECOVERY \
+          -e CI_RECOVERY_PR_NUMBER \
+          -e GITHUB_ACTIONS \
+          -e GITHUB_REPOSITORY \
+          -e GITHUB_RUN_ID \
+          -e GITHUB_RUN_ATTEMPT \
           -e ACR_NAME=${{ inputs.ACR_NAME }} \
           -e TF_VAR_acr_name=${{ inputs.ACR_NAME }} \
           -e TF_VAR_aad_tenant_id="${{ inputs.AAD_TENANT_ID }}" \
