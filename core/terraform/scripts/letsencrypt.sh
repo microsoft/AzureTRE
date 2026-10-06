@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+CERTBOT_BIN="${CERTBOT_BIN:-/opt/certbot/bin/certbot}"
+if ! certbot_path=$(command -v -- "${CERTBOT_BIN}") || [[ ! -f "${certbot_path}" || ! -x "${certbot_path}" ]]; then
+  printf "Certbot executable '%s' was not found or is not executable. Set CERTBOT_BIN to a valid executable path.\n" "${CERTBOT_BIN}" >&2
+  exit 1
+fi
+
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
@@ -75,8 +81,7 @@ fi
 
 echo "Requesting certificate for $CERT_FQDN..."
 
-# Initiate the ACME challange
-CERTBOT_BIN="${CERTBOT_BIN:-/opt/certbot/bin/certbot}"
+# Initiate the ACME challenge
 "${CERTBOT_BIN}" certonly \
     --config-dir "${ledir}" \
     --work-dir "${ledir}" \
