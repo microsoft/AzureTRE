@@ -23,6 +23,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read # For paths-filter and super-linter
+    env:
+      # Report lint results through the job without publishing statuses or PR comments.
+      MULTI_STATUS: "false"
+      ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: "false"
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6

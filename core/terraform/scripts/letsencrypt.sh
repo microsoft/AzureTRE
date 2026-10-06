@@ -7,6 +7,8 @@ if ! certbot_path=$(command -v -- "${CERTBOT_BIN}") || [[ ! -f "${certbot_path}"
   exit 1
 fi
 
+: "${RESOURCE_GROUP_NAME:?RESOURCE_GROUP_NAME not set}"
+
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
