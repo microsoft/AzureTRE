@@ -14,6 +14,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Patch vulnerable npm dependencies in the UI (`ui` 0.9.1) and GitHub workflow scripts (`build-scripts` 1.0.1) ([#5108](https://github.com/microsoft/AzureTRE/issues/5108))
 * Check blob read, write, lease and metadata access before Terraform initialisation. Recover empty, unowned bootstrap leases only in verified PR CI backends with no other active workflows. Preserve state-lock errors and share bounded readiness retries with management deployment. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Renew E2E authentication tokens during operation polling and teardown to prevent failures caused by token expiry. ([#5097](https://github.com/microsoft/AzureTRE/issues/5097))
 * Update the PyJWT dependency from 2.13.0 to 2.15.0 in the API and CLI packages (`API` 0.27.30, `CLI` 0.2.10) ([#5102](https://github.com/microsoft/AzureTRE/pull/5102))
