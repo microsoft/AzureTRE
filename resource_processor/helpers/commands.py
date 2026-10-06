@@ -2,6 +2,7 @@ import asyncio
 import json
 import base64
 import logging
+import os
 import tempfile
 import uuid
 from urllib.parse import urlparse
@@ -132,71 +133,80 @@ async def build_porter_command(config, msg_body, custom_action=False):
     param_set_name = f"tre-params-{installation_id}-{uuid.uuid4().hex[:8]}"
 
     param_set_file = None
-    if param_set_entries:
-        param_set = {
-            "schemaType": "ParameterSet",
-            "schemaVersion": "1.0.1",
-            "name": param_set_name,
-            "namespace": "",
-            "parameters": param_set_entries
-        }
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(param_set, f)
-            param_set_file = f.name
-
     installation_file = None
-    if not custom_action and msg_body['action'] in ("install", "upgrade"):
-        installation = {
-            "schemaType": "Installation",
-            "schemaVersion": "1.0.2",
-            "name": installation_id,
-            "bundle": {
-                "repository": f"{config['registry_server']}/{msg_body['name']}",
-                "version": msg_body['version']
-            },
-            "parameters": {},
-            "parameterSets": [param_set_name] if param_set_entries else [],
-            "credentialSets": ["arm_auth", "aad_auth"]
-        }
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump(installation, f)
-            installation_file = f.name
+    try:
+        if param_set_entries:
+            param_set = {
+                "schemaType": "ParameterSet",
+                "schemaVersion": "1.0.1",
+                "name": param_set_name,
+                "namespace": "",
+                "parameters": param_set_entries
+            }
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                param_set_file = f.name
+                json.dump(param_set, f)
 
-    commands = []
-    if param_set_file:
-        commands.append(["porter", "parameters", "apply", param_set_file])
+        if not custom_action and msg_body['action'] in ("install", "upgrade"):
+            installation = {
+                "schemaType": "Installation",
+                "schemaVersion": "1.0.2",
+                "name": installation_id,
+                "bundle": {
+                    "repository": f"{config['registry_server']}/{msg_body['name']}",
+                    "version": msg_body['version']
+                },
+                "parameters": {},
+                "parameterSets": [param_set_name] if param_set_entries else [],
+                "credentialSets": ["arm_auth", "aad_auth"]
+            }
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                installation_file = f.name
+                json.dump(installation, f)
 
-    if custom_action:
-        command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
-        command.extend([
-            "--reference",
-            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-        ])
+        commands = []
         if param_set_file:
-            command.extend(["--parameter-set", param_set_name])
-        command.append("--force")
-        command.extend(["--credential-set", "arm_auth"])
-        command.extend(["--credential-set", "aad_auth"])
-        commands.append(command)
-    elif installation_file:
-        # porter installation apply is declarative: it creates the installation if it
-        # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
-        # replaces the previous explicit upgrade->install fallback for built-in actions.
-        commands.append(["porter", "installation", "apply", installation_file, "--force"])
-    else:
-        command = ["porter", msg_body['action'], installation_id]
-        command.extend([
-            "--reference",
-            f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-        ])
-        if param_set_file:
-            command.extend(["--parameter-set", param_set_name])
-        command.append("--force")
-        command.extend(["--credential-set", "arm_auth"])
-        command.extend(["--credential-set", "aad_auth"])
-        commands.append(command)
+            commands.append(["porter", "parameters", "apply", param_set_file])
 
-    return (commands, param_set_file, param_set_name, installation_file)
+        if custom_action:
+            command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
+            command.extend([
+                "--reference",
+                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+            ])
+            if param_set_file:
+                command.extend(["--parameter-set", param_set_name])
+            command.append("--force")
+            command.extend(["--credential-set", "arm_auth"])
+            command.extend(["--credential-set", "aad_auth"])
+            commands.append(command)
+        elif installation_file:
+            # porter installation apply is declarative: it creates the installation if it
+            # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
+            # replaces the previous explicit upgrade->install fallback for built-in actions.
+            commands.append(["porter", "installation", "apply", installation_file, "--force"])
+        else:
+            command = ["porter", msg_body['action'], installation_id]
+            command.extend([
+                "--reference",
+                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+            ])
+            if param_set_file:
+                command.extend(["--parameter-set", param_set_name])
+            command.append("--force")
+            command.extend(["--credential-set", "arm_auth"])
+            command.extend(["--credential-set", "aad_auth"])
+            commands.append(command)
+
+        return (commands, param_set_file, param_set_name, installation_file)
+    except Exception:
+        for path in (param_set_file, installation_file):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
+        raise
 
 
 async def build_porter_command_for_outputs(msg_body):

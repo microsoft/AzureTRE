@@ -227,17 +227,18 @@ async def _cleanup_param_set(param_set_name: str, param_set_file: str, installat
     The parameter set may never have been applied (e.g. run_porter returned early on an
     Azure/ACR/credential failure), so the delete is best-effort and does not log at error level.
     """
-    if param_set_file:
-        await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set", log_error=False)
-        try:
-            os.unlink(param_set_file)
-        except OSError as e:
-            logger.debug(f"Best-effort cleanup: could not delete temp parameter set file '{param_set_file}': {e}")
-    if installation_file:
-        try:
-            os.unlink(installation_file)
-        except OSError as e:
-            logger.debug(f"Best-effort cleanup: could not delete temp installation file '{installation_file}': {e}")
+    try:
+        if param_set_file:
+            await run_command_helper(["porter", "parameters", "delete", param_set_name], config, "Delete parameter set", log_error=False)
+    except Exception as e:
+        logger.debug(f"Best-effort cleanup: could not delete parameter set '{param_set_name}': {e}")
+    finally:
+        for path in (param_set_file, installation_file):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
 
 
 async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:

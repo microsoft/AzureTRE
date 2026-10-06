@@ -2,6 +2,9 @@ import json
 import asyncio
 import os
 import logging
+import base64
+import stat
+import tempfile
 import pytest
 from unittest.mock import patch, AsyncMock
 from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value
@@ -240,6 +243,88 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
             os.unlink(param_set_file)
         if installation_file and os.path.exists(installation_file):
             os.unlink(installation_file)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action, custom_action", [("install", False), ("upgrade", False), ("uninstall", False), ("start", True)])
+async def test_build_porter_command_large_firewall_parameters(mock_get_porter_parameter_keys, tmp_path, monkeypatch, action, custom_action):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    parameters = {
+        name: [
+            {
+                "name": f"workspace-{index}",
+                "priority": 1000 + index,
+                "rules": [{"name": f"rule-{rule}", "destination": f"service-{rule}.example.com"} for rule in range(20)]
+            }
+            for index in range(200)
+        ]
+        for name in ("rule_collections", "network_rule_collections")
+    }
+    mock_get_porter_parameter_keys.return_value = list(parameters)
+    msg_body = {"id": "guid", "action": action, "name": "mybundle", "version": "1.0.0", "parameters": parameters}
+
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(
+        {"registry_server": "myregistry.azurecr.io"}, msg_body, custom_action
+    )
+
+    assert all("--param" not in command for command in commands)
+    assert sum(len(arg.encode()) + 1 for command in commands for arg in command) < 4096
+    assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+    with open(param_set_file) as f:
+        parameter_set = json.load(f)
+    assert parameter_set["schemaType"] == "ParameterSet"
+    assert parameter_set["name"] == param_set_name
+    assert len(parameter_set["parameters"]) == 2
+    for parameter in parameter_set["parameters"]:
+        value = parameter["source"]["value"]
+        assert len(value) > 128 * 1024
+        assert json.loads(base64.b64decode(value)) == parameters[parameter["name"]]
+
+    if installation_file:
+        with open(installation_file) as f:
+            assert json.load(f)["parameterSets"] == [param_set_name]
+    else:
+        assert commands[1][commands[1].index("--parameter-set") + 1] == param_set_name
+
+    for path in tmp_path.iterdir():
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_stage", ["parameter_write", "installation_create", "installation_write", "command_build"])
+async def test_build_porter_command_removes_files_on_failure(mock_get_porter_parameter_keys, tmp_path, monkeypatch, failure_stage):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    mock_get_porter_parameter_keys.return_value = ["param1"]
+    msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "secret"}}
+    config = {"registry_server": "myregistry.azurecr.io"}
+    original_dump = json.dump
+    original_tempfile = tempfile.NamedTemporaryFile
+
+    def dump(document, stream):
+        should_fail = (
+            (failure_stage == "parameter_write" and document["schemaType"] == "ParameterSet")
+            or (failure_stage == "installation_write" and document["schemaType"] == "Installation")
+        )
+        if should_fail:
+            stream.write("partial secret document")
+            raise OSError("document write failed")
+        return original_dump(document, stream)
+
+    def create_file(*args, **kwargs):
+        if failure_stage == "installation_create" and list(tmp_path.iterdir()):
+            raise OSError("document creation failed")
+        return original_tempfile(*args, **kwargs)
+
+    monkeypatch.setattr("helpers.commands.json.dump", dump)
+    monkeypatch.setattr("helpers.commands.tempfile.NamedTemporaryFile", create_file)
+    if failure_stage == "command_build":
+        msg_body["action"] = "start"
+        del config["registry_server"]
+
+    with pytest.raises((OSError, KeyError)):
+        await build_porter_command(config, msg_body, custom_action=failure_stage == "command_build")
+
+    assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.asyncio

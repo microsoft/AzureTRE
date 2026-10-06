@@ -21,6 +21,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Pass Resource Processor parameters through Porter documents to avoid command-line size limits. Remove temporary documents on construction and execution failures. (`resource_processor` 0.13.10) ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 * Include Azure cloud and location in isolated CI environment names to avoid retained Key Vault name conflicts after region changes. Find previous CI environments by ownership tags during explicit cleanup. (`devops` 0.6.9) ([#5106](https://github.com/microsoft/AzureTRE/issues/5106))
 * Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
 * Preserve loaded UI views during background refresh, ignore stale workspace responses, refresh on every tab return, and keep internal Connect behavior and unavailable cost displays consistent. (`ui` 0.10.1) ([#5105](https://github.com/microsoft/AzureTRE/pull/5105))
@@ -152,8 +153,6 @@ BUG FIXES:
 * Fix Guacamole Windows VM image selections by aligning schema enums/defaults with supported image options in Windows and review VM templates. ([#4963](https://github.com/microsoft/AzureTRE/issues/4963))
 * Remove deprecated `soft_delete_enabled` setting from `azurerm_recovery_services_vault` in base workspace template. ([#4967](https://github.com/microsoft/AzureTRE/issues/4967))
 * Pin MKDocs to v1 to prevent incompatible upgrade. ([#5009](https://github.com/microsoft/AzureTRE/issues/5009))
-* Fix `OSError: [Errno 7] Argument list too long` ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
-
 
 COMPONENTS:
 

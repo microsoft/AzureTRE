@@ -4,6 +4,7 @@ from vmss_porter.runner import (
     set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter, _cleanup_param_set
 )
 import json
+import asyncio
 from unittest.mock import patch, AsyncMock, Mock
 import pytest
 import sys
@@ -507,6 +508,34 @@ async def test_cleanup_param_set_no_param_file(mock_run_command_helper, mock_unl
 
     mock_run_command_helper.assert_not_awaited()
     mock_unlink.assert_called_once_with("/tmp/installation.json")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("delete_error", [OSError("cannot start porter"), asyncio.CancelledError()])
+async def test_cleanup_param_set_removes_files_when_delete_raises(tmp_path, delete_error):
+    parameter_file = tmp_path / "parameters.json"
+    installation_file = tmp_path / "installation.json"
+    parameter_file.write_text("secret parameters")
+    installation_file.write_text("installation")
+
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=delete_error):
+        if isinstance(delete_error, asyncio.CancelledError):
+            with pytest.raises(asyncio.CancelledError):
+                await _cleanup_param_set("test", str(parameter_file), str(installation_file), {})
+        else:
+            await _cleanup_param_set("test", str(parameter_file), str(installation_file), {})
+
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink", side_effect=[OSError("permission denied"), None])
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_attempts_both_files(mock_run_command_helper, mock_unlink):
+    await _cleanup_param_set("test", "/tmp/parameters.json", "/tmp/installation.json", {})
+
+    assert mock_unlink.call_count == 2
+    mock_unlink.assert_any_call("/tmp/installation.json")
 
 
 @pytest.mark.asyncio
