@@ -3,7 +3,7 @@
 **BREAKING CHANGES**
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
-* Base workspace bundle 3.0.0 (major upgrade from 2.11.1) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+* Base workspace bundle 3.0.0 (major upgrade from 2.12.0) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
 
   **Migration Guide:**
   1. **Existing Workspaces:** Continue to operate without changes.
@@ -24,6 +24,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 * Add optional `direct_user_management_enabled` setting (default `false`, not recommended). When enabled, the API assigns workspace roles via direct app-role assignment instead of Entra ID groups (granting the API app `AppRoleAssignment.ReadWrite.All`), which is required to assign service principals a workspace role. Group-based user management remains the default and recommended approach as some workspace services rely on Entra ID groups. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
+* Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 * Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 * Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
