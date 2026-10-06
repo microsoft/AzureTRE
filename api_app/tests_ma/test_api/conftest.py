@@ -144,7 +144,7 @@ def no_workspace_role_user():
     return inner
 
 
-@pytest_asyncio.fixture(scope='module')
+@pytest.fixture(scope='module')
 def app() -> FastAPI:
     from main import get_application
 

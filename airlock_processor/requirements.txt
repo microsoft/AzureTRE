@@ -5,4 +5,4 @@ azure-storage-blob==12.27.1
 azure-identity==1.25.1
 azure-mgmt-storage==24.0.0
 azure-mgmt-resource==24.0.0
-pydantic==1.10.26
+pydantic==2.13.4

@@ -1,7 +1,7 @@
 import uuid
 from typing import List, Tuple
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -73,7 +73,7 @@ class UserResourceRepository(ResourceRepository):
         """
         query, parameters = self.active_user_resources_query(str(workspace_id), str(service_id))
         user_resources = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[UserResource], user_resources)
+        return TypeAdapter(List[UserResource]).validate_python(user_resources)
 
     async def get_user_resource_by_id(self, workspace_id: str, service_id: str, resource_id: str) -> UserResource:
         query, parameters = self.user_resources_query(str(workspace_id), str(service_id))
@@ -83,7 +83,7 @@ class UserResourceRepository(ResourceRepository):
         user_resources = await self.query(query=query, parameters=parameters)
         if not user_resources:
             raise EntityDoesNotExist
-        return parse_obj_as(UserResource, user_resources[0])
+        return TypeAdapter(UserResource).validate_python(user_resources[0])
 
     def get_user_resource_spec_params(self):
         return self.get_resource_base_spec_params()

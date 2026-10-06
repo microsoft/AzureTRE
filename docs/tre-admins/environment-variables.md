@@ -35,6 +35,7 @@
 | `STATEFUL_RESOURCES_LOCKED` | If set to `false` locks on stateful resources won't be created. A recommended setting for developers. |
 | `KV_PURGE_PROTECTION_ENABLED` | If set to `false` the core Key Vault's purge protection will be disabled so it can be reused upon deletion. A recommended setting for developers. |
 | `ENABLE_AIRLOCK_MALWARE_SCANNING` | If False, Airlock requests will skip the malware scanning stage. If set to True, Defender for Storage will be enabled. |
+| `ENABLE_LEGACY_AIRLOCK` | Set to `true` by default. Deploys the legacy per-stage airlock storage accounts alongside the consolidated accounts. Set to `false` only once no `airlock_version=1` workspaces or in-flight v1 requests remain; doing so permanently deletes the legacy accounts and any data still in them. |
 | `ENABLE_LOCAL_DEBUGGING` | Set to `false` by default. Setting this to `true` will ensure that Azure resources are accessible from your local development machine. (e.g. ServiceBus and Cosmos) |
 | `PUBLIC_DEPLOYMENT_IP_ADDRESS` | The public IP address of the machine that is deploying TRE. (Your desktop or the build agents). In certain locations a dynamic script to retrieve this from [https://ipecho.net/plain](https://ipecho.net/plain) does not work. If this is the case, then you can 'hardcode' your IP. |
 | `RESOURCE_PROCESSOR_VMSS_SKU` | The SKU of the VMMS to use for the resource processing VM. |

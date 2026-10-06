@@ -18,6 +18,43 @@ from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
 from azure.identity.aio import DefaultAzureCredential
 
 
+RESOURCE_REQUEST_FIELD_TYPES = {
+    "id": str,
+    "action": str,
+    "stepId": str,
+    "operationId": str,
+    "name": str,
+    "version": str,
+    "parameters": dict,
+}
+OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES = {"user": dict}
+
+
+def validate_resource_request(message: object) -> None:
+    if not isinstance(message, dict):
+        raise ValueError("Resource request message must be a JSON object")
+
+    missing_fields = set(RESOURCE_REQUEST_FIELD_TYPES) - message.keys()
+    if missing_fields:
+        raise ValueError(f"Resource request message is missing fields: {sorted(missing_fields)}")
+
+    invalid_fields = [
+        field_name
+        for field_name, field_type in RESOURCE_REQUEST_FIELD_TYPES.items()
+        if not isinstance(message[field_name], field_type)
+    ]
+    if invalid_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_fields)}")
+
+    invalid_optional_fields = [
+        field_name
+        for field_name, field_type in OPTIONAL_RESOURCE_REQUEST_FIELD_TYPES.items()
+        if field_name in message and not isinstance(message[field_name], field_type)
+    ]
+    if invalid_optional_fields:
+        raise ValueError(f"Resource request message has invalid field types: {sorted(invalid_optional_fields)}")
+
+
 def set_up_config() -> Optional[dict]:
     try:
         config = get_config()
@@ -33,8 +70,10 @@ async def default_credentials(msi_id):
     Context manager which yields the default credentials.
     """
     credential = DefaultAzureCredential(managed_identity_client_id=msi_id) if msi_id else DefaultAzureCredential()
-    yield credential
-    await credential.close()
+    try:
+        yield credential
+    finally:
+        await credential.close()
 
 
 async def receive_message(service_bus_client, config: dict, keep_running=lambda: True):
@@ -71,8 +110,25 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
                         try:
                             message = json.loads(str(msg))
-                        except (json.JSONDecodeError) as e:
+                        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as e:
                             logger.error(f"Received bad service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidJSON", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter malformed message")
+                                raise
+                            continue
+
+                        try:
+                            validate_resource_request(message)
+                        except ValueError as e:
+                            logger.error(f"Received invalid service bus resource request message: {e}")
+                            try:
+                                await receiver.dead_letter_message(msg, reason="InvalidResourceRequest", error_description=str(e))
+                            except Exception:
+                                logger.exception("Failed to dead-letter invalid resource request message")
+                                raise
+                            continue
 
                         with tracer.start_as_current_span("receive_message") as current_span:
                             current_span.set_attribute("resource_id", message["id"])
@@ -100,11 +156,14 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
         except ServiceBusConnectionError:
             # Occasionally there will be a transient / network-level error in connecting to SB.
             logger.info("Unknown Service Bus connection error. Will retry...")
+            await asyncio.sleep(10)
+
+        except asyncio.CancelledError:
+            raise
 
         except Exception:
-            # Catch all other exceptions, log them via .exception to get the stack trace, sleep, and reconnect
-
             logger.exception("Unknown exception. Will retry...")
+            await asyncio.sleep(10)
 
 
 async def run_porter(command_parts_list: list, config: dict):
@@ -278,8 +337,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 async def runner(process_number: int, config: dict):
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
-            service_bus_client = ServiceBusClient(config["service_bus_namespace"], credential)
-            await receive_message(service_bus_client, config)
+            async with ServiceBusClient(config["service_bus_namespace"], credential) as service_bus_client:
+                await receive_message(service_bus_client, config)
 
 
 async def check_runners(processes: list, httpserver: Process, keep_running=lambda: True):

@@ -42,7 +42,8 @@ def sample_user_resource():
 # TEMPLATES
 class TestTemplateRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_admin(self, app, non_admin_user):
+    @classmethod
+    def log_in_with_non_admin(cls, app, non_admin_user):
         app.dependency_overrides[require_tre_admin] = forbidden
         yield
         app.dependency_overrides = {}
@@ -63,7 +64,8 @@ class TestTemplateRoutesThatRequireAdminRights:
 # RESOURCES
 class TestWorkspaceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
         app.dependency_overrides[require_tre_admin] = forbidden
         with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
             yield
@@ -84,7 +86,8 @@ class TestWorkspaceRoutesThatRequireAdminRights:
 
 class TestWorkspaceServiceOwnerRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
         app.dependency_overrides[require_workspace_owner] = forbidden
         with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
             yield
@@ -111,7 +114,8 @@ class TestWorkspaceServiceOwnerRoutesAccess:
 
 class TestWorkspaceServiceOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
+    @classmethod
+    def log_in_with_non_owner_or_researcher(cls, app, no_workspace_role_user):
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
         with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
             yield
@@ -138,7 +142,8 @@ class TestWorkspaceServiceOwnerOrResearcherRoutesAccess:
 
 class TestUserResourcesOwnerOrResearcherRoutesAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner_or_researcher(self, app, no_workspace_role_user):
+    @classmethod
+    def log_in_with_non_owner_or_researcher(cls, app, no_workspace_role_user):
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = forbidden
         with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):
             yield
@@ -181,7 +186,8 @@ class TestUserResourcesOwnerOrResearcherRoutesAccess:
 
 class TestUserResourcesRoutesOwnerOrResourceOwnerAccess:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_owner(self, app, researcher_user):
+    @classmethod
+    def log_in_with_non_owner(cls, app, researcher_user):
         # try accessing the route with a non-admin user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         with patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace()):

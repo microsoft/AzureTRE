@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 import semantic_version
 from copy import deepcopy
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 from fastapi import HTTPException, status
 from db.repositories.user_resources import UserResourceRepository
@@ -12,7 +12,7 @@ from db.repositories.resources import ResourceRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
@@ -45,9 +45,9 @@ async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resourc
         child_etag = child_resource["_etag"]
         primary_parent_service_name = ""
         if child_resource["resourceType"] == ResourceType.WorkspaceService:
-            child_resource = parse_obj_as(WorkspaceService, child_resource)
+            child_resource = TypeAdapter(WorkspaceService).validate_python(child_resource)
         elif child_resource["resourceType"] == ResourceType.UserResource:
-            child_resource = parse_obj_as(UserResource, child_resource)
+            child_resource = TypeAdapter(UserResource).validate_python(child_resource)
             primary_parent_workspace_service = await resource_repo.get_resource_by_id(child_resource.parentWorkspaceServiceId)
             primary_parent_service_name = primary_parent_workspace_service.templateName
 
@@ -65,7 +65,7 @@ async def save_and_deploy_resource(
     resource_template: ResourceTemplate,
 ) -> Operation:
     try:
-        resource.user = user
+        resource.user = user.model_dump()
         resource.updatedWhen = get_timestamp()
 
         # Making a copy to save with secrets masked
@@ -134,7 +134,7 @@ def mask_sensitive_properties(
             if isinstance(prop, dict) and prop_name != "if":
                 flatten_template_props(prop)
 
-    flatten_template_props(template.dict())
+    flatten_template_props(template.model_dump())
 
     def recurse_input_props(prop_dict: dict):
         for prop_name, prop in prop_dict.items():
@@ -310,9 +310,21 @@ async def update_user_resource(
 
 
 async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
+    set_available_upgrades(resource, all_versions)
+
+
+async def enrich_resources_with_available_upgrades(resources: List[Resource], resource_template_repo: ResourceTemplateRepository):
+    if not resources:
+        return
+    versions_by_template_name = await resource_template_repo.get_all_template_versions_for_names([resource.templateName for resource in resources])
+    for resource in resources:
+        set_available_upgrades(resource, versions_by_template_name.get(resource.templateName, []))
+
+
+def set_available_upgrades(resource: Resource, all_versions: List[str]):
     available_upgrades = []
     resource_version = semantic_version.Version(resource.templateVersion)
-    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
 
     versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
     major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]

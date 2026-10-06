@@ -1,6 +1,7 @@
 """Tests for auth.token_validator."""
 import pytest
 from unittest.mock import MagicMock, patch
+from pydantic import ValidationError
 
 from auth.exceptions import TokenExpired, TokenInvalid, TokenSignatureInvalid
 from auth.models import AuthenticatedUser
@@ -58,7 +59,7 @@ class TestTokenValidatorValidate:
         with patch("auth.token_validator.jwt.decode", return_value=SAMPLE_CLAIMS):
             user = validator.validate("valid.jwt.token")
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             user.roles = []  # type: ignore[misc]
 
         # roles is a tuple, so in-place escalation is impossible too

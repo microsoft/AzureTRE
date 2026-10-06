@@ -2,11 +2,11 @@ import copy
 import uuid
 
 from datetime import datetime, timezone, UTC
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import UUID4
 from azure.cosmos.exceptions import CosmosResourceNotFoundError, CosmosAccessConditionFailedError
 from fastapi import HTTPException, status
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_aad_service
 from models.domain.authentication import User
@@ -19,8 +19,19 @@ from resources import strings
 from db.repositories.base import BaseRepository
 from services.logging import logger
 
+_UNSET = object()
+
 
 class AirlockRequestRepository(BaseRepository):
+    FINAL_AIRLOCK_STATUSES = [
+        AirlockRequestStatus.Approved,
+        AirlockRequestStatus.Rejected,
+        AirlockRequestStatus.Blocked,
+        AirlockRequestStatus.Cancelled,
+        AirlockRequestStatus.Failed,
+        AirlockRequestStatus.Revoked
+    ]
+
     @classmethod
     async def create(cls):
         cls = AirlockRequestRepository()
@@ -34,7 +45,7 @@ class AirlockRequestRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.now(timezone.utc).timestamp()
 
-    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: User, request_properties: dict) -> AirlockRequest:
+    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: Union[User, dict], request_properties: dict) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
             resourceVersion=original_request.resourceVersion,
             updatedWhen=original_request.updatedWhen,
@@ -45,7 +56,12 @@ class AirlockRequestRepository(BaseRepository):
 
         # now update the request props
         new_request.resourceVersion = new_request.resourceVersion + 1
-        new_request.updatedBy = updated_by
+        if hasattr(updated_by, "model_dump"):
+            new_request.updatedBy = updated_by.model_dump()
+        elif isinstance(updated_by, dict):
+            new_request.updatedBy = updated_by
+        else:
+            raise TypeError("updated_by must be a User model or dict")
         new_request.updatedWhen = self.get_timestamp()
 
         await self.upsert_item_with_etag(new_request, new_request.etag)
@@ -54,6 +70,28 @@ class AirlockRequestRepository(BaseRepository):
     @staticmethod
     def airlock_requests_query():
         return 'SELECT * FROM c'
+
+    async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Any request may still have a container, including cancelled ones whose async deletion
+        # failed or has not completed. Cleanup is idempotent (missing containers are ignored),
+        # so return every request to avoid orphaning data when the workspace is deleted.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
+
+    async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Requests in a final state keep their data but will never move between stages,
+        # so only in-flight requests block a change of storage layout.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)},
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
 
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 
@@ -102,7 +140,7 @@ class AirlockRequestRepository(BaseRepository):
         allowed_transitions = valid_transitions.get(current_status, set())
         return new_status in allowed_transitions
 
-    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user) -> AirlockRequest:
+    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user, airlock_version: int = 1) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
@@ -118,7 +156,8 @@ class AirlockRequestRepository(BaseRepository):
             updatedBy=user,
             updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
-            reviews=[]
+            reviews=[],
+            airlock_version=airlock_version
         )
 
         return airlock_request
@@ -151,14 +190,14 @@ class AirlockRequestRepository(BaseRepository):
             query += ' ASC' if order_ascending else ' DESC'
 
         airlock_requests = await self.query(query=query, parameters=parameters)
-        return parse_obj_as(List[AirlockRequest], airlock_requests)
+        return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
 
     async def get_airlock_request_by_id(self, airlock_request_id: UUID4) -> AirlockRequest:
         try:
             airlock_requests = await self.read_item_by_id(str(airlock_request_id))
         except CosmosResourceNotFoundError:
             raise EntityDoesNotExist
-        return parse_obj_as(AirlockRequest, airlock_requests)
+        return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
 
     async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
@@ -184,26 +223,29 @@ class AirlockRequestRepository(BaseRepository):
     async def update_airlock_request(
             self,
             original_request: AirlockRequest,
-            updated_by: User,
+            updated_by: Union[User, dict],
             new_status: Optional[AirlockRequestStatus] = None,
             request_files: Optional[List[AirlockFile]] = None,
             status_message: Optional[str] = None,
             airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
-        updated_request = self._build_updated_request(
-            original_request=original_request,
+            review_user_resource: Optional[AirlockReviewUserResource] = None,
+            scan_result=_UNSET) -> AirlockRequest:
+        # Preserve every field when rebuilding after an ETag conflict.
+        update_fields = dict(
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
+            scan_result=scan_result,
             updated_by=updated_by)
+        updated_request = self._build_updated_request(original_request=original_request, **update_fields)
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
-            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
+            updated_request = self._build_updated_request(original_request=original_request, **update_fields)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response
@@ -246,12 +288,16 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
-            updated_by: Optional[User] = None) -> AirlockRequest:
+            scan_result=_UNSET,
+            updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
             self._validate_status_update(current_status=original_request.status, new_status=new_status)
             updated_request.status = new_status
+
+        if scan_result is not _UNSET:
+            updated_request.scanResult = scan_result
 
         if status_message is not None:
             updated_request.statusMessage = status_message
@@ -266,7 +312,9 @@ class AirlockRequestRepository(BaseRepository):
                 updated_request.reviews.append(airlock_review)
 
         if review_user_resource is not None and updated_by is not None:
-            updated_request.reviewUserResources[updated_by.id] = review_user_resource
+            reviewer_id = updated_by.id if hasattr(updated_by, "id") else updated_by.get("id")
+            if reviewer_id:
+                updated_request.reviewUserResources[reviewer_id] = review_user_resource
 
         return updated_request
 

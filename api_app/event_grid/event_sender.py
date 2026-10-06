@@ -1,26 +1,36 @@
 import re
-import json
 
 from typing import Dict, Optional
 from azure.eventgrid import EventGridEvent
 from models.domain.events import AirlockNotificationRequestData, AirlockNotificationWorkspaceData, StatusChangedData, AirlockNotificationData
 from event_grid.helpers import publish_event
 from core import config
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus
+from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
 from models.domain.workspace import Workspace
 from services.logging import logger
 
 
-async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus]):
+async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus], workspace: Optional[Workspace] = None):
     request_id = airlock_request.id
     new_status = airlock_request.status.value
     previous_status = previous_status.value if previous_status else None
     request_type = airlock_request.type.value
     short_workspace_id = airlock_request.workspaceId[-4:]
 
+    # V2 ABAC uses full workspace IDs; legacy account names use short IDs.
+    workspace_id_for_event = airlock_request.workspaceId if airlock_request.airlock_version >= 2 else short_workspace_id
+
+    review_workspace_id = None
+    if workspace and airlock_request.type == AirlockRequestType.Import:
+        try:
+            full_review_ws_id = workspace.properties["airlock_review_config"]["import"]["import_vm_workspace_id"]
+            review_workspace_id = full_review_ws_id if airlock_request.airlock_version >= 2 else full_review_ws_id[-4:]
+        except (KeyError, TypeError):
+            pass
+
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=short_workspace_id).__dict__,
+        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=workspace_id_for_event, review_workspace_id=review_workspace_id, airlock_version=airlock_request.airlock_version).model_dump(mode="json"),
         subject=f"{request_id}/statusChanged",
         data_version="2.0"
     )
@@ -56,9 +66,8 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
     )
 
     # For EventGridEvent, data should be a Dict[str, object]
-    # Becuase data has nested objects, they all need to be recursively converted to dict
-    # To do that, we use a json() method implemented for all objects in AzureTREModel, and convert it back from json
-    data_dict = json.loads(data.json())
+    # Because data has nested objects, use JSON mode to recursively produce Event Grid-safe values
+    data_dict = data.model_dump(mode="json")
 
     airlock_notification = EventGridEvent(
         event_type="airlockNotification",

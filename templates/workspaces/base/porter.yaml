@@ -12,6 +12,7 @@ credentials:
     env: AUTH_CLIENT_ID
   - name: auth_client_secret
     env: AUTH_CLIENT_SECRET
+    sensitive: true
   - name: auth_tenant_id
     env: AUTH_TENANT_ID
   # Credentials for interacting with Azure
@@ -23,6 +24,7 @@ credentials:
     env: ARM_CLIENT_ID
   - name: azure_client_secret
     env: ARM_CLIENT_SECRET
+    sensitive: true
 
 parameters:
   - name: tre_id
@@ -67,13 +69,15 @@ parameters:
   - name: create_aad_groups
     type: boolean
     default: true
-    description: "Whether this bundle should create AAD groups for the workspace app roles (required for User Management)"
+    description: "Whether this bundle should create AAD groups for the workspace app
+      roles (required for User Management)"
   - name: core_api_client_id
     type: string
     description: "The client id of the core API"
   - name: workspace_owner_object_id
     type: string
-    description: "The object id of the user that will be granted WorkspaceOwner after it is created."
+    description: "The object id of the user that will be granted WorkspaceOwner
+      after it is created."
   - name: client_id
     type: string
     default: ""
@@ -95,6 +99,13 @@ parameters:
   - name: enable_airlock
     type: boolean
     default: true
+  - name: airlock_version
+    type: integer
+    default: 2
+    description: "Airlock storage version: 1 = legacy per-stage storage accounts, 2
+      = consolidated metadata-based storage. New workspaces default to 2. Pre-v2 workspaces
+      are stamped with an explicit 1 by the POST /migrations step, so this default never
+      migrates an existing workspace."
   - name: arm_environment
     type: string
   - name: enable_cmk_encryption
@@ -106,11 +117,16 @@ parameters:
   - name: storage_account_redundancy
     type: string
     default: "GRS"
-    description: "The redundancy option for the storage account in the workspace: GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
+    description: "The redundancy option for the storage account in the workspace:
+      GRS (Geo-Redundant Storage) or ZRS (Zone-Redundant Storage)."
   - name: enable_backup
     type: boolean
     default: true
     description: "Enable backups for the workspace, including the vm's & shared storage."
+  - name: delete_backups_on_uninstall
+    type: boolean
+    default: false
+    description: "When deleting the workspace, also delete the backups (Recovery Services Vault and its recovery points). When false the vault and its resource group are retained so the backed up data is kept."
   - name: enable_dns_policy
     type: boolean
     default: false
@@ -118,7 +134,8 @@ parameters:
   - name: auto_grant_workspace_consent
     type: boolean
     default: true
-    description: "Setting this to `true` will prevent the need for users to manually grant consent to new workspaces"
+    description: "Setting this to `true` will prevent the need for users to manually
+      grant consent to new workspaces"
   - name: enable_airlock_malware_scanning
     type: boolean
     default: false
@@ -194,6 +211,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: airlock_signer_client_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -224,6 +246,7 @@ install:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        airlock_version: ${ bundle.parameters.airlock_version }
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -254,6 +277,7 @@ install:
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
+        - name: airlock_signer_client_id
 
 upgrade:
   - terraform:
@@ -277,6 +301,7 @@ upgrade:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        airlock_version: ${ bundle.parameters.airlock_version }
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
@@ -307,8 +332,24 @@ upgrade:
         - name: workspace_owners_group_id
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
+        - name: airlock_signer_client_id
 
 uninstall:
+  - exec:
+      description: "Handle backup resources before tearing down the workspace"
+      command: ./remove_backup.sh
+      arguments:
+        - ${ bundle.parameters.tfstate_resource_group_name }
+        - ${ bundle.parameters.tfstate_storage_account_name }
+        - ${ bundle.parameters.tfstate_container_name }
+        - ${ bundle.parameters.tre_id }
+        - ${ bundle.parameters.id }
+        - ${ bundle.parameters.enable_backup }
+        - ${ bundle.parameters.delete_backups_on_uninstall }
+        - ${ bundle.parameters.workspace_subscription_id }
+      envs:
+        ARM_USE_AZUREAD: "true"
+        ARM_USE_OIDC: "true"
   - terraform:
       description: "Tear down workspace"
       vars:
@@ -330,6 +371,7 @@ uninstall:
         aad_redirect_uris_b64: ${ bundle.parameters.aad_redirect_uris }
         app_service_plan_sku: ${ bundle.parameters.app_service_plan_sku }
         enable_airlock: ${ bundle.parameters.enable_airlock }
+        airlock_version: ${ bundle.parameters.airlock_version }
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }

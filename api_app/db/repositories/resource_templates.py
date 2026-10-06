@@ -1,7 +1,7 @@
 import uuid
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from core import config
 from db.errors import DuplicateEntity, EntityDoesNotExist, EntityVersionExist, InvalidInput
@@ -55,7 +55,7 @@ class ResourceTemplateRepository(BaseRepository):
             query += ' AND c.parentWorkspaceService = @parentWorkspaceService'
             parameters.append({'name': '@parentWorkspaceService', 'value': parent_service_name})
         template_infos = await self.query(query=query, parameters=parameters)
-        templates = [parse_obj_as(ResourceTemplateInformation, info) for info in template_infos]
+        templates = [TypeAdapter(ResourceTemplateInformation).validate_python(info) for info in template_infos]
 
         if not user_roles:
             return templates
@@ -77,9 +77,9 @@ class ResourceTemplateRepository(BaseRepository):
         if len(templates) > 1:
             raise DuplicateEntity
         if resource_type == ResourceType.UserResource:
-            return parse_obj_as(UserResourceTemplate, templates[0])
+            return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
         else:
-            return parse_obj_as(ResourceTemplate, templates[0])
+            return TypeAdapter(ResourceTemplate).validate_python(templates[0])
 
     async def get_template_by_name_and_version(self, name: str, version: str, resource_type: ResourceType, parent_service_name: Optional[str] = None) -> Union[ResourceTemplate, UserResourceTemplate]:
         """
@@ -104,15 +104,27 @@ class ResourceTemplateRepository(BaseRepository):
         if len(templates) != 1:
             raise EntityDoesNotExist
         if resource_type == ResourceType.UserResource:
-            return parse_obj_as(UserResourceTemplate, templates[0])
+            return TypeAdapter(UserResourceTemplate).validate_python(templates[0])
         else:
-            return parse_obj_as(ResourceTemplate, templates[0])
+            return TypeAdapter(ResourceTemplate).validate_python(templates[0])
 
     async def get_all_template_versions(self, template_name: str) -> List[str]:
         query = 'SELECT VALUE c.version FROM c where c.name = @template_name'
         parameters = [{"name": "@template_name", "value": template_name}]
         versions = await self.query(query=query, parameters=parameters)
         return versions
+
+    async def get_all_template_versions_for_names(self, template_names: List[str]) -> Dict[str, List[str]]:
+        unique_template_names = list(set(template_names))
+        if not unique_template_names:
+            return {}
+        query = 'SELECT c.name, c.version FROM c WHERE ARRAY_CONTAINS(@template_names, c.name)'
+        parameters = [{"name": "@template_names", "value": unique_template_names}]
+        template_versions = await self.query(query=query, parameters=parameters)
+        versions_by_name: Dict[str, List[str]] = {name: [] for name in unique_template_names}
+        for template_version in template_versions:
+            versions_by_name.setdefault(template_version["name"], []).append(template_version["version"])
+        return versions_by_name
 
     async def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
@@ -132,6 +144,10 @@ class ResourceTemplateRepository(BaseRepository):
             "customActions": template_input.customActions
         }
 
+        for schema_key, template_field in (("$schema", "schema_uri"), ("$id", "schema_id"), ("$defs", "defs")):
+            if schema_key in template_input.json_schema:
+                template[template_field] = template_input.json_schema[schema_key]
+
         if "uiSchema" in template_input.json_schema:
             template["uiSchema"] = template_input.json_schema["uiSchema"]
 
@@ -145,9 +161,9 @@ class ResourceTemplateRepository(BaseRepository):
 
         if resource_type == ResourceType.UserResource:
             template["parentWorkspaceService"] = parent_service_name
-            template = parse_obj_as(UserResourceTemplate, template)
+            template = TypeAdapter(UserResourceTemplate).validate_python(template)
         else:
-            template = parse_obj_as(ResourceTemplate, template)
+            template = TypeAdapter(ResourceTemplate).validate_python(template)
 
         await self.save_item(template)
         return template

@@ -5,7 +5,8 @@
 // These tests can be run from the dev container using the run-tests.sh script
 //
 const { createHash } = require('crypto');
-const { create } = require('domain');
+
+const SKIP_DEPLOYMENT_FLAG = "skip_deployment";
 
 async function getCommandFromComment({ core, context, github }) {
   const commentUsername = context.payload.comment.user.login;
@@ -31,6 +32,7 @@ async function getCommandFromComment({ core, context, github }) {
     core.info(`Using head ref: ${pr.head.ref}`)
     const branchRefId = getRefIdForBranch(pr.head.ref);
     logAndSetOutput(core, "branchRefId", branchRefId);
+    logAndSetOutput(core, "branchCiGitRef", `refs/heads/${pr.head.ref}`);
   } else {
     core.info("Skipping branchRefId as PR is from a fork")
   }
@@ -51,6 +53,7 @@ async function getCommandFromComment({ core, context, github }) {
   const commentBody = context.payload.comment.body;
   const commentFirstLine = commentBody.split("\n")[0];
   let command = "none";
+  let skipDeployment = false;
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
     // only allow actions for users with write access
@@ -83,6 +86,7 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests";
+            skipDeployment = commandHasSkipDeploymentFlag(parts);
           }
           break;
         }
@@ -92,12 +96,18 @@ async function getCommandFromComment({ core, context, github }) {
           const runTests = await handleTestCommand({ core, github }, parts, "extended tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended";
+            skipDeployment = commandHasSkipDeploymentFlag(parts);
           }
           break;
         }
 
       case "/test-extended-aad":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "extended AAD tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-extended-aad";
@@ -107,6 +117,11 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-shared-services":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-shared-services";
@@ -116,9 +131,37 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-manual-app":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "manual app tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-manual-app";
+          }
+          break;
+        }
+
+      case "/test-backups":
+        {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
+          const runTests = await handleTestCommand({ core, github }, parts, "backup tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-backups";
+          }
+          break;
+        }
+
+      case "/test-airlock":
+        {
+          const runTests = await handleTestCommand({ core, github }, parts, "airlock tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
+          if (runTests) {
+            command = "run-tests-airlock";
           }
           break;
         }
@@ -147,6 +190,7 @@ async function getCommandFromComment({ core, context, github }) {
         break;
     }
   }
+  logAndSetOutput(core, "skipDeployment", skipDeployment.toString());
   logAndSetOutput(core, "command", command);
   return command;
 }
@@ -168,28 +212,41 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
   const prAuthorHasWriteAccess = await userHasWriteAccessToRepo({ core, github }, pr.authorUsername, pr.repoOwner, pr.repoName);
   const externalPr = !prAuthorHasWriteAccess;
   if (externalPr) {
-    if (commandParts.length === 1) {
+    const commentSha = getShaFromCommandParts(commandParts);
+    if (!commentSha) {
       const message = `:warning: When using \`${command}\` on external PRs, the SHA of the checked commit must be specified`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
-    const commentSha = commandParts[1];
     if (commentSha.length < 7) {
       const message = `:warning: When specifying a commit SHA it must be at least 7 characters (received \`${commentSha}\`)`;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
     if (!pr.headSha.startsWith(commentSha)) {
-      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`/test\``;
+      const message = `:warning: The specified SHA \`${commentSha}\` is not the latest commit on the PR. Please validate the latest commit and re-run \`${command}\``;
       await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
       return false;
     }
   }
 
-  const message = `:runner: Running ${testDescription}: https://github.com/${pr.repoOwner}/${pr.repoName}/actions/runs/${runId} (with refid \`${pr.refId}\`)`;
+  const message = `:runner: Running ${testDescription}: https://github.com/${pr.repoOwner}/${pr.repoName}/actions/runs/${runId}`;
   await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
   return true
 
+}
+
+function commandHasSkipDeploymentFlag(commandParts) {
+  return commandParts.slice(1).includes(SKIP_DEPLOYMENT_FLAG);
+}
+
+function getShaFromCommandParts(commandParts) {
+  return commandParts.slice(1).find(part => part !== SKIP_DEPLOYMENT_FLAG);
+}
+
+async function addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, command) {
+  const message = `:warning: \`${SKIP_DEPLOYMENT_FLAG}\` is only supported for \`/test\` and \`/test-extended\`. Please re-run \`${command}\` without \`${SKIP_DEPLOYMENT_FLAG}\`.`;
+  await addActionComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, message);
 }
 
 async function prContainsNonDocChanges(github, repoOwner, repoName, prNumber) {
@@ -255,10 +312,12 @@ async function showHelp({ github }, repoOwner, repoName, prNumber, commentUser, 
   const body = `${leadingContent}
 
 You can use the following commands:
-&nbsp;&nbsp;&nbsp;&nbsp;/test - build, deploy and run smoke tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-extended - build, deploy and run smoke & extended tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test [<sha>] [skip_deployment] - build, deploy and run smoke tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-extended [<sha>] [skip_deployment] - build, deploy and run smoke & extended tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad - build, deploy and run smoke & extended AAD tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
+&nbsp;&nbsp;&nbsp;&nbsp;/test-backups - build, deploy and run backup tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-airlock - build, deploy and run Airlock tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-manual-app - run the manual workspace application test suite on a PR build
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)

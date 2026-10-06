@@ -133,4 +133,3 @@ echo "=========================================="
 echo "Workspace Application Client ID: ${workspaceAppId}"
 echo "=========================================="
 echo
-

@@ -35,7 +35,8 @@ permissions:
 jobs:
   prepare-not-main:
     name: Preparation
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     if: |
       github.ref != 'refs/heads/main'
     outputs:
@@ -43,8 +44,16 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
       - id: run-id
         name: Get run id
+        env:
+          CI_GIT_REF: ${{ github.ref }}
+          CI_LOCATION: ${{ vars.LOCATION }}
+          CI_AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT || 'AzureCloud' }}
         run: |
           set -o errexit
           set -o pipefail
@@ -54,7 +63,8 @@ jobs:
           echo "git ref:    $(git rev-parse HEAD)"
           echo "github sha: ${GITHUB_SHA}"
           echo "github ref: ${GITHUB_REF}"
-          REFID=$(echo "${GITHUB_REF}" | shasum | cut -c1-8)
+          REFID=$(python3 devops/scripts/ci_environment_id.py \
+            --ref "$CI_GIT_REF" --location "$CI_LOCATION" --cloud "$CI_AZURE_ENVIRONMENT")
           echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
           echo "refid=${REFID}" >> "$GITHUB_OUTPUT"
 
@@ -70,6 +80,7 @@ jobs:
       pull-requests: write
     with:
       ciGitRef: ${{ github.ref }}
+      ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
       environmentName: ${{ github.event.inputs.environment }}

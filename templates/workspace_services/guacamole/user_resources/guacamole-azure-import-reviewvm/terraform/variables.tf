@@ -21,7 +21,8 @@ variable "image_gallery_id" {
   default = ""
 }
 variable "airlock_request_sas_url" {
-  type = string
+  type      = string
+  sensitive = true
 }
 variable "enable_cmk_encryption" {
   type    = bool

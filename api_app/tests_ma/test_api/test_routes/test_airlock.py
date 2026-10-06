@@ -1,6 +1,5 @@
 import time
 import pytest
-import pytest_asyncio
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -14,7 +13,7 @@ from models.domain.user_resource import UserResource
 from models.domain.resource_template import ResourceTemplate
 from models.domain.workspace_service import WorkspaceService
 from models.domain.workspace import Workspace
-from models.domain.operation import Operation
+from models.domain.operation import Operation, Status
 from resources import strings
 from auth.rbac import require_workspace_owner_or_researcher, require_workspace_owner_or_researcher_or_airlock_manager, require_airlock_manager
 pytestmark = pytest.mark.asyncio
@@ -33,14 +32,16 @@ AIRLOCK_REVIEW_ID = "11bd2526-054b-4305-a7f9-63a2d6d2a80c"
 def sample_airlock_request_input_data():
     return {
         "type": "import",
-        "businessJustification": "some business justification"
+        "title": "a request title",
+        "businessJustification": "some business justification",
+        "properties": {}
     }
 
 
 @pytest.fixture
 def sample_airlock_review_input_data():
     return {
-        "reviewDecision": "approved",
+        "approval": True,
         "decisionExplanation": "the reason why this request was approved/rejected"
     }
 
@@ -77,14 +78,15 @@ def sample_airlock_user_resource_object():
     )
 
 
-def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {}) -> Workspace:
+def sample_workspace(workspace_id=WORKSPACE_ID, workspace_properties: dict = {}, deployment_status: Status = Status.Deployed) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
         templateName="tre-workspace-base",
         templateVersion="0.1.0",
         etag="",
         properties=workspace_properties,
-        resourcePath=f'/workspaces/{workspace_id}'
+        resourcePath=f'/workspaces/{workspace_id}',
+        deploymentStatus=deployment_status,
     )
     return workspace
 
@@ -127,8 +129,9 @@ def create_test_user_with_roles(roles):
 
 
 class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
-    @pytest_asyncio.fixture(autouse=True, scope='class')
-    def log_in_with_researcher_user(self, app, researcher_user):
+    @pytest.fixture(autouse=True, scope='class')
+    @classmethod
+    def log_in_with_researcher_user(cls, app, researcher_user):
         app.dependency_overrides[require_workspace_owner_or_researcher] = researcher_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = researcher_user
         with patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
@@ -152,6 +155,13 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_201_CREATED
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
+
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(deployment_status=Status.AwaitingUpdate))
+    async def test_post_airlock_request_during_airlock_version_upgrade_returns_409(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert "being upgraded" in response.text
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.AirlockRequestRepository.create_airlock_request_item", side_effect=ValueError)
@@ -181,6 +191,12 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
     async def test_post_airlock_request_with_airlock_disabled_returns_405(self, _, app, client, sample_airlock_request_input_data):
         response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    @patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", False)
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={"airlock_version": 1}))
+    async def test_post_airlock_request_on_v1_workspace_with_legacy_disabled_returns_400(self, _, app, client, sample_airlock_request_input_data):
+        response = await client.post(app.url_path_for(strings.API_CREATE_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID), json=sample_airlock_request_input_data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace(workspace_properties={}))
     @patch("api.routes.airlock.save_and_publish_event_airlock_request")
@@ -214,6 +230,19 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["airlockRequest"]["id"] == AIRLOCK_REQUEST_ID
         assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
+
+    @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", return_value=sample_airlock_request_object())
+    @patch("api.routes.airlock.update_and_publish_event_airlock_request")
+    async def test_post_submit_does_not_apply_a_recorded_scan_result(self, update_mock, _, app, client):
+        submitted = sample_airlock_request_object(status=AirlockRequestStatus.Submitted)
+        submitted.scanResult = {"clean": True, "message": None}
+        update_mock.return_value = submitted
+
+        response = await client.post(app.url_path_for(strings.API_SUBMIT_AIRLOCK_REQUEST, workspace_id=WORKSPACE_ID, airlock_request_id=AIRLOCK_REQUEST_ID))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["airlockRequest"]["status"] == AirlockRequestStatus.Submitted
+        assert update_mock.call_count == 1
 
     @patch("api.routes.airlock.AirlockRequestRepository.read_item_by_id", side_effect=EntityDoesNotExist)
     async def test_post_submit_airlock_request_if_request_not_found_returns_404(self, _, app, client):
@@ -303,14 +332,16 @@ class TestAirlockRoutesThatRequireOwnerOrResearcherRights():
 
 
 class TestAirlockRoutesThatRequireAirlockManagerRights():
-    @pytest_asyncio.fixture(autouse=True, scope='class')
-    def log_in_with_airlock_manager_user(self, app, airlock_manager_user):
+    @pytest.fixture(autouse=True, scope='class')
+    @classmethod
+    def log_in_with_airlock_manager_user(cls, app, airlock_manager_user):
         app.dependency_overrides[require_airlock_manager] = airlock_manager_user
         app.dependency_overrides[require_workspace_owner_or_researcher_or_airlock_manager] = airlock_manager_user
         with patch("services.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
                 patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
                 patch("services.airlock.AirlockRequestRepository.save_item"), \
-                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"):
+                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"), \
+                patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]}):
             yield
         app.dependency_overrides = {}
 
@@ -463,7 +494,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
 
 class TestAirlockRoutesPermissions():
 
-    @pytest_asyncio.fixture()
+    @pytest.fixture()
     def log_in_with_user(self, app):
         def inner(user):
             app.dependency_overrides[require_workspace_owner_or_researcher] = user

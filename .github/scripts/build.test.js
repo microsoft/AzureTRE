@@ -125,6 +125,27 @@ describe('getCommandFromComment', () => {
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
         });
 
+        test(`should set skipDeployment to 'true' when skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test skip_deployment',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
+        });
+
+        test(`should set skipDeployment to 'false' by default`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('false');
+        });
+
         test(`should set nonDocsChanges to 'true'`, async () => {
           const context = createCommentContext({
             username: 'admin',
@@ -146,7 +167,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -326,8 +347,22 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
+        });
+      })
+
+      describe(`for '/test 2345678 skip_deployment' for external PR`, () => {
+        test(`should set command to 'run-tests' and skipDeployment to 'true'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test 2345678 skip_deployment',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
         });
       })
 
@@ -355,7 +390,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -370,6 +405,16 @@ describe('getCommandFromComment', () => {
           expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
         });
 
+        test(`should set skipDeployment to 'true' when skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
+        });
+
         test(`should add comment with run link`, async () => {
           const context = createCommentContext({
             username: 'admin',
@@ -381,7 +426,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -407,7 +452,22 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
+          });
+        });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended-aad skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-extended-aad` without `skip_deployment`\./,
           });
         });
       });
@@ -433,7 +493,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running manual app tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running manual app tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -459,7 +519,74 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
+          });
+        });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-shared-services skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-shared-services` without `skip_deployment`\./,
+          });
+        });
+      });
+
+      describe(`for '/test-airlock'`, () => {
+        test(`should set command to 'run-tests-airlock'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-airlock',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-airlock');
+        });
+      });
+
+      describe(`for '/test-backups'`, () => {
+        test(`should set command to 'run-tests-backups'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-backups');
+        });
+
+        test(`should add comment with run link`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups',
+            pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
+          });
+        });
+
+        test(`should warn and not run if skip_deployment is supplied`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-backups skip_deployment',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+          expect(mockGithubRestIssuesCreateComment).toHaveComment({
+            owner: 'someOwner',
+            repo: 'someRepo',
+            issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
+            bodyMatcher: /`skip_deployment` is only supported for `\/test` and `\/test-extended`\. Please re-run `\/test-backups` without `skip_deployment`\./,
           });
         });
       });
@@ -517,7 +644,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /The specified SHA `00000000` is not the latest commit on the PR. Please validate the latest commit and re-run `\/test`/,
+            bodyMatcher: /The specified SHA `00000000` is not the latest commit on the PR. Please validate the latest commit and re-run `\/test-extended`/,
           });
         });
       })
@@ -575,8 +702,22 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
+        });
+      })
+
+      describe(`for '/test-extended skip_deployment 2345678' for external PR`, () => {
+        test(`should set command to 'run-tests-extended' and skipDeployment to 'true'`, async () => {
+          const context = createCommentContext({
+            username: 'admin',
+            body: '/test-extended skip_deployment 2345678',
+            pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES,
+            authorUsername: 'non-contributor',
+          });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-extended');
+          expect(outputFor(mockCoreSetOutput, 'skipDeployment')).toBe('true');
         });
       })
 
@@ -637,7 +778,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Hello!\n\nYou can use the following commands:/,
+            bodyMatcher: /Hello!\n\nYou can use the following commands:[\s\S]*\/test-airlock/,
           });
         });
       });
@@ -723,6 +864,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe(null);
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe(null);
       });
 
       test('should set branchRefId for PR from upstream repo', async () => {
@@ -734,6 +876,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe('6b751c8f');
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe('refs/heads/pr-head-ref');
       });
 
       test('should set prHeadSha output', async () => {

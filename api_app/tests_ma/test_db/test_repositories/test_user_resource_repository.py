@@ -85,7 +85,7 @@ async def test_get_user_resources_for_workspace_queries_db(query_mock, user_reso
 
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 async def test_get_user_resource_returns_resource_if_found(query_mock, user_resource_repo, user_resource):
-    query_mock.return_value = [user_resource.dict()]
+    query_mock.return_value = [user_resource.model_dump()]
 
     actual_resource = await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
 
@@ -94,7 +94,7 @@ async def test_get_user_resource_returns_resource_if_found(query_mock, user_reso
 
 @patch('db.repositories.user_resources.UserResourceRepository.query')
 async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
-    query_mock.return_value = [user_resource.dict()]
+    query_mock.return_value = [user_resource.model_dump()]
     expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus'
     expected_parameters = [
         {'name': '@resourceType', 'value': ResourceType.UserResource},
