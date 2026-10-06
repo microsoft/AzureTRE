@@ -129,6 +129,13 @@ class WorkspaceRepository(ResourceRepository):
         finally:
             await storage_client.close()
 
+    @staticmethod
+    def _template_default_param(template: ResourceTemplate, input_properties: dict, name: str) -> dict:
+        template_property = template.properties.get(name)
+        if template_property is None or template_property.default is None:
+            return {}
+        return {name: input_properties.get(name, template_property.default)}
+
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
@@ -168,13 +175,10 @@ class WorkspaceRepository(ResourceRepository):
         # JSON Schema defaults validate input but are not materialised by the API. Persist the
         # Airlock default so review-workspace templates that default it to false do not later get
         # interpreted as having Airlock enabled.
-        enable_airlock_default = template.properties.get("enable_airlock")
-        enable_airlock_param = {}
-        if enable_airlock_default and enable_airlock_default.default is not None:
-            enable_airlock_param = {
-                "enable_airlock": workspace_input.properties.get(
-                    "enable_airlock", enable_airlock_default.default)
-            }
+        enable_airlock_param = self._template_default_param(template, workspace_input.properties, "enable_airlock")
+        # Persist the group creation default so Porter's own default does not create Entra ID groups that
+        # the default Application Admin permissions cannot manage.
+        create_aad_groups_param = self._template_default_param(template, workspace_input.properties, "create_aad_groups")
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
@@ -184,6 +188,7 @@ class WorkspaceRepository(ResourceRepository):
                                     **workspace_owner_param,
                                     **airlock_version_param,
                                     **enable_airlock_param,
+                                    **create_aad_groups_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 
