@@ -19,7 +19,7 @@ import {
   Stack,
   TextField,
 } from "@fluentui/react";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { WorkspaceContext } from "../../../contexts/WorkspaceContext";
 import { HttpMethod, useAuthApiCall } from "../../../hooks/useAuthApiCall";
 import { AirlockRequest } from "../../../models/airlock";
@@ -37,6 +37,7 @@ import { addUpdateOperation } from "../notifications/operationsSlice";
 import { StatusBadge } from "../StatusBadge";
 import vmImage from "../../../assets/virtual_machine.svg";
 import { useAccount, useMsal } from "@azure/msal-react";
+import { openExternalUrl } from "../../../utils/openExternalUrl";
 
 interface AirlockReviewRequestProps {
   request: AirlockRequest | undefined;
@@ -57,6 +58,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const [reviewResourceError, setReviewResourceError] = useState(false);
   const [apiError, setApiError] = useState({} as APIError);
   const [proceedToReview, setProceedToReview] = useState(false);
+  const [proceedToDecision, setProceedToDecision] = useState(false);
   const [reviewResource, setReviewResource] = useState<UserResource>();
   const [reviewWorkspaceScope, setReviewWorkspaceScope] = useState<string>();
   const [otherReviewers, setOtherReviewers] = useState<Array<string>>();
@@ -69,6 +71,26 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
   const account = useAccount(accounts[0] || {});
 
   useEffect(() => setRequest(props.request), [props.request]);
+
+  // The component is reused across :requestId changes; start each request's review afresh.
+  const requestId = props.request?.id;
+  const currentRequestId = useRef(requestId);
+  currentRequestId.current = requestId;
+  useEffect(() => {
+    setReviewResource(undefined);
+    setReviewWorkspaceScope(undefined);
+    setReviewResourceStatus(undefined);
+    setReviewResourceError(false);
+    setOtherReviewers(undefined);
+    setApiError({} as APIError);
+    setReviewExplanation("");
+    setReviewing(false);
+    setReviewError(false);
+    setProceedToReview(false);
+    setProceedToDecision(false);
+    setShowApproveConfirmation(false);
+    setShowRejectConfirmation(false);
+  }, [requestId]);
 
   // Check if Review Resources are configured for the current workspace
   useEffect(() => {
@@ -85,6 +107,8 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Get the review user resource if present in the airlock request
   useEffect(() => {
+    // Ignore lookups that finish after the request (or its inputs) changed.
+    let active = true;
     const getReviewUserResource = async (userId: string) => {
       setReviewResourceError(false);
       try {
@@ -98,6 +122,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         if (reviewWorkspaceId !== workspaceCtx.workspace.id) {
           scopeId = (await apiCall(`${ApiEndpoint.Workspaces}/${reviewWorkspaceId}/scopeid`, HttpMethod.Get))
             .workspaceAuth.scopeId;
+          if (!active) return;
           if (!scopeId) {
             throw Error("Unable to get scope_id from review resource workspace - authentication not set up.");
           }
@@ -114,8 +139,10 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
             scopeId,
           )
         ).userResource;
+        if (!active) return;
         setReviewResource(resource);
       } catch (err: any) {
+        if (!active) return;
         err.userMessage = "Error retrieving resource";
         setApiError(err);
         setReviewResourceError(true);
@@ -131,6 +158,9 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       const otherReviewers = Object.keys(request.reviewUserResources).filter((id) => id !== userId);
       setOtherReviewers(otherReviewers);
     }
+    return () => {
+      active = false;
+    };
   }, [
     apiCall,
     request,
@@ -180,6 +210,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
 
   // Create a review resource
   const createReviewResource = useCallback(async () => {
+    const createdFor = request?.id;
     setReviewResourceError(false);
     setReviewResourceStatus("creating");
     try {
@@ -191,6 +222,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       dispatch(addUpdateOperation(response.operation));
       props.onUpdateRequest(response.airlockRequest);
     } catch (err: any) {
+      if (currentRequestId.current !== createdFor) return;
       err.userMessage = "Error creating review resource";
       setApiError(err);
       setReviewResourceError(true);
@@ -215,13 +247,19 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
             workspaceCtx.workspaceApplicationIdURI,
             review,
           );
+          // If the user has moved on to another request, just update the list rather than closing their current review.
+          if (currentRequestId.current !== request.id) {
+            props.onUpdateRequest(response.airlockRequest);
+            return;
+          }
           props.onReviewRequest(response.airlockRequest);
         } catch (err: any) {
+          if (currentRequestId.current !== request.id) return;
           err.userMessage = "Error reviewing airlock request";
           setApiError(err);
           setReviewError(true);
         }
-        setReviewing(false);
+        if (currentRequestId.current === request.id) setReviewing(false);
       }
     },
     [apiCall, request, workspaceCtx.workspaceApplicationIdURI, reviewExplanation, props],
@@ -265,7 +303,9 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       if (resourceNotConnectable) {
         action = <PrimaryButton onClick={createReviewResource} text="Re-deploy" title="Re-deploy resource" />;
       } else {
-        action = <PrimaryButton onClick={() => window.open(connectUri)} text="View data" title="Connect to resource" />;
+        action = (
+          <PrimaryButton onClick={() => openExternalUrl(connectUri)} text="View data" title="Connect to resource" />
+        );
       }
       break;
   }
@@ -316,7 +356,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         <PrimaryButton onClick={() => setProceedToReview(true)} text="Proceed to review" />
       </DialogFooter>
     </>
-  ) : (
+  ) : !proceedToDecision ? (
     <>
       <TextField
         label="Reason for decision"
@@ -339,19 +379,43 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
       ) : (
         <DialogFooter>
           <DefaultButton onClick={() => setProceedToReview(false)} text="Back" styles={{ root: { float: "left" } }} />
+          <PrimaryButton
+            text="Continue to decision"
+            onClick={() => setProceedToDecision(true)}
+            disabled={reviewExplanation.trim().length === 0}
+          />
+        </DialogFooter>
+      )}
+    </>
+  ) : (
+    <>
+      <p>Do you wish to approve or reject this Airlock request?</p>
+      <p>
+        <b>Reason for decision:</b> {reviewExplanation}
+      </p>
+      {reviewError && <ExceptionLayout e={apiError} />}
+      {reviewing ? (
+        <Spinner
+          label="Submitting review..."
+          ariaLive="assertive"
+          labelPosition="top"
+          size={SpinnerSize.large}
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <DialogFooter>
+          <DefaultButton onClick={() => setProceedToDecision(false)} text="Back" styles={{ root: { float: "left" } }} />
           <DefaultButton
             iconProps={{ iconName: "Cancel" }}
             onClick={() => setShowRejectConfirmation(true)}
             text="Reject"
             styles={destructiveButtonStyles}
-            disabled={reviewExplanation.length <= 0}
           />
           <DefaultButton
             iconProps={{ iconName: "Accept" }}
             onClick={() => setShowApproveConfirmation(true)}
             text="Approve"
             styles={successButtonStyles}
-            disabled={reviewExplanation.length <= 0}
           />
         </DialogFooter>
       )}
@@ -377,7 +441,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         onDismiss={() => setShowApproveConfirmation(false)}
         dialogContentProps={{
           title: "Approve Airlock Request?",
-          subText: `Are you sure you want to approve "${request?.title}"? This will allow the data to be downloaded.`,
+          subText: `This submits your review reason and approves "${request?.title}", allowing the data to be downloaded.`,
         }}
       >
         <DialogFooter>
@@ -399,7 +463,7 @@ export const AirlockReviewRequest: React.FunctionComponent<AirlockReviewRequestP
         onDismiss={() => setShowRejectConfirmation(false)}
         dialogContentProps={{
           title: "Reject Airlock Request?",
-          subText: `Are you sure you want to reject "${request?.title}"?`,
+          subText: `This submits your review reason and rejects "${request?.title}".`,
         }}
       >
         <DialogFooter>

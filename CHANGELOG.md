@@ -5,6 +5,14 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
+* Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
+* Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
+* Add search, sort and (for Workspace Owners) a My resources / All resources view to every resource list, defaulting owners to their own user resources. ([#2832](https://github.com/microsoft/AzureTRE/issues/2832))
+* Redesign the resource Details, History and Operations tabs: grouped details with copy buttons, a history table showing what changed in each version, and compact operations with collapsible steps. ([#2832](https://github.com/microsoft/AzureTRE/issues/2832))
+* Add one right-aligned Refresh control per UI view, and poll status only while the UI tab is visible, catching up when it becomes visible again. Polling no longer reloads unchanged data or remounts resource lists, and resource templates are fetched once per template rather than once per card. ([#3983](https://github.com/microsoft/AzureTRE/issues/3983), [#4204](https://github.com/microsoft/AzureTRE/issues/4204))
+* Separate Airlock review explanations from the final approve/reject decision. ([#4753](https://github.com/microsoft/AzureTRE/issues/4753))
+* Clarify Stop and Disable VM behavior with confirmation text and action descriptions, and add Start/Stop buttons to virtual machine cards and detail pages. ([#3973](https://github.com/microsoft/AzureTRE/issues/3973))
 * Redesign Airlock storage to consolidated metadata-based accounts (v2), now the default for new workspaces. Legacy per-stage storage is retained behind `enable_legacy_airlock` (default `true`; sample config sets `false`). Existing workspaces upgrade in place and stay on `airlock_version=1` (a minor, non-destructive `tre-workspace-base`
   upgrade to `2.11.1`); run `POST /migrations` after upgrading to stamp pre-v2 workspaces with `airlock_version=1`, then opt into v2 per workspace by patching `airlock_version=2`.
 See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlock) ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
@@ -14,6 +22,13 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Include Azure cloud and location in isolated CI environment names to avoid retained Key Vault name conflicts after region changes. Find previous CI environments by ownership tags during explicit cleanup. (`devops` 0.6.9) ([#5106](https://github.com/microsoft/AzureTRE/issues/5106))
+* Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
+* Preserve loaded UI views during background refresh, ignore stale workspace responses, refresh on every tab return, and keep internal Connect behavior and unavailable cost displays consistent. (`ui` 0.10.1) ([#5105](https://github.com/microsoft/AzureTRE/pull/5105))
+* Avoid role-restricted shared-service and workspace-operation requests for researchers, show only the resource tabs each role can use, and show a researcher's own name as the owner of their resources. ([#2431](https://github.com/microsoft/AzureTRE/issues/2431))
+* Replace cryptic API network and server errors with a retryable availability message. ([#4852](https://github.com/microsoft/AzureTRE/issues/4852))
+* Hide cost displays when cost reporting is unavailable instead of showing repeated error banners. ([#4318](https://github.com/microsoft/AzureTRE/issues/4318))
+* Dead-letter malformed Service Bus resource-request payloads instead of retrying them indefinitely. ([#4976](https://github.com/microsoft/AzureTRE/issues/4976))
+* Patch vulnerable npm dependencies in the UI (`ui` 0.9.1) and GitHub workflow scripts (`build-scripts` 1.0.1) ([#5108](https://github.com/microsoft/AzureTRE/issues/5108))
 * Check blob read, write, lease and metadata access before Terraform initialisation. Recover empty, unowned bootstrap leases only in verified PR CI backends with no other active workflows. Preserve state-lock errors and share bounded readiness retries with management deployment. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Renew E2E authentication tokens during operation polling and teardown to prevent failures caused by token expiry. ([#5097](https://github.com/microsoft/AzureTRE/issues/5097))
 * Update the PyJWT dependency from 2.13.0 to 2.15.0 in the API and CLI packages (`API` 0.27.30, `CLI` 0.2.10) ([#5102](https://github.com/microsoft/AzureTRE/pull/5102))
@@ -21,6 +36,7 @@ BUG FIXES:
 * Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. Preserve tags on bootstrap reruns and restrict cleanup to the environment's core, management, workspace and shared-service groups. Add manual validation with disposable empty groups. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
+* Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 
 ## (0.29.1)
 **BREAKING CHANGES**
