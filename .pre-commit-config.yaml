@@ -7,6 +7,8 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-yaml
+        # Syntax-only check so custom tags such as those in mkdocs.yml are accepted
+        args: [--unsafe]
       - id: check-json
         exclude: ^\.devcontainer/.*\.json$
       - id: check-toml
@@ -47,7 +49,10 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_tflint
-        args: [--args=--config=__GIT_WORKING_DIR__/.github/linters/.tflint.hcl]
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.github/linters/.tflint.hcl
+          # CI lints per changed file, so whole-module structure warnings it never reports are disabled here
+          - --args=--disable-rule=terraform_standard_module_structure
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.0
