@@ -77,7 +77,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
         # Second command is porter installation apply using the installation file
-        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
 
         with open(param_set_file) as f:
             param_set = json.load(f)
@@ -127,7 +127,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
         # Second command is porter installation apply (not porter upgrade)
-        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
 
         with open(installation_file) as f:
             installation = json.load(f)
@@ -171,7 +171,7 @@ async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys
         assert installation_file is not None
         assert os.path.exists(installation_file)
 
-        assert commands == [["porter", "installation", "apply", installation_file, "--force"]]
+        assert commands == [["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]]
 
         with open(installation_file) as f:
             installation = json.load(f)
@@ -212,7 +212,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
         # Second command is porter installation apply
-        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force"]
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
 
         assert param_set_name.startswith("tre-params-guid-")
 

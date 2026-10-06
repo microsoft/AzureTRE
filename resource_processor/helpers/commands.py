@@ -195,7 +195,8 @@ async def build_porter_command(config, msg_body, custom_action=False):
             # porter installation apply is declarative: it creates the installation if it
             # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
             # replaces the previous explicit upgrade->install fallback for built-in actions.
-            commands.append(["porter", "installation", "apply", installation_file, "--force"])
+            # Porter v1.4.0 logs parameter diffs, including secrets, at INFO.
+            commands.append(["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"])
         else:
             command = ["porter", msg_body['action'], installation_id]
             command.extend([

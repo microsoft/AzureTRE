@@ -210,6 +210,8 @@ output "network_digest" { value = sha256(jsonencode(local.api_driven_network_rul
         }
         expected_digest = hashlib.sha256(json.dumps(parameters[names[0]], sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         assert all(len(base64.b64encode(json.dumps(value).encode())) > 128 * 1024 for value in parameters.values())
+        passwords = ("synthetic-previous-password", "synthetic-current-password")
+        parameters["smtpPassword"] = passwords[0]
         msg = {"id": f"rp-files-{uuid.uuid4().hex}", "name": "rp-compatibility", "version": "1.0.0",
                "parameters": parameters, "operationId": "test-operation", "stepId": "test-step"}
         config = {"registry_server": "example.invalid", "porter_env": env, "deployment_status_queue": "test"}
@@ -226,6 +228,8 @@ output "network_digest" { value = sha256(jsonencode(local.api_driven_network_rul
             result = await run_command_helper(command, *args, **kwargs)
             if command[:3] == ["porter", "installation", "apply"] or command[:2] == ["porter", "uninstall"]:
                 assert result[0] == 0, result[2]
+                for password in passwords:
+                    assert password not in (result[1] or "") + (result[2] or "")
                 outputs.append(result[1])
             return result
 
@@ -236,6 +240,8 @@ output "network_digest" { value = sha256(jsonencode(local.api_driven_network_rul
                 patch("vmss_porter.runner.run_command_helper", side_effect=local_command), \
                 patch("helpers.commands.tempfile.tempdir", str(tmp_path)):
             for action in ("install", "upgrade", "uninstall"):
+                if action == "upgrade":
+                    parameters["smtpPassword"] = passwords[1]
                 result = await invoke_porter_action(dict(msg, action=action), client, config)
                 assert result is True
         assert len(outputs) == 3
