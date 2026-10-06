@@ -4,6 +4,20 @@ To deploy the Azure TRE using GitHub workflows, create a fork of the repository.
 
 Deployment is done using the `/.github/workflows/deploy_tre.yml` workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.
 
+## Isolated CI environments
+
+PR comment tests and branch validation derive their environment names from the Git reference, Azure cloud and deployment location.
+Repeated runs in the same cloud and location reuse the environment. Changing the location creates a separate environment, including its management account and Key Vault names.
+This prevents a retained, purge-protected vault in the previous location from blocking deployment in the new location.
+Terraform continues to recover soft-deleted vaults in the same location through its existing provider configuration.
+
+The first run after adopting these names must include deployment. Use `/test COMMIT_SHA` without `skip_deployment`.
+PR comment workflow changes take effect after merge. Before merge, use the branch validation workflow from a trusted upstream branch to test the changed workflow.
+
+`/test-destroy-env` finds all core and management groups tagged with the PR's Git reference, including previous naming schemes and locations in the selected subscription.
+For an upstream PR, it also cleans the tagged branch environments. Cleanup refuses conflicting ownership tags and shares deployment concurrency.
+Scheduled cleanup continues to use the `ci_git_ref` tags. Retained vaults remain subject to their existing soft-delete and purge protection policies.
+
 ## Dockerfile build checks
 
 The `Dockerfile Build Check` workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.

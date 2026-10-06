@@ -158,6 +158,20 @@ describe("CostsTag Component", () => {
     });
   });
 
+  it("does not let the TRE-wide unsupported state override workspace costs", async () => {
+    const workspaceCosts = [{ id: "test-resource-id", name: "Test Resource", costs: [{ cost: 1, currency: "USD" }] }];
+    render(
+      <CostsContext.Provider value={{ ...createMockCostsContext([]), loadingState: LoadingState.NotSupported } as any}>
+        <WorkspaceContext.Provider value={createMockWorkspaceContext(workspaceCosts) as any}>
+          <CostsTag resourceId="test-resource-id" />
+        </WorkspaceContext.Provider>
+      </CostsContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByText("$1.00")).toBeInTheDocument());
+    expect(screen.getByTestId("tooltip")).toHaveAttribute("title", "Month-to-date costs");
+  });
+
   it("displays formatted cost when available in costs context", async () => {
     const costsContextCosts = [
       {
@@ -199,6 +213,18 @@ describe("CostsTag Component", () => {
 
     const tooltip = screen.getByTestId("tooltip");
     expect(tooltip).toHaveAttribute("title", "Cost data not yet available");
+  });
+
+  it("describes costs as unavailable outside a workspace after a permanent cost error", async () => {
+    render(
+      <CostsContext.Provider value={{ ...createMockCostsContext([]), loadingState: LoadingState.Error } as any}>
+        <WorkspaceContext.Provider value={{ ...createMockWorkspaceContext(), workspace: {} } as any}>
+          <CostsTag resourceId="test-resource-id" />
+        </WorkspaceContext.Provider>
+      </CostsContext.Provider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("tooltip")).toHaveAttribute("title", "Costs unavailable"));
   });
 
   it("displays clock icon when resource is not found in costs", async () => {
@@ -282,4 +308,32 @@ describe("CostsTag Component", () => {
 
     expect(screen.getByTestId("icon-Clock")).toBeInTheDocument();
   });
+
+  it.each(["cleared", "missing resource", "empty costs"])(
+    "clears a previously displayed cost when %s",
+    async (state) => {
+      const costsContext = createMockCostsContext();
+      const workspaceContext = createMockWorkspaceContext([
+        { id: "test-resource-id", name: "Test", costs: [{ cost: 123.45, currency: "USD" }] },
+      ]);
+      const view = (costs: CostResource[]) => (
+        <CostsContext.Provider value={costsContext as any}>
+          <WorkspaceContext.Provider value={{ ...workspaceContext, costs } as any}>
+            <CostsTag resourceId="test-resource-id" />
+          </WorkspaceContext.Provider>
+        </CostsContext.Provider>
+      );
+      const { rerender } = render(view(workspaceContext.costs));
+      expect(await screen.findByText("$123.45")).toBeInTheDocument();
+
+      const costs =
+        state === "cleared"
+          ? []
+          : [{ id: state === "missing resource" ? "other" : "test-resource-id", name: "Test", costs: [] }];
+      rerender(view(costs));
+
+      await waitFor(() => expect(screen.queryByText("$123.45")).not.toBeInTheDocument());
+      expect(screen.getByTestId("icon-Clock")).toBeInTheDocument();
+    },
+  );
 });
