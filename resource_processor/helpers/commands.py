@@ -11,10 +11,7 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
-        *cmd_parts,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"]
+        *cmd_parts, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=config["porter_env"]
     )
 
     stdout, stderr = await proc.communicate()
@@ -24,11 +21,11 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str):
 
     if stdout:
         stdout_text = stdout.decode()
-        shell_output_logger(stdout_text, '[stdout]', logging.INFO)
+        shell_output_logger(stdout_text, "[stdout]", logging.INFO)
 
     if stderr:
         stderr_text = stderr.decode()
-        shell_output_logger(stderr_text, '[stderr]', logging.WARN)
+        shell_output_logger(stderr_text, "[stderr]", logging.WARN)
 
     if proc.returncode != 0:
         logger.error(f"{description} failed with return code {proc.returncode}")
@@ -39,19 +36,26 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str):
 
 
 def azure_login_command(config):
-    commands = [
-        ["az", "cloud", "set", "--name", config['azure_environment']]
-    ]
+    commands = [["az", "cloud", "set", "--name", config["azure_environment"]]]
 
     if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
-        commands.append(["az", "login", "--identity", "--client-id", config['vmss_msi_id']])
+        commands.append(["az", "login", "--identity", "--client-id", config["vmss_msi_id"]])
     else:
         # Use a Service Principal when running locally
-        commands.append(["az", "login", "--service-principal",
-                         "--username", config['arm_client_id'],
-                         "--password", config['arm_client_secret'],
-                         "--tenant", config['arm_tenant_id']])
+        commands.append(
+            [
+                "az",
+                "login",
+                "--service-principal",
+                "--username",
+                config["arm_client_id"],
+                "--password",
+                config["arm_client_secret"],
+                "--tenant",
+                config["arm_tenant_id"],
+            ]
+        )
 
     return commands
 
@@ -72,7 +76,7 @@ def apply_porter_credentials_sets_command(config):
 
 
 def azure_acr_login_command(config):
-    acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
+    acr_name = _get_acr_name(acr_fqdn=config["registry_server"])
     return [["az", "acr", "login", "--name", acr_name]]
 
 
@@ -119,41 +123,29 @@ async def build_porter_command(config, msg_body, custom_action=False):
 
                 porter_parameters.extend(["--param", f"{parameter_name}={parameter_value}"])
 
-    installation_id = msg_body['id']
+    installation_id = msg_body["id"]
 
     command = ["porter"]
     if custom_action:
         command.extend(["invoke", "--action"])
 
-    command.append(msg_body['action'])
+    command.append(msg_body["action"])
     command.append(installation_id)
-    command.extend([
-        "--reference",
-        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-    ])
+    command.extend(["--reference", f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"])
     command.extend(porter_parameters)
     command.append("--force")
     command.extend(["--credential-set", "arm_auth"])
     command.extend(["--credential-set", "aad_auth"])
 
-    if msg_body['action'] == 'upgrade':
+    if msg_body["action"] == "upgrade":
         command.append("--force-upgrade")
 
     return [command]
 
 
 async def build_porter_command_for_outputs(msg_body):
-    installation_id = msg_body['id']
-    command = [
-        "porter",
-        "installations",
-        "output",
-        "list",
-        "--installation",
-        installation_id,
-        "--output",
-        "json"
-    ]
+    installation_id = msg_body["id"]
+    command = ["porter", "installations", "output", "list", "--installation", installation_id, "--output", "json"]
     return [command]
 
 
@@ -176,7 +168,7 @@ async def get_porter_parameter_keys(config, msg_body):
         "--reference",
         f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}",
         "--output",
-        "json"
+        "json",
     ]
 
     returncode, stdout_text, _ = await run_command_helper(explain_cmd, config, "Porter explain command")
@@ -196,11 +188,11 @@ async def get_porter_parameter_keys(config, msg_body):
 def get_special_porter_param_value(config, parameter_name: str, msg_body):
     # some parameters might not have identical names and this comes to handle that
     if parameter_name == "mgmt_acr_name":
-        return _get_acr_name(acr_fqdn=config['registry_server'])
+        return _get_acr_name(acr_fqdn=config["registry_server"])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
     if parameter_name == "azure_environment":
-        return config['azure_environment']
+        return config["azure_environment"]
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":
@@ -211,12 +203,12 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return value
     # Parameters that relate to the cloud type
     if parameter_name == "aad_authority_url":
-        return config['aad_authority_url']
+        return config["aad_authority_url"]
     if parameter_name == "microsoft_graph_fqdn":
-        return urlparse(config['microsoft_graph_fqdn']).netloc
+        return urlparse(config["microsoft_graph_fqdn"]).netloc
     if parameter_name == "arm_environment":
         return config["arm_environment"]
 
 
 def _get_acr_name(acr_fqdn: str):
-    return acr_fqdn.split('.', 1)[0]
+    return acr_fqdn.split(".", 1)[0]

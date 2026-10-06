@@ -1,4 +1,3 @@
-
 import json
 import pytest
 import uuid
@@ -38,9 +37,7 @@ def create_test_resource():
     )
 
 
-@pytest.mark.parametrize(
-    "request_action", [RequestAction.Install, RequestAction.UnInstall]
-)
+@pytest.mark.parametrize("request_action", [RequestAction.Install, RequestAction.UnInstall])
 @patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
 @patch("service_bus.resource_request_sender.OperationRepository.create")
 @patch("service_bus.helpers.ServiceBusClient")
@@ -53,7 +50,7 @@ async def test_resource_request_message_generated_correctly(
     operations_repo_mock,
     resource_history_repo_mock,
     request_action,
-    multi_step_resource_template
+    multi_step_resource_template,
 ):
     service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
     resource = create_test_resource()
@@ -71,7 +68,7 @@ async def test_resource_request_message_generated_correctly(
         user=create_test_user(),
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo_mock,
-        action=request_action
+        action=request_action,
     )
 
     args = service_bus_client_mock().get_queue_sender().send_messages.call_args.args
@@ -144,7 +141,7 @@ async def test_multi_step_document_sends_first_step(
         etag=basic_shared_service.etag,
         resource_template_repo=resource_template_repo,
         user=test_user,
-        resource_action=strings.RESOURCE_ACTION_UPDATE
+        resource_action=strings.RESOURCE_ACTION_UPDATE,
     )
 
 
@@ -159,13 +156,11 @@ async def test_multi_step_document_retries_then_succeeds(
     basic_shared_service_template,
     test_user,
     multi_step_resource_template,
-    primary_resource
+    primary_resource,
 ):
 
     resource_repo.get_resource_by_id.return_value = basic_shared_service
-    resource_template_repo.get_template_by_name_and_version.return_value = (
-        basic_shared_service_template
-    )
+    resource_template_repo.get_template_by_name_and_version.return_value = basic_shared_service_template
     updated_resource = basic_shared_service.copy(update={"etag": "updated-etag"})
     resource_repo.patch_resource.side_effect = [
         CosmosAccessConditionFailedError(),
@@ -183,7 +178,7 @@ async def test_multi_step_document_retries_then_succeeds(
         resource_history_repo=resource_history_repo,
         primary_resource=primary_resource,
         primary_parent_workspace=None,
-        primary_parent_workspace_svc=None
+        primary_parent_workspace_svc=None,
     )
 
     assert result == updated_resource
@@ -202,13 +197,11 @@ async def test_multi_step_document_retries(
     basic_shared_service_template,
     test_user,
     multi_step_resource_template,
-    primary_resource
+    primary_resource,
 ):
 
     resource_repo.get_resource_by_id.return_value = basic_shared_service
-    resource_template_repo.get_current_template.return_value = (
-        basic_shared_service_template
-    )
+    resource_template_repo.get_current_template.return_value = basic_shared_service_template
 
     # simulate an etag mismatch
     resource_repo.patch_resource.side_effect = CosmosAccessConditionFailedError
@@ -226,7 +219,7 @@ async def test_multi_step_document_retries(
             resource_history_repo=resource_history_repo,
             primary_resource=primary_resource,
             primary_parent_workspace=None,
-            primary_parent_workspace_svc=None
+            primary_parent_workspace_svc=None,
         )
     except CosmosAccessConditionFailedError:
         pass

@@ -8,12 +8,11 @@ import os
 from shared_code import constants, blob_operations, parsers, airlock_storage_helper
 
 
-def main(msg: func.ServiceBusMessage,
-         outputEvent: func.Out[func.EventGridOutputEvent]):
+def main(msg: func.ServiceBusMessage, outputEvent: func.Out[func.EventGridOutputEvent]):
 
     logging.info("Python ServiceBus queue trigger processed message - Malware scan result arrived!")
-    body = msg.get_body().decode('utf-8')
-    logging.info(f'Python ServiceBus queue trigger processed message: {body}')
+    body = msg.get_body().decode("utf-8")
+    logging.info(f"Python ServiceBus queue trigger processed message: {body}")
 
     try:
         enable_malware_scanning = parsers.parse_bool(os.environ["ENABLE_MALWARE_SCANNING"])
@@ -45,16 +44,24 @@ def main(msg: func.ServiceBusMessage,
     # was later replaced. Only the sealed copy's verdict describes the data actually under review.
     # Only v2 creates -draft containers, so the suffix identifies them without depending on account names.
     if container_name.endswith(constants.DRAFT_CONTAINER_SUFFIX):
-        logging.info(f'Scan result for draft blob in request {request_id} ignored; the submitted copy gates review.')
+        logging.info(f"Scan result for draft blob in request {request_id} ignored; the submitted copy gates review.")
         return
 
     # The verdict is reported as a fact; the API decides the status once submission is validated.
     outputEvent.set(
         func.EventGridOutputEvent(
             id=str(uuid.uuid4()),
-            data={"completed_step": constants.STAGE_SUBMITTED, "request_id": request_id,
-                  "scan_result": {"clean": verdict == constants.NO_THREATS, "message": None if verdict == constants.NO_THREATS else verdict}},
+            data={
+                "completed_step": constants.STAGE_SUBMITTED,
+                "request_id": request_id,
+                "scan_result": {
+                    "clean": verdict == constants.NO_THREATS,
+                    "message": None if verdict == constants.NO_THREATS else verdict,
+                },
+            },
             subject=request_id,
             event_type="Airlock.StepResult",
             event_time=datetime.datetime.now(datetime.UTC),
-            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION))
+            data_version=constants.STEP_RESULT_EVENT_DATA_VERSION,
+        )
+    )

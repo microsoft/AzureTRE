@@ -4,7 +4,14 @@ from multiprocessing import Process
 import json
 import asyncio
 import sys
-from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
+from helpers.commands import (
+    azure_acr_login_command,
+    azure_login_command,
+    build_porter_command,
+    build_porter_command_for_outputs,
+    apply_porter_credentials_sets_command,
+    run_command_helper,
+)
 from shared.config import get_config
 from helpers.httpserver import start_server
 
@@ -98,7 +105,9 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
 
             logger.debug("Looking for new session...")
             # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-            async with service_bus_client.get_queue_receiver(queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+            async with service_bus_client.get_queue_receiver(
+                queue_name=q_name, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION
+            ) as receiver:
                 logger.info(f"Got a session containing messages: {receiver.session.session_id}")
                 async with AutoLockRenewer() as renewer:
                     # allow a session to be auto lock renewed for up to an hour - if it's processing a message
@@ -124,7 +133,9 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                         except ValueError as e:
                             logger.error(f"Received invalid service bus resource request message: {e}")
                             try:
-                                await receiver.dead_letter_message(msg, reason="InvalidResourceRequest", error_description=str(e))
+                                await receiver.dead_letter_message(
+                                    msg, reason="InvalidResourceRequest", error_description=str(e)
+                                )
                             except Exception:
                                 logger.exception("Failed to dead-letter invalid resource request message")
                                 raise
@@ -135,16 +146,20 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                             current_span.set_attribute("action", message["action"])
                             current_span.set_attribute("step_id", message["stepId"])
                             current_span.set_attribute("operation_id", message["operationId"])
-                            logger.info(f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}")
+                            logger.info(
+                                f"Message received for resource_id={message['id']}, operation_id={message['operationId']}, step_id={message['stepId']}"
+                            )
 
                             result = await invoke_porter_action(message, service_bus_client, config)
 
                             if result:
                                 logger.info(f"Resource request for {message} is complete")
                             else:
-                                logger.error('Message processing failed!')
+                                logger.error("Message processing failed!")
 
-                            logger.info(f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete.")
+                            logger.info(
+                                f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete."
+                            )
                             await receiver.complete_message(msg)
 
                     logger.info(f"Closing session: {receiver.session.session_id}")
@@ -210,7 +225,8 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
         "stepId": sb_message["stepId"],
         "id": sb_message["id"],
         "status": status,
-        "message": f"{installation_id}: {deployment_message}"}
+        "message": f"{installation_id}: {deployment_message}",
+    }
 
     if outputs is not None:
         message_dict["outputs"] = outputs
@@ -231,9 +247,17 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
 
     # post an update message to set the status to an 'in progress' one
-    resource_request_message = service_bus_message_generator(msg_body, statuses.in_progress_status_string_for[action], "Job starting")
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
-    logger.info(f'Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting')
+    resource_request_message = service_bus_message_generator(
+        msg_body, statuses.in_progress_status_string_for[action], "Job starting"
+    )
+    await sb_sender.send_messages(
+        ServiceBusMessage(
+            body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]
+        )
+    )
+    logger.info(
+        f"Sent status message for {installation_id} - {statuses.in_progress_status_string_for[action]} - Job starting"
+    )
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
@@ -256,19 +280,24 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             command_representation += " ".join(cmd) + "; "
         command_representation = command_representation.rstrip("; ")
 
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + command_representation
+        error_message = "Error message: " + " ".join(err.split("\n")) + "; Command executed: " + command_representation
         action_completed_without_error = False
 
-        if "upgrade" == action and ("could not find installation" in err or "The installation cannot be upgraded, because it is not installed." in err):
+        if "upgrade" == action and (
+            "could not find installation" in err
+            or "The installation cannot be upgraded, because it is not installed." in err
+        ):
             logger.warning("Upgrade failed, attempting install...")
-            msg_body['action'] = "install"
+            msg_body["action"] = "install"
             porter_command = await build_porter_command(config, msg_body, False)
             returncode, _, err = await run_porter(porter_command, config)
             if returncode == 0:
                 action_completed_without_error = True
 
         if "uninstall" == action and "could not find installation" in err:
-            logger.warning("The installation doesn't exist. Treating as a successful action to allow the flow to proceed.")
+            logger.warning(
+                "The installation doesn't exist. Treating as a successful action to allow the flow to proceed."
+            )
             action_completed_without_error = True
             error_message = f"A success despite of underlying error. {error_message}"
 
@@ -294,9 +323,15 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             status_for_sb_message = statuses.failed_status_string_for[action]
             status_message = f"{action} action completed successfully, but failed to get outputs."
 
-        resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, status_message, outputs)
+        resource_request_message = service_bus_message_generator(
+            msg_body, status_for_sb_message, status_message, outputs
+        )
 
-    await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]))
+    await sb_sender.send_messages(
+        ServiceBusMessage(
+            body=resource_request_message, correlation_id=msg_body["id"], session_id=msg_body["operationId"]
+        )
+    )
     logger.info(f"Sent status message for {installation_id}: {status_for_sb_message}")
 
     # return true as want to continue processing the message
@@ -313,7 +348,7 @@ async def get_porter_outputs(msg_body: dict, config: dict):
     logger.debug("Finished running porter output command.")
 
     if returncode != 0:
-        error_message = "Error context message = " + " ".join(err.split('\n'))
+        error_message = "Error context message = " + " ".join(err.split("\n"))
         installation_id = msg_body["id"]
         logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
         return False, {}
@@ -324,8 +359,8 @@ async def get_porter_outputs(msg_body: dict, config: dict):
 
             # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
             for i in range(0, len(outputs_json)):
-                if "{" in outputs_json[i]['value'] or "[" in outputs_json[i]['value']:
-                    outputs_json[i]['value'] = json.loads(outputs_json[i]['value'].replace("\\", ""))
+                if "{" in outputs_json[i]["value"] or "[" in outputs_json[i]["value"]:
+                    outputs_json[i]["value"] = json.loads(outputs_json[i]["value"].replace("\\", ""))
 
             logger.info(f"Got outputs as json: {outputs_json}")
         except ValueError:
@@ -350,7 +385,7 @@ async def check_runners(processes: list, httpserver: Process, keep_running=lambd
             logger.error("All runner processes have failed!")
             # Support both sync and async kill methods for tests
             kill_method = httpserver.kill
-            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, '__await__'):
+            if asyncio.iscoroutinefunction(kill_method) or hasattr(kill_method, "__await__"):
                 await kill_method()
             else:
                 kill_method()
@@ -363,10 +398,7 @@ if __name__ == "__main__":
         config = set_up_config()
 
         logger.info("Verifying Azure CLI and Porter functionality...")
-        asyncio.run(run_porter([[
-            "az", "account", "show",
-            "-o", "table"
-        ]], config))
+        asyncio.run(run_porter([["az", "account", "show", "-o", "table"]], config))
 
         httpserver = Process(target=start_server)
         httpserver.start()

@@ -20,7 +20,7 @@ UNWANTED_LOGGERS = [
     # Remove these once the following PR is merged:
     # https://github.com/Azure/azure-sdk-for-python/pull/30832
     # Issue: https://github.com/microsoft/AzureTRE/issues/3766
-    "azure.servicebus._pyamqp.aio._session_async"
+    "azure.servicebus._pyamqp.aio._session_async",
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
@@ -44,7 +44,7 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "opentelemetry.attributes",
     "azure.servicebus._pyamqp.aio._management_link_async",
     "azure.servicebus._pyamqp.aio._cbs_async",
-    "azure.servicebus._pyamqp.aio._client_async"
+    "azure.servicebus._pyamqp.aio._client_async",
 ]
 
 logger = logging.getLogger("azuretre_resource_processor")
@@ -83,13 +83,11 @@ def initialize_logging() -> logging.Logger:
                 "django": {"enabled": False},
                 "fastapi": {"enabled": True},
                 "psycopg2": {"enabled": False},
-            }
+            },
         )
 
     LoggingInstrumentor().instrument(
-        set_logging_format=True,
-        log_level=logging_level,
-        tracer_provider=tracer._real_tracer
+        set_logging_format=True, log_level=logging_level, tracer_provider=tracer._real_tracer
     )
 
     return logger
@@ -106,7 +104,7 @@ def chunk_log_output(output: str, chunk_size: int = 30000):
     for i in range(0, len(output), chunk_size):
         current_chunk = i // chunk_size + 1
         prefix = f"[Log chunk {current_chunk} of {total_chunks}] "
-        yield prefix + output[i:i + chunk_size]
+        yield prefix + output[i : i + chunk_size]
 
 
 def shell_output_logger(console_output: str, prefix_item: str, logging_level: int):
@@ -114,19 +112,23 @@ def shell_output_logger(console_output: str, prefix_item: str, logging_level: in
         logger.debug("shell console output is empty.")
         return
 
-    if (logging_level != logging.INFO
-            and console_output.startswith("Unable to find image '")
-            and "' locally" in console_output):
+    if (
+        logging_level != logging.INFO
+        and console_output.startswith("Unable to find image '")
+        and "' locally" in console_output
+    ):
         console_output = console_output.strip()
-        console_output = re.sub(r"Unable to find image '.*' locally", '', console_output)
+        console_output = re.sub(r"Unable to find image '.*' locally", "", console_output)
         if console_output.startswith("\n"):
             console_output = console_output[1:]
         logger.debug("Image not present locally, removing text from console output.")
         logging_level = logging.INFO
 
-    if (logging_level != logging.INFO
-            and len(console_output) < 34
-            and "execution completed successfully!" in console_output):
+    if (
+        logging_level != logging.INFO
+        and len(console_output) < 34
+        and "execution completed successfully!" in console_output
+    ):
         logging_level = logging.INFO
 
     console_output = console_output.strip()

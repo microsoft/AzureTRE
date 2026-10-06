@@ -19,31 +19,50 @@ recovery = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(recovery)
 
 ENV = {
-    "CI_BOOTSTRAP_LEASE_RECOVERY": "true", "GITHUB_ACTIONS": "true", "CI_RECOVERY_PR_NUMBER": "5092",
-    "GITHUB_REPOSITORY": "microsoft/AzureTRE", "GITHUB_RUN_ID": "123", "GITHUB_RUN_ATTEMPT": "1",
-    "TF_VAR_ci_git_ref": "refs/pull/5092/merge", "TF_VAR_mgmt_resource_group_name": "rg-trea66984da-mgmt",
-    "TF_VAR_mgmt_storage_account_name": "trea66984damgmt", "TF_VAR_terraform_state_container_name": "tfstate",
+    "CI_BOOTSTRAP_LEASE_RECOVERY": "true",
+    "GITHUB_ACTIONS": "true",
+    "CI_RECOVERY_PR_NUMBER": "5092",
+    "GITHUB_REPOSITORY": "microsoft/AzureTRE",
+    "GITHUB_RUN_ID": "123",
+    "GITHUB_RUN_ATTEMPT": "1",
+    "TF_VAR_ci_git_ref": "refs/pull/5092/merge",
+    "TF_VAR_mgmt_resource_group_name": "rg-trea66984da-mgmt",
+    "TF_VAR_mgmt_storage_account_name": "trea66984damgmt",
+    "TF_VAR_terraform_state_container_name": "tfstate",
     "ARM_SUBSCRIPTION_ID": "test-subscription",
 }
 ORPHAN = {
-    "name": "bootstrap.tfstate", "metadata": {},
-    "properties": {"contentLength": 0, "blobType": "BlockBlob", "etag": '"test-etag"', "lastModified": "2026-10-05T08:35:23Z",
-                   "lease": {"duration": "infinite", "state": "leased", "status": "locked"}},
+    "name": "bootstrap.tfstate",
+    "metadata": {},
+    "properties": {
+        "contentLength": 0,
+        "blobType": "BlockBlob",
+        "etag": '"test-etag"',
+        "lastModified": "2026-10-05T08:35:23Z",
+        "lease": {"duration": "infinite", "state": "leased", "status": "locked"},
+    },
 }
 
 
 class RecoveryTests(unittest.TestCase):
     def test_regional_context_uses_the_matching_backend(self):
-        regional = {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth", "AZURE_ENVIRONMENT": "AzureCloud",
-                    "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt", "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt"}
+        regional = {
+            "CI_ENVIRONMENT_ID": "e06583c4",
+            "TF_VAR_location": "switzerlandnorth",
+            "AZURE_ENVIRONMENT": "AzureCloud",
+            "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt",
+            "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt",
+        }
         with patch.dict(os.environ, regional):
             self.assertEqual(recovery.context()["group"], "rg-tree06583c4-mgmt")
             self.assertEqual(recovery.context()["account"], "tree06583c4mgmt")
 
     def test_regional_context_refuses_foreign_regions_or_legacy_backend(self):
-        cases = [{"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "swedencentral"},
-                 {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth"},
-                 {"CI_ENVIRONMENT_ID": "637595c5", "TF_VAR_location": ""}]
+        cases = [
+            {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "swedencentral"},
+            {"CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth"},
+            {"CI_ENVIRONMENT_ID": "637595c5", "TF_VAR_location": ""},
+        ]
         for env in cases:
             with self.subTest(env=env), patch.dict(os.environ, env), self.assertRaises(recovery.RecoveryError):
                 recovery.context()
@@ -67,9 +86,15 @@ class RecoveryTests(unittest.TestCase):
         self.change_on_second_group_read = None
         self.show_reads = 0
         self.change_on_second_show = None
-        self.current = {"id": 123, "run_attempt": 1, "status": "in_progress", "event": "issue_comment",
-                        "path": ".github/workflows/pr_comment_bot.yml", "repository": {"full_name": "microsoft/AzureTRE"},
-                        "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@abc"}]}
+        self.current = {
+            "id": 123,
+            "run_attempt": 1,
+            "status": "in_progress",
+            "event": "issue_comment",
+            "path": ".github/workflows/pr_comment_bot.yml",
+            "repository": {"full_name": "microsoft/AzureTRE"},
+            "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@abc"}],
+        }
         for name, implementation in (("azure", self.azure), ("github", self.github)):
             mock = patch.object(recovery, name, side_effect=implementation)
             mock.start()
@@ -154,18 +179,29 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(self.activity, [])
 
     def test_non_ci_main_wrong_pr_and_wrong_backend_are_refused(self):
-        for key, value in (("CI_BOOTSTRAP_LEASE_RECOVERY", "false"), ("GITHUB_ACTIONS", "false"),
-                           ("TF_VAR_ci_git_ref", "refs/heads/main"), ("CI_RECOVERY_PR_NUMBER", "5005"),
-                           ("TF_VAR_mgmt_storage_account_name", "production"), ("TF_VAR_mgmt_resource_group_name", "production"),
-                           ("GITHUB_RUN_ID", ""), ("GITHUB_RUN_ATTEMPT", ""), ("ARM_SUBSCRIPTION_ID", ""),
-                           ("GITHUB_REPOSITORY", "../other"), ("TF_VAR_terraform_state_container_name", "")):
+        for key, value in (
+            ("CI_BOOTSTRAP_LEASE_RECOVERY", "false"),
+            ("GITHUB_ACTIONS", "false"),
+            ("TF_VAR_ci_git_ref", "refs/heads/main"),
+            ("CI_RECOVERY_PR_NUMBER", "5005"),
+            ("TF_VAR_mgmt_storage_account_name", "production"),
+            ("TF_VAR_mgmt_resource_group_name", "production"),
+            ("GITHUB_RUN_ID", ""),
+            ("GITHUB_RUN_ATTEMPT", ""),
+            ("ARM_SUBSCRIPTION_ID", ""),
+            ("GITHUB_REPOSITORY", "../other"),
+            ("TF_VAR_terraform_state_container_name", ""),
+        ):
             with self.subTest(key=key), patch.dict(os.environ, {key: value}):
                 with self.assertRaises(recovery.RecoveryError):
                     recovery.context()
         self.assertEqual(self.breaks(), [])
 
     def test_wrong_resource_group_identity_or_tag_is_refused(self):
-        for key, value in (("group_id", "/subscriptions/other/resourceGroups/rg-trea66984da-mgmt"), ("group_tag", "refs/pull/5005/merge")):
+        for key, value in (
+            ("group_id", "/subscriptions/other/resourceGroups/rg-trea66984da-mgmt"),
+            ("group_tag", "refs/pull/5005/merge"),
+        ):
             with self.subTest(key=key):
                 original = getattr(self, key)
                 setattr(self, key, value)
@@ -177,9 +213,11 @@ class RecoveryTests(unittest.TestCase):
         self.assert_refused()
 
     def test_populated_state_and_any_lock_owner_are_refused(self):
-        for update in (lambda value: value["properties"].update(contentLength=1),
-                       lambda value: value.update(metadata={"terraformlockid": "owner"}),
-                       lambda value: value.update(metadata={"TerraformLockId": "owner"})):
+        for update in (
+            lambda value: value["properties"].update(contentLength=1),
+            lambda value: value.update(metadata={"terraformlockid": "owner"}),
+            lambda value: value.update(metadata={"TerraformLockId": "owner"}),
+        ):
             self.state = deepcopy(ORPHAN)
             update(self.state)
             self.assert_refused()
@@ -191,9 +229,14 @@ class RecoveryTests(unittest.TestCase):
             self.assert_refused()
 
     def test_incomplete_blob_data_is_refused(self):
-        for update in (lambda value: value.update(name="devops.tfstate"), lambda value: value.pop("metadata"),
-                       lambda value: value["properties"].pop("etag"), lambda value: value["properties"].pop("lastModified"),
-                       lambda value: value["properties"].update(contentLength=False), lambda value: value["properties"].pop("lease")):
+        for update in (
+            lambda value: value.update(name="devops.tfstate"),
+            lambda value: value.pop("metadata"),
+            lambda value: value["properties"].pop("etag"),
+            lambda value: value["properties"].pop("lastModified"),
+            lambda value: value["properties"].update(contentLength=False),
+            lambda value: value["properties"].pop("lease"),
+        ):
             self.state = deepcopy(ORPHAN)
             update(self.state)
             self.assert_refused()
@@ -208,9 +251,14 @@ class RecoveryTests(unittest.TestCase):
         self.assert_refused()
 
     def test_incomplete_api_activity_is_refused(self):
-        for data in ({}, {"total_count": 0, "workflow_runs": None}, {"total_count": 1, "workflow_runs": []},
-                     {"total_count": 1001, "workflow_runs": []}, {"total_count": 1, "workflow_runs": [{"id": "123"}]},
-                     {"total_count": 2, "workflow_runs": [{"id": 123}, {"id": 123}]}):
+        for data in (
+            {},
+            {"total_count": 0, "workflow_runs": None},
+            {"total_count": 1, "workflow_runs": []},
+            {"total_count": 1001, "workflow_runs": []},
+            {"total_count": 1, "workflow_runs": [{"id": "123"}]},
+            {"total_count": 2, "workflow_runs": [{"id": 123}, {"id": 123}]},
+        ):
             self.status_data = {"in_progress": data}
             self.assert_refused()
 
@@ -219,9 +267,14 @@ class RecoveryTests(unittest.TestCase):
         self.assert_refused()
 
     def test_completed_wrong_attempt_or_other_current_workflow_is_refused(self):
-        for key, value in (("status", "completed"), ("run_attempt", 2), ("event", "push"),
-                           ("path", ".github/workflows/other.yml"), ("repository", {"full_name": "other/repo"}),
-                           ("referenced_workflows", [])):
+        for key, value in (
+            ("status", "completed"),
+            ("run_attempt", 2),
+            ("event", "push"),
+            ("path", ".github/workflows/other.yml"),
+            ("repository", {"full_name": "other/repo"}),
+            ("referenced_workflows", []),
+        ):
             original = self.current[key]
             self.current[key] = value
             self.assert_refused()
@@ -239,7 +292,9 @@ class RecoveryTests(unittest.TestCase):
         self.assert_refused()
 
     def test_workflow_starting_during_quiet_interval_blocks_recovery(self):
-        self.sleep.side_effect = lambda _: self.status_data.update(queued={"total_count": 1, "workflow_runs": [{"id": 999}]})
+        self.sleep.side_effect = lambda _: self.status_data.update(
+            queued={"total_count": 1, "workflow_runs": [{"id": 999}]}
+        )
         self.assert_refused()
 
     def test_conditional_break_failure_is_not_retried(self):
@@ -249,9 +304,11 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(len(self.breaks()), 1)
 
     def test_failed_post_break_integrity_or_lease_check_stops_recovery(self):
-        for update in (lambda value: value["properties"].update(etag='"changed"'),
-                       lambda value: value.update(metadata={"unexpected": "value"}),
-                       lambda value: value["properties"]["lease"].update(status="locked", state="leased")):
+        for update in (
+            lambda value: value["properties"].update(etag='"changed"'),
+            lambda value: value.update(metadata={"unexpected": "value"}),
+            lambda value: value["properties"]["lease"].update(status="locked", state="leased"),
+        ):
             self.calls = []
             self.state = deepcopy(ORPHAN)
             self.after_break = update
@@ -270,7 +327,10 @@ class ExternalCommandTests(unittest.TestCase):
                 recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
 
     def test_azure_failures_and_invalid_json_are_closed(self):
-        for result in (subprocess.CompletedProcess([], 1, "", "AuthorizationFailure"), subprocess.CompletedProcess([], 0, "invalid", "")):
+        for result in (
+            subprocess.CompletedProcess([], 1, "", "AuthorizationFailure"),
+            subprocess.CompletedProcess([], 0, "invalid", ""),
+        ):
             with patch.object(recovery.subprocess, "run", return_value=result):
                 with self.assertRaises(recovery.RecoveryError):
                     recovery.azure({"subscription": "test-subscription"}, "storage", "blob", "show")

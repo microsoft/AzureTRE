@@ -13,7 +13,7 @@ import unittest
 DEVOPS = Path(__file__).resolve().parents[1]
 
 # Azure CLI replaces storage error codes with these messages before printing them.
-CLI_PERMISSION_ERROR = '''ERROR:
+CLI_PERMISSION_ERROR = """ERROR:
 You do not have the required permissions needed to perform this operation.
 Depending on your operation, you may need to be assigned one of the following roles:
     "Storage Blob Data Owner"
@@ -25,13 +25,13 @@ Depending on your operation, you may need to be assigned one of the following ro
     "Storage Table Data Reader"
 
 If you want to use the old authentication method and allow querying for the right account key, please use the "--auth-mode" parameter and "key" value.
-'''
-CLI_NETWORK_ERROR = '''ERROR:
+"""
+CLI_NETWORK_ERROR = """ERROR:
 The request may be blocked by network rules of storage account. Please check network rule set using 'az storage account show -n accountname --query networkRuleSet'.
 If you want to change the default action to apply when no rule matches, please use 'az storage account update'.
-'''
+"""
 
-MOCK_COMMAND = r'''
+MOCK_COMMAND = r"""
 import json
 import os
 from pathlib import Path
@@ -225,7 +225,7 @@ elif command == "az":
         finish()
 
 finish(99, "Unexpected command: " + " ".join([command, *args]))
-'''
+"""
 
 
 class TerraformScriptTests(unittest.TestCase):
@@ -302,7 +302,7 @@ class TerraformScriptTests(unittest.TestCase):
         return result
 
     def commands(self, *prefix):
-        return [call for call in self.calls if call[:len(prefix)] == list(prefix)]
+        return [call for call in self.calls if call[: len(prefix)] == list(prefix)]
 
     def blob_checks(self):
         return [call for call in self.commands("az", "storage", "blob", "list") if "--prefix" in call]
@@ -314,7 +314,7 @@ class TerraformScriptTests(unittest.TestCase):
         self.assertEqual(self.commands("terraform", "import"), [])
 
 
-RECOVERY_WRAPPER = '''
+RECOVERY_WRAPPER = """
 import importlib.util
 import json
 from pathlib import Path
@@ -334,19 +334,34 @@ def github(ctx, suffix):
 recovery.github = github
 recovery.time.sleep = lambda seconds: subprocess.run(["sleep", str(seconds)], check=True)
 sys.exit(recovery.main())
-'''
+"""
 
 
 class CiLeaseRecoveryTests(TerraformScriptTests):
     def run_recovery(self, script="bootstrap.sh", **config):
         from test_recover_bootstrap_lease import ENV, ORPHAN
-        return self.run_script(script, env=config.pop("env", ENV), account_exists=True, containers=["tfstate", "tflogs"],
-                               mock_recovery_api=True, bootstrap_blob=config.pop("bootstrap_blob", ORPHAN), **config)
+
+        return self.run_script(
+            script,
+            env=config.pop("env", ENV),
+            account_exists=True,
+            containers=["tfstate", "tflogs"],
+            mock_recovery_api=True,
+            bootstrap_blob=config.pop("bootstrap_blob", ORPHAN),
+            **config,
+        )
 
     def test_regional_orphan_is_recovered_before_terraform(self):
         from test_recover_bootstrap_lease import ENV
-        env = {**ENV, "CI_ENVIRONMENT_ID": "e06583c4", "TF_VAR_location": "switzerlandnorth", "AZURE_ENVIRONMENT": "AzureCloud",
-               "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt", "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt"}
+
+        env = {
+            **ENV,
+            "CI_ENVIRONMENT_ID": "e06583c4",
+            "TF_VAR_location": "switzerlandnorth",
+            "AZURE_ENVIRONMENT": "AzureCloud",
+            "TF_VAR_mgmt_resource_group_name": "rg-tree06583c4-mgmt",
+            "TF_VAR_mgmt_storage_account_name": "tree06583c4mgmt",
+        }
         result = self.run_recovery(env=env)
         self.assertEqual(result.returncode, 0, self.output)
         breaks = self.commands("az", "storage", "blob", "lease", "break")
@@ -366,6 +381,7 @@ class CiLeaseRecoveryTests(TerraformScriptTests):
     def test_owned_or_populated_state_stops_before_terraform(self):
         from copy import deepcopy
         from test_recover_bootstrap_lease import ORPHAN
+
         blob = deepcopy(ORPHAN)
         blob["properties"]["contentLength"] = 1000
         result = self.run_recovery(bootstrap_blob=blob)
@@ -403,8 +419,12 @@ class BlobReadinessChecks:
         result = self.run_readiness()
         self.assertEqual(result.returncode, 0, self.output)
         expected = [
-            ("upload",), ("lease", "acquire"), ("show",),
-            ("metadata", "update"), ("lease", "release"), ("delete",),
+            ("upload",),
+            ("lease", "acquire"),
+            ("show",),
+            ("metadata", "update"),
+            ("lease", "release"),
+            ("delete",),
         ]
         calls = [self.commands("az", "storage", "blob", *operation)[0] for operation in expected]
         self.assertEqual([self.calls.index(call) for call in calls], sorted(self.calls.index(call) for call in calls))
@@ -419,10 +439,12 @@ class BlobReadinessChecks:
         self.assertEqual(self.probe_state(), {})
 
     def test_list_success_does_not_skip_delayed_write_permission(self):
-        result = self.run_readiness(upload_responses=[
-            {"code": 1, "output": "AuthorizationPermissionMismatch: blob writes are not ready"},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            upload_responses=[
+                {"code": 1, "output": "AuthorizationPermissionMismatch: blob writes are not ready"},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.blob_checks()), 2)
         self.assertEqual(len(self.commands("az", "storage", "blob", "upload")), 2)
@@ -439,10 +461,12 @@ class BlobReadinessChecks:
         self.assertEqual(self.probe_state(), {})
 
     def test_lease_permission_denial_cleans_up_before_retry(self):
-        result = self.run_readiness(lease_acquire_responses=[
-            {"code": 1, "output": "AuthorizationPermissionMismatch: lease denied"},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            lease_acquire_responses=[
+                {"code": 1, "output": "AuthorizationPermissionMismatch: lease denied"},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "acquire")), 2)
         self.assertEqual(len(self.commands("az", "storage", "blob", "delete")), 2)
@@ -451,9 +475,12 @@ class BlobReadinessChecks:
 
     def test_metadata_denial_after_lease_cleans_up_before_retry(self):
         error = "executing request: unexpected status 403 with AuthorizationPermissionMismatch"
-        result = self.run_readiness(metadata_update_responses=[
-            {"code": 1, "output": error}, {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            metadata_update_responses=[
+                {"code": 1, "output": error},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertIn(error, self.output)
         deletes = self.commands("az", "storage", "blob", "delete")
@@ -470,20 +497,25 @@ class BlobReadinessChecks:
         self.assertEqual(self.probe_state(), {})
 
     def test_release_permission_delay_is_bounded_before_terraform(self):
-        result = self.run_readiness(lease_release_responses=[
-            {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            lease_release_responses=[
+                {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.commands("az", "storage", "blob", "lease", "release")), 2)
         self.assertEqual(self.sleeps(), [10])
         self.assertEqual(self.probe_state(), {})
 
     def test_expired_probe_lease_allows_cleanup(self):
-        result = self.run_readiness(expire_probe_lease=True, lease_release_responses=[
-            {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            expire_probe_lease=True,
+            lease_release_responses=[
+                {"code": 1, "output": "AuthorizationPermissionMismatch: release denied"},
+                {"code": 0, "output": ""},
+            ],
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(self.probe_state(), {})
 
@@ -506,9 +538,12 @@ class BlobReadinessChecks:
         self.assertEqual(self.sleeps(), [])
 
     def test_probe_deletion_permission_delay_is_retried(self):
-        result = self.run_readiness(delete_responses=[
-            {"code": 1, "output": CLI_PERMISSION_ERROR}, {"code": 0, "output": ""},
-        ])
+        result = self.run_readiness(
+            delete_responses=[
+                {"code": 1, "output": CLI_PERMISSION_ERROR},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(self.sleeps(), [10])
         self.assertEqual(self.probe_state(), {})
@@ -577,11 +612,13 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertEqual(len(self.blob_checks()), 1)
 
     def test_role_presence_and_container_creation_do_not_skip_permission_wait(self):
-        result = self.run_bootstrap(blob_responses=[
-            {"code": 1, "output": "AuthorizationPermissionMismatch: initial denial"},
-            {"code": 1, "output": "AuthorizationFailure: access is not ready"},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_bootstrap(
+            blob_responses=[
+                {"code": 1, "output": "AuthorizationPermissionMismatch: initial denial"},
+                {"code": 1, "output": "AuthorizationFailure: access is not ready"},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.blob_checks()), 3)
         self.assertEqual(self.sleeps(), [10, 20])
@@ -597,11 +634,13 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn("Terraform has not been started", self.output)
 
     def test_cli_permission_messages_retry_until_blob_access_is_ready(self):
-        result = self.run_bootstrap(blob_responses=[
-            {"code": 1, "output": CLI_PERMISSION_ERROR},
-            {"code": 1, "output": CLI_NETWORK_ERROR},
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_bootstrap(
+            blob_responses=[
+                {"code": 1, "output": CLI_PERMISSION_ERROR},
+                {"code": 1, "output": CLI_NETWORK_ERROR},
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.blob_checks()), 3)
         self.assertEqual(self.sleeps(), [10, 20])
@@ -639,10 +678,12 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn(error, self.output)
 
     def test_final_wait_is_followed_by_one_last_check(self):
-        result = self.run_bootstrap(blob_responses=[
-            *[{"code": 1, "output": "HTTP 403"}] * 5,
-            {"code": 0, "output": ""},
-        ])
+        result = self.run_bootstrap(
+            blob_responses=[
+                *[{"code": 1, "output": "HTTP 403"}] * 5,
+                {"code": 0, "output": ""},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.blob_checks()), 6)
         self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
@@ -667,24 +708,30 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn("Backend ready", self.output)
 
     def test_success_phrase_does_not_override_failed_exit_status(self):
-        result = self.run_bootstrap(init_responses=[{"code": 1, "output": "Terraform has been successfully initialized\nLater failure"}])
+        result = self.run_bootstrap(
+            init_responses=[{"code": 1, "output": "Terraform has been successfully initialized\nLater failure"}]
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_imports()
         self.assertEqual(self.sleeps(), [])
         self.assertIn("terraform init failed (exit 1)", self.output)
 
     def test_pre_lock_workspace_permission_error_can_retry(self):
-        result = self.run_bootstrap(init_responses=[
-            {"code": 1, "output": "Failed to get existing workspaces: HTTP 403"},
-            {"code": 0, "output": "Backend ready"},
-        ])
+        result = self.run_bootstrap(
+            init_responses=[
+                {"code": 1, "output": "Failed to get existing workspaces: HTTP 403"},
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.commands("terraform", "init")), 2)
         self.assertEqual(self.sleeps(), [10])
         self.assertIn("Failed to get existing workspaces: HTTP 403", self.output)
 
     def test_workspace_error_without_permission_failure_is_not_retried(self):
-        result = self.run_bootstrap(init_responses=[{"code": 1, "output": "Failed to get existing workspaces: HTTP 404"}])
+        result = self.run_bootstrap(
+            init_responses=[{"code": 1, "output": "Failed to get existing workspaces: HTTP 404"}]
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
@@ -709,7 +756,9 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assert_no_imports()
 
     def test_failed_unlock_with_403_is_visible_and_not_retried(self):
-        error = "Error unlocking Azure state. Lock ID: test-lock\nError: failed to delete lock info from metadata: HTTP 403"
+        error = (
+            "Error unlocking Azure state. Lock ID: test-lock\nError: failed to delete lock info from metadata: HTTP 403"
+        )
         result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}])
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(error, self.output)
@@ -729,10 +778,14 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assert_no_imports()
 
     def test_lock_error_takes_priority_over_workspace_permission_error(self):
-        result = self.run_bootstrap(init_responses=[{
-            "code": 1,
-            "output": "Failed to get existing workspaces: HTTP 403\nError unlocking Azure state. Lock ID: test-lock",
-        }])
+        result = self.run_bootstrap(
+            init_responses=[
+                {
+                    "code": 1,
+                    "output": "Failed to get existing workspaces: HTTP 403\nError unlocking Azure state. Lock ID: test-lock",
+                }
+            ]
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
@@ -747,10 +800,14 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assert_no_imports()
 
     def test_lock_error_takes_priority_over_cli_permission_message(self):
-        result = self.run_bootstrap(init_responses=[{
-            "code": 1,
-            "output": f"Failed to get existing workspaces: {CLI_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock",
-        }])
+        result = self.run_bootstrap(
+            init_responses=[
+                {
+                    "code": 1,
+                    "output": f"Failed to get existing workspaces: {CLI_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock",
+                }
+            ]
+        )
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(CLI_PERMISSION_ERROR, self.output)
         self.assertIn("Check the reported lock owner", self.output)
@@ -773,7 +830,9 @@ class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
 
     def assert_deployed_once(self):
         self.assertEqual(self.commands("terraform", "plan"), [["terraform", "plan", "-out", "devops.tfplan"]])
-        self.assertEqual(self.commands("terraform", "apply"), [["terraform", "apply", "-auto-approve", "devops.tfplan"]])
+        self.assertEqual(
+            self.commands("terraform", "apply"), [["terraform", "apply", "-auto-approve", "devops.tfplan"]]
+        )
         self.assertEqual(self.commands("update_tags.sh"), [["update_tags.sh"]])
         last_init = max(index for index, call in enumerate(self.calls) if call[:2] == ["terraform", "init"])
         plan = self.calls.index(self.commands("terraform", "plan")[0])
@@ -793,10 +852,12 @@ class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
 
     def test_workspace_permission_failure_after_access_probe_is_retried(self):
         error = "Failed to get existing workspaces: listing blobs: executing request: unexpected status 403 (403 This request is not authorized to perform this operation.) with AuthorizationFailure: This request is not authorized to perform this operation."
-        result = self.run_deploy(init_responses=[
-            {"code": 1, "output": error},
-            {"code": 0, "output": "Backend ready"},
-        ])
+        result = self.run_deploy(
+            init_responses=[
+                {"code": 1, "output": error},
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertIn(error, self.output)
         self.assertEqual(len(self.commands("terraform", "init")), 2)
@@ -814,10 +875,12 @@ class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
         self.assert_no_deployment()
 
     def test_final_init_attempt_can_succeed(self):
-        result = self.run_deploy(init_responses=[
-            *[{"code": 1, "output": "Failed to get existing workspaces: HTTP 403"}] * 5,
-            {"code": 0, "output": "Backend ready"},
-        ])
+        result = self.run_deploy(
+            init_responses=[
+                *[{"code": 1, "output": "Failed to get existing workspaces: HTTP 403"}] * 5,
+                {"code": 0, "output": "Backend ready"},
+            ]
+        )
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.commands("terraform", "init")), 6)
         self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])

@@ -26,7 +26,9 @@ class WorkspaceServiceOperationContext(object):
     @staticmethod
     def add_operation_id_to_context_obj(ctx: click.Context, operation_id: str) -> "WorkspaceServiceOperationContext":
         workspace_service_context = ctx.find_object(WorkspaceServiceContext)
-        return WorkspaceServiceOperationContext(workspace_service_context.workspace_id, workspace_service_context.workspace_service_id, operation_id)
+        return WorkspaceServiceOperationContext(
+            workspace_service_context.workspace_id, workspace_service_context.workspace_service_id, operation_id
+        )
 
 
 pass_workspace_service_operation_context = click.make_pass_decorator(WorkspaceServiceOperationContext)

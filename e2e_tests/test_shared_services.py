@@ -27,13 +27,10 @@ async def test_patch_firewall(verify):
                             "name": "e2e test rule 1",
                             "description": "desc here",
                             "protocols": [{"port": "5555", "type": "Http"}],
-                            "target_fqdns": [
-                                "one.two.three.microsoft.com",
-                                "two.three.microsoft.com"
-                            ],
-                            "source_addresses": ["172.196.0.0"]
+                            "target_fqdns": ["one.two.three.microsoft.com", "two.three.microsoft.com"],
+                            "source_addresses": ["172.196.0.0"],
                         }
-                    ]
+                    ],
                 },
                 {
                     "name": "e2e-rule-collection-2",
@@ -43,13 +40,10 @@ async def test_patch_firewall(verify):
                             "name": "e2e test rule 1",
                             "description": "desc here",
                             "protocols": [{"port": "5556", "type": "Http"}],
-                            "target_fqdns": [
-                                "one.two.microsoft.com",
-                                "two.microsoft.com"
-                            ],
-                            "source_addresses": ["172.196.0.1"]
+                            "target_fqdns": ["one.two.microsoft.com", "two.microsoft.com"],
+                            "source_addresses": ["172.196.0.1"],
                         }
-                    ]
+                    ],
                 },
                 {
                     "name": "e2e-rule-collection-3",
@@ -60,24 +54,20 @@ async def test_patch_firewall(verify):
                             "name": "e2e test rule 1",
                             "description": "desc here",
                             "protocols": [{"port": "5557", "type": "Http"}],
-                            "target_fqdns": [
-                                "one.two.three.microsoft.com.uk"
-                            ],
-                            "source_addresses": ["172.196.0.2"]
+                            "target_fqdns": ["one.two.three.microsoft.com.uk"],
+                            "source_addresses": ["172.196.0.2"],
                         }
-                    ]
-                }
+                    ],
+                },
             ],
         }
     }
 
     admin_token = await get_admin_token(verify)
-    shared_service_firewall = await get_shared_service_by_name(
-        template_name, verify, admin_token
-    )
+    shared_service_firewall = await get_shared_service_by_name(template_name, verify, admin_token)
 
     if shared_service_firewall:
-        shared_service_path = f'/shared-services/{shared_service_firewall["id"]}'
+        shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
 
         await post_resource(
             payload=patch_payload,
@@ -85,7 +75,7 @@ async def test_patch_firewall(verify):
             access_token=admin_token,
             verify=verify,
             method="PATCH",
-            etag=shared_service_firewall['_etag'],
+            etag=shared_service_firewall["_etag"],
         )
 
 
@@ -138,7 +128,9 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(60 * 60)
-@pytest.mark.skipif(date.today().weekday() in [5, 6], reason="LetsEncrypt limits to 5 times a week. Skipping on SAT & SUN.")
+@pytest.mark.skipif(
+    date.today().weekday() in [5, 6], reason="LetsEncrypt limits to 5 times a week. Skipping on SAT & SUN."
+)
 async def test_create_certs_nexus_shared_service(verify) -> None:
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
@@ -190,12 +182,8 @@ async def disable_and_delete_shared_service_if_exists(shared_service_name, verif
     admin_token = await get_admin_token(verify)
 
     # Check that the shared service hasn't already been created
-    shared_service = await get_shared_service_by_name(
-        shared_service_name, verify, admin_token
-    )
+    shared_service = await get_shared_service_by_name(shared_service_name, verify, admin_token)
     if shared_service:
         id = shared_service["id"]
-        LOGGER.info(
-            f"Shared service {shared_service_name} already exists (id {id}), deleting it first..."
-        )
+        LOGGER.info(f"Shared service {shared_service_name} already exists (id {id}), deleting it first...")
         await disable_and_delete_tre_resource(f"/shared-services/{id}", verify)

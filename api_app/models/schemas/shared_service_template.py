@@ -15,11 +15,8 @@ def get_sample_shared_service_template_object(template_name: str = "tre-shared-s
         current=True,
         type="object",
         required=["display_name", "description"],
-        properties={
-            "display_name": Property(type="string"),
-            "description": Property(type="string")
-        },
-        actions=[CustomAction()]
+        properties={"display_name": Property(type="string"), "description": Property(type="string")},
+        actions=[CustomAction()],
     )
 
 
@@ -38,32 +35,27 @@ def get_sample_shared_service_template_in_response() -> dict:
 
 
 class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "my-tre-shared-service",
-            "version": "0.0.1",
-            "current": True,
-            "json_schema": {
-                "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/myshared_service/shared_service.json",
-                "type": "object",
-                "title": "My Shared Service Template",
-                "description": "These is a test shared service resource template schema",
-                "required": [],
-                "authorizedRoles": [],
-                "properties": {}
-            },
-            "customActions": [
-                {
-                    "name": "disable",
-                    "description": "Deallocates resources"
-                }
-            ]
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "my-tre-shared-service",
+                "version": "0.0.1",
+                "current": True,
+                "json_schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/myshared_service/shared_service.json",
+                    "type": "object",
+                    "title": "My Shared Service Template",
+                    "description": "These is a test shared service resource template schema",
+                    "required": [],
+                    "authorizedRoles": [],
+                    "properties": {},
+                },
+                "customActions": [{"name": "disable", "description": "Deallocates resources"}],
+            }
         }
-    })
+    )
 
 
 class SharedServiceTemplateInResponse(ResourceTemplateInResponse):
-    model_config = ConfigDict(json_schema_extra={
-        "example": get_sample_shared_service_template_in_response()
-    })
+    model_config = ConfigDict(json_schema_extra={"example": get_sample_shared_service_template_in_response()})

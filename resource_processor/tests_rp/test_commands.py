@@ -2,7 +2,16 @@ import json
 import asyncio
 import pytest
 from unittest.mock import patch, AsyncMock
-from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value
+from helpers.commands import (
+    azure_login_command,
+    apply_porter_credentials_sets_command,
+    azure_acr_login_command,
+    build_porter_command,
+    build_porter_command_for_outputs,
+    get_porter_parameter_keys,
+    run_command_helper,
+    get_special_porter_param_value,
+)
 
 
 @pytest.fixture
@@ -11,41 +20,70 @@ def mock_get_porter_parameter_keys():
         yield mock
 
 
-@pytest.mark.parametrize("config, expected_commands", [
-    ({"azure_environment": "AzureCloud", "vmss_msi_id": "msi_id"}, [
-        ["az", "cloud", "set", "--name", "AzureCloud"],
-        ["az", "login", "--identity", "--client-id", "msi_id"]
-    ]),
-    ({"azure_environment": "AzureCloud", "arm_client_id": "client_id", "arm_client_secret": "client_secret", "arm_tenant_id": "tenant_id"}, [
-        ["az", "cloud", "set", "--name", "AzureCloud"],
-        ["az", "login", "--service-principal", "--username", "client_id", "--password", "client_secret", "--tenant", "tenant_id"]
-    ])
-])
+@pytest.mark.parametrize(
+    "config, expected_commands",
+    [
+        (
+            {"azure_environment": "AzureCloud", "vmss_msi_id": "msi_id"},
+            [["az", "cloud", "set", "--name", "AzureCloud"], ["az", "login", "--identity", "--client-id", "msi_id"]],
+        ),
+        (
+            {
+                "azure_environment": "AzureCloud",
+                "arm_client_id": "client_id",
+                "arm_client_secret": "client_secret",
+                "arm_tenant_id": "tenant_id",
+            },
+            [
+                ["az", "cloud", "set", "--name", "AzureCloud"],
+                [
+                    "az",
+                    "login",
+                    "--service-principal",
+                    "--username",
+                    "client_id",
+                    "--password",
+                    "client_secret",
+                    "--tenant",
+                    "tenant_id",
+                ],
+            ],
+        ),
+    ],
+)
 def test_azure_login_command(config, expected_commands):
     """Test azure_login_command function."""
     assert azure_login_command(config) == expected_commands
 
 
-@pytest.mark.parametrize("config, expected_commands", [
-    ({"vmss_msi_id": "msi_id"}, [
-        ["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"],
-        ["porter", "credentials", "apply", "vmss_porter/aad_auth.json"]
-    ]),
-    ({}, [
-        ["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"],
-        ["porter", "credentials", "apply", "vmss_porter/aad_auth_local_debugging.json"]
-    ])
-])
+@pytest.mark.parametrize(
+    "config, expected_commands",
+    [
+        (
+            {"vmss_msi_id": "msi_id"},
+            [
+                ["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"],
+                ["porter", "credentials", "apply", "vmss_porter/aad_auth.json"],
+            ],
+        ),
+        (
+            {},
+            [
+                ["porter", "credentials", "apply", "vmss_porter/arm_auth_local_debugging.json"],
+                ["porter", "credentials", "apply", "vmss_porter/aad_auth_local_debugging.json"],
+            ],
+        ),
+    ],
+)
 def test_apply_porter_credentials_sets_command(config, expected_commands):
     """Test apply_porter_credentials_sets_command function."""
     assert apply_porter_credentials_sets_command(config) == expected_commands
 
 
-@pytest.mark.parametrize("config, expected_commands", [
-    ({"registry_server": "myregistry.azurecr.io"}, [
-        ["az", "acr", "login", "--name", "myregistry"]
-    ])
-])
+@pytest.mark.parametrize(
+    "config, expected_commands",
+    [({"registry_server": "myregistry.azurecr.io"}, [["az", "acr", "login", "--name", "myregistry"]])],
+)
 def test_azure_acr_login_command(config, expected_commands):
     """Test azure_acr_login_command function."""
     assert azure_acr_login_command(config) == expected_commands
@@ -55,17 +93,31 @@ def test_azure_acr_login_command(config, expected_commands):
 async def test_build_porter_command(mock_get_porter_parameter_keys):
     """Test build_porter_command function."""
     config = {"registry_server": "myregistry.azurecr.io"}
-    msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
+    msg_body = {
+        "id": "guid",
+        "action": "install",
+        "name": "mybundle",
+        "version": "1.0.0",
+        "parameters": {"param1": "value1"},
+    }
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    expected_command = [[
-        "porter", "install", "guid",
-        "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-        "--param", "param1=value1",
-        "--force",
-        "--credential-set", "arm_auth",
-        "--credential-set", "aad_auth"
-    ]]
+    expected_command = [
+        [
+            "porter",
+            "install",
+            "guid",
+            "--reference",
+            "myregistry.azurecr.io/mybundle:v1.0.0",
+            "--param",
+            "param1=value1",
+            "--force",
+            "--credential-set",
+            "arm_auth",
+            "--credential-set",
+            "aad_auth",
+        ]
+    ]
 
     command = await build_porter_command(config, msg_body)
     assert command == expected_command
@@ -75,18 +127,32 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
 async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     """Test build_porter_command function for upgrade action."""
     config = {"registry_server": "myregistry.azurecr.io"}
-    msg_body = {"id": "guid", "action": "upgrade", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
+    msg_body = {
+        "id": "guid",
+        "action": "upgrade",
+        "name": "mybundle",
+        "version": "1.0.0",
+        "parameters": {"param1": "value1"},
+    }
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    expected_command = [[
-        "porter", "upgrade", "guid",
-        "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-        "--param", "param1=value1",
-        "--force",
-        "--credential-set", "arm_auth",
-        "--credential-set", "aad_auth",
-        "--force-upgrade"
-    ]]
+    expected_command = [
+        [
+            "porter",
+            "upgrade",
+            "guid",
+            "--reference",
+            "myregistry.azurecr.io/mybundle:v1.0.0",
+            "--param",
+            "param1=value1",
+            "--force",
+            "--credential-set",
+            "arm_auth",
+            "--credential-set",
+            "aad_auth",
+            "--force-upgrade",
+        ]
+    ]
 
     command = await build_porter_command(config, msg_body)
     assert command == expected_command
@@ -96,11 +162,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
 async def test_build_porter_command_for_outputs():
     """Test build_porter_command_for_outputs function."""
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0"}
-    expected_command = [[
-        "porter", "installations", "output", "list",
-        "--installation", "guid",
-        "--output", "json"
-    ]]
+    expected_command = [["porter", "installations", "output", "list", "--installation", "guid", "--output", "json"]]
 
     command = await build_porter_command_for_outputs(msg_body)
     assert command == expected_command
@@ -118,11 +180,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         "action": "install",
         "name": "mybundle",
         "version": "1.0.0",
-        "parameters": {
-            "dict_param": dict_value,
-            "list_param": list_value,
-            "string_param": "simple_value"
-        }
+        "parameters": {"dict_param": dict_value, "list_param": list_value, "string_param": "simple_value"},
     }
 
     mock_get_porter_parameter_keys.return_value = ["dict_param", "list_param", "string_param"]
@@ -160,17 +218,24 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
 @patch("helpers.commands.run_command_helper")
 async def test_get_porter_parameter_keys(mock_run_command_helper):
     """Test get_porter_parameter_keys function."""
-    config = {"registry_server": "myregistry.azurecr.io", "azure_environment": "AzureCloud", "porter_env": {}, "arm_client_id": "client_id", "arm_client_secret": "client_secret", "arm_tenant_id": "tenant_id"}
+    config = {
+        "registry_server": "myregistry.azurecr.io",
+        "azure_environment": "AzureCloud",
+        "porter_env": {},
+        "arm_client_id": "client_id",
+        "arm_client_secret": "client_secret",
+        "arm_tenant_id": "tenant_id",
+    }
     msg_body = {"name": "mybundle", "version": "1.0.0"}
 
     porter_explain_output = json.dumps({"parameters": [{"name": "param1"}]})
 
     # Need to account for multiple commands per operation (cloud set, login, etc)
     mock_run_command_helper.side_effect = [
-        (0, "cloud set output", None),   # az cloud set
-        (0, "login output", None),      # az login
+        (0, "cloud set output", None),  # az cloud set
+        (0, "login output", None),  # az login
         (0, "acr login output", None),  # az acr login
-        (0, porter_explain_output, None)  # porter explain
+        (0, porter_explain_output, None),  # porter explain
     ]
 
     expected_keys = ["param1"]
@@ -205,10 +270,7 @@ async def test_run_command_helper():
         assert stdout == "stdout output"
         assert stderr == "stderr output"
         mock_subprocess.assert_called_once_with(
-            "echo", "test",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env=config["porter_env"]
+            "echo", "test", stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=config["porter_env"]
         )
 
 
@@ -239,7 +301,7 @@ async def test_get_porter_parameter_keys_command_splitting(mock_run_command_help
         "registry_server": "myregistry.azurecr.io",
         "azure_environment": "AzureCloud",
         "porter_env": {},
-        "vmss_msi_id": "msi_id"
+        "vmss_msi_id": "msi_id",
     }
     msg_body = {"name": "mybundle", "version": "1.0.0"}
 
@@ -247,10 +309,10 @@ async def test_get_porter_parameter_keys_command_splitting(mock_run_command_help
 
     # We need more side effects now since there are multiple commands per step
     mock_run_command_helper.side_effect = [
-        (0, "cloud set output", None),   # First az cloud set
-        (0, "login output", None),      # Then az login
+        (0, "cloud set output", None),  # First az cloud set
+        (0, "login output", None),  # Then az login
         (0, "acr login output", None),  # Then az acr login
-        (0, porter_explain_output, None)  # Finally porter explain
+        (0, porter_explain_output, None),  # Finally porter explain
     ]
 
     await get_porter_parameter_keys(config, msg_body)
@@ -293,14 +355,10 @@ def test_get_special_porter_param_value():
         "aad_authority_url": "https://login.microsoftonline.com",
         "microsoft_graph_fqdn": "https://graph.microsoft.com",
         "arm_environment": "AzurePublicCloud",
-        "bundle_params": {"custom_param": "custom_value"}
+        "bundle_params": {"custom_param": "custom_value"},
     }
 
-    msg_body = {
-        "workspaceId": "ws-123",
-        "parentWorkspaceServiceId": "parent-123",
-        "ownerId": "owner-123"
-    }
+    msg_body = {"workspaceId": "ws-123", "parentWorkspaceServiceId": "parent-123", "ownerId": "owner-123"}
 
     # Test ACR name extraction
     assert get_special_porter_param_value(config, "mgmt_acr_name", msg_body) == "myregistry"

@@ -20,10 +20,20 @@ def group(name, ref=REF, subscription=SUBSCRIPTION):
 
 class CleanupTests(unittest.TestCase):
     def setUp(self):
-        names = ("rg-trea66984da", "rg-trea66984da-mgmt", "rg-tree06583c4", "rg-tree06583c4-mgmt", "rg-tre637595c5-mgmt")
+        names = (
+            "rg-trea66984da",
+            "rg-trea66984da-mgmt",
+            "rg-tree06583c4",
+            "rg-tree06583c4-mgmt",
+            "rg-tre637595c5-mgmt",
+        )
         self.groups = [group(name) for name in names]
-        self.groups += [group("rg-tre12345678", "refs/pull/1/merge"), group("rg-treproduction"),
-                        group("rg-trea66984da-ws-workspace"), {"name": "rg-unowned", "tags": None}]
+        self.groups += [
+            group("rg-tre12345678", "refs/pull/1/merge"),
+            group("rg-treproduction"),
+            group("rg-trea66984da-ws-workspace"),
+            {"name": "rg-unowned", "tags": None},
+        ]
         self.reads = 0
         self.account = SUBSCRIPTION
         self.change = None
@@ -88,8 +98,14 @@ class CleanupTests(unittest.TestCase):
         self.run.assert_not_called()
 
     def test_invalid_inventory_has_no_mutations(self):
-        cases = [None, {}, [None], [{"name": 3}], [group("rg-tre12345678"), group("rg-tre12345678")],
-                 [{"name": "rg-trea66984da", "tags": "invalid"}]]
+        cases = [
+            None,
+            {},
+            [None],
+            [{"name": 3}],
+            [group("rg-tre12345678"), group("rg-tre12345678")],
+            [{"name": "rg-trea66984da", "tags": "invalid"}],
+        ]
         for groups in cases:
             with self.subTest(groups=groups), self.assertRaises(ValueError):
                 cleanup.targets(groups, REF, SUBSCRIPTION)
@@ -103,7 +119,11 @@ class CleanupTests(unittest.TestCase):
 
     def test_invalid_account_has_no_mutations(self):
         for account in (None, [], {}, {"id": None}, {"id": 3}):
-            with self.subTest(account=account), patch.object(cleanup, "azure", return_value=account), self.assertRaises(ValueError):
+            with (
+                self.subTest(account=account),
+                patch.object(cleanup, "azure", return_value=account),
+                self.assertRaises(ValueError),
+            ):
                 cleanup.destroy(REF, SUBSCRIPTION)
         self.run.assert_not_called()
 

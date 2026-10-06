@@ -20,14 +20,52 @@ OPERATION_ID = "0000c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 STEP_ID = "main"
 
 
-@pytest.mark.parametrize('resource, expected', [
-    # enabled = True
-    (Resource(templateName="", templateVersion="", isEnabled=True, etag="", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), True),
-    # enabled = False
-    (Resource(templateName="", templateVersion="", isEnabled=False, etag="", properties={}, id="1234", resourceType=ResourceType.Workspace, resourcePath="test"), False),
-    # enabled not set - defaults to True
-    (Resource(templateName="", templateVersion="", properties={}, id="1234", etag="", resourceType=ResourceType.Workspace, resourcePath="test"), True),
-])
+@pytest.mark.parametrize(
+    "resource, expected",
+    [
+        # enabled = True
+        (
+            Resource(
+                templateName="",
+                templateVersion="",
+                isEnabled=True,
+                etag="",
+                properties={},
+                id="1234",
+                resourceType=ResourceType.Workspace,
+                resourcePath="test",
+            ),
+            True,
+        ),
+        # enabled = False
+        (
+            Resource(
+                templateName="",
+                templateVersion="",
+                isEnabled=False,
+                etag="",
+                properties={},
+                id="1234",
+                resourceType=ResourceType.Workspace,
+                resourcePath="test",
+            ),
+            False,
+        ),
+        # enabled not set - defaults to True
+        (
+            Resource(
+                templateName="",
+                templateVersion="",
+                properties={},
+                id="1234",
+                etag="",
+                resourceType=ResourceType.Workspace,
+                resourcePath="test",
+            ),
+            True,
+        ),
+    ],
+)
 def test_resource_is_enabled_returns_correct_value(resource, expected):
     assert resource.isEnabled == expected
 
@@ -37,7 +75,16 @@ def test_user_resource_get_resource_request_message_payload_augments_payload_wit
     workspace_id = "123"
     parent_service_id = "abcdef"
 
-    user_resource = UserResource(id="123", templateName="user-template", templateVersion="1.0", etag="", ownerId=owner_id, workspaceId=workspace_id, parentWorkspaceServiceId=parent_service_id, resourcePath="test")
+    user_resource = UserResource(
+        id="123",
+        templateName="user-template",
+        templateVersion="1.0",
+        etag="",
+        ownerId=owner_id,
+        workspaceId=workspace_id,
+        parentWorkspaceServiceId=parent_service_id,
+        resourcePath="test",
+    )
 
     message_payload = user_resource.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
 
@@ -48,38 +95,53 @@ def test_user_resource_get_resource_request_message_payload_augments_payload_wit
 
 def test_workspace_service_get_resource_request_message_payload_augments_payload_with_extra_params():
     workspace_id = "123"
-    workspace_service = WorkspaceService(id="123", templateName="service-template", templateVersion="1.0", etag="", workspaceId=workspace_id, resourcePath="test")
+    workspace_service = WorkspaceService(
+        id="123",
+        templateName="service-template",
+        templateVersion="1.0",
+        etag="",
+        workspaceId=workspace_id,
+        resourcePath="test",
+    )
 
-    message_payload = workspace_service.get_resource_request_message_payload(OPERATION_ID, STEP_ID, RequestAction.Install)
+    message_payload = workspace_service.get_resource_request_message_payload(
+        OPERATION_ID, STEP_ID, RequestAction.Install
+    )
 
     assert message_payload["workspaceId"] == workspace_id
 
 
 def test_legacy_actor_dicts_validate_without_user_required_fields():
-    resource = Resource.model_validate({
-        "id": "resource-id",
-        "templateName": "workspace",
-        "templateVersion": "1.0",
-        "properties": {},
-        "resourceType": ResourceType.Workspace,
-        "_etag": "etag",
-        "user": {"id": "legacy-user"},
-    })
-    operation = Operation.model_validate({
-        "id": "operation-id",
-        "resourceId": "resource-id",
-        "resourcePath": "/workspaces/resource-id",
-        "status": Status.AwaitingDeployment,
-        "action": "install",
-        "user": {},
-    })
-    airlock_request = AirlockRequest.model_validate({
-        "id": "airlock-id",
-        "workspaceId": "workspace-id",
-        "type": AirlockRequestType.Import,
-        "createdBy": {},
-        "updatedBy": {"name": "Legacy User"},
-    })
+    resource = Resource.model_validate(
+        {
+            "id": "resource-id",
+            "templateName": "workspace",
+            "templateVersion": "1.0",
+            "properties": {},
+            "resourceType": ResourceType.Workspace,
+            "_etag": "etag",
+            "user": {"id": "legacy-user"},
+        }
+    )
+    operation = Operation.model_validate(
+        {
+            "id": "operation-id",
+            "resourceId": "resource-id",
+            "resourcePath": "/workspaces/resource-id",
+            "status": Status.AwaitingDeployment,
+            "action": "install",
+            "user": {},
+        }
+    )
+    airlock_request = AirlockRequest.model_validate(
+        {
+            "id": "airlock-id",
+            "workspaceId": "workspace-id",
+            "type": AirlockRequestType.Import,
+            "createdBy": {},
+            "updatedBy": {"name": "Legacy User"},
+        }
+    )
 
     assert resource.user == {"id": "legacy-user"}
     assert operation.user == {}
@@ -141,12 +203,15 @@ def test_resource_history_example_uses_declared_field_types():
     assert isinstance(resource_history.user, dict)
 
 
-@pytest.mark.parametrize("model", [
-    SharedServiceTemplateInCreate,
-    UserResourceTemplateInCreate,
-    WorkspaceServiceTemplateInCreate,
-    WorkspaceTemplateInCreate,
-])
+@pytest.mark.parametrize(
+    "model",
+    [
+        SharedServiceTemplateInCreate,
+        UserResourceTemplateInCreate,
+        WorkspaceServiceTemplateInCreate,
+        WorkspaceTemplateInCreate,
+    ],
+)
 def test_resource_template_create_examples_use_boolean_current(model):
     example = model.model_config["json_schema_extra"]["example"]
     template = model.model_validate(example)

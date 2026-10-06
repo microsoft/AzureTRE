@@ -4,14 +4,21 @@ import pytest
 from mock import MagicMock, call, patch
 
 from pydantic import ValidationError
-from StatusChangedQueueTrigger import get_request_files, main, extract_properties, get_source_dest_for_copy, is_require_data_copy, get_storage_account_destination_for_copy
+from StatusChangedQueueTrigger import (
+    get_request_files,
+    main,
+    extract_properties,
+    get_source_dest_for_copy,
+    is_require_data_copy,
+    get_storage_account_destination_for_copy,
+)
 from azure.functions.servicebus import ServiceBusMessage
 from shared_code import constants
 
 
-class TestPropertiesExtraction():
+class TestPropertiesExtraction:
     def test_extract_prop_valid_body_return_all_values(self):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"456\" ,\"previous_status\":\"789\" , \"type\":\"101112\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123","new_status":"456" ,"previous_status":"789" , "type":"101112", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         req_prop = extract_properties(message)
         assert req_prop.request_id == "123"
@@ -21,19 +28,19 @@ class TestPropertiesExtraction():
         assert req_prop.workspace_id == "ws1"
 
     def test_extract_prop_with_review_workspace_id(self):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"456\" ,\"previous_status\":\"789\" , \"type\":\"101112\", \"workspace_id\":\"ws1\", \"review_workspace_id\":\"rw01\"  }}"
+        message_body = '{ "data": { "request_id":"123","new_status":"456" ,"previous_status":"789" , "type":"101112", "workspace_id":"ws1", "review_workspace_id":"rw01"  }}'
         message = _mock_service_bus_message(body=message_body)
         req_prop = extract_properties(message)
         assert req_prop.review_workspace_id == "rw01"
 
     def test_extract_prop_without_review_workspace_id_defaults_to_none(self):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"456\" ,\"previous_status\":\"789\" , \"type\":\"101112\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123","new_status":"456" ,"previous_status":"789" , "type":"101112", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         req_prop = extract_properties(message)
         assert req_prop.review_workspace_id is None
 
     def test_extract_prop_defaults_missing_previous_status_to_none(self):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"draft\", \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123","new_status":"draft", "type":"export", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
 
         req_prop = extract_properties(message)
@@ -41,19 +48,19 @@ class TestPropertiesExtraction():
         assert req_prop.previous_status is None
 
     def test_extract_prop_missing_arg_throws(self):
-        message_body = "{ \"data\": { \"status\":\"456\" , \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "status":"456" , "type":"789", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         pytest.raises(ValidationError, extract_properties, message)
 
-        message_body = "{ \"data\": { \"request_id\":\"123\", \"type\":\"789\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123", "type":"789", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         pytest.raises(ValidationError, extract_properties, message)
 
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" ,  \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123","status":"456" ,  "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         pytest.raises(ValidationError, extract_properties, message)
 
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"status\":\"456\" , \"type\":\"789\"  }}"
+        message_body = '{ "data": { "request_id":"123","status":"456" , "type":"789"  }}'
         message = _mock_service_bus_message(body=message_body)
         pytest.raises(ValidationError, extract_properties, message)
 
@@ -63,7 +70,7 @@ class TestPropertiesExtraction():
         pytest.raises(JSONDecodeError, extract_properties, message)
 
 
-class TestDataCopyProperties():
+class TestDataCopyProperties:
     def test_only_specific_status_are_triggering_copy(self):
         assert not is_require_data_copy("Mitzi")
         assert not is_require_data_copy("")
@@ -86,14 +93,16 @@ class TestDataCopyProperties():
         pytest.raises(Exception, get_source_dest_for_copy, "accepted", "somethingelse")
 
 
-class TestFileEnumeration():
+class TestFileEnumeration:
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_request_files")
     @patch("StatusChangedQueueTrigger.get_request_files")
     @patch("StatusChangedQueueTrigger.blob_operations.create_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_get_request_files_should_be_called_on_submit_stage(self, _, __, mock_get_request_files, mock_set_output_event_to_report_request_files):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+    def test_get_request_files_should_be_called_on_submit_stage(
+        self, _, __, mock_get_request_files, mock_set_output_event_to_report_request_files
+    ):
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted" ,"previous_status":"draft" , "type":"export", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert mock_get_request_files.called
@@ -102,8 +111,10 @@ class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_failure")
     @patch("StatusChangedQueueTrigger.get_request_files")
     @patch("StatusChangedQueueTrigger.handle_status_changed")
-    def test_get_request_files_should_not_be_called_if_new_status_is_not_submit(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"fake-status\" ,\"previous_status\":\"None\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+    def test_get_request_files_should_not_be_called_if_new_status_is_not_submit(
+        self, _, mock_get_request_files, mock_set_output_event_to_report_failure
+    ):
+        message_body = '{ "data": { "request_id":"123","new_status":"fake-status" ,"previous_status":"None" , "type":"export", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert not mock_get_request_files.called
@@ -112,9 +123,11 @@ class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.set_output_event_to_report_failure")
     @patch("StatusChangedQueueTrigger.get_request_files")
     @patch("StatusChangedQueueTrigger.handle_status_changed", side_effect=Exception)
-    def test_transient_error_during_submit_propagates_for_retry(self, _, mock_get_request_files, mock_set_output_event_to_report_failure):
+    def test_transient_error_during_submit_propagates_for_retry(
+        self, _, mock_get_request_files, mock_set_output_event_to_report_failure
+    ):
         # A non-deterministic error must escape so Service Bus retries it, rather than failing the request.
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+        message_body = '{ "data": { "request_id":"123","new_status":"submitted" ,"previous_status":"draft" , "type":"export", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         with pytest.raises(Exception):
             main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
@@ -124,18 +137,25 @@ class TestFileEnumeration():
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_called_with_correct_storage_account(self, mock_get_request_files):
-        source_storage_account_for_submitted_stage = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + 'ws1'
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\", \"airlock_version\":1  }}"
+        source_storage_account_for_submitted_stage = constants.STORAGE_ACCOUNT_NAME_EXPORT_INTERNAL + "ws1"
+        message_body = '{ "data": { "request_id":"123","new_status": "submitted" ,"previous_status":"draft" , "type":"export", "workspace_id":"ws1", "airlock_version":1  }}'
         message = _mock_service_bus_message(body=message_body)
         request_properties = extract_properties(message)
         get_request_files(request_properties)
-        mock_get_request_files.assert_called_with(account_name=source_storage_account_for_submitted_stage, request_id=request_properties.request_id, container_name=None)
+        mock_get_request_files.assert_called_with(
+            account_name=source_storage_account_for_submitted_stage,
+            request_id=request_properties.request_id,
+            container_name=None,
+        )
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_get_request_files_enumerates_the_draft_container_for_v2(self, mock_get_request_files, _):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"submitted\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\", \"airlock_version\":2  }}"
+        message_body = '{ "data": { "request_id":"123","new_status": "submitted" ,"previous_status":"draft" , "type":"export", "workspace_id":"ws1", "airlock_version":2  }}'
         message = _mock_service_bus_message(body=message_body)
         request_properties = extract_properties(message)
         get_request_files(request_properties)
@@ -144,24 +164,26 @@ class TestFileEnumeration():
         assert mock_get_request_files.call_args.kwargs["container_name"] == "123-draft"
 
 
-class TestFilesDeletion():
+class TestFilesDeletion:
     @patch("StatusChangedQueueTrigger.set_output_event_to_trigger_container_deletion")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
-    def test_delete_request_files_should_be_called_on_cancel_stage(self, mock_set_output_event_to_trigger_container_deletion):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\":\"cancelled\" ,\"previous_status\":\"draft\" , \"type\":\"export\", \"workspace_id\":\"ws1\"  }}"
+    def test_delete_request_files_should_be_called_on_cancel_stage(
+        self, mock_set_output_event_to_trigger_container_deletion
+    ):
+        message_body = '{ "data": { "request_id":"123","new_status":"cancelled" ,"previous_status":"draft" , "type":"export", "workspace_id":"ws1"  }}'
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         assert mock_set_output_event_to_trigger_container_deletion.called
 
 
-class TestImportSubmitUsesReviewWorkspaceId():
+class TestImportSubmitUsesReviewWorkspaceId:
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_submit_destination_uses_review_workspace_id(self):
         dest = get_storage_account_destination_for_copy(
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
             short_workspace_id="ws01",
-            review_workspace_id="rw01"
+            review_workspace_id="rw01",
         )
         assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
 
@@ -171,7 +193,7 @@ class TestImportSubmitUsesReviewWorkspaceId():
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.IMPORT_TYPE,
             short_workspace_id="ws01",
-            review_workspace_id=None
+            review_workspace_id=None,
         )
         assert dest == constants.STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS + "tre-id"
 
@@ -181,24 +203,24 @@ class TestImportSubmitUsesReviewWorkspaceId():
             new_status=constants.STAGE_SUBMITTED,
             request_type=constants.EXPORT_TYPE,
             short_workspace_id="ws01",
-            review_workspace_id="rw01"
+            review_workspace_id="rw01",
         )
         assert dest == constants.STORAGE_ACCOUNT_NAME_EXPORT_INPROGRESS + "ws01"
 
 
-class TestImportApproval():
+class TestImportApproval:
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.create_container")
     @patch.dict(os.environ, {"TRE_ID": "tre-id"}, clear=True)
     def test_import_approval_copies_data_in_legacy_mode(self, mock_create_container, mock_copy_data):
-        message_body = "{ \"data\": { \"request_id\":\"123\",\"new_status\": \"approval_in_progress\" ,\"previous_status\":\"in_review\" , \"type\":\"import\", \"workspace_id\":\"ws01\", \"airlock_version\":1  }}"
+        message_body = '{ "data": { "request_id":"123","new_status": "approval_in_progress" ,"previous_status":"in_review" , "type":"import", "workspace_id":"ws01", "airlock_version":1  }}'
         message = _mock_service_bus_message(body=message_body)
         main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
         mock_create_container.assert_called_once()
         mock_copy_data.assert_called_once()
 
 
-class TestMainFailurePaths():
+class TestMainFailurePaths:
     def test_main_raises_json_decode_error_when_invalid_json(self):
         message = _mock_service_bus_message(body="invalid json")
         with pytest.raises(JSONDecodeError):
@@ -210,7 +232,7 @@ class TestMainFailurePaths():
             main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
 
     def test_main_raises_validation_error_when_missing_properties(self):
-        message = _mock_service_bus_message(body="{ \"data\": {} }")
+        message = _mock_service_bus_message(body='{ "data": {} }')
         with pytest.raises(ValidationError):
             main(msg=message, stepResultEvent=MagicMock(), dataDeletionEvent=MagicMock())
 
@@ -221,8 +243,7 @@ def _mock_service_bus_message(body: str):
     return message
 
 
-class TestV2MetadataMode():
-
+class TestV2MetadataMode:
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -247,11 +268,18 @@ class TestV2MetadataMode():
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_submit_with_scanning_disabled_emits_in_review(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
+    def test_v2_submit_with_scanning_disabled_emits_in_review(
+        self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -266,7 +294,10 @@ class TestV2MetadataMode():
         assert second_call_event.get_json()["new_status"] == constants.STAGE_IN_REVIEW
         assert second_call_event.get_json()["request_files"] == [{"name": "test.txt", "size": 100}]
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
     @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[])
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
@@ -277,8 +308,14 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
 
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "a.txt", "size": 1}, {"name": "b.txt", "size": 2}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files",
+        return_value=[{"name": "a.txt", "size": 1}, {"name": "b.txt", "size": 2}],
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
     def test_v2_submit_rejects_multiple_files(self, mock_blob_svc, mock_get_files, _):
@@ -288,13 +325,20 @@ class TestV2MetadataMode():
         main(msg=message, stepResultEvent=step_result, dataDeletionEvent=MagicMock())
         assert step_result.set.call_args_list[-1][0][0].get_json()["new_status"] == constants.STAGE_FAILED
 
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 1}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 1}]
+    )
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(self, mock_blob_svc, _, mock_copy, mock_delete, mock_files):
+    def test_v2_submit_with_scanning_enabled_does_not_emit_in_review(
+        self, mock_blob_svc, _, mock_copy, mock_delete, mock_files
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -305,11 +349,18 @@ class TestV2MetadataMode():
 
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: container.endswith("-draft"))
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: container.endswith("-draft"),
+    )
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "False"}, clear=True)
-    def test_v2_submit_with_scanning_disabled_carries_files_with_the_transition(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
+    def test_v2_submit_with_scanning_disabled_carries_files_with_the_transition(
+        self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete
+    ):
         # With scanning off, BlobCreatedTrigger also advances the request but carries no files,
         # so this event must carry them or the race can leave the request with no file metadata.
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
@@ -324,11 +375,18 @@ class TestV2MetadataMode():
     @patch("StatusChangedQueueTrigger.blob_operations.is_submission_sealed", return_value=True)
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
-    @patch("StatusChangedQueueTrigger.blob_operations.container_exists", side_effect=lambda account, container: not container.endswith("-draft"))
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.container_exists",
+        side_effect=lambda account, container: not container.endswith("-draft"),
+    )
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_redelivered_submit_resumes_from_the_sealed_container(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, _):
+    def test_v2_redelivered_submit_resumes_from_the_sealed_container(
+        self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, _
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -344,11 +402,14 @@ class TestV2MetadataMode():
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
     def test_v2_redelivery_does_not_overwrite_sealed_submission_when_draft_remains(
-            self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, mock_is_sealed):
+        self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete, mock_is_sealed
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
@@ -368,12 +429,21 @@ class TestV2MetadataMode():
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=True)
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
     def test_v2_redelivery_retries_after_deleting_failed_copy(
-            self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete,
-            mock_is_sealed, mock_delete_failed_copy):
+        self,
+        mock_blob_svc,
+        mock_get_files,
+        mock_exists,
+        mock_copy,
+        mock_delete,
+        mock_is_sealed,
+        mock_delete_failed_copy,
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
 
@@ -386,10 +456,14 @@ class TestV2MetadataMode():
     @patch("StatusChangedQueueTrigger.blob_operations.delete_container")
     @patch("StatusChangedQueueTrigger.blob_operations.copy_data")
     @patch("StatusChangedQueueTrigger.blob_operations.container_exists", return_value=False)
-    @patch("StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}])
+    @patch(
+        "StatusChangedQueueTrigger.blob_operations.get_request_files", return_value=[{"name": "test.txt", "size": 100}]
+    )
     @patch("shared_code.blob_operations_metadata.BlobServiceClient")
     @patch.dict(os.environ, {"TRE_ID": "tre-id", "ENABLE_MALWARE_SCANNING": "True"}, clear=True)
-    def test_v2_submit_fails_when_no_data_can_be_found(self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete):
+    def test_v2_submit_fails_when_no_data_can_be_found(
+        self, mock_blob_svc, mock_get_files, mock_exists, mock_copy, mock_delete
+    ):
         message_body = '{ "data": { "request_id":"123","new_status":"submitted","previous_status":"draft","type":"import","workspace_id":"ws01","airlock_version":2 }}'
         message = _mock_service_bus_message(body=message_body)
         step_result = MagicMock()
