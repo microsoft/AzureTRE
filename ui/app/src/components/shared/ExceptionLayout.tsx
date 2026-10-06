@@ -1,14 +1,17 @@
-import { MessageBar, MessageBarType, Link as FluentLink, Icon } from "@fluentui/react";
+import { MessageBar, MessageBarType, Link as FluentLink, Icon, DefaultButton } from "@fluentui/react";
 import React, { useState } from "react";
-import { APIError } from "../../models/exceptions";
+import { APIError, API_UNAVAILABLE_MESSAGE } from "../../models/exceptions";
 
 interface ExceptionLayoutProps {
   e: APIError;
+  onRetry?: () => void;
 }
 
 export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (props: ExceptionLayoutProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showMessageBar, setShowMessageBar] = useState(true);
+  const apiUnavailable =
+    props.e.status === 408 || props.e.status === 429 || (props.e.status !== undefined && props.e.status >= 500);
 
   switch (props.e.status) {
     case 403:
@@ -20,8 +23,6 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
           <p>Attempted resource: {props.e.endpoint}</p>
         </MessageBar>
       );
-    case 429:
-      return <></>;
     default:
       if (!showMessageBar) return null;
       return (
@@ -32,8 +33,11 @@ export const ExceptionLayout: React.FunctionComponent<ExceptionLayoutProps> = (p
             onDismiss={() => setShowMessageBar(false)}
             dismissButtonAriaLabel="Close"
           >
-            <h3>{props.e.userMessage}</h3>
-            <p>{props.e.message}</p>
+            <h3>{apiUnavailable ? API_UNAVAILABLE_MESSAGE : props.e.userMessage}</h3>
+            {!apiUnavailable && <p>{props.e.message}</p>}
+            {apiUnavailable && (
+              <DefaultButton text="Retry" onClick={props.onRetry || (() => window.location.reload())} />
+            )}
             <br />
 
             <FluentLink
