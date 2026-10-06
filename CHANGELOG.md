@@ -21,7 +21,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Allow up to 30 checks at ten-second intervals when enabling or disabling storage public access during deployment. (`devops` 0.6.10)
+* Allow up to 30 checks at ten-second intervals when enabling or disabling storage public access during deployment. (`devops` 0.6.10) ([#5113](https://github.com/microsoft/AzureTRE/pull/5113))
 * Include Azure cloud and location in isolated CI environment names to avoid retained Key Vault name conflicts after region changes. Find previous CI environments by ownership tags during explicit cleanup. (`devops` 0.6.9) ([#5106](https://github.com/microsoft/AzureTRE/issues/5106))
 * Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
 * Preserve loaded UI views during background refresh, ignore stale workspace responses, refresh on every tab return, and keep internal Connect behavior and unavailable cost displays consistent. (`ui` 0.10.1) ([#5105](https://github.com/microsoft/AzureTRE/pull/5105))
