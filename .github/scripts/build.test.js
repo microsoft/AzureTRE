@@ -167,7 +167,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -347,7 +347,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -390,7 +390,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -426,7 +426,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       });
@@ -452,7 +452,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running extended AAD tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
 
@@ -493,7 +493,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running shared service tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
 
@@ -545,7 +545,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES,
-            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `291ae84f`\)/,
+            bodyMatcher: /Running backup tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
 
@@ -676,7 +676,7 @@ describe('getCommandFromComment', () => {
             owner: 'someOwner',
             repo: 'someRepo',
             issue_number: PR_NUMBER.FORK_NON_DOCS_CHANGES,
-            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222 \(with refid `607c7437`\)/,
+            bodyMatcher: /Running extended tests: https:\/\/github.com\/someOwner\/someRepo\/actions\/runs\/11112222/,
           });
         });
       })
@@ -838,6 +838,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe(null);
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe(null);
       });
 
       test('should set branchRefId for PR from upstream repo', async () => {
@@ -849,6 +850,7 @@ goes here`,
         });
         await getCommandFromComment({ core, context, github });
         expect(outputFor(mockCoreSetOutput, 'branchRefId')).toBe('6b751c8f');
+        expect(outputFor(mockCoreSetOutput, 'branchCiGitRef')).toBe('refs/heads/pr-head-ref');
       });
 
       test('should set prHeadSha output', async () => {
