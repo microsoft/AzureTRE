@@ -11,10 +11,10 @@ resource "azurerm_resource_group" "mgmt" {
   name     = var.mgmt_resource_group_name
   location = var.location
 
-  tags = {
+  tags = merge({
     project = "Azure Trusted Research Environment"
     source  = "https://github.com/microsoft/AzureTRE/"
-  }
+  }, var.ci_git_ref != "" ? { ci_git_ref = var.ci_git_ref } : {})
 
   lifecycle { ignore_changes = [tags] }
 }

@@ -1,6 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/airlock_import_review/template_schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/airlock-import-review/template_schema.json",
   "type": "object",
   "title": "Airlock Import Review Workspace",
   "description": "This workspace template is intended to conduct Airlock Data Import reviews from.",
@@ -29,6 +29,12 @@
       "description": "Enable backups for the workspace, including VMs and shared storage.",
       "default": true,
       "updateable": true
+    },
+    "enable_airlock": {
+      "type": "boolean",
+      "title": "Enable Airlock",
+      "description": "Airlock review workspaces review requests from other workspaces and do not expose their own Airlock.",
+      "default": false
     },
     "address_space_size": {
       "type": "string",
@@ -192,6 +198,9 @@
   "pipeline": null,
   "uiSchema": {
     "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    },
+    "enable_airlock": {
       "classNames": "tre-hidden"
     },
     "address_spaces": {

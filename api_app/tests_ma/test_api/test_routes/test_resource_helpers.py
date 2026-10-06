@@ -8,7 +8,7 @@ import json
 
 from fastapi import HTTPException, status
 
-from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties, enrich_resource_with_available_upgrades
+from api.routes.resource_helpers import save_and_deploy_resource, send_uninstall_message, mask_sensitive_properties, enrich_resource_with_available_upgrades, enrich_resources_with_available_upgrades
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -321,6 +321,21 @@ class TestResourceHelpers:
         resource = sample_resource()
         await enrich_resource_with_available_upgrades(resource, resource_template_repo)
         assert resource.availableUpgrades == []
+
+    @patch("api.routes.workspaces.ResourceTemplateRepository")
+    @pytest.mark.asyncio
+    async def test_enrich_resources_with_available_upgrades_queries_template_versions_once(self, resource_template_repo):
+        resource_template_repo.get_all_template_versions_for_names = AsyncMock(return_value={"tre-workspace-base": ['0.1.0', '0.1.2', '1.0.0']})
+        resource_template_repo.get_all_template_versions = AsyncMock()
+        resources = [sample_resource(), sample_resource(workspace_id=str(uuid.uuid4()))]
+
+        await enrich_resources_with_available_upgrades(resources, resource_template_repo)
+
+        resource_template_repo.get_all_template_versions_for_names.assert_awaited_once_with(["tre-workspace-base", "tre-workspace-base"])
+        resource_template_repo.get_all_template_versions.assert_not_called()
+        for resource in resources:
+            assert resource.availableUpgrades == [AvailableUpgrade(version='0.1.2', forceUpdateRequired=False),
+                                                  AvailableUpgrade(version='1.0.0', forceUpdateRequired=True)]
 
     def test_sensitive_properties_get_masked(self, basic_resource_template):
         resource = sample_resource_with_secret()
