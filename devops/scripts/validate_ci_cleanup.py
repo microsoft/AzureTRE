@@ -102,7 +102,7 @@ class Validation:
                                cwd=SOURCE).returncode == 0, "Validation requires an unchanged checkout.")
         token = f"{run_id}-{attempt}-{uuid.uuid4().hex[:8]}"
         core = "rg-trevalidate-" + token
-        branch = "ci-cleanup-validation/" + token
+        branch = f"ci-cleanup-validation/{run_id}-{attempt}"
         require(subprocess.run(["git", "show-ref", "--verify", "--quiet", "refs/remotes/origin/" + branch],
                                cwd=SOURCE).returncode == 1, "The synthetic cleanup branch already exists.")
         self.state = {"az": shutil.which("az"), "subscription": os.environ["AZURE_SUBSCRIPTION_ID"],
@@ -179,7 +179,7 @@ class Validation:
     def cleanup_script(self, preview):
         phase = "preview" if preview else "apply"
         env = self.wrapper_environment(phase)
-        env.update(MAIN_TRE_ID=self.state["main_id"], BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP="4",
+        env.update(CI_CLEANUP_REF=self.state["ref"], MAIN_TRE_ID=self.state["main_id"], BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP="4",
                    BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY="48")
         result = self.script("devops/scripts/clean_ci_validation_envs.sh", env)
         audit = self.root / "audit.jsonl"
@@ -253,6 +253,14 @@ class Validation:
                 return 39
         elif phase in ("preview", "apply"):
             core = self.state["core"]
+            if args == ["account", "show", "-o", "json"]:
+                self.identity()
+                return self.forward(args)
+            if args == ["group", "list", "--subscription", self.state["subscription"], "-o", "json"]:
+                self.identity()
+                rows = json.loads(self.azure(["group", "list", "-o", "json"]).stdout)
+                print(json.dumps([row for row in rows if row["name"] in self.state["groups"]]))
+                return 0
             if args == ["config", "set", "extension.use_dynamic_install=yes_without_prompt"]:
                 return 0
             if args == ["group", "list", "--query", f"[?starts_with(name, 'rg-{self.state['main_id']}-ws-')].name", "-o", "tsv"]:
@@ -275,7 +283,7 @@ class Validation:
                         ["lock", "list", "--resource-group", target, "--query", "[].id", "-o", "tsv"]):
                 require(not self.azure(args).stdout.strip(), "The disposable group contains a registry or a lock.")
                 return 0
-            if args == ["group", "delete", "--resource-group", target, "--yes", "--no-wait"]:
+            if args == ["group", "delete", "--resource-group", target, "--yes"]:
                 metadata = self.owned_empty(target)
                 require(metadata["tags"].get("ci_git_ref") == self.state["ref"], "The cleanup ownership reference changed.")
                 if phase == "preview":

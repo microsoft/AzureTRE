@@ -114,6 +114,35 @@ if result is not None:
 '''
 
 
+SCOPE_WRAPPER = r'''
+import os
+from pathlib import Path
+import sys
+
+if Path(sys.argv[1]).name != "ci_cleanup_scope.py":
+    os.execv(sys.executable, [sys.executable, *sys.argv[1:]])
+sys.path.insert(0, str(Path(sys.argv[1]).resolve().parent))
+import ci_cleanup_scope as scope
+import recover_bootstrap_lease as recovery
+
+def github(ctx, suffix):
+    if suffix == "/actions/runs/123":
+        return {"id": 123, "run_attempt": 1, "status": "in_progress", "path": ".github/workflows/clean_validation_envs.yml",
+                "repository": {"full_name": "example/test"}}
+    if "/jobs?" in suffix:
+        return {"total_count": 1, "jobs": [{"id": 99, "name": "Validate cleanup with disposable groups", "status": "in_progress"}]}
+    if "/concurrency_groups/" in suffix:
+        return {"group_name": "deploy-" + ctx["ref"], "total_count": 1,
+                "group_members": [{"run_id": 123, "job_id": 99, "status": "in_progress"}]}
+    raise AssertionError("Unexpected GitHub request: " + suffix)
+
+scope.github = github
+recovery.github = github
+sys.argv = sys.argv[1:]
+sys.exit(scope.main())
+'''
+
+
 class ValidationTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -156,7 +185,7 @@ class ValidationTests(unittest.TestCase):
     def test_delete_requires_unchanged_ci_reference(self):
         with patch.object(self.runner, "owned_empty", return_value=self.metadata), patch.object(self.runner, "azure") as azure:
             with self.assertRaisesRegex(validation.ValidationError, "ownership reference"):
-                self.runner.guard(["group", "delete", "--resource-group", self.target, "--yes", "--no-wait"])
+                self.runner.guard(["group", "delete", "--resource-group", self.target, "--yes"])
             azure.assert_not_called()
 
     def test_azure_failure_reports_operation_without_private_arguments_or_output(self):
@@ -236,8 +265,14 @@ class ValidationTests(unittest.TestCase):
             script = self.root / command
             script.write_text(f"#!{sys.executable}\n" + FAKE_COMMAND)
             script.chmod(0o755)
+        # Run the real scope guard with an in-process fake GitHub transport.
+        # Every Azure call still passes through the real fixture allow-list.
+        python = self.root / "python3"
+        python.write_text(f"#!{sys.executable}\n" + SCOPE_WRAPPER)
+        python.chmod(0o755)
         env = patch.dict(os.environ, FAKE_AZURE_STATE=str(path), PATH=str(self.root) + os.pathsep + os.environ["PATH"],
-                         GITHUB_REPOSITORY="example/test", GITHUB_RUN_ID="123")
+                         GITHUB_REPOSITORY="example/test", GITHUB_RUN_ID="123", GITHUB_RUN_ATTEMPT="1", GITHUB_ACTIONS="true",
+                         AZURE_SUBSCRIPTION_ID="test-subscription", CI_CLEANUP_JOB_NAME="Validate cleanup with disposable groups")
         env.start()
         self.addCleanup(env.stop)
         return path

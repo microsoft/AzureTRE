@@ -32,6 +32,7 @@ If you want to change the default action to apply when no rule matches, please u
 '''
 
 MOCK_COMMAND = r'''
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -77,12 +78,18 @@ if command == "sleep":
 elif command == "github_api":
     if args[0] == "/actions/runs/123":
         finish(output=json.dumps({
-            "id": 123, "run_attempt": 1, "status": "in_progress", "event": "issue_comment",
+            "head_sha": "a" * 40, "id": 123, "run_attempt": 1, "status": "in_progress", "event": "issue_comment",
             "path": ".github/workflows/pr_comment_bot.yml", "repository": {"full_name": "microsoft/AzureTRE"},
-            "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@abc"}],
+            "referenced_workflows": [{"path": "microsoft/AzureTRE/.github/workflows/deploy_tre_reusable.yml@" + "a" * 40, "sha": "a" * 40}],
         }))
     if config.get("recovery_api_error"):
         finish(1, "GitHub API failed")
+    if args[0].startswith("/contents/"):
+        content = (root / args[0].removeprefix("/contents/").split("?")[0]).read_bytes()
+        finish(output=json.dumps({"type": "file", "sha": hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()}))
+    if args[0].startswith("/actions/concurrency_groups/"):
+        finish(output=json.dumps({"group_name": "deploy-" + os.environ["TF_VAR_ci_git_ref"], "total_count": 1,
+                                  "group_members": [{"run_id": 123, "status": "in_progress"}]}))
     status = args[0].split("status=")[1].split("&")[0]
     runs = [{"id": 123}] if status == "in_progress" else []
     if config.get("other_active_workflow") and status == "queued":
@@ -250,6 +257,10 @@ class TerraformScriptTests(unittest.TestCase):
         (self.terraform_dir / "update_tags.sh").symlink_to(mock)
         for script in ("storage_enable_public_access.sh", "bash_trap_helper.sh", "terraform_init.sh"):
             shutil.copy2(DEVOPS / "scripts" / script, scripts)
+        workflows = self.root / ".github/workflows"
+        workflows.mkdir(parents=True)
+        for name in ("pr_comment_bot.yml", "deploy_tre_reusable.yml", "clean_validation_envs.yml"):
+            shutil.copy2(DEVOPS.parent / ".github/workflows" / name, workflows / name)
         for script in ("recover_bootstrap_lease.py", "ci_environment_id.py"):
             shutil.copy2(DEVOPS / "scripts" / script, scripts / script)
 
@@ -317,6 +328,8 @@ class TerraformScriptTests(unittest.TestCase):
 RECOVERY_WRAPPER = '''
 import importlib.util
 import json
+import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
@@ -326,13 +339,16 @@ recovery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recovery)
 
 def github(ctx, suffix):
+    config = json.loads((Path(os.environ["MOCK_ROOT"]) / "config.json").read_text())
+    if config.get("cancel_recovery") and suffix.startswith("/actions/concurrency_groups/"):
+        os.kill(os.getppid(), signal.SIGTERM)
+        sys.exit(143)
     result = subprocess.run(["github_api", suffix], capture_output=True, text=True)
     if result.returncode:
         raise recovery.RecoveryError(result.stderr)
     return json.loads(result.stdout)
 
 recovery.github = github
-recovery.time.sleep = lambda seconds: subprocess.run(["sleep", str(seconds)], check=True)
 sys.exit(recovery.main())
 '''
 
@@ -379,7 +395,7 @@ class CiLeaseRecoveryTests(TerraformScriptTests):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.commands("terraform"), [])
         self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
-        self.assertIn("Another workflow is queued", self.output)
+        self.assertIn("Run 999 workflow=? state=queued target=unverified", self.output)
 
     def test_activity_api_failure_stops_before_break_and_terraform(self):
         result = self.run_recovery(recovery_api_error=True)
@@ -387,6 +403,13 @@ class CiLeaseRecoveryTests(TerraformScriptTests):
         self.assertEqual(self.commands("terraform"), [])
         self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
         self.assertIn("GitHub API failed", self.output)
+
+    def test_cancellation_before_lease_break_restores_network_access(self):
+        result = self.run_recovery(cancel_recovery=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands("az", "storage", "blob", "lease", "break"), [])
+        self.assertEqual(self.commands("terraform", "init"), [])
+        # run_script checks the real EXIT trap disabled public access and set Deny.
 
     def test_management_deploy_never_attempts_state_lease_recovery(self):
         result = self.run_recovery(script="deploy.sh")

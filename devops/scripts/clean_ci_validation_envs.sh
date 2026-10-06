@@ -14,6 +14,7 @@ set -o nounset
 
 function stopEnv ()
 {
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
   local tre_rg="$1"
   if [[ "$tre_rg" == *-mgmt ]]; then
     echo "Management-only environment ${tre_rg} has no core services to stop. Keeping it until the destroy threshold."
@@ -25,38 +26,26 @@ function stopEnv ()
 
 function destroyEnv ()
 {
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
   # The destroy helper accepts the core name even when only management exists.
-  devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${1%-mgmt}" --no-wait
+  devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${1%-mgmt}"
 }
 
-# Check before any cleanup, including PR environments. Comment-triggered PR tests
-# report the default branch, so a branch filter would miss the environment in use.
-# Defer the entire sweep while another run is active, including queued runs.
-function skip_cleanup_if_workflows_active ()
-{
-  local status active_runs
-  for status in requested waiting pending queued in_progress; do
-    if ! active_runs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?status=${status}&per_page=100" |
-      jq --slurp --compact-output --exit-status --arg run_id "${GITHUB_RUN_ID}" '
-        if length == 0 then error("No workflow data returned")
-        elif any(.[]; type != "object") then error("Invalid workflow response page")
-        elif any(.[]; (.workflow_runs | type) != "array") then
-          error("Expected workflow_runs to be an array on every page")
-        else [.[].workflow_runs[] | select((.id | tostring) != $run_id)]
-        end'); then
-      echo "Could not check active workflow runs. Stopping cleanup." >&2
-      exit 1
-    fi
+# Every mutating invocation must own the same reference group as deployment.
+# The planner only reads inventory; matrix jobs select and recheck targets after
+# acquiring their lock. Refuse legacy unscoped invocations.
+python3 devops/scripts/ci_cleanup_scope.py verify-lock
 
-    if [[ "${active_runs}" != "[]" ]]; then
-      echo "Skipping environment cleanup while other workflow runs are ${status}:"
-      echo "${active_runs}" | jq -r '.[].html_url'
-      exit 0
-    fi
+if [[ "${CI_CLEANUP_REF}" == refs/heads/main ]]; then
+  [[ "${MAIN_TRE_ID}" =~ ^[a-zA-Z0-9-]+$ ]] || { echo "Invalid main TRE ID" >&2; exit 1; }
+  az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
+  while read -r rg_name; do
+    [[ -n "$rg_name" ]] || continue
+    echo "Deleting resource group: ${rg_name}"
+    az group delete --yes --name "${rg_name}"
   done
-}
-
-skip_cleanup_if_workflows_active
+  exit 0
+fi
 
 az config set extension.use_dynamic_install=yes_without_prompt
 
@@ -91,6 +80,7 @@ cleanup_groups=$(jq -rs '
 echo "$cleanup_groups" |
 while read -r rg_name rg_ref_name; do
   [[ -n "$rg_name" ]] || continue
+  [[ "$rg_ref_name" == "$CI_CLEANUP_REF" ]] || continue
   if [[ "${rg_ref_name}" == refs/pull* ]]
   then
     # this rg originated from an external PR (i.e. a fork)
@@ -151,14 +141,4 @@ while read -r rg_name rg_ref_name; do
       fi
     fi
   fi
-done
-
-# Check again in case a workflow started during the environment cleanup.
-skip_cleanup_if_workflows_active
-
-# Delete workspace resource groups left behind by tests on main.
-az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
-while read -r rg_name; do
-  echo "Deleting resource group: ${rg_name}"
-  az group delete --yes --no-wait --name "${rg_name}"
 done

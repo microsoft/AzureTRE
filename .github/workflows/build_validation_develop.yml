@@ -67,6 +67,7 @@ jobs:
               - 'devops/scripts/terraform_init.sh'
               - 'devops/scripts/recover_bootstrap_lease.py'
               - 'devops/scripts/ci_environment_id.py'
+              - 'devops/scripts/ci_cleanup_scope.py'
               - 'devops/scripts/destroy_ci_ref_env.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
