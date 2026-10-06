@@ -4739,6 +4739,10 @@
 <p>The Azure TRE solution has 8 different user roles defined. The roles are modeled around a set of tasks for each role. The roles are not mutually exclusive, and one person can have multiple roles assigned to be able to carry out a broader set of tasks.</p>
 <p>Before you deploy a Trusted Research Environment based on the Azure TRE solution, you should consider your scenario and have an understanding of which of these roles that needs to be staffed.</p>
 <h2 id="role-overview">Role overview</h2>
+<p>To see your roles in the Azure TRE UI, open the user menu and select <strong>Your access...</strong>.
+The panel lists the TRE roles you hold, what each role permits, and the roles you do not hold. When you are viewing a workspace, it also lists your roles in that workspace.
+A TRE administrator without a workspace role is identified as such; some workspace actions, such as managing workspace services, still require a workspace role.
+Roles come from your sign-in token, so a role assigned after you signed in appears only after you sign out and back in.</p>
 <p>While we have defined 8 different user roles for the Azure TRE solution, not all of them are required in all scenarios. Three of the roles support role-based access control (RBAC) within the TRE.  </p>
 <table>
 <thead>
@@ -4836,6 +4840,7 @@
 </ul>
 <h2 id="tre-workspace-owner">TRE workspace owner</h2>
 <p>Owns a specific workspace and has additional privileges than the researcher within the workspace. Is most likely also a <em>Researcher</em>.</p>
+<p>Resource lists can be searched and sorted. In a workspace service's resource list, Workspace Owners see <strong>My resources</strong> by default and can switch to <strong>All resources</strong> from the list controls.</p>
 <p>Example tasks:</p>
 <ul>
 <li>Manage Researcher users.</li>
