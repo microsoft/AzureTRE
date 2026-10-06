@@ -3816,6 +3816,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#isolated-ci-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Isolated CI environments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dockerfile-build-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4619,6 +4630,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#isolated-ci-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Isolated CI environments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dockerfile-build-checks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4754,6 +4776,16 @@
 <h1 id="github-actions-workflows-cicd">GitHub Actions workflows (CI/CD)</h1>
 <p>To deploy the Azure TRE using GitHub workflows, create a fork of the repository.</p>
 <p>Deployment is done using the <code>/.github/workflows/deploy_tre.yml</code> workflow. This method is also used to deploy the dev/test environment for the original Azure TRE repository.</p>
+<h2 id="isolated-ci-environments">Isolated CI environments</h2>
+<p>PR comment tests and branch validation derive their environment names from the Git reference, Azure cloud and deployment location.
+Repeated runs in the same cloud and location reuse the environment. Changing the location creates a separate environment, including its management account and Key Vault names.
+This prevents a retained, purge-protected vault in the previous location from blocking deployment in the new location.
+Terraform continues to recover soft-deleted vaults in the same location through its existing provider configuration.</p>
+<p>The first run after adopting these names must include deployment. Use <code>/test COMMIT_SHA</code> without <code>skip_deployment</code>.
+PR comment workflow changes take effect after merge. Before merge, use the branch validation workflow from a trusted upstream branch to test the changed workflow.</p>
+<p><code>/test-destroy-env</code> finds all core and management groups tagged with the PR's Git reference, including previous naming schemes and locations in the selected subscription.
+For an upstream PR, it also cleans the tagged branch environments. Cleanup refuses conflicting ownership tags and shares deployment concurrency.
+Scheduled cleanup continues to use the <code>ci_git_ref</code> tags. Retained vaults remain subject to their existing soft-delete and purge protection policies.</p>
 <h2 id="dockerfile-build-checks">Dockerfile build checks</h2>
 <p>The <code>Dockerfile Build Check</code> workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.</p>
 <p>Pull requests to <code>main</code> or <code>feature/**</code> select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.</p>
