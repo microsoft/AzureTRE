@@ -48,13 +48,6 @@ repos:
       - id: terraform_fmt
       - id: terraform_tflint
         args: [--args=--config=__GIT_WORKING_DIR__/.github/linters/.tflint.hcl]
-      - id: terraform_docs
-        args:
-          - --hook-config=--path-to-file=README.md
-          - --hook-config=--add-to-existing-file=true
-          - --hook-config=--create-file-if-not-exist=true
-          # Module sources are raw git URLs that fail Markdown bare-URL linting
-          - --args=--hide=modules
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.0
