@@ -5,7 +5,7 @@ import json
 import asyncio
 import os
 import sys
-from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper, cleanup_parameter_value_files
+from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper, cleanup_parameter_value_files, PorterParameterDiscoveryError
 from shared.config import get_config
 from helpers.httpserver import start_server
 
@@ -141,7 +141,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                             result = await invoke_porter_action(message, service_bus_client, config)
 
                             if result:
-                                logger.info(f"Resource request for {message} is complete")
+                                logger.info(f"Resource request for {message['id']} is complete")
                             else:
                                 logger.error('Message processing failed!')
 
@@ -312,7 +312,12 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body, is_custom_action)
+    try:
+        porter_command, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body, is_custom_action)
+    except PorterParameterDiscoveryError as error:
+        resource_request_message = service_bus_message_generator(msg_body, statuses.failed_status_string_for[action], str(error))
+        await sb_sender.send_messages(ServiceBusMessage(body=resource_request_message, correlation_id=installation_id, session_id=msg_body["operationId"]))
+        return False
 
     logger.debug("Starting to run porter execution command...")
     try:

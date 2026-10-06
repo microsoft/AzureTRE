@@ -140,7 +140,7 @@ async def test_default_credentials_closes_real_credential_on_exception(mock_serv
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.invoke_porter_action", return_value=True)
-async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer):
+async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer, mock_logger):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
 
     # Set up the lock renewer mock correctly
@@ -160,7 +160,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
         "operationId": "test_operation_id",
         "name": "test_bundle",
         "version": "1.0.0",
-        "parameters": {},
+        "parameters": {"smtpPassword": "synthetic-password-not-for-logs"},
     })
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
@@ -171,6 +171,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
     mock_receiver.complete_message.assert_awaited_once()
+    assert "synthetic-password-not-for-logs" not in str(mock_logger.mock_calls)
     mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE)
 
 
@@ -569,6 +570,28 @@ async def test_run_porter_success(mock_run_command_helper):
     assert stdout == "porter command output"
     assert stderr is None
     assert mock_run_command_helper.call_count == 6
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["install", "upgrade", "uninstall", "start"])
+async def test_parameter_discovery_failure_stops_before_porter_action(tmp_path, action):
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    msg = {"id": "resource", "action": action, "operationId": "operation", "stepId": "step",
+           "name": "test-bundle", "version": "1.0.0", "parameters": {"test": "current-value"}}
+    config = {"deployment_status_queue": "test", "registry_server": "test.azurecr.io"}
+    with patch("helpers.commands.get_porter_parameter_keys", return_value=None), \
+            patch("helpers.commands.tempfile.tempdir", str(tmp_path)), \
+            patch("vmss_porter.runner.run_porter", new_callable=AsyncMock, return_value=(1, None, "synthetic failure")) as run:
+        result = await invoke_porter_action(msg, client, config)
+
+    assert result is False
+    run.assert_not_awaited()
+    assert list(tmp_path.iterdir()) == []
+    status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert "failed" in status["status"]
+    assert "Cannot read bundle parameters" in status["message"]
 
 
 @pytest.mark.asyncio

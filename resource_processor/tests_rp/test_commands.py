@@ -428,7 +428,8 @@ async def test_run_command_helper():
             "echo", "test",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=config["porter_env"]
+            env=config["porter_env"],
+            start_new_session=True
         )
 
 

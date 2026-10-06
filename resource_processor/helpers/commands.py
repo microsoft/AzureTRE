@@ -4,11 +4,35 @@ import base64
 import logging
 import os
 import shutil
+import signal
 import tempfile
 import uuid
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
+
+
+_CANCEL_GRACE_PERIOD_SECONDS = 10
+
+
+class PorterParameterDiscoveryError(RuntimeError):
+    """The current bundle's parameters could not be determined safely."""
+
+
+async def _stop_command(proc, communication):
+    def send_signal(sig):
+        try:
+            os.killpg(proc.pid, sig)
+        except ProcessLookupError:
+            pass  # The command and its process group have already exited.
+
+    # Porter handles SIGINT by cancelling its action context gracefully.
+    send_signal(signal.SIGINT)
+    try:
+        await asyncio.wait_for(asyncio.shield(communication), timeout=_CANCEL_GRACE_PERIOD_SECONDS)
+    except asyncio.TimeoutError:
+        send_signal(signal.SIGKILL)
+        await communication
 
 
 async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True):
@@ -18,10 +42,23 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
         *cmd_parts,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"]
+        env=config["porter_env"],
+        start_new_session=True
     )
 
-    stdout, stderr = await proc.communicate()
+    # Keep draining output while shutting down, including after repeated cancellation.
+    communication = asyncio.create_task(proc.communicate())
+    try:
+        stdout, stderr = await asyncio.shield(communication)
+    except asyncio.CancelledError:
+        shutdown = asyncio.create_task(_stop_command(proc, communication))
+        while not shutdown.done():
+            try:
+                await asyncio.shield(shutdown)
+            except asyncio.CancelledError:
+                continue
+        shutdown.result()
+        raise
 
     stdout_text = None
     stderr_text = None
@@ -91,7 +128,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
     param_set_entries = []
 
     if porter_parameter_keys is None:
-        logger.warning("Unknown porter parameters - explain probably failed.")
+        raise PorterParameterDiscoveryError("Cannot read bundle parameters from Porter. Check registry access and retry.")
     else:
         for parameter_name in porter_parameter_keys:
             # try to find the param in order of priorities:

@@ -24,6 +24,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 BUG FIXES:
 * Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
   Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.
+  Stop cancelled subprocesses before removing their inputs. Reject failed parameter discovery and keep request parameters out of completion logs.
   (`resource_processor` 0.13.10, `tre-shared-service-firewall` 1.6.4) ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 * Allow up to 30 checks at ten-second intervals when enabling or disabling storage public access during deployment. (`devops` 0.6.10) ([#5113](https://github.com/microsoft/AzureTRE/pull/5113))
 * Include Azure cloud and location in isolated CI environment names to avoid retained Key Vault name conflicts after region changes. Find previous CI environments by ownership tags during explicit cleanup. (`devops` 0.6.9) ([#5106](https://github.com/microsoft/AzureTRE/issues/5106))
