@@ -276,8 +276,8 @@ async def _assign_workspace_role_via_api(
 ) -> None:
     """
     Assign a user/service principal to an app role via the TRE API.
-    The API automatically uses direct app role assignment for service principals,
-    which propagates to tokens immediately (no 5-15 min group membership delay).
+    Service principals can only be assigned when the API has `direct_user_management_enabled`,
+    which also propagates to tokens immediately (no 5-15 min group membership delay).
 
     After assignment, verifies that the role appears in newly issued tokens
     by polling with retry to handle Entra ID propagation delays.
@@ -297,14 +297,13 @@ async def _assign_workspace_role_via_api(
             timeout=TIMEOUT
         )
 
-        if response.status_code == status.HTTP_202_ACCEPTED:
-            LOGGER.info("App role assignment succeeded for %s role in workspace %s", role_name, workspace_id)
-        else:
-            LOGGER.warning(
-                "App role assignment failed for %s role in workspace %s: %s - %s",
-                role_name, workspace_id, response.status_code, response.text
-            )
-            return  # Don't attempt verification if assignment failed
+        assert_status(
+            response,
+            [status.HTTP_202_ACCEPTED],
+            f"Failed to assign {role_name} role in workspace {workspace_id}. Service principals require "
+            "direct_user_management_enabled on the TRE API"
+        )
+        LOGGER.info("App role assignment succeeded for %s role in workspace %s", role_name, workspace_id)
 
     # Verify the role appears in newly issued tokens
     if scope_uri is None:

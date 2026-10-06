@@ -30,3 +30,9 @@ variable "existing_identifier_uri" {
   type    = string
   default = ""
 }
+
+variable "workspace_password_rotation_days" {
+  type        = number
+  default     = 365
+  description = "Number of days after which the workspace application password is rotated on the next workspace upgrade. The password remains valid for the same period again after rotation."
+}

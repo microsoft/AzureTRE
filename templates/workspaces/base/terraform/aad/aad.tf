@@ -112,9 +112,24 @@ resource "azuread_service_principal_delegated_permission_grant" "ui" {
   claim_values                         = ["user_impersonation"]
 }
 
+# A new password is issued on the first apply after the rotation period elapses, well before
+# the current one expires; the Key Vault secret follows the replacement.
+resource "time_rotating" "workspace_password" {
+  rotation_days = var.workspace_password_rotation_days
+}
+
 resource "azuread_application_password" "workspace" {
   application_id = azuread_application.workspace.id
   display_name   = "Workspace Password"
+  end_date       = timeadd(time_rotating.workspace_password.rotation_rfc3339, "${var.workspace_password_rotation_days * 24}h")
+
+  rotate_when_changed = {
+    rotation = time_rotating.workspace_password.id
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "azurerm_key_vault_secret" "client_id" {

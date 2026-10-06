@@ -46,6 +46,6 @@ Further details around which Azure services are allowed to connect can be found 
 - Azure Storage: <https://docs.microsoft.com/en-us/azure/storage/common/storage-network-security?msclkid=ee4e79e4b97911eca46dae54da464d11&tabs=azure-portal#trusted-access-for-resources-registered-in-your-subscription>
 
 ## Client secret management
-The workspace application password is created with a default validity of approximately 2 years. The secret is stored in the workspace Key Vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
+The workspace application password is stored in the workspace Key Vault as `workspace-client-secret` (with the client ID stored as `workspace-client-id`).
 
-Workspaces should be upgraded periodically (at least every 2 years) to refresh the password.
+The password is rotated every 365 days and is valid for 2 years. Rotation happens on the first workspace upgrade after the 365-day period has elapsed: a new password is created, the Key Vault secret is updated, and the previous password is removed. Upgrade workspaces at least once a year so the password is rotated before it expires.

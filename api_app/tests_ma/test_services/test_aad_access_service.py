@@ -751,8 +751,8 @@ def get_mock_role_response(principal_roles):
 @patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", True)
 @patch("services.aad_authentication.AzureADAuthorization._assign_principal_to_app_role_direct")
 def test_assign_workspace_user_uses_direct_when_flag_enabled(direct_assign_mock,
-                                                            workspace_without_groups, role_owner,
-                                                            user_with_role):
+                                                             workspace_without_groups, role_owner,
+                                                             user_with_role):
     """When direct user management is enabled, should use direct app role assignment."""
     access_service = AzureADAuthorization()
     access_service.assign_workspace_user(user_with_role.id, workspace_without_groups, role_owner.id)
@@ -763,8 +763,8 @@ def test_assign_workspace_user_uses_direct_when_flag_enabled(direct_assign_mock,
 @patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", False)
 @patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
 def test_assign_workspace_user_raises_when_no_groups_and_direct_disabled(workspace_role_in_use_mock,
-                                                                        workspace_without_groups, role_owner,
-                                                                        user_with_role):
+                                                                         workspace_without_groups, role_owner,
+                                                                         user_with_role):
     """When groups are not in use and direct management is disabled, should raise."""
     access_service = AzureADAuthorization()
     with pytest.raises(UserRoleAssignmentError):
@@ -803,16 +803,51 @@ def test_assign_workspace_user_if_groups(assign_user_to_group_mock,
 
 
 @patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", True)
-@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct")
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct", return_value=True)
 def test_remove_workspace_user_uses_direct_when_flag_enabled(direct_remove_mock,
-                                                            workspace_without_groups,
-                                                            role_owner,
-                                                            user_with_role):
+                                                             group_remove_mock,
+                                                             workspace_without_groups,
+                                                             role_owner,
+                                                             user_with_role):
     """When direct user management is enabled, should use direct app role removal."""
     access_service = AzureADAuthorization()
     access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
 
     assert direct_remove_mock.call_count == 1
+    assert group_remove_mock.call_count == 0
+
+
+@patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", True)
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=True)
+@patch("services.aad_authentication.AzureADAuthorization._remove_workspace_user_from_application_group")
+@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct", return_value=False)
+def test_remove_workspace_user_falls_back_to_group_when_no_direct_assignment(direct_remove_mock,
+                                                                             group_remove_mock,
+                                                                             workspace_role_in_use_mock,
+                                                                             workspace_without_groups,
+                                                                             role_owner,
+                                                                             user_with_role):
+    """Access granted via groups before direct management was enabled should still be removable."""
+    access_service = AzureADAuthorization()
+    access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
+
+    assert direct_remove_mock.call_count == 1
+    assert group_remove_mock.call_count == 1
+
+
+@patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", True)
+@patch("services.aad_authentication.AzureADAuthorization._is_workspace_role_group_in_use", return_value=False)
+@patch("services.aad_authentication.AzureADAuthorization._remove_principal_from_app_role_direct", return_value=False)
+def test_remove_workspace_user_raises_when_no_assignment_found(direct_remove_mock,
+                                                               workspace_role_in_use_mock,
+                                                               workspace_without_groups,
+                                                               role_owner,
+                                                               user_with_role):
+    """When no direct assignment exists and groups are not in use, removal should not silently succeed."""
+    access_service = AzureADAuthorization()
+    with pytest.raises(UserRoleAssignmentError):
+        access_service.remove_workspace_role_user_assignment(user_with_role.id, role_owner.id, workspace_without_groups)
 
 
 @patch("services.aad_authentication.config.DIRECT_USER_MANAGEMENT_ENABLED", False)

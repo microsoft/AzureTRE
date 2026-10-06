@@ -17,6 +17,8 @@ AAD_TENANT_ID: str = config("AAD_TENANT_ID", default="")
 TEST_ACCOUNT_CLIENT_ID: str = config("TEST_ACCOUNT_CLIENT_ID", default="")
 TEST_ACCOUNT_CLIENT_SECRET: str = config("TEST_ACCOUNT_CLIENT_SECRET", default="")
 TEST_WORKSPACE_APP_PLAN: str = config("WORKSPACE_APP_SERVICE_PLAN_SKU", default="")
+# Application Admin identity that must own pre-created workspace applications; CI exposes it as a Terraform variable
+APPLICATION_ADMIN_CLIENT_ID: str = config("APPLICATION_ADMIN_CLIENT_ID", default=config("TF_VAR_application_admin_client_id", default=""))
 
 # Set workspace id of an existing workspace to skip creation of a workspace during E2E tests
 TEST_WORKSPACE_ID: str = config("TEST_WORKSPACE_ID", default="")

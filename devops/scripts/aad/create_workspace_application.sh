@@ -17,8 +17,9 @@ Options:
       Required. Prefix for the Workspace API app registration name.
       The script appends " API" to keep naming consistent with Terraform.
   -y,--application-admin-clientid
-      Required. Client ID of the application administrator (typically the TRE Core API
-      app registration) that must be added as an owner of the workspace application.
+      Required. Client ID of the Application Admin identity used by the workspace bundle
+      (APPLICATION_ADMIN_CLIENT_ID). It is added as an owner of the workspace application
+      so Terraform can manage it.
 
 USAGE
     exit 2
@@ -77,7 +78,8 @@ if [[ -z "$applicationAdminClientId" ]]; then
   show_usage
 fi
 
-currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors)
+# Service principal sessions have no signed-in user; the Application Admin owner below is sufficient.
+currentUserId=$(az ad signed-in-user show --query 'id' --output tsv --only-show-errors 2>/dev/null || true)
 applicationAdminObjectId=$(az ad sp show --id "$applicationAdminClientId" --query id -o tsv --only-show-errors)
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
 tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
@@ -122,10 +124,20 @@ if [[ -z ${appObjectId} ]]; then
   appObjectId=$(az ad app show --id "${workspaceAppId}" --query "id" --output tsv --only-show-errors)
 fi
 
-# Make the current user and the application administrator owners so Terraform can update later.
-az ad app owner add --id "${workspaceAppId}" --owner-object-id "$currentUserId" --only-show-errors || true
-az ad app owner add --id "${workspaceAppId}" --owner-object-id "$applicationAdminObjectId" --only-show-errors || true
+function ensure_app_owner()
+{
+  local ownerObjectId=$1
+  if az ad app owner list --id "${workspaceAppId}" --query "[?id=='${ownerObjectId}'].id" --output tsv --only-show-errors | grep -q .; then
+    return 0
+  fi
+  az ad app owner add --id "${workspaceAppId}" --owner-object-id "${ownerObjectId}" --only-show-errors
+}
 
+# The Application Admin must own the application so Terraform can manage it.
+ensure_app_owner "${applicationAdminObjectId}"
+if [[ -n "${currentUserId}" ]]; then
+  ensure_app_owner "${currentUserId}" || echo "Warning: unable to add the signed-in user as an owner of the workspace application." 1>&2
+fi
 
 # Output the application details
 echo

@@ -919,6 +919,7 @@ jobs:
           AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
           LOCATION: ${{ vars.LOCATION }}
           API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          APPLICATION_ADMIN_CLIENT_ID: "${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}"
           AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
           TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
           TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"

@@ -4,6 +4,7 @@ import re
 from typing import List
 
 import requests
+from fastapi import HTTPException, status
 from msal import ConfidentialClientApplication
 from semantic_version import Version
 
@@ -394,14 +395,19 @@ class AzureADAuthorization:
         """
         Remove a principal from a workspace role.
 
-        When DIRECT_USER_MANAGEMENT_ENABLED, removes the direct app-role assignment.
+        When DIRECT_USER_MANAGEMENT_ENABLED, removes the direct app-role assignment. If no
+        direct assignment exists and the workspace uses Entra ID groups, falls back to group
+        removal so access granted before the setting was enabled can still be revoked.
         Otherwise removes via Entra ID group membership, which requires the workspace
         to have groups enabled.
         """
         if config.DIRECT_USER_MANAGEMENT_ENABLED:
-            return self._remove_principal_from_app_role_direct(user_id, workspace, role_id)
+            if self._remove_principal_from_app_role_direct(user_id, workspace, role_id):
+                return
+            if not self._is_workspace_role_group_in_use(workspace):
+                raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}: no role assignment found")
 
-        if not self._is_workspace_role_group_in_use(workspace):
+        elif not self._is_workspace_role_group_in_use(workspace):
             logger.error(f"Unable to remove user {user_id} from role {role_id}: Entra ID groups are not in use on this workspace")
             raise UserRoleAssignmentError(f"Unable to remove user {user_id} from role {role_id}: Entra ID groups are not enabled on this workspace. User management requires the workspace to be deployed with 'create_aad_groups' set to true, or 'direct_user_management_enabled' to be enabled.")
 
@@ -411,9 +417,10 @@ class AzureADAuthorization:
 
         return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
-    def _remove_principal_from_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> None:
+    def _remove_principal_from_app_role_direct(self, principal_id: str, workspace: Workspace, role_id: str) -> bool:
         """
         Remove a principal's direct app role assignment via Graph API.
+        Returns True if a direct assignment was found and removed.
         """
         sp_id = workspace.properties.get("sp_id")
         if not _is_valid_aad_property(sp_id):
@@ -429,9 +436,10 @@ class AzureADAuthorization:
                 delete_url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo/{assignment_id}"
                 self._ms_graph_query(delete_url, "DELETE")
                 logger.info(f"Successfully removed principal {principal_id} from app role {role_id}")
-                return
+                return True
 
-        logger.warning(f"No direct app role assignment found for principal {principal_id} with role {role_id}")
+        logger.info(f"No direct app role assignment found for principal {principal_id} with role {role_id}")
+        return False
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}

@@ -21,11 +21,11 @@ make prepare-for-e2e
 
 Most E2E suites now rely on automatically created workspace applications, so you no longer need to provision a manual app registration for standard runs.
 
-The `test_manually_created_application_owner_token` test (included in the `extended` marker set) exercises the manual-authentication flow. Its fixture automatically runs `devops/scripts/aad/create_workspace_application.sh` to create or reuse a workspace application before deploying the test workspace.
+The `test_manually_created_application_workspace` test (`manual_app` marker, not run automatically) exercises the pre-created workspace application flow. Its fixture automatically runs `devops/scripts/aad/create_workspace_application.sh` to create or reuse a workspace application before deploying the test workspace.
 
-Ensure `az` CLI is installed, you are logged in to the correct tenant (`az login -t <tenant>`), and `APPLICATION_ADMIN_CLIENT_ID` (the application admin app registration) is configured so the script can add the necessary owner.
+Ensure `az` CLI is installed, you are logged in to the correct tenant (`az login -t <tenant>`) as a user or service principal, and `APPLICATION_ADMIN_CLIENT_ID` (the Application Admin app registration used by the workspace bundle) is configured so the script can add it as an owner of the application.
 
-Run `make test-e2e-custom SELECTOR='manual_app'` to exercise the same flow.
+Run `make test-e2e-custom SELECTOR='manual_app'` locally, or comment `/test-manual-app` on a pull request, to exercise this flow.
 
 ## Debugging the End-to-End tests
 
