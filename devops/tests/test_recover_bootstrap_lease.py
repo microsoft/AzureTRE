@@ -252,6 +252,7 @@ class RecoveryTests(unittest.TestCase):
             {"path": "dynamic/agents/copilot-pull-request-reviewer", "event": "dynamic"},
             {"path": "dynamic/github-code-quality/codeql", "event": "dynamic"},
             {"path": "dynamic/github-code-scanning/codeql", "event": "dynamic"},
+            {"path": "dynamic/pages/pages-build-deployment", "event": "dynamic"},
             {"path": ".github/workflows/deploy_tre_branch.yml", "head_sha": "a" * 40},
             {"path": ".github/workflows/pr_comment_bot.yml", "head_sha": "a" * 40},
             {"path": ".github/workflows/clean_validation_envs.yml", "head_sha": "a" * 40},
@@ -268,7 +269,7 @@ class RecoveryTests(unittest.TestCase):
 
     def test_unknown_or_non_dynamic_github_managed_checks_block_recovery(self):
         cases = [
-            {"path": "dynamic/github-code-scanning/codeql", "event": "pull_request"},
+            {"path": "dynamic/pages/pages-build-deployment", "event": "push"},
             {"path": "dynamic/github-code-scanning/unknown", "event": "dynamic"},
         ]
         for case in cases:

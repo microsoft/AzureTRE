@@ -57,8 +57,8 @@ checkout before accepting another known writer or unrelated repository workflow.
 It also checks that the current caller and reusable deployment use the same
 source commit and the updated cleanup wiring. It never derives a comment run's
 target from `head_branch`, `pull_requests` or a display title. The GitHub-managed
-Copilot review and GitHub-managed CodeQL are identified by their exact dynamic
-workflow paths and event.
+Copilot review, GitHub-managed CodeQL, and GitHub Pages deployment are identified
+by their exact dynamic workflow paths and event.
 Unknown workflows, changed definitions, old cleanup wiring and unavailable
 ownership evidence refuse recovery. Certificate renewal and CLI publishing are
 conservatively treated as unknown because their configured targets are not
@@ -97,8 +97,8 @@ tests do not demonstrate GitHub scheduling or a live Azure lease break.
 Before marking the PR ready:
 
 1. Run the changed workflows from a trusted branch against disposable resources.
-2. Overlap unrelated lint, Copilot, and GitHub-managed CodeQL work with an
-   eligible empty bootstrap lease.
+2. Overlap unrelated lint, Copilot, GitHub-managed CodeQL, and GitHub Pages work
+   with an eligible empty bootstrap lease.
 3. Queue deployment and destruction for the same reference during recovery.
 4. Confirm that the new writer cannot start until the current deployment releases its group.
 5. Repeat with scheduled cleanup, a separate reference and a failed or cancelled bootstrap.

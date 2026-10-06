@@ -102,6 +102,7 @@ GITHUB_MANAGED_READ_ONLY_WORKFLOWS = frozenset((
     "dynamic/agents/copilot-pull-request-reviewer",
     "dynamic/github-code-quality/codeql",
     "dynamic/github-code-scanning/codeql",
+    "dynamic/pages/pages-build-deployment",
 ))
 WRITER_WORKFLOWS = frozenset(("pr_comment_bot.yml", "deploy_tre.yml", "deploy_tre_branch.yml", "clean_validation_envs.yml"))
 SOURCE = Path(__file__).resolve().parents[2]
