@@ -29,25 +29,22 @@ def _is_porter_invocation(cmd_parts):
 
 
 async def _stop_command(proc, communication, *, wait_for_completion=False):
-    if wait_for_completion:
-        # Porter 1.4.0 cannot forward cancellation to its daemon-owned Docker
-        # invocation. Let the action and its state recording finish together.
-        # Killing Porter would orphan the deployment and allow an overlapping retry.
-        return await communication
-
     def send_signal(sig):
         try:
             os.killpg(proc.pid, sig)
         except ProcessLookupError:
             pass  # The command and its process group have already exited.
 
-    # Porter handles SIGINT by cancelling its action context gracefully.
-    send_signal(signal.SIGINT)
-    try:
-        await asyncio.wait_for(asyncio.shield(communication), timeout=_CANCEL_GRACE_PERIOD_SECONDS)
-    except asyncio.TimeoutError:
-        send_signal(signal.SIGKILL)
-        await communication
+    # Porter 1.4.0 cannot forward cancellation to its daemon-owned Docker
+    # invocation. Let the action and its state recording finish together.
+    # Killing Porter would orphan the deployment and allow an overlapping retry.
+    if not wait_for_completion:
+        send_signal(signal.SIGINT)
+        try:
+            await asyncio.wait_for(asyncio.shield(communication), timeout=_CANCEL_GRACE_PERIOD_SECONDS)
+        except asyncio.TimeoutError:
+            send_signal(signal.SIGKILL)
+    await asyncio.shield(communication)
 
 
 async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True):
