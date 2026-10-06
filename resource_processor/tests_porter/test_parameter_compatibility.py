@@ -1,5 +1,6 @@
 """Exercise the pinned Porter executable with synthetic bundles and a local MongoDB."""
 import base64
+import asyncio
 import hashlib
 import json
 import os
@@ -250,4 +251,101 @@ output "network_digest" { value = sha256(jsonencode(local.api_driven_network_rul
             assert f'network_digest = "{expected_digest}"' in output
         assert not list(tmp_path.glob("*.json*"))
     finally:
+        subprocess.run(["docker", "image", "rm", image_name], capture_output=True, check=True, timeout=30)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["install", "upgrade", "start", "uninstall"])
+async def test_cancellation_waits_for_docker_invocation_before_cleanup(porter_environment, tmp_path, monkeypatch, action):
+    if os.environ.get("PORTER_TEST_CONTAINERS") != "1":
+        pytest.skip("Set PORTER_TEST_CONTAINERS=1 to exercise Docker")
+    env, bundle_path = porter_environment
+    identifier = uuid.uuid4().hex
+    image_name = f"rp-cancellation:{identifier}"
+    label = f"rp-cancellation={identifier}"
+    context = tmp_path / "container"
+    context.mkdir()
+    (context / "run").write_text("#!/bin/sh\nset -eu\nwhile [ ! -f /finished ]; do sleep 0.1; done\n")
+    (context / "run").chmod(0o755)
+    base_image = os.environ.get("PORTER_TEST_TERRAFORM_IMAGE", "hashicorp/terraform:1.14.3")
+    (context / "Dockerfile").write_text(
+        f"FROM {base_image}\nUSER 0\nLABEL {label}\nCOPY run /cnab/app/run\nENTRYPOINT []\n")
+    subprocess.run(["docker", "build", "--tag", image_name, str(context)],
+                   env=dict(os.environ, DOCKER_BUILDKIT="0"), check=True, capture_output=True, timeout=180)
+    task = None
+
+    def containers():
+        return subprocess.check_output(["docker", "ps", "-aq", "--filter", f"label={label}"], text=True, timeout=15).split()
+
+    try:
+        bundle = json.loads(bundle_path.read_text())
+        bundle["invocationImages"][0]["image"] = image_name
+        bundle_bytes = json.dumps(bundle).encode()
+        bundle_path.write_bytes(bundle_bytes)
+        cache = next((bundle_path.parent / "cache").iterdir())
+        (cache / "cnab" / "bundle.json").write_bytes(bundle_bytes)
+        metadata = json.loads((cache / "metadata.json").read_text())
+        metadata["digest"] = "sha256:" + hashlib.sha256(bundle_bytes).hexdigest()
+        (cache / "metadata.json").write_text(json.dumps(metadata))
+        config_path = bundle_path.parent / "config.yaml"
+        porter_config = json.loads(config_path.read_text())
+        config = {"registry_server": "example.invalid", "porter_env": env, "deployment_status_queue": "test"}
+        msg = {"id": f"rp-cancel-{identifier}", "action": action, "name": "rp-compatibility", "version": "1.0.0",
+               "parameters": {"smtpPassword": "synthetic-secret"}, "operationId": "operation", "stepId": "step"}
+        sender = AsyncMock()
+        client = Mock()
+        client.get_queue_sender.return_value = sender
+        monkeypatch.setattr("helpers.commands._CANCEL_GRACE_PERIOD_SECONDS", 0.1)
+
+        async def local_command(command, *args, **kwargs):
+            if "--reference" in command:
+                command = list(command)
+                index = command.index("--reference")
+                command[index:index + 2] = ["--cnab-file", str(bundle_path)]
+            return await run_command_helper(command, *args, **kwargs)
+
+        with patch("helpers.commands.get_porter_parameter_keys", return_value=["smtpPassword"]), \
+                patch("vmss_porter.runner.azure_login_command", return_value=[]), \
+                patch("vmss_porter.runner.azure_acr_login_command", return_value=[]), \
+                patch("vmss_porter.runner.apply_porter_credentials_sets_command", return_value=[]), \
+                patch("vmss_porter.runner.run_command_helper", side_effect=local_command), \
+                patch("helpers.commands.tempfile.tempdir", str(tmp_path)):
+            if action != "install":
+                installed = await invoke_porter_action(dict(msg, action="install"), client, config)
+                assert installed is True
+                sender.reset_mock()
+            porter_config["runtime-driver"] = "docker"
+            config_path.write_text(json.dumps(porter_config))
+            task = asyncio.create_task(invoke_porter_action(msg, client, config))
+
+            async def wait_for_invocation():
+                while True:
+                    candidates = await asyncio.to_thread(containers)
+                    if candidates:
+                        return candidates[0]
+                    if task.done():
+                        raise AssertionError(f"Porter exited before starting a container: {task.result()}")
+                    await asyncio.sleep(0.05)
+
+            container = await asyncio.wait_for(wait_for_invocation(), timeout=15)
+            task.cancel()
+            await asyncio.sleep(0.2)
+            task.cancel()
+            await asyncio.sleep(0.2)
+            assert not task.done(), "Cancellation must wait for the Docker invocation to finish"
+            assert list(tmp_path.glob("*.json.values/*")), "Keep parameter inputs until execution finishes"
+            await asyncio.to_thread(subprocess.run, ["docker", "exec", container, "touch", "/finished"],
+                                    check=True, capture_output=True, timeout=15)
+            with pytest.raises(asyncio.CancelledError):
+                await asyncio.wait_for(task, timeout=15)
+        assert containers() == [], "Porter must remove its completed invocation container before cancellation returns"
+        assert not list(tmp_path.glob("*.json*"))
+        assert sender.send_messages.await_count == 1
+    finally:
+        for container in containers():
+            subprocess.run(["docker", "rm", "-f", container], check=True, capture_output=True, timeout=15)
+        if task is not None:
+            if not task.done():
+                task.cancel()
+            await asyncio.wait_for(asyncio.gather(task, return_exceptions=True), timeout=15)
         subprocess.run(["docker", "image", "rm", image_name], capture_output=True, check=True, timeout=30)

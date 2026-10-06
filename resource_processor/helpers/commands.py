@@ -19,7 +19,22 @@ class PorterParameterDiscoveryError(RuntimeError):
     """The current bundle's parameters could not be determined safely."""
 
 
-async def _stop_command(proc, communication):
+def _is_porter_invocation(cmd_parts):
+    if not cmd_parts or os.path.basename(cmd_parts[0]) != "porter":
+        return False
+    command = cmd_parts[1:]
+    if command and command[0] in ("installation", "installations", "inst"):
+        command = command[1:]
+    return bool(command and command[0] in ("apply", "install", "upgrade", "uninstall", "invoke"))
+
+
+async def _stop_command(proc, communication, *, wait_for_completion=False):
+    if wait_for_completion:
+        # Porter 1.4.0 cannot forward cancellation to its daemon-owned Docker
+        # invocation. Let the action and its state recording finish together.
+        # Killing Porter would orphan the deployment and allow an overlapping retry.
+        return await communication
+
     def send_signal(sig):
         try:
             os.killpg(proc.pid, sig)
@@ -51,7 +66,7 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
     try:
         stdout, stderr = await asyncio.shield(communication)
     except asyncio.CancelledError:
-        shutdown = asyncio.create_task(_stop_command(proc, communication))
+        shutdown = asyncio.create_task(_stop_command(proc, communication, wait_for_completion=_is_porter_invocation(cmd_parts)))
         while not shutdown.done():
             try:
                 await asyncio.shield(shutdown)

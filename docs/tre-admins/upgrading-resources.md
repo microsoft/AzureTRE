@@ -34,6 +34,8 @@ To remove the firewall rule size limit throughout bundle execution, publish, reg
 
 Upgrade each affected resource separately. Upgrading a workspace does not upgrade its child resources. Before deleting a workspace and its contents, upgrade affected child resources too.
 
+Resource Processor cancellation waits for an active Porter action to finish before removing its input files. This can delay shutdown during a long deployment. Porter 1.4.0 does not forward cancellation to its Docker invocation container, so forcibly stopping Porter could leave a deployment running and overlap a retry.
+
 ## How to upgrade a resource using Swagger UI
 
 Resources can be upgrade using Swagger UI, in the following example we show how to upgrade a workspace version from 1.0.0 to 1.0.1, other resources upgrades are similar.
