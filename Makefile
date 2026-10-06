@@ -162,6 +162,7 @@ plan-core: tre-start
 # Example: make letsencrypt
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
+	&& . "${MAKEFILE_DIR}/core/terraform/scripts/validate_certbot.sh" \
 	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \

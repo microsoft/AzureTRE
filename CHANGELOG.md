@@ -21,7 +21,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Validate the resource group input before requesting certificates and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
+* Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
 * Preserve loaded UI views during background refresh, ignore stale workspace responses, refresh on every tab return, and keep internal Connect behavior and unavailable cost displays consistent. (`ui` 0.10.1) ([#5105](https://github.com/microsoft/AzureTRE/pull/5105))
 * Avoid role-restricted shared-service and workspace-operation requests for researchers, show only the resource tabs each role can use, and show a researcher's own name as the owner of their resources. ([#2431](https://github.com/microsoft/AzureTRE/issues/2431))
 * Replace cryptic API network and server errors with a retryable availability message. ([#4852](https://github.com/microsoft/AzureTRE/issues/4852))

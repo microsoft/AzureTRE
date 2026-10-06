@@ -1,15 +1,13 @@
 #!/bin/bash
 set -e
 
-CERTBOT_BIN="${CERTBOT_BIN:-/opt/certbot/bin/certbot}"
-if ! certbot_path=$(command -v -- "${CERTBOT_BIN}") || [[ ! -f "${certbot_path}" || ! -x "${certbot_path}" ]]; then
-  printf "Certbot executable '%s' was not found or is not executable. Set CERTBOT_BIN to a valid executable path.\n" "${CERTBOT_BIN}" >&2
-  exit 1
-fi
-
-: "${RESOURCE_GROUP_NAME:?RESOURCE_GROUP_NAME not set}"
-
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+# shellcheck disable=SC1091
+source "${script_dir}/validate_certbot.sh"
+
+# The Make target loads this value from Terraform outputs before invoking this script.
+: "${RESOURCE_GROUP_NAME:?RESOURCE_GROUP_NAME not set}"
 
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
