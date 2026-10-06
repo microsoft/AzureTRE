@@ -5,6 +5,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 * Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 * Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
