@@ -177,6 +177,30 @@ async def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_f
 
 
 @patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+async def test_get_all_template_versions_for_names_uses_single_query_and_groups_by_name(query_mock, resource_template_repo):
+    query_mock.return_value = [
+        {"name": "template1", "version": "1.0.0"},
+        {"name": "template1", "version": "1.1.0"},
+        {"name": "template2", "version": "2.0.0"}
+    ]
+
+    result = await resource_template_repo.get_all_template_versions_for_names(["template1", "template2", "template1", "template3"])
+
+    query_mock.assert_called_once()
+    assert query_mock.call_args.kwargs["query"] == 'SELECT c.name, c.version FROM c WHERE ARRAY_CONTAINS(@template_names, c.name)'
+    assert sorted(query_mock.call_args.kwargs["parameters"][0]["value"]) == ["template1", "template2", "template3"]
+    assert result == {"template1": ["1.0.0", "1.1.0"], "template2": ["2.0.0"], "template3": []}
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+async def test_get_all_template_versions_for_names_does_not_query_when_no_names(query_mock, resource_template_repo):
+    result = await resource_template_repo.get_all_template_versions_for_names([])
+
+    query_mock.assert_not_called()
+    assert result == {}
+
+
+@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
 async def test_get_templates_information_returns_unique_template_names(query_mock, resource_template_repo):
     query_mock.return_value = [
         {"name": "template1", "title": "title1", "description": "description1"},

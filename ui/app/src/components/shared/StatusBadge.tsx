@@ -33,7 +33,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (props: St
     onRenderContent: () => (
       <div style={{ padding: "20px 24px" }}>
         <Text block variant="xLarge" style={{ marginBottom: 12, fontWeight: FontWeights.semilight }}>
-          {props.status.replace("_", " ")}
+          {props.status.replace(/_/g, " ")}
         </Text>
         <Text block variant="small">
           <Stack>
@@ -53,7 +53,7 @@ export const StatusBadge: React.FunctionComponent<StatusBadgeProps> = (props: St
 
   switch (badgeType) {
     case "inProgress":
-      let label = awaitingStates.includes(props.status) ? "pending" : props.status.replace("_", " ");
+      let label = awaitingStates.includes(props.status) ? "pending" : props.status.replace(/_/g, " ");
       return (
         <Spinner
           label={label}

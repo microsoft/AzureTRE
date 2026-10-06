@@ -162,6 +162,7 @@ plan-core: tre-start
 # Example: make letsencrypt
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
+	&& . "${MAKEFILE_DIR}/core/terraform/scripts/validate_certbot.sh" \
 	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
@@ -525,6 +526,14 @@ test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 test-e2e-backups: ## 🧪 Run E2E backup tests
 	$(call target_title, "Running E2E backup tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=backups
+
+# Description: Run E2E airlock tests
+# # The E2E airlock tests include:
+# # - tests marked with the `airlock` selector that verify airlock import/export flows and their access controls
+# Example: make test-e2e-airlock
+test-e2e-airlock: ## 🧪 Run E2E airlock tests
+	$(call target_title, "Running E2E airlock tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=airlock
 
 # Description: Run E2E tests with custom selector
 # Arguments: SELECTOR - the selector to run the tests with
