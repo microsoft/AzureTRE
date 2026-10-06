@@ -241,6 +241,19 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(self.environment_actions(), [])
         self.assertIn(["az", "group", "delete", "--yes", "--name", "rg-main-ws-old"], self.calls)
 
+    def test_main_workspace_cleanup_skips_without_tre_id_and_rejects_invalid_id(self):
+        self.config["selected_ref"] = True
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        self.env["MAIN_TRE_ID"] = ""
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Skipping main workspace cleanup", result.stdout)
+        self.assertFalse(any(call[0] == "az" for call in self.calls), self.calls)
+        self.env["MAIN_TRE_ID"] = "main'; x"
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(call[0] == "az" for call in self.calls), self.calls)
+
     def test_idle_cleanup_still_destroys_expired_environments(self):
         self.config["age_hours"] = 49
         result = self.run_cleanup()

@@ -37,6 +37,11 @@ function destroyEnv ()
 python3 devops/scripts/ci_cleanup_scope.py verify-lock
 
 if [[ "${CI_CLEANUP_REF}" == refs/heads/main ]]; then
+  # The TRE_ID secret can be absent for cleanup. The previous sweep then matched nothing.
+  if [[ -z "${MAIN_TRE_ID:-}" ]]; then
+    echo "MAIN_TRE_ID is not set. Skipping main workspace cleanup."
+    exit 0
+  fi
   [[ "${MAIN_TRE_ID}" =~ ^[a-zA-Z0-9-]+$ ]] || { echo "Invalid main TRE ID" >&2; exit 1; }
   az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
   while read -r rg_name; do
