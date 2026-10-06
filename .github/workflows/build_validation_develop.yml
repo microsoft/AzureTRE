@@ -143,7 +143,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_MARKDOWN: true
           VALIDATE_PYTHON_RUFF: true
+          VALIDATE_PYTHON_RUFF_FORMAT: true
           PYTHON_RUFF_CONFIG_FILE: ../../pyproject.toml
+          PYTHON_RUFF_FORMAT_CONFIG_FILE: ../../pyproject.toml
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM_TFLINT: true
           VALIDATE_JAVA: true
