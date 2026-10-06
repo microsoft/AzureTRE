@@ -50,6 +50,14 @@ class ScopeTests(unittest.TestCase):
         lock.assert_called_once_with(self.ctx, job_id=10)
         self.assertTrue(any(suffix.endswith("page=2") for suffix in self.requests))
 
+    def test_run_pending_behind_another_reference_still_verifies_this_job(self):
+        # Observed live: run 37544274766 was pending while another matrix job waited.
+        self.run["status"] = "pending"
+        self.jobs.append({"id": 11, "name": "Clean refs/pull/4904/merge", "status": "pending"})
+        with patch.object(scope, "github", side_effect=self.github), patch.object(scope, "verify_concurrency") as lock:
+            scope.verify_lock(self.ctx)
+        lock.assert_called_once_with(self.ctx, job_id=10)
+
     def test_stale_attempt_completed_foreign_or_wrong_workflow_is_refused(self):
         for key, value in (("id", 999), ("run_attempt", 1), ("status", "completed"), ("path", ".github/workflows/other.yml"),
                            ("repository", {"full_name": "other/repo"})):

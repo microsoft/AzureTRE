@@ -65,10 +65,15 @@ def context():
     return {"ref": ref, "repository": repository, "run_id": int(values[0]), "attempt": int(values[1])}
 
 
+ACTIVE_RUN_STATUSES = frozenset(("in_progress", "queued", "pending", "waiting", "requested"))
+
+
 def verify_lock(ctx):
     run = github(ctx, f"/actions/runs/{ctx['run_id']}")
+    # GitHub reports the whole run as pending while another matrix job waits for
+    # its reference group. The job and concurrency owner checks prove this lock.
     require(isinstance(run, dict) and run.get("id") == ctx["run_id"] and run.get("run_attempt") == ctx["attempt"]
-            and run.get("status") == "in_progress" and run.get("path") == ".github/workflows/clean_validation_envs.yml"
+            and run.get("status") in ACTIVE_RUN_STATUSES and run.get("path") == ".github/workflows/clean_validation_envs.yml"
             and isinstance(run.get("repository"), dict) and run["repository"].get("full_name") == ctx["repository"],
             "The cleanup run or attempt does not match.")
     expected_name = os.environ.get("CI_CLEANUP_JOB_NAME", "Clean " + ctx["ref"])
