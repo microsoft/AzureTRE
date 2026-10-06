@@ -194,7 +194,6 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
 
   depends_on = [
     azurerm_monitor_private_link_scoped_service.ampls_app_insights,
-    azurerm_monitor_private_link_scoped_service.ampls_log_anaytics,
   ]
 }
 
