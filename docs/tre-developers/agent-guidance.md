@@ -24,12 +24,12 @@ The following expectations are based on product documentation checked on 6 Octob
 | Client or surface | Expected behaviour and limitation |
 | --- | --- |
 | Copilot cloud agent, including issue-assignee sessions | Supports root `AGENTS.md` and repository skills. Verify both discovery and application in a fresh task. |
-| Copilot code review on GitHub | Supports root `AGENTS.md` and skills in `.github/skills`. The review skill uses the review-focused name `code-review`. Instructions and skills are read from the PR head branch. |
+| Copilot code review on GitHub | Supports root `AGENTS.md` and skills in `.github/skills`. The review skill uses the review-focused name `code-review`. Instructions and skills are read from the PR head branch. It also reads a root `REVIEW.md`; this layout keeps review guidance in the `code-review` skill instead, so there is one source. |
 | Copilot CLI | Supports root `AGENTS.md` and `.github/skills`. Use `/skills list` and `/skills info <name>` to inspect discovery. Reload skills or start a fresh session after changes. |
 | Copilot agent sessions in VS Code | Supports root `AGENTS.md` and `.github/skills`. Record the selected agent harness and instruction settings. The Local agent can disable `AGENTS.md` through `chat.useAgentsMdFile`. |
 | Copilot code review in VS Code | The support matrix lists `.github/copilot-instructions.md`. Do not infer support for every instruction type from the agent-session behaviour. |
 | GitHub Copilot app | Repository and CLI skills are documented as available. Confirm root instruction loading and skill use in the installed app. |
-| Codex | Reads root `AGENTS.md`. Its documented native repository skill location is `.agents/skills`. Follow the root links to read these skills as guidance; this does not promise native skill-picker registration. |
+| Codex | Reads root `AGENTS.md`. Its documented native repository skill location is `.agents/skills`. Follow the root links to read these skills as guidance; this does not promise native skill-picker registration. Copilot also discovers `.agents/skills`, but the code review documentation names only `.github/skills`. |
 
 Sources: [GitHub instruction support](https://docs.github.com/en/copilot/reference/custom-instructions-support), [Copilot skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills), [GitHub code review](https://docs.github.com/en/copilot/how-tos/copilot-on-github/use-copilot-agents/copilot-code-review).
 
@@ -83,4 +83,4 @@ Historical examples: [bundle uninstall input](https://github.com/microsoft/Azure
 
 For GitHub review, record the PR head, review URL and any skill attribution or session-log evidence. Evaluate the test recommendation's SHA, coverage, observed checks and justification. Record missing or misplaced recommendations as a limitation. A skill appearing in a list establishes discovery only; it does not prove that the agent used it correctly.
 
-Keep dated validation results in the PR or linked issue, including untested clients and missing evidence. Recheck relevant clients after changing discovery paths or skill descriptions.
+Keep dated validation results in the PR or linked issue, including untested clients and missing evidence. Recheck relevant clients after changing discovery paths or skill descriptions. When you recheck the product documentation, update the compatibility table and its check date.

@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Develop or review the Azure TRE React and TypeScript UI in ui/app, including authentication, resource forms, refresh behaviour and component validation.
+description: Covers conventions, setup and checks for the Azure TRE React and TypeScript UI, including authentication, resource forms and refresh behaviour. Use when you change or review files under ui/app.
 ---
 
 # Azure TRE front end

@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review Azure TRE pull requests for behaviour, release metadata and validation gaps, and recommend a justified PR bot command for the assessed commit without dispatching it.
+description: Reviews Azure TRE pull requests for behaviour, release metadata and validation gaps, and recommends a justified PR bot command without dispatching it. Use when you review a pull request or choose PR validation.
 ---
 
 # Azure TRE code review
@@ -53,4 +53,4 @@ Keep suggestions within explanatory review text. Never place an executable slash
 
 GitHub Copilot code review does not guarantee a custom overview format or a recommendation on every review. Use the supported feedback surface and record absent recommendations during evaluation. Do not create a separate comment, request another review or trigger automation merely to force that output.
 
-Report local checks, executed CI, skipped or waived checks, and live Azure validation separately. Keep required reviews, branch rules and merge readiness distinct from technical findings.
+Apply the [root reporting rules](../../../AGENTS.md#validation-and-reporting). Keep required reviews, branch rules and merge readiness distinct from technical findings.

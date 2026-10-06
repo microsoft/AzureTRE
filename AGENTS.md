@@ -43,7 +43,7 @@ If the client does not discover `.github/skills` natively, open these files as r
 
 Follow [.editorconfig](.editorconfig) and the component's lint configuration. Python uses pytest and PEP 8 conventions. TypeScript uses the existing ESLint configuration and Vitest. Preserve existing Terraform module interfaces and resource tags.
 
-Add an accurate entry under `ENHANCEMENTS` or `BUG FIXES` in the Unreleased section of [CHANGELOG.md](CHANGELOG.md). Include an issue or PR link. Leave released entries and release-generated `COMPONENTS` sections unchanged.
+Add an accurate entry under `ENHANCEMENTS` or `BUG FIXES` in the Unreleased section of [CHANGELOG.md](CHANGELOG.md). Include an issue or PR link. Leave released entries and release-generated `COMPONENTS` sections unchanged. Reference the issue number in commit messages.
 
 For changed components, check the version on the current base branch and increment the appropriate version. Use a major version for breaking or destructive changes, a minor version for compatible features, and a patch version for compatible fixes. See [bundle versioning](docs/tre-workspace-authors/authoring-workspace-templates.md#versioning).
 

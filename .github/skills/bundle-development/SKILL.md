@@ -1,6 +1,6 @@
 ---
 name: bundle-development
-description: Develop or review Azure TRE resource bundles under templates, checking Porter, Terraform, schema and parameter consistency across install, upgrade and uninstall.
+description: Checks Porter, Terraform, schema and parameter consistency across install, upgrade and uninstall for Azure TRE resource bundles. Use when you change or review files under templates/.
 ---
 
 # Azure TRE bundle development

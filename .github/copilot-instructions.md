@@ -15,6 +15,7 @@ Read [AGENTS.md](../AGENTS.md) for the repository map, development entry points 
 - Update the Unreleased `ENHANCEMENTS` or `BUG FIXES` section of [CHANGELOG.md](../CHANGELOG.md) with an issue or PR link.
 - Leave released entries and release-generated `COMPONENTS` sections unchanged.
 - Increment changed component or bundle versions using the sources in `AGENTS.md` and semantic versioning.
+- Reference the issue number in commit messages.
 - Match validation to the changed behaviour. Distinguish local checks, executed CI, skipped or waived checks, and live Azure validation.
-- Use the code-review skill to recommend a PR bot command, or explain why none is useful. Include the assessed SHA and justification when the review surface permits it.
+- When you review a PR, use the code-review skill to recommend a PR bot command, or explain why none is useful. Include the assessed SHA and justification when the review surface permits it.
 - Keep command suggestions within explanatory review text. A maintainer decides whether to post a command. Do not dispatch CI, deploy or merge solely because a skill recommends it.
