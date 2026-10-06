@@ -4686,6 +4686,11 @@ static_web_storage = "stwebmytre"
 <p>The Azure TRE instance is initially deployed with an invalid self-signed SSL certificate. This certificate needs to be replaced with one valid for your configured domain name. To use a certificate from <a href="https://letsencrypt.org/">Let's Encrypt</a>, run the command:</p>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>letsencrypt
 </code></pre></div>
+<p>If Certbot is installed elsewhere, specify its executable path:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">CERTBOT_BIN</span><span class="o">=</span>/path/to/certbot<span class="w"> </span>make<span class="w"> </span>letsencrypt
+</code></pre></div>
+<p>The default is <code>/opt/certbot/bin/certbot</code>, as installed in the development container.
+The command checks the selected executable before loading Terraform outputs or changing Azure network access.</p>
 <div class="admonition caution">
 <p class="admonition-title">Caution</p>
 <p>There are rate limits with Let's Encrypt, so this should not be run when not needed.</p>
