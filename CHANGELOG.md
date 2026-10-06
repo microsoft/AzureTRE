@@ -21,6 +21,7 @@ BUG FIXES:
 * Tag management resource groups during CI bootstrap and clean up management-only environments after failed deployments. Preserve tags on bootstrap reruns and restrict cleanup to the environment's core, management, workspace and shared-service groups. Add manual validation with disposable empty groups. (`devops` 0.6.7) ([#5033](https://github.com/microsoft/AzureTRE/issues/5033))
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
+* Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 
 ## (0.29.1)
 **BREAKING CHANGES**
