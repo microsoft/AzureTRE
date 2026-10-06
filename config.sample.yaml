@@ -80,17 +80,16 @@ tre:
   # private_agent_subnet_id: __CHANGE_ME__
 authentication:
   aad_tenant_id: __CHANGE_ME__
+  # Workspaces always create their own AAD Application unless a client_id is provided.
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to false will:
-  # create an identity with `Application.ReadWrite.OwnedBy`.
+  # create an identity with `Application.ReadWrite.OwnedBy`; pre-created applications must have it added as an owner.
   # Setting AUTO_WORKSPACE_APP_REGISTRATION to true will:
-  # create an identity with `Application.ReadWrite.All`.
-  # When this is true, create Workspaces will also create an AAD Application automatically.
-  # When this is false, the AAD Application will need creating manually.
+  # create an identity with `Application.ReadWrite.All`, so it can also manage pre-created applications it does not own.
   auto_workspace_app_registration: true
-  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`, `Group.Read.All` and `User.ReadBasic.All` permissions.
+  # Setting AUTO_WORKSPACE_GROUP_CREATION to true will create an identity with `Group.Create`, `Group.Read.All` and `User.Read.All` permissions.
   auto_workspace_group_creation: false
   # Setting this to true will remove the need for users to manually grant consent when creating new workspaces.
-  # The identity will be granted Application.ReadWrite.All and DelegatedPermissionGrant.ReadWrite.All permissions.
+  # The identity will be granted the DelegatedPermissionGrant.ReadWrite.All permission.
   auto_grant_workspace_consent: false
 
 resource_processor:

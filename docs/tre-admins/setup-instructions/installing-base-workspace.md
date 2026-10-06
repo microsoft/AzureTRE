@@ -17,7 +17,7 @@ Now that we have published and registered a base workspace bundle we can use the
 !!! info
     All routes are auth protected. Click the green **Authorize** button to receive a token for Swagger client.
 
-As explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
+By default each workspace creates its own Microsoft Entra ID application, as explained in the [auth guide](../auth.md). If you want to use a pre-created application instead, create it with the helper script `./devops/scripts/aad/create_workspace_application.sh` and set its client ID as the optional `client_id` property. For example:
 
 ```bash
   ./devops/scripts/aad/create_workspace_application.sh \
@@ -37,7 +37,6 @@ Go to `https://<azure_tre_fqdn>/api/docs` and use POST `/api/workspaces` with th
   "properties": {
     "display_name": "manual-from-swagger",
     "description": "workspace for team X",
-    "client_id":"<WORKSPACE_API_CLIENT_ID>",
     "address_space_size": "medium",
     "workspace_subscription_id": "<OPTIONAL AZURE SUBSCRIPTION ID>"
   }

@@ -18,7 +18,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
   **Permission Changes:**
   - **Removed:** `Directory.Read.All` no longer required
-  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.ReadBasic.All`, `DelegatedPermissionGrant.ReadWrite.All`
+  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.Read.All`, `DelegatedPermissionGrant.ReadWrite.All`
 
   ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 

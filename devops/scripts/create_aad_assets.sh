@@ -33,7 +33,7 @@ if [ "${AUTO_WORKSPACE_APP_REGISTRATION:-}" == true ]; then
 fi
 
 if [ "${AUTO_WORKSPACE_GROUP_CREATION:-}" == true ]; then
-  APPLICATION_PERMISSIONS+=("Group.Create" "Group.Read.All" "User.ReadBasic.All")
+  APPLICATION_PERMISSIONS+=("Group.Create" "Group.Read.All" "User.Read.All")
 fi
 
 if [ "${AUTO_GRANT_WORKSPACE_CONSENT:-}" == true ]; then

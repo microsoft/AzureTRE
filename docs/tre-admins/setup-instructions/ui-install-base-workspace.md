@@ -45,7 +45,7 @@ Workspace is now ready to use.
 
 ## Creating a manual Entra ID Application for the workspace
 
-If you have not configured automatic application registration creation as explained in the [auth guide](../auth.md), every workspace has a corresponding app registration which if you haven't run `make auth`; can be created using the helper script `./devops/scripts/aad/create_workspace_application.sh`. For example:
+By default each workspace creates its own Microsoft Entra ID application. If you want to use a pre-created application instead, create it with the helper script `./devops/scripts/aad/create_workspace_application.sh` and provide its client ID when creating the workspace. For example:
 
 ```bash
   ./devops/scripts/aad/create_workspace_application.sh \

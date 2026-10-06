@@ -1,5 +1,6 @@
 import pytest
-from mock import call, patch
+from fastapi import HTTPException
+from mock import MagicMock, call, patch
 
 from models.domain.authentication import User, RoleAssignment
 from models.domain.workspace_users import AssignmentType, Role
@@ -958,6 +959,24 @@ def test_remove_principal_from_app_role_direct_propagates_graph_errors(ms_graph_
     for query_call in ms_graph_query_mock.call_args_list:
         assert query_call.kwargs.get("raise_on_error") is True
     assert ms_graph_query_mock.call_args_list[-1].args[1] == "DELETE"
+
+
+@pytest.mark.parametrize("status_code, expected_exception", [
+    (403, HTTPException),
+    (503, HTTPException),
+    (404, UserRoleAssignmentError),
+])
+@patch("services.aad_authentication.AzureADAuthorization._get_auth_header", return_value={})
+@patch("services.aad_authentication.AzureADAuthorization._get_msgraph_token", return_value="token")
+@patch("services.aad_authentication.requests.post")
+def test_assign_principal_to_app_role_direct_maps_graph_failures(post_mock, _, __, status_code, expected_exception,
+                                                                 workspace_without_groups, role_owner):
+    """Graph authorization and availability failures are service errors; other failures are invalid requests."""
+    post_mock.return_value = MagicMock(status_code=status_code, text="error")
+
+    access_service = AzureADAuthorization()
+    with pytest.raises(expected_exception):
+        access_service._assign_principal_to_app_role_direct("user-1", workspace_without_groups, role_owner.id)
 
 
 def test_compare_versions_equal():

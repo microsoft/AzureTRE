@@ -298,6 +298,11 @@ class AzureADAuthorization:
                 pass
 
         logger.error(f"Direct app role assignment failed: {response.status_code} - {response.text}")
+        if response.status_code in (401, 403, 429) or response.status_code >= 500:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"{strings.ACCESS_MS_GRAPH_QUERY_FAILED}: {response.status_code}"
+            )
         raise UserRoleAssignmentError(f"Failed to assign principal {principal_id} to role {role_id}: {response.status_code}")
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
