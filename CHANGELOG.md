@@ -15,6 +15,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Validate the resource group input before requesting certificates and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
+* Dead-letter malformed Service Bus resource-request payloads instead of retrying them indefinitely. ([#4976](https://github.com/microsoft/AzureTRE/issues/4976))
 * Patch vulnerable npm dependencies in the UI (`ui` 0.9.1) and GitHub workflow scripts (`build-scripts` 1.0.1) ([#5108](https://github.com/microsoft/AzureTRE/issues/5108))
 * Check blob read, write, lease and metadata access before Terraform initialisation. Recover empty, unowned bootstrap leases only in verified PR CI backends with no other active workflows. Preserve state-lock errors and share bounded readiness retries with management deployment. (`devops` 0.6.8) ([#5091](https://github.com/microsoft/AzureTRE/issues/5091))
 * Renew E2E authentication tokens during operation polling and teardown to prevent failures caused by token expiry. ([#5097](https://github.com/microsoft/AzureTRE/issues/5097))
