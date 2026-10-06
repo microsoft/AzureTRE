@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { PrimaryButton, ProgressIndicator, Stack } from "@fluentui/react";
 import { ResourceContextMenu } from "../shared/ResourceContextMenu";
 import { actionsDisabledStates } from "../../models/operation";
@@ -23,6 +23,9 @@ interface ResourceHeaderProps {
 
 export const ResourceHeader: React.FunctionComponent<ResourceHeaderProps> = (props: ResourceHeaderProps) => {
   const [showCopyUrl, setShowCopyUrl] = useState(false);
+  // The header is reused when a detail route switches resource; don't carry an open Connect dialog over to it.
+  const resourceId = props.resource?.id;
+  useEffect(() => setShowCopyUrl(false), [resourceId]);
   const connectionUri = props.resource.properties?.connection_uri;
   const isExposedExternally = props.resource.properties?.is_exposed_externally ?? props.isExposedExternally ?? true;
   const canConnect =

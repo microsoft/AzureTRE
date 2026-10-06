@@ -51,6 +51,10 @@ vi.mock("./VMPowerButton", () => ({
   VMPowerButton: ({ resource }: any) => <div data-testid="vm-power-button">{resource.id}</div>,
 }));
 
+vi.mock("./ConfirmCopyUrlToClipboard", () => ({
+  ConfirmCopyUrlToClipboard: ({ resource }: any) => <div role="dialog">Copy {resource.properties.connection_uri}</div>,
+}));
+
 // Mock FluentUI components
 vi.mock("@fluentui/react", () => {
   const MockStack = ({ children, horizontal }: any) => (
@@ -181,6 +185,23 @@ describe("ResourceHeader Component", () => {
     fireEvent.click(connectButton);
     expect(windowOpenSpy).toHaveBeenCalledWith("https://resource.example.com", "_blank", "noopener,noreferrer");
     windowOpenSpy.mockRestore();
+  });
+
+  it("closes the internal Connect dialog when the resource changes", () => {
+    const internalResource = (id: string, uri: string) => ({
+      ...mockResource,
+      id,
+      resourceType: ResourceType.UserResource,
+      properties: { ...mockResource.properties, connection_uri: uri, is_exposed_externally: false },
+    });
+    const { rerender } = render(
+      <ResourceHeader resource={internalResource("a", "https://a.internal")} latestUpdate={mockLatestUpdate} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent("https://a.internal");
+
+    rerender(<ResourceHeader resource={internalResource("b", "https://b.internal")} latestUpdate={mockLatestUpdate} />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("renders status badge with operation status when available", () => {
