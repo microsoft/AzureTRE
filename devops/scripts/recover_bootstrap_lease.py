@@ -98,6 +98,11 @@ READ_ONLY_WORKFLOWS = frozenset((
     "build_validation_develop.yml", "build_docker_images.yml", "build_all_dockerfiles.yml",
     "build_docs.yml", "codeql-analysis.yml", "e2e_helper_tests.yml", "flag_external_pr.yml", "test_results.yml",
 ))
+GITHUB_MANAGED_READ_ONLY_WORKFLOWS = frozenset((
+    "dynamic/agents/copilot-pull-request-reviewer",
+    "dynamic/github-code-quality/codeql",
+    "dynamic/github-code-scanning/codeql",
+))
 WRITER_WORKFLOWS = frozenset(("pr_comment_bot.yml", "deploy_tre.yml", "deploy_tre_branch.yml", "clean_validation_envs.yml"))
 SOURCE = Path(__file__).resolve().parents[2]
 
@@ -207,9 +212,9 @@ def verify_workflows(ctx, cache=None):
 
 def verify_other_run(ctx, run, cache):
     path = run.get("path", "")
-    # GitHub supplies this dynamic workflow identity; it is not a display title
-    # or a comment input, and does not run the Azure deployment workflows.
-    if path == "dynamic/agents/copilot-pull-request-reviewer" and run.get("event") == "dynamic":
+    # GitHub supplies these dynamic workflow identities. They are not display
+    # titles or comment inputs, and cannot run the Azure deployment workflows.
+    if path in GITHUB_MANAGED_READ_ONLY_WORKFLOWS and run.get("event") == "dynamic":
         return
     require(isinstance(path, str) and path.startswith(".github/workflows/"), "Unknown workflow identity.")
     name = path.removeprefix(".github/workflows/")

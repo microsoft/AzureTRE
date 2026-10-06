@@ -247,9 +247,11 @@ class RecoveryTests(unittest.TestCase):
         self.change_on_second_show = lambda value: value["properties"].update(etag='"different"')
         self.assert_refused()
 
-    def test_known_writers_and_copilot_do_not_block_the_lock_owner(self):
+    def test_known_writers_and_github_managed_checks_do_not_block_the_lock_owner(self):
         cases = [
             {"path": "dynamic/agents/copilot-pull-request-reviewer", "event": "dynamic"},
+            {"path": "dynamic/github-code-quality/codeql", "event": "dynamic"},
+            {"path": "dynamic/github-code-scanning/codeql", "event": "dynamic"},
             {"path": ".github/workflows/deploy_tre_branch.yml", "head_sha": "a" * 40},
             {"path": ".github/workflows/pr_comment_bot.yml", "head_sha": "a" * 40},
             {"path": ".github/workflows/clean_validation_envs.yml", "head_sha": "a" * 40},
@@ -263,6 +265,16 @@ class RecoveryTests(unittest.TestCase):
                     self.status_data = {status: {"total_count": len(runs), "workflow_runs": runs}}
                     recovery.recover(self.ctx)
                     self.assertEqual(len(self.breaks()), 1)
+
+    def test_unknown_or_non_dynamic_github_managed_checks_block_recovery(self):
+        cases = [
+            {"path": "dynamic/github-code-scanning/codeql", "event": "pull_request"},
+            {"path": "dynamic/github-code-scanning/unknown", "event": "dynamic"},
+        ]
+        for case in cases:
+            with self.subTest(case=case):
+                self.status_data = {"queued": {"total_count": 1, "workflow_runs": [{"id": 999, **case}]}}
+                self.assert_refused()
 
     def test_new_queued_writer_does_not_prevent_owner_progress(self):
         def enqueue(_):
