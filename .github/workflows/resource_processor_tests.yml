@@ -8,6 +8,7 @@ on:  # yamllint disable-line rule:truthy
       - "feature/**"
     paths:
       - 'resource_processor/**'
+      - 'templates/shared_services/firewall/**'
       - '.github/workflows/resource_processor_tests.yml'
 
 permissions:
@@ -49,6 +50,7 @@ jobs:
         env:
           PYTHONPATH: resource_processor
           PORTER_TEST_MONGODB_URL: mongodb://127.0.0.1:27017/porter
+          PORTER_TEST_CONTAINERS: '1'
         run: >-
           python -m pytest resource_processor/tests_rp resource_processor/tests_porter
           -q -o asyncio_default_fixture_loop_scope=function

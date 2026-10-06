@@ -3,6 +3,7 @@ import json
 import base64
 import logging
 import os
+import shutil
 import tempfile
 import uuid
 from urllib.parse import urlparse
@@ -147,6 +148,14 @@ async def build_porter_command(config, msg_body, custom_action=False):
             }
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
                 param_set_file = f.name
+                # Parameter sets are stored verbatim by Porter. Keep values out of
+                # that database, including secrets not identified by the template.
+                value_directory = param_set_file + ".values"
+                os.mkdir(value_directory, mode=0o700)
+                for parameter in param_set_entries:
+                    with tempfile.NamedTemporaryFile(mode='w', dir=value_directory, delete=False) as value_file:
+                        value_file.write(parameter["source"]["value"])
+                        parameter["source"] = {"path": value_file.name}
                 json.dump(param_set, f)
 
         if not custom_action and msg_body['action'] in ("install", "upgrade"):
@@ -202,6 +211,7 @@ async def build_porter_command(config, msg_body, custom_action=False):
 
         return (commands, param_set_file, param_set_name, installation_file)
     except Exception:
+        cleanup_parameter_value_files(param_set_file)
         for path in (param_set_file, installation_file):
             if path:
                 try:
@@ -209,6 +219,17 @@ async def build_porter_command(config, msg_body, custom_action=False):
                 except OSError as e:
                     logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
         raise
+
+
+def cleanup_parameter_value_files(param_set_file):
+    """Remove the private value directory even if Porter parameter-set deletion fails."""
+    if param_set_file:
+        try:
+            shutil.rmtree(param_set_file + ".values")
+        except FileNotFoundError:
+            pass  # Construction may have failed before the directory was created.
+        except OSError as e:
+            logger.debug(f"Best-effort cleanup: could not remove parameter values for '{param_set_file}': {e}")
 
 
 async def build_porter_command_for_outputs(msg_body):

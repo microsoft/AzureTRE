@@ -5,7 +5,7 @@ import json
 import asyncio
 import os
 import sys
-from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper
+from helpers.commands import azure_acr_login_command, azure_login_command, build_porter_command, build_porter_command_for_outputs, apply_porter_credentials_sets_command, run_command_helper, cleanup_parameter_value_files
 from shared.config import get_config
 from helpers.httpserver import start_server
 
@@ -286,6 +286,7 @@ async def _cleanup_param_set(param_set_name: str, param_set_file: str, installat
     except Exception as e:
         logger.debug(f"Best-effort cleanup: could not delete parameter set '{param_set_name}': {e}")
     finally:
+        cleanup_parameter_value_files(param_set_file)
         for path in (param_set_file, installation_file):
             if path:
                 try:

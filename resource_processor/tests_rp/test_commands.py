@@ -5,9 +5,10 @@ import logging
 import base64
 import stat
 import tempfile
+from pathlib import Path
 import pytest
 from unittest.mock import patch, AsyncMock
-from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value
+from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value, cleanup_parameter_value_files
 
 
 @pytest.fixture
@@ -84,7 +85,10 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
         assert param_set["schemaType"] == "ParameterSet"
         assert param_set["name"] == param_set_name
         assert len(param_set["parameters"]) == 1
-        assert param_set["parameters"][0] == {"name": "param1", "source": {"value": "value1"}}
+        assert param_set["parameters"][0]["name"] == "param1"
+        assert set(param_set["parameters"][0]["source"]) == {"path"}
+        assert Path(param_set["parameters"][0]["source"]["path"]).read_text() == "value1"
+        assert "value1" not in Path(param_set_file).read_text()
 
         with open(installation_file) as f:
             installation = json.load(f)
@@ -98,6 +102,7 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
         assert installation["bundle"]["version"] == "1.0.0"
     finally:
         if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
             os.unlink(param_set_file)
         if installation_file and os.path.exists(installation_file):
             os.unlink(installation_file)
@@ -131,6 +136,7 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
         assert installation["parameterSets"] == [param_set_name]
     finally:
         if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
             os.unlink(param_set_file)
         if installation_file and os.path.exists(installation_file):
             os.unlink(installation_file)
@@ -215,7 +221,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         with open(param_set_file) as f:
             param_set = json.load(f)
 
-        params_by_name = {p["name"]: p["source"]["value"] for p in param_set["parameters"]}
+        params_by_name = {p["name"]: Path(p["source"]["path"]).read_text() for p in param_set["parameters"]}
 
         assert "dict_param" in params_by_name
         assert "list_param" in params_by_name
@@ -240,6 +246,7 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
         assert installation["parameterSets"] == [param_set_name]
     finally:
         if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
             os.unlink(param_set_file)
         if installation_file and os.path.exists(installation_file):
             os.unlink(installation_file)
@@ -276,7 +283,8 @@ async def test_build_porter_command_large_firewall_parameters(mock_get_porter_pa
     assert parameter_set["name"] == param_set_name
     assert len(parameter_set["parameters"]) == 2
     for parameter in parameter_set["parameters"]:
-        value = parameter["source"]["value"]
+        assert set(parameter["source"]) == {"path"}
+        value = Path(parameter["source"]["path"]).read_text()
         assert len(value) > 128 * 1024
         assert json.loads(base64.b64decode(value)) == parameters[parameter["name"]]
 
@@ -286,12 +294,12 @@ async def test_build_porter_command_large_firewall_parameters(mock_get_porter_pa
     else:
         assert commands[1][commands[1].index("--parameter-set") + 1] == param_set_name
 
-    for path in tmp_path.iterdir():
-        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    for path in tmp_path.rglob("*"):
+        assert stat.S_IMODE(path.stat().st_mode) == (0o700 if path.is_dir() else 0o600)
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("failure_stage", ["parameter_write", "installation_create", "installation_write", "command_build"])
+@pytest.mark.parametrize("failure_stage", ["parameter_write", "value_create", "value_write", "installation_create", "installation_write", "command_build"])
 async def test_build_porter_command_removes_files_on_failure(mock_get_porter_parameter_keys, tmp_path, monkeypatch, failure_stage):
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     mock_get_porter_parameter_keys.return_value = ["param1"]
@@ -311,9 +319,20 @@ async def test_build_porter_command_removes_files_on_failure(mock_get_porter_par
         return original_dump(document, stream)
 
     def create_file(*args, **kwargs):
-        if failure_stage == "installation_create" and list(tmp_path.iterdir()):
+        if failure_stage == "value_create" and kwargs.get("dir"):
+            raise OSError("value creation failed")
+        if failure_stage == "installation_create" and not kwargs.get("dir") and list(tmp_path.iterdir()):
             raise OSError("document creation failed")
-        return original_tempfile(*args, **kwargs)
+        stream = original_tempfile(*args, **kwargs)
+        if failure_stage == "value_write" and kwargs.get("dir"):
+            original_write = stream.write
+
+            def fail_write(value):
+                original_write(value[:3])
+                raise OSError("value write failed")
+
+            stream.write = fail_write
+        return stream
 
     monkeypatch.setattr("helpers.commands.json.dump", dump)
     monkeypatch.setattr("helpers.commands.tempfile.NamedTemporaryFile", create_file)
@@ -352,6 +371,7 @@ async def test_build_porter_command_custom_action(mock_get_porter_parameter_keys
         ]
     finally:
         if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
             os.unlink(param_set_file)
 
 

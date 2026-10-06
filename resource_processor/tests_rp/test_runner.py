@@ -515,7 +515,10 @@ async def test_cleanup_param_set_no_param_file(mock_run_command_helper, mock_unl
 async def test_cleanup_param_set_removes_files_when_delete_raises(tmp_path, delete_error):
     parameter_file = tmp_path / "parameters.json"
     installation_file = tmp_path / "installation.json"
-    parameter_file.write_text("secret parameters")
+    parameter_file.write_text("parameter references")
+    value_directory = tmp_path / "parameters.json.values"
+    value_directory.mkdir(mode=0o700)
+    (value_directory / "value").write_text("secret value")
     installation_file.write_text("installation")
 
     with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=delete_error):

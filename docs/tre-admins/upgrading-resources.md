@@ -30,6 +30,8 @@ An upgrade runs the bundle's normal upgrade action and can change deployed infra
 
 Follow the [Swagger UI procedure below](#how-to-upgrade-a-resource-using-swagger-ui), using the current template version in the request body. A newer template version is not required.
 
+To remove the firewall rule size limit throughout bundle execution, publish, register and upgrade the firewall shared service to `tre-shared-service-firewall` 1.6.4 or later. Earlier firewall bundles still pass the rules through environment variables.
+
 Upgrade each affected resource separately. Upgrading a workspace does not upgrade its child resources. Before deleting a workspace and its contents, upgrade affected child resources too.
 
 ## How to upgrade a resource using Swagger UI
