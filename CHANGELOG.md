@@ -5,6 +5,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 * Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
 * Add search, sort and (for Workspace Owners) a My resources / All resources view to every resource list, defaulting owners to their own user resources. ([#2832](https://github.com/microsoft/AzureTRE/issues/2832))
@@ -20,6 +21,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
 * Preserve loaded UI views during background refresh, ignore stale workspace responses, refresh on every tab return, and keep internal Connect behavior and unavailable cost displays consistent. (`ui` 0.10.1) ([#5105](https://github.com/microsoft/AzureTRE/pull/5105))
 * Avoid role-restricted shared-service and workspace-operation requests for researchers, show only the resource tabs each role can use, and show a researcher's own name as the owner of their resources. ([#2431](https://github.com/microsoft/AzureTRE/issues/2431))
 * Replace cryptic API network and server errors with a retryable availability message. ([#4852](https://github.com/microsoft/AzureTRE/issues/4852))

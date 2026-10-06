@@ -23,6 +23,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read # For paths-filter and super-linter
+    env:
+      # Report lint results through the job without publishing statuses or PR comments.
+      MULTI_STATUS: "false"
+      ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: "false"
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -54,6 +58,9 @@ jobs:
               - 'devops/scripts/porter_build_bundle.sh'
               - '**/porter-build-context.env'
             ci_cleanup:
+              - 'Makefile'
+              - 'core/terraform/scripts/letsencrypt.sh'
+              - 'core/terraform/scripts/validate_certbot.sh'
               - 'devops/scripts/clean_ci_validation_envs.sh'
               - 'devops/scripts/storage_enable_public_access.sh'
               - 'devops/scripts/bash_trap_helper.sh'
