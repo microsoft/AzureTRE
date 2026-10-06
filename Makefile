@@ -244,8 +244,8 @@ lint: ## 🧹 Lint all files
 		-e VALIDATE_MARKDOWN=true \
 		-e VALIDATE_PYTHON_RUFF=true \
 		-e VALIDATE_PYTHON_RUFF_FORMAT=true \
-		-e PYTHON_RUFF_CONFIG_FILE=pyproject.toml \
-		-e PYTHON_RUFF_FORMAT_CONFIG_FILE=pyproject.toml \
+		-e PYTHON_RUFF_CONFIG_FILE=../../pyproject.toml \
+		-e PYTHON_RUFF_FORMAT_CONFIG_FILE=../../pyproject.toml \
 		-e VALIDATE_YAML=true \
 		-e VALIDATE_TERRAFORM_TFLINT=true \
 		-e VALIDATE_JAVA=true \

@@ -15,7 +15,7 @@ repos:
         args: [--maxkb=1000]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.10
+    rev: v0.15.17 # keep in sync with Super-Linter and requirements.txt
     hooks:
       - id: ruff-check
       - id: ruff-format
@@ -23,9 +23,9 @@ repos:
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.3
     hooks:
+      # Exclusions are defined once in pyproject.toml so CI and pre-commit scan the same files
       - id: bandit
         args: [-ll, --configfile, pyproject.toml]
-        exclude: (^|/)(tests|e2e_tests)/
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.2
@@ -47,8 +47,14 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_tflint
-        args: [--config=__GIT_WORKING_DIR__/.github/linters/.tflint.hcl]
+        args: [--args=--config=__GIT_WORKING_DIR__/.github/linters/.tflint.hcl]
       - id: terraform_docs
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+          # Module sources are raw git URLs that fail Markdown bare-URL linting
+          - --args=--hide=modules
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.5.0

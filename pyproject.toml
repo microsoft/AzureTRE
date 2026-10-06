@@ -8,7 +8,9 @@ ignore-words-list = "tre,aci,requestor,api,AspNet,az,AzureTRE,Codespaces,Conda,d
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F"]
+# Preview enables Ruff's pycodestyle E1/E2/E3 rules, matching the previous Flake8 E/W/F coverage
+preview = true
+select = ["E", "W", "F"]
 ignore = ["E231", "E501"]
 
 [tool.bandit]
@@ -19,6 +21,7 @@ exclude_dirs = [
   "api_app/tests_ma",
   "resource_processor/tests_rp",
   "airlock_processor/tests",
+  "devops/tests",
   "docs",
 ]
 skips = ["B101"]
