@@ -47,7 +47,6 @@
         "editor.formatOnPaste": true,
         "editor.formatOnSave": true,
         "python.pythonPath": "/usr/local/bin/python",
-        "ruff.nativeServer": "on",
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",
           "editor.codeActionsOnSave": {

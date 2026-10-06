@@ -24,7 +24,6 @@ exclude_dirs = [
   "devops/tests",
   "docs",
 ]
-skips = ["B101"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"

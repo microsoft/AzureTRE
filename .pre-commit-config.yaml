@@ -5,6 +5,8 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        # The generated COMPONENTS history must not be rewritten
+        exclude: ^CHANGELOG\.md$
       - id: end-of-file-fixer
       - id: check-yaml
         # Syntax-only check so custom tags such as those in mkdocs.yml are accepted
