@@ -32,6 +32,7 @@ async function getCommandFromComment({ core, context, github }) {
     core.info(`Using head ref: ${pr.head.ref}`)
     const branchRefId = getRefIdForBranch(pr.head.ref);
     logAndSetOutput(core, "branchRefId", branchRefId);
+    logAndSetOutput(core, "branchCiGitRef", `refs/heads/${pr.head.ref}`);
   } else {
     core.info("Skipping branchRefId as PR is from a fork")
   }
@@ -215,7 +216,7 @@ async function handleTestCommand({ core, github }, commandParts, testDescription
     }
   }
 
-  const message = `:runner: Running ${testDescription}: https://github.com/${pr.repoOwner}/${pr.repoName}/actions/runs/${runId} (with refid \`${pr.refId}\`)`;
+  const message = `:runner: Running ${testDescription}: https://github.com/${pr.repoOwner}/${pr.repoName}/actions/runs/${runId}`;
   await addActionComment({ github }, pr.repoOwner, pr.repoName, pr.number, comment.username, comment.link, message);
   return true
 

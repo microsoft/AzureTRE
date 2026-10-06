@@ -11,6 +11,8 @@ import time
 import urllib.error
 import urllib.request
 
+from ci_environment_id import environment_id
+
 
 class RecoveryError(RuntimeError):
     pass
@@ -46,6 +48,13 @@ def context():
         "The workflow run identity is missing.",
     )
     ref_id = hashlib.sha512((ref + "\n").encode()).hexdigest()[:8]
+    regional_id = env.get("CI_ENVIRONMENT_ID", "")
+    if regional_id:
+        try:
+            ref_id = environment_id(ref, env.get("TF_VAR_location", ""), env.get("AZURE_ENVIRONMENT", ""))
+        except ValueError as error:
+            raise RecoveryError(str(error)) from error
+        require(regional_id == ref_id, "The regional CI environment identity does not match.")
     group = "rg-tre" + ref_id + "-mgmt"
     account = "tre" + ref_id + "mgmt"
     require(
