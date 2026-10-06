@@ -5,6 +5,7 @@ import { ApiEndpoint } from "../../../models/apiEndpoints";
 import { TRENotification } from "../../../models/treNotification";
 import { Operation } from "../../../models/operation";
 import config from "../../../config.json";
+import { isPageVisible } from "../../../hooks/useRefresh";
 
 interface NotificationPollerProps {
   notification: TRENotification;
@@ -17,6 +18,8 @@ export const NotificationPoller: React.FunctionComponent<NotificationPollerProps
   const apiCall = useAuthApiCall();
 
   useInterval(async () => {
+    // Operation status is fetched again on the first tick after the tab becomes visible.
+    if (!isPageVisible()) return;
     try {
       let op = (
         await apiCall(
