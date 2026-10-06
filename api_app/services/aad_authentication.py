@@ -428,13 +428,13 @@ class AzureADAuthorization:
 
         # List all direct role assignments on the service principal
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo"
-        assignments = self._ms_graph_query(url, "GET")
+        assignments = self._ms_graph_query(url, "GET", raise_on_error=True)
 
         for assignment in assignments.get("value", []):
             if assignment["principalId"] == principal_id and assignment["appRoleId"] == role_id:
                 assignment_id = assignment["id"]
                 delete_url = f"{MICROSOFT_GRAPH_URL}/v1.0/servicePrincipals/{sp_id}/appRoleAssignedTo/{assignment_id}"
-                self._ms_graph_query(delete_url, "DELETE")
+                self._ms_graph_query(delete_url, "DELETE", raise_on_error=True)
                 logger.info(f"Successfully removed principal {principal_id} from app role {role_id}")
                 return True
 

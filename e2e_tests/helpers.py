@@ -194,7 +194,7 @@ async def ensure_automation_admin_has_airlock_role(workspace_id: str, admin_toke
 
 
 async def ensure_automation_admin_has_workspace_owner_role(workspace_id: str, admin_token: str, verify: bool) -> None:
-    await _ensure_automation_admin_has_role(workspace_id, admin_token, verify, role_name="WorkspaceOwner")
+    await _ensure_automation_admin_has_role(workspace_id, admin_token, verify, role_name="Workspace Owner")
 
 
 async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> None:
@@ -326,7 +326,8 @@ async def _verify_role_in_token(
     for attempt in range(ROLE_VERIFICATION_MAX_ATTEMPTS):
         # Get a fresh token for the workspace
         try:
-            token = await loop.run_in_executor(None, functools.partial(get_token, scope_uri, verify))
+            # A new credential each attempt avoids reusing a cached token issued before the role was assigned
+            token = await loop.run_in_executor(None, lambda: get_token(scope_uri, verify).get_token())
             roles_in_token = _get_roles_from_token(token)
 
             if expected_role_value in roles_in_token:

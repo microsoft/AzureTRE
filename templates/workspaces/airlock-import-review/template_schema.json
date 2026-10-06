@@ -65,8 +65,8 @@
     "client_id": {
       "type": "string",
       "title": "Application (Client) ID",
-      "description": "Optional. Provide the client ID of a pre-created AAD application. If left empty, Terraform will create a new one automatically.",
-      "updateable": true
+      "description": "Optional. Provide the client ID of a pre-created AAD application. If left empty, Terraform will create a new one automatically. Cannot be changed after the workspace is created.",
+      "updateable": false
     },
     "create_aad_groups": {
       "type": "boolean",

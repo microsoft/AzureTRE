@@ -1,9 +1,11 @@
 import asyncio
 import functools
 import logging
+import os
 import random
 import re
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Tuple
 
@@ -13,6 +15,7 @@ import pytest
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
+from e2e_tests.cloud import get_cloud
 from helpers import get_admin_token, get_template, ensure_automation_admin_has_airlock_role, ensure_automation_admin_has_workspace_owner_role
 
 
@@ -39,8 +42,23 @@ def verify(pytestconfig):
 
 
 def _run_manual_app_script(command: list[str]) -> str:
-    completed = subprocess.run(command, check=True, capture_output=True, text=True)
-    return completed.stdout + completed.stderr
+    env = None
+    with tempfile.TemporaryDirectory() as azure_config_dir:
+        if config.APPLICATION_ADMIN_CLIENT_SECRET != "" and config.AAD_TENANT_ID != "":
+            # Run as the Application Admin in an isolated Azure CLI profile so the workspace application is
+            # created by the identity Terraform uses, without replacing the caller's own Azure CLI session.
+            env = {**os.environ, "AZURE_CONFIG_DIR": azure_config_dir}
+            subprocess.run(["az", "cloud", "set", "--name", get_cloud().name, "--only-show-errors"], check=True, capture_output=True, text=True, env=env)
+            subprocess.run(
+                ["az", "login", "--service-principal",
+                 "--username", config.APPLICATION_ADMIN_CLIENT_ID,
+                 "--password", config.APPLICATION_ADMIN_CLIENT_SECRET,
+                 "--tenant", config.AAD_TENANT_ID,
+                 "--allow-no-subscriptions", "--only-show-errors", "--output", "none"],
+                check=True, capture_output=True, text=True, env=env)
+
+        completed = subprocess.run(command, check=True, capture_output=True, text=True, env=env)
+        return completed.stdout + completed.stderr
 
 
 async def _provision_manually_created_application_client_id() -> str:

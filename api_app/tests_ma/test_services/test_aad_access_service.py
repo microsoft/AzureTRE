@@ -947,6 +947,19 @@ def test_get_workspace_roles_returns_roles(_, ms_graph_query_mock, mock_headers,
     assert roles[0].displayName == "Airlock Manager"
 
 
+@patch("services.aad_authentication.AzureADAuthorization._ms_graph_query")
+def test_remove_principal_from_app_role_direct_propagates_graph_errors(ms_graph_query_mock, workspace_without_groups, role_owner):
+    """Graph failures when removing a direct assignment must not be reported as success."""
+    ms_graph_query_mock.return_value = {"value": [{"id": "assignment-1", "principalId": "user-1", "appRoleId": role_owner.id}]}
+
+    access_service = AzureADAuthorization()
+    assert access_service._remove_principal_from_app_role_direct("user-1", workspace_without_groups, role_owner.id) is True
+
+    for query_call in ms_graph_query_mock.call_args_list:
+        assert query_call.kwargs.get("raise_on_error") is True
+    assert ms_graph_query_mock.call_args_list[-1].args[1] == "DELETE"
+
+
 def test_compare_versions_equal():
     result = compare_versions("1.0.0", "1.0.0")
     assert result == 0

@@ -23,7 +23,7 @@ Most E2E suites now rely on automatically created workspace applications, so you
 
 The `test_manually_created_application_workspace` test (`manual_app` marker, not run automatically) exercises the pre-created workspace application flow. Its fixture automatically runs `devops/scripts/aad/create_workspace_application.sh` to create or reuse a workspace application before deploying the test workspace.
 
-Ensure `az` CLI is installed, you are logged in to the correct tenant (`az login -t <tenant>`) as a user or service principal, and `APPLICATION_ADMIN_CLIENT_ID` (the Application Admin app registration used by the workspace bundle) is configured so the script can add it as an owner of the application.
+Set `APPLICATION_ADMIN_CLIENT_ID` (the Application Admin app registration used by the workspace bundle) so the script can add it as an owner of the application. If `APPLICATION_ADMIN_CLIENT_SECRET` and `AAD_TENANT_ID` are also set (as in CI), the fixture signs in as the Application Admin in an isolated Azure CLI profile to create the application. Otherwise, ensure `az` CLI is logged in to the correct tenant (`az login -t <tenant>`) with an identity that can create app registrations.
 
 Run `make test-e2e-custom SELECTOR='manual_app'` locally, or comment `/test-manual-app` on a pull request, to exercise this flow.
 

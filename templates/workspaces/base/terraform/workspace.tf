@@ -126,6 +126,19 @@ removed {
   }
 }
 
+# Workspaces deployed with auth_type=Manual (v2.x) kept their Key Vault secrets in
+# the root module. Move them into the AAD module, which now manages the same
+# secret names, so they are updated in place rather than destroyed.
+moved {
+  from = azurerm_key_vault_secret.client_id[0]
+  to   = module.aad.azurerm_key_vault_secret.client_id
+}
+
+moved {
+  from = azurerm_key_vault_secret.client_secret[0]
+  to   = module.aad.azurerm_key_vault_secret.client_secret
+}
+
 import {
   for_each = local.workspace_app_imports
   to       = module.aad.azuread_application.workspace
