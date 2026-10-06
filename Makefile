@@ -237,15 +237,14 @@ lint: ## 🧹 Lint all files
 	$(call target_title, "Linting")
 	@terraform fmt -check -recursive -diff
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
+	@# Ruff formatting is enforced on changed files by PR validation and pre-commit, not across the whole codebase here
 	@docker run --name superlinter --pull=always --rm \
 		-e RUN_LOCAL=true \
 		-e LOG_LEVEL=INFO \
 		-e DEFAULT_BRANCH=main \
 		-e VALIDATE_MARKDOWN=true \
 		-e VALIDATE_PYTHON_RUFF=true \
-		-e VALIDATE_PYTHON_RUFF_FORMAT=true \
 		-e PYTHON_RUFF_CONFIG_FILE=../../pyproject.toml \
-		-e PYTHON_RUFF_FORMAT_CONFIG_FILE=../../pyproject.toml \
 		-e VALIDATE_YAML=true \
 		-e VALIDATE_TERRAFORM_TFLINT=true \
 		-e VALIDATE_JAVA=true \
@@ -261,7 +260,7 @@ lint: ## 🧹 Lint all files
 		-e TYPESCRIPT_ES_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-e TSX_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		ghcr.io/super-linter/super-linter:slim-v8.3.2
+		ghcr.io/super-linter/super-linter:slim-v8.7.0
 
 # Description: Lint documentation files
 # # This will validate all files, not only the changed ones as the CI version does.
