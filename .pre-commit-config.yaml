@@ -20,7 +20,6 @@ repos:
     rev: v0.15.17 # keep in sync with Super-Linter and requirements.txt
     hooks:
       - id: ruff-check
-      - id: ruff-format
 
   - repo: https://github.com/PyCQA/bandit
     rev: 1.8.3

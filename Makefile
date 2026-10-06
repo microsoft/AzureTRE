@@ -237,7 +237,6 @@ lint: ## 🧹 Lint all files
 	$(call target_title, "Linting")
 	@terraform fmt -check -recursive -diff
 	@# LOG_LEVEL=NOTICE reduces noise but it might also seem like the process is stuck - it's not...
-	@# Ruff formatting is enforced on changed files by PR validation and pre-commit, not across the whole codebase here
 	@docker run --name superlinter --pull=always --rm \
 		-e RUN_LOCAL=true \
 		-e LOG_LEVEL=INFO \
