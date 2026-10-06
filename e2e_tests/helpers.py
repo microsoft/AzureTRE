@@ -1,11 +1,9 @@
 import asyncio
 import base64
-import functools
 import json
 from typing import List, Optional
 from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout, Response
-import httpx
 import logging
 from starlette import status
 from azure.identity import ClientSecretCredential, UsernamePasswordCredential
@@ -216,7 +214,7 @@ async def _ensure_automation_admin_has_role(workspace_id: str, admin_token: str,
         LOGGER.warning("%s role not found for workspace %s; skipping assignment", role_name, workspace_id)
         return
 
-    user_object_id = await _get_automation_admin_object_id(verify)
+    user_object_id = _get_automation_admin_object_id(admin_token)
     if user_object_id is None:
         LOGGER.warning("Unable to determine automation admin directory object id; skipping %s assignment", role_name)
         return
@@ -355,10 +353,10 @@ async def _verify_role_in_token(
     )
 
 
-async def _get_automation_admin_object_id(verify: bool) -> Optional[str]:
-    """Get the directory object ID for the automation admin (user or service principal)."""
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, functools.partial(_get_directory_object_id_via_graph, verify))
+def _get_automation_admin_object_id(admin_token: str | TokenProvider) -> Optional[str]:
+    """Get the directory object ID for the automation admin (user or service principal) from its TRE API token."""
+    token = admin_token.get_token() if isinstance(admin_token, TokenProvider) else admin_token
+    return _decode_jwt_payload(token).get("oid")
 
 
 async def _wait_for_user_management_configuration(workspace_id: str, admin_token: str, verify: bool, role_name: str) -> Optional[dict]:
@@ -404,40 +402,3 @@ def _workspace_cannot_support_user_management(workspace: dict) -> bool:
     deployment_status = workspace.get("deploymentStatus", "")
     groups_flag = props.get("create_aad_groups")
     return deployment_status == "deployed" and not groups_flag
-
-
-def _get_directory_object_id_via_graph(verify: bool) -> Optional[str]:
-    graph_resource = cloud.get_ms_graph_resource()
-    graph_base_url = f"{graph_resource}/v1.0"
-    token = get_token(graph_resource, verify)
-    headers = {**get_auth_header(token), "Content-Type": "application/json"}
-
-    identity_id: Optional[str] = None
-    with httpx.Client(headers=headers, timeout=TIMEOUT, verify=verify) as client:
-        if _is_service_principal_auth():
-            identity_id = _get_service_principal_id(client, graph_base_url, config.TEST_ACCOUNT_CLIENT_ID)
-        elif config.TEST_USER_NAME != "":
-            identity_id = _get_user_object_id(client, graph_base_url, config.TEST_USER_NAME)
-
-    return identity_id
-
-
-def _get_service_principal_id(client: httpx.Client, base_url: str, app_id: str) -> Optional[str]:
-    resp = client.get(f"{base_url}/servicePrincipals", params={"$filter": f"appId eq '{app_id}'"})
-    resp.raise_for_status()
-    values = resp.json().get("value", [])
-    if not values:
-        return None
-    return values[0]["id"]
-
-
-def _get_user_object_id(client: httpx.Client, base_url: str, user_principal_name: str) -> Optional[str]:
-    if user_principal_name == "":
-        return None
-
-    resp = client.get(f"{base_url}/users/{user_principal_name}", params={"$select": "id"})
-    if resp.status_code == status.HTTP_404_NOT_FOUND:
-        return None
-
-    resp.raise_for_status()
-    return resp.json().get("id")

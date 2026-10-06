@@ -40,8 +40,19 @@ Example on how to run the script:
 
 | Argument | Description |
 | -------- | ----------- |
-| `--name` | The name of the application. This will be suffixed with 'API' by the script. |
-| `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application so that it can be administered within TRE. |
+| `--name` | The name of the application. This will be suffixed with 'API' by the script. Required unless `--client-id` is given. |
+| `--client-id` | Optional. Client ID of an existing workspace application. Instead of creating an application, the script adds the Application Admin as an owner of this application and its service principal. |
+| `--application-admin-clientid` | This is a required parameter , and should be a client id that will be added to the Owners of the Microsoft Entra ID Application (and its service principal, if one exists) so that it can be administered within TRE. |
+
+### Upgrading workspaces that use a manually created application
+
+Before upgrading a workspace created with `auth_type` set to `Manual` to base workspace bundle 3.0.0 or later, make the Application Admin an owner of its application and service principal, unless the Application Admin has `Application.ReadWrite.All`:
+
+```bash
+  ./devops/scripts/aad/create_workspace_application.sh \
+    --client-id "<workspace client id>" \
+    --application-admin-clientid "${APPLICATION_ADMIN_CLIENT_ID}"
+```
 
 !!! note
     When you provide a pre-created application's `client_id` at workspace creation, Terraform imports the application and takes over its lifecycle (roles, service principal and secret). As a result the application is **deleted when the workspace is uninstalled**. Do not share a pre-created application across multiple workspaces or with other purposes.

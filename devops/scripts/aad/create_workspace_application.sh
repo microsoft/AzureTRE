@@ -8,14 +8,19 @@ function show_usage()
 {
     cat << USAGE
 
-Utility script for pre-creating the Workspace API Azure AD application registration.
+Utility script for pre-creating the Workspace API Azure AD application registration, or for
+making the Application Admin an owner of an existing workspace application before upgrading it.
 
 Usage: $0 --name <workspace-name> --application-admin-clientid <client-id>
+       $0 --client-id <workspace-client-id> --application-admin-clientid <client-id>
 
 Options:
   -n,--name
-      Required. Prefix for the Workspace API app registration name.
+      Prefix for the Workspace API app registration name. Required unless --client-id is given.
       The script appends " API" to keep naming consistent with Terraform.
+  -c,--client-id
+      Client ID of an existing workspace application. The Application Admin is added as an owner
+      of the application and its service principal so Terraform can manage them on upgrade.
   -y,--application-admin-clientid
       Required. Client ID of the Application Admin identity used by the workspace bundle
       (APPLICATION_ADMIN_CLIENT_ID). It is added as an owner of the workspace application
@@ -54,6 +59,10 @@ while [[ $# -gt 0 ]]; do
             appName=$2
             shift 2
         ;;
+        -c|--client-id)
+            workspaceAppId=$2
+            shift 2
+        ;;
         -y|--application-admin-clientid)
           applicationAdminClientId=$2
           shift 2
@@ -68,11 +77,10 @@ done
 ###################################
 # CHECK INCOMING PARAMETERS       #
 ###################################
-if [[ -z "$appName" ]]; then
-    echo "Please specify the application name." 1>&2
+if [[ -z "$appName" && -z "$workspaceAppId" ]]; then
+    echo "Please specify the application name or an existing client ID." 1>&2
     show_usage
 fi
-appName="$appName API"
 if [[ -z "$applicationAdminClientId" ]]; then
   echo "Please specify the application administrator client ID." 1>&2
   show_usage
@@ -94,12 +102,15 @@ source "${DIR}/get_existing_app.sh"
 # shellcheck disable=SC1091
 source "${DIR}/wait_for_new_app_registration.sh"
 
-# Look for an existing app registration
-existingApp=$(get_existing_app --name "${appName}")
-if [[ -n ${existingApp} ]]; then
-    appObjectId=$(echo "${existingApp}" | jq -r '.id')
-    workspaceAppId=$(echo "${existingApp}" | jq -r '.appId')
-    echo "Found existing app registration (AppId: ${workspaceAppId})"
+if [[ -z ${workspaceAppId} ]]; then
+  appName="$appName API"
+  # Look for an existing app registration
+  existingApp=$(get_existing_app --name "${appName}")
+  if [[ -n ${existingApp} ]]; then
+      appObjectId=$(echo "${existingApp}" | jq -r '.id')
+      workspaceAppId=$(echo "${existingApp}" | jq -r '.appId')
+      echo "Found existing app registration (AppId: ${workspaceAppId})"
+  fi
 fi
 
 if [[ -z ${workspaceAppId} ]]; then
@@ -135,8 +146,26 @@ function ensure_app_owner()
   az ad app owner add --id "${workspaceAppId}" --owner-object-id "${ownerObjectId}" --only-show-errors
 }
 
-# The Application Admin must own the application so Terraform can manage it.
+function ensure_sp_owner()
+{
+  local spObjectId=$1
+  local ownerObjectId=$2
+  if az rest --method GET --uri "${msGraphUri}/servicePrincipals/${spObjectId}/owners?\$select=id" -o json --only-show-errors \
+      | jq -e --arg id "${ownerObjectId}" '.value[] | select(.id == $id)' > /dev/null; then
+    return 0
+  fi
+  az rest --method POST --uri "${msGraphUri}/servicePrincipals/${spObjectId}/owners/\$ref" \
+    --headers Content-Type=application/json \
+    --body "{\"@odata.id\": \"${msGraphUri}/directoryObjects/${ownerObjectId}\"}" --only-show-errors
+}
+
+# The Application Admin must own the application and, if it exists, its service principal so
+# Terraform can manage them with Application.ReadWrite.OwnedBy.
 ensure_app_owner "${applicationAdminObjectId}"
+workspaceSpObjectId=$(az ad sp list --filter "appId eq '${workspaceAppId}'" --query "[0].id" --output tsv --only-show-errors)
+if [[ -n "${workspaceSpObjectId}" ]]; then
+  ensure_sp_owner "${workspaceSpObjectId}" "${applicationAdminObjectId}"
+fi
 if [[ -n "${currentUserId}" ]]; then
   ensure_app_owner "${currentUserId}" || echo "Warning: unable to add the signed-in user as an owner of the workspace application." 1>&2
 fi

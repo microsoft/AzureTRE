@@ -13,7 +13,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
      - Leave `client_id` empty for fully automatic application creation
   3. **Upgrading Workspaces:**
      - Only upgrade once you have tested the process in a non-production environment with your own bundles.
-     - Ensure Application Admin identity owns existing workspace applications
+     - Ensure the Application Admin identity owns existing workspace applications and their service principals, unless it has `Application.ReadWrite.All`. For manually created applications run `devops/scripts/aad/create_workspace_application.sh --client-id <workspace client id> --application-admin-clientid <application admin client id>`
      - Run workspace upgrade - Terraform will import and take over secret management
 
   **Permission Changes:**

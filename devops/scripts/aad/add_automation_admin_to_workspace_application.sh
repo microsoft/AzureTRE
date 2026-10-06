@@ -84,7 +84,9 @@ else
 fi
 
 msGraphUri="$(az cloud show --query endpoints.microsoftGraphResourceId --output tsv)/v1.0"
-tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json | jq -r '.value[] | select(.isDefault == true) | .id')
+# Informational only; identities without directory read permissions fall back to the tenant ID.
+tenant=$(az rest -m get -u "${msGraphUri}/domains" -o json --only-show-errors 2>/dev/null | jq -r '.value[] | select(.isDefault == true) | .id' || true)
+tenant=${tenant:-$(az account show --query tenantId --output tsv)}
 
 echo -e "\e[96mAdding Automation Admin to Workspace Application in the \"${tenant}\" Azure AD tenant.\e[0m"
 
