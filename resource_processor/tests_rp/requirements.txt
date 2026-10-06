@@ -1,0 +1,4 @@
+-r ../vmss_porter/requirements.txt
+mock==5.2.0
+pytest==9.0.3
+pytest-asyncio==1.3.0

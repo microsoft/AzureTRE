@@ -453,6 +453,21 @@ async def test_run_command_helper_error_best_effort_logs_debug(mock_shell_output
 
 
 @pytest.mark.asyncio
+@patch("helpers.commands.shell_output_logger")
+async def test_run_command_helper_can_capture_sensitive_output_without_logging(mock_shell_output_logger):
+    with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_subprocess:
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b'{"secret": "stored-value"}', b"sensitive diagnostic")
+        mock_proc.returncode = 0
+        mock_subprocess.return_value = mock_proc
+
+        result = await run_command_helper(["porter", "show"], {"porter_env": {}}, "Read installation", log_output=False)
+
+    assert result == (0, '{"secret": "stored-value"}', "sensitive diagnostic")
+    mock_shell_output_logger.assert_not_called()
+
+
+@pytest.mark.asyncio
 @patch("helpers.commands.run_command_helper")
 async def test_get_porter_parameter_keys_command_splitting(mock_run_command_helper):
     """Test that commands are properly split for security in get_porter_parameter_keys."""

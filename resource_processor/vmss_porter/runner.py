@@ -167,7 +167,55 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
             await asyncio.sleep(10)
 
 
-async def run_porter(command_parts_list: list, config: dict):
+async def check_legacy_parameter_overrides(installation_id: str, config: dict) -> Optional[str]:
+    """Reject actions whose current parameters could be replaced by stored CLI overrides."""
+    inspection_error = f"Cannot verify stored parameters for resource '{installation_id}'. Check Porter storage access and retry."
+    upgrade_error = (
+        f"Cannot run this action for resource '{installation_id}': legacy Porter parameter overrides can replace current values. "
+        "Upgrade this resource with its current template version before retrying."
+    )
+    try:
+        # List first so a missing installation retains Porter's normal action behaviour.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "list", "--name", installation_id, "--output", "json", "--verbosity", "error"],
+            config, "Check installation exists", log_output=False
+        )
+        if code != 0:
+            return inspection_error
+        installations = json.loads(output)
+        if not isinstance(installations, list):
+            return inspection_error
+        if not installations:
+            return None
+        if len(installations) != 1 or not isinstance(installations[0], dict) or installations[0].get("name") != installation_id:
+            return inspection_error
+
+        # The show document can contain resolved secrets. Never log its output.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "show", installation_id, "--output", "json", "--verbosity", "error"],
+            config, "Check stored parameter overrides", log_output=False
+        )
+        if code != 0:
+            return inspection_error
+        installation = json.loads(output)
+        if not isinstance(installation, dict) or installation.get("name") != installation_id:
+            return inspection_error
+        parameters = installation.get("parameters", {})
+        if not isinstance(parameters, dict):
+            return inspection_error
+        status = installation.get("status", {})
+        # Porter show omits stored parameters when no recorded run is available.
+        if not isinstance(status, dict) or not status.get("runId"):
+            return f"Cannot verify stored parameters for resource '{installation_id}' without a recorded run. Upgrade this resource before retrying."
+        if parameters:
+            return upgrade_error
+    except Exception:
+        # Parser, subprocess and storage errors must not allow an unchecked action.
+        return inspection_error
+    return None
+
+
+async def run_porter(command_parts_list: list, config: dict, *, parameter_check_installation: Optional[str] = None):
     """
     Run a Porter command
     """
@@ -188,6 +236,11 @@ async def run_porter(command_parts_list: list, config: dict):
         returncode, _, stderr_text = await run_command_helper(cmd, config, "Porter credential sets")
         if returncode != 0:
             return (returncode, None, stderr_text)
+
+    if parameter_check_installation is not None:
+        error = await check_legacy_parameter_overrides(parameter_check_installation, config)
+        if error:
+            return (1, None, error)
 
     last_returncode = None
     last_stdout = None
@@ -262,7 +315,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     logger.debug("Starting to run porter execution command...")
     try:
-        returncode, _, err = await run_porter(porter_command, config)
+        check_installation = installation_id if action not in ("install", "upgrade") else None
+        returncode, _, err = await run_porter(porter_command, config, parameter_check_installation=check_installation)
     finally:
         if param_set_file or installation_file:
             try:
@@ -284,7 +338,7 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             command_representation += " ".join(cmd) + "; "
         command_representation = command_representation.rstrip("; ")
 
-        error_message = "Error message: " + " ".join(err.split('\n')) + "; Command executed: " + command_representation
+        error_message = "Error message: " + " ".join(err.split('\n')) + "; Porter command: " + command_representation
         action_completed_without_error = False
 
         if "uninstall" == action and "could not find installation" in err:

@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from shared.logging import logger, shell_output_logger
 
 
-async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True):
+async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
@@ -27,12 +27,14 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
 
     if stdout:
         stdout_text = stdout.decode()
-        shell_output_logger(stdout_text, '[stdout]', logging.INFO)
+        if log_output:
+            shell_output_logger(stdout_text, '[stdout]', logging.INFO)
 
     if stderr:
         stderr_text = stderr.decode()
-        stderr_log_level = logging.WARN if log_error else logging.DEBUG
-        shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
+        if log_output:
+            stderr_log_level = logging.WARN if log_error else logging.DEBUG
+            shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
 
     if proc.returncode != 0:
         if log_error:

@@ -569,6 +569,97 @@ async def test_run_porter_success(mock_run_command_helper):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["uninstall", "start"])
+async def test_run_porter_blocks_legacy_overrides_before_applying_parameters(action):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    action_command = ["porter", "uninstall", "resource"] if action == "uninstall" else ["porter", "invoke", "--action", action, "resource"]
+    commands = [["porter", "parameters", "apply", "/tmp/parameters.json"], action_command]
+    responses = [(0, None, None)] * 5 + [
+        (0, '[{"name":"resource"}]', None),
+        (0, json.dumps({"name": "resource", "status": {"runId": "old-run"}, "parameters": {"delete_backups_on_uninstall": True}}), None)
+    ]
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        code, stdout, error = await run_porter(commands, config, parameter_check_installation="resource")
+
+    assert code != 0
+    assert stdout is None
+    assert "Upgrade this resource" in error
+    assert "legacy Porter parameter overrides" in error
+    assert all(call.args[0] not in commands for call in command.await_args_list)
+    assert all(call.kwargs.get("log_output") is False for call in command.await_args_list[-2:])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("installation", [None, {"name": "resource", "status": {"runId": "new-run"}, "parameters": {}}])
+async def test_run_porter_allows_missing_or_migrated_installation(installation):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    commands = [["porter", "uninstall", "resource"]]
+    responses = [(0, None, None)] * 5
+    if installation is None:
+        responses.append((0, "[]", None))
+    else:
+        responses.extend([(0, '[{"name":"resource"}]', None), (0, json.dumps(installation), None)])
+    responses.append((0, "action completed", None))
+
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        result = await run_porter(commands, config, parameter_check_installation="resource")
+
+    assert result == (0, "action completed", None)
+    assert command.await_args_list[-1].args[0] == commands[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("inspection_responses", [
+    [(1, None, "secret diagnostic")],
+    [(0, "not json", None)],
+    [(0, "{}", None)],
+    [(0, '[{"name":"wrong-resource"}]', None)],
+    [(0, '[{"name":"resource"}]', None), (1, None, "secret diagnostic")],
+    [(0, '[{"name":"resource"}]', None), (0, "not json", None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"wrong-resource"}', None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":[]}', None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":{}}', None)],
+])
+async def test_run_porter_stops_when_parameter_inspection_is_inconclusive(inspection_responses):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    action = ["porter", "uninstall", "resource"]
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=[(0, None, None)] * 5 + inspection_responses) as command:
+        code, _, error = await run_porter([action], config, parameter_check_installation="resource")
+
+    assert code != 0
+    assert error
+    assert "secret diagnostic" not in error
+    assert all(call.args[0] != action for call in command.await_args_list)
+
+
+@pytest.mark.asyncio
+async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path):
+    parameters = tmp_path / "parameters.json"
+    parameters.write_text("secret")
+    action = ["porter", "uninstall", "resource"]
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io", "deployment_status_queue": "status"}
+    msg_body = {"id": "resource", "action": "uninstall", "operationId": "operation", "stepId": "step"}
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    responses = [(0, None, None)] * 5 + [
+        (0, '[{"name":"resource"}]', None),
+        (0, '{"name":"resource","status":{"runId":"old-run"},"parameters":{"backup":true}}', None),
+        (1, None, "not applied")
+    ]
+    with patch("vmss_porter.runner.build_porter_command", return_value=([action], str(parameters), "test-parameters", None)), \
+            patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        result = await invoke_porter_action(msg_body, client, config)
+
+    assert result is False
+    assert not parameters.exists()
+    assert all(call.args[0] != action for call in command.await_args_list)
+    final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert final_status["status"] == "deleting_failed"
+    assert "Upgrade this resource" in final_status["message"]
+
+
+@pytest.mark.asyncio
 @patch("vmss_porter.runner.run_command_helper")
 async def test_run_porter_azure_login_failure(mock_run_command_helper):
     """Test run_porter function with Azure login failure."""
