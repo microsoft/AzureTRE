@@ -1,18 +1,30 @@
-import random
-import pytest
 import asyncio
-from typing import Tuple
-import config
+import functools
 import logging
+import os
+import random
+import re
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Tuple
+
+import config
+import pytest
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
-from helpers import get_admin_token, get_template
+from e2e_tests.cloud import get_cloud
+from helpers import get_admin_token, get_template, ensure_automation_admin_has_airlock_role, ensure_automation_admin_has_workspace_owner_role
 
 
 LOGGER = logging.getLogger(__name__)
 pytestmark = pytest.mark.asyncio(loop_scope="session")
+
+_MANUALLY_CREATED_APP_NAME_PREFIX = "TRE E2E Manual Workspace"
+_CREATE_MANUAL_APP_SCRIPT = Path(__file__).resolve().parents[1] / "devops" / "scripts" / "aad" / "create_workspace_application.sh"
+_MANUAL_APP_CLIENT_ID_PATTERN = re.compile(r"Workspace Application Client ID:\s*([0-9a-f-]+)")
 
 
 def pytest_addoption(parser):
@@ -21,32 +33,85 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session")
 def verify(pytestconfig):
-    if pytestconfig.getoption("verify").lower() == "true":
+    option_value = pytestconfig.getoption("verify").lower()
+    if option_value == "true":
         return True
-    elif pytestconfig.getoption("verify").lower() == "false":
+    if option_value == "false":
         return False
+    raise ValueError("--verify must be 'true' or 'false'")
+
+
+def _run_manual_app_script(command: list[str]) -> str:
+    env = None
+    with tempfile.TemporaryDirectory() as azure_config_dir:
+        if config.APPLICATION_ADMIN_CLIENT_SECRET != "" and config.AAD_TENANT_ID != "":
+            # Run as the Application Admin in an isolated Azure CLI profile so the workspace application is
+            # created by the identity Terraform uses, without replacing the caller's own Azure CLI session.
+            env = {**os.environ, "AZURE_CONFIG_DIR": azure_config_dir}
+            subprocess.run(["az", "cloud", "set", "--name", get_cloud().name, "--only-show-errors"], check=True, capture_output=True, text=True, env=env)
+            subprocess.run(
+                ["az", "login", "--service-principal",
+                 "--username", config.APPLICATION_ADMIN_CLIENT_ID,
+                 "--password", config.APPLICATION_ADMIN_CLIENT_SECRET,
+                 "--tenant", config.AAD_TENANT_ID,
+                 "--allow-no-subscriptions", "--only-show-errors", "--output", "none"],
+                check=True, capture_output=True, text=True, env=env)
+
+        completed = subprocess.run(command, check=True, capture_output=True, text=True, env=env)
+        return completed.stdout + completed.stderr
+
+
+async def _provision_manually_created_application_client_id() -> str:
+    if not _CREATE_MANUAL_APP_SCRIPT.exists():
+        raise FileNotFoundError(f"Unable to locate create_workspace_application.sh at {_CREATE_MANUAL_APP_SCRIPT}")
+
+    application_admin_client_id = config.APPLICATION_ADMIN_CLIENT_ID
+    if application_admin_client_id == "":
+        raise ValueError("APPLICATION_ADMIN_CLIENT_ID must be set to provision a manually created workspace application")
+
+    command = [
+        str(_CREATE_MANUAL_APP_SCRIPT),
+        "--name",
+        _MANUALLY_CREATED_APP_NAME_PREFIX,
+        "--application-admin-clientid",
+        application_admin_client_id
+    ]
+
+    loop = asyncio.get_running_loop()
+    output = await loop.run_in_executor(None, functools.partial(_run_manual_app_script, command))
+
+    match = _MANUAL_APP_CLIENT_ID_PATTERN.search(output)
+    if not match:
+        raise RuntimeError(f"Unable to parse workspace application client ID from script output: {output}")
+
+    client_id = match.group(1)
+    LOGGER.info("Ensured manually created workspace application exists: %s", client_id)
+    return client_id
 
 
 async def create_or_get_test_workspace(
-        auth_type: str,
         verify: bool,
         template_name: str = resource_strings.BASE_WORKSPACE,
         pre_created_workspace_id: str = "",
-        client_id: str = "",
-        client_secret: str = "") -> Tuple[str, str]:
+        client_id: str = "") -> Tuple[str, str]:
     if pre_created_workspace_id != "":
+        # Still need to ensure role assignment for pre-created workspaces
+        admin_token = await get_admin_token(verify=verify)
+        await ensure_automation_admin_has_workspace_owner_role(pre_created_workspace_id, admin_token, verify)
+        await ensure_automation_admin_has_airlock_role(pre_created_workspace_id, admin_token, verify)
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
 
     LOGGER.info(f"Creating workspace {template_name}")
 
     description = " ".join([x.capitalize() for x in template_name.split("-")[2:]])
+    app_source = "Pre-created" if client_id else "Automatic"
     payload = {
         "templateName": template_name,
         "properties": {
-            "display_name": f"E2E {description} workspace ({auth_type} AAD)",
+            "display_name": f"E2E {description} workspace ({app_source} AAD)",
             "description": f"{template_name} test workspace for E2E tests",
-            "auth_type": auth_type,
-            "address_space_size": "small"
+            "address_space_size": "small",
+            "create_aad_groups": True
         }
     }
 
@@ -62,15 +127,21 @@ async def create_or_get_test_workspace(
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN
 
-    if auth_type == "Manual":
+    if client_id:
         payload["properties"]["client_id"] = client_id
-        payload["properties"]["client_secret"] = client_secret
 
     # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
     await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify)
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
+
+    # post_resource with wait=True (the default) ensures the workspace is fully deployed
+    await ensure_automation_admin_has_airlock_role(workspace_id, admin_token, verify)
+
+    if client_id:
+        await ensure_automation_admin_has_workspace_owner_role(workspace_id, admin_token, verify)
+
     return workspace_path, workspace_id
 
 
@@ -115,9 +186,8 @@ async def clean_up_test_workspace_service(pre_created_workspace_service_id: str,
 @pytest.fixture(scope="session")
 async def setup_test_workspace(verify) -> Tuple[str, str]:
     pre_created_workspace_id = config.TEST_WORKSPACE_ID
-    auth_type = "Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic"
     workspace_path, workspace_id = await create_or_get_test_workspace(
-        auth_type=auth_type, verify=verify, pre_created_workspace_id=pre_created_workspace_id, client_id=config.TEST_WORKSPACE_APP_ID, client_secret=config.TEST_WORKSPACE_APP_SECRET)
+        verify=verify, pre_created_workspace_id=pre_created_workspace_id)
 
     yield workspace_path, workspace_id
 
@@ -149,12 +219,25 @@ async def setup_test_workspace_and_guacamole_service(setup_test_workspace, verif
 async def setup_test_aad_workspace(verify) -> Tuple[str, str, str]:
     pre_created_workspace_id = config.TEST_AAD_WORKSPACE_ID
     # Set up
-    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, pre_created_workspace_id=pre_created_workspace_id)
+    workspace_path, workspace_id = await create_or_get_test_workspace(verify=verify, pre_created_workspace_id=pre_created_workspace_id)
 
     yield workspace_path, workspace_id
 
     # Tear-down
     await clean_up_test_workspace(pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify)
+
+
+@pytest.fixture(scope="session")
+async def setup_manually_created_application_workspace(verify) -> Tuple[str, str]:
+    client_id = await _provision_manually_created_application_client_id()
+
+    workspace_path, workspace_id = await create_or_get_test_workspace(
+        verify=verify,
+        client_id=client_id)
+
+    yield workspace_path, workspace_id
+
+    await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)
 
 
 async def get_workspace_owner_token(workspace_id, verify):
@@ -178,7 +261,7 @@ async def disable_and_delete_tre_resource(resource_path, verify):
 async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> Tuple[str, str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
-    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)
+    workspace_path, workspace_id = await create_or_get_test_workspace(verify=verify, template_name=resource_strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE, pre_created_workspace_id=pre_created_workspace_id)
 
     admin_token = await get_admin_token(verify=verify)
     workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=workspace_id, verify=verify)

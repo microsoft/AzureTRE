@@ -63,11 +63,15 @@ def workspace_show(workspace_context: WorkspaceContext, output_format, query):
 @click.option('--no-wait',
               flag_value=True,
               default=False)
+@click.option('--force-version-update',
+              flag_value=True,
+              default=False,
+              help='Force a major version upgrade')
 @output_option()
 @query_option()
 @click.pass_context
 @pass_workspace_context
-def workspace_update(workspace_context: WorkspaceContext, ctx: click.Context, etag, definition, definition_file, no_wait, output_format, query, suppress_output: bool = False):
+def workspace_update(workspace_context: WorkspaceContext, ctx: click.Context, etag, definition, definition_file, no_wait, force_version_update, output_format, query, suppress_output: bool = False):
     log = logging.getLogger(__name__)
 
     workspace_id = workspace_context.workspace_id
@@ -82,12 +86,14 @@ def workspace_update(workspace_context: WorkspaceContext, ctx: click.Context, et
     definition_dict = json.loads(definition)
 
     client = ApiClient.get_api_client_from_config()
+    params = {'force_version_update': True} if force_version_update else None
     response = client.call_api(
         log,
         'PATCH',
         f'/api/workspaces/{workspace_id}',
         headers={'etag': etag},
-        json_data=definition_dict)
+        json_data=definition_dict,
+        params=params)
 
     if no_wait:
         output(response, output_format=output_format, query=query, default_table_query=default_operation_table_query_single())

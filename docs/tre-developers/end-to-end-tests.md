@@ -17,6 +17,16 @@ When running tests locally, use the `prepare-for-e2e` Makefile target:
 make prepare-for-e2e
 ```
 
+## Manually created workspace application for targeted tests
+
+Most E2E suites now rely on automatically created workspace applications, so you no longer need to provision a manual app registration for standard runs.
+
+The `test_manually_created_application_workspace` test (`manual_app` marker, not run automatically) exercises the pre-created workspace application flow. Its fixture automatically runs `devops/scripts/aad/create_workspace_application.sh` to create or reuse a workspace application before deploying the test workspace.
+
+Set `APPLICATION_ADMIN_CLIENT_ID` (the Application Admin app registration used by the workspace bundle) so the script can add it as an owner of the application. If `APPLICATION_ADMIN_CLIENT_SECRET` and `AAD_TENANT_ID` are also set (as in CI), the fixture signs in as the Application Admin in an isolated Azure CLI profile to create the application. Otherwise, ensure `az` CLI is logged in to the correct tenant (`az login -t <tenant>`) with an identity that can create app registrations.
+
+Run `make test-e2e-custom SELECTOR='manual_app'` locally, or comment `/test-manual-app` on a pull request, to exercise this flow.
+
 ## Debugging the End-to-End tests
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.

@@ -152,6 +152,14 @@ scope_profile=$(get_msgraph_scope "profile")
 scope_openid=$(get_msgraph_scope "openid")
 scope_offline_access=$(get_msgraph_scope "offline_access")
 
+# When direct user management is enabled the API assigns workspace roles via direct
+# app-role assignment, which requires AppRoleAssignment.ReadWrite.All.
+appRoleAssignmentAccess=""
+if [[ "${DIRECT_USER_MANAGEMENT_ENABLED:-}" == true ]]; then
+  roleAppRoleAssignmentReadWriteAll=$(get_msgraph_role "AppRoleAssignment.ReadWrite.All")
+  appRoleAssignmentAccess="${roleAppRoleAssignmentReadWriteAll},"
+fi
+
 appDefinition=$(jq -c . << JSON
 {
   "displayName": "${appName}",
@@ -195,6 +203,7 @@ appDefinition=$(jq -c . << JSON
     {
       "resourceAppId": "${msGraphAppId}",
       "resourceAccess": [
+          ${appRoleAssignmentAccess}
           ${roleUserReadAll},
           ${roleDirectoryReadAll},
           $scope_email,
@@ -242,6 +251,10 @@ if [[ $grantAdminConsent -eq 1 ]]; then
   grant_admin_consent "${spId}" "$msGraphObjectId" "${directoryReadAllId}"
   userReadAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='User.Read.All'].id" --output tsv --only-show-errors)
   grant_admin_consent "${spId}" "${msGraphObjectId}" "${userReadAllId}"
+  if [[ "${DIRECT_USER_MANAGEMENT_ENABLED:-}" == true ]]; then
+    appRoleAssignmentReadWriteAllId=$(az ad sp show --id ${msGraphAppId} --query "appRoles[?value=='AppRoleAssignment.ReadWrite.All'].id" --output tsv --only-show-errors)
+    grant_admin_consent "${spId}" "${msGraphObjectId}" "${appRoleAssignmentReadWriteAllId}"
+  fi
 fi
 
 # Create the UX App Registration

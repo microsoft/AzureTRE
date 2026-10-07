@@ -37,7 +37,6 @@ async def test_create_base_workspace_with_backup_setting(enable_backup, expected
         properties = {
             "display_name": f"E2E Backup Workspace {uuid.uuid4().hex[:8]}",
             "description": "Base workspace for backup E2E tests",
-            "auth_type": "Automatic",
             "address_space_size": "small",
             "enable_backup": enable_backup,
         }

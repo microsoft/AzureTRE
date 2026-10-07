@@ -340,7 +340,8 @@ class TestAirlockRoutesThatRequireAirlockManagerRights():
         with patch("services.airlock.AirlockRequestRepository.create_airlock_request_item", return_value=sample_airlock_request_object()), \
                 patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation"), \
                 patch("services.airlock.AirlockRequestRepository.save_item"), \
-                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"):
+                patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id"), \
+                patch("services.aad_authentication.AzureADAuthorization.get_workspace_user_emails_by_role_assignment", return_value={"WorkspaceResearcher": ["researcher@outlook.com"], "WorkspaceOwner": ["owner@outlook.com"], "AirlockManager": ["manager@outlook.com"]}):
             yield
         app.dependency_overrides = {}
 

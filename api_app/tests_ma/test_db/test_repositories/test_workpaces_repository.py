@@ -183,6 +183,29 @@ async def test_create_workspace_item_persists_default_airlock_version_when_omitt
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("requested, expected", [(None, False), (True, True)])
+@patch('db.repositories.workspaces.generate_new_cidr')
+@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
+@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
+@patch('core.config.RESOURCE_LOCATION', "useast2")
+@patch('core.config.TRE_ID', "9876")
+async def test_create_workspace_item_persists_create_aad_groups_default(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, requested, expected, workspace_repo, basic_workspace_request, basic_resource_template):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties.pop("create_aad_groups", None)
+    if requested is not None:
+        workspace_to_create.properties["create_aad_groups"] = requested
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties["create_aad_groups"] = Property(type="boolean", default=False)
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["create_aad_groups"] is expected
+
+
+@pytest.mark.asyncio
 @patch('db.repositories.workspaces.generate_new_cidr')
 @patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
 @patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
@@ -382,18 +405,6 @@ async def test_create_workspace_item_raises_value_error_if_template_is_invalid(m
 
     with pytest.raises(ValueError):
         await workspace_repo.create_workspace_item(workspace_input, {}, "test_object_id", ["test_role"])
-
-
-def test_automatically_create_application_registration_returns_true(workspace_repo):
-    dictToTest = {"auth_type": "Automatic"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is True
-
-
-def test_automatically_create_application_registration_returns_false(workspace_repo):
-    dictToTest = {"client_id": "12345"}
-
-    assert workspace_repo.automatically_create_application_registration(dictToTest) is False
 
 
 def test_workspace_owner_is_set_if_not_present_in_workspace_properties(workspace_repo):

@@ -148,17 +148,6 @@ Configure the E2E Test repository secrets
 | `TEST_USER_NAME` | The username of the E2E Test User |
 | `TEST_USER_PASSWORD` | The password of the E2E Test User |
 
-### Create a workspace app registration for setting up workspaces (for the E2E tests)
-
-Follow the [instructions to create a workspace app registration](../auth.md#workspaces) (used for the E2E tests) - and make the E2E test user a **WorkspaceOwner** for the app registration.
-
-Configure the TEST_WORKSPACE_APP_ID repository secret
-
-| <div style="width: 230px">Secret name</div> | Description |
-| ----------- | ----------- |
-| `TEST_WORKSPACE_APP_ID` | The application (client) ID of the Workspaces app. |
-| `TEST_WORKSPACE_APP_SECRET` | The application (client) secret of the Workspaces app. |
-
 ### Configure repository/environment secrets
 
 Configure additional secrets used in the deployment workflow:
@@ -177,7 +166,7 @@ Configure additional secrets used in the deployment workflow:
 Configure variables used in the deployment workflow:
 
 | <div style="width: 230px">Variable name</div> | Description |
-| ----------- | ----------- |
+| --- | --- |
 | `LOCATION` | The Azure location (region) for all resources. E.g. `westeurope` |
 | `TERRAFORM_STATE_CONTAINER_NAME` | Optional. The name of the blob container to hold the Terraform state. Default value is `tfstate`. |
 | `CORE_ADDRESS_SPACE` | Optional. The address space for the Azure TRE core virtual network. Default value is `10.0.0.0/22`. |
@@ -187,6 +176,7 @@ Configure variables used in the deployment workflow:
 | `RESOURCE_PROCESSOR_VMSS_SKU` | Optional. The SKU of the resource processor VMSS. Defaults to `Standard_B2s`. |
 | `RESOURCE_PROCESSOR_NUMBER_PROCESSES_PER_INSTANCE` | Optional. The number of processes to instantiate when the Resource Processor starts. Equates to the number of parallel deployment operations possible in your TRE. Defaults to `5`. |
 | `ENABLE_SWAGGER` | Optional. Determines whether the Swagger interface for the API will be available. Default value is `false`. |
+| `DIRECT_USER_MANAGEMENT_ENABLED` | Optional. Default value is `false`. Set to `true` when the E2E tests authenticate with a service principal (`TEST_ACCOUNT_CLIENT_ID`), so the tests can assign it workspace roles on the workspaces they create. See `DIRECT_USER_MANAGEMENT_ENABLED` in [environment variables](../environment-variables.md). |
 | `FIREWALL_SKU` | Optional. The SKU of the Azure Firewall instance. Default value is `Standard`. Allowed values [`Basic`, `Standard`, `Premium`]. See [Azure Firewall SKU feature comparison](https://learn.microsoft.com/en-us/azure/firewall/choose-firewall-sku). |
 | `APP_GATEWAY_SKU` | Optional. The SKU of the Application Gateway. Default value is `Standard_v2`. Allowed values [`Standard_v2`, `WAF_v2`] |
 | `ENABLE_CMK_ENCRYPTION` | Optional. Default is `false`, if set to `true` customer-managed key encryption will be enabled for all supported resources. |

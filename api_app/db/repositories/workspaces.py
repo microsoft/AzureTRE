@@ -129,6 +129,13 @@ class WorkspaceRepository(ResourceRepository):
         finally:
             await storage_client.close()
 
+    @staticmethod
+    def _template_default_param(template: ResourceTemplate, input_properties: dict, name: str) -> dict:
+        template_property = template.properties.get(name)
+        if template_property is None or template_property.default is None:
+            return {}
+        return {name: input_properties.get(name, template_property.default)}
+
     async def create_workspace_item(self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]) -> Tuple[Workspace, ResourceTemplate]:
 
         full_workspace_id = str(uuid.uuid4())
@@ -153,7 +160,6 @@ class WorkspaceRepository(ResourceRepository):
         address_space_param = {"address_space": intial_address_space}
         address_spaces_param = {"address_spaces": [intial_address_space]}
 
-        auto_app_registration_param = {"register_aad_application": self.automatically_create_application_registration(workspace_input.properties)}
         workspace_owner_param = {"workspace_owner_object_id": self.get_workspace_owner(workspace_input.properties, workspace_owner_object_id)}
 
         # Derive airlock_version from the template: a template that doesn't declare it is legacy (v1) and
@@ -169,23 +175,20 @@ class WorkspaceRepository(ResourceRepository):
         # JSON Schema defaults validate input but are not materialised by the API. Persist the
         # Airlock default so review-workspace templates that default it to false do not later get
         # interpreted as having Airlock enabled.
-        enable_airlock_default = template.properties.get("enable_airlock")
-        enable_airlock_param = {}
-        if enable_airlock_default and enable_airlock_default.default is not None:
-            enable_airlock_param = {
-                "enable_airlock": workspace_input.properties.get(
-                    "enable_airlock", enable_airlock_default.default)
-            }
+        enable_airlock_param = self._template_default_param(template, workspace_input.properties, "enable_airlock")
+        # Persist the group creation default so Porter's own default does not create Entra ID groups that
+        # the default Application Admin permissions cannot manage.
+        create_aad_groups_param = self._template_default_param(template, workspace_input.properties, "create_aad_groups")
 
         # we don't want something in the input to overwrite the system parameters,
         # so dict.update can't work. Priorities from right to left.
         resource_spec_parameters = {**workspace_input.properties,
                                     **address_space_param,
                                     **address_spaces_param,
-                                    **auto_app_registration_param,
                                     **workspace_owner_param,
                                     **airlock_version_param,
                                     **enable_airlock_param,
+                                    **create_aad_groups_param,
                                     **auth_info,
                                     **self.get_workspace_spec_params(full_workspace_id)}
 
@@ -205,9 +208,6 @@ class WorkspaceRepository(ResourceRepository):
         # the request, we can assume the logged in user will be WorkspaceOwner
         user_defined_workspace_owner_object_id = workspace_properties.get("workspace_owner_object_id")
         return workspace_owner_object_id if user_defined_workspace_owner_object_id is None else user_defined_workspace_owner_object_id
-
-    def automatically_create_application_registration(self, workspace_properties: dict) -> bool:
-        return True if ("auth_type" in workspace_properties and workspace_properties["auth_type"] == "Automatic") else False
 
     async def get_address_space_based_on_size(self, workspace_properties: dict):
         # Default the address space to 'small' if not supplied.

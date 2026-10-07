@@ -4,8 +4,27 @@
 * Existing resources with legacy Porter parameter overrides must complete a resource upgrade before custom actions or uninstall. The current template version can be reused. See [upgrading resources](docs/tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters). (`resource_processor` 0.13.10) ([#4904](https://github.com/microsoft/AzureTRE/pull/4904))
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
+* Base workspace bundle 3.0.0 (major upgrade from 2.12.0) now creates and manages the workspace Microsoft Entra application secret automatically and removes the manual identity passthrough parameters (`client_secret`, `register_aad_application`, `scope_id`, `sp_id`, `app_role_id_*`).
+
+  **Migration Guide:**
+  1. **Existing Workspaces:** Continue to operate without changes.
+  2. **New Workspaces:**
+     - No `client_secret` parameter needed
+     - Optionally provide `client_id` to reuse pre-existing application
+     - Leave `client_id` empty for fully automatic application creation
+  3. **Upgrading Workspaces:**
+     - Only upgrade once you have tested the process in a non-production environment with your own bundles.
+     - Ensure the Application Admin identity owns existing workspace applications and their service principals, unless it has `Application.ReadWrite.All`. For manually created applications run `devops/scripts/aad/create_workspace_application.sh --client-id <workspace client id> --application-admin-clientid <application admin client id>`
+     - Run workspace upgrade - Terraform will import and take over secret management
+
+  **Permission Changes:**
+  - **Removed:** `Directory.Read.All` no longer required
+  - **Keep (depending on requirements):** `Application.ReadWrite.All` (or `Application.ReadWrite.OwnedBy`), `Group.Create`, `Group.Read.All`, `User.Read.All`, `DelegatedPermissionGrant.ReadWrite.All`
+
+  ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 
 ENHANCEMENTS:
+* Add optional `direct_user_management_enabled` setting (default `false`, not recommended). When enabled, the API assigns workspace roles via direct app-role assignment instead of Entra ID groups (granting the API app `AppRoleAssignment.ReadWrite.All`), which is required to assign service principals a workspace role. Group-based user management remains the default and recommended approach as some workspace services rely on Entra ID groups. ([#4775](https://github.com/microsoft/AzureTRE/pull/4775))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 * Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
