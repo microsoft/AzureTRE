@@ -2,9 +2,11 @@
 
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient, MockTransport, Response
+from jsonschema import validate
 
 from e2e_tests import helpers
 from e2e_tests import test_guacamole_linuxvm as linuxvm
@@ -19,6 +21,11 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.fixture = ("/workspaces/ws", "ws", "/workspaces/ws/workspace-services/service", "service")
         self.resource_path = self.fixture[2] + "/user-resources/linux"
         self.requests = []
+        template = (
+            Path(__file__).resolve().parents[2]
+            / "templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/template_schema.json"
+        )
+        self.schema = json.loads(template.read_text())
 
     def mock_api(
         self,
@@ -48,6 +55,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
             phase = request.url.path.rsplit("/", 1)[-1]
             response_status = 200
             if request.method == "POST":
+                validate(json.loads(request.content)["properties"], self.schema)
                 phase, response_status, state = "install", post_status, "deploying"
             elif request.method == "PATCH":
                 self.assertEqual(json.loads(request.content), {"isEnabled": False})

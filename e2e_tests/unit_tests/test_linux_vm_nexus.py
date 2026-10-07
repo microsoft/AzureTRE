@@ -2,9 +2,11 @@
 
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient, MockTransport, Response
+from jsonschema import validate
 
 from e2e_tests import helpers
 from e2e_tests import test_guacamole_linuxvm as linuxvm
@@ -16,6 +18,13 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
         self.services = []
         self.requests = []
         self.outcomes = {}
+        templates = Path(__file__).resolve().parents[2] / "templates/shared_services"
+        self.schemas = {
+            strings.NEXUS_SHARED_SERVICE: json.loads(
+                (templates / "sonatype-nexus-vm/template_schema.json").read_text()
+            ),
+            strings.CERTS_SHARED_SERVICE: json.loads((templates / "certs/template_schema.json").read_text()),
+        }
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(linuxvm, "get_admin_token", new=AsyncMock(return_value="admin-token")))
         self.enterContext(patch.object(linuxvm.config, "TEST_ACCEPT_NEXUS_EULA", True))
@@ -32,6 +41,7 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
         response_status = 200
         if request.method == "POST":
             payload = json.loads(request.content)
+            validate(payload["properties"], self.schemas[payload["templateName"]])
             kind = "nexus" if payload["templateName"] == strings.NEXUS_SHARED_SERVICE else "certs"
             if kind == "nexus":
                 self.assertIs(payload["properties"]["accept_nexus_eula"], True)

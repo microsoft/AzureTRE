@@ -94,6 +94,7 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
             "display_name": "Nexus Linux bootstrap test",
             "description": "Verify jammy package installation and cloud-init completion",
             "os_image": "Ubuntu 22.04 LTS",
+            "vm_size": "2 CPU | 8GB RAM",
         },
     }
 
