@@ -1,5 +1,5 @@
 ---
-name: troubleshooting
+name: tre-troubleshooting
 description: Uses the exact commit, run attempt and component logs to separate observed causes from hypotheses. Use when you investigate a failed Azure TRE deployment, bundle operation or GitHub Actions run.
 ---
 
@@ -47,4 +47,4 @@ Prefer read-only checks and a scoped local reproduction before changing infrastr
 
 State what failed, the observed cause or leading hypothesis, missing evidence and the next diagnostic step. Include the run attempt and commit with supporting links.
 
-When a repair is authorised, use the component's procedure and verify the repaired path. Report the results according to the [root reporting rules](../../../AGENTS.md#validation-and-reporting). Use the [code-review skill](../code-review/SKILL.md) for any PR test recommendation. A queued run, skipped job or manually successful check is not an executed test.
+When a repair is authorised, use the component's procedure and verify the repaired path. Report the results according to the [root reporting rules](../../../AGENTS.md#validation-and-reporting). Use the [code-review skill](../tre-code-review/SKILL.md) for any PR test recommendation. A queued run, skipped job or manually successful check is not an executed test.

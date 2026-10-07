@@ -1,6 +1,6 @@
 ---
-name: code-review
-description: Reviews Azure TRE pull requests for behaviour, release metadata and validation gaps, and recommends a justified PR bot command without dispatching it. Use when you review a pull request or choose PR validation.
+name: tre-code-review
+description: Reviews Azure TRE pull requests for security, correctness, release metadata and validation gaps. Use when reviewing a PR or selecting its checks, including whether a PR bot command adds useful evidence.
 ---
 
 # Azure TRE code review
@@ -8,7 +8,7 @@ description: Reviews Azure TRE pull requests for behaviour, release metadata and
 ## Establish the scope
 
 1. Identify the current PR head SHA, base branch and changed paths. Recheck the head if it changes during review.
-2. Read the changed implementation and affected callers. Load the [front-end](../frontend/SKILL.md) or [bundle](../bundle-development/SKILL.md) procedure when relevant.
+2. Read the changed implementation and affected callers. Load the [front-end](../tre-frontend/SKILL.md) or [bundle](../tre-bundle-development/SKILL.md) procedure when relevant.
 3. Check versions and release notes against the current base using [root contribution requirements](../../../AGENTS.md#contribution-requirements).
 4. Examine checks for the assessed commit. Inspect run attempts and jobs before treating a successful status as executed validation.
 
@@ -16,7 +16,21 @@ Check that changelog claims match the implementation. For bundle inputs, inspect
 
 State actionable findings with a file location, the failing condition and its consequence. Rank findings by impact. Distinguish a code defect from an unperformed test or an outstanding GitHub approval gate. If checks or logs are inaccessible, state the missing evidence.
 
+## Review security and coordination
+
+For network or identity changes, apply the [security baseline](../../../AGENTS.md#security-baseline):
+
+- List new or widened outbound hosts and firewall rules. Assess data-export paths, including shared Azure endpoints serving other tenants or subscriptions.
+- Check public network access, private endpoints, DNS and routing against the intended workspace boundaries.
+- Check managed identities and RBAC roles, scopes and inherited access. Use the [bundle security checks](../tre-bundle-development/SKILL.md#check-network-and-identity-boundaries) for affected bundles.
+
+For concurrent or message-driven changes, trace overlapping operations, persistence/dispatch ordering, duplicate delivery and recovery after interruption. If reviews repeatedly find failures in the same design, reassess its coordination and recovery model before adding more locks or retries.
+
+Mocked tests can exercise selected interleavings but do not establish real queue, database or distributed-lock behaviour. Identify the concurrency and redelivery scenarios exercised, and state where integration evidence is missing.
+
 ## Recommend validation
+
+Recommend checks that address the changed behaviour. Recommend a PR bot command only when it adds useful evidence or a maintainer needs an explicit waiver. Otherwise, explain why no command is useful.
 
 Read the [PR bot commands](../../../docs/tre-developers/github-pr-bot-commands.md), [command implementation](../../../.github/scripts/build.js) and [workflow routing](../../../.github/workflows/pr_comment_bot.yml) when selecting a command. Inspect the selected tests in [e2e_tests](../../../e2e_tests) rather than inferring coverage from a suite name.
 

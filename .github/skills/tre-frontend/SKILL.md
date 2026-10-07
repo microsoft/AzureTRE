@@ -1,5 +1,5 @@
 ---
-name: frontend
+name: tre-frontend
 description: Covers conventions, setup and checks for the Azure TRE React and TypeScript UI, including authentication, resource forms and refresh behaviour. Use when you change or review files under ui/app.
 ---
 
@@ -50,8 +50,16 @@ For changes to shared hooks, contexts, routing or configuration, include the wid
 
 If macOS reports watcher exhaustion, retry the affected command with `CHOKIDAR_USEPOLLING=1` and record that environment difference. Do not suppress a failing test to work around a runtime mismatch.
 
+## Test on a deployed TRE
+
+When deployed testing is authorised, use an approved test identity and record its TRE and workspace roles. A human completes password entry and MFA outside agent input. Do not request, read, record or replay passwords or MFA codes. Keep tokens and session cookies out of reports.
+
+Check both permitted and denied actions using the tested roles, including direct API responses where relevant. Refresh the session after role changes. Distinguish UI visibility from API enforcement, and restore temporary access changes within the authorised task.
+
+For polling changes, record API request counts over a stated interval, response statuses including `429`, and behaviour with hidden tabs and slow requests. Compare equivalent conditions before and after the change where possible.
+
 ## Report the limits
 
 Apply the [root contribution requirements](../../../AGENTS.md#contribution-requirements) for UI version and changelog updates. Confirm that release notes describe the rendered behaviour.
 
-Component tests do not establish browser layout, attended sign-in or deployed role behaviour. Record those checks separately when relevant. Use the [code-review skill](../code-review/SKILL.md) for PR bot recommendations; a larger backend E2E suite is not evidence of UI interaction coverage.
+Component tests do not establish browser layout, attended sign-in or deployed role behaviour. Record those checks separately when relevant. Use the [code-review skill](../tre-code-review/SKILL.md) for PR bot recommendations; a larger backend E2E suite is not evidence of UI interaction coverage.

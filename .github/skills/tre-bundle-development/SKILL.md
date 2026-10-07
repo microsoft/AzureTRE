@@ -1,6 +1,6 @@
 ---
-name: bundle-development
-description: Checks Porter, Terraform, schema and parameter consistency across install, upgrade and uninstall for Azure TRE resource bundles. Use when you change or review files under templates/.
+name: tre-bundle-development
+description: Checks Azure TRE bundle contracts, network and identity boundaries, and install, upgrade and uninstall behaviour. Use when you change or review Porter/Terraform resource bundles under templates/.
 ---
 
 # Azure TRE bundle development
@@ -16,6 +16,20 @@ Use [template authoring](../../../docs/tre-workspace-authors/authoring-workspace
 3. Check defaults, types, required values, substitutions and Azure TRE annotations such as `sensitive`, `readOnly` and `updateable`.
 4. Check `parameters.json` against the Porter parameter set. Internal deployment parameters do not all belong in the user-facing schema.
 5. Trace changed outputs back to their consumers, including API substitutions, connection details and dependent pipeline steps.
+
+## Check network and identity boundaries
+
+Apply the [security baseline](../../../AGENTS.md#security-baseline) and inspect the effective configuration for every changed network or identity setting:
+
+1. List added or widened outbound hosts, service tags and firewall rules, including their source networks, protocols and ports.
+2. Check whether an allowed destination can receive research data in another subscription, tenant or externally controlled account, bypassing Airlock.
+3. Inspect public network access, private endpoints, DNS and routing for exposure or paths around the intended hub-and-spoke boundaries.
+4. Trace managed identities and RBAC assignments to their consumers. Check roles, assignment scopes and inherited grants for excessive access.
+5. Check install, upgrade and uninstall for temporary access changes and restoration, including failure paths. Record any required exception and its justification.
+
+An allowed FQDN is not a tenant or subscription boundary. For example, `management.azure.com` serves ARM operations across subscriptions. A researcher with external credentials and permissions could use that allowed host to send data outside the TRE. Assess the endpoint's capabilities and effective controls, not just its hostname.
+
+See [Azure Firewall FQDN filtering](https://learn.microsoft.com/en-us/azure/firewall/domain-filtering-overview) and [ARM Run Command requests](https://learn.microsoft.com/en-us/rest/api/compute/virtual-machines/run-command) for the filtering and request models.
 
 ## Check every affected lifecycle action
 
@@ -49,4 +63,4 @@ When live validation is available and authorised, exercise the changed install, 
 
 Apply [component version and changelog requirements](../../../AGENTS.md#contribution-requirements). Check separately versioned container images if their sources change. Ensure examples and parameter files remain consistent with the final behaviour.
 
-Use the [code-review skill](../code-review/SKILL.md) to recommend the appropriate PR checks. Formatting, Terraform validation and a successful image build do not establish a successful bundle deployment or upgrade.
+Use the [code-review skill](../tre-code-review/SKILL.md) to recommend the appropriate PR checks. Formatting, Terraform validation and a successful image build do not establish a successful bundle deployment or upgrade.

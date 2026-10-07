@@ -6,26 +6,29 @@ Azure TRE shares repository context through root `AGENTS.md` and reusable proced
 
 | File | Purpose |
 | --- | --- |
-| `AGENTS.md` | Repository map, contribution requirements and links to the relevant skills |
+| `AGENTS.md` | Security baseline, repository map, contribution requirements and links to the relevant skills |
 | `.github/copilot-instructions.md` | Essential Copilot rules and links to the shared guidance |
-| `.github/skills/frontend/SKILL.md` | UI setup, conventions and validation |
-| `.github/skills/bundle-development/SKILL.md` | Bundle contracts and lifecycle checks |
-| `.github/skills/code-review/SKILL.md` | Review procedure and PR command recommendations |
-| `.github/skills/troubleshooting/SKILL.md` | Failure evidence and cause isolation |
+| `.github/skills/tre-frontend/SKILL.md` | UI setup, conventions, component checks and deployed testing |
+| `.github/skills/tre-bundle-development/SKILL.md` | Bundle contracts, security boundaries and lifecycle checks |
+| `.github/skills/tre-code-review/SKILL.md` | Security, coordination, release metadata and validation recommendations |
+| `.github/skills/tre-troubleshooting/SKILL.md` | Failure evidence and cause isolation |
 
 Start with the [root instructions](https://github.com/microsoft/AzureTRE/blob/main/AGENTS.md). Keep each detailed procedure in its skill. The short Copilot file retains essential rules for surfaces that do not automatically load `AGENTS.md`. Scoped instruction files and additional discovery adapters can be added when a demonstrated need justifies them.
 
 These files guide existing sessions. They do not create scheduled automation, change review settings, post PR bot commands or grant permission to deploy or merge.
 
+The `tre-` prefix identifies repository skills alongside built-in and plugin capabilities. Use the exact skill name when invoking one. Reload skills or start a fresh session after a rename, and verify the loaded path. Earlier discovery evidence under the previous names does not establish discovery after renaming.
+
 ## Client compatibility
 
-The following expectations are based on product documentation checked on 6 October 2026. They describe documented support, not completed client acceptance tests.
+The following expectations describe documented support, not completed client acceptance tests. Product sources were checked on 6 October 2026. CLI instruction inheritance and skill naming were rechecked on 7 October 2026.
 
 | Client or surface | Expected behaviour and limitation |
 | --- | --- |
 | Copilot cloud agent, including issue-assignee sessions | Supports root `AGENTS.md` and repository skills. Verify both discovery and application in a fresh task. |
-| Copilot code review on GitHub | Supports root `AGENTS.md` and skills in `.github/skills`. The review skill uses the review-focused name `code-review`. Instructions and skills are read from the PR head branch. It also reads a root `REVIEW.md`; this layout keeps review guidance in the `code-review` skill instead, so there is one source. |
-| Copilot CLI | Supports root `AGENTS.md` and `.github/skills`. Use `/skills list` and `/skills info <name>` to inspect discovery. Reload skills or start a fresh session after changes. |
+| Copilot code review on GitHub | Supports root `AGENTS.md` and skills in `.github/skills`, read from the PR head branch. This layout keeps review guidance in the review-focused `tre-code-review` skill rather than duplicating it in a root `REVIEW.md`. |
+| Copilot CLI session agent | Supports root `AGENTS.md` and `.github/skills`. Use `copilot skill list --json` and `/skills info tre-code-review` to inspect discovery and source paths. Reload skills or start a fresh session after changes. |
+| Copilot CLI built-in review subagent | GitHub documents that the built-in `code-review` subagent does not receive repository instruction files. Session-agent loading does not prove review-subagent loading. Check skill invocation separately. The built-in agent, `/review` command and repository `tre-code-review` skill are distinct capabilities. |
 | Copilot agent sessions in VS Code | Supports root `AGENTS.md` and `.github/skills`. Record the selected agent harness and instruction settings. The Local agent can disable `AGENTS.md` through `chat.useAgentsMdFile`. |
 | Copilot code review in VS Code | The support matrix lists `.github/copilot-instructions.md`. Do not infer support for every instruction type from the agent-session behaviour. |
 | GitHub Copilot app | Repository and CLI skills are documented as available. Confirm root instruction loading and skill use in the installed app. |
@@ -34,6 +37,8 @@ The following expectations are based on product documentation checked on 6 Octob
 Sources: [GitHub instruction support](https://docs.github.com/en/copilot/reference/custom-instructions-support), [Copilot skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills), [GitHub code review](https://docs.github.com/en/copilot/how-tos/copilot-on-github/use-copilot-agents/copilot-code-review).
 
 Additional sources: [Copilot CLI skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills), [VS Code instructions](https://code.visualstudio.com/docs/agent-customization/custom-instructions), [Copilot app customisation](https://docs.github.com/en/copilot/how-tos/github-copilot-app/customize-github-copilot-app).
+
+CLI details: [instruction inheritance](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#repository-custom-instructions-for-subagents) and [skill discovery and duplicate-name priority](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#skill-locations).
 
 Codex sources: [repository instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [skill discovery](https://learn.chatgpt.com/docs/build-skills).
 
@@ -57,13 +62,14 @@ markdownlint --config .markdownlint.json AGENTS.md .github/copilot-instructions.
 
 Include other changed Markdown files in the invocation. `make lint-docs` excludes root instructions and `.github/skills`, so it is not sufficient for this change.
 
-For an all-documentation PR, `/test` produces a smoke-check waiver under the current [PR bot implementation](https://github.com/microsoft/AzureTRE/blob/main/.github/scripts/build.js). It does not test skill discovery. Select any PR command using the [code-review procedure](https://github.com/microsoft/AzureTRE/blob/main/.github/skills/code-review/SKILL.md) and [PR bot documentation](github-pr-bot-commands.md).
+For an all-documentation PR, `/test` produces a smoke-check waiver under the current [PR bot implementation](https://github.com/microsoft/AzureTRE/blob/main/.github/scripts/build.js). It does not test skill discovery. Select any PR command using the [code-review procedure](https://github.com/microsoft/AzureTRE/blob/main/.github/skills/tre-code-review/SKILL.md) and [PR bot documentation](github-pr-bot-commands.md).
 
 ### Client and behaviour checks
 
 1. Start a fresh session against the branch containing the guidance.
 2. Record the client version, agent harness, relevant settings and repository SHA.
 3. Check discovery using the client's skill list, references or session logs where available.
+   If a task delegates to a subagent, record its instruction loading and skill invocation separately from the parent session.
 4. Give the agent a representative task without pasting repository guidance or the expected finding.
 5. Check the produced work and tool activity against the expected behaviour below.
 6. Record discovery, invocation and behaviour separately as passed, failed or not tested.
@@ -74,7 +80,11 @@ Use a disposable branch or a supplied diff for regression examples. Do not reint
 | --- | --- |
 | UI filter or workspace changes during a pending request | Reads the UI procedure, considers follow-up requests and stale responses, and chooses relevant component checks. |
 | A new Terraform input is supplied only during install | Checks upgrade and uninstall and identifies any missing input or suitable default. |
+| A bundle adds an outbound rule for a shared Azure endpoint | Lists the new access, assesses external tenant/subscription destinations and checks identity permissions and data-export controls. |
+| A public endpoint or broader managed-identity role is introduced | Checks the exposure, role and scope against the security baseline and asks for evidence supporting the expanded access. |
+| Cleanup persists state before dispatching an update | Considers interruption, overlapping operations and redelivery, and identifies what mocked tests leave unverified. |
 | API behaviour changes without a new API version | Checks the current base version and identifies the release metadata gap. |
+| Main advances during conflict resolution | Rechecks versions and changelog against the refreshed base and identifies unrelated changes in the PR diff. |
 | A release note claims a field that the UI does not render | Compares the implementation and tests with the note and identifies the mismatch. |
 | CI deployment fails before E2E starts | Identifies the run attempt, checked-out commit and first relevant failure. Reports the tests as unexecuted. |
 | Documentation-only PR review | Justifies the checks needed and identifies any successful smoke status created by a waiver. |
