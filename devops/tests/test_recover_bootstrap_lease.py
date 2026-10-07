@@ -324,6 +324,26 @@ class RecoveryTests(unittest.TestCase):
             with self.subTest(path=path), patch.object(recovery, "github", side_effect=source):
                 self.assert_refused()
 
+    def test_pr_modified_allow_listed_workflow_cannot_classify_its_runs(self):
+        original = self.github
+        for path in ("build_validation_develop.yml", "deploy_tre_branch.yml"):
+            def source(ctx, suffix):
+                # The PR checkout and its run match each other, but differ from the trusted caller commit.
+                if suffix == f"/contents/.github/workflows/{path}?ref={'a' * 40}":
+                    return {"type": "file", "sha": "b" * 40}
+                return original(ctx, suffix)
+            run = {"id": 999, "path": ".github/workflows/" + path, "event": "pull_request", "head_sha": "c" * 40}
+            self.status_data = {"queued": {"total_count": 1, "workflow_runs": [run]}}
+            with self.subTest(path=path), patch.object(recovery, "github", side_effect=source):
+                self.state = deepcopy(ORPHAN)
+                self.calls = []
+                self.assert_refused()
+                # Without an active run of the changed workflow, recovery continues.
+                self.status_data = {}
+                self.state = deepcopy(ORPHAN)
+                recovery.recover(self.ctx)
+                self.assertEqual(len(self.breaks()), 1)
+
     def test_pagination_verifies_every_run_on_later_pages(self):
         runs = [{"id": number, "path": "dynamic/agents/copilot-pull-request-reviewer", "event": "dynamic"}
                 for number in range(1000, 1101)]

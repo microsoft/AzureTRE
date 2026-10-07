@@ -175,9 +175,10 @@ def verify_workflows(ctx, cache=None):
                    and item["path"].startswith(workflow_prefix)] if isinstance(workflows, list) else []
     require(len(deployments) == 1, "The PR deployment workflow source is unavailable or ambiguous.")
     require(deployments[0].get("sha") == current.get("head_sha"), "Caller and deployment workflow sources differ.")
+    trusted = deployments[0].get("sha")
     # A /test run using pre-fix workflow wiring must not enable the weaker guard.
     for name in ("pr_comment_bot.yml", "deploy_tre_reusable.yml", "clean_validation_envs.yml"):
-        verify_source(ctx, ".github/workflows/" + name, deployments[0].get("sha"), cache)
+        verify_source(ctx, ".github/workflows/" + name, trusted, cache)
     verify_concurrency(ctx)
     for status in ("requested", "waiting", "pending", "queued", "in_progress"):
         seen = set()
@@ -196,7 +197,7 @@ def verify_workflows(ctx, cache=None):
                 if run["id"] == ctx["run_id"]:
                     continue
                 try:
-                    verify_other_run(ctx, run, cache)
+                    verify_other_run(ctx, run, cache, trusted)
                 except RecoveryError as error:
                     raise RecoveryError(f"Run {run['id']} workflow={run.get('path', '?')} state={status} "
                                         f"target=unverified may affect {ctx['ref']}: {error}") from error
@@ -213,7 +214,7 @@ def verify_workflows(ctx, cache=None):
     verify_concurrency(ctx)
 
 
-def verify_other_run(ctx, run, cache):
+def verify_other_run(ctx, run, cache, trusted):
     path = run.get("path", "")
     # GitHub supplies these dynamic workflow identities. They are not display
     # titles or comment inputs, and cannot run the Azure deployment workflows.
@@ -222,6 +223,9 @@ def verify_other_run(ctx, run, cache):
     require(isinstance(path, str) and path.startswith(".github/workflows/"), "Unknown workflow identity.")
     name = path.removeprefix(".github/workflows/")
     require(name in READ_ONLY_WORKFLOWS | WRITER_WORKFLOWS, "Workflow backend ownership is unavailable.")
+    # The default-branch caller commit is the audited baseline, not the PR checkout.
+    # If a PR changes an allow-listed workflow, its active runs remain unclassified.
+    verify_source(ctx, path, trusted, cache)
     verify_source(ctx, path, run.get("head_sha"), cache)
     if name in WRITER_WORKFLOWS:
         # These audited entry points bind their mutation targets to deploy-<ref>.

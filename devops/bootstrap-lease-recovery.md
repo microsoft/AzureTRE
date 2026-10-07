@@ -35,11 +35,17 @@ and [concurrency behaviour](https://docs.github.com/en/actions/how-tos/write-wor
 
 All GitHub API calls use a token with `actions: read`. The management deployment
 job and each of its callers grant this permission. The composite action passes
-the job token as `CI_RECOVERY_GITHUB_TOKEN` only to the `make bootstrap` command
-of a PR comment deployment. Other commands do not receive it. Cleanup uses its
-own `GITHUB_TOKEN`. Without a token, recovery and cleanup refuse. Anonymous reads
-share a limit of 60 requests each hour for each address, and private forks do
-not allow them.
+the job token as `CI_RECOVERY_GITHUB_TOKEN` only to the container command that
+contains `make bootstrap` in a PR comment deployment. That command is
+`make bootstrap mgmt-deploy`. Other container commands do not receive it.
+Cleanup uses its own `GITHUB_TOKEN`. Without a token, recovery and cleanup
+refuse. Anonymous reads share a limit of 60 requests each hour for each address,
+and private forks do not allow them.
+
+The job loads the composite action from the PR checkout, so PR code in this job
+can already use the job token. The token in the container therefore gives PR
+code no new capability. The dedicated variable name prevents tools that read
+`GITHUB_TOKEN` or `GH_TOKEN` from using the token by accident.
 
 ## Writer audit
 
@@ -65,8 +71,12 @@ so cleanup deletes them in parallel. The job waits for every deletion and then
 reports any failure.
 Unscoped invocations of the cleanup script refuse to run.
 
-The recovery helper checks immutable workflow source blob hashes against the
-checkout before accepting another known writer or unrelated repository workflow.
+The recovery helper checks immutable workflow source blob hashes before it
+accepts another known writer or unrelated repository workflow. The definition at
+the commit of the run must match the checkout. The checkout must also match the
+trusted default-branch caller commit, which is the audited baseline. A PR that
+changes an allow-listed workflow therefore cannot classify active runs of that
+workflow, and recovery refuses while they run.
 It also checks that the current caller and reusable deployment use the same
 source commit and the updated cleanup wiring. It never derives a comment run's
 target from `head_branch`, `pull_requests` or a display title. The GitHub-managed
