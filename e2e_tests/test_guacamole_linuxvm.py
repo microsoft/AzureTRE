@@ -1,10 +1,14 @@
 """Check that a Guacamole Linux VM finishes its Nexus-backed bootstrap."""
 
 import pytest
+from httpx import AsyncClient
+from starlette import status
 
 from e2e_tests.conftest import disable_and_delete_ws_resource, get_workspace_owner_token
+from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
 from e2e_tests.resources import strings
-from e2e_tests.resources.resource import post_resource
+from e2e_tests.resources.deployment import install_done
+from e2e_tests.resources.resource import TIMEOUT, wait_for
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
@@ -25,12 +29,23 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
         },
     }
 
-    # The operation waits for the cloud-init extension, and fails on bootstrap errors.
-    resource_path, _ = await post_resource(
-        payload,
-        f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}",
-        workspace_owner_token,
-        verify,
-    )
-    # Also remove the VM when the fixture reuses a pre-existing Guacamole service.
-    await disable_and_delete_ws_resource(resource_path, workspace_id, verify)
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
+        response = await client.post(
+            get_full_endpoint(f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}"),
+            headers=get_auth_header(workspace_owner_token),
+            json=payload,
+        )
+        assert_status(response, [status.HTTP_202_ACCEPTED], "The Linux VM could not be created")
+        # Capture the path before waiting, so a failed bootstrap can still be removed.
+        resource_path = response.json()["operation"]["resourcePath"]
+        try:
+            await wait_for(
+                install_done,
+                client,
+                response.headers["Location"],
+                workspace_owner_token,
+                [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED],
+            )
+        finally:
+            # Reused workspace/service fixtures do not delete their user resources.
+            await disable_and_delete_ws_resource(resource_path, workspace_id, verify)

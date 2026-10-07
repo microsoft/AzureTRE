@@ -55,7 +55,8 @@ Repository-list failures are retried and stop the upgrade if they persist.
 
 Upgrade Nexus before deploying Guacamole Linux VM bundle `1.4.7`.
 This VM bundle requests the `$RELEASE-security` suite and waits for cloud-init to complete before reporting deployment success.
-Upgrading an existing Linux VM does not rerun its cloud-init bootstrap. Already-failed VMs need a separate repair or replacement.
+For existing Linux VMs, set the security source suite to the VM's release plus `-security`, for example `jammy-security`.
+Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-failed VMs need a separate repair or replacement.
 
 ## Setup and usage
 

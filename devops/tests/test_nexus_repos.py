@@ -57,6 +57,11 @@ if url.endswith("/security/anonymous"):
     respond(body='{"enabled":true}')
 if url.endswith("/security/realms/active"):
     respond(204)
+# Retryable repository calls must have bounds so an unresponsive server cannot hang them.
+if "/repositories" in url:
+    for option in ("--connect-timeout", "--max-time"):
+        if option not in args or not 0 < int(args[args.index(option) + 1]) <= 60:
+            respond(exit_code=99)
 if url.endswith("/repositories"):
     state["list_attempts"] += 1
     failures = state["list_failures"]
@@ -76,6 +81,9 @@ if url.endswith("/repositories"):
 if "/repositories/" in url:
     parts = url.split("/repositories/", 1)[1].split("/")
     if method == "DELETE":
+        if state.get("delete_timeouts", 0):
+            state["delete_timeouts"] -= 1
+            respond(exit_code=28)
         if state.get("delete_failures", 0):
             state["delete_failures"] -= 1
             respond(503)
@@ -231,6 +239,14 @@ class NexusRepositoryTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.state["repos"]["ubuntu"]["format"], "apt")
         self.assertEqual([method for method, _ in self.mutations()], ["DELETE"] * 5)
+
+    def test_delete_timeout_is_retried_before_creation(self):
+        self.add_repo()
+        self.state["delete_timeouts"] = 1
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assert_raw_repo()
+        self.assertEqual([method for method, _ in self.mutations()], ["DELETE", "DELETE", "POST"])
 
     def test_failed_creation_after_deletion_fails_deployment(self):
         self.add_repo()

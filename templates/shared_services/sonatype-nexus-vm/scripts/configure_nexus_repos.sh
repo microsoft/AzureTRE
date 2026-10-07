@@ -137,6 +137,7 @@ configure_repo() {
   # Try to create the repository first.
   response=$(curl -u admin:"$pass" -XPOST \
     "$create" \
+    --connect-timeout 10 --max-time 60 \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d @"$file" \
@@ -150,6 +151,7 @@ configure_repo() {
   # If it already exists, update it so configuration changes are applied.
   code=$(curl -iu admin:"$pass" -XPUT \
     "$update" \
+    --connect-timeout 10 --max-time 60 \
     -H 'accept: application/json' \
     -H 'Content-Type: application/json' \
     -d @"$file" \
@@ -236,6 +238,7 @@ delete_if_type_mismatch() {
   local code
   code=$(curl -s -u admin:"$pass" -XDELETE \
     "http://localhost/service/rest/v1/repositories/$repo_name" \
+    --connect-timeout 10 --max-time 60 \
     -k -w "%{http_code}" -o /dev/null)
   echo "Delete response for '$repo_name': $code"
   [ "$code" -eq 204 ] || [ "$code" -eq 200 ]
