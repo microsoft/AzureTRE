@@ -2,7 +2,7 @@
 
 import pytest
 
-from e2e_tests.conftest import get_workspace_owner_token
+from e2e_tests.conftest import disable_and_delete_ws_resource, get_workspace_owner_token
 from e2e_tests.resources import strings
 from e2e_tests.resources.resource import post_resource
 
@@ -26,10 +26,11 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
     }
 
     # The operation waits for the cloud-init extension, and fails on bootstrap errors.
-    # The session fixture removes the VM with its Guacamole service during teardown.
-    await post_resource(
+    resource_path, _ = await post_resource(
         payload,
         f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}",
         workspace_owner_token,
         verify,
     )
+    # Also remove the VM when the fixture reuses a pre-existing Guacamole service.
+    await disable_and_delete_ws_resource(resource_path, workspace_id, verify)
