@@ -74,6 +74,8 @@ Run `make test-e2e-custom SELECTOR=linux_vm` in the configured E2E environment.
 For the **Deploy Azure TRE (branch)** workflow, set `e2eTestsCustomSelector` to `linux_vm`.
 If the test must create Nexus, select `acceptNexusEula` after accepting the agreement.
 The workflow leaves this consent input disabled by default.
+If the environment already runs this branch's core and bundles, select `skipDeployment` to rerun tests without deploying again.
+Leave `skipDeployment` disabled when validating deployment changes.
 
 ## Setup and usage
 
