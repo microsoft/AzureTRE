@@ -68,7 +68,9 @@ jobs:
     name: Clean ${{ matrix.ref }}
     runs-on: ubuntu-latest
     environment: CICD
-    timeout-minutes: 30
+    # Deletion is synchronous so the job keeps deploy-<ref> until Azure finishes.
+    # Use the GitHub-hosted maximum, which explicit destruction also uses.
+    timeout-minutes: 360
     permissions:
       id-token: write
       contents: read

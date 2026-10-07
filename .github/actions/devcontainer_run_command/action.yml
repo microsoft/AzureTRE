@@ -241,6 +241,11 @@ runs:
         CI_BOOTSTRAP_LEASE_RECOVERY: >-
           ${{ github.event_name == 'issue_comment' && startsWith(inputs.CI_GIT_REF, 'refs/pull/') }}
         CI_RECOVERY_PR_NUMBER: ${{ github.event.issue.number }}
+        # Only the PR bootstrap command can recover a lease. Recovery uses this
+        # actions: read token to verify workflow and concurrency ownership.
+        CI_RECOVERY_GITHUB_TOKEN: >-
+          ${{ github.event_name == 'issue_comment' && startsWith(inputs.CI_GIT_REF, 'refs/pull/')
+          && contains(inputs.COMMAND, 'make bootstrap') && github.token || '' }}
       run: |
         # Write command to a command.sh script file
         cat <<EOF > ./command.sh
@@ -283,6 +288,7 @@ runs:
           -e CI_BOOTSTRAP_LEASE_RECOVERY \
           -e CI_ENVIRONMENT_ID \
           -e CI_RECOVERY_PR_NUMBER \
+          -e CI_RECOVERY_GITHUB_TOKEN \
           -e GITHUB_ACTIONS \
           -e GITHUB_REPOSITORY \
           -e GITHUB_RUN_ID \

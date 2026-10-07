@@ -78,6 +78,7 @@ jobs:
       checks: write
       contents: read
       pull-requests: write
+      actions: read # Required by the reusable management job
     with:
       ciGitRef: ${{ github.ref }}
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}

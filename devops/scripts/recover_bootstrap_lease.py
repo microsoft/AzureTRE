@@ -77,14 +77,15 @@ def verify_owner(ctx):
 
 
 def github(ctx, suffix):
-    # Cleanup supplies its actions:read token. Public recovery also works without
-    # passing the deployment job's checks:write token into the devcontainer.
+    # Recovery receives the deployment job token only for the PR bootstrap command.
+    # Cleanup supplies GITHUB_TOKEN. Both jobs grant actions: read. Anonymous reads
+    # share a small per-address rate limit and fail for private forks.
+    token = os.environ.get("CI_RECOVERY_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    require(token, "A GitHub token with actions: read is unavailable. Workflow ownership is unverified.")
     request = urllib.request.Request("https://api.github.com/repos/" + ctx["repository"] + suffix,
                                      headers={"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10",
-                                              "User-Agent": "AzureTRE-bootstrap-lease-recovery"})
-    token = os.environ.get("GITHUB_TOKEN")
-    if token:
-        request.add_header("Authorization", "Bearer " + token)
+                                              "User-Agent": "AzureTRE-bootstrap-lease-recovery",
+                                              "Authorization": "Bearer " + token})
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             return json.load(response)
@@ -96,7 +97,8 @@ def github(ctx, suffix):
 # immutable source before treating an active run as unrelated, not their title.
 READ_ONLY_WORKFLOWS = frozenset((
     "build_validation_develop.yml", "build_docker_images.yml", "build_all_dockerfiles.yml",
-    "build_docs.yml", "codeql-analysis.yml", "e2e_helper_tests.yml", "flag_external_pr.yml", "test_results.yml",
+    "build_docs.yml", "codeql-analysis.yml", "e2e_helper_tests.yml", "flag_external_pr.yml", "resource_processor_tests.yml",
+    "test_results.yml",
 ))
 GITHUB_MANAGED_READ_ONLY_WORKFLOWS = frozenset((
     "dynamic/agents/copilot-pull-request-reviewer",

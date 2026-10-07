@@ -139,6 +139,7 @@ jobs:
       id-token: write
       checks: write
       contents: read
+      actions: read # For bootstrap lease recovery ownership checks
     environment: ${{ inputs.environmentName }}
     steps:
       - name: Show inputs

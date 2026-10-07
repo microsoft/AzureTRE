@@ -43,13 +43,24 @@ if [[ "${CI_CLEANUP_REF}" == refs/heads/main ]]; then
     exit 0
   fi
   [[ "${MAIN_TRE_ID}" =~ ^[a-zA-Z0-9-]+$ ]] || { echo "Invalid main TRE ID" >&2; exit 1; }
-  az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
+  workspace_groups=$(az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv)
+  # Workspace groups are independent. Delete them in parallel, but keep the
+  # reference lock until every deletion has finished.
+  pids=""
   while read -r rg_name; do
     [[ -n "$rg_name" ]] || continue
     echo "Deleting resource group: ${rg_name}"
-    az group delete --yes --name "${rg_name}"
+    az group delete --yes --name "${rg_name}" &
+    pids="${pids} $!"
+  done <<< "${workspace_groups}"
+  failed=0
+  for pid in ${pids}; do
+    wait "${pid}" || failed=1
   done
-  exit 0
+  if (( failed )); then
+    echo "One or more main workspace resource group deletions failed." >&2
+  fi
+  exit "${failed}"
 fi
 
 az config set extension.use_dynamic_install=yes_without_prompt

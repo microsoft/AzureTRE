@@ -33,6 +33,14 @@ They are therefore not used. See the
 [GitHub concurrency API](https://docs.github.com/en/rest/actions/concurrency-groups)
 and [concurrency behaviour](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency).
 
+All GitHub API calls use a token with `actions: read`. The management deployment
+job and each of its callers grant this permission. The composite action passes
+the job token as `CI_RECOVERY_GITHUB_TOKEN` only to the `make bootstrap` command
+of a PR comment deployment. Other commands do not receive it. Cleanup uses its
+own `GITHUB_TOKEN`. Without a token, recovery and cleanup refuse. Anonymous reads
+share a limit of 60 requests each hour for each address, and private forks do
+not allow them.
+
 ## Writer audit
 
 | Entry point | Backend selection | Exclusion |
@@ -43,13 +51,18 @@ and [concurrency behaviour](https://docs.github.com/en/actions/how-tos/write-wor
 | Explicit PR destruction | Current resource groups tagged with the selected PR reference | `destroy_pr_env` holds the matching reference group and waits for deletion |
 | Explicit branch destruction | Current resource groups tagged with the selected branch reference | `destroy_branch_env` holds the matching reference group and waits for deletion |
 | Scheduled or dispatched cleanup | Read-only Azure tag discovery, then fresh selection inside each matrix job | Each job holds its reference group, verifies the actual job owner and rechecks core/management tags before mutation |
-| Main workspace cleanup | Configured main TRE workspace prefix | Separate matrix entry holding `deploy-refs/heads/main` |
+| Main workspace cleanup | Configured main TRE workspace prefix | Separate matrix entry holding `deploy-refs/heads/main` and waiting for all parallel deletions |
 | Disposable cleanup validation | Synthetic reference containing run ID and attempt | Dedicated reference group, with the existing fixture ownership and empty-resource allow-list |
 
 The planner discovers references, not approved deletion actions. A queued cleanup
 job reevaluates PR status, branch activity, resource groups and ownership after
 acquiring its lock. Different regions for the same reference share one job.
 Deletion is synchronous so the job retains exclusion until Azure returns.
+Cleanup jobs use the 360-minute limit of GitHub-hosted runners, which explicit
+destruction also uses. A 30-minute limit could cancel the job and release the
+group while Azure still deletes resources. Main workspace groups are independent,
+so cleanup deletes them in parallel. The job waits for every deletion and then
+reports any failure.
 Unscoped invocations of the cleanup script refuse to run.
 
 The recovery helper checks immutable workflow source blob hashes against the

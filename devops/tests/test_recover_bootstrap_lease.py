@@ -212,6 +212,19 @@ class RecoveryTests(unittest.TestCase):
         recovery.recover(self.ctx)
         self.assertEqual(len(self.breaks()), 1)
 
+    def test_resource_processor_tests_do_not_block_eligible_recovery(self):
+        self.status_data["queued"] = {"total_count": 1, "workflow_runs": [
+            {"id": 999, "path": ".github/workflows/resource_processor_tests.yml", "event": "pull_request", "head_sha": "a" * 40},
+        ]}
+        recovery.recover(self.ctx)
+        self.assertEqual(len(self.breaks()), 1)
+
+    def test_classified_workflows_exist(self):
+        workflows = recovery.SOURCE / ".github/workflows"
+        for name in recovery.READ_ONLY_WORKFLOWS | recovery.WRITER_WORKFLOWS:
+            with self.subTest(name=name):
+                self.assertTrue((workflows / name).is_file())
+
     def test_api_failure_and_rate_limit_refuse_recovery(self):
         self.status_data["queued"] = recovery.RecoveryError("GitHub API rate limit")
         self.assert_refused()
@@ -374,13 +387,27 @@ class RecoveryTests(unittest.TestCase):
 
 
 class ExternalCommandTests(unittest.TestCase):
-    def test_public_github_api_http_and_json_failures_are_closed(self):
-        with patch.object(recovery.urllib.request, "urlopen", side_effect=urllib.error.URLError("unavailable")):
-            with self.assertRaises(recovery.RecoveryError):
+    def test_github_api_http_and_json_failures_are_closed(self):
+        with patch.dict(os.environ, {"CI_RECOVERY_GITHUB_TOKEN": "test-token"}, clear=True):
+            with patch.object(recovery.urllib.request, "urlopen", side_effect=urllib.error.URLError("unavailable")):
+                with self.assertRaises(recovery.RecoveryError):
+                    recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
+            with patch.object(recovery.urllib.request, "urlopen", return_value=io.StringIO("invalid")):
+                with self.assertRaises(recovery.RecoveryError):
+                    recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
+
+    def test_github_api_requires_and_sends_a_token(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(recovery.urllib.request, "urlopen") as urlopen:
+            with self.assertRaisesRegex(recovery.RecoveryError, "actions: read"):
                 recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
-        with patch.object(recovery.urllib.request, "urlopen", return_value=io.StringIO("invalid")):
-            with self.assertRaises(recovery.RecoveryError):
-                recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123")
+            urlopen.assert_not_called()
+        for env in ({"CI_RECOVERY_GITHUB_TOKEN": "recovery-token"}, {"GITHUB_TOKEN": "recovery-token"}):
+            with self.subTest(env=env), patch.dict(os.environ, env, clear=True), \
+                    patch.object(recovery.urllib.request, "urlopen", return_value=io.StringIO("{}")) as urlopen:
+                self.assertEqual(recovery.github({"repository": "microsoft/AzureTRE"}, "/actions/runs/123"), {})
+                request = urlopen.call_args.args[0]
+                self.assertEqual(request.get_header("Authorization"), "Bearer recovery-token")
+                self.assertEqual(request.full_url, "https://api.github.com/repos/microsoft/AzureTRE/actions/runs/123")
 
     def test_azure_failures_and_invalid_json_are_closed(self):
         for result in (subprocess.CompletedProcess([], 1, "", "AuthorizationFailure"), subprocess.CompletedProcess([], 0, "invalid", "")):

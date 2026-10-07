@@ -86,7 +86,8 @@ elif command == "az":
                 if name.startswith(prefix):
                     print(name)
         else:
-            print("rg-main-ws-old")
+            for name in config.get("main_workspaces", ["rg-main-ws-old"]):
+                print(name)
     elif config.get("real_destroy") and args[:2] == ["group", "show"]:
         if config.get("group_show_error"):
             sys.exit(1)
@@ -102,7 +103,10 @@ elif command == "az":
             print(0)
     elif config.get("real_destroy") and (args[:2] == ["keyvault", "show"] or args[:4] == ["monitor", "log-analytics", "workspace", "show"]):
         sys.exit(3)
-    elif args[:2] not in (["config", "set"], ["group", "delete"]):
+    elif args[:2] == ["group", "delete"]:
+        if "--name" in args and args[args.index("--name") + 1] in config.get("delete_errors", []):
+            sys.exit("Deletion failed")
+    elif args[:2] != ["config", "set"]:
         sys.exit("Unexpected az command")
 elif command == "git":
     if args[0] == "for-each-ref":
@@ -240,6 +244,27 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [])
         self.assertIn(["az", "group", "delete", "--yes", "--name", "rg-main-ws-old"], self.calls)
+
+    def test_main_workspace_cleanup_waits_for_every_parallel_deletion(self):
+        self.config.update(selected_ref=True, main_workspaces=["rg-main-ws-a", "rg-main-ws-b", "rg-main-ws-c"],
+                           delete_errors=["rg-main-ws-a"])
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("deletions failed", result.stderr)
+        # A failed deletion must not stop the job before the other deletions finish.
+        deleted = sorted(call[-1] for call in self.calls if call[:3] == ["az", "group", "delete"])
+        self.assertEqual(deleted, ["rg-main-ws-a", "rg-main-ws-b", "rg-main-ws-c"])
+        self.config["delete_errors"] = []
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_main_workspace_cleanup_without_workspaces_succeeds(self):
+        self.config.update(selected_ref=True, main_workspaces=[])
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
 
     def test_main_workspace_cleanup_skips_without_tre_id_and_rejects_invalid_id(self):
         self.config["selected_ref"] = True
