@@ -23,6 +23,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Fix Guacamole Linux VM bootstrap through distribution-independent Nexus raw proxies, migrate existing apt repositories on upgrade, and use the Ubuntu security suite. Wait for cloud-init so bootstrap errors fail deployment. (`sonatype-nexus` 3.11.0, `tre-service-guacamole-linuxvm` 1.4.7) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992), [#4540](https://github.com/microsoft/AzureTRE/issues/4540))
 * Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
   Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.
   Defer cancellation of active Porter actions until they finish, preventing orphaned Docker deployments. Stop other cancelled subprocesses before removing their inputs.
@@ -144,7 +145,6 @@ ENHANCEMENTS:
 * Migration to Pydantic v2: Updates codebase to be compatible with Pydantic v2 for future FastAPI upgrades ([#4637](https://github.com/microsoft/AzureTRE/issues/4637))
 
 BUG FIXES:
-* Fix Guacamole Linux VM bootstrap failures on Ubuntu 22.04 (jammy): serve the `ubuntu`, `ubuntu-security`, `docker`, and `microsoft-apt` Nexus apt feeds through raw proxy repositories that pass any Ubuntu release straight through, so one repo per upstream works for every current and future distribution without per-release configuration (Nexus does not support apt group repositories). Migrate existing repos to the new format automatically on upgrade. Add cloud-init wait to Guacamole Linux VM so deployment reports failure if cloud-init errors. (`sonatype-nexus` 3.11.0, `tre-service-guacamole-linuxvm` 1.4.5) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992), [#4540](https://github.com/microsoft/AzureTRE/issues/4540))
 * Mark secret parameters in porter.yaml as `sensitive: true` to prevent secrets from appearing in debug logs ([#5011](https://github.com/microsoft/AzureTRE/issues/5011))
 * Ignore changes to `ip_tags` on public IP resources to unblock deployments where these tags are set by Azure policy. (`core` 0.16.17, `tre-shared-service-certs` 0.7.11) ([#5019](https://github.com/microsoft/AzureTRE/issues/5019))
 * Fix workspace deletion when backup is enabled for the base, unrestricted and airlock-import-review workspaces by adding a `delete_backups_on_uninstall` flag and a pre-teardown backup cleanup (`remove_backup.sh`) that stops protection and either deletes or retains the Recovery Services Vault, so deletion works with Azure secure-by-default soft delete ([#4962](https://github.com/microsoft/AzureTRE/issues/4962))

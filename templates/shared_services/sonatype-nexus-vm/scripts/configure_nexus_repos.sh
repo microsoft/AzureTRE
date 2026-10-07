@@ -132,6 +132,7 @@ configure_repo() {
   local create="$2"
   local update="$3"
   local pass="$4"
+  local repo_name="${update##*/}"
   local response code body
   # Try to create the repository first.
   response=$(curl -u admin:"$pass" -XPOST \
@@ -163,7 +164,7 @@ configure_repo() {
   # be reconciled via the API, so warn and skip rather than blocking the whole
   # upgrade on an already-broken repository.
   if [ "$code" -eq 404 ] && printf '%s' "$body" | grep -qi 'already used'; then
-    echo "WARNING - Repository is in a failed state in Nexus and cannot be updated (its proxy remote URL may be unreachable). Skipping."
+    echo "WARNING - Repository '$repo_name' is in a failed state in Nexus and cannot be updated (its proxy remote URL may be unreachable). Skipping."
     return 0
   fi
   return 1
@@ -173,9 +174,12 @@ configure_one_repo() {
   local filename="$1"
   echo "Found config file: $filename. Sending to Nexus..."
   local base_type repo_type repo_name create_url update_url
-  base_type=$( jq .baseType "$filename" | sed 's/"//g')
-  repo_type=$( jq .repoType "$filename" | sed 's/"//g')
-  repo_name=$( jq .name "$filename" | sed 's/"//g')
+  if ! base_type=$(jq -er '.baseType | strings | select(length > 0)' "$filename") \
+    || ! repo_type=$(jq -er '.repoType | strings | select(length > 0)' "$filename") \
+    || ! repo_name=$(jq -er '.name | strings | select(length > 0)' "$filename"); then
+    echo "ERROR - Invalid repository configuration in '$filename'"
+    exit 1
+  fi
 
   # A repo's format/type cannot be changed in place, so if one already exists
   # under this name with a different format or type (e.g. an old apt proxy being
@@ -203,15 +207,32 @@ delete_if_type_mismatch() {
   local want_format="$2"
   local want_type="$3"
   local pass="$4"
-  local existing
-  existing=$(curl -s -u admin:"$pass" \
+  local repositories existing
+  if ! repositories=$(curl --fail --silent --show-error -u admin:"$pass" \
     'http://localhost/service/rest/v1/repositories' \
     -H 'accept: application/json' \
-    -k | jq -r --arg name "$repo_name" '.[] | select(.name == $name) | "\(.format) \(.type)"')
+    --connect-timeout 10 --max-time 60); then
+    echo "ERROR - Could not list Nexus repositories while configuring '$repo_name'. Retrying."
+    return 1
+  fi
+  if ! existing=$(printf '%s' "$repositories" | jq -er --arg name "$repo_name" '
+    if type != "array" then error("Expected a repository list")
+    else
+      [.[] | select(.name == $name)] |
+      if length == 0 then ""
+      elif length == 1 and (.[0].format | type) == "string" and (.[0].type | type) == "string"
+        and (.[0].format | length) > 0 and (.[0].type | length) > 0
+      then .[0] | "\(.format) \(.type)"
+      else error("Invalid or duplicate repository details")
+      end
+    end'); then
+    echo "ERROR - Invalid Nexus repository list while configuring '$repo_name'. Retrying."
+    return 1
+  fi
   if [ -z "$existing" ] || [ "$existing" = "$want_format $want_type" ]; then
     return 0
   fi
-  echo "Repo '$repo_name' exists as '$existing' but config wants '$want_format $want_type' — deleting it so it can be recreated..."
+  echo "Repo '$repo_name' exists as '$existing' but config wants '$want_format $want_type'. Deleting it so it can be recreated..."
   local code
   code=$(curl -s -u admin:"$pass" -XDELETE \
     "http://localhost/service/rest/v1/repositories/$repo_name" \

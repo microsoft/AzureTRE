@@ -32,7 +32,8 @@ sudo rm -f /etc/apt/sources.list.d/microsoft-edge*
 echo "init_vm.sh: VS Code"
 echo code code/add-microsoft-repo boolean false | sudo debconf-set-selections
 sudo apt install -y code
-sudo apt install -y gvfs
+# Desktop file integration is optional; its failure must not block VM access.
+sudo apt install -y gvfs || echo "WARNING - Optional gvfs installation failed. Desktop file integration may be unavailable."
 
 echo "init_vm.sh: Folders"
 sudo mkdir -p /opt/vscode/user-data

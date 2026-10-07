@@ -44,6 +44,19 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
+## Upgrade apt repositories to raw proxies
+
+Nexus bundle `3.11.0` replaces the `ubuntu`, `ubuntu-security`, `docker` and `microsoft-apt` apt repositories with raw proxies.
+The repository URLs stay the same. Clients select the distribution and product path, provided that the upstream still serves them.
+
+Schedule the upgrade outside package installation activity. Nexus deletes and recreates repositories whose format changes, making each feed temporarily unavailable.
+The replacement repositories rebuild their caches from upstream. The Nexus VM does not need to be recreated.
+Repository-list failures are retried and stop the upgrade if they persist.
+
+Upgrade Nexus before deploying Guacamole Linux VM bundle `1.4.7`.
+This VM bundle requests the `$RELEASE-security` suite and waits for cloud-init to complete before reporting deployment success.
+Upgrading an existing Linux VM does not rerun its cloud-init bootstrap. Already-failed VMs need a separate repair or replacement.
+
 ## Setup and usage
 
 1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the Key Vault under `vm-<tre-id>-jumpbox-password`
@@ -207,7 +220,7 @@ for ext in "${extensions[@]}"; do
     IFS='.' read -r publisher extension <<< "$publisher_extension"
     vsix_file="${publisher}-${extension}-${version}.vsix"
     curl -o "$vsix_file" "${base_url}/${publisher}/vsextensions/${extension}/${version}/vspackage"
-    
+
     # Install the extension if --install flag is set
     if [ "$INSTALL" = true ]; then
         code --install-extension "$vsix_file"
