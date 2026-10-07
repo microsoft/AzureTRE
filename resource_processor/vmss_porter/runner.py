@@ -3,6 +3,7 @@ from typing import Optional
 from multiprocessing import Process
 import json
 import asyncio
+import os
 import sys
 from helpers.commands import (
     azure_acr_login_command,
@@ -11,6 +12,8 @@ from helpers.commands import (
     build_porter_command_for_outputs,
     apply_porter_credentials_sets_command,
     run_command_helper,
+    cleanup_parameter_value_files,
+    PorterParameterDiscoveryError,
 )
 from shared.config import get_config
 from helpers.httpserver import start_server
@@ -153,7 +156,7 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
                             result = await invoke_porter_action(message, service_bus_client, config)
 
                             if result:
-                                logger.info(f"Resource request for {message} is complete")
+                                logger.info(f"Resource request for {message['id']} is complete")
                             else:
                                 logger.error("Message processing failed!")
 
@@ -181,7 +184,65 @@ async def receive_message(service_bus_client, config: dict, keep_running=lambda:
             await asyncio.sleep(10)
 
 
-async def run_porter(command_parts_list: list, config: dict):
+async def check_legacy_parameter_overrides(installation_id: str, config: dict) -> Optional[str]:
+    """Reject actions whose current parameters could be replaced by stored CLI overrides."""
+    inspection_error = (
+        f"Cannot verify stored parameters for resource '{installation_id}'. Check Porter storage access and retry."
+    )
+    upgrade_error = (
+        f"Cannot run this action for resource '{installation_id}': legacy Porter parameter overrides can replace current values. "
+        "Upgrade this resource with its current template version before retrying."
+    )
+    try:
+        # List first so a missing installation retains Porter's normal action behaviour.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "list", "--name", installation_id, "--output", "json", "--verbosity", "error"],
+            config,
+            "Check installation exists",
+            log_output=False,
+        )
+        if code != 0:
+            return inspection_error
+        installations = json.loads(output)
+        if not isinstance(installations, list):
+            return inspection_error
+        if not installations:
+            return None
+        if (
+            len(installations) != 1
+            or not isinstance(installations[0], dict)
+            or installations[0].get("name") != installation_id
+        ):
+            return inspection_error
+
+        # The show document can contain resolved secrets. Never log its output.
+        code, output, _ = await run_command_helper(
+            ["porter", "installations", "show", installation_id, "--output", "json", "--verbosity", "error"],
+            config,
+            "Check stored parameter overrides",
+            log_output=False,
+        )
+        if code != 0:
+            return inspection_error
+        installation = json.loads(output)
+        if not isinstance(installation, dict) or installation.get("name") != installation_id:
+            return inspection_error
+        parameters = installation.get("parameters", {})
+        if not isinstance(parameters, dict):
+            return inspection_error
+        status = installation.get("status", {})
+        # Porter show omits stored parameters when no recorded run is available.
+        if not isinstance(status, dict) or not status.get("runId"):
+            return f"Cannot verify stored parameters for resource '{installation_id}' without a recorded run. Upgrade this resource before retrying."
+        if parameters:
+            return upgrade_error
+    except Exception:
+        # Parser, subprocess and storage errors must not allow an unchecked action.
+        return inspection_error
+    return None
+
+
+async def run_porter(command_parts_list: list, config: dict, *, parameter_check_installation: Optional[str] = None):
     """
     Run a Porter command
     """
@@ -202,6 +263,11 @@ async def run_porter(command_parts_list: list, config: dict):
         returncode, _, stderr_text = await run_command_helper(cmd, config, "Porter credential sets")
         if returncode != 0:
             return (returncode, None, stderr_text)
+
+    if parameter_check_installation is not None:
+        error = await check_legacy_parameter_overrides(parameter_check_installation, config)
+        if error:
+            return (1, None, error)
 
     last_returncode = None
     last_stdout = None
@@ -236,6 +302,29 @@ def service_bus_message_generator(sb_message: dict, status: str, deployment_mess
     return resource_request_message
 
 
+async def _cleanup_param_set(param_set_name: str, param_set_file: str, installation_file: str, config: dict):
+    """Remove a Porter parameter set from its local store and delete the temp files.
+
+    The parameter set may never have been applied (e.g. run_porter returned early on an
+    Azure/ACR/credential failure), so the delete is best-effort and does not log at error level.
+    """
+    try:
+        if param_set_file:
+            await run_command_helper(
+                ["porter", "parameters", "delete", param_set_name], config, "Delete parameter set", log_error=False
+            )
+    except Exception as e:
+        logger.debug(f"Best-effort cleanup: could not delete parameter set '{param_set_name}': {e}")
+    finally:
+        cleanup_parameter_value_files(param_set_file)
+        for path in (param_set_file, installation_file):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
+
+
 async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
@@ -261,10 +350,31 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
 
     # Build and run porter command (flagging if its a built-in action or custom so we can adapt porter command appropriately)
     is_custom_action = action not in ["install", "upgrade", "uninstall"]
-    porter_command = await build_porter_command(config, msg_body, is_custom_action)
+    try:
+        porter_command, param_set_file, param_set_name, installation_file = await build_porter_command(
+            config, msg_body, is_custom_action
+        )
+    except PorterParameterDiscoveryError as error:
+        resource_request_message = service_bus_message_generator(
+            msg_body, statuses.failed_status_string_for[action], str(error)
+        )
+        await sb_sender.send_messages(
+            ServiceBusMessage(
+                body=resource_request_message, correlation_id=installation_id, session_id=msg_body["operationId"]
+            )
+        )
+        return False
 
     logger.debug("Starting to run porter execution command...")
-    returncode, _, err = await run_porter(porter_command, config)
+    try:
+        check_installation = installation_id if action not in ("install", "upgrade") else None
+        returncode, _, err = await run_porter(porter_command, config, parameter_check_installation=check_installation)
+    finally:
+        if param_set_file or installation_file:
+            try:
+                await _cleanup_param_set(param_set_name, param_set_file, installation_file, config)
+            except Exception as e:
+                logger.debug(f"Best-effort cleanup failed for '{installation_id}': {e}")
     logger.debug("Finished running porter execution command.")
 
     action_completed_without_error = False
@@ -280,19 +390,8 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
             command_representation += " ".join(cmd) + "; "
         command_representation = command_representation.rstrip("; ")
 
-        error_message = "Error message: " + " ".join(err.split("\n")) + "; Command executed: " + command_representation
+        error_message = "Error message: " + " ".join(err.split("\n")) + "; Porter command: " + command_representation
         action_completed_without_error = False
-
-        if "upgrade" == action and (
-            "could not find installation" in err
-            or "The installation cannot be upgraded, because it is not installed." in err
-        ):
-            logger.warning("Upgrade failed, attempting install...")
-            msg_body["action"] = "install"
-            porter_command = await build_porter_command(config, msg_body, False)
-            returncode, _, err = await run_porter(porter_command, config)
-            if returncode == 0:
-                action_completed_without_error = True
 
         if "uninstall" == action and "could not find installation" in err:
             logger.warning(

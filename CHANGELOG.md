@@ -1,10 +1,12 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* Existing resources with legacy Porter parameter overrides must complete a resource upgrade before custom actions or uninstall. The current template version can be reused. See [upgrading resources](docs/tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters). (`resource_processor` 0.13.10) ([#4904](https://github.com/microsoft/AzureTRE/pull/4904))
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 * Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
 * Add a "Your access" panel to the user menu that shows the TRE and workspace roles you hold and do not hold, what each role permits, and a sign out and back in option to pick up role changes, including when a TRE administrator has no workspace role. ([#5051](https://github.com/microsoft/AzureTRE/issues/5051))
 * Show a role-appropriate Connect action on resource detail pages, using the same connection behavior as resource cards. ([#5073](https://github.com/microsoft/AzureTRE/issues/5073))
@@ -23,6 +25,11 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
+  Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.
+  Defer cancellation of active Porter actions until they finish, preventing orphaned Docker deployments. Stop other cancelled subprocesses before removing their inputs.
+  Reject failed parameter discovery and keep request parameters out of completion logs.
+  (`resource_processor` 0.13.10, `tre-shared-service-firewall` 1.6.4) ([#4903](https://github.com/microsoft/AzureTRE/issues/4903))
 * Allow up to 30 checks at ten-second intervals when enabling or disabling storage public access during deployment. (`devops` 0.6.10) ([#5113](https://github.com/microsoft/AzureTRE/pull/5113))
 * Include Azure cloud and location in isolated CI environment names to avoid retained Key Vault name conflicts after region changes. Find previous CI environments by ownership tags during explicit cleanup. (`devops` 0.6.9) ([#5106](https://github.com/microsoft/AzureTRE/issues/5106))
 * Validate Certbot before `make letsencrypt` prepares Azure access, check the resource group after loading Terraform outputs, and disable optional Super-Linter publishing with read-only GitHub tokens. ([#5110](https://github.com/microsoft/AzureTRE/pull/5110))
