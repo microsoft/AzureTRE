@@ -275,7 +275,7 @@ export const AirlockViewRequest: React.FunctionComponent<AirlockViewRequestProps
                 <b>Status</b>
               </Stack.Item>
               <Stack.Item styles={stackItemStyles}>
-                <p>{request.status.replace("_", " ")}</p>
+                <p>{request.status.replace(/_/g, " ")}</p>
               </Stack.Item>
             </Stack>
 

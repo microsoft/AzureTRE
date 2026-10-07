@@ -3,32 +3,12 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-retry_with_backoff() {
-  local func="$1"
-  local sleep_time=10
-  local max_sleep=180
+# shellcheck disable=SC1091
+source ../scripts/terraform_init.sh
 
-  while [ "$sleep_time" -lt "$max_sleep" ]; do
-    if "$func"; then
-      return 0
-    fi
-    sleep "$sleep_time"
-    sleep_time=$((sleep_time * 2))
-  done
-  return 1
-}
-
-init_terraform() {
-  terraform_output=$(terraform init -input=false -backend=true -reconfigure 2>&1)
-  if echo "$terraform_output" | grep -q "AuthorizationPermissionMismatch\|403\|Failed to get existing workspaces"; then
-    return 1
-  elif echo "$terraform_output" | grep -q "Terraform has been successfully initialized"; then
-    return 0
-  fi
-
-  echo "Apply Retry mechanism on: ERROR- Unexpected output from terraform init: $terraform_output"
-  return 1
-}
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  python3 ../scripts/recover_bootstrap_lease.py context
+fi
 
 check_role_assignments() {
   local roles
@@ -47,7 +27,33 @@ check_role_assignments() {
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
 # shellcheck disable=SC2154
-az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+group_exists=$(az group exists --name "$TF_VAR_mgmt_resource_group_name" --output json)
+case "$group_exists" in
+  true)
+    # Verify existing ownership before bootstrap can update the CI tag.
+    if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+      python3 ../scripts/recover_bootstrap_lease.py verify-owner
+    fi
+    # Creating an existing group without tags clears its tags. Preserve them on reruns.
+    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+      az group update --name "$TF_VAR_mgmt_resource_group_name" \
+        --set "tags.ci_git_ref=$TF_VAR_ci_git_ref" -o table
+    fi
+    ;;
+  false)
+    # Tag new CI groups before any later bootstrap step can fail.
+    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+      az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" \
+        --tags "ci_git_ref=$TF_VAR_ci_git_ref" -o table
+    else
+      az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
+    fi
+    ;;
+  *)
+    echo "ERROR: Could not determine whether the management resource group exists." >&2
+    exit 1
+    ;;
+esac
 
 # shellcheck disable=SC2154
 if ! az storage account show --resource-group "$TF_VAR_mgmt_resource_group_name" --name "$TF_VAR_mgmt_storage_account_name" --query "name" -o none 2>/dev/null; then
@@ -113,6 +119,18 @@ for container in "${containers[@]}"; do
   done
 done
 
+echo "Checking blob read, write and lease access before initialising Terraform..."
+if ! retry_with_backoff check_blob_access; then
+  echo "ERROR: Bootstrap blob access check failed. Terraform has not been started." >&2
+  exit 1
+fi
+
+if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
+  if ! python3 ../scripts/recover_bootstrap_lease.py recover; then
+    echo "ERROR: Bootstrap lease recovery failed. Terraform has not been started." >&2
+    exit 1
+  fi
+fi
 
 echo -e "\n\e[34m»»» ✨ \e[96mTerraform init\e[0m..."
 # shellcheck disable=SC2154
@@ -129,7 +147,7 @@ BOOTSTRAP_BACKEND
 
 # shellcheck disable=SC2154
 if ! retry_with_backoff init_terraform; then
-  echo "ERROR: Timeout waiting for Terraform backend role assignments."
+  echo "ERROR: Terraform backend initialisation failed. See the error above." >&2
   exit 1
 fi
 echo -e "\n\e[34m»»» 📤 \e[96mImporting resources to state\e[0m..."

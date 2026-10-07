@@ -1,0 +1,4 @@
+-r ../requirements.txt
+# Match the E2E devcontainer's Azure Identity and Azure CLI dependencies.
+azure-identity==1.25.1
+azure-cli-core==2.81.0

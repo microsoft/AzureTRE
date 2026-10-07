@@ -2,36 +2,95 @@ import asyncio
 import json
 import base64
 import logging
+import os
+import shutil
+import signal
+import tempfile
+import uuid
 from urllib.parse import urlparse
 
 from shared.logging import logger, shell_output_logger
 
 
-async def run_command_helper(cmd_parts: list, config: dict, description: str):
+_CANCEL_GRACE_PERIOD_SECONDS = 10
+
+
+class PorterParameterDiscoveryError(RuntimeError):
+    """The current bundle's parameters could not be determined safely."""
+
+
+def _is_porter_invocation(cmd_parts):
+    if not cmd_parts or os.path.basename(cmd_parts[0]) != "porter":
+        return False
+    command = cmd_parts[1:]
+    if command and command[0] in ("installation", "installations", "inst"):
+        command = command[1:]
+    return bool(command and command[0] in ("apply", "install", "upgrade", "uninstall", "invoke"))
+
+
+async def _stop_command(proc, communication, *, wait_for_completion=False):
+    def send_signal(sig):
+        try:
+            os.killpg(proc.pid, sig)
+        except ProcessLookupError:
+            pass  # The command and its process group have already exited.
+
+    # Porter 1.4.0 cannot forward cancellation to its daemon-owned Docker
+    # invocation. Let the action and its state recording finish together.
+    # Killing Porter would orphan the deployment and allow an overlapping retry.
+    if not wait_for_completion:
+        send_signal(signal.SIGINT)
+        try:
+            await asyncio.wait_for(asyncio.shield(communication), timeout=_CANCEL_GRACE_PERIOD_SECONDS)
+        except asyncio.TimeoutError:
+            send_signal(signal.SIGKILL)
+    await asyncio.shield(communication)
+
+
+async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
         *cmd_parts,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env=config["porter_env"]
+        env=config["porter_env"],
+        start_new_session=True
     )
 
-    stdout, stderr = await proc.communicate()
+    # Keep draining output while shutting down, including after repeated cancellation.
+    communication = asyncio.create_task(proc.communicate())
+    try:
+        stdout, stderr = await asyncio.shield(communication)
+    except asyncio.CancelledError:
+        shutdown = asyncio.create_task(_stop_command(proc, communication, wait_for_completion=_is_porter_invocation(cmd_parts)))
+        while not shutdown.done():
+            try:
+                await asyncio.shield(shutdown)
+            except asyncio.CancelledError:
+                continue
+        shutdown.result()
+        raise
 
     stdout_text = None
     stderr_text = None
 
     if stdout:
         stdout_text = stdout.decode()
-        shell_output_logger(stdout_text, '[stdout]', logging.INFO)
+        if log_output:
+            shell_output_logger(stdout_text, '[stdout]', logging.INFO)
 
     if stderr:
         stderr_text = stderr.decode()
-        shell_output_logger(stderr_text, '[stderr]', logging.WARN)
+        if log_output:
+            stderr_log_level = logging.WARN if log_error else logging.DEBUG
+            shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
 
     if proc.returncode != 0:
-        logger.error(f"{description} failed with return code {proc.returncode}")
+        if log_error:
+            logger.error(f"{description} failed with return code {proc.returncode}")
+        else:
+            logger.debug(f"{description} failed with return code {proc.returncode}")
     else:
         logger.debug(f"{description} completed successfully")
 
@@ -78,10 +137,10 @@ def azure_acr_login_command(config):
 
 async def build_porter_command(config, msg_body, custom_action=False):
     porter_parameter_keys = await get_porter_parameter_keys(config, msg_body)
-    porter_parameters = []
+    param_set_entries = []
 
     if porter_parameter_keys is None:
-        logger.warning("Unknown porter parameters - explain probably failed.")
+        raise PorterParameterDiscoveryError("Cannot read bundle parameters from Porter. Check registry access and retry.")
     else:
         for parameter_name in porter_parameter_keys:
             # try to find the param in order of priorities:
@@ -117,29 +176,110 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                porter_parameters.extend(["--param", f"{parameter_name}={parameter_value}"])
+                param_set_entries.append({
+                    "name": parameter_name,
+                    "source": {"value": str(parameter_value)}
+                })
 
     installation_id = msg_body['id']
+    param_set_name = f"tre-params-{installation_id}-{uuid.uuid4().hex[:8]}"
 
-    command = ["porter"]
-    if custom_action:
-        command.extend(["invoke", "--action"])
+    param_set_file = None
+    installation_file = None
+    try:
+        if param_set_entries:
+            param_set = {
+                "schemaType": "ParameterSet",
+                "schemaVersion": "1.0.1",
+                "name": param_set_name,
+                "namespace": "",
+                "parameters": param_set_entries
+            }
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                param_set_file = f.name
+                # Parameter sets are stored verbatim by Porter. Keep values out of
+                # that database, including secrets not identified by the template.
+                value_directory = param_set_file + ".values"
+                os.mkdir(value_directory, mode=0o700)
+                for parameter in param_set_entries:
+                    with tempfile.NamedTemporaryFile(mode='w', dir=value_directory, delete=False) as value_file:
+                        value_file.write(parameter["source"]["value"])
+                        parameter["source"] = {"path": value_file.name}
+                json.dump(param_set, f)
 
-    command.append(msg_body['action'])
-    command.append(installation_id)
-    command.extend([
-        "--reference",
-        f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-    ])
-    command.extend(porter_parameters)
-    command.append("--force")
-    command.extend(["--credential-set", "arm_auth"])
-    command.extend(["--credential-set", "aad_auth"])
+        if not custom_action and msg_body['action'] in ("install", "upgrade"):
+            installation = {
+                "schemaType": "Installation",
+                "schemaVersion": "1.0.2",
+                "name": installation_id,
+                "bundle": {
+                    "repository": f"{config['registry_server']}/{msg_body['name']}",
+                    "version": msg_body['version']
+                },
+                "parameters": {},
+                "parameterSets": [param_set_name] if param_set_entries else [],
+                "credentialSets": ["arm_auth", "aad_auth"]
+            }
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                installation_file = f.name
+                json.dump(installation, f)
 
-    if msg_body['action'] == 'upgrade':
-        command.append("--force-upgrade")
+        commands = []
+        if param_set_file:
+            commands.append(["porter", "parameters", "apply", param_set_file])
 
-    return [command]
+        if custom_action:
+            command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
+            command.extend([
+                "--reference",
+                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+            ])
+            if param_set_file:
+                command.extend(["--parameter-set", param_set_name])
+            command.append("--force")
+            command.extend(["--credential-set", "arm_auth"])
+            command.extend(["--credential-set", "aad_auth"])
+            commands.append(command)
+        elif installation_file:
+            # porter installation apply is declarative: it creates the installation if it
+            # doesn't exist (or a previous install failed) and upgrades it otherwise, so it
+            # replaces the previous explicit upgrade->install fallback for built-in actions.
+            # Porter v1.4.0 logs parameter diffs, including secrets, at INFO.
+            commands.append(["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"])
+        else:
+            command = ["porter", msg_body['action'], installation_id]
+            command.extend([
+                "--reference",
+                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
+            ])
+            if param_set_file:
+                command.extend(["--parameter-set", param_set_name])
+            command.append("--force")
+            command.extend(["--credential-set", "arm_auth"])
+            command.extend(["--credential-set", "aad_auth"])
+            commands.append(command)
+
+        return (commands, param_set_file, param_set_name, installation_file)
+    except Exception:
+        cleanup_parameter_value_files(param_set_file)
+        for path in (param_set_file, installation_file):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
+        raise
+
+
+def cleanup_parameter_value_files(param_set_file):
+    """Remove the private value directory even if Porter parameter-set deletion fails."""
+    if param_set_file:
+        try:
+            shutil.rmtree(param_set_file + ".values")
+        except FileNotFoundError:
+            pass  # Construction may have failed before the directory was created.
+        except OSError as e:
+            logger.debug(f"Best-effort cleanup: could not remove parameter values for '{param_set_file}': {e}")
 
 
 async def build_porter_command_for_outputs(msg_body):

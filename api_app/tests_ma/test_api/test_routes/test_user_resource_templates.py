@@ -35,7 +35,8 @@ def user_resource_template_without_enriching():
 
 class TestUserResourceTemplatesRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
+    @classmethod
+    def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
         yield
@@ -105,7 +106,8 @@ class TestUserResourceTemplatesRequiringAdminRights:
 
 class TestUserResourceTemplatesNotRequiringAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, researcher_user):
+    @classmethod
+    def _prepare(cls, app, researcher_user):
         app.dependency_overrides[require_tre_user_or_admin] = researcher_user
         yield
         app.dependency_overrides = {}
