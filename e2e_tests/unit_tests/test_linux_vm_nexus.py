@@ -157,9 +157,10 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_vm_failure_preserved_while_shared_resources_are_cleaned(self):
         failure = RuntimeError("VM bootstrap failed")
-        with self.assertRaises(RuntimeError) as caught:
+        bootstrap_vm = AsyncMock(side_effect=failure)
+        with self.assertRaisesRegex(RuntimeError, "VM bootstrap failed") as caught:
             async with linuxvm.linux_vm_nexus(True):
-                raise failure
+                await bootstrap_vm()
         self.assertIs(caught.exception, failure)
         self.assertEqual(self.deleted(), ["nexus", "certs"])
 
