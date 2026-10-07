@@ -123,13 +123,21 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.deleted(), ["nexus", "certs"])
 
     async def test_existing_certificate_service_is_preserved(self):
-        self.services = [self.certs(properties={"domain_prefix": "other", "cert_name": "unrelated"}), self.certs()]
+        self.services = [self.certs()]
         async with linuxvm.linux_vm_nexus(True):
             pass
         posts = [json.loads(request.content) for request in self.requests if request.method == "POST"]
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0]["properties"]["ssl_cert_name"], "existing-cert")
         self.assertEqual(self.deleted(), ["nexus"])
+
+    async def test_unrelated_certificate_service_is_not_replaced(self):
+        # The API allows only one active service per template.
+        self.services = [self.certs(properties={"domain_prefix": "other", "cert_name": "unrelated"})]
+        with self.assertRaisesRegex(AssertionError, "belongs to another domain"):
+            async with linuxvm.linux_vm_nexus(True):
+                self.fail("An unrelated certificate service must be preserved")
+        self.assertEqual([request.method for request in self.requests], ["GET"])
 
     async def test_failed_existing_certificate_service_requires_repair(self):
         self.services = [self.certs(deploymentStatus="deployment_failed")]

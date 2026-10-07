@@ -67,6 +67,7 @@ It reports an error if an existing Nexus service needs repair or an upgrade.
 If Nexus is absent, the test can create its certificate service and Nexus after explicit acceptance of the [Sonatype Nexus Community Edition EULA](https://links.sonatype.com/products/nxrm/ce-eula).
 Set `TEST_ACCEPT_NEXUS_EULA=true` only after accepting that agreement.
 The test reuses an existing certificate service for the Nexus domain where available, and removes only services that it creates.
+If an existing certificate service uses another domain, deploy Nexus separately before testing.
 Certificate creation uses Let's Encrypt and is subject to its issuance limits.
 
 Run `make test-e2e-custom SELECTOR=linux_vm` in the configured E2E environment.

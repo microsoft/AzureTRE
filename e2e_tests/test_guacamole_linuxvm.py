@@ -36,18 +36,16 @@ async def linux_vm_nexus(verify):
         "This test requires Nexus. Deploy Nexus 3.11.0 first, or explicitly accept its CE EULA "
         "with TEST_ACCEPT_NEXUS_EULA=true (acceptNexusEula in the branch workflow)."
     )
-    cert_services = [
-        service
-        for service in services
-        if service["templateName"] == strings.CERTS_SHARED_SERVICE
-        and service["properties"].get("domain_prefix") == "nexus"
-    ]
-    assert len(cert_services) <= 1, "This test requires at most one certificate service for the Nexus domain"
+    cert_services = [service for service in services if service["templateName"] == strings.CERTS_SHARED_SERVICE]
+    assert len(cert_services) <= 1, "This test requires at most one certificate shared service"
     async with AsyncExitStack() as resources:
         if cert_services:
             certs = cert_services[0]
             assert certs["isEnabled"] and certs["deploymentStatus"] in ("deployed", "updated"), (
                 "Repair the existing Nexus certificate service before this test"
+            )
+            assert certs["properties"].get("domain_prefix") == "nexus", (
+                "The existing certificate service belongs to another domain. Deploy Nexus separately before this test."
             )
             cert_name = certs["properties"]["cert_name"]
         else:
