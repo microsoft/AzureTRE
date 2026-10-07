@@ -4,11 +4,11 @@ import pytest
 from httpx import AsyncClient
 from starlette import status
 
-from e2e_tests.conftest import disable_and_delete_ws_resource, get_workspace_owner_token
+from e2e_tests.conftest import get_workspace_owner_token
 from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
 from e2e_tests.resources import strings
 from e2e_tests.resources.deployment import install_done
-from e2e_tests.resources.resource import TIMEOUT, wait_for
+from e2e_tests.resources.resource import TIMEOUT, disable_and_delete_resource, wait_for
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
@@ -46,6 +46,15 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
                 workspace_owner_token,
                 [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED],
             )
-        finally:
+        except BaseException as bootstrap_error:
+            # Delete failed installs even if disabling reruns the failed bootstrap.
+            try:
+                await disable_and_delete_resource(
+                    f"/api{resource_path}", workspace_owner_token, verify, allow_failed_disable=True
+                )
+            except Exception as cleanup_error:
+                bootstrap_error.add_note(f"Linux VM cleanup also failed: {cleanup_error!r}")
+            raise
+        else:
             # Reused workspace/service fixtures do not delete their user resources.
-            await disable_and_delete_ws_resource(resource_path, workspace_id, verify)
+            await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify)

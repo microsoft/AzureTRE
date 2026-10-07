@@ -22,9 +22,10 @@ async def get_resource(endpoint, access_token, verify):
         return response.json()
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None):
+async def post_resource(
+    payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None
+):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
-
         full_endpoint = get_full_endpoint(endpoint)
         auth_headers = get_auth_header(access_token)
 
@@ -44,14 +45,19 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
 
         if wait:
             wait_token = access_token_for_wait if access_token_for_wait is not None else access_token
-            await wait_for(check_method, client, operation_endpoint, wait_token, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
+            await wait_for(
+                check_method,
+                client,
+                operation_endpoint,
+                wait_token,
+                [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED],
+            )
 
         return resource_path, resource_id
 
 
-async def disable_and_delete_resource(endpoint, access_token, verify):
+async def disable_and_delete_resource(endpoint, access_token, verify, *, allow_failed_disable=False):
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-
         full_endpoint = get_full_endpoint(endpoint)
         auth_headers = get_auth_header(access_token)
         auth_headers["etag"] = "*"  # for now, send in the wildcard to skip around etag checking
@@ -61,7 +67,10 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be disabled")
         operation_endpoint = response.headers["Location"]
-        await wait_for(patch_done, client, operation_endpoint, access_token, [strings.RESOURCE_STATUS_UPDATING_FAILED])
+        # The API persists isEnabled=False before provisioning. Failed installs can
+        # fail again during disable, but deletion is safe once that operation ends.
+        failure_states = [] if allow_failed_disable else [strings.RESOURCE_STATUS_UPDATING_FAILED]
+        await wait_for(patch_done, client, operation_endpoint, access_token, failure_states)
 
         # delete
         auth_headers = get_auth_header(access_token)
@@ -78,7 +87,7 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
 
 async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
     done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
-    LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
+    LOGGER.info(f"WAITING FOR OP: {operation_endpoint}")
     while not done:
         await asyncio.sleep(30)
 
