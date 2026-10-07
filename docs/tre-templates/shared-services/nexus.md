@@ -58,6 +58,22 @@ This VM bundle requests the `$RELEASE-security` suite and waits for cloud-init t
 For existing Linux VMs, set the security source suite to the VM's release plus `-security`, for example `jammy-security`.
 Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-failed VMs need a separate repair or replacement.
 
+## Validate Linux VM provisioning
+
+Run the `linux_vm` E2E test explicitly to check Ubuntu 22.04 bootstrap through Nexus.
+The test reuses an enabled, successfully deployed Nexus service at bundle version `3.11.0` or later.
+It reports an error if an existing Nexus service needs repair or an upgrade.
+
+If Nexus is absent, the test can create its certificate service and Nexus after explicit acceptance of the [Sonatype Nexus Community Edition EULA](https://links.sonatype.com/products/nxrm/ce-eula).
+Set `TEST_ACCEPT_NEXUS_EULA=true` only after accepting that agreement.
+The test reuses an existing certificate service for the Nexus domain where available, and removes only services that it creates.
+Certificate creation uses Let's Encrypt and is subject to its issuance limits.
+
+Run `make test-e2e-custom SELECTOR=linux_vm` in the configured E2E environment.
+For the **Deploy Azure TRE (branch)** workflow, set `e2eTestsCustomSelector` to `linux_vm`.
+If the test must create Nexus, select `acceptNexusEula` after accepting the agreement.
+The workflow leaves this consent input disabled by default.
+
 ## Setup and usage
 
 1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the Key Vault under `vm-<tre-id>-jumpbox-password`

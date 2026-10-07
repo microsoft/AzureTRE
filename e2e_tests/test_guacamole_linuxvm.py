@@ -1,22 +1,92 @@
 """Check that a Guacamole Linux VM finishes its Nexus-backed bootstrap."""
 
-import pytest
-from httpx import AsyncClient
-from starlette import status
+from contextlib import AsyncExitStack, asynccontextmanager
+from uuid import uuid4
 
+import pytest
+from packaging.version import Version
+
+from e2e_tests import config
 from e2e_tests.conftest import get_workspace_owner_token
-from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
+from e2e_tests.helpers import get_admin_token
 from e2e_tests.resources import strings
-from e2e_tests.resources.deployment import install_done
-from e2e_tests.resources.resource import TIMEOUT, disable_and_delete_resource, wait_for
+from e2e_tests.resources.resource import get_resource, temporary_resource
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
-@pytest.mark.extended
+@asynccontextmanager
+async def linux_vm_nexus(verify):
+    """Reuse a suitable Nexus instance or create explicitly authorised prerequisites."""
+    admin_token = await get_admin_token(verify)
+    services = (await get_resource(strings.API_SHARED_SERVICES, admin_token, verify))["sharedServices"]
+    nexus_services = [service for service in services if service["templateName"] == strings.NEXUS_SHARED_SERVICE]
+    assert len(nexus_services) <= 1, "This test requires at most one Nexus shared service"
+    if nexus_services:
+        nexus = nexus_services[0]
+        assert nexus["isEnabled"] and nexus["deploymentStatus"] in ("deployed", "updated"), (
+            "Nexus must be deployed and enabled"
+        )
+        assert Version(nexus["templateVersion"]) >= Version("3.11.0"), "Upgrade Nexus to bundle 3.11.0 before this test"
+        yield
+        return
+
+    assert config.TEST_ACCEPT_NEXUS_EULA, (
+        "This test requires Nexus. Deploy Nexus 3.11.0 first, or explicitly accept its CE EULA "
+        "with TEST_ACCEPT_NEXUS_EULA=true (acceptNexusEula in the branch workflow)."
+    )
+    cert_services = [
+        service
+        for service in services
+        if service["templateName"] == strings.CERTS_SHARED_SERVICE
+        and service["properties"].get("domain_prefix") == "nexus"
+    ]
+    assert len(cert_services) <= 1, "This test requires at most one certificate service for the Nexus domain"
+    async with AsyncExitStack() as resources:
+        if cert_services:
+            certs = cert_services[0]
+            assert certs["isEnabled"] and certs["deploymentStatus"] in ("deployed", "updated"), (
+                "Repair the existing Nexus certificate service before this test"
+            )
+            cert_name = certs["properties"]["cert_name"]
+        else:
+            cert_name = f"nexus-linux-e2e-{uuid4().hex[:8]}"
+            await resources.enter_async_context(
+                temporary_resource(
+                    {
+                        "templateName": strings.CERTS_SHARED_SERVICE,
+                        "properties": {
+                            "display_name": "Linux E2E Nexus certificate",
+                            "domain_prefix": "nexus",
+                            "cert_name": cert_name,
+                        },
+                    },
+                    strings.API_SHARED_SERVICES,
+                    admin_token,
+                    verify,
+                )
+            )
+        await resources.enter_async_context(
+            temporary_resource(
+                {
+                    "templateName": strings.NEXUS_SHARED_SERVICE,
+                    "properties": {
+                        "display_name": "Linux E2E Nexus",
+                        "ssl_cert_name": cert_name,
+                        "accept_nexus_eula": config.TEST_ACCEPT_NEXUS_EULA,
+                    },
+                },
+                strings.API_SHARED_SERVICES,
+                admin_token,
+                verify,
+            )
+        )
+        yield
+
+
 @pytest.mark.linux_vm
-@pytest.mark.timeout(75 * 60)
+@pytest.mark.timeout(150 * 60)
 async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_service, verify):
     _, workspace_id, workspace_service_path, _ = setup_test_workspace_and_guacamole_service
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
@@ -29,32 +99,8 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
         },
     }
 
-    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        response = await client.post(
-            get_full_endpoint(f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}"),
-            headers=get_auth_header(workspace_owner_token),
-            json=payload,
-        )
-        assert_status(response, [status.HTTP_202_ACCEPTED], "The Linux VM could not be created")
-        # Capture the path before waiting, so a failed bootstrap can still be removed.
-        resource_path = response.json()["operation"]["resourcePath"]
-        try:
-            await wait_for(
-                install_done,
-                client,
-                response.headers["Location"],
-                workspace_owner_token,
-                [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED],
-            )
-        except BaseException as bootstrap_error:
-            # Delete failed installs even if disabling reruns the failed bootstrap.
-            try:
-                await disable_and_delete_resource(
-                    f"/api{resource_path}", workspace_owner_token, verify, allow_failed_disable=True
-                )
-            except Exception as cleanup_error:
-                bootstrap_error.add_note(f"Linux VM cleanup also failed: {cleanup_error!r}")
-            raise
-        else:
-            # Reused workspace/service fixtures do not delete their user resources.
-            await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify)
+    async with linux_vm_nexus(verify):
+        async with temporary_resource(
+            payload, f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}", workspace_owner_token, verify
+        ):
+            pass

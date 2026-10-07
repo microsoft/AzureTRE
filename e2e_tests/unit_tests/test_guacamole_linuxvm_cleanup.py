@@ -15,6 +15,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")))
+        self.enterContext(patch.object(linuxvm, "get_admin_token", new=AsyncMock(return_value="admin-token")))
         self.fixture = ("/workspaces/ws", "ws", "/workspaces/ws/workspace-services/service", "service")
         self.resource_path = self.fixture[2] + "/user-resources/linux"
         self.requests = []
@@ -29,6 +30,20 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         delete_outcome=strings.RESOURCE_STATUS_DELETED,
     ):
         def handle(request):
+            if request.url.path == "/api/shared-services":
+                return Response(
+                    200,
+                    json={
+                        "sharedServices": [
+                            {
+                                "templateName": strings.NEXUS_SHARED_SERVICE,
+                                "templateVersion": "3.11.0",
+                                "isEnabled": True,
+                                "deploymentStatus": "deployed",
+                            }
+                        ]
+                    },
+                )
             self.requests.append(request)
             phase = request.url.path.rsplit("/", 1)[-1]
             response_status = 200
@@ -61,7 +76,6 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         def create_client(**_):
             return AsyncClient(transport=MockTransport(handle))
 
-        self.enterContext(patch.object(linuxvm, "AsyncClient", side_effect=create_client))
         self.enterContext(patch.object(resource, "AsyncClient", side_effect=create_client))
 
     def assert_deleted(self):
@@ -98,7 +112,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(RuntimeError) as caught:
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertIs(caught.exception, failure)
-        self.assertIn("Linux VM cleanup also failed", caught.exception.__notes__[0])
+        self.assertIn("also failed", caught.exception.__notes__[0])
         self.assert_deleted()
 
     async def test_cleanup_failure_fails_a_successful_bootstrap(self):
@@ -117,7 +131,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.mock_api(strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, disable_status=403)
         with self.assertRaises(AssertionError) as caught:
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
-        self.assertIn("Linux VM cleanup also failed", caught.exception.__notes__[0])
+        self.assertIn("also failed", caught.exception.__notes__[0])
         self.assertEqual([request.method for request in self.requests], ["POST", "GET", "PATCH"])
 
     async def test_successful_bootstrap_still_requires_successful_disable(self):
