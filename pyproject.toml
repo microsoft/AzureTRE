@@ -20,6 +20,7 @@ exclude_dirs = [
   "e2e_tests",
   "api_app/tests_ma",
   "resource_processor/tests_rp",
+  "resource_processor/tests_porter",
   "airlock_processor/tests",
   "devops/tests",
   "docs",
