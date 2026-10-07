@@ -3162,6 +3162,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#upgrade-existing-resources-for-document-based-porter-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade existing resources for document-based Porter parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-to-upgrade-a-resource-using-swagger-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4529,6 +4540,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#upgrade-existing-resources-for-document-based-porter-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade existing resources for document-based Porter parameters
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#how-to-upgrade-a-resource-using-swagger-ui" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4584,6 +4606,21 @@
 <p>Only minor and patch version upgrades are automatically allowed within the Azure TRE upgrade mechanism. Major versions upgrades and any version downgrades are blocked as they are assumed to contain breaking changes or changes that require additional consideration.</p>
 <p>For users who wish to upgrade a major version, we highly recommend to read the changelog, review what has changed and take some appropriate action before upgrading using <a href="#force-version-update">force version update</a>.</p>
 </div>
+<h2 id="upgrade-existing-resources-for-document-based-porter-parameters">Upgrade existing resources for document-based Porter parameters</h2>
+<p>Resource Processor 0.13.10 passes parameters through Porter documents. Existing resources can retain command-line parameter overrides from earlier versions. Porter gives these overrides precedence over the current action's parameter set.</p>
+<p>Custom actions and uninstall stop with an upgrade-required message when these overrides exist. The Resource Processor also stops these actions if it cannot verify the stored parameters. New installations and resource upgrades clear the overrides through an installation document.</p>
+<p>An upgrade runs the bundle's normal upgrade action and can change deployed infrastructure. Plan the usual maintenance window before proceeding.</p>
+<ol>
+<li>Read the resource's current <code>templateVersion</code> and <code>_etag</code> using its API <code>GET</code> operation.</li>
+<li>Confirm that the current template version is still registered and its bundle is available.</li>
+<li>Run the resource's API <code>PATCH</code> operation with that same <code>templateVersion</code> and the current <code>_etag</code>.</li>
+<li>Wait for the upgrade operation to succeed.</li>
+<li>Retry the custom action or uninstall.</li>
+</ol>
+<p>Follow the <a href="#how-to-upgrade-a-resource-using-swagger-ui">Swagger UI procedure below</a>, using the current template version in the request body. A newer template version is not required.</p>
+<p>To remove the firewall rule size limit throughout bundle execution, publish, register and upgrade the firewall shared service to <code>tre-shared-service-firewall</code> 1.6.4 or later. Earlier firewall bundles still pass the rules through environment variables.</p>
+<p>Upgrade each affected resource separately. Upgrading a workspace does not upgrade its child resources. Before deleting a workspace and its contents, upgrade affected child resources too.</p>
+<p>Resource Processor cancellation waits for an active Porter action to finish before removing its input files. This can delay shutdown during a long deployment. Porter 1.4.0 does not forward cancellation to its Docker invocation container, so forcibly stopping Porter could leave a deployment running and overlap a retry.</p>
 <h2 id="how-to-upgrade-a-resource-using-swagger-ui">How to upgrade a resource using Swagger UI</h2>
 <p>Resources can be upgrade using Swagger UI, in the following example we show how to upgrade a workspace version from 1.0.0 to 1.0.1, other resources upgrades are similar.</p>
 <ol>
@@ -4597,7 +4634,7 @@
 <p>Log into the Swagger UI using <code>Authorize</code>.</p>
 </li>
 <li>
-<p>Click <code>Try it out</code> on the <code>GET</code> <code>/api/workspace/{workspace_id}</code> operation.</p>
+<p>Click <code>Try it out</code> on the <code>GET</code> <code>/api/workspaces/{workspace_id}</code> operation.</p>
 </li>
 <li>
 <p>Provide your <code>workspace_id</code> in the parameters section and click <code>Execute</code>.</p>
@@ -4606,7 +4643,7 @@
 <p>Copy the <code>_etag</code> property from the response body.</p>
 </li>
 <li>
-<p>Click <code>Try it out</code> on the <code>PATCH</code> <code>/api/workspace/{workspace_id}</code> operation.</p>
+<p>Click <code>Try it out</code> on the <code>PATCH</code> <code>/api/workspaces/{workspace_id}</code> operation.</p>
 </li>
 <li>
 <p>Provide your <code>workspace_id</code> and <code>_etag</code> parameters which you've just copied.</p>
@@ -4614,13 +4651,13 @@
 <li>
 <p>Provide the following payload with the desired version in the <code>Request body</code> parameter and click <code>Execute</code>.</p>
 <p><div class="highlight"><pre><span></span><code><span class="w">  </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">"templateVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.1"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"templateVersion"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.1"</span>
 <span class="w">  </span><span class="p">}</span>
 </code></pre></div>
 1. Review server response, it should include a new <code>operation</code> document with <code>upgrade</code> as an <code>action</code> and <code>updating</code> as <code>status</code> for upgrading the workspace and a message states that the Job is starting.</p>
 </li>
 <li>
-<p>Once the upgrade is complete another operation will be created and can be viewed by executing <code>GET</code> <code>/api/workspace/{workspace_id}/operations</code>, review it and make sure its <code>status</code> is <code>updated</code>.</p>
+<p>Once the upgrade is complete another operation will be created and can be viewed by executing <code>GET</code> <code>/api/workspaces/{workspace_id}/operations</code>, review it and make sure its <code>status</code> is <code>updated</code>.</p>
 </li>
 </ol>
 <h3 id="force-version-update">Force version update</h3>
