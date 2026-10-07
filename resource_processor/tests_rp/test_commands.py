@@ -1,8 +1,14 @@
 import json
 import asyncio
+import os
+import logging
+import base64
+import stat
+import tempfile
+from pathlib import Path
 import pytest
 from unittest.mock import patch, AsyncMock
-from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value
+from helpers.commands import azure_login_command, apply_porter_credentials_sets_command, azure_acr_login_command, build_porter_command, build_porter_command_for_outputs, get_porter_parameter_keys, run_command_helper, get_special_porter_param_value, cleanup_parameter_value_files
 
 
 @pytest.fixture
@@ -58,17 +64,48 @@ async def test_build_porter_command(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    expected_command = [[
-        "porter", "install", "guid",
-        "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-        "--param", "param1=value1",
-        "--force",
-        "--credential-set", "arm_auth",
-        "--credential-set", "aad_auth"
-    ]]
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
+    try:
+        assert param_set_file is not None
+        assert param_set_name.startswith("tre-params-guid-")
+        assert len(param_set_name) == len("tre-params-guid-") + 8
+        assert os.path.exists(param_set_file)
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
 
-    command = await build_porter_command(config, msg_body)
-    assert command == expected_command
+        # First command applies the parameter set to Porter's store
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command is porter installation apply using the installation file
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
+
+        with open(param_set_file) as f:
+            param_set = json.load(f)
+
+        assert param_set["schemaType"] == "ParameterSet"
+        assert param_set["name"] == param_set_name
+        assert len(param_set["parameters"]) == 1
+        assert param_set["parameters"][0]["name"] == "param1"
+        assert set(param_set["parameters"][0]["source"]) == {"path"}
+        assert Path(param_set["parameters"][0]["source"]["path"]).read_text() == "value1"
+        assert "value1" not in Path(param_set_file).read_text()
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["schemaType"] == "Installation"
+        assert installation["name"] == "guid"
+        assert installation["parameters"] == {}
+        assert installation["parameterSets"] == [param_set_name]
+        assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
+        assert installation["bundle"]["repository"] == "myregistry.azurecr.io/mybundle"
+        assert installation["bundle"]["version"] == "1.0.0"
+    finally:
+        if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
+            os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -78,18 +115,31 @@ async def test_build_porter_command_for_upgrade(mock_get_porter_parameter_keys):
     msg_body = {"id": "guid", "action": "upgrade", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
     mock_get_porter_parameter_keys.return_value = ["param1"]
 
-    expected_command = [[
-        "porter", "upgrade", "guid",
-        "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
-        "--param", "param1=value1",
-        "--force",
-        "--credential-set", "arm_auth",
-        "--credential-set", "aad_auth",
-        "--force-upgrade"
-    ]]
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
+    try:
+        assert param_set_file is not None
+        assert param_set_name.startswith("tre-params-guid-")
+        assert os.path.exists(param_set_file)
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
 
-    command = await build_porter_command(config, msg_body)
-    assert command == expected_command
+        # First command applies the parameter set to Porter's store
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command is porter installation apply (not porter upgrade)
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == {}
+        assert installation["parameterSets"] == [param_set_name]
+    finally:
+        if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
+            os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -104,6 +154,34 @@ async def test_build_porter_command_for_outputs():
 
     command = await build_porter_command_for_outputs(msg_body)
     assert command == expected_command
+
+
+@pytest.mark.asyncio
+async def test_build_porter_command_no_parameters(mock_get_porter_parameter_keys):
+    """Test build_porter_command with no parameters: no param set file, but installation file with empty parameterSets."""
+    config = {"registry_server": "myregistry.azurecr.io"}
+    msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {}}
+    mock_get_porter_parameter_keys.return_value = []
+
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
+
+    try:
+        assert param_set_file is None
+        assert param_set_name.startswith("tre-params-guid-")
+        assert installation_file is not None
+        assert os.path.exists(installation_file)
+
+        assert commands == [["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]]
+
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == {}
+        assert installation["parameterSets"] == []
+        assert installation["credentialSets"] == ["arm_auth", "aad_auth"]
+    finally:
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
 
 
 @pytest.mark.asyncio
@@ -127,33 +205,174 @@ async def test_build_porter_command_with_complex_parameters(mock_get_porter_para
 
     mock_get_porter_parameter_keys.return_value = ["dict_param", "list_param", "string_param"]
 
-    command = await build_porter_command(config, msg_body)
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body)
 
-    # Verify the command contains properly encoded complex parameters
-    command_args = command[0]
+    try:
+        # First command is the apply command
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
 
-    # Find the indices of parameters
-    param_indices = [i for i, arg in enumerate(command_args) if arg == "--param"]
-    param_values = [command_args[i + 1] for i in param_indices]
+        # Second command is porter installation apply
+        assert commands[1] == ["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"]
 
-    # Check for all parameters
-    dict_param = next((p for p in param_values if p.startswith("dict_param=")), None)
-    list_param = next((p for p in param_values if p.startswith("list_param=")), None)
-    string_param = next((p for p in param_values if p.startswith("string_param=")), None)
+        assert param_set_name.startswith("tre-params-guid-")
 
-    assert dict_param is not None
-    assert list_param is not None
-    assert string_param is not None
-    assert string_param == "string_param=simple_value"
+        # Verify the param set file contains the correct parameters
+        assert param_set_file is not None
+        with open(param_set_file) as f:
+            param_set = json.load(f)
 
-    # Verify the dict and list are base64 encoded
-    import base64
+        params_by_name = {p["name"]: Path(p["source"]["path"]).read_text() for p in param_set["parameters"]}
 
-    dict_encoded = base64.b64encode(json.dumps(dict_value).encode("ascii")).decode("ascii")
-    list_encoded = base64.b64encode(json.dumps(list_value).encode("ascii")).decode("ascii")
+        assert "dict_param" in params_by_name
+        assert "list_param" in params_by_name
+        assert "string_param" in params_by_name
+        assert params_by_name["string_param"] == "simple_value"
 
-    assert dict_param == f"dict_param={dict_encoded}"
-    assert list_param == f"list_param={list_encoded}"
+        # Verify the dict and list are base64 encoded
+        import base64
+
+        dict_encoded = base64.b64encode(json.dumps(dict_value).encode("ascii")).decode("ascii")
+        list_encoded = base64.b64encode(json.dumps(list_value).encode("ascii")).decode("ascii")
+
+        assert params_by_name["dict_param"] == dict_encoded
+        assert params_by_name["list_param"] == list_encoded
+
+        # Verify the installation file references the parameter set
+        assert installation_file is not None
+        with open(installation_file) as f:
+            installation = json.load(f)
+
+        assert installation["parameters"] == {}
+        assert installation["parameterSets"] == [param_set_name]
+    finally:
+        if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
+            os.unlink(param_set_file)
+        if installation_file and os.path.exists(installation_file):
+            os.unlink(installation_file)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action, custom_action", [("install", False), ("upgrade", False), ("uninstall", False), ("start", True)])
+async def test_build_porter_command_large_firewall_parameters(mock_get_porter_parameter_keys, tmp_path, monkeypatch, action, custom_action):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    parameters = {
+        name: [
+            {
+                "name": f"workspace-{index}",
+                "priority": 1000 + index,
+                "rules": [{"name": f"rule-{rule}", "destination": f"service-{rule}.example.com"} for rule in range(20)]
+            }
+            for index in range(200)
+        ]
+        for name in ("rule_collections", "network_rule_collections")
+    }
+    mock_get_porter_parameter_keys.return_value = list(parameters)
+    msg_body = {"id": "guid", "action": action, "name": "mybundle", "version": "1.0.0", "parameters": parameters}
+
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(
+        {"registry_server": "myregistry.azurecr.io"}, msg_body, custom_action
+    )
+
+    assert all("--param" not in command for command in commands)
+    assert sum(len(arg.encode()) + 1 for command in commands for arg in command) < 4096
+    assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+    with open(param_set_file) as f:
+        parameter_set = json.load(f)
+    assert parameter_set["schemaType"] == "ParameterSet"
+    assert parameter_set["name"] == param_set_name
+    assert len(parameter_set["parameters"]) == 2
+    for parameter in parameter_set["parameters"]:
+        assert set(parameter["source"]) == {"path"}
+        value = Path(parameter["source"]["path"]).read_text()
+        assert len(value) > 128 * 1024
+        assert json.loads(base64.b64decode(value)) == parameters[parameter["name"]]
+
+    if installation_file:
+        with open(installation_file) as f:
+            assert json.load(f)["parameterSets"] == [param_set_name]
+    else:
+        assert commands[1][commands[1].index("--parameter-set") + 1] == param_set_name
+
+    for path in tmp_path.rglob("*"):
+        assert stat.S_IMODE(path.stat().st_mode) == (0o700 if path.is_dir() else 0o600)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_stage", ["parameter_write", "value_create", "value_write", "installation_create", "installation_write", "command_build"])
+async def test_build_porter_command_removes_files_on_failure(mock_get_porter_parameter_keys, tmp_path, monkeypatch, failure_stage):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    mock_get_porter_parameter_keys.return_value = ["param1"]
+    msg_body = {"id": "guid", "action": "install", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "secret"}}
+    config = {"registry_server": "myregistry.azurecr.io"}
+    original_dump = json.dump
+    original_tempfile = tempfile.NamedTemporaryFile
+
+    def dump(document, stream):
+        should_fail = (
+            (failure_stage == "parameter_write" and document["schemaType"] == "ParameterSet")
+            or (failure_stage == "installation_write" and document["schemaType"] == "Installation")
+        )
+        if should_fail:
+            stream.write("partial secret document")
+            raise OSError("document write failed")
+        return original_dump(document, stream)
+
+    def create_file(*args, **kwargs):
+        if failure_stage == "value_create" and kwargs.get("dir"):
+            raise OSError("value creation failed")
+        if failure_stage == "installation_create" and not kwargs.get("dir") and list(tmp_path.iterdir()):
+            raise OSError("document creation failed")
+        stream = original_tempfile(*args, **kwargs)
+        if failure_stage == "value_write" and kwargs.get("dir"):
+            original_write = stream.write
+
+            def fail_write(value):
+                original_write(value[:3])
+                raise OSError("value write failed")
+
+            stream.write = fail_write
+        return stream
+
+    monkeypatch.setattr("helpers.commands.json.dump", dump)
+    monkeypatch.setattr("helpers.commands.tempfile.NamedTemporaryFile", create_file)
+    if failure_stage == "command_build":
+        msg_body["action"] = "start"
+        del config["registry_server"]
+
+    with pytest.raises((OSError, KeyError)):
+        await build_porter_command(config, msg_body, custom_action=failure_stage == "command_build")
+
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+async def test_build_porter_command_custom_action(mock_get_porter_parameter_keys):
+    """Test that custom actions use porter invoke --action (regression guard)."""
+    config = {"registry_server": "myregistry.azurecr.io"}
+    msg_body = {"id": "guid", "action": "start", "name": "mybundle", "version": "1.0.0", "parameters": {"param1": "value1"}}
+    mock_get_porter_parameter_keys.return_value = ["param1"]
+
+    commands, param_set_file, param_set_name, installation_file = await build_porter_command(config, msg_body, custom_action=True)
+    try:
+        assert installation_file is None
+
+        # First command applies the parameter set
+        assert commands[0] == ["porter", "parameters", "apply", param_set_file]
+
+        # Second command uses porter invoke --action (not installation apply)
+        assert commands[1] == [
+            "porter", "invoke", "--action", "start", "guid",
+            "--reference", "myregistry.azurecr.io/mybundle:v1.0.0",
+            "--parameter-set", param_set_name,
+            "--force",
+            "--credential-set", "arm_auth",
+            "--credential-set", "aad_auth"
+        ]
+    finally:
+        if param_set_file and os.path.exists(param_set_file):
+            cleanup_parameter_value_files(param_set_file)
+            os.unlink(param_set_file)
 
 
 @pytest.mark.asyncio
@@ -184,7 +403,8 @@ async def test_get_porter_parameter_keys(mock_run_command_helper):
     assert command_args[0] == "porter"
     assert command_args[1] == "explain"
     assert "--reference" in command_args
-    assert f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}" == command_args[3]
+    expected_reference = "{}/{}:v{}".format(config['registry_server'], msg_body['name'], msg_body['version'])
+    assert expected_reference == command_args[3]
 
 
 @pytest.mark.asyncio
@@ -208,7 +428,8 @@ async def test_run_command_helper():
             "echo", "test",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            env=config["porter_env"]
+            env=config["porter_env"],
+            start_new_session=True
         )
 
 
@@ -229,6 +450,42 @@ async def test_run_command_helper_error():
         assert returncode == 1
         assert stdout is None
         assert stderr == "error output"
+
+
+@pytest.mark.asyncio
+@patch("helpers.commands.shell_output_logger")
+async def test_run_command_helper_error_best_effort_logs_debug(mock_shell_output_logger):
+    """Best-effort failures should reduce stderr logging severity to debug."""
+    config = {"porter_env": {}}
+    cmd_parts = ["command_that_fails"]
+
+    with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_subprocess:
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b"", b"error output")
+        mock_proc.returncode = 1
+        mock_subprocess.return_value = mock_proc
+
+        returncode, stdout, stderr = await run_command_helper(cmd_parts, config, "Best-effort command", log_error=False)
+
+        assert returncode == 1
+        assert stdout is None
+        assert stderr == "error output"
+        mock_shell_output_logger.assert_called_once_with("error output", "[stderr]", logging.DEBUG)
+
+
+@pytest.mark.asyncio
+@patch("helpers.commands.shell_output_logger")
+async def test_run_command_helper_can_capture_sensitive_output_without_logging(mock_shell_output_logger):
+    with patch("asyncio.create_subprocess_exec", new_callable=AsyncMock) as mock_subprocess:
+        mock_proc = AsyncMock()
+        mock_proc.communicate.return_value = (b'{"secret": "stored-value"}', b"sensitive diagnostic")
+        mock_proc.returncode = 0
+        mock_subprocess.return_value = mock_proc
+
+        result = await run_command_helper(["porter", "show"], {"porter_env": {}}, "Read installation", log_output=False)
+
+    assert result == (0, '{"secret": "stored-value"}', "sensitive diagnostic")
+    mock_shell_output_logger.assert_not_called()
 
 
 @pytest.mark.asyncio
