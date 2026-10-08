@@ -493,6 +493,8 @@ jobs:
             BUNDLE_DIR: "./templates/workspace_services/azuresql"
           - BUNDLE_TYPE: "workspace_service"
             BUNDLE_DIR: "./templates/workspace_services/openai"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/ai-foundry"
           - BUNDLE_TYPE: "user_resource"
             BUNDLE_DIR: "./templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm"
           - BUNDLE_TYPE: "user_resource"
@@ -673,6 +675,8 @@ jobs:
             BUNDLE_DIR: "./templates/workspace_services/ohdsi"
           - BUNDLE_TYPE: "workspace_service"
             BUNDLE_DIR: "./templates/workspace_services/azuresql"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/ai-foundry"
 
     environment: ${{ inputs.environmentName }}
     steps:

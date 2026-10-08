@@ -1,0 +1,209 @@
+---
+schemaVersion: 1.0.0
+name: tre-workspace-service-ai-foundry
+version: 0.5.1
+description: "Deploy Azure AI Foundry with configurable network access and authentication."
+registry: azuretre
+dockerfile: Dockerfile.tmpl
+
+credentials:
+  - name: azure_tenant_id
+    env: ARM_TENANT_ID
+  - name: azure_subscription_id
+    env: ARM_SUBSCRIPTION_ID
+  - name: azure_client_id
+    env: ARM_CLIENT_ID
+  - name: azure_client_secret
+    env: ARM_CLIENT_SECRET
+    sensitive: true
+
+parameters:
+  - name: workspace_id
+    type: string
+  - name: workspace_subscription_id
+    type: string
+    default: ""
+    description: "Workspace subscription ID. An empty value uses the core subscription."
+  - name: tre_id
+    type: string
+
+  # Azure TRE adds the following parameters during deployment.
+  - name: id
+    type: string
+    description: "Resource ID"
+    env: id
+  - name: tfstate_resource_group_name
+    type: string
+    description: "Resource group that contains the Terraform state storage account."
+  - name: tfstate_storage_account_name
+    type: string
+    description: "Terraform state storage account name."
+  - name: tfstate_container_name
+    env: tfstate_container_name
+    type: string
+    default: "tfstate"
+    description: "Terraform state storage container name."
+  - name: arm_use_msi
+    env: ARM_USE_MSI
+    type: boolean
+    default: false
+  - name: arm_environment
+    env: ARM_ENVIRONMENT
+    type: string
+    default: "public"
+
+  # AI Foundry parameters.
+  - name: is_exposed_externally
+    type: boolean
+    default: false
+    description: "Allow access from outside the workspace network. Authentication is still required."
+  - name: local_auth_enabled
+    type: boolean
+    default: false
+    description: "Allow API key authentication alongside Microsoft Entra ID."
+  - name: allowed_fqdns
+    type: string
+    default: "WyJkZW55LWFsbC5pbnZhbGlkIl0=" # Base64-encoded ["deny-all.invalid"].
+    description: >-
+      Base64-encoded JSON array of allowed outbound hostnames, defaulting to
+      ["deny-all.invalid"]. Removing the last entry or setting [] removes the
+      workaround: live tests on 25 September 2026 allowed external image and MCP
+      requests with an empty list, despite outbound restriction remaining enabled.
+      Real hostnames permit outbound access to those hosts. Use hostnames, not URLs.
+  - name: openai_model
+    type: string
+    default: "gpt-5.1 | 2025-11-13"
+    description: "OpenAI model that Azure deploys."
+  - name: openai_model_capacity
+    type: integer
+    default: 10
+    description: "Model capacity in thousands of tokens per minute."
+  - name: workspace_owners_group_id
+    type: string
+    description: "Microsoft Entra ID group object ID for workspace owners."
+  - name: workspace_researchers_group_id
+    type: string
+    description: "Microsoft Entra ID group object ID for workspace researchers."
+
+mixins:
+  - exec
+  - terraform:
+      clientVersion: 1.14.3
+
+outputs:
+  - name: ai_foundry_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: ai_foundry_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: openai_endpoint
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: openai_model_deployment
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: openai_api_key_secret_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+  - name: workspace_address_spaces
+    type: string
+    applyTo:
+      - install
+      - upgrade
+
+install:
+  - terraform:
+      description: "Create the AI Foundry model service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
+        openai_model: ${ bundle.parameters.openai_model }
+        openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ai-foundry-${ bundle.parameters.id }
+      outputs:
+        - name: ai_foundry_id
+        - name: ai_foundry_name
+        - name: openai_endpoint
+        - name: openai_model_deployment
+        - name: openai_api_key_secret_id
+        - name: workspace_address_spaces
+
+upgrade:
+  - terraform:
+      description: "Upgrade the AI Foundry workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
+        openai_model: ${ bundle.parameters.openai_model }
+        openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ai-foundry-${ bundle.parameters.id }
+      outputs:
+        - name: ai_foundry_id
+        - name: ai_foundry_name
+        - name: openai_endpoint
+        - name: openai_model_deployment
+        - name: openai_api_key_secret_id
+        - name: workspace_address_spaces
+
+uninstall:
+  - terraform:
+      description: "Delete the AI Foundry workspace service"
+      vars:
+        workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
+        tre_id: ${ bundle.parameters.tre_id }
+        tre_resource_id: ${ bundle.parameters.id }
+        arm_environment: ${ bundle.parameters.arm_environment }
+        is_exposed_externally: ${ bundle.parameters.is_exposed_externally }
+        local_auth_enabled: ${ bundle.parameters.local_auth_enabled }
+        allowed_fqdns: ${ bundle.parameters.allowed_fqdns }
+        openai_model: ${ bundle.parameters.openai_model }
+        openai_model_capacity: ${ bundle.parameters.openai_model_capacity }
+        workspace_owners_group_id: ${ bundle.parameters.workspace_owners_group_id }
+        workspace_researchers_group_id: ${ bundle.parameters.workspace_researchers_group_id }
+      backendConfig:
+        use_azuread_auth: "true"
+        use_oidc: "true"
+        resource_group_name: ${ bundle.parameters.tfstate_resource_group_name }
+        storage_account_name: ${ bundle.parameters.tfstate_storage_account_name }
+        container_name: ${ bundle.parameters.tfstate_container_name }
+        key: tre-workspace-service-ai-foundry-${ bundle.parameters.id }

@@ -1,0 +1,6 @@
+-r ../../e2e_tests/requirements.txt
+# Match the CLI and identity versions used by the dev container.
+azure-cli-core==2.81.0
+azure-identity==1.25.1
+jsonschema==4.25.1
+PyYAML==6.0.3

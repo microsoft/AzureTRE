@@ -161,7 +161,7 @@ async def test_multi_step_document_retries_then_succeeds(
 
     resource_repo.get_resource_by_id.return_value = basic_shared_service
     resource_template_repo.get_template_by_name_and_version.return_value = basic_shared_service_template
-    updated_resource = basic_shared_service.copy(update={"etag": "updated-etag"})
+    updated_resource = basic_shared_service.model_copy(update={"etag": "updated-etag"})
     resource_repo.patch_resource.side_effect = [
         CosmosAccessConditionFailedError(),
         (updated_resource, basic_shared_service_template),
