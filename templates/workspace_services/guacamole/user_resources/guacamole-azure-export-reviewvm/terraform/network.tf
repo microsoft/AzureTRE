@@ -3,14 +3,26 @@
 # VM Terraform is shared via the ./vm module; this file holds the
 # export-specific networking.
 
+locals {
+  airlock_v2_private_endpoint_name     = "pe-sa-airlock-ws-global-${module.windows_vm.short_workspace_id}"
+  airlock_legacy_private_endpoint_name = "pe-sa-export-ip-blob-${module.windows_vm.short_workspace_id}"
+  workspace_private_endpoint_names     = toset(data.azurerm_resources.workspace_private_endpoints.resources[*].name)
+  airlock_private_endpoint_name        = contains(local.workspace_private_endpoint_names, local.airlock_v2_private_endpoint_name) ? local.airlock_v2_private_endpoint_name : local.airlock_legacy_private_endpoint_name
+}
+
 data "azurerm_subnet" "webapps" {
   name                 = "WebAppsSubnet"
   virtual_network_name = module.windows_vm.virtual_network_name
   resource_group_name  = module.windows_vm.resource_group_name
 }
 
+data "azurerm_resources" "workspace_private_endpoints" {
+  resource_group_name = module.windows_vm.resource_group_name
+  type                = "Microsoft.Network/privateEndpoints"
+}
+
 data "azurerm_private_endpoint_connection" "airlock_export_inprogress_pe" {
-  name                = "pe-sa-export-ip-blob-${module.windows_vm.short_workspace_id}"
+  name                = local.airlock_private_endpoint_name
   resource_group_name = module.windows_vm.resource_group_name
 }
 

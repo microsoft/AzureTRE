@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import TypeAdapter
 
@@ -114,6 +114,18 @@ class ResourceTemplateRepository(BaseRepository):
         versions = await self.query(query=query, parameters=parameters)
         return versions
 
+    async def get_all_template_versions_for_names(self, template_names: List[str]) -> Dict[str, List[str]]:
+        unique_template_names = list(set(template_names))
+        if not unique_template_names:
+            return {}
+        query = 'SELECT c.name, c.version FROM c WHERE ARRAY_CONTAINS(@template_names, c.name)'
+        parameters = [{"name": "@template_names", "value": unique_template_names}]
+        template_versions = await self.query(query=query, parameters=parameters)
+        versions_by_name: Dict[str, List[str]] = {name: [] for name in unique_template_names}
+        for template_version in template_versions:
+            versions_by_name.setdefault(template_version["name"], []).append(template_version["version"])
+        return versions_by_name
+
     async def create_template(self, template_input: ResourceTemplateInCreate, resource_type: ResourceType, parent_service_name: str = "") -> Union[ResourceTemplate, UserResourceTemplate]:
         """
         creates a template based on the input (workspace and workspace-services template)
@@ -131,6 +143,10 @@ class ResourceTemplateRepository(BaseRepository):
             "properties": template_input.json_schema["properties"],
             "customActions": template_input.customActions
         }
+
+        for schema_key, template_field in (("$schema", "schema_uri"), ("$id", "schema_id"), ("$defs", "defs")):
+            if schema_key in template_input.json_schema:
+                template[template_field] = template_input.json_schema[schema_key]
 
         if "uiSchema" in template_input.json_schema:
             template["uiSchema"] = template_input.json_schema["uiSchema"]
