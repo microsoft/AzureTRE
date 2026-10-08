@@ -11,6 +11,7 @@ class AirlockRequestStatus(StrEnum):
     """
     Airlock Resource status
     """
+
     Draft = strings.AIRLOCK_RESOURCE_STATUS_DRAFT
     Submitted = strings.AIRLOCK_RESOURCE_STATUS_SUBMITTED
     InReview = strings.AIRLOCK_RESOURCE_STATUS_INREVIEW
@@ -53,6 +54,7 @@ class AirlockReview(AzureTREModel):
     """
     Airlock review
     """
+
     id: str = Field(title="Id", description="GUID identifying the review")
     reviewer: dict = Field(default_factory=dict)
     dateCreated: float = 0.0
@@ -71,6 +73,7 @@ class AirlockRequestHistoryItem(AzureTREModel):
     """
     Resource History Item - to preserve history of resource properties
     """
+
     resourceVersion: int
     updatedWhen: float
     updatedBy: dict = Field(default_factory=dict)
@@ -88,6 +91,7 @@ class AirlockReviewUserResource(AzureTREModel):
     """
     User resource created for Airlock Review
     """
+
     workspaceId: str = Field(title="Workspace ID")
     workspaceServiceId: str = Field(title="Workspace Service ID")
     userResourceId: str = Field(title="User Resource ID")
@@ -97,6 +101,7 @@ class AirlockRequest(AzureTREModel):
     """
     Airlock request
     """
+
     id: str = Field(title="Id", description="GUID identifying the resource")
     resourceVersion: int = 0
     createdBy: dict = Field(default_factory=dict)
@@ -108,21 +113,35 @@ class AirlockRequest(AzureTREModel):
     type: Optional[AirlockRequestType] = Field(None, title="Airlock request type")
     files: List[AirlockFile] = Field(default_factory=list, title="Files of the request")
     title: str = Field(default="Airlock Request", title="Brief title for the request")
-    businessJustification: str = Field(default="Business Justification", title="Explanation that will be provided to the request reviewer")
+    businessJustification: str = Field(
+        default="Business Justification", title="Explanation that will be provided to the request reviewer"
+    )
     status: AirlockRequestStatus = AirlockRequestStatus.Draft
-    statusMessage: Optional[str] = Field(None, title="Optional - contains additional information about the current status.")
+    statusMessage: Optional[str] = Field(
+        None, title="Optional - contains additional information about the current status."
+    )
     reviews: Optional[List[AirlockReview]] = None
     etag: Optional[str] = Field(None, title="_etag", alias="_etag")
-    reviewUserResources: Dict[str, AirlockReviewUserResource] = Field(default_factory=dict, title="User resources created for Airlock Reviews")
-    airlock_version: int = Field(default=1, title="Airlock version", description="1 = legacy per-stage storage, 2 = consolidated metadata-based storage. Requests are created with an explicit version, so a missing value identifies a pre-v2 request whose data is in legacy storage.")
-    scanResult: Optional[dict] = Field(None, title="Scan result", description="Malware scan verdict recorded independently of the request status. Shape: {clean, message}.")
+    reviewUserResources: Dict[str, AirlockReviewUserResource] = Field(
+        default_factory=dict, title="User resources created for Airlock Reviews"
+    )
+    airlock_version: int = Field(
+        default=1,
+        title="Airlock version",
+        description="1 = legacy per-stage storage, 2 = consolidated metadata-based storage. Requests are created with an explicit version, so a missing value identifies a pre-v2 request whose data is in legacy storage.",
+    )
+    scanResult: Optional[dict] = Field(
+        None,
+        title="Scan result",
+        description="Malware scan verdict recorded independently of the request status. Shape: {clean, message}.",
+    )
 
     # SQL API CosmosDB saves ETag as an escaped string: https://github.com/microsoft/AzureTRE/issues/1931
     @field_validator("etag", mode="before")
     @classmethod
     def parse_etag_to_remove_escaped_quotes(cls, value):
         if value:
-            return value.replace('\"', '')
+            return value.replace('"', "")
 
     @field_validator("createdBy", mode="before")
     @classmethod

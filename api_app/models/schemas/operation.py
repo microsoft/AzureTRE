@@ -24,28 +24,28 @@ def get_sample_operation(operation_id: str) -> dict:
                 "resourceType": "workspace",
                 "resourceAction": "install",
                 "status": "awaiting_deployment",
-                "updatedWhen": 1642611942.423857
+                "updatedWhen": 1642611942.423857,
             }
-        ]
+        ],
     }
 
 
 class OperationInResponse(BaseModel):
     operation: Operation
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "operation": get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132")
-        }
-    })
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"operation": get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132")}}
+    )
 
 
 class OperationInList(BaseModel):
     operations: List[Operation] = Field(default_factory=list, title="Operations")
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "operations": [
-                get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"),
-                get_sample_operation("640488fe-9408-4b9f-a239-3b03bc0c5df0")
-            ]
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "operations": [
+                    get_sample_operation("7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"),
+                    get_sample_operation("640488fe-9408-4b9f-a239-3b03bc0c5df0"),
+                ]
+            }
         }
-    })
+    )

@@ -58,7 +58,6 @@ def get_config() -> dict:
             "KEY_VAULT_URL": config["key_vault_url"],
             "ARM_ENVIRONMENT": config["arm_environment"],
             "AZURE_ENVIRONMENT": config["azure_environment"],
-
             # These are needed since they are referenced as credentials in every bundle and also in arm_auth credential set.
             "ARM_CLIENT_ID": config["arm_client_id"],
             "ARM_CLIENT_SECRET": config["arm_client_secret"],
@@ -77,15 +76,11 @@ def get_config() -> dict:
 
         # when running in vscode devcontainer
         if "DEVCONTAINER" in os.environ:
-            config["porter_env"].update(
-                {
-                    "REMOTE_CONTAINERS_IPC": config["remote_containers_ipc"]
-                }
-            )
+            config["porter_env"].update({"REMOTE_CONTAINERS_IPC": config["remote_containers_ipc"]})
 
         # Load env vars for bundles
         def envvar_to_key(name: str) -> str:
-            return name[len("RP_BUNDLE_"):].lower()
+            return name[len("RP_BUNDLE_") :].lower()
 
         config["bundle_params"] = {
             envvar_to_key(env_var_name): os.getenv(env_var_name)

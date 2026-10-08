@@ -1,7 +1,18 @@
 import asyncio
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
-from core.config import SUBSCRIPTION_ID, RESOURCE_GROUP_NAME, RESOURCE_LOCATION, COSMOSDB_ACCOUNT_NAME, STATE_STORE_DATABASE, STATE_STORE_RESOURCES_CONTAINER, STATE_STORE_RESOURCE_TEMPLATES_CONTAINER, STATE_STORE_RESOURCES_HISTORY_CONTAINER, STATE_STORE_OPERATIONS_CONTAINER, STATE_STORE_AIRLOCK_REQUESTS_CONTAINER
+from core.config import (
+    SUBSCRIPTION_ID,
+    RESOURCE_GROUP_NAME,
+    RESOURCE_LOCATION,
+    COSMOSDB_ACCOUNT_NAME,
+    STATE_STORE_DATABASE,
+    STATE_STORE_RESOURCES_CONTAINER,
+    STATE_STORE_RESOURCE_TEMPLATES_CONTAINER,
+    STATE_STORE_RESOURCES_HISTORY_CONTAINER,
+    STATE_STORE_OPERATIONS_CONTAINER,
+    STATE_STORE_AIRLOCK_REQUESTS_CONTAINER,
+)
 from core.credentials import get_credential
 from services.logging import logger
 
@@ -16,7 +27,7 @@ async def bootstrap_database() -> bool:
             create_container_if_not_exists(db_mgmt_client, STATE_STORE_RESOURCE_TEMPLATES_CONTAINER, "/id"),
             create_container_if_not_exists(db_mgmt_client, STATE_STORE_RESOURCES_HISTORY_CONTAINER, "/resourceId"),
             create_container_if_not_exists(db_mgmt_client, STATE_STORE_OPERATIONS_CONTAINER, "/id"),
-            create_container_if_not_exists(db_mgmt_client, STATE_STORE_AIRLOCK_REQUESTS_CONTAINER, "/id")
+            create_container_if_not_exists(db_mgmt_client, STATE_STORE_AIRLOCK_REQUESTS_CONTAINER, "/id"),
         )
 
         return True
@@ -36,14 +47,6 @@ async def create_container_if_not_exists(db_mgmt_client, container, partition_ke
         container_name=container,
         create_update_sql_container_parameters={
             "location": RESOURCE_LOCATION,
-            "resource": {
-                "id": container,
-                "partition_key": {
-                    "paths": [
-                        partition_key
-                    ],
-                    "kind": "Hash"
-                }
-            }
-        }
+            "resource": {"id": container, "partition_key": {"paths": [partition_key], "kind": "Hash"}},
+        },
     )

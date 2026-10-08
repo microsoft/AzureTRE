@@ -22,8 +22,9 @@ def get_account_url(account_name: str) -> str:
 
 
 def get_blob_client_from_blob_info(storage_account_name: str, container_name: str, blob_name: str):
-    source_blob_service_client = BlobServiceClient(account_url=get_account_url(storage_account_name),
-                                                   credential=get_credential())
+    source_blob_service_client = BlobServiceClient(
+        account_url=get_account_url(storage_account_name), credential=get_credential()
+    )
     source_container_client = source_blob_service_client.get_container_client(container_name)
     return source_container_client.get_blob_client(blob_name)
 
@@ -31,28 +32,25 @@ def get_blob_client_from_blob_info(storage_account_name: str, container_name: st
 def create_container(account_name: str, request_id: str):
     try:
         container_name = request_id
-        blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
-                                                credential=get_credential())
+        blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
         blob_service_client.create_container(container_name)
-        logging.info(f'Container created for request id: {request_id}.')
+        logging.info(f"Container created for request id: {request_id}.")
     except ResourceExistsError:
-        logging.info(f'Did not create a new container. Container already exists for request id: {request_id}.')
+        logging.info(f"Did not create a new container. Container already exists for request id: {request_id}.")
 
 
 def container_exists(account_name: str, container_name: str) -> bool:
-    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
-                                            credential=get_credential())
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
     return blob_service_client.get_container_client(container_name).exists()
 
 
 def delete_container(account_name: str, container_name: str):
-    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name),
-                                            credential=get_credential())
+    blob_service_client = BlobServiceClient(account_url=get_account_url(account_name), credential=get_credential())
     try:
         blob_service_client.delete_container(container_name)
-        logging.info(f'Deleted container {container_name} from {account_name}.')
+        logging.info(f"Deleted container {container_name} from {account_name}.")
     except ResourceNotFoundError:
-        logging.info(f'Container {container_name} already absent from {account_name}.')
+        logging.info(f"Container {container_name} already absent from {account_name}.")
 
 
 def get_request_files(account_name: str, request_id: str, container_name: str = None) -> list:
@@ -96,19 +94,27 @@ def delete_failed_submission_copy(account_name: str, container_name: str) -> boo
     blob_client.delete_blob()
     logging.info(
         "Deleted incomplete submission blob '%s' after copy status '%s' so delivery can retry",
-        blobs[0].name, copy_status)
+        blobs[0].name,
+        copy_status,
+    )
     return True
 
 
-def copy_data(source_account_name: str, destination_account_name: str, request_id: str,
-              source_container: str = None, destination_container: str = None,
-              additional_metadata: dict = None):
+def copy_data(
+    source_account_name: str,
+    destination_account_name: str,
+    request_id: str,
+    source_container: str = None,
+    destination_container: str = None,
+    additional_metadata: dict = None,
+):
     credential = get_credential()
     container_name = source_container or request_id
     dest_container_name = destination_container or request_id
 
-    source_blob_service_client = BlobServiceClient(account_url=get_account_url(source_account_name),
-                                                   credential=credential)
+    source_blob_service_client = BlobServiceClient(
+        account_url=get_account_url(source_account_name), credential=credential
+    )
     source_container_client = source_blob_service_client.get_container_client(container_name)
 
     # Check that we are copying exactly one blob
@@ -133,15 +139,17 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
     expiry = datetime.now(UTC) + timedelta(hours=1)
     udk = source_blob_service_client.get_user_delegation_key(key_start_time=start, key_expiry_time=expiry)
 
-    sas_token = generate_container_sas(container_name=container_name,
-                                       account_name=source_account_name,
-                                       user_delegation_key=udk,
-                                       permission=ContainerSasPermissions(read=True),
-                                       start=start,
-                                       expiry=expiry)
+    sas_token = generate_container_sas(
+        container_name=container_name,
+        account_name=source_account_name,
+        user_delegation_key=udk,
+        permission=ContainerSasPermissions(read=True),
+        start=start,
+        expiry=expiry,
+    )
 
     source_blob = source_container_client.get_blob_client(blob_name)
-    source_url = f'{source_blob.url}?{sas_token}'
+    source_url = f"{source_blob.url}?{sas_token}"
 
     # Set metadata to include the blob url that it is copied from
     metadata = source_blob.get_blob_properties()["metadata"].copy()
@@ -151,14 +159,16 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
         metadata.update(additional_metadata)
 
     # Copy files
-    dest_blob_service_client = BlobServiceClient(account_url=get_account_url(destination_account_name),
-                                                 credential=credential)
+    dest_blob_service_client = BlobServiceClient(
+        account_url=get_account_url(destination_account_name), credential=credential
+    )
     copied_blob = dest_blob_service_client.get_blob_client(dest_container_name, source_blob.blob_name)
     copy = copied_blob.start_copy_from_url(source_url, metadata=metadata)
 
     try:
-        logging.info("Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"],
-                     copy["copy_status"])
+        logging.info(
+            "Copy operation returned 'copy_id': '%s', 'copy_status': '%s'", copy["copy_id"], copy["copy_status"]
+        )
     except KeyError as e:
         logging.error(f"Failed getting operation id and status {e}")
 
@@ -179,25 +189,33 @@ def copy_data(source_account_name: str, destination_account_name: str, request_i
                 logging.warning(f"Aborted still-pending copy of '{source_blob.blob_name}' after {waited_seconds}s")
             except Exception as abort_error:
                 logging.error(f"Failed aborting pending copy of '{source_blob.blob_name}': {abort_error}")
-        raise Exception(f"Copy of '{source_blob.blob_name}' did not complete: status '{copy_status}' after {waited_seconds}s")
+        raise Exception(
+            f"Copy of '{source_blob.blob_name}' did not complete: status '{copy_status}' after {waited_seconds}s"
+        )
 
 
 def get_credential() -> DefaultAzureCredential:
     managed_identity = os.environ.get("MANAGED_IDENTITY_CLIENT_ID")
     if managed_identity:
         logging.info("using the Airlock processor's managed identity to get credentials.")
-    return DefaultAzureCredential(managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
-                                  exclude_shared_token_cache_credential=True) if managed_identity else DefaultAzureCredential()
+    return (
+        DefaultAzureCredential(
+            managed_identity_client_id=os.environ["MANAGED_IDENTITY_CLIENT_ID"],
+            exclude_shared_token_cache_credential=True,
+        )
+        if managed_identity
+        else DefaultAzureCredential()
+    )
 
 
 def get_blob_info_from_topic_and_subject(topic: str, subject: str):
     # Example of a topic: "/subscriptions/<subscription_id>/resourceGroups/<reosurce_group_name>/providers/Microsoft.Storage/storageAccounts/<storage_account_name>"
-    account_match = re.search(r'providers/Microsoft.Storage/storageAccounts/(.*?)$', topic)
+    account_match = re.search(r"providers/Microsoft.Storage/storageAccounts/(.*?)$", topic)
     if account_match is None:
         raise ValueError(f"Could not parse storage account name from Event Grid topic: '{topic}'")
     storage_account_name = account_match.group(1)
     # Example of a subject: "/blobServices/default/containers/<container_guid>/blobs/<blob_name>"
-    subject_match = re.search(r'/blobServices/default/containers/(.*?)/blobs/(.*?)$', subject)
+    subject_match = re.search(r"/blobServices/default/containers/(.*?)/blobs/(.*?)$", subject)
     if subject_match is None:
         raise ValueError(f"Could not parse container and blob name from Event Grid subject: '{subject}'")
     container_name, blob_name = subject_match.groups()
@@ -207,14 +225,14 @@ def get_blob_info_from_topic_and_subject(topic: str, subject: str):
 
 def get_blob_info_from_blob_url(blob_url: str) -> Tuple[str, str, str]:
     # Example of blob url: https://stalimappws663d.blob.core.windows.net/50866a82-d13a-4fd5-936f-deafdf1022ce/test_blob.txt
-    url_match = re.search(rf'https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$', blob_url)
+    url_match = re.search(rf"https://(.*?).blob.{get_storage_endpoint_suffix()}/(.*?)/(.*?)$", blob_url)
     if url_match is None:
         raise ValueError(f"Could not parse account, container and blob name from blob URL: '{blob_url}'")
     return url_match.groups()
 
 
-def get_blob_url(account_name: str, container_name: str, blob_name='') -> str:
-    return f'{get_account_url(account_name)}{container_name}/{blob_name}'
+def get_blob_url(account_name: str, container_name: str, blob_name="") -> str:
+    return f"{get_account_url(account_name)}{container_name}/{blob_name}"
 
 
 def get_storage_endpoint_suffix():

@@ -14,14 +14,14 @@ def airlock_id_completion(ctx: click.Context, param: click.Parameter, incomplete
     workspace_id = parent_ctx.params["workspace_id"]
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
-    response = client.call_api(log, 'GET', f'/api/workspaces/{workspace_id}/requests', scope_id=workspace_scope)
+    response = client.call_api(log, "GET", f"/api/workspaces/{workspace_id}/requests", scope_id=workspace_scope)
     if response.is_success:
         ids = [request["airlockRequest"]["id"] for request in response.json()["airlockRequests"]]
         return [id for id in ids if id.startswith(incomplete)]
 
 
 @click.group(name="airlock-request", invoke_without_command=True, help="Perform actions on an airlock request")
-@click.argument('airlock_id', required=True, type=click.UUID, shell_complete=airlock_id_completion)
+@click.argument("airlock_id", required=True, type=click.UUID, shell_complete=airlock_id_completion)
 @click.pass_context
 def airlock(ctx: click.Context, airlock_id: str) -> None:
     ctx.obj = WorkspaceAirlockContext.add_airlock_id_to_context_obj(ctx, airlock_id)
@@ -36,18 +36,18 @@ def airlock_show(airlock_context: WorkspaceAirlockContext, output_format, query)
 
     workspace_id = airlock_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing airlock request ID')
+        raise click.UsageError("Missing airlock request ID")
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
 
     response = client.call_api(
         log,
-        'GET',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}',
+        "GET",
+        f"/api/workspaces/{workspace_id}/requests/{airlock_id}",
         scope_id=workspace_scope,
     )
 
@@ -63,18 +63,18 @@ def airlock_get_url(airlock_context: WorkspaceAirlockContext, output_format, que
 
     workspace_id = airlock_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing service ID')
+        raise click.UsageError("Missing service ID")
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
 
     response = client.call_api(
         log,
-        'GET',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/link',
+        "GET",
+        f"/api/workspaces/{workspace_id}/requests/{airlock_id}/link",
         scope_id=workspace_scope,
     )
 
@@ -90,31 +90,27 @@ def airlock_submit(airlock_context: WorkspaceAirlockContext, output_format, quer
 
     workspace_id = airlock_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing airlock request ID')
+        raise click.UsageError("Missing airlock request ID")
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
 
     response = client.call_api(
         log,
-        'POST',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/submit',
+        "POST",
+        f"/api/workspaces/{workspace_id}/requests/{airlock_id}/submit",
         scope_id=workspace_scope,
     )
 
-    output(
-        response,
-        output_format=output_format,
-        query=query,
-        default_table_query=_default_table_query_item)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_item)
 
 
 @click.command(name="review", help="Provide a review response for an airlock request")
-@click.option('--approve/--reject', 'approve', required=True, help="Approved/rejected")
-@click.option('--reason', required=True, help="Reason for approval/rejection")
+@click.option("--approve/--reject", "approve", required=True, help="Approved/rejected")
+@click.option("--reason", required=True, help="Reason for approval/rejection")
 @output_option()
 @query_option()
 @pass_workspace_airlock_context
@@ -123,18 +119,18 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
 
     workspace_id = airlock_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing airlock request ID')
+        raise click.UsageError("Missing airlock request ID")
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
 
     response = client.call_api(
         log,
-        'POST',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/review',
+        "POST",
+        f"/api/workspaces/{workspace_id}/requests/{airlock_id}/review",
         json_data={
             "approval": approve,
             "decisionExplanation": reason,
@@ -142,11 +138,7 @@ def airlock_review(airlock_context: WorkspaceAirlockContext, approve, reason, ou
         scope_id=workspace_scope,
     )
 
-    output(
-        response,
-        output_format=output_format,
-        query=query,
-        default_table_query=_default_table_query_item)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_item)
 
 
 @click.command(name="cancel", help="Cancel an airlock request")
@@ -158,26 +150,22 @@ def airlock_cancel(airlock_context: WorkspaceAirlockContext, output_format, quer
 
     workspace_id = airlock_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
+        raise click.UsageError("Missing workspace ID")
     airlock_id = airlock_context.airlock_id
     if airlock_id is None:
-        raise click.UsageError('Missing airlock request ID')
+        raise click.UsageError("Missing airlock request ID")
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)
 
     response = client.call_api(
         log,
-        'POST',
-        f'/api/workspaces/{workspace_id}/requests/{airlock_id}/cancel',
+        "POST",
+        f"/api/workspaces/{workspace_id}/requests/{airlock_id}/cancel",
         scope_id=workspace_scope,
     )
 
-    output(
-        response,
-        output_format=output_format,
-        query=query,
-        default_table_query=_default_table_query_item)
+    output(response, output_format=output_format, query=query, default_table_query=_default_table_query_item)
 
 
 airlock.add_command(airlock_show)

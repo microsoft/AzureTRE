@@ -2,7 +2,12 @@ import pytest
 from pydantic import ValidationError
 
 from models.domain.airlock_request import AirlockReview, AirlockReviewDecision
-from models.schemas.airlock_request import AirlockRequestAndOperationInResponse, AirlockRequestInCreate, AirlockReviewInCreate, get_sample_airlock_request
+from models.schemas.airlock_request import (
+    AirlockRequestAndOperationInResponse,
+    AirlockRequestInCreate,
+    AirlockReviewInCreate,
+    get_sample_airlock_request,
+)
 from models.schemas.operation import get_sample_operation
 
 
@@ -13,7 +18,7 @@ def test_airlock_request_and_operation_in_response_schema_is_valid():
 
     sample_data = {
         "airlockRequest": get_sample_airlock_request(workspace_id, airlock_request_id),
-        "operation": get_sample_operation(operation_id)
+        "operation": get_sample_operation(operation_id),
     }
 
     # This validates the schema extra example logic

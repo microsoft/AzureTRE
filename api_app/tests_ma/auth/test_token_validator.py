@@ -1,4 +1,5 @@
 """Tests for auth.token_validator."""
+
 import pytest
 from unittest.mock import MagicMock, patch
 from pydantic import ValidationError
@@ -243,9 +244,7 @@ class TestTokenValidatorValidate:
 
         call_kwargs = mock_decode.call_args
         algorithms_arg = call_kwargs.kwargs.get("algorithms")
-        assert algorithms_arg == ["RS256"], (
-            f"Expected algorithms=['RS256'] only, got {algorithms_arg!r}"
-        )
+        assert algorithms_arg == ["RS256"], f"Expected algorithms=['RS256'] only, got {algorithms_arg!r}"
 
     def test_raises_token_invalid_on_missing_oid_claim(self):
         """A token whose payload lacks the 'oid' claim must raise TokenInvalid, not KeyError."""

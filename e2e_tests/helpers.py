@@ -22,20 +22,20 @@ class InstallFailedException(Exception):
 
 
 def read_workspace_id() -> str:
-    with open('workspace_id.txt', 'r') as f:
+    with open("workspace_id.txt", "r") as f:
         workspace_id = f.readline()
     return workspace_id
 
 
 def write_workspace_id(workspace_id: str) -> None:
-    with open('workspace_id.txt', 'w') as f:
+    with open("workspace_id.txt", "w") as f:
         f.write(workspace_id)
 
 
 def get_auth_header(token: str | TokenProvider) -> dict:
     if isinstance(token, TokenProvider):
         token = token.get_token()
-    return {'Authorization': f'Bearer {token}'}
+    return {"Authorization": f"Bearer {token}"}
 
 
 def get_full_endpoint(endpoint: str) -> str:
@@ -54,17 +54,17 @@ async def get_template(template_name, endpoint, token, verify):
 
 async def get_shared_service_by_name(template_name: str, verify, token) -> Optional[dict]:
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-        full_endpoint = get_full_endpoint('/api/shared-services')
+        full_endpoint = get_full_endpoint("/api/shared-services")
         auth_headers = get_auth_header(token)
 
         response = await client.get(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_200_OK], "Failed to get shared services")
-        LOGGER.info(f'RESPONSE: {response}')
+        LOGGER.info(f"RESPONSE: {response}")
 
         shared_service_list = response.json()["sharedServices"]
 
         # sort the list by most recently updated and pick the first one
-        shared_service_list.sort(reverse=True, key=lambda s: s['updatedWhen'])
+        shared_service_list.sort(reverse=True, key=lambda s: s["updatedWhen"])
         matching_shared_service = None
         for service in shared_service_list:
             if service["templateName"] == template_name:
@@ -77,14 +77,15 @@ async def get_shared_service_by_name(template_name: str, verify, token) -> Optio
 async def check_aad_auth_redirect(endpoint, verify) -> None:
     LOGGER.info(f"Checking AAD AuthN redirect on: {endpoint}")
 
-    terminal_http_status = [status.HTTP_200_OK,
-                            status.HTTP_401_UNAUTHORIZED,
-                            status.HTTP_403_FORBIDDEN,
-                            status.HTTP_302_FOUND
-                            ]
+    terminal_http_status = [
+        status.HTTP_200_OK,
+        status.HTTP_401_UNAUTHORIZED,
+        status.HTTP_403_FORBIDDEN,
+        status.HTTP_302_FOUND,
+    ]
 
     async with AsyncClient(verify=verify) as client:
-        while (True):
+        while True:
             try:
                 response = await client.get(url=endpoint, timeout=TIMEOUT)
                 LOGGER.info(f"Endpoint Response: {endpoint} {response}")
@@ -115,16 +116,32 @@ async def get_admin_token(verify) -> TokenProvider:
 def get_token(scope_uri, verify) -> TokenProvider:
     if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
         # Logging in as an Enterprise Application: Use Client Credentials flow
-        credential = ClientSecretCredential(config.AAD_TENANT_ID, config.TEST_ACCOUNT_CLIENT_ID, config.TEST_ACCOUNT_CLIENT_SECRET, connection_verify=verify, authority=cloud.get_aad_authority_fqdn())
-        scope = f'{scope_uri}/.default'
+        credential = ClientSecretCredential(
+            config.AAD_TENANT_ID,
+            config.TEST_ACCOUNT_CLIENT_ID,
+            config.TEST_ACCOUNT_CLIENT_SECRET,
+            connection_verify=verify,
+            authority=cloud.get_aad_authority_fqdn(),
+        )
+        scope = f"{scope_uri}/.default"
     else:
         # Logging in as a User: Use Resource Owner Password Credentials flow
-        credential = UsernamePasswordCredential(config.TEST_APP_ID, config.TEST_USER_NAME, config.TEST_USER_PASSWORD, connection_verify=verify, authority=cloud.get_aad_authority_fqdn(), tenant_id=config.AAD_TENANT_ID)
-        scope = f'{scope_uri}/user_impersonation'
+        credential = UsernamePasswordCredential(
+            config.TEST_APP_ID,
+            config.TEST_USER_NAME,
+            config.TEST_USER_PASSWORD,
+            connection_verify=verify,
+            authority=cloud.get_aad_authority_fqdn(),
+            tenant_id=config.AAD_TENANT_ID,
+        )
+        scope = f"{scope_uri}/user_impersonation"
 
     return TokenProvider(credential, scope)
 
 
-def assert_status(response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"):
-    assert response.status_code in expected_status, \
+def assert_status(
+    response: Response, expected_status: List[int] = [200], message_prefix: str = "Unexpected HTTP Status"
+):
+    assert response.status_code in expected_status, (
         f"{message_prefix}. Expected: {expected_status}. Actual: {response.status_code}. Response text: {response.text}"
+    )

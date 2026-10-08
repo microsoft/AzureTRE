@@ -18,8 +18,7 @@ from core import config, credentials
 from resources import strings
 
 
-class AirlockStatusUpdater():
-
+class AirlockStatusUpdater:
     def __init__(self):
         pass
 
@@ -35,25 +34,37 @@ class AirlockStatusUpdater():
             while True:
                 try:
                     async with credentials.get_credential_async_context() as credential:
-                        async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
+                        async with ServiceBusClient(
+                            config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential
+                        ) as service_bus_client:
                             client_created_time = time.time()
                             while True:
                                 try:
                                     if time.time() - client_created_time > 3600:
-                                        logger.info("ServiceBusClient has been active for 1 hour. Recreating for freshness...")
+                                        logger.info(
+                                            "ServiceBusClient has been active for 1 hour. Recreating for freshness..."
+                                        )
                                         break
 
                                     current_time = time.time()
                                     polling_count += 1
                                     if current_time - last_heartbeat_time >= 60:
-                                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue {polling_count} times in the last minute")
+                                        logger.info(
+                                            f"Queue reader heartbeat: Polled {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue {polling_count} times in the last minute"
+                                        )
                                         last_heartbeat_time = current_time
                                         polling_count = 0
 
-                                    logger.debug(f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue...")
-                                    receiver = service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE)
+                                    logger.debug(
+                                        f"Looking for new messages on {config.SERVICE_BUS_STEP_RESULT_QUEUE} queue..."
+                                    )
+                                    receiver = service_bus_client.get_queue_receiver(
+                                        queue_name=config.SERVICE_BUS_STEP_RESULT_QUEUE
+                                    )
                                     async with receiver:
-                                        received_msgs = await receiver.receive_messages(max_message_count=10, max_wait_time=1)
+                                        received_msgs = await receiver.receive_messages(
+                                            max_message_count=10, max_wait_time=1
+                                        )
                                         for msg in received_msgs:
                                             async with AutoLockRenewer() as renewer:
                                                 renewer.register(receiver, msg, max_lock_renewal_duration=60)
@@ -115,18 +126,27 @@ class AirlockStatusUpdater():
         if clean is True:
             new_status, status_message = AirlockRequestStatus.InReview, None
         elif clean is False:
-            new_status, status_message = AirlockRequestStatus.BlockingInProgress, airlock_request.scanResult.get("message")
+            new_status, status_message = (
+                AirlockRequestStatus.BlockingInProgress,
+                airlock_request.scanResult.get("message"),
+            )
         else:
             # A malformed verdict must never be read as clean, so leave the request where it is.
-            logger.error(f"Request {airlock_request.id} has a malformed scan verdict, not advancing: {airlock_request.scanResult}")
+            logger.error(
+                f"Request {airlock_request.id} has a malformed scan verdict, not advancing: {airlock_request.scanResult}"
+            )
             return
 
         logger.info(f"Completing submission for request {airlock_request.id} with status '{new_status}'.")
         workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
         await update_and_publish_event_airlock_request(
-            airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo,
-            updated_by=airlock_request.updatedBy, workspace=workspace,
-            new_status=new_status, status_message=status_message)
+            airlock_request=airlock_request,
+            airlock_request_repo=self.airlock_request_repo,
+            updated_by=airlock_request.updatedBy,
+            workspace=workspace,
+            new_status=new_status,
+            status_message=status_message,
+        )
 
     async def update_status_in_database(self, step_result_message: StepResultStatusUpdateMessage):
         """
@@ -143,26 +163,28 @@ class AirlockStatusUpdater():
             request_files = step_result_data.request_files
             scan_result = step_result_data.scan_result
             # Find the airlock request by id
-            airlock_request = await get_airlock_request_by_id(airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo)
+            airlock_request = await get_airlock_request_by_id(
+                airlock_request_id=airlock_request_id, airlock_request_repo=self.airlock_request_repo
+            )
             if airlock_request.status in AirlockRequestRepository.FINAL_AIRLOCK_STATUSES:
-                logger.info(f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'.")
+                logger.info(
+                    f"Discarding step result for request {airlock_request_id} in final status '{airlock_request.status}'."
+                )
                 return True
 
             # File enumeration is a fact about the data and can arrive after the transition it
             # accompanied, so record it regardless of the current status rather than discarding it.
             if request_files and not airlock_request.files:
                 airlock_request = await self.airlock_request_repo.update_airlock_request(
-                    original_request=airlock_request,
-                    updated_by=airlock_request.updatedBy,
-                    request_files=request_files)
+                    original_request=airlock_request, updated_by=airlock_request.updatedBy, request_files=request_files
+                )
                 result = True
 
             if scan_result is not None:
                 # A verdict is a fact about the data, so it is recorded in any non-final status.
                 airlock_request = await self.airlock_request_repo.update_airlock_request(
-                    original_request=airlock_request,
-                    updated_by=airlock_request.updatedBy,
-                    scan_result=scan_result)
+                    original_request=airlock_request, updated_by=airlock_request.updatedBy, scan_result=scan_result
+                )
                 result = True
             elif new_status is None:
                 # A file-only result carries no transition; the facts above are enough. Acknowledge it
@@ -171,14 +193,26 @@ class AirlockStatusUpdater():
             elif airlock_request.status == completed_step:
                 workspace = await self.workspace_repo.get_workspace_by_id(airlock_request.workspaceId)
                 # update to new status and send to event grid
-                airlock_request = await update_and_publish_event_airlock_request(airlock_request=airlock_request, airlock_request_repo=self.airlock_request_repo, updated_by=airlock_request.updatedBy, workspace=workspace, new_status=new_status, request_files=request_files, status_message=status_message)
+                airlock_request = await update_and_publish_event_airlock_request(
+                    airlock_request=airlock_request,
+                    airlock_request_repo=self.airlock_request_repo,
+                    updated_by=airlock_request.updatedBy,
+                    workspace=workspace,
+                    new_status=new_status,
+                    request_files=request_files,
+                    status_message=status_message,
+                )
                 result = True
             elif airlock_request.status == new_status:
                 # Redelivery of a result that was already applied. Retrying forever would dead-letter a valid message.
                 logger.info(f"Step result for request {airlock_request_id} already applied, acknowledging duplicate.")
                 return True
             else:
-                logger.error(strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(airlock_request_id, completed_step, airlock_request.status))
+                logger.error(
+                    strings.STEP_RESULT_MESSAGE_STATUS_DOES_NOT_MATCH.format(
+                        airlock_request_id, completed_step, airlock_request.status
+                    )
+                )
                 return result
 
             await self._complete_submission_if_ready(airlock_request)
@@ -190,7 +224,9 @@ class AirlockStatusUpdater():
                 logger.exception(strings.STEP_RESULT_ID_NOT_FOUND.format(airlock_request_id))
             if e.status_code == 400:
                 result = True
-                logger.exception(strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, completed_step, new_status))
+                logger.exception(
+                    strings.STEP_RESULT_MESSAGE_INVALID_STATUS.format(airlock_request_id, completed_step, new_status)
+                )
             if e.status_code == 503:
                 logger.exception(strings.STATE_STORE_ENDPOINT_NOT_RESPONDING)
         except Exception:
