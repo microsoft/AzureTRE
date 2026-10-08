@@ -126,7 +126,7 @@ class Validation:
         )
         token = f"{run_id}-{attempt}-{uuid.uuid4().hex[:8]}"
         core = "rg-trevalidate-" + token
-        branch = "ci-cleanup-validation/" + token
+        branch = f"ci-cleanup-validation/{run_id}-{attempt}"
         require(
             subprocess.run(
                 ["git", "show-ref", "--verify", "--quiet", "refs/remotes/origin/" + branch], cwd=SOURCE
@@ -251,6 +251,7 @@ class Validation:
         phase = "preview" if preview else "apply"
         env = self.wrapper_environment(phase)
         env.update(
+            CI_CLEANUP_REF=self.state["ref"],
             MAIN_TRE_ID=self.state["main_id"],
             BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP="4",
             BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY="48",
@@ -379,6 +380,14 @@ class Validation:
                 return 39
         elif phase in ("preview", "apply"):
             core = self.state["core"]
+            if args == ["account", "show", "-o", "json"]:
+                self.identity()
+                return self.forward(args)
+            if args == ["group", "list", "--subscription", self.state["subscription"], "-o", "json"]:
+                self.identity()
+                rows = json.loads(self.azure(["group", "list", "-o", "json"]).stdout)
+                print(json.dumps([row for row in rows if row["name"] in self.state["groups"]]))
+                return 0
             if args == ["config", "set", "extension.use_dynamic_install=yes_without_prompt"]:
                 return 0
             if args == [
@@ -417,7 +426,7 @@ class Validation:
             ):
                 require(not self.azure(args).stdout.strip(), "The disposable group contains a registry or a lock.")
                 return 0
-            if args == ["group", "delete", "--resource-group", target, "--yes", "--no-wait"]:
+            if args == ["group", "delete", "--resource-group", target, "--yes"]:
                 metadata = self.owned_empty(target)
                 require(
                     metadata["tags"].get("ci_git_ref") == self.state["ref"], "The cleanup ownership reference changed."
