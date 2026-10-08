@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/base/template_schema.json",
   "type": "object",
   "title": "Base Workspace",
@@ -21,6 +21,16 @@
       "title": "Enable Airlock",
       "description": "Allow safe import and export to the workspace",
       "default": true,
+      "updateable": true
+    },
+    "airlock_version": {
+      "type": "integer",
+      "title": "Airlock Version",
+      "description": "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage. Leave unset to use the default (2). Version 1 requires legacy airlock to be enabled in core.",
+      "enum": [
+        1,
+        2
+      ],
       "updateable": true
     },
     "app_service_plan_sku": {
@@ -49,9 +59,18 @@
     "address_space_size": {
       "type": "string",
       "title": "Address space size",
-      "description": "Network address size (small, medium, large or custom) to be used by the workspace.",
+      "description": "Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.",
       "default": "small",
       "enum": [
+        "24",
+        "23",
+        "22",
+        "21",
+        "20",
+        "19",
+        "18",
+        "17",
+        "16",
         "small",
         "medium",
         "large",

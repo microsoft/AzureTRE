@@ -74,7 +74,42 @@ Similarly to `tre_id`, `workspace_id` is used in the resource names of the works
 
 All the values for the required parameters will be provided by the deployment runner.
 
-Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle. This file follows the [JSON schema standard](http://json-schema.org/) and can be used by a user interface to generate a UI for the user to input the parameters.
+Any **custom parameters** are picked up by Azure TRE API and will be queried from the user deploying the workspace bundle. Custom parameters should also be defined in the `template_schema.json` file at the root of the bundle.
+This file follows the [JSON schema standard](https://json-schema.org/) Draft 2020-12 (`https://json-schema.org/draft/2020-12/schema`) for the subset supported by Azure TRE and can be used by a user interface to generate a UI for the user to input the parameters.
+
+### JSON Schema Version Standard
+
+Azure TRE template schemas (`template_schema.json`) use the **JSON Schema Draft 2020-12** dialect for the keywords supported by the template registration and validation APIs:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
+```
+
+The API preserves the root `$schema`, `$id`, and `$defs` keywords during registration. Other Draft 2020-12 keywords should be used only where supported by the template model and validation engine.
+
+#### Compatibility with existing templates
+
+| Template declaration | API validation | Resource forms |
+| --- | --- | --- |
+| Draft 2020-12 | Draft 2020-12 | Draft 2020-12 validator |
+| Draft 7 | Draft 7 with Azure TRE's additional `unevaluatedProperties` restriction | Draft 7 validator |
+| No `$schema` | Existing default validation, currently Draft 2020-12 | Existing Draft 7 form validation |
+
+Azure TRE rejects unexpected resource properties and PATCH changes to properties that are not updateable, including when a Draft 7 template is registered again. The Draft 7 API validator retains legacy keyword behaviour and adds support for Azure TRE's `unevaluatedProperties: false` restriction. Conditional properties declared in an active `allOf` branch remain valid.
+
+Registration preserves the root validation fields `properties`, `required`, `allOf` and `$defs`, together with `$schema` and `$id`. The root type is always `object`. Other root validation keywords are not preserved.
+
+Put conditional rules inside `allOf`, rather than using root `if`, `then` or `else`. Property schemas can contain local references such as `#/$defs/label`, nested object and array constraints, and nullable types. Form rendering remains limited to the features supported by React JSON Schema Form. This is not full JSON Schema conformance.
+
+Keep Azure TRE annotations such as `updateable`, `sensitive` and `readOnly` on the property itself when using a `$ref`. A reusable definition does not supply these annotations to Azure TRE's resource processing.
+
+An API upgrade does not rewrite stored templates or add missing metadata. To adopt Draft 2020-12, review the custom template's keywords, increment its bundle version and register the updated bundle. Changing only `$schema` can change validation semantics. Test creation and updates before upgrading existing resources.
+
+!!! note
+    **`$id` is not required on individual properties or subschemas.** Properties defined under "properties" are natively addressable by standard JSON Pointer (e.g. `#/properties/property_name`).
+    * In JSON Schema Draft 2020-12, `$id` is used for establishing the base URI of schema resources (e.g. at the root schema level). Placing `$id` on individual properties or subschemas is generally unnecessary and can alter reference resolution context. If custom plain-name anchors are needed within a subschema, use `$anchor` instead.
 
 ### Template properties
 
@@ -103,13 +138,18 @@ The mandatory parameters for workspace services are:
 | `tre_id` | string | Unique ID of for the TRE instance. | `tre-dev-42` |
 | `workspace_id` | string | Unique 4-character long, alphanumeric workspace ID. | `0a9e` |
 
-### Workpace services requiring additional address spaces
+### Workspace services requiring additional address spaces
 
 Some workspace services may require additional address spaces to be provisioned. This may be necessary if they need advanced network security groups, route tables or delegated subnets.
 
 To request an additional address space, the workspace service bundle must define an `address_space` parameter in the `porter.yaml` file. The value of this parameter will be provided by API to the resource processor.
 
 The size of the `address_space` will default to `/24`, however other sizes can be requested by including an `address_space_size` as part of the workspace service template.
+This parameter accepts the presets `small` (/24), `medium` (/22), `large` (/16), the literal value `custom` together with an explicit `address_space` CIDR (e.g. `10.2.1.0/25`), or a numeric CIDR mask as a string.
+The API has support for allocating CIDR subnet masks from "16" to "29". Workspace templates are configured to support from "16" (65,536 IP addresses) to "24" (256 IP addresses).
+Depending on the workspace service you are deploying you may configure a template with a CIDR up to "29" which has only 3 usable IP addresses as Azure reserves the first four and last address of every subnet.
+The workspace service IP addresses are in addition to the workspace addresses and the address size is unrelated to the workspace IP address size.
+The workspace will be patched to add the additional address space to its vnet.
 
 The `address_space` allocation will only take place during the install phase of a deployment, as this is a breaking change to your template you should increment the major version of your template, this means a you must deploy a new resource instead of upgrading an existing one.
 

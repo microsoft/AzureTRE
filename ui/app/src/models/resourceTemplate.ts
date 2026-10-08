@@ -1,6 +1,9 @@
 import { ResourceType } from "./resourceType";
 
 export interface ResourceTemplate {
+  $schema?: string;
+  $id?: string;
+  $defs?: Record<string, any>;
   id: string;
   name: string;
   type: string;
@@ -35,6 +38,9 @@ export const sanitiseTemplateForRJSF = (template: ResourceTemplate) => {
   }
 
   const sanitised = {
+    ...(template.$schema ? { $schema: template.$schema } : {}),
+    ...(template.$id ? { $id: template.$id } : {}),
+    ...(template.$defs ? { $defs: template.$defs } : {}),
     name: template.name,
     type: template.type,
     description: template.description,
@@ -54,6 +60,12 @@ export interface TemplateAction {
   name: string;
   description: string;
 }
+
+// "reset_password" -> "Reset password"
+export const getActionDisplayName = (actionName: string) => {
+  const words = actionName.replace(/[_-]+/g, " ").trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 // make a sensible guess at an icon
 export const getActionIcon = (actionName: string) => {
