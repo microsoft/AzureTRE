@@ -4922,9 +4922,9 @@ make setup-local-debugging
 <h3 id="api-logs-in-loganalytics">API logs in LogAnalytics</h3>
 <p>To find logs in LogAnalytics, go to your resource group, then to LogAnalytics instance, which is named like <code>log-${TRE_ID}</code>.</p>
 <p>There, you can run a query like</p>
-<div class="highlight"><pre><span></span><code>AppTraces 
+<div class="highlight"><pre><span></span><code>AppTraces
 | where AppRoleName == "api"
-| order by TimeGenerated desc 
+| order by TimeGenerated desc
 </code></pre></div>
 <h3 id="api-logs-using-deployment-center">API logs using deployment center</h3>
 <p>Check that the version you are debugging/troubleshooting is the same one deployed on the App Service.</p>

@@ -4578,9 +4578,9 @@
 <p>To find logs in Application Insights, go to your resource group, then to Application Insights instance, which is named like <code>appi-${TRE_ID}</code>. Click on <em>Logs</em> in the left menu. Under Queries, select either <code>TRE Resource Processor Logs</code> or <code>TRE API Logs</code>.</p>
 <p><img alt="App Insights Queries" src="../app_insights_queries.png" /></p>
 <p>A manual query can also be created such as:</p>
-<div class="highlight"><pre><span></span><code><span class="n">traces</span><span class="w"> </span>
+<div class="highlight"><pre><span></span><code><span class="n">traces</span>
 <span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">cloud_RoleName</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s">"resource_processor"</span>
-<span class="p">|</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">timestamp</span><span class="w"> </span><span class="n">desc</span><span class="w"> </span>
+<span class="p">|</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">timestamp</span><span class="w"> </span><span class="n">desc</span>
 </code></pre></div>
 <h2 id="check-the-logs-for-a-specific-deployment">Check the logs for a specific deployment</h2>
 <p>You can run the following example query to get the logs for a specific deployment.</p>
