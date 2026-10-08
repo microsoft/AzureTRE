@@ -22,13 +22,13 @@
                 "type": "string",
                 "enum": [
                     "WorkspaceWrite",
-                    "WorkspaceRead", 
-                    "WorkspaceDelete", 
+                    "WorkspaceRead",
+                    "WorkspaceDelete",
                     "WorkspaceCreateService",
                     "WorkspaceUserRead",
                     "WorkspaceUserManage",
                     "ServiceRead",
-                    "ServiceWrite",  
+                    "ServiceWrite",
                     "ServiceDelete"
                 ]
             }

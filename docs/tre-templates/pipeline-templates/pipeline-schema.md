@@ -52,7 +52,7 @@ The below example references 2 properties from the primary resource to be used i
         "stepId": "1234567-87654-2345-6543",
         "stepTitle": "Update a firewall rule",
         "resourceTemplateName": "tre-shared-service-firewall",
-        "resourceType": "shared-service", 
+        "resourceType": "shared-service",
         "resourceAction": "upgrade",
         "arraySubstitutionAction": "replace", // <-- [append | remove | replace]
         "arrayMatchField": "name", // <-- name of the field in the array object to match on, for remove / replace
