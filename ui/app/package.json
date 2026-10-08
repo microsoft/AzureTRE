@@ -1,6 +1,6 @@
 {
   "name": "tre-ui",
-  "version": "0.9.1",
+  "version": "0.10.2",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -18,7 +18,7 @@
     "@types/react-dom": "^18.2.6",
     "@vitejs/plugin-react-swc": "latest",
     "ajv": "^8.18.0",
-    "moment": "^2.29.4",
+    "moment": "^2.31.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^8.0.3",

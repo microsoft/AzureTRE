@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 import semantic_version
 from copy import deepcopy
-from typing import Dict, Any, Optional
+from typing import Dict, Any, List, Optional
 
 from fastapi import HTTPException, status
 from db.repositories.user_resources import UserResourceRepository
@@ -310,9 +310,21 @@ async def update_user_resource(
 
 
 async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
+    set_available_upgrades(resource, all_versions)
+
+
+async def enrich_resources_with_available_upgrades(resources: List[Resource], resource_template_repo: ResourceTemplateRepository):
+    if not resources:
+        return
+    versions_by_template_name = await resource_template_repo.get_all_template_versions_for_names([resource.templateName for resource in resources])
+    for resource in resources:
+        set_available_upgrades(resource, versions_by_template_name.get(resource.templateName, []))
+
+
+def set_available_upgrades(resource: Resource, all_versions: List[str]):
     available_upgrades = []
     resource_version = semantic_version.Version(resource.templateVersion)
-    all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
 
     versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
     major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]

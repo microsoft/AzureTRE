@@ -30,12 +30,27 @@
       "default": true,
       "updateable": true
     },
+    "enable_airlock": {
+      "type": "boolean",
+      "title": "Enable Airlock",
+      "description": "Airlock review workspaces review requests from other workspaces and do not expose their own Airlock.",
+      "default": false
+    },
     "address_space_size": {
       "type": "string",
       "title": "Address space size",
-      "description": "Network address size (small, medium, large or custom) to be used by the workspace.",
+      "description": "Network address size as a CIDR value or (small /24, medium /22, large /16 or custom with an IP range e.g. 10.2.1.0/25) to be used by the workspace.",
       "default": "small",
       "enum": [
+        "24",
+        "23",
+        "22",
+        "21",
+        "20",
+        "19",
+        "18",
+        "17",
+        "16",
         "small",
         "medium",
         "large",
@@ -192,6 +207,9 @@
   "pipeline": null,
   "uiSchema": {
     "aad_redirect_uris": {
+      "classNames": "tre-hidden"
+    },
+    "enable_airlock": {
       "classNames": "tre-hidden"
     },
     "address_spaces": {

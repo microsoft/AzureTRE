@@ -24,7 +24,7 @@ When deploying a workspace the following properties need to be configured.
 
 ## Blocked Azure resource types
 
-Base workspace `2.12.0` adds the updateable `blocked_resource_types` setting.
+Base workspace `2.13.0` adds the updateable `blocked_resource_types` setting.
 It defaults to `[]`, which creates no policy assignment and preserves existing deployment behaviour.
 Set the list when creating or updating a workspace through TRE. For example:
 

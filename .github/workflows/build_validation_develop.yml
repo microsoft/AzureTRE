@@ -23,6 +23,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read # For paths-filter and super-linter
+    env:
+      # Report lint results through the job without publishing statuses or PR comments.
+      MULTI_STATUS: "false"
+      ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: "false"
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -54,14 +58,24 @@ jobs:
               - 'devops/scripts/porter_build_bundle.sh'
               - '**/porter-build-context.env'
             ci_cleanup:
+              - 'Makefile'
+              - 'core/terraform/scripts/letsencrypt.sh'
+              - 'core/terraform/scripts/validate_certbot.sh'
               - 'devops/scripts/clean_ci_validation_envs.sh'
+              - 'devops/scripts/storage_enable_public_access.sh'
+              - 'devops/scripts/bash_trap_helper.sh'
+              - 'devops/scripts/terraform_init.sh'
+              - 'devops/scripts/recover_bootstrap_lease.py'
+              - 'devops/scripts/ci_environment_id.py'
+              - 'devops/scripts/destroy_ci_ref_env.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
               - 'devops/scripts/kv_add_network_exception.sh'
-              - 'devops/scripts/bash_trap_helper.sh'
               - 'devops/terraform/**'
               - '.github/actions/devcontainer_run_command/action.yml'
               - '.github/workflows/deploy_tre_reusable.yml'
+              - '.github/workflows/deploy_tre_branch.yml'
+              - '.github/workflows/pr_comment_bot.yml'
               - 'devops/tests/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'

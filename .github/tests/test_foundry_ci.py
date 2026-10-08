@@ -142,8 +142,17 @@ class FoundryTemplateTests(unittest.TestCase):
                                "action": action, "parameters": {"allowed_fqdns": hosts}}
                     with patch.object(commands, "get_porter_parameter_keys", AsyncMock(return_value=["allowed_fqdns"])):
                         result = asyncio.run(commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message))
-                    argument = next(item for item in result[0] if item.startswith("allowed_fqdns="))
-                    self.assertEqual(json.loads(base64.b64decode(argument.split("=", 1)[1])), hosts)
+                    _, parameter_file, _, installation_file = result
+                    try:
+                        parameters = json.loads(Path(parameter_file).read_text())["parameters"]
+                        source = next(item["source"] for item in parameters if item["name"] == "allowed_fqdns")
+                        encoded = Path(source["path"]).read_text()
+                        self.assertEqual(json.loads(base64.b64decode(encoded)), hosts)
+                    finally:
+                        commands.cleanup_parameter_value_files(parameter_file)
+                        Path(parameter_file).unlink(missing_ok=True)
+                        if installation_file:
+                            Path(installation_file).unlink(missing_ok=True)
 
     def test_local_parameter_sources_follow_environment_conventions(self):
         parameter_set = json.loads((BUNDLE / "parameters.json").read_text())

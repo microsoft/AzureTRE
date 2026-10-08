@@ -19,8 +19,19 @@ from resources import strings
 from db.repositories.base import BaseRepository
 from services.logging import logger
 
+_UNSET = object()
+
 
 class AirlockRequestRepository(BaseRepository):
+    FINAL_AIRLOCK_STATUSES = [
+        AirlockRequestStatus.Approved,
+        AirlockRequestStatus.Rejected,
+        AirlockRequestStatus.Blocked,
+        AirlockRequestStatus.Cancelled,
+        AirlockRequestStatus.Failed,
+        AirlockRequestStatus.Revoked
+    ]
+
     @classmethod
     async def create(cls):
         cls = AirlockRequestRepository()
@@ -59,6 +70,28 @@ class AirlockRequestRepository(BaseRepository):
     @staticmethod
     def airlock_requests_query():
         return 'SELECT * FROM c'
+
+    async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Any request may still have a container, including cancelled ones whose async deletion
+        # failed or has not completed. Cleanup is idempotent (missing containers are ignored),
+        # so return every request to avoid orphaning data when the workspace is deleted.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
+
+    async def get_in_flight_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
+        # Requests in a final state keep their data but will never move between stages,
+        # so only in-flight requests block a change of storage layout.
+        query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
+        parameters = [
+            {"name": "@workspaceId", "value": str(workspace_id)},
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+        ]
+        requests = await self.query(query=query, parameters=parameters)
+        return [request["id"] for request in requests]
 
     def validate_status_update(self, current_status: AirlockRequestStatus, new_status: AirlockRequestStatus) -> bool:
 
@@ -107,7 +140,7 @@ class AirlockRequestRepository(BaseRepository):
         allowed_transitions = valid_transitions.get(current_status, set())
         return new_status in allowed_transitions
 
-    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user) -> AirlockRequest:
+    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user, airlock_version: int = 1) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
@@ -123,7 +156,8 @@ class AirlockRequestRepository(BaseRepository):
             updatedBy=user,
             updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
-            reviews=[]
+            reviews=[],
+            airlock_version=airlock_version
         )
 
         return airlock_request
@@ -194,21 +228,24 @@ class AirlockRequestRepository(BaseRepository):
             request_files: Optional[List[AirlockFile]] = None,
             status_message: Optional[str] = None,
             airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None) -> AirlockRequest:
-        updated_request = self._build_updated_request(
-            original_request=original_request,
+            review_user_resource: Optional[AirlockReviewUserResource] = None,
+            scan_result=_UNSET) -> AirlockRequest:
+        # Preserve every field when rebuilding after an ETag conflict.
+        update_fields = dict(
             new_status=new_status,
             request_files=request_files,
             status_message=status_message,
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
+            scan_result=scan_result,
             updated_by=updated_by)
+        updated_request = self._build_updated_request(original_request=original_request, **update_fields)
         try:
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
         except CosmosAccessConditionFailedError:
             logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
-            updated_request = self._build_updated_request(original_request=original_request, new_status=new_status, request_files=request_files, status_message=status_message, airlock_review=airlock_review)
+            updated_request = self._build_updated_request(original_request=original_request, **update_fields)
             db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
 
         return db_response
@@ -251,12 +288,16 @@ class AirlockRequestRepository(BaseRepository):
             status_message: Optional[Optional[str]] = None,
             airlock_review: Optional[AirlockReview] = None,
             review_user_resource: Optional[AirlockReviewUserResource] = None,
+            scan_result=_UNSET,
             updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
             self._validate_status_update(current_status=original_request.status, new_status=new_status)
             updated_request.status = new_status
+
+        if scan_result is not _UNSET:
+            updated_request.scanResult = scan_result
 
         if status_message is not None:
             updated_request.statusMessage = status_message

@@ -81,8 +81,17 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
                            "action": action, "parameters": {"blocked_resource_types": blocked}}
                 with patch.object(commands, "get_porter_parameter_keys", AsyncMock(return_value=["blocked_resource_types"])):
                     result = asyncio.run(commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message))
-                argument = next(item for item in result[0] if item.startswith("blocked_resource_types="))
-                self.assertEqual(json.loads(base64.b64decode(argument.split("=", 1)[1])), blocked)
+                _, parameter_file, _, installation_file = result
+                try:
+                    parameters = json.loads(Path(parameter_file).read_text())["parameters"]
+                    source = next(item["source"] for item in parameters if item["name"] == "blocked_resource_types")
+                    encoded = Path(source["path"]).read_text()
+                    self.assertEqual(json.loads(base64.b64decode(encoded)), blocked)
+                finally:
+                    commands.cleanup_parameter_value_files(parameter_file)
+                    Path(parameter_file).unlink(missing_ok=True)
+                    if installation_file:
+                        Path(installation_file).unlink(missing_ok=True)
 
     def test_existing_ci_covers_workspace_policy(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/build_validation_develop.yml").read_text())
