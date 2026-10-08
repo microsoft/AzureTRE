@@ -18,9 +18,10 @@ msal==1.31.1
 opentelemetry-instrumentation-fastapi==0.64b0
 opentelemetry-instrumentation-logging==0.64b0
 pandas==2.3.3
-PyJWT==2.13.0
+PyJWT==2.15.0
 pytz==2025.2
 python-dateutil==2.9.0.post0
 semantic-version==2.10.0
+starlette==1.6.0
 uvicorn[standard]==0.40.0
 pydantic==2.13.4

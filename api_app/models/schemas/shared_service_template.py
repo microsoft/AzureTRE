@@ -44,7 +44,7 @@ class SharedServiceTemplateInCreate(ResourceTemplateInCreate):
             "version": "0.0.1",
             "current": True,
             "json_schema": {
-                "$schema": "http://json-schema.org/draft-07/schema",
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "$id": "https://github.com/microsoft/AzureTRE/templates/shared_services/myshared_service/shared_service.json",
                 "type": "object",
                 "title": "My Shared Service Template",

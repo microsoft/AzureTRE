@@ -1,120 +1,74 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { ComponentAction, VMPowerStates, Resource } from "../../models/resource";
 import { CommandBar, IconButton, IContextualMenuItem, IContextualMenuProps } from "@fluentui/react";
-import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { SecuredByRole } from "./SecuredByRole";
 import { ResourceType } from "../../models/resourceType";
-import { HttpMethod, useAuthApiCall } from "../../hooks/useAuthApiCall";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
-import { ApiEndpoint } from "../../models/apiEndpoints";
-import { UserResource } from "../../models/userResource";
-import { getActionIcon, ResourceTemplate, TemplateAction } from "../../models/resourceTemplate";
+import { getActionDisplayName, getActionIcon, TemplateAction } from "../../models/resourceTemplate";
+import { useResourceTemplate } from "../../hooks/useResourceTemplate";
+import { useInvokeResourceAction } from "../../hooks/useInvokeResourceAction";
+import { ConfirmStopVM } from "./ConfirmStopVM";
+import { hasVMPowerControl, isVirtualMachineResource } from "./VMPowerButton";
 import { ConfirmDeleteResource } from "./ConfirmDeleteResource";
 import { ConfirmCopyUrlToClipboard } from "./ConfirmCopyUrlToClipboard";
 import { ConfirmDisableEnableResource } from "./ConfirmDisableEnableResource";
 import { CreateUpdateResourceContext } from "../../contexts/CreateUpdateResourceContext";
-import { Workspace } from "../../models/workspace";
-import { WorkspaceService } from "../../models/workspaceService";
 import { actionsDisabledStates } from "../../models/operation";
-import { AppRolesContext } from "../../contexts/AppRolesContext";
-import { useAppDispatch } from "../../hooks/customReduxHooks";
-import { addUpdateOperation } from "../shared/notifications/operationsSlice";
 import { ConfirmUpgradeResource } from "./ConfirmUpgradeResource";
+import { openExternalUrl } from "../../utils/openExternalUrl";
+import { APIError } from "../../models/exceptions";
+import { ExceptionLayout } from "./ExceptionLayout";
 
 interface ResourceContextMenuProps {
   resource: Resource;
   componentAction: ComponentAction;
   commandBar?: boolean;
+  isExposedExternally?: boolean;
 }
 
 export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuProps> = (
   props: ResourceContextMenuProps,
 ) => {
-  const apiCall = useAuthApiCall();
   const workspaceCtx = useContext(WorkspaceContext);
   const [showDisable, setShowDisable] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showCopyUrl, setShowCopyUrl] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
-  const [resourceTemplate, setResourceTemplate] = useState({} as ResourceTemplate);
+  const [stopActionName, setStopActionName] = useState("");
   const createFormCtx = useContext(CreateUpdateResourceContext);
-  const [parentResource, setParentResource] = useState({} as WorkspaceService | Workspace);
-  const [roles, setRoles] = useState([] as Array<string>);
-  const appRoles = useContext(AppRolesContext); // the user is in these roles which apply across the app
-  const dispatch = useAppDispatch();
+  const { resourceTemplate, parentResource, roles } = useResourceTemplate(props.resource);
+  const invokeAction = useInvokeResourceAction();
 
-  // get the resource template
+  const [actionError, setActionError] = useState<{ error: APIError; actionName: string }>();
+
+  // The menu is reused when a detail route switches resource; drop dialogs and errors that belong to the previous one.
+  const resourceId = props.resource.id;
+  const currentResourceId = useRef(resourceId);
+  currentResourceId.current = resourceId;
   useEffect(() => {
-    const getTemplate = async () => {
-      if (!props.resource || !props.resource.id) return;
-      let templatesPath;
-      switch (props.resource.resourceType) {
-        case ResourceType.Workspace:
-          templatesPath = ApiEndpoint.WorkspaceTemplates;
-          break;
-        case ResourceType.WorkspaceService:
-          templatesPath = ApiEndpoint.WorkspaceServiceTemplates;
-          break;
-        case ResourceType.SharedService:
-          templatesPath = ApiEndpoint.SharedServiceTemplates;
-          break;
-        case ResourceType.UserResource:
-          const ur = props.resource as UserResource;
-          const parentService = (
-            await apiCall(
-              `${ApiEndpoint.Workspaces}/${workspaceCtx.workspace.id}/${ApiEndpoint.WorkspaceServices}/${ur.parentWorkspaceServiceId}`,
-              HttpMethod.Get,
-              workspaceCtx.workspaceApplicationIdURI,
-            )
-          ).workspaceService;
-          setParentResource(parentService);
-          templatesPath = `${ApiEndpoint.WorkspaceServiceTemplates}/${parentService.templateName}/${ApiEndpoint.UserResourceTemplates}`;
-          break;
-        default:
-          throw Error("Unsupported resource type.");
-      }
+    setShowDisable(false);
+    setShowDelete(false);
+    setShowCopyUrl(false);
+    setShowUpgrade(false);
+    setStopActionName("");
+    setActionError(undefined);
+  }, [resourceId]);
 
-      let r = [] as Array<string>;
-      let wsAuth = false;
-      switch (props.resource.resourceType) {
-        case ResourceType.SharedService:
-          r = [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner];
-          break;
-        case ResourceType.WorkspaceService:
-          r = [WorkspaceRoleName.WorkspaceOwner];
-          wsAuth = true;
-          break;
-        case ResourceType.UserResource:
-          r = [
-            WorkspaceRoleName.WorkspaceOwner,
-            WorkspaceRoleName.WorkspaceResearcher,
-            WorkspaceRoleName.AirlockManager,
-          ];
-          wsAuth = true;
-          break;
-        case ResourceType.Workspace:
-          r = [RoleName.TREAdmin];
-          break;
-      }
-      setRoles(r);
-
-      // should we bother getting the template? if the user isn't in the right role they won't see the menu at all.
-      const userRoles = wsAuth ? workspaceCtx.roles : appRoles.roles;
-      if (userRoles && r.filter((x) => userRoles.includes(x)).length > 0) {
-        const template = await apiCall(`${templatesPath}/${props.resource.templateName}`, HttpMethod.Get);
-        setResourceTemplate(template);
-      }
-    };
-    getTemplate();
-  }, [apiCall, props.resource, workspaceCtx, appRoles]);
+  // Drop a VM Stop confirmation once polling shows the power state has changed.
+  const powerState = props.resource.azureStatus?.powerState;
+  useEffect(() => setStopActionName(""), [powerState]);
 
   const doAction = async (actionName: string) => {
-    const action = await apiCall(
-      `${props.resource.resourcePath}/${ApiEndpoint.InvokeAction}?action=${actionName}`,
-      HttpMethod.Post,
-      workspaceCtx.workspaceApplicationIdURI,
-    );
-    action && action.operation && dispatch(addUpdateOperation(action.operation));
+    const invokedFor = props.resource.id;
+    setActionError(undefined);
+    try {
+      await invokeAction(props.resource, actionName);
+    } catch (e) {
+      if (currentResourceId.current !== invokedFor) return;
+      const error = e as APIError;
+      error.userMessage = error.userMessage || `Error running ${getActionDisplayName(actionName)}`;
+      setActionError({ error, actionName });
+    }
   };
 
   // context menu
@@ -137,6 +91,9 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     {
       key: "disable",
       text: props.resource.isEnabled ? "Disable" : "Enable",
+      title: props.resource.isEnabled
+        ? "Disable this resource in TRE. It must be disabled before it can be deleted."
+        : "Enable this resource in TRE.",
       iconProps: {
         iconName: props.resource.isEnabled ? "CirclePause" : "PlayResume",
       },
@@ -163,8 +120,9 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
   };
 
   // add 'connect' button if we have a URL to connect to
-  if (props.resource.properties.connection_uri) {
-    if (props.resource.properties.is_exposed_externally === true) {
+  if (props.resource.properties.connection_uri && !props.commandBar) {
+    const isExposedExternally = props.resource.properties.is_exposed_externally ?? props.isExposedExternally ?? true;
+    if (isExposedExternally) {
       menuItems.push({
         key: "connect",
         text: "Connect",
@@ -173,11 +131,11 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           : "Connect to resource",
         iconProps: { iconName: "PlugConnected" },
         onClick: () => {
-          window.open(props.resource.properties.connection_uri, "_blank");
+          openExternalUrl(props.resource.properties.connection_uri);
         },
         disabled: shouldDisableConnect(),
       });
-    } else if (props.resource.properties.is_exposed_externally === false) {
+    } else {
       menuItems.push({
         key: "connect",
         text: "Connect",
@@ -199,18 +157,29 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
     );
   };
 
-  // add custom actions if we have any
-  if (resourceTemplate && resourceTemplate.customActions && resourceTemplate.customActions.length > 0) {
+  // add custom actions if we have any; Start/Stop are left to the dedicated VM power button when it is shown
+  const powerControlShown = hasVMPowerControl(props.resource, resourceTemplate?.customActions);
+  const menuCustomActions = (resourceTemplate?.customActions || []).filter(
+    (a: TemplateAction) => !(powerControlShown && ["start", "stop"].includes(a.name.toLowerCase())),
+  );
+  if (menuCustomActions.length > 0) {
     let customActions: Array<IContextualMenuItem> = [];
-    resourceTemplate.customActions.forEach((a: TemplateAction) => {
+    // Only VM user resources get the VM-specific Stop confirmation; other templates' "stop" runs as described.
+    const isVirtualMachine = isVirtualMachineResource(props.resource);
+    menuCustomActions.forEach((a: TemplateAction) => {
+      const isVmStop = isVirtualMachine && a.name.toLowerCase() === "stop";
       customActions.push({
         key: a.name,
-        text: a.name,
-        title: a.description,
+        text: getActionDisplayName(a.name),
+        title: isVmStop ? "Power off the VM. You can start it again later." : a.description,
         iconProps: { iconName: getActionIcon(a.name) },
         className: "tre-context-menu",
         onClick: () => {
-          doAction(a.name);
+          if (isVmStop) {
+            setStopActionName(a.name);
+          } else {
+            doAction(a.name);
+          }
         },
       });
     });
@@ -253,6 +222,8 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
           ) : (
             <IconButton
               iconProps={{ iconName: "More" }}
+              ariaLabel="More actions"
+              title="More actions"
               menuProps={menuProps}
               className="tre-hide-chevron"
               disabled={props.componentAction === ComponentAction.Lock}
@@ -279,6 +250,20 @@ export const ResourceContextMenu: React.FunctionComponent<ResourceContextMenuPro
               ? (parentResource as WorkspaceService)
               : undefined
           }
+      {actionError && (
+        // Keep clicks on the error bar from reaching a clickable parent card.
+        <span onClick={(e) => e.stopPropagation()}>
+          <ExceptionLayout e={actionError.error} onRetry={() => doAction(actionError.actionName)} />
+        </span>
+      )}
+      {stopActionName && (
+        <ConfirmStopVM
+          onDismiss={() => setStopActionName("")}
+          onConfirm={() => {
+            const actionName = stopActionName;
+            setStopActionName("");
+            doAction(actionName);
+          }}
         />
       )}
     </>

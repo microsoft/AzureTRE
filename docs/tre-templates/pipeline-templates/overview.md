@@ -10,7 +10,7 @@ Consider the following `template_schema.json`:
 
 ```json
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/microsoft/AzureTRE/templates/workspace_services/guacamole/user_resources/guacamole-dev-vm/template_schema.json",
   ...
   "properties": {...},

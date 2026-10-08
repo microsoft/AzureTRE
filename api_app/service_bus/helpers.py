@@ -130,7 +130,7 @@ async def try_update_with_retries(num_retries: int, attempt_count: int, resource
     except CosmosAccessConditionFailedError as e:
         logger.warning(f"Etag mismatch for {resource_to_update_id}. Retrying.")
         if attempt_count < num_retries:
-            await try_update_with_retries(
+            return await try_update_with_retries(
                 num_retries=num_retries,
                 attempt_count=(attempt_count + 1),
                 resource_repo=resource_repo,

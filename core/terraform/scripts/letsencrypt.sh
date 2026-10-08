@@ -3,6 +3,12 @@ set -e
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
+# shellcheck disable=SC1091
+source "${script_dir}/validate_certbot.sh"
+
+# The Make target loads this value from Terraform outputs before invoking this script.
+: "${RESOURCE_GROUP_NAME:?RESOURCE_GROUP_NAME not set}"
+
 if [[ -z ${STORAGE_ACCOUNT} ]]; then
   echo "STORAGE_ACCOUNT not set"
   exit 1
@@ -75,8 +81,8 @@ fi
 
 echo "Requesting certificate for $CERT_FQDN..."
 
-# Initiate the ACME challange
-/opt/certbot/bin/certbot certonly \
+# Initiate the ACME challenge
+"${CERTBOT_BIN}" certonly \
     --config-dir "${ledir}" \
     --work-dir "${ledir}" \
     --logs-dir "${ledir}"/logs \

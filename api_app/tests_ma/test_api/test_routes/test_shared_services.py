@@ -79,14 +79,15 @@ def sample_resource_history(history_length, shared_service_id=SHARED_SERVICE_ID)
 
 class TestSharedServiceRoutesThatDontRequireAdminRigths:
     @pytest.fixture(autouse=True, scope='class')
-    def log_in_with_non_admin_user(self, app, non_admin_user):
+    @classmethod
+    def log_in_with_non_admin_user(cls, app, non_admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
         yield
         app.dependency_overrides = {}
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
-    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    @patch("api.routes.shared_services.enrich_resources_with_available_upgrades", return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services_for_user(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
@@ -121,7 +122,8 @@ class TestSharedServiceRoutesThatDontRequireAdminRigths:
 
 class TestSharedServiceRoutesThatRequireAdminRights:
     @pytest.fixture(autouse=True, scope='class')
-    def _prepare(self, app, admin_user):
+    @classmethod
+    def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = admin_user
         app.dependency_overrides[require_tre_admin] = admin_user
         yield
@@ -129,7 +131,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
     # [GET] /shared-services
     @patch("api.routes.shared_services.SharedServiceRepository.get_active_shared_services", return_value=None)
-    @patch("api.routes.shared_services.enrich_resource_with_available_upgrades", return_value=None)
+    @patch("api.routes.shared_services.enrich_resources_with_available_upgrades", return_value=None)
     async def test_get_shared_services_returns_list_of_shared_services_for_admin_user(self, _, get_active_shared_services_mock, app, client):
         shared_services = [sample_shared_service()]
         get_active_shared_services_mock.return_value = shared_services
