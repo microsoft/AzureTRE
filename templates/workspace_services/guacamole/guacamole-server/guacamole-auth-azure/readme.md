@@ -22,4 +22,4 @@ This extension works in the following manner:
   - Guacamole auth extension uses the generic provider (oidc) since the Azure provider is broken in the proxy repository.
   - When upgraded to version 7.4.0, \
   `--insecure-oidc-allow unverified-email true,
-   --oidc-groups-claim "roles"` were added because of this following [issue](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680).
+   --oidc-groups-claim "roles"` were added because of the following [issue](https://github.com/oauth2-proxy/oauth2-proxy/issues/1680).
