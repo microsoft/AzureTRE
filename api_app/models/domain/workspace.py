@@ -15,6 +15,7 @@ class Workspace(Resource):
     """
     Workspace request
     """
+
     workspaceURL: str = Field("", title="Workspace URL", description="Main endpoint for workspace users")
     resourceType: ResourceType = ResourceType.Workspace
 

@@ -17,14 +17,14 @@ SHARED_SERVICE_ID = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
 
 @pytest_asyncio.fixture
 async def shared_service_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=AsyncMock()):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=AsyncMock()):
         shared_service_repo = await SharedServiceRepository().create()
         yield shared_service_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=None):
         operations_repo = await OperationRepository().create()
         yield operations_repo
 
@@ -34,10 +34,10 @@ def shared_service():
     shared_service = SharedService(
         id=SHARED_SERVICE_ID,
         templateVersion="0.1.0",
-        etag='',
+        etag="",
         properties={},
         templateName="my-shared-service",
-        resourcePath="test"
+        resourcePath="test",
     )
     return shared_service
 
@@ -45,12 +45,8 @@ def shared_service():
 @pytest.fixture
 def basic_shared_service_request():
     return SharedServiceInCreate(
-        templateName="my-shared-service",
-        properties={
-            "display_name": "test",
-            "description": "test",
-            "tre_id": "test"
-        })
+        templateName="my-shared-service", properties={"display_name": "test", "description": "test", "tre_id": "test"}
+    )
 
 
 async def test_get_shared_service_by_id_raises_if_does_not_exist(shared_service_repo):
@@ -76,9 +72,11 @@ async def test_get_active_shared_services_for_shared_queries_db(shared_service_r
     shared_service_repo.query.assert_called_once_with(query=query, parameters=parameters)
 
 
-@patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
-@patch('core.config.TRE_ID', "1234")
-async def test_create_shared_service_item_creates_a_shared_with_the_right_values(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+@patch("db.repositories.shared_services.SharedServiceRepository.validate_input_against_template")
+@patch("core.config.TRE_ID", "1234")
+async def test_create_shared_service_item_creates_a_shared_with_the_right_values(
+    validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template
+):
     shared_service_repo.query = AsyncMock(return_value=[])
     shared_service_to_create = basic_shared_service_request
     validate_input_mock.return_value = basic_shared_service_template
@@ -93,9 +91,11 @@ async def test_create_shared_service_item_creates_a_shared_with_the_right_values
     assert shared_service.properties["tre_id"] == "1234"
 
 
-@patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template')
-@patch('core.config.TRE_ID', "1234")
-async def test_create_shared_service_item_with_the_same_name_twice_fails(validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template):
+@patch("db.repositories.shared_services.SharedServiceRepository.validate_input_against_template")
+@patch("core.config.TRE_ID", "1234")
+async def test_create_shared_service_item_with_the_same_name_twice_fails(
+    validate_input_mock, shared_service_repo, basic_shared_service_request, basic_shared_service_template
+):
     shared_service_repo.query = AsyncMock(return_value=[])
     validate_input_mock.return_value = basic_shared_service_template
 
@@ -109,8 +109,12 @@ async def test_create_shared_service_item_with_the_same_name_twice_fails(validat
         shared_service = await shared_service_repo.create_shared_service_item(basic_shared_service_request, [])
 
 
-@patch('db.repositories.shared_services.SharedServiceRepository.validate_input_against_template', side_effect=ValueError)
-async def test_create_shared_item_raises_value_error_if_template_is_invalid(_, shared_service_repo, basic_shared_service_request):
+@patch(
+    "db.repositories.shared_services.SharedServiceRepository.validate_input_against_template", side_effect=ValueError
+)
+async def test_create_shared_item_raises_value_error_if_template_is_invalid(
+    _, shared_service_repo, basic_shared_service_request
+):
     shared_service_repo.query = AsyncMock(return_value=[])
     shared_service_to_create = basic_shared_service_request
 

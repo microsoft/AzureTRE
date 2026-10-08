@@ -8,17 +8,11 @@ from core import config
 
 def _jwks_uri() -> str:
     # Direct JWKS endpoint — PyJWKClient fetches this and parses it as a key set.
-    return (
-        f"{config.AAD_AUTHORITY_URL.rstrip('/')}"
-        f"/{config.AAD_TENANT_ID}/discovery/v2.0/keys"
-    )
+    return f"{config.AAD_AUTHORITY_URL.rstrip('/')}/{config.AAD_TENANT_ID}/discovery/v2.0/keys"
 
 
 def _issuer() -> str:
-    return (
-        f"{config.AAD_AUTHORITY_URL.rstrip('/')}"
-        f"/{config.AAD_TENANT_ID}/v2.0"
-    )
+    return f"{config.AAD_AUTHORITY_URL.rstrip('/')}/{config.AAD_TENANT_ID}/v2.0"
 
 
 @lru_cache(maxsize=1)

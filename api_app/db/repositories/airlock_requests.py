@@ -11,8 +11,16 @@ from db.repositories.workspaces import WorkspaceRepository
 from services.authentication import get_aad_service
 from models.domain.authentication import User
 from db.errors import EntityDoesNotExist
-from models.domain.airlock_request import AirlockFile, AirlockRequest, AirlockRequestStatus, \
-    AirlockReview, AirlockReviewDecision, AirlockRequestHistoryItem, AirlockRequestType, AirlockReviewUserResource
+from models.domain.airlock_request import (
+    AirlockFile,
+    AirlockRequest,
+    AirlockRequestStatus,
+    AirlockReview,
+    AirlockReviewDecision,
+    AirlockRequestHistoryItem,
+    AirlockRequestType,
+    AirlockReviewUserResource,
+)
 from models.schemas.airlock_request import AirlockRequestInCreate, AirlockReviewInCreate
 from core import config
 from resources import strings
@@ -29,7 +37,7 @@ class AirlockRequestRepository(BaseRepository):
         AirlockRequestStatus.Blocked,
         AirlockRequestStatus.Cancelled,
         AirlockRequestStatus.Failed,
-        AirlockRequestStatus.Revoked
+        AirlockRequestStatus.Revoked,
     ]
 
     @classmethod
@@ -45,12 +53,18 @@ class AirlockRequestRepository(BaseRepository):
     def get_timestamp(self) -> float:
         return datetime.now(timezone.utc).timestamp()
 
-    async def update_airlock_request_item(self, original_request: AirlockRequest, new_request: AirlockRequest, updated_by: Union[User, dict], request_properties: dict) -> AirlockRequest:
+    async def update_airlock_request_item(
+        self,
+        original_request: AirlockRequest,
+        new_request: AirlockRequest,
+        updated_by: Union[User, dict],
+        request_properties: dict,
+    ) -> AirlockRequest:
         history_item = AirlockRequestHistoryItem(
             resourceVersion=original_request.resourceVersion,
             updatedWhen=original_request.updatedWhen,
             updatedBy=original_request.updatedBy,
-            properties=request_properties
+            properties=request_properties,
         )
         new_request.history.append(history_item)
 
@@ -69,16 +83,14 @@ class AirlockRequestRepository(BaseRepository):
 
     @staticmethod
     def airlock_requests_query():
-        return 'SELECT * FROM c'
+        return "SELECT * FROM c"
 
     async def get_data_retaining_airlock_request_ids_for_workspace(self, workspace_id: str) -> List[str]:
         # Any request may still have a container, including cancelled ones whose async deletion
         # failed or has not completed. Cleanup is idempotent (missing containers are ignored),
         # so return every request to avoid orphaning data when the workspace is deleted.
         query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId"
-        parameters = [
-            {"name": "@workspaceId", "value": str(workspace_id)}
-        ]
+        parameters = [{"name": "@workspaceId", "value": str(workspace_id)}]
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
 
@@ -88,7 +100,7 @@ class AirlockRequestRepository(BaseRepository):
         query = "SELECT c.id FROM c WHERE c.workspaceId = @workspaceId AND NOT ARRAY_CONTAINS(@finalStatuses, c.status)"
         parameters = [
             {"name": "@workspaceId", "value": str(workspace_id)},
-            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]}
+            {"name": "@finalStatuses", "value": [status.value for status in self.FINAL_AIRLOCK_STATUSES]},
         ]
         requests = await self.query(query=query, parameters=parameters)
         return [request["id"] for request in requests]
@@ -100,47 +112,38 @@ class AirlockRequestRepository(BaseRepository):
             AirlockRequestStatus.Draft: {
                 AirlockRequestStatus.Submitted,
                 AirlockRequestStatus.Cancelled,
-                AirlockRequestStatus.Failed
+                AirlockRequestStatus.Failed,
             },
             AirlockRequestStatus.Submitted: {
                 AirlockRequestStatus.InReview,
                 AirlockRequestStatus.BlockingInProgress,
-                AirlockRequestStatus.Failed
+                AirlockRequestStatus.Failed,
             },
             AirlockRequestStatus.InReview: {
                 AirlockRequestStatus.ApprovalInProgress,
                 AirlockRequestStatus.RejectionInProgress,
                 AirlockRequestStatus.Cancelled,
-                AirlockRequestStatus.Failed
+                AirlockRequestStatus.Failed,
             },
-            AirlockRequestStatus.ApprovalInProgress: {
-                AirlockRequestStatus.Approved,
-                AirlockRequestStatus.Failed
-            },
-            AirlockRequestStatus.RejectionInProgress: {
-                AirlockRequestStatus.Rejected,
-                AirlockRequestStatus.Failed
-            },
-            AirlockRequestStatus.BlockingInProgress: {
-                AirlockRequestStatus.Blocked,
-                AirlockRequestStatus.Failed
-            },
-            AirlockRequestStatus.Approved: {
-                AirlockRequestStatus.Revoked
-            },
+            AirlockRequestStatus.ApprovalInProgress: {AirlockRequestStatus.Approved, AirlockRequestStatus.Failed},
+            AirlockRequestStatus.RejectionInProgress: {AirlockRequestStatus.Rejected, AirlockRequestStatus.Failed},
+            AirlockRequestStatus.BlockingInProgress: {AirlockRequestStatus.Blocked, AirlockRequestStatus.Failed},
+            AirlockRequestStatus.Approved: {AirlockRequestStatus.Revoked},
             # Final states - no transitions allowed
             AirlockRequestStatus.Rejected: set(),
             AirlockRequestStatus.Blocked: set(),
             AirlockRequestStatus.Cancelled: set(),
             AirlockRequestStatus.Failed: set(),
-            AirlockRequestStatus.Revoked: set()
+            AirlockRequestStatus.Revoked: set(),
         }
 
         # Check if the transition is valid
         allowed_transitions = valid_transitions.get(current_status, set())
         return new_status in allowed_transitions
 
-    def create_airlock_request_item(self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user, airlock_version: int = 1) -> AirlockRequest:
+    def create_airlock_request_item(
+        self, airlock_request_input: AirlockRequestInCreate, workspace_id: str, user, airlock_version: int = 1
+    ) -> AirlockRequest:
         full_airlock_request_id = str(uuid.uuid4())
 
         resource_spec_parameters = {**self.get_airlock_request_spec_params()}
@@ -157,37 +160,45 @@ class AirlockRequestRepository(BaseRepository):
             updatedWhen=datetime.now(UTC).timestamp(),
             properties=resource_spec_parameters,
             reviews=[],
-            airlock_version=airlock_version
+            airlock_version=airlock_version,
         )
 
         return airlock_request
 
-    async def get_airlock_requests(self, workspace_id: Optional[str] = None, creator_user_id: Optional[str] = None, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests(
+        self,
+        workspace_id: Optional[str] = None,
+        creator_user_id: Optional[str] = None,
+        type: Optional[AirlockRequestType] = None,
+        status: Optional[AirlockRequestStatus] = None,
+        order_by: Optional[str] = None,
+        order_ascending=True,
+    ) -> List[AirlockRequest]:
         query = self.airlock_requests_query()
 
         # optional filters
         conditions = []
         parameters = []
         if workspace_id:
-            conditions.append('c.workspaceId=@workspace_id')
+            conditions.append("c.workspaceId=@workspace_id")
             parameters.append({"name": "@workspace_id", "value": workspace_id})
         if creator_user_id:
-            conditions.append('c.createdBy.id=@user_id')
+            conditions.append("c.createdBy.id=@user_id")
             parameters.append({"name": "@user_id", "value": creator_user_id})
         if status:
-            conditions.append('c.status=@status')
+            conditions.append("c.status=@status")
             parameters.append({"name": "@status", "value": status})
         if type:
-            conditions.append('c.type=@type')
+            conditions.append("c.type=@type")
             parameters.append({"name": "@type", "value": type})
 
         if conditions:
-            query += ' WHERE ' + ' AND '.join(conditions)
+            query += " WHERE " + " AND ".join(conditions)
 
         # optional sorting
         if order_by:
-            query += ' ORDER BY c.' + order_by
-            query += ' ASC' if order_ascending else ' DESC'
+            query += " ORDER BY c." + order_by
+            query += " ASC" if order_ascending else " DESC"
 
         airlock_requests = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[AirlockRequest]).validate_python(airlock_requests)
@@ -199,7 +210,14 @@ class AirlockRequestRepository(BaseRepository):
             raise EntityDoesNotExist
         return TypeAdapter(AirlockRequest).validate_python(airlock_requests)
 
-    async def get_airlock_requests_for_airlock_manager(self, user_id: str, type: Optional[AirlockRequestType] = None, status: Optional[AirlockRequestStatus] = None, order_by: Optional[str] = None, order_ascending=True) -> List[AirlockRequest]:
+    async def get_airlock_requests_for_airlock_manager(
+        self,
+        user_id: str,
+        type: Optional[AirlockRequestType] = None,
+        status: Optional[AirlockRequestStatus] = None,
+        order_by: Optional[str] = None,
+        order_ascending=True,
+    ) -> List[AirlockRequest]:
         workspace_repo = await WorkspaceRepository.create()
         access_service = get_aad_service()
 
@@ -216,20 +234,23 @@ class AirlockRequestRepository(BaseRepository):
         requests = []
 
         for workspace_id in workspace_ids:
-            requests += await self.get_airlock_requests(workspace_id=workspace_id, type=type, status=status, order_by=order_by, order_ascending=order_ascending)
+            requests += await self.get_airlock_requests(
+                workspace_id=workspace_id, type=type, status=status, order_by=order_by, order_ascending=order_ascending
+            )
 
         return requests
 
     async def update_airlock_request(
-            self,
-            original_request: AirlockRequest,
-            updated_by: Union[User, dict],
-            new_status: Optional[AirlockRequestStatus] = None,
-            request_files: Optional[List[AirlockFile]] = None,
-            status_message: Optional[str] = None,
-            airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None,
-            scan_result=_UNSET) -> AirlockRequest:
+        self,
+        original_request: AirlockRequest,
+        updated_by: Union[User, dict],
+        new_status: Optional[AirlockRequestStatus] = None,
+        request_files: Optional[List[AirlockFile]] = None,
+        status_message: Optional[str] = None,
+        airlock_review: Optional[AirlockReview] = None,
+        review_user_resource: Optional[AirlockReviewUserResource] = None,
+        scan_result=_UNSET,
+    ) -> AirlockRequest:
         # Preserve every field when rebuilding after an ETag conflict.
         update_fields = dict(
             new_status=new_status,
@@ -238,15 +259,20 @@ class AirlockRequestRepository(BaseRepository):
             airlock_review=airlock_review,
             review_user_resource=review_user_resource,
             scan_result=scan_result,
-            updated_by=updated_by)
+            updated_by=updated_by,
+        )
         updated_request = self._build_updated_request(original_request=original_request, **update_fields)
         try:
-            db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
+            db_response = await self.update_airlock_request_item(
+                original_request, updated_request, updated_by, {"previousStatus": original_request.status}
+            )
         except CosmosAccessConditionFailedError:
             logger.warning(f"ETag mismatch for request ID: '{original_request.id}'. Retrying.")
             original_request = await self.get_airlock_request_by_id(original_request.id)
             updated_request = self._build_updated_request(original_request=original_request, **update_fields)
-            db_response = await self.update_airlock_request_item(original_request, updated_request, updated_by, {"previousStatus": original_request.status})
+            db_response = await self.update_airlock_request_item(
+                original_request, updated_request, updated_by, {"previousStatus": original_request.status}
+            )
 
         return db_response
 
@@ -255,14 +281,16 @@ class AirlockRequestRepository(BaseRepository):
 
     def create_airlock_review_item(self, airlock_review_input: AirlockReviewInCreate, reviewer: User) -> AirlockReview:
         full_airlock_review_id = str(uuid.uuid4())
-        airlock_review_decision_from_bool = AirlockReviewDecision.Approved if airlock_review_input.approval else AirlockReviewDecision.Rejected
+        airlock_review_decision_from_bool = (
+            AirlockReviewDecision.Approved if airlock_review_input.approval else AirlockReviewDecision.Rejected
+        )
 
         airlock_review = AirlockReview(
             id=full_airlock_review_id,
             dateCreated=self.get_timestamp(),
             reviewDecision=airlock_review_decision_from_bool,
             decisionExplanation=airlock_review_input.decisionExplanation,
-            reviewer=reviewer
+            reviewer=reviewer,
         )
 
         return airlock_review
@@ -275,21 +303,22 @@ class AirlockRequestRepository(BaseRepository):
             dateCreated=self.get_timestamp(),
             reviewDecision=AirlockReviewDecision.Revoked,
             decisionExplanation=revocation_reason,
-            reviewer=reviewer
+            reviewer=reviewer,
         )
 
         return airlock_review
 
     def _build_updated_request(
-            self,
-            original_request: AirlockRequest,
-            new_status: Optional[AirlockRequestStatus] = None,
-            request_files: Optional[List[AirlockFile]] = None,
-            status_message: Optional[Optional[str]] = None,
-            airlock_review: Optional[AirlockReview] = None,
-            review_user_resource: Optional[AirlockReviewUserResource] = None,
-            scan_result=_UNSET,
-            updated_by: Optional[Union[User, dict]] = None) -> AirlockRequest:
+        self,
+        original_request: AirlockRequest,
+        new_status: Optional[AirlockRequestStatus] = None,
+        request_files: Optional[List[AirlockFile]] = None,
+        status_message: Optional[Optional[str]] = None,
+        airlock_review: Optional[AirlockReview] = None,
+        review_user_resource: Optional[AirlockReviewUserResource] = None,
+        scan_result=_UNSET,
+        updated_by: Optional[Union[User, dict]] = None,
+    ) -> AirlockRequest:
         updated_request = copy.deepcopy(original_request)
 
         if new_status is not None:
@@ -320,4 +349,6 @@ class AirlockRequestRepository(BaseRepository):
 
     def _validate_status_update(self, current_status, new_status):
         if not self.validate_status_update(current_status=current_status, new_status=new_status):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE
+            )

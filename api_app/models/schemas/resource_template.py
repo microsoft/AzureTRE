@@ -21,24 +21,21 @@ class ResourceTemplateInformation(BaseModel):
     name: str = Field(title="Template name")
     title: str = Field(title="Template title", default="")
     description: str = Field(title="Template description", default="")
-    authorizedRoles: Optional[List[str]] = Field(title="If not empty, the user is required to have one of these roles to install the template", default_factory=list)
+    authorizedRoles: Optional[List[str]] = Field(
+        title="If not empty, the user is required to have one of these roles to install the template",
+        default_factory=list,
+    )
 
 
 class ResourceTemplateInformationInList(BaseModel):
     templates: List[ResourceTemplateInformation]
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "templates": [
-                {
-                    "name": "tre-workspace-base",
-                    "title": "Base Workspace",
-                    "description": "base description"
-                },
-                {
-                    "name": "tre-workspace-base",
-                    "title": "Base Workspace",
-                    "description": "base description"
-                }
-            ]
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "templates": [
+                    {"name": "tre-workspace-base", "title": "Base Workspace", "description": "base description"},
+                    {"name": "tre-workspace-base", "title": "Base Workspace", "description": "base description"},
+                ]
+            }
         }
-    })
+    )

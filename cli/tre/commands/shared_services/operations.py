@@ -20,9 +20,9 @@ def shared_service_operations_list(shared_service_context: SharedServiceContext,
 
     shared_service_id = shared_service_context.shared_service_id
     if shared_service_id is None:
-        raise click.UsageError('Missing shared_service ID')
+        raise click.UsageError("Missing shared_service ID")
 
-    operations_url = f'/api/shared-services/{shared_service_id}/operations'
+    operations_url = f"/api/shared-services/{shared_service_id}/operations"
     operations_list(log, operations_url, output_format, query)
 
 

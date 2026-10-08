@@ -4,7 +4,13 @@ from models.domain.resource_template import PipelineStep
 from models.domain.resource import Resource
 
 
-def substitute_properties(template_step: PipelineStep, primary_resource: Resource, primary_parent_workspace: Resource, primary_parent_workspace_svc: Resource, resource_to_update: Resource) -> dict:
+def substitute_properties(
+    template_step: PipelineStep,
+    primary_resource: Resource,
+    primary_parent_workspace: Resource,
+    primary_parent_workspace_svc: Resource,
+    resource_to_update: Resource,
+) -> dict:
     properties = {}
     parent_ws_dict = {}
     parent_ws_svc_dict = {}
@@ -22,24 +28,24 @@ def substitute_properties(template_step: PipelineStep, primary_resource: Resourc
         if isinstance(prop.value, dict):
             val = recurse_object(prop.value, primary_resource_dict, parent_ws_dict, parent_ws_svc_dict)
 
-            if prop.type == 'array':
+            if prop.type == "array":
                 if prop.name in resource_to_update.properties:
                     existing_arr = resource_to_update.properties[prop.name]
                 else:
                     existing_arr = []
 
-                if prop.arraySubstitutionAction == 'overwrite':
+                if prop.arraySubstitutionAction == "overwrite":
                     existing_arr = [val]
 
-                if prop.arraySubstitutionAction == 'append':
+                if prop.arraySubstitutionAction == "append":
                     existing_arr.append(val)
 
-                if prop.arraySubstitutionAction == 'remove':
+                if prop.arraySubstitutionAction == "remove":
                     item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
                     if item_index > -1:
                         del existing_arr[item_index]
 
-                if prop.arraySubstitutionAction == 'replace':
+                if prop.arraySubstitutionAction == "replace":
                     item_index = find_item_index(existing_arr, prop.arrayMatchField, val)
                     if item_index > -1:
                         existing_arr[item_index] = val
@@ -81,7 +87,9 @@ def recurse_object(obj: dict, resource_dict: dict, parent_ws_dict: dict, parent_
     return obj
 
 
-def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_dict: dict, primary_parent_ws_svc_dict: dict) -> Union[dict, list, str]:
+def substitute_value(
+    val: str, primary_resource_dict: dict, primary_parent_ws_dict: dict, primary_parent_ws_svc_dict: dict
+) -> Union[dict, list, str]:
     if "{{" not in val:
         return val
 
@@ -100,7 +108,7 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
     parts = val.split("{{")
     for p in parts:
         if len(p) > 0 and "}}" in p:
-            t = p[0:p.index("}}")]
+            t = p[0 : p.index("}}")]
             tokens.append(t)
 
     dict_to_use = None
@@ -120,7 +128,9 @@ def substitute_value(val: str, primary_resource_dict: dict, primary_parent_ws_di
         if primary_resource_type == strings.USER_RESOURCE and hierarchy_level > 2:
             raise ValueError(f"parent.parent.parent is invalid for a resource of type '{strings.USER_RESOURCE}'")
         elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE_SERVICE and hierarchy_level > 1:
-            raise ValueError(f"parent.parent is invalid for a resource of type '{strings.RESOURCE_TYPE_WORKSPACE_SERVICE}'")
+            raise ValueError(
+                f"parent.parent is invalid for a resource of type '{strings.RESOURCE_TYPE_WORKSPACE_SERVICE}'"
+            )
         elif primary_resource_type == strings.RESOURCE_TYPE_WORKSPACE and hierarchy_level > 0:
             raise ValueError(f"parent is invalid for a resource of type '{strings.RESOURCE_TYPE_WORKSPACE}'")
         elif primary_resource_type == strings.RESOURCE_TYPE_SHARED_SERVICE and hierarchy_level > 0:

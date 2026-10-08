@@ -1,7 +1,14 @@
 from azure.servicebus import ServiceBusSessionFilter
 from azure.servicebus.aio import ServiceBusClient
 from vmss_porter.runner import (
-    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter, _cleanup_param_set
+    set_up_config,
+    receive_message,
+    invoke_porter_action,
+    get_porter_outputs,
+    check_runners,
+    runner,
+    run_porter,
+    _cleanup_param_set,
 )
 import json
 import asyncio
@@ -40,11 +47,24 @@ def mock_logger():
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.get_config", return_value={"resource_request_queue": "test_queue", "service_bus_namespace": "test_namespace", "vmss_msi_id": "test_msi_id", "porter_env": {}})
+@patch(
+    "vmss_porter.runner.get_config",
+    return_value={
+        "resource_request_queue": "test_queue",
+        "service_bus_namespace": "test_namespace",
+        "vmss_msi_id": "test_msi_id",
+        "porter_env": {},
+    },
+)
 async def test_set_up_config(mock_get_config):
     """Test setting up configuration."""
     config = set_up_config()
-    assert config == {"resource_request_queue": "test_queue", "service_bus_namespace": "test_namespace", "vmss_msi_id": "test_msi_id", "porter_env": {}}
+    assert config == {
+        "resource_request_queue": "test_queue",
+        "service_bus_namespace": "test_namespace",
+        "vmss_msi_id": "test_msi_id",
+        "porter_env": {},
+    }
 
 
 async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, msi_id):
@@ -61,13 +81,15 @@ async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_
 @patch("vmss_porter.runner.receive_message")
 async def test_runner(mock_receive_message, mock_service_bus_client, mock_default_credential):
     """Test runner with valid MSI ID."""
-    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, 'test_msi_id')
+    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(
+        mock_service_bus_client, mock_default_credential, "test_msi_id"
+    )
 
     config = {"vmss_msi_id": "test_msi_id", "service_bus_namespace": "test_namespace"}
 
     await runner(0, config)
 
-    mock_default_credential.assert_called_once_with('test_msi_id')
+    mock_default_credential.assert_called_once_with("test_msi_id")
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
 
@@ -82,7 +104,9 @@ async def test_runner(mock_receive_message, mock_service_bus_client, mock_defaul
 @patch("vmss_porter.runner.receive_message")
 async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, mock_default_credential):
     """Test runner with no MSI ID."""
-    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, None)
+    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(
+        mock_service_bus_client, mock_default_credential, None
+    )
 
     config = {"vmss_msi_id": None, "service_bus_namespace": "test_namespace"}
 
@@ -103,7 +127,9 @@ async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, m
 @patch("vmss_porter.runner.receive_message")
 async def test_runner_exception(mock_receive_message, mock_service_bus_client, mock_default_credential):
     """Test runner with an exception."""
-    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, 'test_msi_id')
+    mock_service_bus_client_instance, mock_credential = await setup_service_bus_client_and_credential(
+        mock_service_bus_client, mock_default_credential, "test_msi_id"
+    )
     mock_receive_message.side_effect = Exception("Test Exception")
 
     config = {"vmss_msi_id": "test_msi_id", "service_bus_namespace": "test_namespace"}
@@ -111,7 +137,7 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
     with pytest.raises(Exception, match="Test Exception"):
         await runner(0, config)
 
-    mock_default_credential.assert_called_once_with('test_msi_id')
+    mock_default_credential.assert_called_once_with("test_msi_id")
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
     mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, config)
 
@@ -128,8 +154,10 @@ async def test_default_credentials_closes_real_credential_on_exception(mock_serv
     mock_service_bus_client_instance = mock_service_bus_client.return_value
     mock_service_bus_client.return_value.__aenter__.return_value = mock_service_bus_client_instance
 
-    with patch("vmss_porter.runner.DefaultAzureCredential", return_value=mock_credential), \
-            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+    with (
+        patch("vmss_porter.runner.DefaultAzureCredential", return_value=mock_credential),
+        patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")),
+    ):
         config = {"vmss_msi_id": "test_msi_id", "service_bus_namespace": "test_namespace"}
 
         with pytest.raises(Exception, match="Test Exception"):
@@ -153,15 +181,17 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({
-        "id": "test_id",
-        "action": "install",
-        "stepId": "test_step_id",
-        "operationId": "test_operation_id",
-        "name": "test_bundle",
-        "version": "1.0.0",
-        "parameters": {"smtpPassword": "synthetic-password-not-for-logs"},
-    })
+    mock_receiver.__aiter__.return_value[0] = json.dumps(
+        {
+            "id": "test_id",
+            "action": "install",
+            "stepId": "test_step_id",
+            "operationId": "test_operation_id",
+            "name": "test_bundle",
+            "version": "1.0.0",
+            "parameters": {"smtpPassword": "synthetic-password-not-for-logs"},
+        }
+    )
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 
@@ -172,7 +202,9 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
     mock_receiver.complete_message.assert_awaited_once()
     assert "synthetic-password-not-for-logs" not in str(mock_logger.mock_calls)
-    mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE)
+    mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(
+        queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE
+    )
 
 
 @pytest.mark.asyncio
@@ -252,7 +284,7 @@ async def test_receive_message_dead_letter_failure_is_logged(
     [
         ("null", "Resource request message must be a JSON object"),
         ("[]", "Resource request message must be a JSON object"),
-        ("\"text\"", "Resource request message must be a JSON object"),
+        ('"text"', "Resource request message must be a JSON object"),
         (
             '{"id": "test_id"}',
             "Resource request message is missing fields: ['action', 'name', 'operationId', 'parameters', 'stepId', 'version']",
@@ -316,15 +348,17 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({
-        "id": "test_id",
-        "action": "install",
-        "stepId": "test_step_id",
-        "operationId": "test_operation_id",
-        "name": "test_bundle",
-        "version": "1.0.0",
-        "parameters": {},
-    })
+    mock_receiver.__aiter__.return_value[0] = json.dumps(
+        {
+            "id": "test_id",
+            "action": "install",
+            "stepId": "test_step_id",
+            "operationId": "test_operation_id",
+            "name": "test_bundle",
+            "version": "1.0.0",
+            "parameters": {},
+        }
+    )
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 
@@ -332,8 +366,10 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
     config = {"resource_request_queue": "test_queue"}
 
-    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep, \
-            patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")):
+    with (
+        patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")),
+    ):
         await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
         mock_logger.exception.assert_any_call("Unknown exception. Will retry...")
         mock_sleep.assert_awaited_once_with(10)
@@ -343,7 +379,9 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter action."""
     mock_sb_sender = AsyncMock()
     mock_service_bus_client.get_queue_sender.return_value = mock_sb_sender
@@ -361,7 +399,9 @@ async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action_failure(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter action with failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
@@ -378,7 +418,10 @@ async def test_invoke_porter_action_failure(mock_service_bus_message_generator, 
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner._cleanup_param_set", side_effect=RuntimeError("cleanup failed"))
-@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], "/tmp/params.json", "tre-params-test", None))
+@patch(
+    "vmss_porter.runner.build_porter_command",
+    return_value=([["porter", "install"]], "/tmp/params.json", "tre-params-test", None),
+)
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_cleanup_error_is_non_blocking(
@@ -386,7 +429,7 @@ async def test_invoke_porter_action_cleanup_error_is_non_blocking(
     mock_run_porter,
     mock_build_porter_command,
     mock_cleanup_param_set,
-    mock_service_bus_client
+    mock_service_bus_client,
 ):
     """Cleanup exceptions should not mask porter command failure handling."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
@@ -407,7 +450,9 @@ async def test_invoke_porter_action_cleanup_error_is_non_blocking(
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_upgrade_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action_upgrade_failure(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter action with upgrade failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
@@ -424,9 +469,14 @@ async def test_invoke_porter_action_upgrade_failure(mock_service_bus_message_gen
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
-@patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (1, "", "installation failed")])
+@patch(
+    "vmss_porter.runner.run_porter",
+    side_effect=[(1, "", "could not find installation"), (1, "", "installation failed")],
+)
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action_upgrade_failure_install_failure(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter action with upgrade and install failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
@@ -445,7 +495,9 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action_uninstall_failure(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter action with uninstall failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
@@ -461,17 +513,27 @@ async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_g
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "custom-action"]], None, "tre-params-test", None))
+@patch(
+    "vmss_porter.runner.build_porter_command",
+    return_value=([["porter", "custom-action"]], None, "tre-params-test", None),
+)
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_custom_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+async def test_invoke_porter_action_custom_action(
+    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
+):
     """Test invoking a porter custom action."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
     mock_sb_client.get_queue_sender.return_value = mock_sb_sender
 
     config = {"deployment_status_queue": "test_queue"}
-    msg_body = {"id": "test_id", "action": "custom-action", "stepId": "test_step_id", "operationId": "test_operation_id"}
+    msg_body = {
+        "id": "test_id",
+        "action": "custom-action",
+        "stepId": "test_step_id",
+        "operationId": "test_operation_id",
+    }
 
     result = await invoke_porter_action(msg_body, mock_sb_client, config)
 
@@ -550,18 +612,18 @@ async def test_run_porter_success(mock_run_command_helper):
         "azure_environment": "AzureCloud",
         "vmss_msi_id": "msi_id",
         "registry_server": "myregistry.azurecr.io",
-        "porter_env": {}
+        "porter_env": {},
     }
     command = [["porter", "install", "test_installation"]]
 
     # Mock successful execution of all commands - need more responses for the multiple commands now
     mock_run_command_helper.side_effect = [
         (0, "azure cloud set output", None),  # Azure cloud set succeeds
-        (0, "azure login output", None),      # Azure login succeeds
-        (0, "acr login output", None),        # ACR login succeeds
-        (0, "porter cred output 1", None),    # Porter credential set 1 succeeds
-        (0, "porter cred output 2", None),    # Porter credential set 2 succeeds
-        (0, "porter command output", None)    # Porter command succeeds
+        (0, "azure login output", None),  # Azure login succeeds
+        (0, "acr login output", None),  # ACR login succeeds
+        (0, "porter cred output 1", None),  # Porter credential set 1 succeeds
+        (0, "porter cred output 2", None),  # Porter credential set 2 succeeds
+        (0, "porter command output", None),  # Porter command succeeds
     ]
 
     returncode, stdout, stderr = await run_porter(command, config)
@@ -578,12 +640,23 @@ async def test_parameter_discovery_failure_stops_before_porter_action(tmp_path, 
     sender = AsyncMock()
     client = Mock()
     client.get_queue_sender.return_value = sender
-    msg = {"id": "resource", "action": action, "operationId": "operation", "stepId": "step",
-           "name": "test-bundle", "version": "1.0.0", "parameters": {"test": "current-value"}}
+    msg = {
+        "id": "resource",
+        "action": action,
+        "operationId": "operation",
+        "stepId": "step",
+        "name": "test-bundle",
+        "version": "1.0.0",
+        "parameters": {"test": "current-value"},
+    }
     config = {"deployment_status_queue": "test", "registry_server": "test.azurecr.io"}
-    with patch("helpers.commands.get_porter_parameter_keys", return_value=None), \
-            patch("helpers.commands.tempfile.tempdir", str(tmp_path)), \
-            patch("vmss_porter.runner.run_porter", new_callable=AsyncMock, return_value=(1, None, "synthetic failure")) as run:
+    with (
+        patch("helpers.commands.get_porter_parameter_keys", return_value=None),
+        patch("helpers.commands.tempfile.tempdir", str(tmp_path)),
+        patch(
+            "vmss_porter.runner.run_porter", new_callable=AsyncMock, return_value=(1, None, "synthetic failure")
+        ) as run,
+    ):
         result = await invoke_porter_action(msg, client, config)
 
     assert result is False
@@ -598,11 +671,25 @@ async def test_parameter_discovery_failure_stops_before_porter_action(tmp_path, 
 @pytest.mark.parametrize("action", ["uninstall", "start"])
 async def test_run_porter_blocks_legacy_overrides_before_applying_parameters(action):
     config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
-    action_command = ["porter", "uninstall", "resource"] if action == "uninstall" else ["porter", "invoke", "--action", action, "resource"]
+    action_command = (
+        ["porter", "uninstall", "resource"]
+        if action == "uninstall"
+        else ["porter", "invoke", "--action", action, "resource"]
+    )
     commands = [["porter", "parameters", "apply", "/tmp/parameters.json"], action_command]
     responses = [(0, None, None)] * 5 + [
         (0, '[{"name":"resource"}]', None),
-        (0, json.dumps({"name": "resource", "status": {"runId": "old-run"}, "parameters": {"delete_backups_on_uninstall": True}}), None)
+        (
+            0,
+            json.dumps(
+                {
+                    "name": "resource",
+                    "status": {"runId": "old-run"},
+                    "parameters": {"delete_backups_on_uninstall": True},
+                }
+            ),
+            None,
+        ),
     ]
     with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
         code, stdout, error = await run_porter(commands, config, parameter_check_installation="resource")
@@ -635,21 +722,28 @@ async def test_run_porter_allows_missing_or_migrated_installation(installation):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("inspection_responses", [
-    [(1, None, "secret diagnostic")],
-    [(0, "not json", None)],
-    [(0, "{}", None)],
-    [(0, '[{"name":"wrong-resource"}]', None)],
-    [(0, '[{"name":"resource"}]', None), (1, None, "secret diagnostic")],
-    [(0, '[{"name":"resource"}]', None), (0, "not json", None)],
-    [(0, '[{"name":"resource"}]', None), (0, '{"name":"wrong-resource"}', None)],
-    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":[]}', None)],
-    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":{}}', None)],
-])
+@pytest.mark.parametrize(
+    "inspection_responses",
+    [
+        [(1, None, "secret diagnostic")],
+        [(0, "not json", None)],
+        [(0, "{}", None)],
+        [(0, '[{"name":"wrong-resource"}]', None)],
+        [(0, '[{"name":"resource"}]', None), (1, None, "secret diagnostic")],
+        [(0, '[{"name":"resource"}]', None), (0, "not json", None)],
+        [(0, '[{"name":"resource"}]', None), (0, '{"name":"wrong-resource"}', None)],
+        [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":[]}', None)],
+        [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":{}}', None)],
+    ],
+)
 async def test_run_porter_stops_when_parameter_inspection_is_inconclusive(inspection_responses):
     config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
     action = ["porter", "uninstall", "resource"]
-    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=[(0, None, None)] * 5 + inspection_responses) as command:
+    with patch(
+        "vmss_porter.runner.run_command_helper",
+        new_callable=AsyncMock,
+        side_effect=[(0, None, None)] * 5 + inspection_responses,
+    ) as command:
         code, _, error = await run_porter([action], config, parameter_check_installation="resource")
 
     assert code != 0
@@ -663,7 +757,12 @@ async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path)
     parameters = tmp_path / "parameters.json"
     parameters.write_text("secret")
     action = ["porter", "uninstall", "resource"]
-    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io", "deployment_status_queue": "status"}
+    config = {
+        "azure_environment": "AzureCloud",
+        "vmss_msi_id": "msi",
+        "registry_server": "registry.azurecr.io",
+        "deployment_status_queue": "status",
+    }
     msg_body = {"id": "resource", "action": "uninstall", "operationId": "operation", "stepId": "step"}
     sender = AsyncMock()
     client = Mock()
@@ -671,10 +770,14 @@ async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path)
     responses = [(0, None, None)] * 5 + [
         (0, '[{"name":"resource"}]', None),
         (0, '{"name":"resource","status":{"runId":"old-run"},"parameters":{"backup":true}}', None),
-        (1, None, "not applied")
+        (1, None, "not applied"),
     ]
-    with patch("vmss_porter.runner.build_porter_command", return_value=([action], str(parameters), "test-parameters", None)), \
-            patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+    with (
+        patch(
+            "vmss_porter.runner.build_porter_command", return_value=([action], str(parameters), "test-parameters", None)
+        ),
+        patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command,
+    ):
         result = await invoke_porter_action(msg_body, client, config)
 
     assert result is False
@@ -689,16 +792,8 @@ async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path)
 @patch("vmss_porter.runner.run_command_helper")
 async def test_run_porter_azure_login_failure(mock_run_command_helper):
     """Test run_porter function with Azure login failure."""
-    config = {
-        "azure_environment": "AzureCloud",
-        "vmss_msi_id": "msi_id",
-        "porter_env": {}
-    }
-    command = [[
-        "porter",
-        "install",
-        "test_installation"
-    ]]
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi_id", "porter_env": {}}
+    command = [["porter", "install", "test_installation"]]
 
     # Mock Azure login failure
     mock_run_command_helper.return_value = (1, None, "azure login error")
@@ -719,19 +814,15 @@ async def test_run_porter_acr_login_failure(mock_run_command_helper):
         "azure_environment": "AzureCloud",
         "vmss_msi_id": "msi_id",
         "registry_server": "myregistry.azurecr.io",
-        "porter_env": {}
+        "porter_env": {},
     }
-    command = [[
-        "porter",
-        "install",
-        "test_installation"
-    ]]
+    command = [["porter", "install", "test_installation"]]
 
     # Mock Azure login success but ACR login failure
     mock_run_command_helper.side_effect = [
         (0, "azure cloud set output", None),  # Azure cloud set succeeds
-        (0, "azure login output", None),      # Azure login succeeds
-        (1, None, "acr login error")          # ACR login fails
+        (0, "azure login output", None),  # Azure login succeeds
+        (1, None, "acr login error"),  # ACR login fails
     ]
 
     returncode, stdout, stderr = await run_porter(command, config)
@@ -750,20 +841,16 @@ async def test_run_porter_porter_credentials_failure(mock_run_command_helper):
         "azure_environment": "AzureCloud",
         "vmss_msi_id": "msi_id",
         "registry_server": "myregistry.azurecr.io",
-        "porter_env": {}
+        "porter_env": {},
     }
-    command = [[
-        "porter",
-        "install",
-        "test_installation"
-    ]]
+    command = [["porter", "install", "test_installation"]]
 
     # Mock Azure and ACR login success but Porter credentials failure
     mock_run_command_helper.side_effect = [
         (0, "azure cloud set output", None),  # Azure cloud set succeeds
-        (0, "azure login output", None),     # Azure login succeeds
-        (0, "acr login output", None),       # ACR login succeeds
-        (1, None, "porter creds error")      # Porter credential sets fails
+        (0, "azure login output", None),  # Azure login succeeds
+        (0, "acr login output", None),  # ACR login succeeds
+        (1, None, "porter creds error"),  # Porter credential sets fails
     ]
 
     returncode, stdout, stderr = await run_porter(command, config)
@@ -782,26 +869,20 @@ async def test_run_porter_command_injection_prevention(mock_run_command_helper):
         "azure_environment": "AzureCloud",
         "vmss_msi_id": "msi_id",
         "registry_server": "myregistry.azurecr.io",
-        "porter_env": {}
+        "porter_env": {},
     }
 
     # A command that could potentially have injection issues
-    command = [[
-        "porter",
-        "install",
-        "installation_id",
-        "--param",
-        "param=value; malicious_command"
-    ]]
+    command = [["porter", "install", "installation_id", "--param", "param=value; malicious_command"]]
 
     # Mock successful execution of all commands
     mock_run_command_helper.side_effect = [
         (0, "azure cloud set output", None),  # Azure cloud set succeeds
-        (0, "azure login output", None),      # Azure login succeeds
-        (0, "acr login output", None),        # ACR login succeeds
-        (0, "porter cred output 1", None),    # Porter credential set 1 succeeds
-        (0, "porter cred output 2", None),    # Porter credential set 2 succeeds
-        (0, "porter command output", None)    # Porter command succeeds
+        (0, "azure login output", None),  # Azure login succeeds
+        (0, "acr login output", None),  # ACR login succeeds
+        (0, "porter cred output 1", None),  # Porter credential set 1 succeeds
+        (0, "porter cred output 2", None),  # Porter credential set 2 succeeds
+        (0, "porter command output", None),  # Porter command succeeds
     ]
 
     await run_porter(command, config)
@@ -812,8 +893,12 @@ async def test_run_porter_command_injection_prevention(mock_run_command_helper):
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command_for_outputs", return_value=[["porter", "installations", "output", "list"]])
-@patch("vmss_porter.runner.run_porter", return_value=(0, json.dumps([{"name": "output1", "value": "value1"}]), "stderr"))
+@patch(
+    "vmss_porter.runner.build_porter_command_for_outputs", return_value=[["porter", "installations", "output", "list"]]
+)
+@patch(
+    "vmss_porter.runner.run_porter", return_value=(0, json.dumps([{"name": "output1", "value": "value1"}]), "stderr")
+)
 async def test_get_porter_outputs(mock_run_porter, mock_build_porter_command_for_outputs):
     """Test getting porter outputs."""
     config = {}

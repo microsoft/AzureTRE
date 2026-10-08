@@ -42,29 +42,35 @@ class AzureADAuthorization:
     """
 
     WORKSPACE_ROLES_DICT = {
-        'WorkspaceOwner': 'app_role_id_workspace_owner',
-        'WorkspaceResearcher': 'app_role_id_workspace_researcher',
-        'AirlockManager': 'app_role_id_workspace_airlock_manager',
+        "WorkspaceOwner": "app_role_id_workspace_owner",
+        "WorkspaceResearcher": "app_role_id_workspace_researcher",
+        "AirlockManager": "app_role_id_workspace_airlock_manager",
     }
 
     @staticmethod
     def _get_msgraph_token() -> str:
         scopes = [f"{MICROSOFT_GRAPH_URL}/.default"]
-        app = ConfidentialClientApplication(client_id=config.API_CLIENT_ID, client_credential=config.API_CLIENT_SECRET, authority=f"{config.AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}")
+        app = ConfidentialClientApplication(
+            client_id=config.API_CLIENT_ID,
+            client_credential=config.API_CLIENT_SECRET,
+            authority=f"{config.AAD_AUTHORITY_URL}/{config.AAD_TENANT_ID}",
+        )
         try:
             result = app.acquire_token_silent(scopes=scopes, account=None)
         except Exception:
             result = None
         if not result:
-            logger.debug('No suitable token exists in cache, getting a new one from AAD')
+            logger.debug("No suitable token exists in cache, getting a new one from AAD")
             result = app.acquire_token_for_client(scopes=scopes)
         if "access_token" not in result:
-            raise Exception(f"API app registration access token cannot be retrieved. {result.get('error')}: {result.get('error_description')}")
+            raise Exception(
+                f"API app registration access token cannot be retrieved. {result.get('error')}: {result.get('error_description')}"
+            )
         return result["access_token"]
 
     @staticmethod
     def _get_auth_header(msgraph_token: str) -> dict:
-        return {'Authorization': 'Bearer ' + msgraph_token}
+        return {"Authorization": "Bearer " + msgraph_token}
 
     @staticmethod
     def _get_service_principal_endpoint(client_id) -> str:
@@ -103,13 +109,18 @@ class AzureADAuthorization:
         max_number_request = 20
         requests_from_batch = batch_request_body["requests"]
         # We split the original batch request body in sub-lits with at most max_number_request elements
-        batch_request_body_list = [requests_from_batch[i:i + max_number_request] for i in range(0, len(requests_from_batch), max_number_request)]
+        batch_request_body_list = [
+            requests_from_batch[i : i + max_number_request]
+            for i in range(0, len(requests_from_batch), max_number_request)
+        ]
         users_graph_data = {"responses": []}
 
         # For each sub-list it's required to call the batch endpoint for retrieveing user/group information
         for request_body_element in batch_request_body_list:
             batch_request_body_tmp = {"requests": request_body_element}
-            users_graph_data_tmp = requests.post(batch_endpoint, json=batch_request_body_tmp, headers=headers, timeout=GRAPH_REQUEST_TIMEOUT).json()
+            users_graph_data_tmp = requests.post(
+                batch_endpoint, json=batch_request_body_tmp, headers=headers, timeout=GRAPH_REQUEST_TIMEOUT
+            ).json()
             users_graph_data["responses"] = users_graph_data["responses"] + users_graph_data_tmp["responses"]
 
         return users_graph_data
@@ -118,10 +129,14 @@ class AzureADAuthorization:
         roles = []
         for role_assignment in roles_graph_data["value"]:
             if role_assignment["principalId"] == user_id:
-                roles.append(Role(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]]))
+                roles.append(
+                    Role(id=role_assignment["appRoleId"], displayName=app_id_to_role_name[role_assignment["appRoleId"]])
+                )
         return roles
 
-    def _get_users_inc_groups_from_response(self, users_graph_data, roles_graph_data, app_id_to_role_name) -> List[AssignedUser]:
+    def _get_users_inc_groups_from_response(
+        self, users_graph_data, roles_graph_data, app_id_to_role_name
+    ) -> List[AssignedUser]:
         users = []
         for user_data in users_graph_data["responses"]:
             if "users" in user_data["body"]["@odata.context"]:
@@ -136,7 +151,15 @@ class AzureADAuthorization:
                     user_roles = self._get_roles_for_principal(user_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, email=user_email, roles=user_roles))
+                        users.append(
+                            AssignedUser(
+                                id=user_id,
+                                displayName=user_name,
+                                userPrincipalName=user_principal_name,
+                                email=user_email,
+                                roles=user_roles,
+                            )
+                        )
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + user_roles))
@@ -153,7 +176,15 @@ class AzureADAuthorization:
                     group_roles = self._get_roles_for_principal(group_id, roles_graph_data, app_id_to_role_name)
 
                     if not any(user.id == user_id for user in users):
-                        users.append(AssignedUser(id=user_id, displayName=user_name, userPrincipalName=user_principal_name, email=user_email, roles=group_roles))
+                        users.append(
+                            AssignedUser(
+                                id=user_id,
+                                displayName=user_name,
+                                userPrincipalName=user_principal_name,
+                                email=user_email,
+                                roles=group_roles,
+                            )
+                        )
                     else:
                         user = next((user for user in users if user.id == user_id), None)
                         user.roles = list(set(user.roles + group_roles))
@@ -163,10 +194,14 @@ class AzureADAuthorization:
     def get_workspace_users(self, workspace: Workspace) -> List[AssignedUser]:
         msgraph_token = self._get_msgraph_token()
         sp_graph_data = self._get_app_sp_graph_data(workspace.properties["client_id"])
-        app_id_to_role_name = {app_role["id"]: (app_role["value"]) for app_role in sp_graph_data["value"][0]["appRoles"]}
+        app_id_to_role_name = {
+            app_role["id"]: (app_role["value"]) for app_role in sp_graph_data["value"][0]["appRoles"]
+        }
         roles_graph_data = self._get_user_role_assignments(workspace.properties["sp_id"])
         users_graph_data = self._get_user_details(roles_graph_data, msgraph_token)
-        users_inc_groups = self._get_users_inc_groups_from_response(users_graph_data, roles_graph_data, app_id_to_role_name)
+        users_inc_groups = self._get_users_inc_groups_from_response(
+            users_graph_data, roles_graph_data, app_id_to_role_name
+        )
 
         return users_inc_groups
 
@@ -182,13 +217,20 @@ class AzureADAuthorization:
         return workspace_role_assignments_details
 
     def get_assignable_users(self, filter: str = "", maxResultCount: int = 5) -> List[AssignableUser]:
-        users_endpoint = f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
+        users_endpoint = (
+            f"{MICROSOFT_GRAPH_URL}/v1.0/users?$filter=startswith(displayName,'{filter}')&$top={maxResultCount}"
+        )
         graph_data = self._ms_graph_query(users_endpoint, "GET")
         result = []
 
         for user_data in graph_data["value"]:
             result.append(
-                AssignableUser(id=user_data["id"], displayName=user_data["displayName"], userPrincipalName=user_data["userPrincipalName"], email=user_data["mail"])
+                AssignableUser(
+                    id=user_data["id"],
+                    displayName=user_data["displayName"],
+                    userPrincipalName=user_data["userPrincipalName"],
+                    email=user_data["mail"],
+                )
             )
 
         return result
@@ -204,9 +246,7 @@ class AzureADAuthorization:
             roleAssignmentType = AssignmentType.GROUP
 
         for role in graph_data["value"]:
-            roles.append(Role(id=role["id"],
-                              displayName=role["displayName"],
-                              type=roleAssignmentType))
+            roles.append(Role(id=role["id"], displayName=role["displayName"], type=roleAssignmentType))
 
         return roles
 
@@ -215,11 +255,19 @@ class AzureADAuthorization:
         if self._is_user_in_role(user_id, role_id):
             return
         if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
+            logger.error(
+                f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater"
+            )
+            raise UserRoleAssignmentError(
+                f"Unable to assign user {user_id} to group with role {role_id}, Workspace needs to be version 2.2.0 or greater"
+            )
         if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace")
+            logger.error(
+                f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace"
+            )
+            raise UserRoleAssignmentError(
+                f"Unable to assign user {user_id} to group with role {role_id}, Entra ID groups are not in use on this workspace"
+            )
         return self._assign_workspace_user_to_application_group(user_id, workspace, role_id)
 
     def _is_user_in_role(self, user_id: str, role_id: str) -> bool:
@@ -257,7 +305,10 @@ class AzureADAuthorization:
         workspace_app_role_field = group_details[1]
 
         for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
-            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+            if (
+                group.get("principalDisplayName") == group_name
+                and group.get("appRoleId") == workspace.properties[workspace_app_role_field]
+            ):
                 self._add_user_to_group(user_id, group["principalId"])
                 return
 
@@ -270,16 +321,17 @@ class AzureADAuthorization:
         workspace_app_role_field = group_details[1]
 
         for group in [item for item in roles_graph_data["value"] if item["principalType"] == PrincipalType.Group.value]:
-            if group.get("principalDisplayName") == group_name and group.get("appRoleId") == workspace.properties[workspace_app_role_field]:
+            if (
+                group.get("principalDisplayName") == group_name
+                and group.get("appRoleId") == workspace.properties[workspace_app_role_field]
+            ):
                 self._remove_user_from_group(user_id, group["principalId"])
                 return
         raise UserRoleAssignmentError(f"Unable to assign user to group with role: {role_id}")
 
     def _add_user_to_group(self, user_id: str, group_id: str):
         url = f"{MICROSOFT_GRAPH_URL}/v1.0/groups/{group_id}/members/$ref"
-        body = {
-            "@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"
-        }
+        body = {"@odata.id": f"{MICROSOFT_GRAPH_URL}/v1.0/users/{user_id}"}
 
         response = self._ms_graph_query(url, "POST", json=body)
         return response
@@ -296,23 +348,27 @@ class AzureADAuthorization:
             if role["appRoleId"] == role_id:
                 return role
 
-    def remove_workspace_role_user_assignment(self,
-                                              user_id: str,
-                                              role_id: str,
-                                              workspace: Workspace
-                                              ) -> None:
+    def remove_workspace_role_user_assignment(self, user_id: str, role_id: str, workspace: Workspace) -> None:
         if compare_versions(workspace.templateVersion, USER_MANAGEMENT_MINIMUM_BASE_TEMPLATE_VERSION) < 0:
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater")
+            logger.error(
+                f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater"
+            )
+            raise UserRoleAssignmentError(
+                f"Unable to remove user {user_id} from group with role {role_id}, Workspace needs to be version 2.2.0 or greater"
+            )
         if not self._is_workspace_role_group_in_use(workspace):
-            logger.error(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
-            raise UserRoleAssignmentError(f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace")
+            logger.error(
+                f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace"
+            )
+            raise UserRoleAssignmentError(
+                f"Unable to remove user {user_id} from group with role {role_id}, Entra ID groups are not in use on this workspace"
+            )
         return self._remove_workspace_user_from_application_group(user_id, workspace, role_id)
 
     def _get_batch_users_by_role_assignments_body(self, roles_graph_data):
         request_body = {"requests": []}
         met_principal_ids = set()
-        for role_assignment in roles_graph_data['value']:
+        for role_assignment in roles_graph_data["value"]:
             if role_assignment["principalId"] not in met_principal_ids:
                 batch_url = ""
                 if role_assignment["principalType"] == "User":
@@ -322,9 +378,8 @@ class AzureADAuthorization:
                 else:
                     continue
                 request_body["requests"].append(
-                    {"method": "GET",
-                        "url": batch_url,
-                        "id": role_assignment["principalId"]})
+                    {"method": "GET", "url": batch_url, "id": role_assignment["principalId"]}
+                )
                 met_principal_ids.add(role_assignment["principalId"])
 
         return request_body
@@ -334,17 +389,17 @@ class AzureADAuthorization:
     # If the auth_type is `Automatic`, then these values will be written by Terraform.
     def _get_app_auth_info(self, client_id: str) -> dict:
         graph_data = self._get_app_sp_graph_data(client_id)
-        if 'value' not in graph_data or len(graph_data['value']) == 0:
+        if "value" not in graph_data or len(graph_data["value"]) == 0:
             logger.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_INFO_FOR_APP} {client_id}")
 
-        app_info = graph_data['value'][0]
-        authInfo = {'sp_id': app_info['id'], 'scope_id': app_info['servicePrincipalNames'][0]}
+        app_info = graph_data["value"][0]
+        authInfo = {"sp_id": app_info["id"], "scope_id": app_info["servicePrincipalNames"][0]}
 
         # Convert the roles into ids (We could have more roles defined in the app than we need.)
-        for appRole in app_info['appRoles']:
-            if appRole['value'] in self.WORKSPACE_ROLES_DICT.keys():
-                authInfo[self.WORKSPACE_ROLES_DICT[appRole['value']]] = appRole['id']
+        for appRole in app_info["appRoles"]:
+            if appRole["value"] in self.WORKSPACE_ROLES_DICT.keys():
+                authInfo[self.WORKSPACE_ROLES_DICT[appRole["value"]]] = appRole["id"]
 
         return authInfo
 
@@ -357,15 +412,19 @@ class AzureADAuthorization:
                 break
             logger.debug(f"Making request to: {url}")
             if json:
-                response = requests.request(method=http_method, url=url, json=json, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
+                response = requests.request(
+                    method=http_method, url=url, json=json, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT
+                )
             else:
-                response = requests.request(method=http_method, url=url, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT)
+                response = requests.request(
+                    method=http_method, url=url, headers=auth_headers, timeout=GRAPH_REQUEST_TIMEOUT
+                )
             url = ""
             if response.status_code == 200:
                 json_response = response.json()
                 graph_data = merge_dict(graph_data, json_response)
-                if '@odata.nextLink' in json_response:
-                    url = json_response['@odata.nextLink']
+                if "@odata.nextLink" in json_response:
+                    url = json_response["@odata.nextLink"]
             else:
                 logger.error(f"MS Graph query to: {url} failed with status code {response.status_code}")
                 logger.error(f"Full response: {response}")
@@ -425,29 +484,47 @@ class AzureADAuthorization:
         else:
             raise AuthConfigValidationError(f"{strings.ACCESS_UNHANDLED_ACCOUNT_TYPE} {identity_type}")
 
-        if 'value' not in graph_data:
+        if "value" not in graph_data:
             logger.debug(graph_data)
             raise AuthConfigValidationError(f"{strings.ACCESS_UNABLE_TO_GET_ROLE_ASSIGNMENTS_FOR_USER} {user_id}")
 
         logger.debug(graph_data)
 
-        return [RoleAssignment(role_assignment['resourceId'], role_assignment['appRoleId']) for role_assignment in graph_data['value']]
+        return [
+            RoleAssignment(role_assignment["resourceId"], role_assignment["appRoleId"])
+            for role_assignment in graph_data["value"]
+        ]
 
-    def get_workspace_role(self, user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]) -> WorkspaceRole:
-        if 'sp_id' not in workspace.properties:
+    def get_workspace_role(
+        self, user: User, workspace: Workspace, user_role_assignments: List[RoleAssignment]
+    ) -> WorkspaceRole:
+        if "sp_id" not in workspace.properties:
             raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
-        workspace_sp_id = workspace.properties['sp_id']
+        workspace_sp_id = workspace.properties["sp_id"]
 
         for requiredRole in self.WORKSPACE_ROLES_DICT.values():
             if requiredRole not in workspace.properties:
                 raise AuthConfigValidationError(strings.AUTH_CONFIGURATION_NOT_AVAILABLE_FOR_WORKSPACE)
 
-        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_owner']) in user_role_assignments:
+        if (
+            RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties["app_role_id_workspace_owner"])
+            in user_role_assignments
+        ):
             return WorkspaceRole.Owner
-        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_researcher']) in user_role_assignments:
+        if (
+            RoleAssignment(
+                resource_id=workspace_sp_id, role_id=workspace.properties["app_role_id_workspace_researcher"]
+            )
+            in user_role_assignments
+        ):
             return WorkspaceRole.Researcher
-        if RoleAssignment(resource_id=workspace_sp_id, role_id=workspace.properties['app_role_id_workspace_airlock_manager']) in user_role_assignments:
+        if (
+            RoleAssignment(
+                resource_id=workspace_sp_id, role_id=workspace.properties["app_role_id_workspace_airlock_manager"]
+            )
+            in user_role_assignments
+        ):
             return WorkspaceRole.AirlockManager
         return WorkspaceRole.NoRole
 
