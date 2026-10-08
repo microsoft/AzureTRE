@@ -26,6 +26,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Fix Guacamole Linux VM bootstrap through distribution-independent Nexus raw proxies, migrate existing apt repositories on upgrade, and use the Ubuntu security suite. Wait for cloud-init so bootstrap errors fail deployment. (`sonatype-nexus` 3.11.0, `tre-service-guacamole-linuxvm` 1.4.7) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992), [#4540](https://github.com/microsoft/AzureTRE/issues/4540))
 * Verify CI backend concurrency ownership before recovering empty bootstrap leases, and serialise scheduled cleanup with deployment and explicit destruction. Preserve queued deployments when cleanup joins the same reference group. (`devops` 0.6.11, `build-scripts` 1.0.2) ([#5115](https://github.com/microsoft/AzureTRE/issues/5115))
 * Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
   Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.

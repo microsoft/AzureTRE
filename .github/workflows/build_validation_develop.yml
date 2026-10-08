@@ -84,6 +84,8 @@ jobs:
               - '.github/workflows/deploy_tre_branch.yml'
               - '.github/workflows/pr_comment_bot.yml'
               - 'devops/tests/**'
+              - 'templates/shared_services/sonatype-nexus-vm/scripts/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'
 
@@ -112,7 +114,7 @@ jobs:
           npm ci
           npm test -- --runInBand
 
-      - name: Test CI environment cleanup
+      - name: Test deployment scripts
         if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
         run: python3 -m unittest discover -s devops/tests -v
 
