@@ -2180,6 +2180,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upgrade-apt-repositories-to-raw-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade apt repositories to raw proxies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-linux-vm-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate Linux VM provisioning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setup-and-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4647,6 +4669,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upgrade-apt-repositories-to-raw-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade apt repositories to raw proxies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-linux-vm-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate Linux VM provisioning
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#setup-and-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4801,6 +4845,31 @@
 </li>
 </ol>
 <p>This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the <code>./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config</code> folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at <code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</p>
+<h2 id="upgrade-apt-repositories-to-raw-proxies">Upgrade apt repositories to raw proxies</h2>
+<p>Nexus bundle <code>3.11.0</code> replaces the <code>ubuntu</code>, <code>ubuntu-security</code>, <code>docker</code> and <code>microsoft-apt</code> apt repositories with raw proxies.
+The repository URLs stay the same. Clients select the distribution and product path, provided that the upstream still serves them.</p>
+<p>Schedule the upgrade outside package installation activity. Nexus deletes and recreates repositories whose format changes, making each feed temporarily unavailable.
+The replacement repositories rebuild their caches from upstream. The Nexus VM does not need to be recreated.
+Repository-list failures are retried and stop the upgrade if they persist.</p>
+<p>Upgrade Nexus before deploying Guacamole Linux VM bundle <code>1.4.7</code>.
+This VM bundle requests the <code>$RELEASE-security</code> suite and waits for cloud-init to complete before reporting deployment success.
+For existing Linux VMs, set the security source suite to the VM's release plus <code>-security</code>, for example <code>jammy-security</code>.
+Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-failed VMs need a separate repair or replacement.</p>
+<h2 id="validate-linux-vm-provisioning">Validate Linux VM provisioning</h2>
+<p>Run the <code>linux_vm</code> E2E test explicitly to check Ubuntu 22.04 bootstrap through Nexus.
+The test reuses an enabled, successfully deployed Nexus service at bundle version <code>3.11.0</code> or later.
+It reports an error if an existing Nexus service needs repair or an upgrade.</p>
+<p>If Nexus is absent, the test can create its certificate service and Nexus after explicit acceptance of the <a href="https://links.sonatype.com/products/nxrm/ce-eula">Sonatype Nexus Community Edition EULA</a>.
+Set <code>TEST_ACCEPT_NEXUS_EULA=true</code> only after accepting that agreement.
+The test reuses an existing certificate service for the Nexus domain where available, and removes only services that it creates.
+If an existing certificate service uses another domain, deploy Nexus separately before testing.
+Certificate creation uses Let's Encrypt and is subject to its issuance limits.</p>
+<p>Run <code>make test-e2e-custom SELECTOR=linux_vm</code> in the configured E2E environment.
+For the <strong>Deploy Azure TRE (branch)</strong> workflow, set <code>e2eTestsCustomSelector</code> to <code>linux_vm</code>.
+If the test must create Nexus, select <code>acceptNexusEula</code> after accepting the agreement.
+The workflow leaves this consent input disabled by default.
+If the environment already runs this branch's core and bundles, select <code>skipDeployment</code> to rerun tests without deploying again.
+Leave <code>skipDeployment</code> disabled when validating deployment changes.</p>
 <h2 id="setup-and-usage">Setup and usage</h2>
 <ol>
 <li>A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is <code>adminuser</code> and the password is located in the Key Vault under <code>vm-&lt;tre-id&gt;-jumpbox-password</code></li>
@@ -4920,10 +4989,10 @@
 </tr>
 <tr>
 <td>Docker</td>
-<td>apt</td>
+<td>raw</td>
 <td>[https://download.docker.com/linux/ubuntu/]</td>
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker/</code></td>
-<td>Install Docker via apt on Linux systems.</td>
+<td>Install Docker via apt on Linux systems. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions.</td>
 </tr>
 <tr>
 <td>Docker GPG</td>
@@ -4941,17 +5010,17 @@
 </tr>
 <tr>
 <td>Ubuntu Packages</td>
-<td>apt</td>
+<td>raw</td>
 <td>[http://archive.ubuntu.com/ubuntu/]</td>
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/</code></td>
-<td>Provide access to Ubuntu apt packages on Ubuntu systems.</td>
+<td>Ubuntu apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions.</td>
 </tr>
 <tr>
-<td>Ubuntu Security Packages</td>
-<td>apt</td>
+<td>Ubuntu Security</td>
+<td>raw</td>
 <td>[http://security.ubuntu.com/ubuntu/]</td>
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/</code></td>
-<td>Provide access to Ubuntu Security apt packages on Ubuntu systems.</td>
+<td>Ubuntu security apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions.</td>
 </tr>
 <tr>
 <td>Almalinux</td>
@@ -4983,10 +5052,10 @@
 </tr>
 <tr>
 <td>Microsoft Apt</td>
-<td>apt</td>
+<td>raw</td>
 <td>[https://packages.microsoft.com]</td>
 <td><code>https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-apt</code></td>
-<td>Provide access to Microsoft Apt packages</td>
+<td>Microsoft apt packages. The remoteUrl is the host root; per-product paths and the Ubuntu release are supplied by the client sources list. A raw proxy passes these through for any release.</td>
 </tr>
 <tr>
 <td>Microsoft Keys</td>
