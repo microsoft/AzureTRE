@@ -9,6 +9,23 @@ const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/work
 
 describe('reference concurrency queues', () => {
   test.each([
+    ['deploy_tre.yml', 'run-deploy-tre-main', '${{ github.ref }}'],
+    ['deploy_tre_branch.yml', 'run-deploy-tre-not-main', '${{ github.ref }}'],
+    ['pr_comment_bot.yml', 'run_test', '${{ needs.pr_comment.outputs.ciGitRef }}']
+  ])('%s routes deployment into the shared queue without an outer queue', (file, job, ref) => {
+    const caller = workflow(file);
+    expect(caller.concurrency).toBeUndefined();
+    expect(caller.jobs[job].concurrency).toBeUndefined();
+    expect(caller.jobs[job].uses).toBe('./.github/workflows/deploy_tre_reusable.yml');
+    expect(caller.jobs[job].with.ciGitRef).toBe(ref);
+    // Preparation may run independently, but must not add another waiting group.
+    const needs = caller.jobs[job].needs || [];
+    for (const dependency of Array.isArray(needs) ? needs : [needs]) {
+      expect(caller.jobs[dependency].concurrency).toBeUndefined();
+    }
+  });
+
+  test.each([
     ['deploy_tre_reusable.yml', null, 'deploy-${{ inputs.ciGitRef }}'],
     ['pr_comment_bot.yml', 'destroy_pr_env', 'deploy-${{ needs.pr_comment.outputs.ciGitRef }}'],
     ['pr_comment_bot.yml', 'destroy_branch_env', 'deploy-${{ needs.pr_comment.outputs.branchCiGitRef }}'],

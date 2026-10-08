@@ -13,6 +13,12 @@ scheduled cleanup use the same group. Every participant sets `queue: max` and
 waiters. An hourly cleanup therefore cannot replace a pending deployment, even
 when that reference later proves ineligible for cleanup.
 
+Main, branch and PR callers have no separate deployment queue. Main enters the
+reusable workflow directly. Branch and PR preparation calculate environment
+identifiers before entering it. Azure deployment and image builds remain inside
+the reusable workflow's reference group. A second caller queue would hide a
+waiting deployment from cleanup and could replace it before it reached that group.
+
 GitHub permits up to 100 pending jobs or runs per group. When the queue is full,
 GitHub cancels the new arrival, preserving existing waiters. Queue order follows
 entry into the group, not workflow dispatch time. Cleanup still checks eligibility
@@ -138,7 +144,7 @@ Before marking the PR ready:
 1. Run the changed workflows from a trusted branch against disposable resources.
 2. Overlap unrelated lint, Copilot, GitHub-managed CodeQL, and GitHub Pages work
    with an eligible empty bootstrap lease.
-3. Queue deployment B behind deployment A, then scheduled cleanup and destruction for the same reference.
+3. Confirm that deployment B is pending behind A in `deploy-<ci_git_ref>`, then queue cleanup and destruction.
 4. Confirm that B stays pending and runs after A, before cleanup and destruction.
 5. Repeat with scheduled cleanup, a separate reference and a failed or cancelled bootstrap.
 6. Record the commit, workflow source, run IDs, blob integrity and restored network settings.

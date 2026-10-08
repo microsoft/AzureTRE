@@ -52,6 +52,8 @@ jobs:
             github_scripts:
               - '.github/scripts/**'
               - '.github/linters/actionlint.yml'
+              - '.github/workflows/deploy_tre.yml'
+              - '.github/workflows/deploy_tre_branch.yml'
               - '.github/workflows/clean_validation_envs.yml'
               - '.github/workflows/deploy_tre_reusable.yml'
               - '.github/workflows/pr_comment_bot.yml'
