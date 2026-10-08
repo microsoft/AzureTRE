@@ -101,6 +101,17 @@ jobs:
             terraform_workspace_services:
               - templates/workspace_services/**/terraform/**/*.tf
 
+            workspace_templates:
+              - templates/workspaces/base/porter.yaml
+              - templates/workspaces/base/template_schema.json
+              - templates/workspaces/unrestricted/porter.yaml
+              - templates/workspaces/unrestricted/template_schema.json
+              - templates/workspaces/airlock-import-review/porter.yaml
+              - templates/workspaces/airlock-import-review/template_schema.json
+              - tests/requirements.txt
+              - tests/test_workspace_template_defaults.py
+              - .github/workflows/build_validation_develop.yml
+
       - name: Set up Node.js for GitHub scripts
         if: ${{ steps.filter.outputs.github_scripts == 'true' }}
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -185,6 +196,12 @@ jobs:
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
+
+      - name: Workspace template defaults
+        if: ${{ steps.filter.outputs.workspace_templates == 'true' }}
+        run: |
+          pip install -r tests/requirements.txt
+          python tests/test_workspace_template_defaults.py
 
       - name: Core Tags
         if: ${{ steps.filter.outputs.terraform_core == 'true' }}

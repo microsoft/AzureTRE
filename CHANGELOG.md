@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
 * Allow configuring the Certbot executable for `make letsencrypt` with `CERTBOT_BIN`, retaining `/opt/certbot/bin/certbot` as the default (`core` 0.18.10). ([#5067](https://github.com/microsoft/AzureTRE/issues/5067))
@@ -26,6 +27,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Align the `create_aad_groups` schema and Porter defaults to `true` across all three workspace bundles, preventing an unrelated edit from unintentionally removing workspace role groups and app-role assignments.
+  Add regression checks for each bundle. (`tre-workspace-base` 2.12.2, `tre-workspace-unrestricted` 0.15.1, `tre-workspace-airlock-import-review` 0.18.1) ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Complete the repository-wide pre-commit baseline after the Ruff migration. Align local validator versions with CI, keep editor import handling consistent with the selected Ruff rules, and fix shell quoting and file-formatting findings. ([#5117](https://github.com/microsoft/AzureTRE/pull/5117))
 * Fix Guacamole Linux VM bootstrap through distribution-independent Nexus raw proxies, migrate existing apt repositories on upgrade, and use the Ubuntu security suite. Wait for cloud-init so bootstrap errors fail deployment. (`sonatype-nexus` 3.11.0, `tre-service-guacamole-linuxvm` 1.4.7) ([#4992](https://github.com/microsoft/AzureTRE/issues/4992), [#4540](https://github.com/microsoft/AzureTRE/issues/4540))
 * Verify CI backend concurrency ownership before recovering empty bootstrap leases, and serialise scheduled cleanup with deployment and explicit destruction. Preserve queued deployments when cleanup joins the same reference group. (`devops` 0.6.11, `build-scripts` 1.0.2) ([#5115](https://github.com/microsoft/AzureTRE/issues/5115))
