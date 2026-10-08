@@ -18,7 +18,7 @@ UNWANTED_LOGGERS = [
     # Remove these once the following PR is merged:
     # https://github.com/Azure/azure-sdk-for-python/pull/30832
     # Issue: https://github.com/microsoft/AzureTRE/issues/3766
-    "azure.servicebus._pyamqp.aio._session_async"
+    "azure.servicebus._pyamqp.aio._session_async",
 ]
 
 LOGGERS_FOR_ERRORS_ONLY = [
@@ -42,7 +42,7 @@ LOGGERS_FOR_ERRORS_ONLY = [
     "uamqp.connection",
     "uamqp.receiver",
     "uamqp.sender",
-    "urllib3.connectionpool"
+    "urllib3.connectionpool",
 ]
 
 logger = logging.getLogger("azuretre_api")
@@ -82,13 +82,11 @@ def initialize_logging() -> logging.Logger:
                 "fastapi": {"enabled": True},
                 "psycopg2": {"enabled": False},
             },
-            connection_string=APPLICATIONINSIGHTS_CONNECTION_STRING
+            connection_string=APPLICATIONINSIGHTS_CONNECTION_STRING,
         )
 
     LoggingInstrumentor().instrument(
-        set_logging_format=True,
-        log_level=logging_level,
-        tracer_provider=tracer._real_tracer
+        set_logging_format=True, log_level=logging_level, tracer_provider=tracer._real_tracer
     )
 
     logger.info("Logging initialized with level: %s", LOGGING_LEVEL)

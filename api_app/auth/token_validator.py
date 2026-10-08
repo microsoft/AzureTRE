@@ -34,9 +34,7 @@ class TokenValidator:
         jwks_client: Optional[PyJWKClient] = None,
     ) -> None:
         self._config = config
-        self._jwks_client = jwks_client or PyJWKClient(
-            config.jwks_uri, cache_keys=True, lifespan=300
-        )
+        self._jwks_client = jwks_client or PyJWKClient(config.jwks_uri, cache_keys=True, lifespan=300)
 
     def validate(self, token: str) -> AuthenticatedUser:
         """Validate *token* and return an :class:`AuthenticatedUser`.

@@ -14,9 +14,9 @@ from tre.authentication import get_auth_token_client_credentials, get_public_cli
 
 def all_or_none(values: "list(bool)") -> bool:
     """Returns:
-       True if all set
-       False if all unset
-       None otherwise
+    True if all set
+    False if all unset
+    None otherwise
     """
 
     if len(values) == 0:
@@ -37,32 +37,46 @@ def login():
 
 
 @click.command(name="device-code", help="Use device code flow to authenticate")
-@click.option('--base-url',
-              required=True,
-              help='The TRE base URL, e.g. '
-              + 'https://<id>.<location>.cloudapp.azure.com/')
-@click.option('--client-id',
-              required=False,
-              help='The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.7)')
-@click.option('--aad-tenant-id',
-              required=False,
-              help='The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)')
-@click.option('--api-scope',
-              required=False,
-              help='The API scope for the base API (optional for API versions >= v0.5.7)')
-@click.option('--verify/--no-verify',
-              help='Enable/disable SSL verification',
-              default=True)
-@click.option('--workspace', "workspaces",
-              required=False,
-              help='Additionally log in to workspace with specified id (can be specified multiple times).',
-              multiple=True)
-@click.option('--all-workspaces',
-              required=False,
-              default=False,
-              is_flag=True,
-              help='Additionally log in to all current workspaces (not compatible with --workspace)')
-def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_scope: str, verify: bool, workspaces: List[str], all_workspaces):
+@click.option(
+    "--base-url", required=True, help="The TRE base URL, e.g. " + "https://<id>.<location>.cloudapp.azure.com/"
+)
+@click.option(
+    "--client-id",
+    required=False,
+    help="The Client ID of the Azure AD application for the API (optional for API versions >= v0.5.7)",
+)
+@click.option(
+    "--aad-tenant-id",
+    required=False,
+    help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)",
+)
+@click.option(
+    "--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.7)"
+)
+@click.option("--verify/--no-verify", help="Enable/disable SSL verification", default=True)
+@click.option(
+    "--workspace",
+    "workspaces",
+    required=False,
+    help="Additionally log in to workspace with specified id (can be specified multiple times).",
+    multiple=True,
+)
+@click.option(
+    "--all-workspaces",
+    required=False,
+    default=False,
+    is_flag=True,
+    help="Additionally log in to all current workspaces (not compatible with --workspace)",
+)
+def login_device_code(
+    base_url: str,
+    client_id: str,
+    aad_tenant_id: str,
+    api_scope: str,
+    verify: bool,
+    workspaces: List[str],
+    all_workspaces,
+):
     log = logging.getLogger(__name__)
 
     if workspaces is not None and len(workspaces) > 0:
@@ -85,8 +99,8 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
         api_scope = metadata["api_root_scope"]
 
     # Set up token cache
-    Path('~/.config/tre').expanduser().mkdir(parents=True, exist_ok=True)
-    token_cache_file = Path('~/.config/tre/token_cache.json').expanduser()
+    Path("~/.config/tre").expanduser().mkdir(parents=True, exist_ok=True)
+    token_cache_file = Path("~/.config/tre/token_cache.json").expanduser()
 
     cache = msal.SerializableTokenCache()
     if os.path.exists(token_cache_file):
@@ -94,12 +108,12 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 
     app = get_public_client_application(client_id, aad_tenant_id, cache)
 
-    click.echo(f'api_scope: {api_scope}')
+    click.echo(f"api_scope: {api_scope}")
     flow = app.initiate_device_flow(scopes=[api_scope])
     if "user_code" not in flow:
         raise click.ClickException("unable to initiate device flow")
 
-    click.echo(flow['message'])
+    click.echo(flow["message"])
     auth_result = app.acquire_token_by_device_flow(flow)
 
     if "access_token" not in auth_result:
@@ -107,17 +121,17 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
 
     # Save the auth details to ~/.config/tre/environment.json
     environment_config = {
-        'base-url': base_url,
-        'login-method': 'device-code',
-        'token-cache-file': str(token_cache_file.absolute()),
-        'client-id': client_id,
-        'aad-tenant-id': aad_tenant_id,
-        'api-scope': api_scope,
-        'verify': verify,
+        "base-url": base_url,
+        "login-method": "device-code",
+        "token-cache-file": str(token_cache_file.absolute()),
+        "client-id": client_id,
+        "aad-tenant-id": aad_tenant_id,
+        "api-scope": api_scope,
+        "verify": verify,
     }
-    Path('~/.config/tre/environment.json').expanduser().write_text(
-        json.dumps(environment_config, indent=4),
-        encoding='utf-8')
+    Path("~/.config/tre/environment.json").expanduser().write_text(
+        json.dumps(environment_config, indent=4), encoding="utf-8"
+    )
 
     # Save the token cache
     if cache.has_state_changed:
@@ -132,7 +146,9 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
         response = client.call_api(log, "GET", "/api/workspaces")
         if not response.is_success:
             raise click.ClickException(f"Failed to list workspaces: {response.text}")
-        workspaces = [workspace["id"] for workspace in response.json()["workspaces"] if "scope_id" in workspace["properties"]]
+        workspaces = [
+            workspace["id"] for workspace in response.json()["workspaces"] if "scope_id" in workspace["properties"]
+        ]
 
     if workspaces is not None and len(workspaces) > 0:
         click.echo(f"Logging in to workspaces: {workspaces}...")
@@ -145,7 +161,7 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
         if "user_code" not in flow:
             raise click.ClickException("unable to initiate device flow")
 
-        click.echo(flow['message'])
+        click.echo(flow["message"])
         app.acquire_token_by_device_flow(flow)
 
         if cache.has_state_changed:
@@ -164,21 +180,17 @@ def login_device_code(base_url: str, client_id: str, aad_tenant_id: str, api_sco
     required=True,
     help="The TRE base URL, e.g. " + "https://<id>.<location>.cloudapp.azure.com/",
 )
-@click.option(
-    "--client-id", required=True, help="The Client ID to use for authenticating"
-)
-@click.option(
-    "--client-secret", required=True, help="The Client Secret to use for authenticating"
-)
+@click.option("--client-id", required=True, help="The Client ID to use for authenticating")
+@click.option("--client-secret", required=True, help="The Client Secret to use for authenticating")
 @click.option(
     "--aad-tenant-id",
     required=False,
     help="The Tenant ID for the AAD tenant to authenticate with (optional for API versions >= v0.5.7)",
 )
-@click.option("--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.7)")
 @click.option(
-    "--verify/--no-verify", help="Enable/disable SSL verification", default=True
+    "--api-scope", required=False, help="The API scope for the base API (optional for API versions >= v0.5.7)"
 )
+@click.option("--verify/--no-verify", help="Enable/disable SSL verification", default=True)
 def login_client_credentials(
     base_url: str,
     client_id: str,
@@ -205,14 +217,12 @@ def login_client_credentials(
 
     # metadata includes /user_impersonation which works for device_code flow but not client credentials
     if api_scope.endswith("/user_impersonation"):
-        api_scope = api_scope[:-1 * len("/user_impersonation")]
+        api_scope = api_scope[: -1 * len("/user_impersonation")]
 
     # Test the auth succeeds
     try:
         log.info("Attempting sign-in...")
-        get_auth_token_client_credentials(
-            log, client_id, client_secret, aad_tenant_id, api_scope, verify
-        )
+        get_auth_token_client_credentials(log, client_id, client_secret, aad_tenant_id, api_scope, verify)
         log.info("Sign-in successful")
         # TODO make a call against the API to ensure the auth token
         # is valid there (url)
@@ -248,11 +258,10 @@ def login_client_credentials(
 @click.option(
     "--base-url",
     required=False,
-    help="The TRE base URL, e.g. " + "https://<id>.<location>.cloudapp.azure.com/ (uses existing config if not specified)",
+    help="The TRE base URL, e.g. "
+    + "https://<id>.<location>.cloudapp.azure.com/ (uses existing config if not specified)",
 )
-@click.option(
-    "--verify/--no-verify", help="Enable/disable SSL verification", default=True
-)
+@click.option("--verify/--no-verify", help="Enable/disable SSL verification", default=True)
 def login_interactive(base_url: str, verify: bool):
 
     # If no base-url provided, try to get from existing config or tre_output.json
@@ -274,7 +283,9 @@ def login_interactive(base_url: str, verify: bool):
                     click.echo(f"Using base URL from core/tre_output.json: {base_url}")
 
         if not base_url:
-            raise click.ClickException("No --base-url specified and no existing configuration found. Please specify --base-url.")
+            raise click.ClickException(
+                "No --base-url specified and no existing configuration found. Please specify --base-url."
+            )
 
     # Load metadata from API
     metadata = ApiClient.get_api_metadata(base_url)
@@ -285,8 +296,8 @@ def login_interactive(base_url: str, verify: bool):
     api_scope = metadata["api_root_scope"]
 
     # Set up token cache
-    Path('~/.config/tre').expanduser().mkdir(parents=True, exist_ok=True)
-    token_cache_file = Path('~/.config/tre/token_cache.json').expanduser()
+    Path("~/.config/tre").expanduser().mkdir(parents=True, exist_ok=True)
+    token_cache_file = Path("~/.config/tre/token_cache.json").expanduser()
 
     cache = msal.SerializableTokenCache()
     if os.path.exists(token_cache_file):
@@ -295,7 +306,7 @@ def login_interactive(base_url: str, verify: bool):
 
     app = get_public_client_application(client_id, aad_tenant_id, cache)
 
-    click.echo('Opening browser for interactive login...')
+    click.echo("Opening browser for interactive login...")
 
     try:
         auth_result = app.acquire_token_interactive(scopes=[api_scope])
@@ -307,17 +318,17 @@ def login_interactive(base_url: str, verify: bool):
 
     # Save the auth details to ~/.config/tre/environment.json
     environment_config = {
-        'base-url': base_url,
-        'login-method': 'interactive',
-        'token-cache-file': str(token_cache_file.absolute()),
-        'client-id': client_id,
-        'aad-tenant-id': aad_tenant_id,
-        'api-scope': api_scope,
-        'verify': verify,
+        "base-url": base_url,
+        "login-method": "interactive",
+        "token-cache-file": str(token_cache_file.absolute()),
+        "client-id": client_id,
+        "aad-tenant-id": aad_tenant_id,
+        "api-scope": api_scope,
+        "verify": verify,
     }
-    Path('~/.config/tre/environment.json').expanduser().write_text(
-        json.dumps(environment_config, indent=4),
-        encoding='utf-8')
+    Path("~/.config/tre/environment.json").expanduser().write_text(
+        json.dumps(environment_config, indent=4), encoding="utf-8"
+    )
 
     # Save the token cache
     if cache.has_state_changed:

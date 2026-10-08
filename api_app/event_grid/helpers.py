@@ -29,8 +29,7 @@ async def publish_event(event: EventGridEvent, topic_endpoint: str) -> None:
                 raise
             last_exc = exc
             logger.warning(
-                f"Event Grid publish failed with HTTP {exc.status_code} "
-                f"(attempt {attempt + 1}/{_MAX_RETRIES}): {exc}"
+                f"Event Grid publish failed with HTTP {exc.status_code} (attempt {attempt + 1}/{_MAX_RETRIES}): {exc}"
             )
         except ServiceRequestError as exc:
             last_exc = exc
@@ -40,7 +39,7 @@ async def publish_event(event: EventGridEvent, topic_endpoint: str) -> None:
             )
 
         if attempt < _MAX_RETRIES - 1:
-            delay = _BASE_DELAY_SECONDS * (2 ** attempt)
+            delay = _BASE_DELAY_SECONDS * (2**attempt)
             await asyncio.sleep(delay)
 
     raise last_exc  # type: ignore[misc]

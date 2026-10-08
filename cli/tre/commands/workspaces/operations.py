@@ -20,8 +20,8 @@ def workspace_operations_list(workspace_context: WorkspaceContext, output_format
 
     workspace_id = workspace_context.workspace_id
     if workspace_id is None:
-        raise click.UsageError('Missing workspace ID')
-    operations_url = f'/api/workspaces/{workspace_id}/operations'
+        raise click.UsageError("Missing workspace ID")
+    operations_url = f"/api/workspaces/{workspace_id}/operations"
     operations_list(log, operations_url, output_format, query)
 
 

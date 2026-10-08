@@ -11,7 +11,7 @@ import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/storage_enable_public_access.sh"
 
-MOCK_COMMAND = r'''
+MOCK_COMMAND = r"""
 import json
 import os
 from pathlib import Path
@@ -57,32 +57,50 @@ if args[:3] == ["storage", "container", "list"]:
 if args[:3] == ["storage", "blob", "list"]:
     finish()
 finish(99, "Unexpected mocked command: " + repr([command, *args]))
-'''
+"""
 
 
 class StoragePublicAccessTests(unittest.TestCase):
-    def run_helper(self, enable_ready_after=1, disable_ready_after=1,
-                   enable_error="AuthorizationFailure: network rules are propagating", command="true"):
+    def run_helper(
+        self,
+        enable_ready_after=1,
+        disable_ready_after=1,
+        enable_error="AuthorizationFailure: network rules are propagating",
+        command="true",
+    ):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "config.json").write_text(json.dumps({
-                "enable_ready_after": enable_ready_after,
-                "disable_ready_after": disable_ready_after,
-                "enable_error": enable_error,
-            }))
+            (root / "config.json").write_text(
+                json.dumps(
+                    {
+                        "enable_ready_after": enable_ready_after,
+                        "disable_ready_after": disable_ready_after,
+                        "enable_error": enable_error,
+                    }
+                )
+            )
             for name in ("az", "sleep"):
                 executable = root / name
                 executable.write_text(f"#!{sys.executable}\n" + MOCK_COMMAND)
                 executable.chmod(0o755)
             result = subprocess.run(
-                ["/bin/bash", "-c", '''
+                [
+                    "/bin/bash",
+                    "-c",
+                    """
 set -euo pipefail
 source "$1" --storage-account-name mockstorage --resource-group-name mockgroup
 echo DEPLOYMENT_STARTED
 eval "$2"
-''', "storage-access-test", str(SCRIPT), command],
+""",
+                    "storage-access-test",
+                    str(SCRIPT),
+                    command,
+                ],
                 env={**os.environ, "MOCK_ROOT": str(root), "PATH": str(root) + os.pathsep + os.environ["PATH"]},
-                text=True, capture_output=True, timeout=60,
+                text=True,
+                capture_output=True,
+                timeout=60,
             )
             self.state = json.loads((root / "state.json").read_text())
             self.calls = [json.loads(line) for line in (root / "calls.jsonl").read_text().splitlines()]

@@ -10,13 +10,14 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestMigrationRoutesWithNonAdminRights:
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest.fixture(autouse=True, scope="class")
     @classmethod
     def log_in_with_non_admin_user(cls, app, non_admin_user):
         from fastapi import HTTPException
 
         def forbidden():
             raise HTTPException(status_code=403)
+
         app.dependency_overrides[require_tre_admin] = forbidden
         yield
         app.dependency_overrides = {}
@@ -29,7 +30,7 @@ class TestMigrationRoutesWithNonAdminRights:
 
 
 class TestMigrationRoutesThatRequireAdminRights:
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest.fixture(autouse=True, scope="class")
     @classmethod
     def _prepare(cls, app, admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = admin_user

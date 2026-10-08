@@ -12,7 +12,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 BOOTSTRAP = ROOT / "devops/terraform/bootstrap.sh"
 
-MOCK_AZ = r'''
+MOCK_AZ = r"""
 import json
 import os
 from pathlib import Path
@@ -47,7 +47,7 @@ elif args[:2] == ["storage", "account"]:
     sys.exit(39)
 else:
     sys.exit("Unexpected Azure command: " + " ".join(args))
-'''
+"""
 
 
 class BootstrapCiTagsTests(unittest.TestCase):
@@ -77,8 +77,12 @@ class BootstrapCiTagsTests(unittest.TestCase):
     def run_bootstrap(self):
         (self.root / "config.json").write_text(json.dumps(self.config))
         result = subprocess.run(
-            ["/bin/bash", str(BOOTSTRAP)], cwd=self.terraform_dir, env=self.env,
-            capture_output=True, text=True, timeout=10,
+            ["/bin/bash", str(BOOTSTRAP)],
+            cwd=self.terraform_dir,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         self.calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
         self.assertNotIn("Unexpected Azure command", result.stderr)
@@ -93,18 +97,28 @@ class BootstrapCiTagsTests(unittest.TestCase):
         result = self.run_bootstrap()
         self.assertEqual(result.returncode, 39, result.stderr)
         self.assertEqual(self.tags(), {"ci_git_ref": "refs/pull/5033/merge"})
-        self.assertEqual([call[:2] for call in self.calls[:3]], [
-            ["group", "exists"], ["group", "create"], ["storage", "account"],
-        ])
+        self.assertEqual(
+            [call[:2] for call in self.calls[:3]],
+            [
+                ["group", "exists"],
+                ["group", "create"],
+                ["storage", "account"],
+            ],
+        )
 
     def test_existing_group_keeps_unrelated_tags(self):
         self.config = {"exists": True, "tags": {"project": "keep this", "owner": "platform"}}
         self.env["TF_VAR_ci_git_ref"] = "refs/heads/feature/test"
         result = self.run_bootstrap()
         self.assertEqual(result.returncode, 39, result.stderr)
-        self.assertEqual(self.tags(), {
-            "project": "keep this", "owner": "platform", "ci_git_ref": "refs/heads/feature/test",
-        })
+        self.assertEqual(
+            self.tags(),
+            {
+                "project": "keep this",
+                "owner": "platform",
+                "ci_git_ref": "refs/heads/feature/test",
+            },
+        )
         self.assertEqual(self.calls[1][:2], ["group", "update"])
         self.assertFalse(any(call[:2] == ["group", "create"] for call in self.calls))
 

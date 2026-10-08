@@ -21,15 +21,22 @@ def workspace_service_templates_list(output_format, query):
 
     response = client.call_api(
         log,
-        'GET',
-        '/api/workspace-service-templates',
+        "GET",
+        "/api/workspace-service-templates",
     )
-    output(response, output_format=output_format, query=query, default_table_query=r"templates[].{name:name, title: title, description:description}")
+    output(
+        response,
+        output_format=output_format,
+        query=query,
+        default_table_query=r"templates[].{name:name, title: title, description:description}",
+    )
 
 
 @click.command(name="new", help="Register a new workspace service template")
-@click.option('--definition', help='JSON definition for the template', required=False)
-@click.option('--definition-file', help='File containing JSON definition for the template', required=False, type=click.File("r"))
+@click.option("--definition", help="JSON definition for the template", required=False)
+@click.option(
+    "--definition-file", help="File containing JSON definition for the template", required=False, type=click.File("r")
+)
 @output_option()
 @query_option()
 def workspace_service_templates_create(definition, definition_file, output_format, query):
@@ -37,16 +44,21 @@ def workspace_service_templates_create(definition, definition_file, output_forma
 
     if definition is None:
         if definition_file is None:
-            raise click.UsageError('Please specify either a definition or a definition file')
+            raise click.UsageError("Please specify either a definition or a definition file")
         definition = definition_file.read()
 
     definition_dict = json.loads(definition)
 
     client = ApiClient.get_api_client_from_config()
     click.echo("Registering template...", err=True)
-    response = client.call_api(log, 'POST', '/api/workspace-service-templates', json_data=definition_dict)
+    response = client.call_api(log, "POST", "/api/workspace-service-templates", json_data=definition_dict)
 
-    output(response, output_format=output_format, query=query, default_table_query=r"{id: id, name:name, title: title, description:description}")
+    output(
+        response,
+        output_format=output_format,
+        query=query,
+        default_table_query=r"{id: id, name:name, title: title, description:description}",
+    )
     return response.text
 
 

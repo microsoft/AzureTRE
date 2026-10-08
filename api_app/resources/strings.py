@@ -131,7 +131,9 @@ UNABLE_TO_REPLACE_CURRENT_TEMPLATE = "Unable to replace the existing 'current' t
 UNABLE_TO_PROCESS_REQUEST = "Unable to process request"
 
 USER_RESOURCE_DOES_NOT_EXIST = "User Resource does not exist"
-USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All user resources need to be deleted before you can delete the workspace service"
+USER_RESOURCES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = (
+    "All user resources need to be deleted before you can delete the workspace service"
+)
 USER_RESOURCE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The resource needs to be disabled before you can delete it"
 
 WORKSPACE_DOES_NOT_EXIST = "Workspace does not exist"
@@ -140,8 +142,12 @@ WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace needs to be disa
 
 WORKSPACE_SERVICE_DOES_NOT_EXIST = "Workspace service does not exist"
 WORKSPACE_SERVICE_IS_NOT_DEPLOYED = "Workspace service is not deployed."
-WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = "The workspace service needs to be disabled before you can delete it"
-WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = "All workspace services need to be deleted before you can delete the workspace"
+WORKSPACE_SERVICE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION = (
+    "The workspace service needs to be disabled before you can delete it"
+)
+WORKSPACE_SERVICES_NEED_TO_BE_DELETED_BEFORE_WORKSPACE = (
+    "All workspace services need to be deleted before you can delete the workspace"
+)
 WORKSPACE_DOES_NOT_HAVE_ADDRESS_SPACES_PROPERTY = "Workspace does not have address_spaces property"
 WORKSPACE_TEMPLATE_VERSION_EXISTS = "A template with the same version, or a newer version already exists"
 OPERATION_DOES_NOT_EXIST = "Operation does not exist"
@@ -265,7 +271,9 @@ EVENT_GRID_GENERAL_ERROR_MESSAGE = "Event grid failure"
 EVENT_GRID_PUBLISH_FAILED = "Failed to publish Event Grid event: {}"
 
 # Graph / role assignments
-GRAPH_ROLE_ASSIGNMENT_ERROR = "Failed to fetch workspace role assignments from Microsoft Graph. See API logs for details."
+GRAPH_ROLE_ASSIGNMENT_ERROR = (
+    "Failed to fetch workspace role assignments from Microsoft Graph. See API logs for details."
+)
 
 # Workspace creation validation
 MISSING_REQUIRED_PARAMETERS = "Missing required parameters"

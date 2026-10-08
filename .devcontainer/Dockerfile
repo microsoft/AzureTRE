@@ -28,6 +28,15 @@ ARG TERRAFORM_VERSION="1.14.3"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
+# Install tflint
+ARG TFLINT_VERSION="0.64.0"
+COPY .devcontainer/scripts/tflint.sh /tmp/
+RUN bash /tmp/tflint.sh "${TFLINT_VERSION}" /usr/bin
+
+# Install ShellCheck for local pre-commit hooks
+RUN apt-get update && apt-get install -y shellcheck --no-install-recommends \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+
 ARG DOCKER_GROUP_ID
 COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME
