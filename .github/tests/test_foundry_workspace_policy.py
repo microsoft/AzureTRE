@@ -51,6 +51,12 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertFalse(validator.is_valid(value))
 
+    def test_rejects_resource_types_with_trailing_line_breaks(self):
+        validator = Draft202012Validator(self.field)
+        for suffix in ("\n", "\r", "\r\n", "\u2028", "\u2029"):
+            with self.subTest(suffix=suffix):
+                self.assertFalse(validator.is_valid(["Microsoft.Bing/accounts" + suffix]))
+
     def test_parameter_reaches_all_terraform_actions(self):
         for action in ("install", "upgrade", "uninstall"):
             terraform = next(step["terraform"] for step in self.porter[action] if "terraform" in step)

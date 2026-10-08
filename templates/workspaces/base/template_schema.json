@@ -114,7 +114,7 @@
       "description": "Deny creation and updates of these Azure resource types in this workspace. Use Microsoft.Bing/accounts to block Bing accounts. An empty list creates no policy. Existing resources are not disabled.",
       "items": {
         "type": "string",
-        "pattern": "^[A-Za-z][A-Za-z0-9.]+/[A-Za-z0-9]+(/[A-Za-z0-9]+)*$"
+        "pattern": "^[A-Za-z][A-Za-z0-9.]+/[A-Za-z0-9]+(/[A-Za-z0-9]+)*(?![\\s\\S])"
       },
       "uniqueItems": true,
       "default": [],

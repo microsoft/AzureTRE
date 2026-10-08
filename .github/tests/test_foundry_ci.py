@@ -119,6 +119,12 @@ class FoundryTemplateTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertFalse(validator.is_valid({"allowed_fqdns": value}))
 
+    def test_outbound_allowlist_rejects_trailing_line_breaks(self):
+        validator = Draft202012Validator(self.schema)
+        for suffix in ("\n", "\r", "\r\n", "\u2028", "\u2029"):
+            with self.subTest(suffix=suffix):
+                self.assertFalse(validator.is_valid({"allowed_fqdns": ["example.com" + suffix]}))
+
     def test_outbound_warning_explains_empty_list_without_claiming_flag_is_disabled(self):
         for description in (self.schema["properties"]["allowed_fqdns"]["description"],
                             self.parameters["allowed_fqdns"]["description"]):

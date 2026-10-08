@@ -48,7 +48,7 @@
       "items": {
         "type": "string",
         "maxLength": 253,
-        "pattern": "^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$"
+        "pattern": "^([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.)+[A-Za-z]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?![\\s\\S])"
       },
       "maxItems": 1000,
       "uniqueItems": true,

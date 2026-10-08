@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Reject trailing line breaks in Foundry outbound hostnames and blocked workspace resource types during schema validation, before Terraform runs. ([#5094](https://github.com/microsoft/AzureTRE/pull/5094))
 * Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
   Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.
   Defer cancellation of active Porter actions until they finish, preventing orphaned Docker deployments. Stop other cancelled subprocesses before removing their inputs.

@@ -59,6 +59,21 @@ describe("resource template validation", () => {
     }
   });
 
+  it.each([
+    ["Foundry", foundry, "allowed_fqdns", "example.com"],
+    ["workspace", workspace, "blocked_resource_types", "Microsoft.Bing/accounts"],
+  ] as const)("rejects trailing line breaks in the %s list setting", (_name, template, property, value) => {
+    const schema = formSchema(template);
+    const validator = createResourceTemplateValidator(schema);
+    const data = getDefaultFormState(validator, schema);
+    expect(validator.validateFormData({ ...data, [property]: [value] }, schema).errors).toEqual([]);
+    for (const suffix of ["\n", "\r", "\r\n", "\u2028", "\u2029"]) {
+      expect(validator.validateFormData({ ...data, [property]: [value + suffix] }, schema).errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ name: "pattern" })]),
+      );
+    }
+  });
+
   it("enforces required fields, enums and conditional fields in existing templates", () => {
     const schema = formSchema(workspace);
     const validator = createResourceTemplateValidator(schema);
