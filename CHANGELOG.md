@@ -87,6 +87,7 @@ BUG FIXES:
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix pytest deprecation warnings in API test fixtures. ([#5069](https://github.com/microsoft/AzureTRE/pull/5069))
+* Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
 * Fix Service Bus client lifecycle management in the API and resource processor to prevent connection socket and AMQP channel leaks. Close credentials on errors and handle cancellation and retry delays. ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 COMPONENTS:
