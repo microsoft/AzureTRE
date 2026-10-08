@@ -22,14 +22,23 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def accepted(mode):
-    items = {"text": {"type": "message", "content": [{"type": "output_text", "text": "READY"}]},
-             "metadata": {"type": "mcp_list_tools", "tools": [{"name": "microsoft_docs_search"}]},
-             "invoke": {"type": "mcp_call", "name": "microsoft_docs_search", "status": "completed", "error": None}}
+    items = {
+        "text": {"type": "message", "content": [{"type": "output_text", "text": "READY"}]},
+        "metadata": {"type": "mcp_list_tools", "tools": [{"name": "microsoft_docs_search"}]},
+        "invoke": {"type": "mcp_call", "name": "microsoft_docs_search", "status": "completed", "error": None},
+    }
     return mcp.Reply(200, {"status": "completed", "output": [items[mode]]})
 
 
 def denied():
-    return mcp.Reply(400, {"error": {"message": "MCP server url 'learn.microsoft.com' is not allowed. Allowed domains: deny-all.invalid."}})
+    return mcp.Reply(
+        400,
+        {
+            "error": {
+                "message": "MCP server url 'learn.microsoft.com' is not allowed. Allowed domains: deny-all.invalid."
+            }
+        },
+    )
 
 
 def probes():
@@ -72,8 +81,13 @@ class McpVerdictTests(unittest.TestCase):
     def test_approval_request_is_not_completed_tool_execution(self):
         reply = mcp.Reply(200, {"output": [{"type": "mcp_approval_request", "name": "microsoft_docs_search"}]})
         self.assertFalse(reply.tool_completed)
-        for body in ({}, {"output": None}, {"output": [None]}, {"output": [{"type": "mcp_list_tools", "tools": []}]},
-                     {"output": [{"type": "mcp_call", "name": "microsoft_docs_search", "status": "failed"}]}):
+        for body in (
+            {},
+            {"output": None},
+            {"output": [None]},
+            {"output": [{"type": "mcp_list_tools", "tools": []}]},
+            {"output": [{"type": "mcp_call", "name": "microsoft_docs_search", "status": "failed"}]},
+        ):
             value = mcp.Reply(200, body)
             self.assertFalse(value.metadata_imported)
             self.assertFalse(value.tool_completed)
@@ -86,8 +100,11 @@ class McpVerdictTests(unittest.TestCase):
 
 class McpProbeTests(unittest.TestCase):
     def test_request_separates_discovery_from_execution(self):
-        target = {"endpoint": "https://synthetic.openai.azure.com", "deployment": "vision",
-                  "model_properties": {"model": {"name": "gpt-5.1"}}}
+        target = {
+            "endpoint": "https://synthetic.openai.azure.com",
+            "deployment": "vision",
+            "model_properties": {"model": {"name": "gpt-5.1"}},
+        }
         for mode in ("text", "metadata", "invoke"):
             with patch.object(mcp.foundry, "opener") as opener:
                 response = opener.return_value.open.return_value.__enter__.return_value
@@ -104,7 +121,9 @@ class McpProbeTests(unittest.TestCase):
                     self.assertEqual(payload["tools"][0]["server_url"], mcp.SERVER_URL)
                     self.assertEqual(payload["tools"][0]["allowed_tools"], ["microsoft_docs_search"])
                     self.assertEqual(payload["tool_choice"], "none" if mode == "metadata" else "required")
-                    self.assertEqual(payload["tools"][0]["require_approval"], "always" if mode == "metadata" else "never")
+                    self.assertEqual(
+                        payload["tools"][0]["require_approval"], "always" if mode == "metadata" else "never"
+                    )
 
     def test_policy_readback_and_postflight_drift(self):
         accounts = {name: {"label": name} for name in mcp.POLICIES}
@@ -112,11 +131,16 @@ class McpProbeTests(unittest.TestCase):
             after = copy.deepcopy(accounts)
             if changed:
                 after["empty"]["changed"] = True
-            with patch.object(mcp.foundry, "verify_live", side_effect=[accounts, after]) as verify, \
-                    patch.object(mcp.foundry, "azure", return_value={"accessToken": "synthetic-token"}), \
-                    patch.object(mcp, "call") as call:
-                call.side_effect = lambda account, token, mode: accepted(mode) if account["label"] != "unrelated" else (
-                    accepted(mode) if mode == "text" else denied())
+            with (
+                patch.object(mcp.foundry, "verify_live", side_effect=[accounts, after]) as verify,
+                patch.object(mcp.foundry, "azure", return_value={"accessToken": "synthetic-token"}),
+                patch.object(mcp, "call") as call,
+            ):
+                call.side_effect = lambda account, token, mode: (
+                    accepted(mode)
+                    if account["label"] != "unrelated"
+                    else (accepted(mode) if mode == "text" else denied())
+                )
                 results = mcp.run_probes({"subscription_id": "synthetic"})
                 self.assertEqual(call.call_count, 9)
                 self.assertEqual(verify.call_args.kwargs["expected_fqdns"], mcp.POLICIES)
@@ -143,8 +167,12 @@ with patch.object(foundry_mcp, 'run_probes', return_value=json.loads(sys.argv[1]
         assert not run.called
     raise SystemExit(code)
 """
-        for scenario, failures, errors, skips in (("accepted", 1, 0, 0), ("enforced", 0, 0, 0),
-                                                  ("quota", 0, 5, 0), ("unconfigured", 0, 0, 9)):
+        for scenario, failures, errors, skips in (
+            ("accepted", 1, 0, 0),
+            ("enforced", 0, 0, 0),
+            ("quota", 0, 5, 0),
+            ("unconfigured", 0, 0, 9),
+        ):
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
                 values = probes()
                 if scenario == "accepted":
@@ -154,14 +182,29 @@ with patch.object(foundry_mcp, 'run_probes', return_value=json.loads(sys.argv[1]
                 report = Path(directory) / "junit.xml"
                 config = Path(directory) / "accounts.json"
                 config.write_text("{}")
-                args = [sys.executable, "-c", script, json.dumps(mcp.evaluate(values)), "-q", "-n", "0",
-                        "test_foundry_mcp.py", f"--junitxml={report}"]
+                args = [
+                    sys.executable,
+                    "-c",
+                    script,
+                    json.dumps(mcp.evaluate(values)),
+                    "-q",
+                    "-n",
+                    "0",
+                    "test_foundry_mcp.py",
+                    f"--junitxml={report}",
+                ]
                 if scenario != "unconfigured":
                     args.extend(["--foundry-mcp-config", str(config)])
-                result = subprocess.run(args, cwd=ROOT / "e2e_tests", env={**os.environ, "PYTHONPATH": str(ROOT)},
-                                        text=True, capture_output=True, timeout=60)
+                result = subprocess.run(
+                    args,
+                    cwd=ROOT / "e2e_tests",
+                    env={**os.environ, "PYTHONPATH": str(ROOT)},
+                    text=True,
+                    capture_output=True,
+                    timeout=60,
+                )
                 self.assertEqual(result.returncode, 1 if failures or errors else 0, result.stdout + result.stderr)
-                suite = ET.parse(report).getroot().find("testsuite")
+                suite = ET.parse(report).getroot().find("testsuite")  # nosec B314: XML generated locally by pytest
                 self.assertEqual(int(suite.attrib["tests"]), 9)
                 self.assertEqual(int(suite.attrib["failures"]), failures)
                 self.assertEqual(int(suite.attrib["errors"]), errors)

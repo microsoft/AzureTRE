@@ -18,11 +18,8 @@ def get_sample_user_resource_template_object(template_name: str = "guacamole-vm"
         current=True,
         type="object",
         required=["display_name", "description"],
-        properties={
-            "display_name": Property(type="string"),
-            "description": Property(type="string")
-        },
-        customActions=[CustomAction()]
+        properties={"display_name": Property(type="string"), "description": Property(type="string")},
+        customActions=[CustomAction()],
     )
 
 
@@ -41,37 +38,31 @@ def get_sample_user_resource_template_in_response() -> dict:
 
 
 class UserResourceTemplateInCreate(ResourceTemplateInCreate):
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "name": "my-tre-user-resource",
-            "version": "0.0.1",
-            "current": True,
-            "json_schema": {
-                "$schema": "https://json-schema.org/draft/2020-12/schema",
-                "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
-                "type": "object",
-                "title": "My User Resource Template",
-                "description": "These is a test user resource template schema",
-                "required": [],
-                "authorizedRoles": [],
-                "properties": {},
-            },
-            "customActions": [
-                {
-                    "name": "start",
-                    "description": "Starts a VM"
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "name": "my-tre-user-resource",
+                "version": "0.0.1",
+                "current": True,
+                "json_schema": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "$id": "https://github.com/microsoft/AzureTRE/templates/workspaces/myworkspace/user_resource.json",
+                    "type": "object",
+                    "title": "My User Resource Template",
+                    "description": "These is a test user resource template schema",
+                    "required": [],
+                    "authorizedRoles": [],
+                    "properties": {},
                 },
-                {
-                    "name": "stop",
-                    "description": "Stops a VM"
-                }
-            ]
+                "customActions": [
+                    {"name": "start", "description": "Starts a VM"},
+                    {"name": "stop", "description": "Stops a VM"},
+                ],
+            }
         }
-    })
+    )
 
 
 class UserResourceTemplateInResponse(ResourceTemplateInResponse):
     parentWorkspaceService: str = Field(title="Workspace type", description="Bundle name")
-    model_config = ConfigDict(json_schema_extra={
-        "example": get_sample_user_resource_template_in_response()
-    })
+    model_config = ConfigDict(json_schema_extra={"example": get_sample_user_resource_template_in_response()})

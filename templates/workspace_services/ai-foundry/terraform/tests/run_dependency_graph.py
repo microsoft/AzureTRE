@@ -28,7 +28,8 @@ def check_graph(source):
         (offline / ".terraform").mkdir()
         for name in ("modules", "providers"):
             (offline / ".terraform" / name).symlink_to(
-                (source / ".terraform" / name).resolve(strict=True), target_is_directory=True)
+                (source / ".terraform" / name).resolve(strict=True), target_is_directory=True
+            )
 
         graph = offline / "graph.dot"
         with graph.open("w") as output:

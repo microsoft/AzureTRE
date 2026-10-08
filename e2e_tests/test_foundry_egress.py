@@ -27,11 +27,12 @@ def foundry_image_result(request, foundry_egress_results):
     result = foundry_egress_results[request.param]
     if result["state"] == "blocked":
         # A fixture error is inconclusive, not a passed rejection or an expected failure.
-        pytest.fail(f'Inconclusive {request.param}: {result["reason"]}; HTTP {result["http_status"]}')
+        pytest.fail(f"Inconclusive {request.param}: {result['reason']}; HTTP {result['http_status']}")
     return result
 
 
 @pytest.mark.parametrize("foundry_image_result", foundry.CASES, indirect=True, ids=foundry.CASES)
 def test_foundry_image_url(foundry_image_result):
     assert foundry_image_result["state"] == "pass", (
-        f'{foundry_image_result["reason"]}; HTTP {foundry_image_result["http_status"]}')
+        f"{foundry_image_result['reason']}; HTTP {foundry_image_result['http_status']}"
+    )

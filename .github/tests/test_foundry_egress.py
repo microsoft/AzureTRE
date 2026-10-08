@@ -38,18 +38,28 @@ def probes():
 
 def configuration():
     prefix = f"/subscriptions/{SUBSCRIPTION}/resourceGroups/rg-test/providers/Microsoft.CognitiveServices/accounts/"
-    return {"subscription_id": SUBSCRIPTION, "tenant_id": TENANT,
-            "model_name": "gpt-5.1", "model_version": "2025-11-13",
-            "accounts": {name: {"id": prefix + name, "deployment": "vision"}
-                         for name in ("empty", "unrelated", "allowed")}}
+    return {
+        "subscription_id": SUBSCRIPTION,
+        "tenant_id": TENANT,
+        "model_name": "gpt-5.1",
+        "model_version": "2025-11-13",
+        "accounts": {name: {"id": prefix + name, "deployment": "vision"} for name in ("empty", "unrelated", "allowed")},
+    }
 
 
 def account(name="empty"):
     config = configuration()
-    return {"id": config["accounts"][name]["id"], "kind": "AIServices",
-            "systemData": {"lastModifiedAt": "2026-01-01T00:00:00Z"},
-            "properties": {"provisioningState": "Succeeded", "restrictOutboundNetworkAccess": True,
-                           "allowedFqdnList": foundry.verify_config(config)[name], "customSubDomainName": name}}
+    return {
+        "id": config["accounts"][name]["id"],
+        "kind": "AIServices",
+        "systemData": {"lastModifiedAt": "2026-01-01T00:00:00Z"},
+        "properties": {
+            "provisioningState": "Succeeded",
+            "restrictOutboundNetworkAccess": True,
+            "allowedFqdnList": foundry.verify_config(config)[name],
+            "customSubDomainName": name,
+        },
+    }
 
 
 class VerdictTests(unittest.TestCase):
@@ -69,9 +79,13 @@ class VerdictTests(unittest.TestCase):
             self.assertEqual(foundry.evaluate(values)["empty_external"]["state"], "blocked")
 
     def test_invalid_image_content_filter_and_inbound_firewall_are_not_policy_passes(self):
-        for message in ("The provided image url is not accessible.", "The image size is not allowed.",
-                        "Image URL was blocked by content filtering.", "Public network access is disabled.",
-                        "Access denied due to Virtual Network/Firewall rules."):
+        for message in (
+            "The provided image url is not accessible.",
+            "The image size is not allowed.",
+            "Image URL was blocked by content filtering.",
+            "Public network access is disabled.",
+            "Access denied due to Virtual Network/Firewall rules.",
+        ):
             values = probes()
             values["empty_external"] = foundry.Reply(400, {"error": {"message": message}})
             self.assertEqual(foundry.evaluate(values)["empty_external"]["state"], "blocked")
@@ -114,8 +128,12 @@ class VerdictTests(unittest.TestCase):
 
 class ReadbackTests(unittest.TestCase):
     def check(self, value):
-        foundry.verify_account(value, configuration()["accounts"]["empty"]["id"], [],
-                               now=dt.datetime(2026, 1, 1, 0, 16, tzinfo=dt.timezone.utc))
+        foundry.verify_account(
+            value,
+            configuration()["accounts"]["empty"]["id"],
+            [],
+            now=dt.datetime(2026, 1, 1, 0, 16, tzinfo=dt.timezone.utc),
+        )
 
     def test_valid_readback_and_omitted_empty_list(self):
         value = account()
@@ -124,8 +142,11 @@ class ReadbackTests(unittest.TestCase):
         self.check(value)
 
     def test_policy_drift_blocks_the_run(self):
-        for key, changed in (("restrictOutboundNetworkAccess", False), ("allowedFqdnList", ["example.com"]),
-                             ("provisioningState", "Updating")):
+        for key, changed in (
+            ("restrictOutboundNetworkAccess", False),
+            ("allowedFqdnList", ["example.com"]),
+            ("provisioningState", "Updating"),
+        ):
             value = account()
             value["properties"][key] = changed
             with self.assertRaises(ValueError):
@@ -174,8 +195,12 @@ class ReadbackTests(unittest.TestCase):
     @patch.object(foundry, "azure", return_value={"id": SUBSCRIPTION, "tenantId": TENANT})
     @patch.object(foundry, "arm")
     def test_live_readback_checks_policy_model_and_endpoint(self, arm, _azure):
-        model = {"properties": {"provisioningState": "Succeeded",
-                                "model": {"format": "OpenAI", "name": "gpt-5.1", "version": "2025-11-13"}}}
+        model = {
+            "properties": {
+                "provisioningState": "Succeeded",
+                "model": {"format": "OpenAI", "name": "gpt-5.1", "version": "2025-11-13"},
+            }
+        }
 
         def read(resource_id, _subscription):
             return model if "/deployments/" in resource_id else account(resource_id.rsplit("/", 1)[1])
@@ -189,13 +214,20 @@ class ReadbackTests(unittest.TestCase):
 
 class ProbeTests(unittest.TestCase):
     def test_nonce_is_unique_per_run_and_case(self):
-        urls = {foundry.image_url(foundry.DEFAULT_IMAGE, run_id, case)
-                for run_id in ("run1", "run2") for case in ("empty", "allowed")}
+        urls = {
+            foundry.image_url(foundry.DEFAULT_IMAGE, run_id, case)
+            for run_id in ("run1", "run2")
+            for case in ("empty", "allowed")
+        }
         self.assertEqual(len(urls), 4)
 
     def test_credentials_and_signed_urls_are_rejected(self):
-        for url in ("http://example.com/x.png", "https://user:password@example.com/x.png",
-                    "https://example.com/x.png?sig=secret", "https://example.com:8443/x.png"):
+        for url in (
+            "http://example.com/x.png",
+            "https://user:password@example.com/x.png",
+            "https://example.com/x.png?sig=secret",
+            "https://example.com:8443/x.png",
+        ):
             with self.assertRaises(ValueError):
                 foundry.image_url(url, "run", "case")
 
@@ -204,8 +236,10 @@ class ProbeTests(unittest.TestCase):
 
     def test_azure_cli_does_not_expose_error_output(self):
         completed = subprocess.CompletedProcess([], 1, "private-token", "private-token")
-        with patch.object(foundry.subprocess, "run", return_value=completed), \
-                self.assertRaisesRegex(RuntimeError, "^Azure CLI failed with exit code 1$"):
+        with (
+            patch.object(foundry.subprocess, "run", return_value=completed),
+            self.assertRaisesRegex(RuntimeError, "^Azure CLI failed with exit code 1$"),
+        ):
             foundry.azure(["account", "show"], SUBSCRIPTION)
 
     @patch.object(foundry, "check_image", return_value="image-hash")
@@ -251,9 +285,13 @@ with patch.object(foundry, 'run_probes', return_value=results) as run:
         assert not run.called
     raise SystemExit(code)
 """
-        for scenario, failures, errors, skips in (("unexpected_acceptance", 1, 0, 0), ("policy_enforced", 0, 0, 0),
-                                                  ("quota", 0, 3, 0), ("unconfigured", 0, 0, 6),
-                                                  ("bad_config", 0, 6, 0)):
+        for scenario, failures, errors, skips in (
+            ("unexpected_acceptance", 1, 0, 0),
+            ("policy_enforced", 0, 0, 0),
+            ("quota", 0, 3, 0),
+            ("unconfigured", 0, 0, 6),
+            ("bad_config", 0, 6, 0),
+        ):
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as directory:
                 values = probes()
                 if scenario == "unexpected_acceptance":
@@ -263,16 +301,26 @@ with patch.object(foundry, 'run_probes', return_value=results) as run:
                 output = Path(directory) / "junit.xml"
                 config = Path(directory) / "accounts.json"
                 config.write_text("invalid json" if scenario == "bad_config" else json.dumps(configuration()))
-                args = [sys.executable, "-c", script, json.dumps(foundry.evaluate(values)),
-                        "-q", "test_foundry_egress.py", "-m", "foundry_egress", f"--junitxml={output}"]
+                args = [
+                    sys.executable,
+                    "-c",
+                    script,
+                    json.dumps(foundry.evaluate(values)),
+                    "-q",
+                    "test_foundry_egress.py",
+                    "-m",
+                    "foundry_egress",
+                    f"--junitxml={output}",
+                ]
                 if scenario != "unconfigured":
                     args += ["--foundry-egress-config", str(config)]
                 environment = os.environ.copy()
                 environment["PYTHONPATH"] = str(ROOT)
-                result = subprocess.run(args, cwd=ROOT / "e2e_tests", env=environment,
-                                        capture_output=True, text=True, timeout=60)
+                result = subprocess.run(
+                    args, cwd=ROOT / "e2e_tests", env=environment, capture_output=True, text=True, timeout=60
+                )
                 self.assertEqual(result.returncode, 1 if failures or errors else 0, result.stdout + result.stderr)
-                suite = ET.parse(output).getroot().find("testsuite")
+                suite = ET.parse(output).getroot().find("testsuite")  # nosec B314: XML generated locally by pytest
                 self.assertEqual(int(suite.attrib["tests"]), 6)
                 self.assertEqual(int(suite.attrib["failures"]), failures)
                 self.assertEqual(int(suite.attrib["errors"]), errors)

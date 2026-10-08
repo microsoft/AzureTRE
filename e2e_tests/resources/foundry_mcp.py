@@ -14,8 +14,17 @@ SERVER_URL = "https://learn.microsoft.com/api/mcp"
 SERVER_HOST = "learn.microsoft.com"
 DENY_ALL_FQDN = "deny-all.invalid"
 POLICIES = {"empty": [], "unrelated": [DENY_ALL_FQDN], "allowed": ["raw.githubusercontent.com", SERVER_HOST]}
-CASES = ("empty_text", "unrelated_text", "allowed_text", "allowed_metadata", "allowed_invoke",
-         "unrelated_metadata", "unrelated_invoke", "empty_metadata", "empty_invoke")
+CASES = (
+    "empty_text",
+    "unrelated_text",
+    "allowed_text",
+    "allowed_metadata",
+    "allowed_invoke",
+    "unrelated_metadata",
+    "unrelated_invoke",
+    "empty_metadata",
+    "empty_invoke",
+)
 
 
 @dataclass
@@ -33,24 +42,33 @@ class Reply:
     def text_completed(self):
         return self.body.get("status") == "completed" and any(
             isinstance(part, dict) and isinstance(part.get("text"), str) and part["text"].strip()
-            for item in self.items("message") if isinstance(item.get("content"), list)
-            for part in item["content"])
+            for item in self.items("message")
+            if isinstance(item.get("content"), list)
+            for part in item["content"]
+        )
 
     @property
     def metadata_imported(self):
-        return any(not item.get("error") and isinstance(item.get("tools"), list) and item["tools"]
-                   for item in self.items("mcp_list_tools"))
+        return any(
+            not item.get("error") and isinstance(item.get("tools"), list) and item["tools"]
+            for item in self.items("mcp_list_tools")
+        )
 
     @property
     def tool_completed(self):
-        return any(item.get("status") == "completed" and not item.get("error")
-                   and item.get("name") == "microsoft_docs_search" for item in self.items("mcp_call"))
+        return any(
+            item.get("status") == "completed" and not item.get("error") and item.get("name") == "microsoft_docs_search"
+            for item in self.items("mcp_call")
+        )
 
     @property
     def policy_denied(self):
         error = self.body.get("error")
-        return (self.status in (400, 403) and isinstance(error, dict)
-                and f"mcp server url '{SERVER_HOST}' is not allowed." in str(error.get("message", "")).lower())
+        return (
+            self.status in (400, 403)
+            and isinstance(error, dict)
+            and f"mcp server url '{SERVER_HOST}' is not allowed." in str(error.get("message", "")).lower()
+        )
 
 
 def evaluate(probes):
@@ -60,9 +78,16 @@ def evaluate(probes):
     for name in CASES:
         reply = probes[name]
         if name in CASES[:5]:
-            success = (reply.text_completed if name.endswith("_text") else
-                       reply.metadata_imported if name.endswith("_metadata") else reply.tool_completed)
-            state, reason = ("pass", "positive_control_succeeded") if success else ("blocked", "positive_control_failed")
+            success = (
+                reply.text_completed
+                if name.endswith("_text")
+                else reply.metadata_imported
+                if name.endswith("_metadata")
+                else reply.tool_completed
+            )
+            state, reason = (
+                ("pass", "positive_control_succeeded") if success else ("blocked", "positive_control_failed")
+            )
         elif reply.metadata_imported or reply.tool_completed:
             state, reason = "fail", "forbidden_mcp_access_accepted"
         elif reply.policy_denied and healthy:
@@ -74,21 +99,36 @@ def evaluate(probes):
 
 
 def call(account, token, mode):
-    payload = {"model": account["deployment"], "store": False, "max_output_tokens": 256,
-               "input": "<task>Reply READY.</task>"}
+    payload = {
+        "model": account["deployment"],
+        "store": False,
+        "max_output_tokens": 256,
+        "input": "<task>Reply READY.</task>",
+    }
     if account["model_properties"]["model"]["name"] == "gpt-5.1":
         payload["reasoning"] = {"effort": "none"}
     if mode != "text":
-        payload["tools"] = [{"type": "mcp", "server_label": "public_microsoft_docs", "server_url": SERVER_URL,
-                             "allowed_tools": ["microsoft_docs_search"],
-                             "require_approval": "always" if mode == "metadata" else "never"}]
+        payload["tools"] = [
+            {
+                "type": "mcp",
+                "server_label": "public_microsoft_docs",
+                "server_url": SERVER_URL,
+                "allowed_tools": ["microsoft_docs_search"],
+                "require_approval": "always" if mode == "metadata" else "never",
+            }
+        ]
         payload["tool_choice"] = "none" if mode == "metadata" else "required"
         if mode == "invoke":
             payload["max_tool_calls"] = 1
-            payload["input"] = ('<task>Call microsoft_docs_search once with query "Azure AI Foundry model deployment". '
-                                'Then reply READY.</task>')
-    request = urllib.request.Request(account["endpoint"] + "/openai/v1/responses", data=json.dumps(payload).encode(),
-                                     headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})
+            payload["input"] = (
+                '<task>Call microsoft_docs_search once with query "Azure AI Foundry model deployment". '
+                "Then reply READY.</task>"
+            )
+    request = urllib.request.Request(
+        account["endpoint"] + "/openai/v1/responses",
+        data=json.dumps(payload).encode(),
+        headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+    )
     try:
         with foundry.opener().open(request, timeout=120) as response:
             body = json.loads(response.read(foundry.MAX_BODY))
@@ -105,8 +145,9 @@ def call(account, token, mode):
 
 def run_probes(config):
     before = foundry.verify_live(config, expected_fqdns=POLICIES)
-    token = foundry.azure(["account", "get-access-token", "--resource", "https://ai.azure.com/"],
-                          config["subscription_id"])["accessToken"]
+    token = foundry.azure(
+        ["account", "get-access-token", "--resource", "https://ai.azure.com/"], config["subscription_id"]
+    )["accessToken"]
 
     def account_probes(item):
         name, account = item

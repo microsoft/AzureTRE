@@ -15,7 +15,6 @@ class Singleton(type):
 
 
 class Database(metaclass=Singleton):
-
     _cosmos_client: CosmosClient = None
     _database_proxy: DatabaseProxy = None
 
@@ -30,25 +29,17 @@ class Database(metaclass=Singleton):
             logger.debug("Connecting with key")
             if STATE_STORE_SSL_VERIFY:
                 logger.debug("Connecting with SSL verification")
-                cosmos_client = CosmosClient(
-                    url=STATE_STORE_ENDPOINT,
-                    credential=STATE_STORE_KEY
-                )
+                cosmos_client = CosmosClient(url=STATE_STORE_ENDPOINT, credential=STATE_STORE_KEY)
             else:
                 logger.debug("Connecting without SSL verification")
                 # ignore TLS (setup is a pain) when using local Cosmos emulator.
                 cosmos_client = CosmosClient(
-                    url=STATE_STORE_ENDPOINT,
-                    credential=STATE_STORE_KEY,
-                    connection_verify=False
+                    url=STATE_STORE_ENDPOINT, credential=STATE_STORE_KEY, connection_verify=False
                 )
         else:
             logger.debug("Connecting with managed identity")
             credential = await get_credential_async()
-            cosmos_client = CosmosClient(
-                url=STATE_STORE_ENDPOINT,
-                credential=credential
-            )
+            cosmos_client = CosmosClient(url=STATE_STORE_ENDPOINT, credential=credential)
 
         logger.debug("Connection established")
         return cosmos_client

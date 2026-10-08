@@ -18,14 +18,18 @@ def _workspace(airlock_version=None):
 @pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_noop_when_version_unchanged():
     request_repo = AsyncMock()
-    await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 1}), request_repo)
+    await ensure_airlock_version_change_allowed(
+        _workspace(1), ResourcePatch(properties={"airlock_version": 1}), request_repo
+    )
     request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_ensure_airlock_version_change_allowed_noop_when_no_version_in_patch():
     request_repo = AsyncMock()
-    await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"display_name": "x"}), request_repo)
+    await ensure_airlock_version_change_allowed(
+        _workspace(1), ResourcePatch(properties={"display_name": "x"}), request_repo
+    )
     request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
 
@@ -37,7 +41,8 @@ async def test_ensure_airlock_version_change_allowed_blocks_disabling_v2_airlock
 
     with pytest.raises(ValueError, match="Cannot disable Airlock"):
         await ensure_airlock_version_change_allowed(
-            workspace, ResourcePatch(properties={"enable_airlock": False}), request_repo)
+            workspace, ResourcePatch(properties={"enable_airlock": False}), request_repo
+        )
 
     request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
@@ -48,7 +53,8 @@ async def test_ensure_airlock_version_change_allowed_rejects_invalid_version(inv
     request_repo = AsyncMock()
     with pytest.raises(ValueError, match="integer with a value of 1 or 2"):
         await ensure_airlock_version_change_allowed(
-            _workspace(1), ResourcePatch(properties={"airlock_version": invalid_version}), request_repo)
+            _workspace(1), ResourcePatch(properties={"airlock_version": invalid_version}), request_repo
+        )
     request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()
 
 
@@ -56,7 +62,9 @@ async def test_ensure_airlock_version_change_allowed_rejects_invalid_version(inv
 async def test_ensure_airlock_version_change_allowed_permits_change_when_no_in_flight():
     request_repo = AsyncMock()
     request_repo.get_in_flight_airlock_request_ids_for_workspace.return_value = []
-    await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo)
+    await ensure_airlock_version_change_allowed(
+        _workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo
+    )
 
 
 @pytest.mark.asyncio
@@ -64,7 +72,9 @@ async def test_ensure_airlock_version_change_allowed_blocks_upgrade_with_in_flig
     request_repo = AsyncMock()
     request_repo.get_in_flight_airlock_request_ids_for_workspace.return_value = ["req-1"]
     with pytest.raises(ValueError):
-        await ensure_airlock_version_change_allowed(_workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo)
+        await ensure_airlock_version_change_allowed(
+            _workspace(1), ResourcePatch(properties={"airlock_version": 2}), request_repo
+        )
 
 
 def test_ensure_workspace_airlock_version_supported_allows_when_legacy_enabled():
@@ -104,12 +114,16 @@ def test_unstamped_workspace_is_treated_as_v1_when_validating_an_existing_one():
 
 def test_ensure_workspace_airlock_version_supported_allows_v2_on_manual_auth():
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=True):
-        ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Manual"})
+        ensure_workspace_airlock_version_supported(
+            {"enable_airlock": True, "airlock_version": 2, "auth_type": "Manual"}
+        )
 
 
 def test_ensure_workspace_airlock_version_supported_allows_v2_on_automatic_auth():
     with patch("services.legacy_airlock_guard.config.ENABLE_LEGACY_AIRLOCK", new=True):
-        ensure_workspace_airlock_version_supported({"enable_airlock": True, "airlock_version": 2, "auth_type": "Automatic"})
+        ensure_workspace_airlock_version_supported(
+            {"enable_airlock": True, "airlock_version": 2, "auth_type": "Automatic"}
+        )
 
 
 def test_unspecified_version_with_manual_auth_defaults_to_v1_and_is_blocked_when_legacy_disabled():
@@ -122,6 +136,8 @@ def test_unspecified_version_with_manual_auth_defaults_to_v1_and_is_blocked_when
 async def test_ensure_airlock_version_change_allowed_blocks_downgrade():
     request_repo = AsyncMock()
     with pytest.raises(ValueError, match="downgrading is not supported"):
-        await ensure_airlock_version_change_allowed(_workspace(2), ResourcePatch(properties={"airlock_version": 1}), request_repo)
+        await ensure_airlock_version_change_allowed(
+            _workspace(2), ResourcePatch(properties={"airlock_version": 1}), request_repo
+        )
     # A downgrade must be rejected outright, before even checking in-flight requests.
     request_repo.get_in_flight_airlock_request_ids_for_workspace.assert_not_called()

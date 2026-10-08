@@ -37,17 +37,30 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
 
     def test_valid_resource_types(self):
         validator = Draft202012Validator(self.field)
-        for value in ([], ["Microsoft.Bing/accounts"],
-                      ["Microsoft.Bing/accounts", "Microsoft.Search/searchServices"],
-                      ["Microsoft.CognitiveServices/accounts/projects/connections"]):
+        for value in (
+            [],
+            ["Microsoft.Bing/accounts"],
+            ["Microsoft.Bing/accounts", "Microsoft.Search/searchServices"],
+            ["Microsoft.CognitiveServices/accounts/projects/connections"],
+        ):
             with self.subTest(value=value):
                 validator.validate(value)
 
     def test_rejects_invalid_and_duplicate_types(self):
         validator = Draft202012Validator(self.field)
-        for value in (None, "Microsoft.Bing/accounts", {}, [1], [True], [None], [""],
-                      ["Microsoft.Bing/*"], [" Microsoft.Bing/accounts"], ["/subscriptions/example"],
-                      ["Microsoft.Bing/accounts", "Microsoft.Bing/accounts"]):
+        for value in (
+            None,
+            "Microsoft.Bing/accounts",
+            {},
+            [1],
+            [True],
+            [None],
+            [""],
+            ["Microsoft.Bing/*"],
+            [" Microsoft.Bing/accounts"],
+            ["/subscriptions/example"],
+            ["Microsoft.Bing/accounts", "Microsoft.Bing/accounts"],
+        ):
             with self.subTest(value=value):
                 self.assertFalse(validator.is_valid(value))
 
@@ -60,7 +73,9 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
     def test_parameter_reaches_all_terraform_actions(self):
         for action in ("install", "upgrade", "uninstall"):
             terraform = next(step["terraform"] for step in self.porter[action] if "terraform" in step)
-            self.assertEqual(terraform["vars"]["blocked_resource_types"], "${ bundle.parameters.blocked_resource_types }")
+            self.assertEqual(
+                terraform["vars"]["blocked_resource_types"], "${ bundle.parameters.blocked_resource_types }"
+            )
         parameters = json.loads((BASE / "parameters.json").read_text())["parameters"]
         entry = next(item for item in parameters if item["name"] == "blocked_resource_types")
         self.assertEqual(entry["source"], {"env": "BLOCKED_RESOURCE_TYPES"})
@@ -68,13 +83,15 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
     def test_workspace_owns_scope_and_decodes_complex_parameter(self):
         content = (BASE / "terraform/workspace.tf").read_text()
         self.assertIn('source                 = "./resource-policy"', content)
-        self.assertIn('resource_group_id      = azurerm_resource_group.ws.id', content)
-        self.assertIn('blocked_resource_types = jsondecode(base64decode(var.blocked_resource_types))', content)
+        self.assertIn("resource_group_id      = azurerm_resource_group.ws.id", content)
+        self.assertIn("blocked_resource_types = jsondecode(base64decode(var.blocked_resource_types))", content)
         foundry = ROOT / "templates/workspace_services/ai-foundry/terraform"
         self.assertFalse(any('"resource_policy"' in path.read_text() for path in foundry.glob("*.tf")))
 
     def test_resource_processor_encodes_workspace_list_for_porter(self):
-        spec = importlib.util.spec_from_file_location("workspace_policy_commands", ROOT / "resource_processor/helpers/commands.py")
+        spec = importlib.util.spec_from_file_location(
+            "workspace_policy_commands", ROOT / "resource_processor/helpers/commands.py"
+        )
         commands = importlib.util.module_from_spec(spec)
         logging = ModuleType("shared.logging")
         logging.logger = Mock()
@@ -82,11 +99,24 @@ class WorkspaceResourcePolicyTests(unittest.TestCase):
         with patch.dict(sys.modules, {"shared": ModuleType("shared"), "shared.logging": logging}):
             spec.loader.exec_module(commands)
         for action in ("install", "upgrade", "uninstall"):
-            for blocked in ([], ["Microsoft.Bing/accounts"], ["Microsoft.Bing/accounts", "Microsoft.Search/searchServices"]):
-                message = {"id": "synthetic", "name": self.porter["name"], "version": self.porter["version"],
-                           "action": action, "parameters": {"blocked_resource_types": blocked}}
-                with patch.object(commands, "get_porter_parameter_keys", AsyncMock(return_value=["blocked_resource_types"])):
-                    result = asyncio.run(commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message))
+            for blocked in (
+                [],
+                ["Microsoft.Bing/accounts"],
+                ["Microsoft.Bing/accounts", "Microsoft.Search/searchServices"],
+            ):
+                message = {
+                    "id": "synthetic",
+                    "name": self.porter["name"],
+                    "version": self.porter["version"],
+                    "action": action,
+                    "parameters": {"blocked_resource_types": blocked},
+                }
+                with patch.object(
+                    commands, "get_porter_parameter_keys", AsyncMock(return_value=["blocked_resource_types"])
+                ):
+                    result = asyncio.run(
+                        commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message)
+                    )
                 _, parameter_file, _, installation_file = result
                 try:
                     parameters = json.loads(Path(parameter_file).read_text())["parameters"]

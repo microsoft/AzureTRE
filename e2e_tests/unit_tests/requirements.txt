@@ -2,3 +2,5 @@
 # Match the E2E devcontainer's Azure Identity and Azure CLI dependencies.
 azure-identity==1.25.1
 azure-cli-core==2.81.0
+# Match the API validator when checking E2E request payloads against templates.
+jsonschema==4.25.1

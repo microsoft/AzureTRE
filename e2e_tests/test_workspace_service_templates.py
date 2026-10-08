@@ -14,7 +14,7 @@ workspace_service_templates = [
     (strings.AZUREML_SERVICE),
     (strings.GUACAMOLE_SERVICE),
     (strings.GITEA_SERVICE),
-    pytest.param(strings.AI_FOUNDRY_SERVICE, marks=pytest.mark.foundry)
+    pytest.param(strings.AI_FOUNDRY_SERVICE, marks=pytest.mark.foundry),
 ]
 
 
@@ -23,10 +23,12 @@ workspace_service_templates = [
 async def test_get_workspace_service_templates(template_name, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify)
-        response = await client.get(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token))
+        response = await client.get(
+            f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token)
+        )
 
         template_names = [templates["name"] for templates in response.json()["templates"]]
-        assert (template_name in template_names), f"No {template_name} template found"
+        assert template_name in template_names, f"No {template_name} template found"
 
 
 @pytest.mark.smoke
@@ -34,7 +36,7 @@ async def test_get_workspace_service_templates(template_name, verify) -> None:
 async def test_get_workspace_service_template(template_name, verify) -> None:
     admin_token = await get_admin_token(verify)
     async with get_template(template_name, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
-        assert (response.status_code == status.HTTP_200_OK), f"GET Request for {template_name} failed"
+        assert response.status_code == status.HTTP_200_OK, f"GET Request for {template_name} failed"
         assert_status(response, [status.HTTP_200_OK], f"Failed to GET {template_name}")
 
 
@@ -42,7 +44,9 @@ async def test_get_workspace_service_template(template_name, verify) -> None:
 @pytest.mark.foundry
 async def test_ai_foundry_template_access_settings(verify) -> None:
     admin_token = await get_admin_token(verify)
-    async with get_template(strings.AI_FOUNDRY_SERVICE, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify) as response:
+    async with get_template(
+        strings.AI_FOUNDRY_SERVICE, strings.API_WORKSPACE_SERVICE_TEMPLATES, admin_token, verify
+    ) as response:
         assert_status(response, [status.HTTP_200_OK], "Failed to GET the Foundry template")
         assert response.json()["$schema"] == "https://json-schema.org/draft/2020-12/schema"
         properties = response.json()["properties"]
@@ -69,11 +73,17 @@ async def test_create_workspace_service_templates(verify) -> None:
                 "title": "DONOTUSE",
                 "description": "DO NOT USE",
                 "required": [],
-                "properties": {}
-            }
+                "properties": {},
+            },
         }
 
         admin_token = await get_admin_token(verify)
-        response = await client.post(f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}", headers=get_auth_header(admin_token), json=payload)
+        response = await client.post(
+            f"{config.TRE_URL}{strings.API_WORKSPACE_SERVICE_TEMPLATES}",
+            headers=get_auth_header(admin_token),
+            json=payload,
+        )
 
-        assert_status(response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template")
+        assert_status(
+            response, [status.HTTP_201_CREATED, status.HTTP_409_CONFLICT], "Failed to create workspace service template"
+        )

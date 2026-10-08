@@ -26,10 +26,12 @@ async def register_and_reload(dialect, resource_type=ResourceType.WorkspaceServi
             "editable": {"$ref": "#/$defs/label", "updateable": True},
             "enabled": {"type": "boolean", "updateable": True},
         },
-        "allOf": [{
-            "if": {"properties": {"enabled": {"const": True}}, "required": ["enabled"]},
-            "then": {"properties": {"conditional": {"type": "string"}}},
-        }],
+        "allOf": [
+            {
+                "if": {"properties": {"enabled": {"const": True}}, "required": ["enabled"]},
+                "then": {"properties": {"conditional": {"type": "string"}}},
+            }
+        ],
     }
     if dialect:
         schema["$schema"] = dialect
@@ -61,10 +63,14 @@ async def test_registered_templates_preserve_create_and_patch_restrictions(diale
     with pytest.raises(ValidationError):
         resources._validate_resource_parameters({"properties": {**valid, "editable": "x"}}, enriched)
 
-    resources.validate_patch(ResourcePatch(properties={"editable": "changed"}), template_repo, template, RESOURCE_ACTION_UPDATE)
+    resources.validate_patch(
+        ResourcePatch(properties={"editable": "changed"}), template_repo, template, RESOURCE_ACTION_UPDATE
+    )
     for properties in [{"fixed": "changed"}, {"unexpected": "value"}, {"editable": "x"}]:
         with pytest.raises(ValidationError):
-            resources.validate_patch(ResourcePatch(properties=properties), template_repo, template, RESOURCE_ACTION_UPDATE)
+            resources.validate_patch(
+                ResourcePatch(properties=properties), template_repo, template, RESOURCE_ACTION_UPDATE
+            )
     assert enriched == original
 
 
@@ -83,14 +89,18 @@ def test_draft7_keeps_legacy_dependency_validation():
     schema = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
-        "properties": {"settings": {
-            "type": "object",
-            "properties": {"first": {"type": "string"}, "second": {"type": "string"}},
-            "dependencies": {"first": ["second"]},
-        }},
+        "properties": {
+            "settings": {
+                "type": "object",
+                "properties": {"first": {"type": "string"}, "second": {"type": "string"}},
+                "dependencies": {"first": ["second"]},
+            }
+        },
         "unevaluatedProperties": False,
     }
-    ResourceRepository._validate_resource_parameters({"properties": {"settings": {"first": "a", "second": "b"}}}, schema)
+    ResourceRepository._validate_resource_parameters(
+        {"properties": {"settings": {"first": "a", "second": "b"}}}, schema
+    )
     with pytest.raises(ValidationError, match="dependency"):
         ResourceRepository._validate_resource_parameters({"properties": {"settings": {"first": "a"}}}, schema)
 
@@ -102,35 +112,51 @@ async def test_registered_template_preserves_array_defaults_and_constraints():
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "Array compatibility",
         "description": "Registration and resource validation for updateable arrays",
-        "properties": {"choices": {
-            "type": "array",
-            "items": {"type": "string", "enum": ["alpha", "beta"]},
-            "uniqueItems": True,
-            "default": ["alpha"],
-            "updateable": True,
-        }},
+        "properties": {
+            "choices": {
+                "type": "array",
+                "items": {"type": "string", "enum": ["alpha", "beta"]},
+                "uniqueItems": True,
+                "default": ["alpha"],
+                "updateable": True,
+            }
+        },
     }
     template_input = ResourceTemplateInCreate(
-        name="array-compatibility", version="1.0.0", current=True, json_schema=schema)
+        name="array-compatibility", version="1.0.0", current=True, json_schema=schema
+    )
     repository = ResourceTemplateRepository()
     repository.save_item = AsyncMock()
     await repository.create_template(template_input, ResourceType.WorkspaceService, "")
     saved = repository.save_item.call_args.args[0].model_dump(mode="json")
     repository.query = AsyncMock(return_value=[saved])
-    template = await repository.get_template_by_name_and_version(template_input.name, "1.0.0", ResourceType.WorkspaceService)
+    template = await repository.get_template_by_name_and_version(
+        template_input.name, "1.0.0", ResourceType.WorkspaceService
+    )
     reloaded = template.model_dump()
     assert reloaded["$schema"] == "https://json-schema.org/draft/2020-12/schema"
     assert reloaded["properties"]["choices"] == schema["properties"]["choices"]
     enriched = repository.enrich_template(template)
     resources = ResourceRepository()
-    defaults = {"display_name": "Example", "description": "Example", "choices": reloaded["properties"]["choices"]["default"]}
+    defaults = {
+        "display_name": "Example",
+        "description": "Example",
+        "choices": reloaded["properties"]["choices"]["default"],
+    }
     resources._validate_resource_parameters({"properties": defaults}, enriched)
 
     for choices in ([], ["alpha"], ["beta"], ["alpha", "beta"]):
         resources._validate_resource_parameters({"properties": {**defaults, "choices": choices}}, enriched)
-        resources.validate_patch(ResourcePatch(properties={"choices": choices}), repository, template, RESOURCE_ACTION_UPDATE)
-    for properties in ({"choices": ["unknown"]}, {"choices": None}, {"choices": [1]},
-                       {"choices": ["alpha", "alpha"]}, {"unexpected": "value"}):
+        resources.validate_patch(
+            ResourcePatch(properties={"choices": choices}), repository, template, RESOURCE_ACTION_UPDATE
+        )
+    for properties in (
+        {"choices": ["unknown"]},
+        {"choices": None},
+        {"choices": [1]},
+        {"choices": ["alpha", "alpha"]},
+        {"unexpected": "value"},
+    ):
         with pytest.raises(ValidationError):
             resources._validate_resource_parameters({"properties": {**defaults, **properties}}, enriched)
         with pytest.raises(ValidationError):

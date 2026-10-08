@@ -41,7 +41,6 @@ provider "registry.terraform.io/hashicorp/azurerm" {
   ]
 }
 
-
 provider "registry.terraform.io/hashicorp/time" {
   version     = "0.14.0"
   constraints = "~> 0.13"

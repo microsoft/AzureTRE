@@ -74,8 +74,11 @@ class FoundryTemplateTests(unittest.TestCase):
             # A cached bundle must have the same inputs before it can check generated parameters.
             for field in ("name", "parameters", "mixins", "install", "upgrade", "uninstall"):
                 self.assertEqual(manifest[field], self.porter[field], f"Stale bundle field: {field}")
-            expected.update(name for name, parameter in built["parameters"].items()
-                            if built["definitions"][parameter["definition"]].get("$comment") != "porter-internal")
+            expected.update(
+                name
+                for name, parameter in built["parameters"].items()
+                if built["definitions"][parameter["definition"]].get("$comment") != "porter-internal"
+            )
         supplied = [item["name"] for item in parameter_set["parameters"]]
         self.assertEqual(len(supplied), len(set(supplied)), "Duplicate parameter mappings")
         self.assertCountEqual((name for name in supplied if name != "arm_use_msi"), expected - {"arm_use_msi"})
@@ -90,32 +93,55 @@ class FoundryTemplateTests(unittest.TestCase):
         self.assertEqual(parameter["type"], "string")
         self.assertEqual(json.loads(base64.b64decode(parameter["default"])), field["default"])
         for action in ("install", "upgrade", "uninstall"):
-            self.assertEqual(self.porter[action][0]["terraform"]["vars"]["allowed_fqdns"],
-                             "${ bundle.parameters.allowed_fqdns }")
+            self.assertEqual(
+                self.porter[action][0]["terraform"]["vars"]["allowed_fqdns"], "${ bundle.parameters.allowed_fqdns }"
+            )
         terraform = (BUNDLE / "terraform/ai_foundry.tf").read_text()
-        self.assertRegex(terraform, r'fqdns\s*=\s*jsondecode\(base64decode\(var.allowed_fqdns\)\)')
-        self.assertRegex(terraform, r'outbound_network_access_restricted\s*=\s*true')
+        self.assertRegex(terraform, r"fqdns\s*=\s*jsondecode\(base64decode\(var.allowed_fqdns\)\)")
+        self.assertRegex(terraform, r"outbound_network_access_restricted\s*=\s*true")
         variables = (BUNDLE / "terraform/variables.tf").read_text()
-        block = variables.split('variable "allowed_fqdns" {', 1)[1].split('\nvariable ', 1)[0]
+        block = variables.split('variable "allowed_fqdns" {', 1)[1].split("\nvariable ", 1)[0]
         self.assertIn('default     = "' + parameter["default"] + '"', block)
 
     def test_outbound_allowlist_accepts_explicit_empty_and_hostname_lists(self):
         validator = Draft202012Validator(self.schema)
         validator.validate({})
-        for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"],
-                      ["deny-all.invalid", "learn.microsoft.com"],
-                      ["raw.githubusercontent.com", "learn.microsoft.com"], ["xn--bcher-kva.example"]):
+        for hosts in (
+            [],
+            ["deny-all.invalid"],
+            ["learn.microsoft.com"],
+            ["deny-all.invalid", "learn.microsoft.com"],
+            ["raw.githubusercontent.com", "learn.microsoft.com"],
+            ["xn--bcher-kva.example"],
+        ):
             with self.subTest(hosts=hosts):
                 validator.validate({"allowed_fqdns": hosts})
 
     def test_outbound_allowlist_rejects_invalid_hosts_and_duplicates(self):
         validator = Draft202012Validator(self.schema)
-        for value in (None, "example.com", {}, [1], [True], [None], [""], ["localhost"],
-                      ["https://example.com"], ["example.com/path"], ["example.com:443"], ["*.example.com"],
-                      [" example.com"], ["example.com "], ["-bad.example"], ["bad-.example"],
-                      ["127.0.0.1"], ["a" * 64 + ".example"], ["example.com", "example.com"],
-                      ["a" * 63 + "." + "b" * 63 + "." + "c" * 63 + "." + "d" * 62 + ".com"],
-                      [f"host{number}.example" for number in range(1001)]):
+        for value in (
+            None,
+            "example.com",
+            {},
+            [1],
+            [True],
+            [None],
+            [""],
+            ["localhost"],
+            ["https://example.com"],
+            ["example.com/path"],
+            ["example.com:443"],
+            ["*.example.com"],
+            [" example.com"],
+            ["example.com "],
+            ["-bad.example"],
+            ["bad-.example"],
+            ["127.0.0.1"],
+            ["a" * 64 + ".example"],
+            ["example.com", "example.com"],
+            ["a" * 63 + "." + "b" * 63 + "." + "c" * 63 + "." + "d" * 62 + ".com"],
+            [f"host{number}.example" for number in range(1001)],
+        ):
             with self.subTest(value=value):
                 self.assertFalse(validator.is_valid({"allowed_fqdns": value}))
 
@@ -126,14 +152,25 @@ class FoundryTemplateTests(unittest.TestCase):
                 self.assertFalse(validator.is_valid({"allowed_fqdns": ["example.com" + suffix]}))
 
     def test_outbound_warning_explains_empty_list_without_claiming_flag_is_disabled(self):
-        for description in (self.schema["properties"]["allowed_fqdns"]["description"],
-                            self.parameters["allowed_fqdns"]["description"]):
-            for phrase in ("deny-all.invalid", "Removing the last entry", "[]", "workaround",
-                           "25 September 2026", "image and MCP", "outbound restriction remaining enabled"):
+        for description in (
+            self.schema["properties"]["allowed_fqdns"]["description"],
+            self.parameters["allowed_fqdns"]["description"],
+        ):
+            for phrase in (
+                "deny-all.invalid",
+                "Removing the last entry",
+                "[]",
+                "workaround",
+                "25 September 2026",
+                "image and MCP",
+                "outbound restriction remaining enabled",
+            ):
                 self.assertIn(phrase, description)
 
     def test_resource_processor_preserves_explicit_outbound_lists(self):
-        spec = importlib.util.spec_from_file_location("foundry_allowlist_commands", ROOT / "resource_processor/helpers/commands.py")
+        spec = importlib.util.spec_from_file_location(
+            "foundry_allowlist_commands", ROOT / "resource_processor/helpers/commands.py"
+        )
         commands = importlib.util.module_from_spec(spec)
         logging = ModuleType("shared.logging")
         logging.logger = Mock()
@@ -141,13 +178,24 @@ class FoundryTemplateTests(unittest.TestCase):
         with patch.dict(sys.modules, {"shared": ModuleType("shared"), "shared.logging": logging}):
             spec.loader.exec_module(commands)
         for action in ("install", "upgrade", "uninstall"):
-            for hosts in ([], ["deny-all.invalid"], ["learn.microsoft.com"],
-                          ["deny-all.invalid", "learn.microsoft.com"]):
+            for hosts in (
+                [],
+                ["deny-all.invalid"],
+                ["learn.microsoft.com"],
+                ["deny-all.invalid", "learn.microsoft.com"],
+            ):
                 with self.subTest(action=action, hosts=hosts):
-                    message = {"id": "synthetic", "name": self.porter["name"], "version": self.porter["version"],
-                               "action": action, "parameters": {"allowed_fqdns": hosts}}
+                    message = {
+                        "id": "synthetic",
+                        "name": self.porter["name"],
+                        "version": self.porter["version"],
+                        "action": action,
+                        "parameters": {"allowed_fqdns": hosts},
+                    }
                     with patch.object(commands, "get_porter_parameter_keys", AsyncMock(return_value=["allowed_fqdns"])):
-                        result = asyncio.run(commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message))
+                        result = asyncio.run(
+                            commands.build_porter_command({"registry_server": "synthetic.azurecr.io"}, message)
+                        )
                     _, parameter_file, _, installation_file = result
                     try:
                         parameters = json.loads(Path(parameter_file).read_text())["parameters"]
@@ -182,8 +230,10 @@ class FoundryTemplateTests(unittest.TestCase):
         self.assertNotIn(name, self.schema["properties"])
         for action in ("install", "upgrade", "uninstall"):
             with self.subTest(action=action):
-                self.assertEqual(self.porter[action][0]["terraform"]["vars"][name],
-                                 "${ bundle.parameters.workspace_subscription_id }")
+                self.assertEqual(
+                    self.porter[action][0]["terraform"]["vars"][name],
+                    "${ bundle.parameters.workspace_subscription_id }",
+                )
 
     def test_secret_reference_is_returned_on_install_and_upgrade(self):
         output = next(item for item in self.porter["outputs"] if item["name"] == "openai_api_key_secret_id")
@@ -198,10 +248,13 @@ class FoundryTemplateTests(unittest.TestCase):
         for job in ("publish_bundles", "register_bundles"):
             with self.subTest(job=job):
                 bundles = workflow["jobs"][job]["strategy"]["matrix"]["include"]
-                self.assertIn({
-                    "BUNDLE_TYPE": "workspace_service",
-                    "BUNDLE_DIR": "./templates/workspace_services/ai-foundry",
-                }, bundles)
+                self.assertIn(
+                    {
+                        "BUNDLE_TYPE": "workspace_service",
+                        "BUNDLE_DIR": "./templates/workspace_services/ai-foundry",
+                    },
+                    bundles,
+                )
 
 
 class FoundrySubscriptionTests(unittest.TestCase):
@@ -211,59 +264,77 @@ class FoundrySubscriptionTests(unittest.TestCase):
 
     def block(self, filename, header):
         # Top-level closing braces delimit these Terraform blocks.
-        return re.search(re.escape(header) + r" \{\n(.*?)^\}",
-                         self.files[filename], re.MULTILINE | re.DOTALL).group(1)
+        return re.search(re.escape(header) + r" \{\n(.*?)^\}", self.files[filename], re.MULTILINE | re.DOTALL).group(1)
 
     def test_default_providers_and_purge_use_workspace_subscription(self):
         for provider in ("azurerm", "azapi"):
             with self.subTest(provider=provider):
-                self.assertRegex(self.block("main.tf", f'provider "{provider}"'),
-                                 r"subscription_id\s*=\s*local.workspace_subscription_id")
-        self.assertRegex(self.files["locals.tf"],
-                         r"workspace_subscription_id\s*=\s*coalesce\(var.workspace_subscription_id, "
-                         r"data.azurerm_client_config.current.subscription_id\)")
-        self.assertRegex(self.block("variables.tf", 'variable "workspace_subscription_id"'),
-                         r'default\s*=\s*""')
+                self.assertRegex(
+                    self.block("main.tf", f'provider "{provider}"'),
+                    r"subscription_id\s*=\s*local.workspace_subscription_id",
+                )
+        self.assertRegex(
+            self.files["locals.tf"],
+            r"workspace_subscription_id\s*=\s*coalesce\(var.workspace_subscription_id, "
+            r"data.azurerm_client_config.current.subscription_id\)",
+        )
+        self.assertRegex(self.block("variables.tf", 'variable "workspace_subscription_id"'), r'default\s*=\s*""')
         purge = self.block("ai_foundry.tf", 'resource "azapi_resource_action" "purge_ai_foundry"')
         self.assertIn('"/subscriptions/", local.workspace_subscription_id,', purge)
         self.assertNotIn("data.azurerm_client_config.current.subscription_id", purge)
 
     def test_core_client_config_avoids_provider_cycle(self):
         main = self.files["main.tf"]
-        core = next(block for block in re.findall(r'provider "azurerm" \{\n(.*?)^\}',
-                                                  main, re.MULTILINE | re.DOTALL)
-                    if re.search(r'alias\s*=\s*"core"', block))
+        core = next(
+            block
+            for block in re.findall(r'provider "azurerm" \{\n(.*?)^\}', main, re.MULTILINE | re.DOTALL)
+            if re.search(r'alias\s*=\s*"core"', block)
+        )
         self.assertNotIn("subscription_id", core)
-        self.assertRegex(self.block("main.tf", 'data "azurerm_client_config" "current"'),
-                         r"provider\s*=\s*azurerm.core")
+        self.assertRegex(
+            self.block("main.tf", 'data "azurerm_client_config" "current"'), r"provider\s*=\s*azurerm.core"
+        )
 
     def test_subscription_runs_map_all_providers_to_mocks(self):
         content = (BUNDLE / "terraform/tests/subscription.tftest.hcl").read_text()
-        for provider, alias in (("azurerm", None), ("azurerm", "core"),
-                                ("azurerm", "distinct"), ("azapi", None), ("time", None)):
-            blocks = re.findall(r'mock_provider "' + provider + r'" \{(.*?)^\}',
-                                content, re.MULTILINE | re.DOTALL)
-            self.assertTrue(any((f'alias = "{alias}"' in block) if alias else 'alias' not in block
-                                for block in blocks) or f'mock_provider "{provider}" {{}}' in content)
+        for provider, alias in (
+            ("azurerm", None),
+            ("azurerm", "core"),
+            ("azurerm", "distinct"),
+            ("azapi", None),
+            ("time", None),
+        ):
+            blocks = re.findall(r'mock_provider "' + provider + r'" \{(.*?)^\}', content, re.MULTILINE | re.DOTALL)
+            self.assertTrue(
+                any((f'alias = "{alias}"' in block) if alias else "alias" not in block for block in blocks)
+                or f'mock_provider "{provider}" {{}}' in content
+            )
         runs = re.findall(r'run "([^"]+)" \{\n(.*?)^\}', content, re.MULTILINE | re.DOTALL)
         self.assertEqual({name for name, _ in runs}, {"default_subscription", "distinct_subscription"})
         for name, block in runs:
             with self.subTest(run=name):
                 mappings = re.search(r"providers = \{(.*?)\}", block, re.DOTALL).group(1)
                 actual = dict(re.findall(r"(\S+)\s*=\s*(\S+)", mappings))
-                self.assertEqual(actual, {
-                    "azurerm": "azurerm.distinct" if name == "distinct_subscription" else "azurerm",
-                    "azurerm.core": "azurerm.core", "azapi": "azapi", "time": "time",
-                })
+                self.assertEqual(
+                    actual,
+                    {
+                        "azurerm": "azurerm.distinct" if name == "distinct_subscription" else "azurerm",
+                        "azurerm.core": "azurerm.core",
+                        "azapi": "azapi",
+                        "time": "time",
+                    },
+                )
 
     def test_only_core_lookups_use_core_provider(self):
-        expected = {'data "azurerm_client_config" "current"',
-                    *(f'data "azurerm_private_dns_zone" "{name}"'
-                      for name in ("cognitive_services", "openai", "ai_services"))}
+        expected = {
+            'data "azurerm_client_config" "current"',
+            *(f'data "azurerm_private_dns_zone" "{name}"' for name in ("cognitive_services", "openai", "ai_services")),
+        }
         actual = set()
         for content in self.files.values():
-            for header, block in re.findall(r'((?:data|resource) "[^"]+" "[^"]+") \{\n(.*?)^\}',
-                                            content, re.MULTILINE | re.DOTALL):
+            for header, block in re.findall(
+                r'((?:data|resource) "[^"]+" "[^"]+") \{\n(.*?)^\}', content, re.MULTILINE | re.DOTALL
+            ):
                 provider = re.search(r"^  provider\s*=\s*(\S+)", block, re.MULTILINE)
                 if provider:
                     self.assertEqual(provider.group(1), "azurerm.core")
@@ -275,31 +346,38 @@ class FoundryGraphTests(unittest.TestCase):
     def test_ci_runs_graph_check_after_initialisation(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/build_validation_develop.yml").read_text())
         steps = next(job["steps"] for job in workflow["jobs"].values() if "steps" in job)
-        graph_index = next(i for i, step in enumerate(steps)
-                           if step.get("run") == "python tests/run_dependency_graph.py")
+        graph_index = next(
+            i for i, step in enumerate(steps) if step.get("run") == "python tests/run_dependency_graph.py"
+        )
         graph_step = steps[graph_index]
         self.assertEqual(graph_step["if"], "${{ steps.filter.outputs.foundry == 'true' }}")
         self.assertEqual(graph_step["working-directory"], str(BUNDLE.relative_to(ROOT) / "terraform"))
-        self.assertTrue(any("terraform init -backend=false" in step.get("run", "")
-                            and step.get("working-directory") == graph_step["working-directory"]
-                            and step.get("if") == graph_step["if"] for step in steps[:graph_index]))
+        self.assertTrue(
+            any(
+                "terraform init -backend=false" in step.get("run", "")
+                and step.get("working-directory") == graph_step["working-directory"]
+                and step.get("if") == graph_step["if"]
+                for step in steps[:graph_index]
+            )
+        )
         filters = yaml.safe_load(next(step["with"]["filters"] for step in steps if step.get("id") == "filter"))
         self.assertIn("templates/workspace_services/ai-foundry/**", filters["foundry"])
         self.assertIn(".github/tests/**", filters["foundry"])
 
     def run_graph(self, removed_edge=None):
         spec = importlib.util.spec_from_file_location(
-            "foundry_graph_runner", BUNDLE / "terraform/tests/run_dependency_graph.py")
+            "foundry_graph_runner", BUNDLE / "terraform/tests/run_dependency_graph.py"
+        )
         runner = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(runner)
         edges = [
-            ('azurerm_cognitive_account_project.default', 'azurerm_cognitive_deployment.openai'),
-            ('azurerm_cognitive_account_project.default', 'azurerm_private_endpoint.ai_foundry'),
-            ('azurerm_cognitive_deployment.openai', 'azurerm_cognitive_account.ai_foundry'),
-            ('azurerm_cognitive_account.ai_foundry', 'azapi_resource_action.purge_ai_foundry'),
-            ('azurerm_cognitive_deployment.openai', 'data.azapi_resource_action.available_models'),
-            ('data.azapi_resource_action.available_models', 'time_sleep.wait_for_ai_foundry'),
-            ('time_sleep.wait_for_ai_foundry', 'azurerm_cognitive_account.ai_foundry'),
+            ("azurerm_cognitive_account_project.default", "azurerm_cognitive_deployment.openai"),
+            ("azurerm_cognitive_account_project.default", "azurerm_private_endpoint.ai_foundry"),
+            ("azurerm_cognitive_deployment.openai", "azurerm_cognitive_account.ai_foundry"),
+            ("azurerm_cognitive_account.ai_foundry", "azapi_resource_action.purge_ai_foundry"),
+            ("azurerm_cognitive_deployment.openai", "data.azapi_resource_action.available_models"),
+            ("data.azapi_resource_action.available_models", "time_sleep.wait_for_ai_foundry"),
+            ("time_sleep.wait_for_ai_foundry", "azurerm_cognitive_account.ai_foundry"),
         ]
         if removed_edge is not None:
             edges.pop(removed_edge)
@@ -315,7 +393,8 @@ class FoundryGraphTests(unittest.TestCase):
             (source / "terraform.tfstate").write_text("resource state")
             (source / "tests").mkdir()
             (source / "tests/check_dependency_graph.py").write_text(
-                (BUNDLE / "terraform/tests/check_dependency_graph.py").read_text())
+                (BUNDLE / "terraform/tests/check_dependency_graph.py").read_text()
+            )
             offline_paths = []
 
             def execute(command, **kwargs):
@@ -323,8 +402,9 @@ class FoundryGraphTests(unittest.TestCase):
                     self.assertEqual(command, ["terraform", "graph"])
                     offline = kwargs["cwd"]
                     offline_paths.append(offline)
-                    self.assertEqual((offline / "main.tf").read_text(),
-                                     original.replace('  backend "azurerm" {}\n', "", 1))
+                    self.assertEqual(
+                        (offline / "main.tf").read_text(), original.replace('  backend "azurerm" {}\n', "", 1)
+                    )
                     self.assertFalse((offline / "terraform.tfstate").exists())
                     self.assertFalse((offline / ".terraform/terraform.tfstate").exists())
                     for dependent, dependency in edges:
@@ -371,9 +451,12 @@ class FoundryLifecycleTests(unittest.TestCase):
                 self.assertEqual(payload["templateName"], lifecycle.strings.AI_FOUNDRY_SERVICE)
                 properties.update(copy.deepcopy(payload["properties"]))
                 # Deployment outputs supplement the inputs. No input defaults are inserted.
-                properties.update(ai_foundry_id="/subscriptions/offline/accounts/foundry",
-                                  openai_endpoint="https://offline.openai.azure.com/",
-                                  openai_model_deployment="gpt-5.1", openai_api_key_secret_id="")
+                properties.update(
+                    ai_foundry_id="/subscriptions/offline/accounts/foundry",
+                    openai_endpoint="https://offline.openai.azure.com/",
+                    openai_model_deployment="gpt-5.1",
+                    openai_api_key_secret_id="",
+                )
             else:
                 self.assertEqual(method, "PATCH")
                 self.assertEqual(path, "/api" + service_path)
@@ -392,10 +475,12 @@ class FoundryLifecycleTests(unittest.TestCase):
             return {"workspaceService": {"properties": returned}}
 
         cleanup = AsyncMock()
-        with patch.object(lifecycle, "post_resource", side_effect=post), \
-                patch.object(lifecycle, "get_resource", side_effect=get), \
-                patch.object(lifecycle, "get_workspace_owner_token", new=AsyncMock(return_value="offline-token")), \
-                patch.object(lifecycle, "disable_and_delete_ws_resource", new=cleanup):
+        with (
+            patch.object(lifecycle, "post_resource", side_effect=post),
+            patch.object(lifecycle, "get_resource", side_effect=get),
+            patch.object(lifecycle, "get_workspace_owner_token", new=AsyncMock(return_value="offline-token")),
+            patch.object(lifecycle, "disable_and_delete_ws_resource", new=cleanup),
+        ):
             invocation = lifecycle.test_ai_foundry_model_service_lifecycle(True, (workspace_path, "offline"))
             if stage:
                 with self.assertRaises(AssertionError):
@@ -415,18 +500,25 @@ class FoundryLifecycleTests(unittest.TestCase):
         self.run_lifecycle()
 
     def test_lifecycle_rejects_incorrect_initial_settings(self):
-        for setting, value in (("openai_model", "wrong-model"), ("openai_model_capacity", 2),
-                               ("is_exposed_externally", True), ("local_auth_enabled", True),
-                               ("openai_api_key_secret_id", "unexpected-secret-reference")):
+        for setting, value in (
+            ("openai_model", "wrong-model"),
+            ("openai_model_capacity", 2),
+            ("is_exposed_externally", True),
+            ("local_auth_enabled", True),
+            ("openai_api_key_secret_id", "unexpected-secret-reference"),
+        ):
             with self.subTest(setting=setting):
                 self.run_lifecycle(1, setting, value)
 
     def test_lifecycle_rejects_incorrect_upgraded_settings(self):
-        for setting, value in (("is_exposed_externally", True), ("local_auth_enabled", True),
-                               ("openai_api_key_secret_id", "unexpected-secret-reference"),
-                               ("ai_foundry_id", "/subscriptions/changed"),
-                               ("openai_endpoint", "https://changed.invalid"),
-                               ("openai_model_deployment", "changed-deployment")):
+        for setting, value in (
+            ("is_exposed_externally", True),
+            ("local_auth_enabled", True),
+            ("openai_api_key_secret_id", "unexpected-secret-reference"),
+            ("ai_foundry_id", "/subscriptions/changed"),
+            ("openai_endpoint", "https://changed.invalid"),
+            ("openai_model_deployment", "changed-deployment"),
+        ):
             with self.subTest(setting=setting):
                 self.run_lifecycle(2, setting, value)
 
@@ -437,9 +529,25 @@ class FoundryTestSelectionTests(unittest.TestCase):
         environment = os.environ.copy()
         environment["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "e2e_tests")))
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", "--collect-only", "-q", "-m", selector,
-             "test_workspace_services.py", "test_workspace_service_templates.py", "test_foundry_egress.py", "test_foundry_mcp.py"],
-            cwd=ROOT / "e2e_tests", env=environment, text=True, capture_output=True, timeout=60)
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
+                "-m",
+                selector,
+                "test_workspace_services.py",
+                "test_workspace_service_templates.py",
+                "test_foundry_egress.py",
+                "test_foundry_mcp.py",
+            ],
+            cwd=ROOT / "e2e_tests",
+            env=environment,
+            text=True,
+            capture_output=True,
+            timeout=60,
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return result.stdout
 

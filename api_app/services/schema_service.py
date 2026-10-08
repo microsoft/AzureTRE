@@ -4,17 +4,7 @@ from typing import List, Dict, Tuple
 
 
 def get_system_properties(id_field: str = "workspace_id"):
-    return {
-        "tre_id": {
-            "type": "string"
-        },
-        id_field: {
-            "type": "string"
-        },
-        "azure_location": {
-            "type": "string"
-        }
-    }
+    return {"tre_id": {"type": "string"}, id_field: {"type": "string"}, "azure_location": {"type": "string"}}
 
 
 def merge_required(all_required):
@@ -37,7 +27,9 @@ def read_schema(schema_file: str) -> Tuple[List[str], Dict]:
         return schema["required"], schema["properties"]
 
 
-def enrich_template(original_template, extra_properties, is_update: bool = False, is_workspace_scope: bool = True) -> dict:
+def enrich_template(
+    original_template, extra_properties, is_update: bool = False, is_workspace_scope: bool = True
+) -> dict:
     template = original_template.model_dump(exclude_none=True)
 
     all_required = [definition[0] for definition in extra_properties] + [template["required"]]
@@ -77,8 +69,8 @@ def enrich_workspace_template(template, is_update: bool = False) -> dict:
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    workspace_default_properties = read_schema('workspace.json')
-    azure_ad_properties = read_schema('azuread.json')
+    workspace_default_properties = read_schema("workspace.json")
+    azure_ad_properties = read_schema("azuread.json")
     return enrich_template(template, [workspace_default_properties, azure_ad_properties], is_update=is_update)
 
 
@@ -90,7 +82,7 @@ def enrich_workspace_service_template(template, is_update: bool = False) -> dict
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    workspace_service_default_properties = read_schema('workspace_service.json')
+    workspace_service_default_properties = read_schema("workspace_service.json")
     return enrich_template(template, [workspace_service_default_properties], is_update=is_update)
 
 
@@ -101,7 +93,7 @@ def enrich_shared_service_template(template, is_update: bool = False) -> dict:
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    shared_service_default_properties = read_schema('shared_service.json')
+    shared_service_default_properties = read_schema("shared_service.json")
     return enrich_template(template, [shared_service_default_properties], is_update=is_update, is_workspace_scope=False)
 
 
@@ -113,5 +105,5 @@ def enrich_user_resource_template(template, is_update: bool = False):
     Returns:
         [Dict]: [Enriched template with all required and system properties added]
     """
-    user_resource_default_properties = read_schema('user_resource.json')
+    user_resource_default_properties = read_schema("user_resource.json")
     return enrich_template(template, [user_resource_default_properties], is_update=is_update)

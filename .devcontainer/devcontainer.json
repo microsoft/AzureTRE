@@ -47,10 +47,16 @@
         "editor.formatOnPaste": true,
         "editor.formatOnSave": true,
         "python.pythonPath": "/usr/local/bin/python",
-        "python.formatting.provider": "black",
-        "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-        "python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-        "python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "never"
+          }
+        },
+        "bandit.args": [
+          "--config=${workspaceFolder}/pyproject.toml"
+        ],
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
         "python.testing.pytestArgs": [
@@ -268,7 +274,7 @@
       "extensions": [
         "ms-python.python",
         "ms-python.pylance",
-        "ms-python.flake8",
+        "charliermarsh.ruff",
         "nwgh.bandit",
         "hashicorp.terraform",
         "github.vscode-pull-request-github",

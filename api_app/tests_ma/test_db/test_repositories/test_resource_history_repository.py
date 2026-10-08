@@ -16,7 +16,7 @@ RESOURCE_VERSION = 1
 
 @pytest_asyncio.fixture
 async def resource_history_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=None):
         resource_history_repo = await ResourceHistoryRepository().create()
         yield resource_history_repo
 
@@ -30,15 +30,15 @@ def sample_resource() -> Resource:
         templateName="template_name",
         templateVersion="template_version",
         properties={
-            'display_name': 'initial display name',
-            'description': 'initial description',
-            'computed_prop': 'computed_val'
+            "display_name": "initial display name",
+            "description": "initial description",
+            "computed_prop": "computed_val",
         },
         resourceType=ResourceType.Workspace,
         etag="some-etag-value",
         resourceVersion=RESOURCE_VERSION,
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
+        user=create_test_user(),
     )
 
 
@@ -51,17 +51,17 @@ def sample_resource_history() -> ResourceHistoryItem:
         resourceVersion=RESOURCE_VERSION,
         templateVersion="template_version",
         properties={
-            'display_name': 'initial display name',
-            'description': 'initial description',
-            'computed_prop': 'computed_val'
+            "display_name": "initial display name",
+            "description": "initial description",
+            "computed_prop": "computed_val",
         },
         updatedWhen=FAKE_CREATE_TIMESTAMP,
-        user=create_test_user()
+        user=create_test_user(),
     )
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', return_value=AsyncMock())
+@patch("db.repositories.resources_history.ResourceHistoryRepository.save_item", return_value=AsyncMock())
 async def test_create_resource_history_item(mock_save, resource_history_repo, sample_resource):
     resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
     # Assertions
@@ -78,7 +78,7 @@ async def test_create_resource_history_item(mock_save, resource_history_repo, sa
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources_history.ResourceHistoryRepository.save_item', side_effect=Exception)
+@patch("db.repositories.resources_history.ResourceHistoryRepository.save_item", side_effect=Exception)
 async def test_create_resource_history_item_throws_error_when_saving(mock_save, resource_history_repo, sample_resource):
     with pytest.raises(Exception):
         resource_history = await resource_history_repo.create_resource_history_item(sample_resource)
@@ -95,7 +95,7 @@ async def test_create_resource_history_item_throws_error_when_saving(mock_save, 
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources_history.ResourceHistoryRepository.query')
+@patch("db.repositories.resources_history.ResourceHistoryRepository.query")
 async def test_get_resource_history_by_resource_id_if_found(mock_query, resource_history_repo, sample_resource_history):
     mock_query.return_value = [sample_resource_history]
     result = await resource_history_repo.get_resource_history_by_resource_id(RESOURCE_ID)
@@ -104,7 +104,7 @@ async def test_get_resource_history_by_resource_id_if_found(mock_query, resource
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.resources_history.ResourceHistoryRepository.query')
+@patch("db.repositories.resources_history.ResourceHistoryRepository.query")
 async def test_get_resource_history_by_resource_id_if_not_found(mock_query, resource_history_repo):
     mock_query.return_value = []
     result = await resource_history_repo.get_resource_history_by_resource_id(RESOURCE_ID)

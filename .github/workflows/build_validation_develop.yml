@@ -51,6 +51,12 @@ jobs:
               - 'docs/**/*'
             github_scripts:
               - '.github/scripts/**'
+              - '.github/linters/actionlint.yml'
+              - '.github/workflows/deploy_tre.yml'
+              - '.github/workflows/deploy_tre_branch.yml'
+              - '.github/workflows/clean_validation_envs.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
+              - '.github/workflows/pr_comment_bot.yml'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/build_all_dockerfiles.yml'
               - '.devcontainer/Dockerfile'
@@ -67,6 +73,7 @@ jobs:
               - 'devops/scripts/terraform_init.sh'
               - 'devops/scripts/recover_bootstrap_lease.py'
               - 'devops/scripts/ci_environment_id.py'
+              - 'devops/scripts/ci_cleanup_scope.py'
               - 'devops/scripts/destroy_ci_ref_env.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
@@ -77,6 +84,8 @@ jobs:
               - '.github/workflows/deploy_tre_branch.yml'
               - '.github/workflows/pr_comment_bot.yml'
               - 'devops/tests/**'
+              - 'templates/shared_services/sonatype-nexus-vm/scripts/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'
 
@@ -102,6 +111,17 @@ jobs:
             terraform_workspace_services:
               - templates/workspace_services/**/terraform/**/*.tf
 
+            workspace_templates:
+              - templates/workspaces/base/porter.yaml
+              - templates/workspaces/base/template_schema.json
+              - templates/workspaces/unrestricted/porter.yaml
+              - templates/workspaces/unrestricted/template_schema.json
+              - templates/workspaces/airlock-import-review/porter.yaml
+              - templates/workspaces/airlock-import-review/template_schema.json
+              - tests/requirements.txt
+              - tests/test_workspace_template_defaults.py
+              - .github/workflows/build_validation_develop.yml
+
       - name: Set up Node.js for GitHub scripts
         if: ${{ steps.filter.outputs.github_scripts == 'true' }}
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -115,7 +135,7 @@ jobs:
           npm ci
           npm test -- --runInBand
 
-      - name: Test CI environment cleanup
+      - name: Test deployment scripts
         if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
         run: python3 -m unittest discover -s devops/tests -v
 
@@ -183,7 +203,10 @@ jobs:
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_MARKDOWN: true
-          VALIDATE_PYTHON_FLAKE8: true
+          VALIDATE_PYTHON_RUFF: true
+          VALIDATE_PYTHON_RUFF_FORMAT: true
+          PYTHON_RUFF_CONFIG_FILE: ../../pyproject.toml
+          PYTHON_RUFF_FORMAT_CONFIG_FILE: ../../pyproject.toml
           VALIDATE_YAML: true
           VALIDATE_TERRAFORM_TFLINT: true
           VALIDATE_JAVA: true
@@ -197,11 +220,29 @@ jobs:
           TYPESCRIPT_ES_CONFIG_FILE: ../../ui/app/eslint.config.js
           TSX_CONFIG_FILE: ../../ui/app/eslint.config.js
 
+      - name: Set up Python for Bandit
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Bandit
+        run: pip install bandit==1.8.3
+
+      - name: Run Bandit security checks
+        run: bandit -ll -c pyproject.toml -r .
+
       - name: Docs validation
         if: ${{ steps.filter.outputs.docs == 'true' }}
         run: |
           pip install -r docs/requirements.txt
           mkdocs build --strict
+
+      - name: Workspace template defaults
+        if: ${{ steps.filter.outputs.workspace_templates == 'true' }}
+        run: |
+          pip install -r tests/requirements.txt
+          python tests/test_workspace_template_defaults.py
 
       - name: Core Tags
         if: ${{ steps.filter.outputs.terraform_core == 'true' }}

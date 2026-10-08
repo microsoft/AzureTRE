@@ -27,8 +27,10 @@ class FoundryDependencyTests(unittest.TestCase):
                     pending.extend(self.graph.get(node, ()))
             return False
 
-        self.assertTrue(reaches(dependent, dependency),
-                        f"No dependency path from {dependent} to {dependency}; operations can overlap")
+        self.assertTrue(
+            reaches(dependent, dependency),
+            f"No dependency path from {dependent} to {dependency}; operations can overlap",
+        )
         self.assertFalse(reaches(dependency, dependent), "The dependency graph contains a cycle")
 
     def test_catalogue_waits_for_account_readiness(self):

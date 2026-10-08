@@ -14,4 +14,3 @@ install-cli: ## install CLI (note, run `source <(_TRE_COMPLETE=bash_source tre)`
 
 build-package: ## build package
 	./scripts/build.sh
-

@@ -40,7 +40,7 @@ class ConnectionServiceTest {
             ConnectionService.class)) {
             connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(null))
                 .thenCallRealMethod();
-            
+
             Map<String, Connection> result = ConnectionService.getConnections(null);
             // Should return empty map when user is null
             assertEquals(0, result.size());
@@ -56,8 +56,8 @@ class ConnectionServiceTest {
             connectionServiceMockedStatic.when(() -> ConnectionService.getConnections(
               (AzureTREAuthenticatedUser) authenticatedUser))
                 .thenThrow(new GuacamoleException("API connection failed"));
-            
-            assertThrows(GuacamoleException.class, () -> 
+
+            assertThrows(GuacamoleException.class, () ->
                 ConnectionService.getConnections((AzureTREAuthenticatedUser) authenticatedUser));
         }
     }

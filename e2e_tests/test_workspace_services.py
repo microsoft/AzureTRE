@@ -14,7 +14,7 @@ workspace_services = [
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
     strings.AZURESQL_SERVICE,
-    strings.OPENAI_SERVICE
+    strings.OPENAI_SERVICE,
 ]
 
 
@@ -38,11 +38,17 @@ async def test_create_guacamole_service_into_base_workspace(setup_test_workspace
             "install_storage_explorer": False,
             "install_git": False,
             "install_python_tools": False,
-            "install_r_tools": False
-        }
+            "install_r_tools": False,
+        },
     }
 
-    _, _ = await post_resource(user_resource_payload, f'/api{workspace_service_path}/{strings.API_USER_RESOURCES}', workspace_owner_token, verify, method="POST")
+    _, _ = await post_resource(
+        user_resource_payload,
+        f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}",
+        workspace_owner_token,
+        verify,
+        method="POST",
+    )
 
 
 @pytest.mark.extended_aad
@@ -54,13 +60,15 @@ async def test_create_guacamole_service_into_aad_workspace(setup_test_aad_worksp
 
     workspace_service_payload = {
         "templateName": strings.GUACAMOLE_SERVICE,
-        "properties": {
-            "display_name": "Workspace service test",
-            "description": "Workspace service for E2E test"
-        }
+        "properties": {"display_name": "Workspace service test", "description": "Workspace service for E2E test"},
     }
 
-    workspace_service_path, _ = await post_resource(workspace_service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, _ = await post_resource(
+        workspace_service_payload,
+        f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}",
+        workspace_owner_token,
+        verify,
+    )
 
     await ping_guacamole_workspace_service(workspace_service_path, workspace_owner_token, verify)
 
@@ -80,13 +88,12 @@ async def test_install_workspace_service(template_name, verify, setup_test_works
 
     service_payload = {
         "templateName": template_name,
-        "properties": {
-            "display_name": f"{template_name} test",
-            "description": "Workspace service for E2E test"
-        }
+        "properties": {"display_name": f"{template_name} test", "description": "Workspace service for E2E test"},
     }
 
-    workspace_service_path, _ = await post_resource(service_payload, f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}', workspace_owner_token, verify)
+    workspace_service_path, _ = await post_resource(
+        service_payload, f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}", workspace_owner_token, verify
+    )
 
     await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)
 
@@ -107,12 +114,12 @@ async def test_ai_foundry_model_service_lifecycle(verify, setup_test_foundry_wor
                 "openai_model": "gpt-5.1 | 2025-11-13",
                 "is_exposed_externally": False,
                 "local_auth_enabled": False,
-                "openai_model_capacity": 1
-            }
+                "openai_model_capacity": 1,
+            },
         },
-        f'/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}',
+        f"/api{workspace_path}/{strings.API_WORKSPACE_SERVICES}",
         workspace_owner_token,
-        verify
+        verify,
     )
     try:
         service = await get_resource(f"/api{workspace_service_path}", workspace_owner_token, verify)
@@ -130,7 +137,11 @@ async def test_ai_foundry_model_service_lifecycle(verify, setup_test_foundry_wor
         workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
         await post_resource(
             {"properties": {"openai_model_capacity": 1}},
-            f"/api{workspace_service_path}", workspace_owner_token, verify, method="PATCH")
+            f"/api{workspace_service_path}",
+            workspace_owner_token,
+            verify,
+            method="PATCH",
+        )
         updated = await get_resource(f"/api{workspace_service_path}", workspace_owner_token, verify)
         updated_properties = updated["workspaceService"]["properties"]
         assert updated_properties["ai_foundry_id"] == properties["ai_foundry_id"]

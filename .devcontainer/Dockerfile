@@ -28,6 +28,12 @@ ARG TERRAFORM_VERSION="1.14.3"
 COPY .devcontainer/scripts/terraform.sh /tmp/
 RUN bash /tmp/terraform.sh "${TERRAFORM_VERSION}" /usr/bin
 
+# Install tflint
+# Keep in sync with the Super-Linter image used by CI and make lint.
+ARG TFLINT_VERSION="0.63.1"
+COPY .devcontainer/scripts/tflint.sh /tmp/
+RUN bash /tmp/tflint.sh "${TFLINT_VERSION}" /usr/bin
+
 ARG DOCKER_GROUP_ID
 COPY .devcontainer/scripts/docker-client.sh /tmp/
 RUN /tmp/docker-client.sh $USERNAME

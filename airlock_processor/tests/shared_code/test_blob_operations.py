@@ -3,7 +3,15 @@ import json
 import pytest
 from mock import MagicMock, patch
 
-from shared_code.blob_operations import delete_failed_submission_copy, get_blob_info_from_topic_and_subject, get_blob_info_from_blob_url, copy_data, get_blob_url, get_storage_endpoint_suffix, is_submission_sealed
+from shared_code.blob_operations import (
+    delete_failed_submission_copy,
+    get_blob_info_from_topic_and_subject,
+    get_blob_info_from_blob_url,
+    copy_data,
+    get_blob_url,
+    get_storage_endpoint_suffix,
+    is_submission_sealed,
+)
 from exceptions import TooManyFilesInRequestException, NoFilesInRequestException
 
 
@@ -11,13 +19,14 @@ def get_test_blob():
     return namedtuple("Blob", "name")
 
 
-class TestBlobOperations():
-
+class TestBlobOperations:
     def test_get_blob_info_from_topic_and_subject(self):
         topic = "/subscriptions/SUB_ID/resourceGroups/RG_NAME/providers/Microsoft.Storage/storageAccounts/ST_ACC_NAME"
         subject = "/blobServices/default/containers/c144728c-3c69-4a58-afec-48c2ec8bfd45/blobs/BLOB"
 
-        storage_account_name, container_name, blob_name = get_blob_info_from_topic_and_subject(topic=topic, subject=subject)
+        storage_account_name, container_name, blob_name = get_blob_info_from_topic_and_subject(
+            topic=topic, subject=subject
+        )
 
         assert storage_account_name == "ST_ACC_NAME"
         assert container_name == "c144728c-3c69-4a58-afec-48c2ec8bfd45"
@@ -34,7 +43,9 @@ class TestBlobOperations():
 
     @patch("shared_code.blob_operations.BlobServiceClient")
     def test_copy_data_fails_if_too_many_blobs_to_copy(self, mock_blob_service_client):
-        mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a"), get_test_blob()("b")])
+        mock_blob_service_client().get_container_client().list_blobs = MagicMock(
+            return_value=[get_test_blob()("a"), get_test_blob()("b")]
+        )
 
         with pytest.raises(TooManyFilesInRequestException):
             copy_data("source_acc", "dest_acc", "req_id")
@@ -54,7 +65,10 @@ class TestBlobOperations():
         # Check for two scenarios: when there's no copied_from history in metadata, and when there is some
         for source_metadata, dest_metadata in [
             ({"a": "b"}, {"a": "b", "copied_from": json.dumps([source_url])}),
-            ({"a": "b", "copied_from": json.dumps(["old_url"])}, {"a": "b", "copied_from": json.dumps(["old_url", source_url])})
+            (
+                {"a": "b", "copied_from": json.dumps(["old_url"])},
+                {"a": "b", "copied_from": json.dumps(["old_url", source_url])},
+            ),
         ]:
             source_blob_client_mock = MagicMock()
             source_blob_client_mock.url = source_url
@@ -62,16 +76,22 @@ class TestBlobOperations():
 
             dest_blob_client_mock = MagicMock()
             dest_blob_client_mock.bla = "bla"
-            dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "success"})
+            dest_blob_client_mock.start_copy_from_url = MagicMock(
+                return_value={"copy_id": "123", "copy_status": "success"}
+            )
 
             # Set source blob mock
-            mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+            mock_blob_service_client().get_container_client().get_blob_client = MagicMock(
+                return_value=source_blob_client_mock
+            )
             # Set dest blob mock
             mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
 
             # Any additional mocks for the copy_data method to work
             mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
-            mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
+            mock_blob_service_client().get_container_client().list_blobs = MagicMock(
+                return_value=[get_test_blob()("a")]
+            )
 
             copy_data("source_acc", "dest_acc", "req_id")
 
@@ -144,11 +164,13 @@ class TestBlobOperations():
 
         dest_blob_client_mock = MagicMock()
         dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "pending"})
-        dest_blob_client_mock.get_blob_properties = MagicMock(side_effect=[
-            MagicMock(copy=MagicMock(status="pending")),
-            MagicMock(copy=MagicMock(status="success"))])
+        dest_blob_client_mock.get_blob_properties = MagicMock(
+            side_effect=[MagicMock(copy=MagicMock(status="pending")), MagicMock(copy=MagicMock(status="success"))]
+        )
 
-        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(
+            return_value=source_blob_client_mock
+        )
         mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
         mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
         mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
@@ -169,7 +191,9 @@ class TestBlobOperations():
         dest_blob_client_mock = MagicMock()
         dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "failed"})
 
-        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(
+            return_value=source_blob_client_mock
+        )
         mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
         mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
         mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])
@@ -191,7 +215,9 @@ class TestBlobOperations():
         dest_blob_client_mock.start_copy_from_url = MagicMock(return_value={"copy_id": "123", "copy_status": "pending"})
         dest_blob_client_mock.get_blob_properties = MagicMock(return_value=MagicMock(copy=MagicMock(status="pending")))
 
-        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(return_value=source_blob_client_mock)
+        mock_blob_service_client().get_container_client().get_blob_client = MagicMock(
+            return_value=source_blob_client_mock
+        )
         mock_blob_service_client().get_blob_client = MagicMock(return_value=dest_blob_client_mock)
         mock_blob_service_client().get_user_delegation_key = MagicMock(return_value="key")
         mock_blob_service_client().get_container_client().list_blobs = MagicMock(return_value=[get_test_blob()("a")])

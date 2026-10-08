@@ -242,7 +242,10 @@ lint: ## 🧹 Lint all files
 		-e LOG_LEVEL=INFO \
 		-e DEFAULT_BRANCH=main \
 		-e VALIDATE_MARKDOWN=true \
-		-e VALIDATE_PYTHON_FLAKE8=true \
+		-e VALIDATE_PYTHON_RUFF=true \
+		-e VALIDATE_PYTHON_RUFF_FORMAT=true \
+		-e PYTHON_RUFF_CONFIG_FILE=../../pyproject.toml \
+		-e PYTHON_RUFF_FORMAT_CONFIG_FILE=../../pyproject.toml \
 		-e VALIDATE_YAML=true \
 		-e VALIDATE_TERRAFORM_TFLINT=true \
 		-e VALIDATE_JAVA=true \
@@ -258,7 +261,7 @@ lint: ## 🧹 Lint all files
 		-e TYPESCRIPT_ES_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-e TSX_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		ghcr.io/super-linter/super-linter:slim-v8.3.2
+		ghcr.io/super-linter/super-linter:slim-v8.7.0
 
 # Description: Lint documentation files
 # # This will validate all files, not only the changed ones as the CI version does.
