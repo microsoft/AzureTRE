@@ -21,21 +21,33 @@ def verify_account():
     subscription = os.environ.get("AZURE_SUBSCRIPTION_ID", "")
     require(re.fullmatch(r"[A-Za-z0-9-]+", subscription), "The cleanup subscription is unavailable.")
     account = json.loads(subprocess.check_output(["az", "account", "show", "-o", "json"], text=True, timeout=90))
-    require(isinstance(account, dict) and isinstance(account.get("id"), str) and account["id"].lower() == subscription.lower(), "The cleanup subscription differs.")
+    require(
+        isinstance(account, dict)
+        and isinstance(account.get("id"), str)
+        and account["id"].lower() == subscription.lower(),
+        "The cleanup subscription differs.",
+    )
     return subscription
 
 
 def inventory():
     subscription = verify_account()
-    groups = json.loads(subprocess.check_output(["az", "group", "list", "--subscription", subscription, "-o", "json"], text=True, timeout=90))
+    groups = json.loads(
+        subprocess.check_output(
+            ["az", "group", "list", "--subscription", subscription, "-o", "json"], text=True, timeout=90
+        )
+    )
     require(isinstance(groups, list), "The cleanup resource group inventory is incomplete.")
     result = {}
     for group in groups:
         require(isinstance(group, dict) and isinstance(group.get("name"), str), "Invalid cleanup resource group.")
         name = group["name"].lower()
-        require(name not in result and isinstance(group.get("id"), str)
-                and group["id"].lower() == f"/subscriptions/{subscription}/resourcegroups/{name}".lower(),
-                "Inconsistent cleanup resource group identity.")
+        require(
+            name not in result
+            and isinstance(group.get("id"), str)
+            and group["id"].lower() == f"/subscriptions/{subscription}/resourcegroups/{name}".lower(),
+            "Inconsistent cleanup resource group identity.",
+        )
         require(group.get("tags") is None or isinstance(group.get("tags"), dict), "Invalid cleanup ownership tags.")
         result[name] = (group.get("tags") or {}).get("ci_git_ref")
     return result
@@ -72,21 +84,37 @@ def verify_lock(ctx):
     run = github(ctx, f"/actions/runs/{ctx['run_id']}")
     # GitHub reports the whole run as pending while another matrix job waits for
     # its reference group. The job and concurrency owner checks prove this lock.
-    require(isinstance(run, dict) and run.get("id") == ctx["run_id"] and run.get("run_attempt") == ctx["attempt"]
-            and run.get("status") in ACTIVE_RUN_STATUSES and run.get("path") == ".github/workflows/clean_validation_envs.yml"
-            and isinstance(run.get("repository"), dict) and run["repository"].get("full_name") == ctx["repository"],
-            "The cleanup run or attempt does not match.")
+    require(
+        isinstance(run, dict)
+        and run.get("id") == ctx["run_id"]
+        and run.get("run_attempt") == ctx["attempt"]
+        and run.get("status") in ACTIVE_RUN_STATUSES
+        and run.get("path") == ".github/workflows/clean_validation_envs.yml"
+        and isinstance(run.get("repository"), dict)
+        and run["repository"].get("full_name") == ctx["repository"],
+        "The cleanup run or attempt does not match.",
+    )
     expected_name = os.environ.get("CI_CLEANUP_JOB_NAME", "Clean " + ctx["ref"])
     jobs, total = {}, None
     for page in range(1, 12):
         data = github(ctx, f"/actions/runs/{ctx['run_id']}/attempts/{ctx['attempt']}/jobs?per_page=100&page={page}")
-        require(isinstance(data, dict) and type(data.get("total_count")) is int and isinstance(data.get("jobs"), list)
-                and 0 <= data["total_count"] <= 1000, "Incomplete cleanup jobs response.")
+        require(
+            isinstance(data, dict)
+            and type(data.get("total_count")) is int
+            and isinstance(data.get("jobs"), list)
+            and 0 <= data["total_count"] <= 1000,
+            "Incomplete cleanup jobs response.",
+        )
         total = data["total_count"] if total is None else total
         require(total == data["total_count"], "Cleanup jobs changed during verification.")
         for job in data["jobs"]:
-            require(isinstance(job, dict) and type(job.get("id")) is int and job["id"] not in jobs
-                    and isinstance(job.get("name"), str), "Invalid cleanup job identity.")
+            require(
+                isinstance(job, dict)
+                and type(job.get("id")) is int
+                and job["id"] not in jobs
+                and isinstance(job.get("name"), str),
+                "Invalid cleanup job identity.",
+            )
             jobs[job["id"]] = job
         require(len(jobs) <= total, "Inconsistent cleanup job count.")
         if len(jobs) == total:
@@ -100,10 +128,16 @@ def verify_lock(ctx):
 
 
 def verify_target(groups, ref, group):
-    require(ref != "refs/heads/main" and re.fullmatch(r"rg-tre[a-z0-9-]+(?:-mgmt)?", group), "Invalid isolated cleanup target.")
+    require(
+        ref != "refs/heads/main" and re.fullmatch(r"rg-tre[a-z0-9-]+(?:-mgmt)?", group),
+        "Invalid isolated cleanup target.",
+    )
     core = group.removesuffix("-mgmt")
     siblings = [name for name in (core, core + "-mgmt") if name in groups]
-    require(siblings and all(groups[name] == ref for name in siblings), "Core or management ownership is missing or inconsistent.")
+    require(
+        siblings and all(groups[name] == ref for name in siblings),
+        "Core or management ownership is missing or inconsistent.",
+    )
 
 
 def main():
