@@ -24,6 +24,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Verify CI backend concurrency ownership before recovering empty bootstrap leases, and serialise scheduled cleanup with deployment and explicit destruction. Preserve queued deployments when cleanup joins the same reference group. (`devops` 0.6.11, `build-scripts` 1.0.2) ([#5115](https://github.com/microsoft/AzureTRE/issues/5115))
 * Pass Resource Processor parameters through protected files referenced by Porter documents to avoid command-line size limits and raw secrets in stored parameter sets. Suppress Porter parameter diffs that can expose secrets.
   Pass large firewall rules through files to Terraform. Block custom actions and uninstall when legacy overrides could replace current values. Remove temporary files on construction and execution failures.
   Defer cancellation of active Porter actions until they finish, preventing orphaned Docker deployments. Stop other cancelled subprocesses before removing their inputs.

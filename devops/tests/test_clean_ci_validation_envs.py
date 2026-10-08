@@ -11,7 +11,7 @@ import unittest
 
 CLEANUP_SCRIPT = Path(__file__).resolve().parents[1] / "scripts/clean_ci_validation_envs.sh"
 
-MOCK_COMMAND = r'''
+MOCK_COMMAND = r"""
 import json
 import os
 from pathlib import Path
@@ -26,7 +26,11 @@ args = sys.argv[1:]
 with (root / "calls.jsonl").open("a") as log:
     log.write(json.dumps([command, *args]) + "\n")
 
-if command == "gh":
+if command == "python3":
+    if config.get("guard_error") or not os.environ.get("CI_CLEANUP_REF"):
+        sys.exit("CI cleanup refused: exclusive ownership unavailable")
+    sys.exit(0)
+elif command == "gh":
     if args[0] == "api":
         if any("/pulls?" in arg for arg in args):
             if config.get("pr_api_error"):
@@ -82,7 +86,8 @@ elif command == "az":
                 if name.startswith(prefix):
                     print(name)
         else:
-            print("rg-main-ws-old")
+            for name in config.get("main_workspaces", ["rg-main-ws-old"]):
+                print(name)
     elif config.get("real_destroy") and args[:2] == ["group", "show"]:
         if config.get("group_show_error"):
             sys.exit(1)
@@ -98,7 +103,10 @@ elif command == "az":
             print(0)
     elif config.get("real_destroy") and (args[:2] == ["keyvault", "show"] or args[:4] == ["monitor", "log-analytics", "workspace", "show"]):
         sys.exit(3)
-    elif args[:2] not in (["config", "set"], ["group", "delete"]):
+    elif args[:2] == ["group", "delete"]:
+        if "--name" in args and args[args.index("--name") + 1] in config.get("delete_errors", []):
+            sys.exit("Deletion failed")
+    elif args[:2] != ["config", "set"]:
         sys.exit("Unexpected az command")
 elif command == "git":
     if args[0] == "for-each-ref":
@@ -113,7 +121,7 @@ elif command == "date":
     print(2000000000 - config["age_hours"] * 3600 if "-d" in args else 2000000000)
 elif command not in ("control_tre.sh", "destroy_env_no_terraform.sh"):
     sys.exit("Unexpected command")
-'''
+"""
 
 
 class CleanupTests(unittest.TestCase):
@@ -131,7 +139,7 @@ class CleanupTests(unittest.TestCase):
         mock = self.root / "mock.py"
         mock.write_text(f"#!{sys.executable}\n" + MOCK_COMMAND)
         mock.chmod(0o755)
-        for command in ("gh", "az", "git", "date"):
+        for command in ("gh", "az", "git", "date", "python3"):
             (bin_dir / command).symlink_to(mock)
         scripts = self.root / "devops/scripts"
         scripts.mkdir(parents=True)
@@ -140,11 +148,13 @@ class CleanupTests(unittest.TestCase):
         self.config = {
             "age_hours": 6,
             "groups": ["rg-tretest\trefs/pull/5085/merge"],
-            "open_prs": [{
-                "number": 5085,
-                "headRefName": "release/v0.29.1",
-                "updatedAt": "2026-09-18T00:00:00Z",
-            }],
+            "open_prs": [
+                {
+                    "number": 5085,
+                    "headRefName": "release/v0.29.1",
+                    "updatedAt": "2026-09-18T00:00:00Z",
+                }
+            ],
         }
         # Only mocks and jq/cut are on PATH. No credentials reach the subprocess.
         self.env = {
@@ -153,6 +163,7 @@ class CleanupTests(unittest.TestCase):
             "MOCK_ROOT": str(self.root),
             "GITHUB_REPOSITORY": "example/tre",
             "GITHUB_RUN_ID": "123",
+            "CI_CLEANUP_REF": "refs/pull/5085/merge",
             "GITHUB_WORKFLOW": "Clean Validation Environments",
             "MAIN_TRE_ID": "main",
             "BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP": "4",
@@ -161,12 +172,20 @@ class CleanupTests(unittest.TestCase):
         self.calls = []
 
     def run_cleanup(self):
+        if self.config.get("groups") and "selected_ref" not in self.config and "CI_CLEANUP_REF" in self.env:
+            refs = [row.split("\t")[1] for row in self.config["groups"] if "\trefs/" in row]
+            if refs:
+                self.env["CI_CLEANUP_REF"] = refs[0]
         (self.root / "config.json").write_text(json.dumps(self.config))
         (self.root / "calls.jsonl").write_text("")
         (self.root / "status_counts.json").write_text("{}")
         result = subprocess.run(
-            ["/bin/bash", str(CLEANUP_SCRIPT)], cwd=self.root, env=self.env,
-            capture_output=True, text=True, timeout=30,
+            ["/bin/bash", str(CLEANUP_SCRIPT)],
+            cwd=self.root,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         self.calls = [json.loads(line) for line in (self.root / "calls.jsonl").read_text().splitlines()]
         return result
@@ -185,7 +204,8 @@ class CleanupTests(unittest.TestCase):
 
     def deleted_environment_groups(self):
         return [
-            call[call.index("--resource-group") + 1] for call in self.calls
+            call[call.index("--resource-group") + 1]
+            for call in self.calls
             if call[:3] == ["az", "group", "delete"] and "--resource-group" in call
         ]
 
@@ -201,134 +221,104 @@ class CleanupTests(unittest.TestCase):
         }
 
     def assert_no_azure_calls(self):
-        self.assertFalse(any(call[0] in (
-            "az", "control_tre.sh", "destroy_env_no_terraform.sh",
-        ) for call in self.calls), self.calls)
-
-    def test_comment_triggered_pr_run_protects_stale_environment(self):
-        for status in ("requested", "waiting", "pending", "queued", "in_progress"):
-            with self.subTest(status=status):
-                self.config["pages"] = {status: [{"workflow_runs": [self.workflow_run()]}]}
-                result = self.run_cleanup()
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assert_no_azure_calls()
-                self.assertIn("Skipping environment cleanup", result.stdout)
-
-    def test_active_run_on_another_branch_also_blocks_cleanup(self):
-        self.config["pages"] = {"in_progress": [{"workflow_runs": [self.workflow_run(branch="feature/test")]}]}
-        result = self.run_cleanup()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assert_no_azure_calls()
-
-    def test_active_run_on_later_page_blocks_cleanup(self):
-        self.config["pages"] = {"in_progress": [
-            {"workflow_runs": [self.workflow_run(run_id=123)]},
-            {"workflow_runs": [self.workflow_run()]},
-        ]}
-        result = self.run_cleanup()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("/runs/456", result.stdout)
-        self.assert_no_azure_calls()
-
-    def test_only_current_run_is_excluded(self):
-        other_cleanup = self.workflow_run()
-        other_cleanup["name"] = self.env["GITHUB_WORKFLOW"]
-        self.config["pages"] = {"in_progress": [{"workflow_runs": [other_cleanup]}]}
-        result = self.run_cleanup()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assert_no_azure_calls()
-
-    def test_github_errors_prevent_all_cleanup(self):
-        for status in ("requested", "waiting", "pending", "queued", "in_progress"):
-            with self.subTest(status=status):
-                self.config["api_error"] = status
-                result = self.run_cleanup()
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Could not check active workflow runs", result.stderr)
-                self.assert_no_azure_calls()
-
-    def test_invalid_or_empty_github_response_prevents_cleanup(self):
-        for response in ("not json", "{}", ""):
-            with self.subTest(response=response):
-                self.config.update(bad_response_status="in_progress", bad_response=response)
-                result = self.run_cleanup()
-                self.assertNotEqual(result.returncode, 0)
-                self.assert_no_azure_calls()
-
-    def test_malformed_workflow_pages_prevent_cleanup(self):
-        malformed_pages = (
-            {"workflow_runs": {}},
-            {"workflow_runs": {"unexpected": self.workflow_run(run_id=123)}},
-            {"workflow_runs": None},
-            {"workflow_runs": False},
-            {"workflow_runs": ""},
-            {"workflow_runs": 0},
-            {}, [], None, True, 42, "invalid page",
+        self.assertFalse(
+            any(
+                call[0]
+                in (
+                    "az",
+                    "control_tre.sh",
+                    "destroy_env_no_terraform.sh",
+                )
+                for call in self.calls
+            ),
+            self.calls,
         )
-        for page in malformed_pages:
-            for page_index in (0, 1):
-                with self.subTest(page=page, page_index=page_index):
-                    pages = [{"workflow_runs": []}] * page_index + [page]
-                    self.config["pages"] = {"requested": pages}
-                    result = self.run_cleanup()
-                    self.assertNotEqual(result.returncode, 0)
-                    self.assertIn("Could not check active workflow runs", result.stderr)
-                    self.assert_no_azure_calls()
 
-    def test_valid_empty_workflow_pages_allow_cleanup(self):
-        self.config["pages"] = {"requested": [
-            {"workflow_runs": []},
-            {"workflow_runs": []},
-        ]}
-        result = self.run_cleanup()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["control_tre.sh", "stop"], self.calls)
-
-    def test_malformed_recheck_prevents_main_workspace_cleanup(self):
-        self.config["later_pages"] = {"requested": [{"workflow_runs": {}}]}
+    def test_missing_or_unverified_concurrency_refuses_all_cleanup(self):
+        self.config["guard_error"] = True
         result = self.run_cleanup()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Could not check active workflow runs", result.stderr)
-        self.assertIn(["control_tre.sh", "stop"], self.calls)
-        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls), self.calls)
-
-    def test_missing_run_id_prevents_cleanup(self):
-        del self.env["GITHUB_RUN_ID"]
+        self.assert_no_azure_calls()
+        self.config.pop("guard_error")
+        self.env.pop("CI_CLEANUP_REF")
         result = self.run_cleanup()
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_azure_calls()
 
-    def test_current_cleanup_run_allows_existing_stop_and_workspace_cleanup(self):
-        self.config["pages"] = {"in_progress": [{"workflow_runs": [self.workflow_run(run_id=123)]}]}
+    def test_scoped_cleanup_ignores_unrelated_workflows_and_other_targets(self):
+        self.config.update(
+            selected_ref=True,
+            groups=["rg-tretest\trefs/pull/5085/merge", "rg-treother\trefs/pull/999/merge"],
+            open_prs=[],
+            pages={"in_progress": [{"workflow_runs": [self.workflow_run()]}]},
+        )
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["control_tre.sh", "stop"], self.calls)
-        self.assertIn(["az", "group", "delete", "--yes", "--no-wait", "--name", "rg-main-ws-old"], self.calls)
+        self.assertEqual(self.environment_actions(), [["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"]])
+        self.assertFalse(any(call[0] == "gh" and any("actions/runs?" in item for item in call) for call in self.calls))
 
-    def test_new_run_blocks_main_workspace_cleanup(self):
-        self.config["later_pages"] = {"in_progress": [{"workflow_runs": [self.workflow_run()]}]}
+    def test_main_workspace_cleanup_is_separate_and_synchronous(self):
+        self.config["selected_ref"] = True
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["control_tre.sh", "stop"], self.calls)
-        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls), self.calls)
+        self.assertEqual(self.environment_actions(), [])
+        self.assertIn(["az", "group", "delete", "--yes", "--name", "rg-main-ws-old"], self.calls)
+
+    def test_main_workspace_cleanup_waits_for_every_parallel_deletion(self):
+        self.config.update(
+            selected_ref=True,
+            main_workspaces=["rg-main-ws-a", "rg-main-ws-b", "rg-main-ws-c"],
+            delete_errors=["rg-main-ws-a"],
+        )
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("deletions failed", result.stderr)
+        # A failed deletion must not stop the job before the other deletions finish.
+        deleted = sorted(call[-1] for call in self.calls if call[:3] == ["az", "group", "delete"])
+        self.assertEqual(deleted, ["rg-main-ws-a", "rg-main-ws-b", "rg-main-ws-c"])
+        self.config["delete_errors"] = []
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_main_workspace_cleanup_without_workspaces_succeeds(self):
+        self.config.update(selected_ref=True, main_workspaces=[])
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
+
+    def test_main_workspace_cleanup_skips_without_tre_id_and_rejects_invalid_id(self):
+        self.config["selected_ref"] = True
+        self.env["CI_CLEANUP_REF"] = "refs/heads/main"
+        self.env["MAIN_TRE_ID"] = ""
+        result = self.run_cleanup()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Skipping main workspace cleanup", result.stdout)
+        self.assertFalse(any(call[0] == "az" for call in self.calls), self.calls)
+        self.env["MAIN_TRE_ID"] = "main'; x"
+        result = self.run_cleanup()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(call[0] == "az" for call in self.calls), self.calls)
 
     def test_idle_cleanup_still_destroys_expired_environments(self):
         self.config["age_hours"] = 49
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"], self.calls)
+        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"], self.calls)
 
     def test_idle_cleanup_still_destroys_closed_pr_environments(self):
         self.config["open_prs"] = []
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"], self.calls)
+        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"], self.calls)
 
     def test_idle_cleanup_still_destroys_removed_branch_environments(self):
         self.config.update(groups=["rg-tretest\trefs/heads/deleted"], missing_branch=True)
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"], self.calls)
+        self.assertIn(["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"], self.calls)
 
     def environment_actions(self):
         return [call for call in self.calls if call[0] in ("control_tre.sh", "destroy_env_no_terraform.sh")]
@@ -337,13 +327,22 @@ class CleanupTests(unittest.TestCase):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[])
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.environment_actions(), [
-            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
-        ])
+        self.assertEqual(
+            self.environment_actions(),
+            [
+                ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"],
+            ],
+        )
 
     def test_real_destroy_keeps_similarly_named_groups(self):
         self.use_real_destroy_helper()
-        neighbours = ["rg-tretestother-mgmt", "rg-tretest-mgmt-copy", "rg-tretest-backup", "rg-tretest-wsother-abcd", "rg-tretest-svcother-abcd"]
+        neighbours = [
+            "rg-tretestother-mgmt",
+            "rg-tretest-mgmt-copy",
+            "rg-tretest-backup",
+            "rg-tretest-wsother-abcd",
+            "rg-tretest-svcother-abcd",
+        ]
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge", *neighbours], open_prs=[])
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -354,19 +353,30 @@ class CleanupTests(unittest.TestCase):
 
     def test_real_destroy_deletes_only_the_environment_groups_once(self):
         self.use_real_destroy_helper()
-        groups = ["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt\trefs/pull/5085/merge",
-                  "rg-tretest-ws-abcd", "rg-tretest-svc-abcd", "rg-tretestother", "rg-tretestother-ws-abcd", "rg-tretestother-svc-abcd"]
+        groups = [
+            "rg-tretest\trefs/pull/5085/merge",
+            "rg-tretest-mgmt\trefs/pull/5085/merge",
+            "rg-tretest-ws-abcd",
+            "rg-tretest-svc-abcd",
+            "rg-tretestother",
+            "rg-tretestother-ws-abcd",
+            "rg-tretestother-svc-abcd",
+        ]
         for rows in (groups, list(reversed(groups))):
             with self.subTest(rows=rows):
                 self.config.update(groups=rows, open_prs=[])
                 result = self.run_cleanup()
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-ws-abcd", "rg-tretest-svc-abcd", "rg-tretest-mgmt", "rg-tretest"])
+                self.assertEqual(
+                    self.deleted_environment_groups(),
+                    ["rg-tretest-ws-abcd", "rg-tretest-svc-abcd", "rg-tretest-mgmt", "rg-tretest"],
+                )
 
     def test_real_destroy_skips_when_only_neighbour_remains(self):
         self.use_real_destroy_helper()
-        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"],
-                           destroy_groups=["rg-tretestother-mgmt"], open_prs=[])
+        self.config.update(
+            groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], destroy_groups=["rg-tretestother-mgmt"], open_prs=[]
+        )
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.deleted_environment_groups(), [])
@@ -381,8 +391,9 @@ class CleanupTests(unittest.TestCase):
 
     def test_real_destroy_inventory_requires_core_preparation_despite_lookup_error(self):
         self.use_real_destroy_helper()
-        self.config.update(groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"],
-                           group_show_error=True, open_prs=[])
+        self.config.update(
+            groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"], group_show_error=True, open_prs=[]
+        )
         core_inspection = ["az", "group", "lock", "list", "-g", "rg-tretest", "--query", "[].id", "-o", "tsv"]
         for inspection_error in (False, True):
             with self.subTest(inspection_error=inspection_error):
@@ -395,13 +406,19 @@ class CleanupTests(unittest.TestCase):
                 else:
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-mgmt", "rg-tretest"])
-                    first_delete = next(index for index, call in enumerate(self.calls) if call[:3] == ["az", "group", "delete"])
+                    first_delete = next(
+                        index for index, call in enumerate(self.calls) if call[:3] == ["az", "group", "delete"]
+                    )
                     self.assertLess(self.calls.index(core_inspection), first_delete)
 
     def test_real_destroy_uses_latest_inventory_when_core_disappears(self):
         self.use_real_destroy_helper()
-        self.config.update(groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"],
-                           destroy_groups=["rg-tretest-mgmt"], core_lock_list_error=True, open_prs=[])
+        self.config.update(
+            groups=["rg-tretest\trefs/pull/5085/merge", "rg-tretest-mgmt"],
+            destroy_groups=["rg-tretest-mgmt"],
+            core_lock_list_error=True,
+            open_prs=[],
+        )
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.deleted_environment_groups(), ["rg-tretest-mgmt"])
@@ -411,17 +428,23 @@ class CleanupTests(unittest.TestCase):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=49)
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.environment_actions(), [
-            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
-        ])
+        self.assertEqual(
+            self.environment_actions(),
+            [
+                ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"],
+            ],
+        )
 
     def test_management_only_missing_branch_is_destroyed(self):
         self.config.update(groups=["rg-tretest-mgmt\trefs/heads/deleted"], missing_branch=True)
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.environment_actions(), [
-            ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
-        ])
+        self.assertEqual(
+            self.environment_actions(),
+            [
+                ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"],
+            ],
+        )
 
     def test_management_only_branch_obeys_destroy_threshold(self):
         self.config["groups"] = ["rg-tretest-mgmt\trefs/heads/feature/test"]
@@ -450,9 +473,12 @@ class CleanupTests(unittest.TestCase):
                 self.config["groups"] = rows
                 result = self.run_cleanup()
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(self.environment_actions(), [
-                    ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest", "--no-wait"],
-                ])
+                self.assertEqual(
+                    self.environment_actions(),
+                    [
+                        ["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"],
+                    ],
+                )
 
     def test_paired_environment_only_stops_core(self):
         self.config["groups"] = ["rg-tretest-mgmt\trefs/pull/5085/merge", "rg-tretest\trefs/pull/5085/merge"]
@@ -478,21 +504,26 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [])
 
-    def test_active_run_protects_management_only_environment(self):
-        self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], open_prs=[])
-        self.config["pages"] = {"in_progress": [{"workflow_runs": [self.workflow_run()]}]}
-        result = self.run_cleanup()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assert_no_azure_calls()
-
     def test_open_pr_on_later_page_is_not_mistaken_for_closed(self):
         self.config.update(groups=["rg-tretest-mgmt\trefs/pull/5085/merge"], age_hours=1, open_prs=[])
-        first_page = [{
-            "number": number, "head": {"ref": "feature/other"}, "updated_at": "2026-09-18T00:00:00Z",
-        } for number in range(1, 101)]
-        self.config["pr_pages"] = [first_page, [{
-            "number": 5085, "head": {"ref": "feature/test"}, "updated_at": "2026-09-18T00:00:00Z",
-        }]]
+        first_page = [
+            {
+                "number": number,
+                "head": {"ref": "feature/other"},
+                "updated_at": "2026-09-18T00:00:00Z",
+            }
+            for number in range(1, 101)
+        ]
+        self.config["pr_pages"] = [
+            first_page,
+            [
+                {
+                    "number": 5085,
+                    "head": {"ref": "feature/test"},
+                    "updated_at": "2026-09-18T00:00:00Z",
+                }
+            ],
+        ]
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [])
@@ -521,7 +552,7 @@ class CleanupTests(unittest.TestCase):
         self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
 
     def test_invalid_group_response_prevents_deletion(self):
-        for response in ("", " ", "[] []", "null", "{}", '[{}]', '[{"name": "rg-tretest-mgmt", "ci_git_ref": 42}]'):
+        for response in ("", " ", "[] []", "null", "{}", "[{}]", '[{"name": "rg-tretest-mgmt", "ci_git_ref": 42}]'):
             with self.subTest(response=response):
                 self.config["bad_group_response"] = response
                 result = self.run_cleanup()
@@ -529,12 +560,12 @@ class CleanupTests(unittest.TestCase):
                 self.assertEqual(self.environment_actions(), [])
                 self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
 
-    def test_no_tagged_groups_preserves_main_workspace_cleanup(self):
+    def test_no_tagged_groups_does_not_clean_another_reference(self):
         self.config["groups"] = []
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [])
-        self.assertIn(["az", "group", "delete", "--yes", "--no-wait", "--name", "rg-main-ws-old"], self.calls)
+        self.assertFalse(any(call[:3] == ["az", "group", "delete"] for call in self.calls))
 
 
 if __name__ == "__main__":
