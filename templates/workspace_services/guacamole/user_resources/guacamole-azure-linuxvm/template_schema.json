@@ -248,5 +248,31 @@
     "admin_username": {
       "classNames": "tre-hidden"
     }
+  },
+  "pipeline": {
+    "install": [
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_storage_name",
+            "type": "string",
+            "value": "{{ resource.parent.parent.properties.storage_account_name }}"
+          }
+        ]
+      }
+    ],
+    "upgrade": [
+      {
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_storage_name",
+            "type": "string",
+            "value": "{{ resource.parent.parent.properties.storage_account_name }}"
+          }
+        ]
+      }
+    ]
   }
 }

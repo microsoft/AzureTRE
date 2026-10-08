@@ -1,4 +1,6 @@
 import uuid
+import secrets
+import string
 from typing import List, Tuple
 import asyncio
 from azure.mgmt.storage.aio import StorageManagementClient
@@ -114,9 +116,13 @@ class WorkspaceRepository(ResourceRepository):
             raise EntityDoesNotExist
         return TypeAdapter(Workspace).validate_python(workspaces[0])
 
-    # Remove this method once not using last 4 digits for naming - https://github.com/microsoft/AzureTRE/issues/3666
-    async def is_workspace_storage_account_available(self, credential, workspace_id: str) -> bool:
-        name = f"stgws{workspace_id[-4:]}"
+    @staticmethod
+    def generate_unique_identifier_suffix() -> str:
+        alphabet = string.ascii_lowercase + string.digits
+        return "".join(secrets.choice(alphabet) for _ in range(constants.UNIQUE_IDENTIFIER_SUFFIX_LENGTH))
+
+    async def is_workspace_storage_account_available(self, credential, name_suffix: str) -> bool:
+        name = constants.STORAGE_ACCOUNT_NAME_WORKSPACE.format(name_suffix)
         storage_client = StorageManagementClient(
             credential,
             config.SUBSCRIPTION_ID,
@@ -135,25 +141,6 @@ class WorkspaceRepository(ResourceRepository):
     async def create_workspace_item(
         self, workspace_input: WorkspaceInCreate, auth_info: dict, workspace_owner_object_id: str, user_roles: List[str]
     ) -> Tuple[Workspace, ResourceTemplate]:
-
-        full_workspace_id = str(uuid.uuid4())
-
-        # Ensure workspace with last four digits of ID does not already exist - remove when https://github.com/microsoft/AzureTRE/issues/3666 is resolved
-        async with credentials.get_credential_async_context() as credential:
-
-            async def name_check():
-                nonlocal full_workspace_id
-                while not await self.is_workspace_storage_account_available(credential, full_workspace_id):
-                    full_workspace_id = str(uuid.uuid4())
-
-            try:
-                await asyncio.wait_for(name_check(), timeout=45.0)
-            except asyncio.TimeoutError:
-                raise StorageAccountNameGenerationTimeout(
-                    "Unable to generate a unique storage account name within the timeout limit."
-                )
-            except HttpResponseError as e:
-                raise StorageAccountNameCheckFailed("Storage name availability check failed.") from e
 
         template = await self.validate_input_against_template(
             workspace_input.templateName, workspace_input, ResourceType.Workspace, user_roles
@@ -183,6 +170,11 @@ class WorkspaceRepository(ResourceRepository):
             airlock_version = 1
         airlock_version_param = {"airlock_version": airlock_version}
 
+        full_workspace_id, unique_identifier_suffix = await self.generate_workspace_storage_naming(airlock_version)
+        # Only airlock_version >= 2 workspaces use the random suffix for storage account naming. The
+        # suffix is set once at creation, so legacy workspaces keep their names even after moving to v2.
+        unique_identifier_suffix_param = {"unique_identifier_suffix": unique_identifier_suffix}
+
         # JSON Schema defaults validate input but are not materialised by the API. Persist the
         # Airlock default so review-workspace templates that default it to false do not later get
         # interpreted as having Airlock enabled.
@@ -203,6 +195,7 @@ class WorkspaceRepository(ResourceRepository):
             **workspace_owner_param,
             **airlock_version_param,
             **enable_airlock_param,
+            **unique_identifier_suffix_param,
             **auth_info,
             **self.get_workspace_spec_params(full_workspace_id),
         }
@@ -217,6 +210,39 @@ class WorkspaceRepository(ResourceRepository):
         )
 
         return workspace, template
+
+    async def generate_workspace_storage_naming(self, airlock_version: int) -> Tuple[str, str]:
+        """Generate a workspace id and storage account name suffix with an available storage account name.
+
+        airlock_version >= 2 workspaces name their storage account from a random unique_identifier_suffix.
+        Legacy (v1) workspaces keep naming storage accounts from the last 4 characters of the workspace id
+        (https://github.com/microsoft/AzureTRE/issues/3666), and return an empty suffix.
+        """
+        full_workspace_id = str(uuid.uuid4())
+        unique_identifier_suffix = ""
+
+        async with credentials.get_credential_async_context() as credential:
+
+            async def name_check():
+                nonlocal full_workspace_id, unique_identifier_suffix
+                if airlock_version >= 2:
+                    unique_identifier_suffix = self.generate_unique_identifier_suffix()
+                    while not await self.is_workspace_storage_account_available(credential, unique_identifier_suffix):
+                        unique_identifier_suffix = self.generate_unique_identifier_suffix()
+                else:
+                    while not await self.is_workspace_storage_account_available(credential, full_workspace_id[-4:]):
+                        full_workspace_id = str(uuid.uuid4())
+
+            try:
+                await asyncio.wait_for(name_check(), timeout=45.0)
+            except asyncio.TimeoutError:
+                raise StorageAccountNameGenerationTimeout(
+                    "Unable to generate a unique storage account name within the timeout limit."
+                )
+            except HttpResponseError as e:
+                raise StorageAccountNameCheckFailed("Storage name availability check failed.") from e
+
+        return full_workspace_id, unique_identifier_suffix
 
     def get_workspace_owner(self, workspace_properties: dict, workspace_owner_object_id: str) -> str:
         # Add the objectId of the user that will become the workspace owner. If it is not present in

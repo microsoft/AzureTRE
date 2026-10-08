@@ -8,6 +8,17 @@ variable "tre_resource_id" {
   description = "Resource ID"
 }
 
+variable "unique_identifier_suffix" {
+  type        = string
+  description = "Random suffix used to name the workspace storage account of airlock_version 2 workspaces. When empty, the legacy name derived from the last 4 characters of the resource ID is used."
+  default     = ""
+
+  validation {
+    condition     = can(regex("^[a-z0-9]{0,19}$", var.unique_identifier_suffix))
+    error_message = "unique_identifier_suffix must be up to 19 lowercase letters or digits."
+  }
+}
+
 variable "workspace_subscription_id" {
   type        = string
   description = "Subscription ID for the workspace resources"

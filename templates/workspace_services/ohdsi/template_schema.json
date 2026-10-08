@@ -155,7 +155,14 @@
         "properties": []
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_storage_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.storage_account_name }}"
+          }
+        ]
       },
       {
         "stepId": "7276dcc1-7d0e-496a-badf-87c8c25fc06e",
@@ -257,7 +264,14 @@
         "properties": []
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_storage_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.storage_account_name }}"
+          }
+        ]
       },
       {
         "stepId": "0d3961fd-1538-4b0e-a6ed-bf401b65c034",
@@ -369,7 +383,14 @@
         ]
       },
       {
-        "stepId": "main"
+        "stepId": "main",
+        "properties": [
+          {
+            "name": "workspace_storage_name",
+            "type": "string",
+            "value": "{{ resource.parent.properties.storage_account_name }}"
+          }
+        ]
       }
     ]
   }

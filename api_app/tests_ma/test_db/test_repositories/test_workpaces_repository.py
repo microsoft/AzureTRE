@@ -1,3 +1,4 @@
+import re
 import copy
 from unittest.mock import AsyncMock
 import pytest
@@ -293,6 +294,69 @@ async def test_create_workspace_item_defaults_legacy_template_to_airlock_v1(
 
 
 @pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_v2_uses_available_random_storage_suffix(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["airlock_version"] = 2
+    workspace_to_create.properties["unique_identifier_suffix"] = "userinput"
+    # first generated suffix is taken, second is available
+    mock_is_workspace_storage_account_available.side_effect = [False, True]
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    suffix = workspace.properties["unique_identifier_suffix"]
+    assert re.fullmatch(r"[a-z0-9]{12}", suffix)
+    assert mock_is_workspace_storage_account_available.call_count == 2
+    assert mock_is_workspace_storage_account_available.call_args_list[-1].args[1] == suffix
+    assert mock_is_workspace_storage_account_available.call_args_list[0].args[1] != suffix
+    assert workspace.properties["workspace_id"] == workspace.id[-4:]
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_v1_keeps_workspace_id_storage_naming(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["airlock_version"] = 1
+    workspace_to_create.properties["unique_identifier_suffix"] = "userinput"
+    # first generated workspace id is taken, second is available
+    mock_is_workspace_storage_account_available.side_effect = [False, True]
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 1
+    assert workspace.properties["unique_identifier_suffix"] == ""
+    assert mock_is_workspace_storage_account_available.call_count == 2
+    assert mock_is_workspace_storage_account_available.call_args_list[-1].args[1] == workspace.id[-4:]
+
+
+@pytest.mark.asyncio
 @patch("core.config.RESOURCE_LOCATION", "useast2")
 @patch("core.config.TRE_ID", "9876")
 @patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
@@ -486,8 +550,7 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
 @pytest.mark.asyncio
 @patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
-    workspace_id = "workspace1234"
-    suffix = workspace_id[-4:]
+    suffix = "abc123def456"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.storage_accounts.check_name_availability.return_value.name_available = True
@@ -495,7 +558,7 @@ async def test_is_workspace_storage_account_available_when_name_available(mock_s
     mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), suffix)
 
     assert result is True
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
@@ -507,8 +570,7 @@ async def test_is_workspace_storage_account_available_when_name_available(mock_s
 @pytest.mark.asyncio
 @patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
-    workspace_id = "workspace1234"
-    suffix = workspace_id[-4:]
+    suffix = "abc123def456"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.close = AsyncMock()
@@ -518,7 +580,7 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
     mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
 
-    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
+    result = await workspace_repo.is_workspace_storage_account_available(MagicMock(), suffix)
 
     assert result is False
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
@@ -530,7 +592,7 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
 @pytest.mark.asyncio
 @patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_check_raises_exception(mock_storage_client):
-    workspace_id = "workspace1234"
+    suffix = "abc123def456"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = Exception("ARM error")
@@ -539,7 +601,7 @@ async def test_is_workspace_storage_account_available_when_check_raises_exceptio
     workspace_repo = WorkspaceRepository()
 
     with pytest.raises(Exception, match="ARM error"):
-        await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
+        await workspace_repo.is_workspace_storage_account_available(MagicMock(), suffix)
 
 
 @pytest.mark.asyncio
@@ -577,7 +639,7 @@ async def test_create_workspace_item_raises_timeout_error_after_timeout(
 @pytest.mark.asyncio
 @patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_check_times_out(mock_storage_client):
-    workspace_id = "workspace1234"
+    suffix = "abc123def456"
     mock_storage_client_instance = MagicMock()
     mock_storage_client_instance.storage_accounts.check_name_availability = AsyncMock()
     mock_storage_client_instance.close = AsyncMock()
@@ -586,7 +648,7 @@ async def test_is_workspace_storage_account_available_when_check_times_out(mock_
     workspace_repo = WorkspaceRepository()
 
     with pytest.raises(asyncio.TimeoutError):
-        await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
+        await workspace_repo.is_workspace_storage_account_available(MagicMock(), suffix)
 
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
 

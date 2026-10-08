@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-windowsvm
-version: 3.0.4
+version: 3.1.0
 description: "An Azure TRE User Resource Template for Guacamole (Windows 11 or Windows Server 2025)"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -61,6 +61,10 @@ credentials:
 parameters:
   - name: workspace_id
     type: string
+  - name: workspace_storage_name
+    type: string
+    default: ""
+    description: "Name of the parent workspace storage account, provided by the workspace storage_account_name output"
   - name: tre_id
     type: string
   - name: parent_service_id
@@ -190,6 +194,7 @@ install:
       description: "Deploy Guacamole User Resource Service (Windows VM)"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
@@ -233,6 +238,7 @@ upgrade:
       description: "Update Guacamole User Resource Service (Windows VM)"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
@@ -288,6 +294,7 @@ uninstall:
       description: "Delete the Guacamole User Resource Service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         parent_service_id: ${ bundle.parameters.parent_service_id }
