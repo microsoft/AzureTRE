@@ -50,7 +50,7 @@ class ScopeTests(unittest.TestCase):
             return deepcopy(self.run)
         self.assertIn("/attempts/2/jobs?", suffix)
         page = int(suffix.split("page=")[-1])
-        return {"total_count": len(self.jobs), "jobs": deepcopy(self.jobs[(page - 1) * 100 : page * 100])}
+        return {"total_count": len(self.jobs), "jobs": deepcopy(self.jobs[(page - 1) * 100 : page * 100])}  # noqa: E203
 
     def test_current_job_identity_selects_the_reference_lock(self):
         with patch.object(scope, "github", side_effect=self.github), patch.object(scope, "verify_concurrency") as lock:
@@ -224,20 +224,20 @@ class WorkflowContractTests(unittest.TestCase):
 
     def test_cleanup_job_keeps_the_lock_for_long_deletions(self):
         scheduled = (SCRIPTS.parents[1] / ".github/workflows/clean_validation_envs.yml").read_text()
-        clean = scheduled[scheduled.index("\n  clean:\n") : scheduled.index("\n  validate:\n")]
+        clean = scheduled[scheduled.index("\n  clean:\n") : scheduled.index("\n  validate:\n")]  # noqa: E203
         # Explicit destruction uses the GitHub-hosted default of 360 minutes.
         self.assertRegex(clean, r"\n    timeout-minutes: 360\n")
 
     def test_recovery_token_reaches_only_the_pr_bootstrap_command(self):
         root = SCRIPTS.parents[1]
         deploy = (root / ".github/workflows/deploy_tre_reusable.yml").read_text()
-        management = deploy[deploy.index("\n  deploy_management:\n") :]
+        management = deploy[deploy.index("\n  deploy_management:\n") :]  # noqa: E203
         management = management[: management.index("\n    steps:\n")]
         self.assertRegex(management, r"\n      actions: read")
         # A reusable workflow cannot elevate the caller's token permissions.
         for name in ("pr_comment_bot.yml", "deploy_tre.yml", "deploy_tre_branch.yml"):
             caller = (root / ".github/workflows" / name).read_text()
-            block = caller[caller.index("uses: ./.github/workflows/deploy_tre_reusable.yml") :]
+            block = caller[caller.index("uses: ./.github/workflows/deploy_tre_reusable.yml") :]  # noqa: E203
             block = block[: block.index("\n    with:\n")]
             with self.subTest(caller=name):
                 self.assertRegex(block, r"\n      actions: read")

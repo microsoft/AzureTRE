@@ -448,7 +448,7 @@ class RecoveryTests(unittest.TestCase):
         def pages(ctx, suffix):
             if "status=queued" in suffix:
                 page = int(suffix.split("page=")[-1])
-                return {"total_count": len(runs), "workflow_runs": runs[(page - 1) * 100 : page * 100]}
+                return {"total_count": len(runs), "workflow_runs": runs[(page - 1) * 100 : page * 100]}  # noqa: E203
             return original(ctx, suffix)
 
         with patch.object(recovery, "github", side_effect=pages):
