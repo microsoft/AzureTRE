@@ -203,7 +203,7 @@ class WorkflowContractTests(unittest.TestCase):
     def test_all_supported_writers_share_the_reference_group(self):
         workflows = SCRIPTS.parents[1] / ".github/workflows"
         deploy = (workflows / "deploy_tre_reusable.yml").read_text()
-        self.assertIn('concurrency: "deploy-${{ inputs.ciGitRef }}"', deploy)
+        self.assertIn("group: deploy-${{ inputs.ciGitRef }}", deploy)
         self.assertIn("CI_GIT_REF: ${{ inputs.ciGitRef }}", deploy)
         explicit = (workflows / "pr_comment_bot.yml").read_text()
         for name in ("ciGitRef", "branchCiGitRef"):

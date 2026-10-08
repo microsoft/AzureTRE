@@ -500,6 +500,25 @@ class RecoveryTests(unittest.TestCase):
             ):
                 recovery.verify_concurrency(self.ctx)
 
+    def test_full_queue_preserves_recovery_for_the_verified_owner(self):
+        # GitHub allows one active owner and up to 100 pending jobs or runs.
+        self.members.extend({"run_id": run_id, "status": "pending"} for run_id in range(1000, 1050))
+        self.members.extend({"run_id": 999, "job_id": job_id, "status": "pending"} for job_id in range(2000, 2050))
+        recovery.recover(self.ctx)
+        self.assertEqual(len(self.breaks()), 1)
+
+    def test_oversized_or_ambiguous_full_queue_refuses_recovery(self):
+        pending = [{"run_id": run_id, "status": "pending"} for run_id in range(1000, 1100)]
+        for final in (
+            {"run_id": 1100, "status": "pending"},
+            {"run_id": 999, "status": "in_progress"},
+            pending[0],
+        ):
+            with self.subTest(final=final):
+                tail = pending if final["run_id"] == 1100 else pending[:-1]
+                self.members = [{"run_id": 123, "status": "in_progress"}, *tail, final]
+                self.assert_refused()
+
     def test_conditional_break_failure_is_not_retried(self):
         self.break_error = recovery.RecoveryError("ConditionNotMet")
         with self.assertRaisesRegex(recovery.RecoveryError, "ConditionNotMet"):

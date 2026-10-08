@@ -8,9 +8,22 @@ populated state. See [issue #5115](https://github.com/microsoft/AzureTRE/issues/
 
 The existing `deploy-<ci_git_ref>` GitHub concurrency group protects the complete
 deployment, including bootstrap, Terraform and E2E work. Explicit destruction and
-scheduled cleanup use the same group. Groups do not cancel a running owner.
-GitHub's default single-pending queue remains unchanged: a newer waiting operation
-can replace an older waiting operation, but cannot interrupt the active owner.
+scheduled cleanup use the same group. Every participant sets `queue: max` and
+`cancel-in-progress: false`, preserving both the running owner and existing
+waiters. An hourly cleanup therefore cannot replace a pending deployment, even
+when that reference later proves ineligible for cleanup.
+
+GitHub permits up to 100 pending jobs or runs per group. When the queue is full,
+GitHub cancels the new arrival, preserving existing waiters. Queue order follows
+entry into the group, not workflow dispatch time. Cleanup still checks eligibility
+after acquiring the group because eligibility can change while it waits.
+
+The current actionlint parser does not recognise `queue`. The configuration in
+`.github/linters/actionlint.yml` suppresses only that exact parser error in these
+three workflows. The GitHub script tests parse their YAML and require `queue: max`,
+`cancel-in-progress: false` and the expected reference key for every participant.
+These tests run when the workflows or compatibility configuration change. Remove
+the exceptions when the pinned linter supports `queue`.
 
 The key deliberately covers all clouds, subscriptions and regions for one
 reference. Explicit destruction searches previous regional environments by tag.
@@ -97,9 +110,11 @@ change the blob ETag and are not ownership evidence.
 
 This is a cooperative CI protocol. Privileged manual Azure operations and old or
 modified workflows that bypass the group must not run against a recovering
-backend. Drain legacy cleanup runs before enabling the new workflow definitions.
-Do not dispatch or rerun old cleanup definitions afterwards. An activity snapshot
-cannot prevent a privileged operator from starting an unsupported writer later.
+backend. Drain old deployment, destruction and cleanup runs before enabling the
+new workflow definitions. Do not dispatch or rerun their old definitions
+afterwards. An old participant using the default single-pending queue can still
+replace waiting work. An activity snapshot cannot prevent a privileged operator
+from starting an unsupported writer later.
 
 A `/test` comment reads workflow definitions from the default branch. Checking out
 this script from a PR does not activate the new cleanup contract. Recovery
@@ -110,8 +125,9 @@ pre-merge lease test needs trusted comment-workflow wiring in a disposable test
 repository or a dedicated validation harness. Branch deployment alone does not
 enable this helper.
 
-Local tests cover unrelated workflows, verified writer definitions, queued
-successors arriving during recovery, lost ownership, unknown writers, pagination,
+Local tests cover unrelated workflows, verified writer definitions, every
+participant's queue configuration, full queues, queued successors arriving during
+recovery, lost ownership, unknown writers, pagination,
 API errors, stale attempts, cleanup scope and synchronous destruction. They also
 run the real shell scripts with mocked services to check lease preservation and
 restoration of storage network access after failures and cancellation. These
@@ -122,8 +138,8 @@ Before marking the PR ready:
 1. Run the changed workflows from a trusted branch against disposable resources.
 2. Overlap unrelated lint, Copilot, GitHub-managed CodeQL, and GitHub Pages work
    with an eligible empty bootstrap lease.
-3. Queue deployment and destruction for the same reference during recovery.
-4. Confirm that the new writer cannot start until the current deployment releases its group.
+3. Queue deployment B behind deployment A, then scheduled cleanup and destruction for the same reference.
+4. Confirm that B stays pending and runs after A, before cleanup and destruction.
 5. Repeat with scheduled cleanup, a separate reference and a failed or cancelled bootstrap.
 6. Record the commit, workflow source, run IDs, blob integrity and restored network settings.
 7. Confirm that disposable resources have been removed.

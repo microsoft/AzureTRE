@@ -51,6 +51,10 @@ jobs:
               - 'docs/**/*'
             github_scripts:
               - '.github/scripts/**'
+              - '.github/linters/actionlint.yml'
+              - '.github/workflows/clean_validation_envs.yml'
+              - '.github/workflows/deploy_tre_reusable.yml'
+              - '.github/workflows/pr_comment_bot.yml'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/build_all_dockerfiles.yml'
               - '.devcontainer/Dockerfile'

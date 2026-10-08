@@ -65,6 +65,7 @@ jobs:
     concurrency:
       group: deploy-${{ matrix.ref }}
       cancel-in-progress: false
+      queue: max
     name: Clean ${{ matrix.ref }}
     runs-on: ubuntu-latest
     environment: CICD
@@ -107,6 +108,7 @@ jobs:
     concurrency:
       group: deploy-refs/heads/ci-cleanup-validation/${{ github.run_id }}-${{ github.run_attempt }}
       cancel-in-progress: false
+      queue: max
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'validate'
     runs-on: ubuntu-latest
     environment: CICD

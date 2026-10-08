@@ -125,7 +125,10 @@ on: # yamllint disable-line rule:truthy
 
 # This will prevent multiple runs of this entire workflow.
 # We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: "deploy-${{ inputs.ciGitRef }}"
+concurrency:
+  group: deploy-${{ inputs.ciGitRef }}
+  cancel-in-progress: false
+  queue: max
 
 env:
   CI_ENVIRONMENT_ID: ${{ inputs.ciEnvironmentId }}
