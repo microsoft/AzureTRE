@@ -7,6 +7,52 @@ const yaml = require('js-yaml');
 const root = path.resolve(__dirname, '../..');
 const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8'));
 
+describe('reference concurrency queues', () => {
+  test.each([
+    ['deploy_tre.yml', 'run-deploy-tre-main', '${{ github.ref }}'],
+    ['deploy_tre_branch.yml', 'run-deploy-tre-not-main', '${{ github.ref }}'],
+    ['pr_comment_bot.yml', 'run_test', '${{ needs.pr_comment.outputs.ciGitRef }}']
+  ])('%s routes deployment into the shared queue without an outer queue', (file, job, ref) => {
+    const caller = workflow(file);
+    expect(caller.concurrency).toBeUndefined();
+    expect(caller.jobs[job].concurrency).toBeUndefined();
+    expect(caller.jobs[job].uses).toBe('./.github/workflows/deploy_tre_reusable.yml');
+    expect(caller.jobs[job].with.ciGitRef).toBe(ref);
+    // Preparation may run independently, but must not add another waiting group.
+    const needs = caller.jobs[job].needs || [];
+    for (const dependency of Array.isArray(needs) ? needs : [needs]) {
+      expect(caller.jobs[dependency].concurrency).toBeUndefined();
+    }
+  });
+
+  test.each([
+    ['deploy_tre_reusable.yml', null, 'deploy-${{ inputs.ciGitRef }}'],
+    ['pr_comment_bot.yml', 'destroy_pr_env', 'deploy-${{ needs.pr_comment.outputs.ciGitRef }}'],
+    ['pr_comment_bot.yml', 'destroy_branch_env', 'deploy-${{ needs.pr_comment.outputs.branchCiGitRef }}'],
+    ['clean_validation_envs.yml', 'clean', 'deploy-${{ matrix.ref }}'],
+    ['clean_validation_envs.yml', 'validate',
+      'deploy-refs/heads/ci-cleanup-validation/${{ github.run_id }}-${{ github.run_attempt }}']
+  ])('%s %s preserves both the active owner and queued writers', (file, job, group) => {
+    const definition = workflow(file);
+    const owner = job ? definition.jobs[job] : definition;
+    // Parse YAML because actionlint currently ignores the unsupported queue key.
+    // A scheduled cleanup must not replace a deployment that is already pending.
+    expect(owner.concurrency).toEqual({ group, 'cancel-in-progress': false, queue: 'max' });
+  });
+
+  test('every reference group participant preserves pending work', () => {
+    for (const file of fs.readdirSync(path.join(root, '.github/workflows')).filter(name => /\.ya?ml$/.test(name))) {
+      const definition = workflow(file);
+      for (const owner of [definition, ...Object.values(definition.jobs || {})]) {
+        const group = typeof owner.concurrency === 'string' ? owner.concurrency : owner.concurrency?.group;
+        if (typeof group === 'string' && group.startsWith('deploy-')) {
+          expect({ file, ...owner.concurrency }).toEqual({ file, group, 'cancel-in-progress': false, queue: 'max' });
+        }
+      }
+    }
+  });
+});
+
 function prepare(job, location, ref, output) {
   const step = job.steps.find(value => value.id === 'environment-id' || value.id === 'run-id');
   execFileSync('bash', ['-c', step.run], {

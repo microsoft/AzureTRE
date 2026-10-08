@@ -24,12 +24,54 @@ permissions:
   contents: read
 
 jobs:
-  clean:
+  plan:
     if: github.event_name == 'schedule' || inputs.mode == 'cleanup'
-    name: Clean
+    name: Plan cleanup
+    outputs:
+      refs: ${{ steps.plan.outputs.refs }}
     runs-on: ubuntu-latest
     environment: CICD
     timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Azure Login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Plan references from Azure ownership tags
+        id: plan
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          refs=$(python3 devops/scripts/ci_cleanup_scope.py plan)
+          echo "refs=$refs" >> "$GITHUB_OUTPUT"
+
+  clean:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        ref: ${{ fromJSON(needs.plan.outputs.refs) }}
+    concurrency:
+      group: deploy-${{ matrix.ref }}
+      cancel-in-progress: false
+      queue: max
+    name: Clean ${{ matrix.ref }}
+    runs-on: ubuntu-latest
+    environment: CICD
+    # Deletion is synchronous so the job keeps deploy-<ref> until Azure finishes.
+    # Use the GitHub-hosted maximum, which explicit destruction also uses.
+    timeout-minutes: 360
     permissions:
       id-token: write
       contents: read
@@ -52,6 +94,8 @@ jobs:
 
       - name: Run clean
         env:
+          CI_CLEANUP_REF: ${{ matrix.ref }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAIN_TRE_ID: ${{ secrets.TRE_ID }}
           GITHUB_REPOSITORY: ${{ github.repository}}
@@ -61,6 +105,10 @@ jobs:
 
   validate:
     name: Validate cleanup with disposable groups
+    concurrency:
+      group: deploy-refs/heads/ci-cleanup-validation/${{ github.run_id }}-${{ github.run_attempt }}
+      cancel-in-progress: false
+      queue: max
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'validate'
     runs-on: ubuntu-latest
     environment: CICD
@@ -71,6 +119,7 @@ jobs:
       pull-requests: read
       actions: read
     env:
+      CI_CLEANUP_JOB_NAME: Validate cleanup with disposable groups
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
     steps:

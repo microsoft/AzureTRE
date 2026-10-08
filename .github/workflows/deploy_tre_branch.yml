@@ -35,9 +35,8 @@ on: # yamllint disable-line rule:truthy
         default: false
         required: false
 
-# This will prevent multiple runs of this entire workflow.
-# We should NOT cancel in progress runs as that can destabilize the environment.
-concurrency: "${{ github.workflow }}-${{ github.ref }}"
+# The reusable deployment workflow holds the shared reference queue.
+# Separate caller queues can discard deployments before they reach that group.
 
 permissions:
   contents: read
@@ -88,6 +87,7 @@ jobs:
       checks: write
       contents: read
       pull-requests: write
+      actions: read # Required by the reusable management job
     with:
       ciGitRef: ${{ github.ref }}
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
