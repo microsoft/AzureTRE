@@ -1,6 +1,7 @@
 import json
-import re
 from pathlib import Path
+
+import yaml
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -10,20 +11,24 @@ PARAM_NAME = "create_aad_groups"
 
 def _get_porter_default() -> bool:
     porter_yaml_path = BASE_WORKSPACE_DIR / "porter.yaml"
-    content = porter_yaml_path.read_text()
-    match = re.search(
-        rf"- name: {PARAM_NAME}\s+type: boolean\s+default: (true|false)",
-        content,
+    porter = yaml.safe_load(porter_yaml_path.read_text(encoding="utf-8"))
+    parameter = next(
+        (
+            parameter
+            for parameter in porter["parameters"]
+            if parameter["name"] == PARAM_NAME
+        ),
+        None,
     )
-    if match is None:
+    if parameter is None:
         raise AssertionError(f"Parameter '{PARAM_NAME}' not found in {porter_yaml_path}")
 
-    return match.group(1) == "true"
+    return parameter["default"]
 
 
 def _get_schema_default() -> bool:
     schema_path = BASE_WORKSPACE_DIR / "template_schema.json"
-    schema = json.loads(schema_path.read_text())
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
     for branch in schema["allOf"]:
         properties = branch.get("else", {}).get("properties", {})
         if PARAM_NAME in properties:

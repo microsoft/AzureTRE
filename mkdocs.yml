@@ -156,6 +156,7 @@ nav:
           - Contributing to AzureTRE:
               # Docs aimed at OSS developers, committing code to the AzureTRE repo
               - Introduction: tre-developers/index.md
+              - Agent Guidance: tre-developers/agent-guidance.md
               - API:
                   - API Overview: tre-developers/api.md
                   - API Permissions Map: tre-developers/api-permissions-map.md

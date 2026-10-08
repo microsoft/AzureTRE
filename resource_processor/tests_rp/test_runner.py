@@ -1,9 +1,10 @@
 from azure.servicebus import ServiceBusSessionFilter
 from azure.servicebus.aio import ServiceBusClient
 from vmss_porter.runner import (
-    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter
+    set_up_config, receive_message, invoke_porter_action, get_porter_outputs, check_runners, runner, run_porter, _cleanup_param_set
 )
 import json
+import asyncio
 from unittest.mock import patch, AsyncMock, Mock
 import pytest
 import sys
@@ -139,7 +140,7 @@ async def test_default_credentials_closes_real_credential_on_exception(mock_serv
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.invoke_porter_action", return_value=True)
-async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer):
+async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer, mock_logger):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
 
     # Set up the lock renewer mock correctly
@@ -152,7 +153,15 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"})
+    mock_receiver.__aiter__.return_value[0] = json.dumps({
+        "id": "test_id",
+        "action": "install",
+        "stepId": "test_step_id",
+        "operationId": "test_operation_id",
+        "name": "test_bundle",
+        "version": "1.0.0",
+        "parameters": {"smtpPassword": "synthetic-password-not-for-logs"},
+    })
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 
@@ -161,8 +170,135 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
     config = {"resource_request_queue": "test_queue"}
 
     await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
-    mock_receiver.complete_message.assert_called_once()
+    mock_receiver.complete_message.assert_awaited_once()
+    assert "synthetic-password-not-for-logs" not in str(mock_logger.mock_calls)
     mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(queue_name="test_queue", max_wait_time=1, session_id=ServiceBusSessionFilter.NEXT_AVAILABLE)
+
+
+@pytest.mark.asyncio
+async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_renewer):
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+
+    # Set up the lock renewer mock correctly
+    mock_renewer = AsyncMock()
+    mock_renewer.register = Mock()
+    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
+
+    mock_receiver = AsyncMock()
+    mock_receiver.__aenter__.return_value = mock_receiver
+    mock_receiver.__aexit__.return_value = None
+    mock_receiver.session.session_id = "test_session_id"
+    mock_receiver.__aiter__.return_value = ["invalid_json_string"]
+
+    mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
+
+    run_once = Mock(side_effect=[True, False])
+
+    config = {"resource_request_queue": "test_queue"}
+
+    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    mock_receiver.dead_letter_message.assert_awaited_once()
+    dead_letter_args, dead_letter_kwargs = mock_receiver.dead_letter_message.await_args
+    assert dead_letter_args == ("invalid_json_string",)
+    assert dead_letter_kwargs["reason"] == "InvalidJSON"
+    assert dead_letter_kwargs["error_description"]
+    mock_receiver.complete_message.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "message, expected_log",
+    [
+        ("invalid_json_string", "Failed to dead-letter malformed message"),
+        ("null", "Failed to dead-letter invalid resource request message"),
+    ],
+)
+async def test_receive_message_dead_letter_failure_is_logged(
+    message, expected_log, mock_service_bus_client, mock_auto_lock_renewer, mock_logger
+):
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+
+    mock_renewer = AsyncMock()
+    mock_renewer.register = Mock()
+    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
+
+    mock_receiver = AsyncMock()
+    mock_receiver.__aenter__.return_value = mock_receiver
+    mock_receiver.__aexit__.return_value = None
+    mock_receiver.session.session_id = "test_session_id"
+    mock_receiver.__aiter__.return_value = [message]
+    mock_receiver.dead_letter_message.side_effect = RuntimeError("lock lost")
+
+    mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
+
+    run_once = Mock(side_effect=[True, False])
+    config = {"resource_request_queue": "test_queue"}
+
+    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+
+    mock_sleep.assert_awaited_once_with(10)
+
+    assert mock_logger.exception.call_args_list == [
+        ((expected_log,), {}),
+        (("Unknown exception. Will retry...",), {}),
+    ]
+    mock_receiver.complete_message.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "message, error_description",
+    [
+        ("null", "Resource request message must be a JSON object"),
+        ("[]", "Resource request message must be a JSON object"),
+        ("\"text\"", "Resource request message must be a JSON object"),
+        (
+            '{"id": "test_id"}',
+            "Resource request message is missing fields: ['action', 'name', 'operationId', 'parameters', 'stepId', 'version']",
+        ),
+        (
+            '{"id": "test_id", "action": [], "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": {}}',
+            "Resource request message has invalid field types: ['action']",
+        ),
+        (
+            '{"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": null}',
+            "Resource request message has invalid field types: ['parameters']",
+        ),
+        (
+            '{"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id", "name": "test_bundle", "version": "1.0.0", "parameters": {}, "user": []}',
+            "Resource request message has invalid field types: ['user']",
+        ),
+    ],
+)
+async def test_receive_message_invalid_json_structure(
+    message, error_description, mock_service_bus_client, mock_auto_lock_renewer
+):
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+
+    mock_renewer = AsyncMock()
+    mock_renewer.register = Mock()
+    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
+
+    mock_receiver = AsyncMock()
+    mock_receiver.__aenter__.return_value = mock_receiver
+    mock_receiver.__aexit__.return_value = None
+    mock_receiver.session.session_id = "test_session_id"
+    mock_receiver.__aiter__.return_value = [message]
+
+    mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
+
+    run_once = Mock(side_effect=[True, False])
+    config = {"resource_request_queue": "test_queue"}
+
+    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+
+    mock_receiver.dead_letter_message.assert_awaited_once_with(
+        message,
+        reason="InvalidResourceRequest",
+        error_description=error_description,
+    )
+    mock_receiver.complete_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -180,7 +316,15 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
     mock_receiver.__aexit__.return_value = None
     mock_receiver.session.session_id = "test_session_id"
     mock_receiver.__aiter__.return_value = [AsyncMock()]
-    mock_receiver.__aiter__.return_value[0] = json.dumps({"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"})
+    mock_receiver.__aiter__.return_value[0] = json.dumps({
+        "id": "test_id",
+        "action": "install",
+        "stepId": "test_step_id",
+        "operationId": "test_operation_id",
+        "name": "test_bundle",
+        "version": "1.0.0",
+        "parameters": {},
+    })
 
     mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
 
@@ -196,7 +340,7 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=["porter install"])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -214,7 +358,7 @@ async def test_invoke_porter_action(mock_service_bus_message_generator, mock_run
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -233,11 +377,38 @@ async def test_invoke_porter_action_failure(mock_service_bus_message_generator, 
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
-@patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (0, "", "")])
+@patch("vmss_porter.runner._cleanup_param_set", side_effect=RuntimeError("cleanup failed"))
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], "/tmp/params.json", "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "error"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_upgrade_failure_install_success(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
-    """Test invoking a porter action with upgrade failure and install success."""
+async def test_invoke_porter_action_cleanup_error_is_non_blocking(
+    mock_service_bus_message_generator,
+    mock_run_porter,
+    mock_build_porter_command,
+    mock_cleanup_param_set,
+    mock_service_bus_client
+):
+    """Cleanup exceptions should not mask porter command failure handling."""
+    mock_sb_client = AsyncMock(spec=ServiceBusClient)
+    mock_sb_sender = AsyncMock()
+    mock_sb_client.get_queue_sender.return_value = mock_sb_sender
+
+    config = {"deployment_status_queue": "test_queue"}
+    msg_body = {"id": "test_id", "action": "install", "stepId": "test_step_id", "operationId": "test_operation_id"}
+
+    result = await invoke_porter_action(msg_body, mock_sb_client, config)
+
+    assert result is False
+    mock_cleanup_param_set.assert_awaited_once()
+    mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
+@patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
+@patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
+async def test_invoke_porter_action_upgrade_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
+    """Test invoking a porter action with upgrade failure."""
     mock_sb_client = AsyncMock(spec=ServiceBusClient)
     mock_sb_sender = AsyncMock()
     mock_sb_client.get_queue_sender.return_value = mock_sb_sender
@@ -247,12 +418,12 @@ async def test_invoke_porter_action_upgrade_failure_install_success(mock_service
 
     result = await invoke_porter_action(msg_body, mock_sb_client, config)
 
-    assert result is True
+    assert result is False
     mock_sb_sender.send_messages.assert_called()
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", side_effect=[(1, "", "could not find installation"), (1, "", "installation failed")])
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -271,7 +442,7 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(mock_service
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "install"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -290,7 +461,7 @@ async def test_invoke_porter_action_uninstall_failure(mock_service_bus_message_g
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=[["porter", "custom-action"]])
+@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "custom-action"]], None, "tre-params-test", None))
 @patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_custom_action(mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client):
@@ -306,6 +477,69 @@ async def test_invoke_porter_action_custom_action(mock_service_bus_message_gener
 
     assert result is True
     mock_sb_sender.send_messages.assert_called()
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_is_best_effort(mock_run_command_helper, mock_unlink):
+    """Cleanup deletes the parameter set without logging errors and unlinks temp files."""
+    mock_run_command_helper.return_value = (1, None, "not found")
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", "/tmp/params.json", "/tmp/installation.json", config)
+
+    # The parameter set delete must be best-effort (log_error=False) since it may never have been applied
+    mock_run_command_helper.assert_awaited_once_with(
+        ["porter", "parameters", "delete", "tre-params-test"], config, "Delete parameter set", log_error=False
+    )
+    # Both temp files should be removed
+    mock_unlink.assert_any_call("/tmp/params.json")
+    mock_unlink.assert_any_call("/tmp/installation.json")
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink")
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_no_param_file(mock_run_command_helper, mock_unlink):
+    """When no parameter set file exists, no delete command runs but the installation file is still removed."""
+    config = {"porter_env": {}}
+
+    await _cleanup_param_set("tre-params-test", None, "/tmp/installation.json", config)
+
+    mock_run_command_helper.assert_not_awaited()
+    mock_unlink.assert_called_once_with("/tmp/installation.json")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("delete_error", [OSError("cannot start porter"), asyncio.CancelledError()])
+async def test_cleanup_param_set_removes_files_when_delete_raises(tmp_path, delete_error):
+    parameter_file = tmp_path / "parameters.json"
+    installation_file = tmp_path / "installation.json"
+    parameter_file.write_text("parameter references")
+    value_directory = tmp_path / "parameters.json.values"
+    value_directory.mkdir(mode=0o700)
+    (value_directory / "value").write_text("secret value")
+    installation_file.write_text("installation")
+
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=delete_error):
+        if isinstance(delete_error, asyncio.CancelledError):
+            with pytest.raises(asyncio.CancelledError):
+                await _cleanup_param_set("test", str(parameter_file), str(installation_file), {})
+        else:
+            await _cleanup_param_set("test", str(parameter_file), str(installation_file), {})
+
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.os.unlink", side_effect=[OSError("permission denied"), None])
+@patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock)
+async def test_cleanup_param_set_attempts_both_files(mock_run_command_helper, mock_unlink):
+    await _cleanup_param_set("test", "/tmp/parameters.json", "/tmp/installation.json", {})
+
+    assert mock_unlink.call_count == 2
+    mock_unlink.assert_any_call("/tmp/installation.json")
 
 
 @pytest.mark.asyncio
@@ -336,6 +570,119 @@ async def test_run_porter_success(mock_run_command_helper):
     assert stdout == "porter command output"
     assert stderr is None
     assert mock_run_command_helper.call_count == 6
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["install", "upgrade", "uninstall", "start"])
+async def test_parameter_discovery_failure_stops_before_porter_action(tmp_path, action):
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    msg = {"id": "resource", "action": action, "operationId": "operation", "stepId": "step",
+           "name": "test-bundle", "version": "1.0.0", "parameters": {"test": "current-value"}}
+    config = {"deployment_status_queue": "test", "registry_server": "test.azurecr.io"}
+    with patch("helpers.commands.get_porter_parameter_keys", return_value=None), \
+            patch("helpers.commands.tempfile.tempdir", str(tmp_path)), \
+            patch("vmss_porter.runner.run_porter", new_callable=AsyncMock, return_value=(1, None, "synthetic failure")) as run:
+        result = await invoke_porter_action(msg, client, config)
+
+    assert result is False
+    run.assert_not_awaited()
+    assert list(tmp_path.iterdir()) == []
+    status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert "failed" in status["status"]
+    assert "Cannot read bundle parameters" in status["message"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["uninstall", "start"])
+async def test_run_porter_blocks_legacy_overrides_before_applying_parameters(action):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    action_command = ["porter", "uninstall", "resource"] if action == "uninstall" else ["porter", "invoke", "--action", action, "resource"]
+    commands = [["porter", "parameters", "apply", "/tmp/parameters.json"], action_command]
+    responses = [(0, None, None)] * 5 + [
+        (0, '[{"name":"resource"}]', None),
+        (0, json.dumps({"name": "resource", "status": {"runId": "old-run"}, "parameters": {"delete_backups_on_uninstall": True}}), None)
+    ]
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        code, stdout, error = await run_porter(commands, config, parameter_check_installation="resource")
+
+    assert code != 0
+    assert stdout is None
+    assert "Upgrade this resource" in error
+    assert "legacy Porter parameter overrides" in error
+    assert all(call.args[0] not in commands for call in command.await_args_list)
+    assert all(call.kwargs.get("log_output") is False for call in command.await_args_list[-2:])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("installation", [None, {"name": "resource", "status": {"runId": "new-run"}, "parameters": {}}])
+async def test_run_porter_allows_missing_or_migrated_installation(installation):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    commands = [["porter", "uninstall", "resource"]]
+    responses = [(0, None, None)] * 5
+    if installation is None:
+        responses.append((0, "[]", None))
+    else:
+        responses.extend([(0, '[{"name":"resource"}]', None), (0, json.dumps(installation), None)])
+    responses.append((0, "action completed", None))
+
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        result = await run_porter(commands, config, parameter_check_installation="resource")
+
+    assert result == (0, "action completed", None)
+    assert command.await_args_list[-1].args[0] == commands[0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("inspection_responses", [
+    [(1, None, "secret diagnostic")],
+    [(0, "not json", None)],
+    [(0, "{}", None)],
+    [(0, '[{"name":"wrong-resource"}]', None)],
+    [(0, '[{"name":"resource"}]', None), (1, None, "secret diagnostic")],
+    [(0, '[{"name":"resource"}]', None), (0, "not json", None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"wrong-resource"}', None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":[]}', None)],
+    [(0, '[{"name":"resource"}]', None), (0, '{"name":"resource","parameters":{}}', None)],
+])
+async def test_run_porter_stops_when_parameter_inspection_is_inconclusive(inspection_responses):
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io"}
+    action = ["porter", "uninstall", "resource"]
+    with patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=[(0, None, None)] * 5 + inspection_responses) as command:
+        code, _, error = await run_porter([action], config, parameter_check_installation="resource")
+
+    assert code != 0
+    assert error
+    assert "secret diagnostic" not in error
+    assert all(call.args[0] != action for call in command.await_args_list)
+
+
+@pytest.mark.asyncio
+async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path):
+    parameters = tmp_path / "parameters.json"
+    parameters.write_text("secret")
+    action = ["porter", "uninstall", "resource"]
+    config = {"azure_environment": "AzureCloud", "vmss_msi_id": "msi", "registry_server": "registry.azurecr.io", "deployment_status_queue": "status"}
+    msg_body = {"id": "resource", "action": "uninstall", "operationId": "operation", "stepId": "step"}
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    responses = [(0, None, None)] * 5 + [
+        (0, '[{"name":"resource"}]', None),
+        (0, '{"name":"resource","status":{"runId":"old-run"},"parameters":{"backup":true}}', None),
+        (1, None, "not applied")
+    ]
+    with patch("vmss_porter.runner.build_porter_command", return_value=([action], str(parameters), "test-parameters", None)), \
+            patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command:
+        result = await invoke_porter_action(msg_body, client, config)
+
+    assert result is False
+    assert not parameters.exists()
+    assert all(call.args[0] != action for call in command.await_args_list)
+    final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert final_status["status"] == "deleting_failed"
+    assert "Upgrade this resource" in final_status["message"]
 
 
 @pytest.mark.asyncio

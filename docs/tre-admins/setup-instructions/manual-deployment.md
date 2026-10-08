@@ -39,6 +39,15 @@ The Azure TRE instance is initially deployed with an invalid self-signed SSL cer
 make letsencrypt
 ```
 
+If Certbot is installed elsewhere, specify its executable path:
+
+```bash
+CERTBOT_BIN=/path/to/certbot make letsencrypt
+```
+
+The default is `/opt/certbot/bin/certbot`, as installed in the development container.
+The command checks the selected executable before loading Terraform outputs or changing Azure network access.
+
 !!! caution
     There are rate limits with Let's Encrypt, so this should not be run when not needed.
 
