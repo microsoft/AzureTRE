@@ -39,7 +39,3 @@ resource "azurerm_servicebus_subscription" "airlock_processor" {
   topic_id           = azurerm_servicebus_topic.blob_created.id
   max_delivery_count = 1
 }
-
-
-
-
