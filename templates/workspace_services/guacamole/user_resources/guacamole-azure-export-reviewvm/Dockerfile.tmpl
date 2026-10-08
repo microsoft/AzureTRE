@@ -42,4 +42,3 @@ COPY --link . ${BUNDLE_DIR}/
 COPY --from=windowsvm --link ./reset_password.sh ${BUNDLE_DIR}/reset_password.sh
 # hadolint ignore=DL3022
 COPY --from=windowsvm --link ./delete_vm_extensions.sh ${BUNDLE_DIR}/delete_vm_extensions.sh
-

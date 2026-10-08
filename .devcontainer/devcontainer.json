@@ -51,7 +51,7 @@
           "editor.defaultFormatter": "charliermarsh.ruff",
           "editor.codeActionsOnSave": {
             "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
+            "source.organizeImports.ruff": "never"
           }
         },
         "bandit.args": [

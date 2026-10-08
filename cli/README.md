@@ -21,7 +21,7 @@ The CLI allows you to log in using either a device code flow or client credentia
 To log in using device code flow, run:
 
 ```bash
-tre login device-code --base-url https://mytre.westeurope.cloudapp.azure.com/ 
+tre login device-code --base-url https://mytre.westeurope.cloudapp.azure.com/
 ```
 
 This will prompt you to copy a device code and navigate to <https://microsoft.com/devicelogin> to complete the login flow interactively.
@@ -87,7 +87,7 @@ The general command structure for the CLI is:
 
 ```bash
 tre plural_noun cmd
-# or 
+# or
 tre singular_noun id cmd
 ```
 
