@@ -6,6 +6,13 @@
   "description": "Provides OHDSI within the workspace",
   "required": [],
   "properties": {
+    "workspace_storage_name": {
+      "type": "string",
+      "title": "Workspace storage account name",
+      "description": "Set by the pipeline from the parent workspace storage account.",
+      "readOnly": true,
+      "updateable": true
+    },
     "display_name": {
       "type": "string",
       "title": "Name for the workspace service",

@@ -13,6 +13,13 @@
     "WorkspaceResearcher"
   ],
   "properties": {
+    "workspace_storage_name": {
+      "type": "string",
+      "title": "Workspace storage account name",
+      "description": "Set by the pipeline from the parent workspace storage account.",
+      "readOnly": true,
+      "updateable": true
+    },
     "display_name": {
       "type": "string",
       "title": "Display name for the VM",

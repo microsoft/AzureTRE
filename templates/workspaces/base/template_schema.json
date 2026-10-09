@@ -33,6 +33,12 @@
       ],
       "updateable": true
     },
+    "unique_identifier_suffix": {
+      "type": "string",
+      "title": "Unique identifier suffix",
+      "description": "Random suffix used to name the workspace storage account. Set by the API at creation and not user-editable.",
+      "readOnly": true
+    },
     "app_service_plan_sku": {
       "type": "string",
       "title": "App Service Plan SKU",

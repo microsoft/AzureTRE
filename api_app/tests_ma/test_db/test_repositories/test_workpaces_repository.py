@@ -313,6 +313,8 @@ async def test_create_workspace_item_v2_uses_available_random_storage_suffix(
     # first generated suffix is taken, second is available
     mock_is_workspace_storage_account_available.side_effect = [False, True]
     basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
+    # the template must declare the suffix to consume it
+    basic_resource_template.properties["unique_identifier_suffix"] = Property(type="string")
     validate_input_mock.return_value = basic_resource_template
     new_cidr_mock.return_value = "1.2.3.4/24"
 
@@ -324,6 +326,33 @@ async def test_create_workspace_item_v2_uses_available_random_storage_suffix(
     assert mock_is_workspace_storage_account_available.call_args_list[-1].args[1] == suffix
     assert mock_is_workspace_storage_account_available.call_args_list[0].args[1] != suffix
     assert workspace.properties["workspace_id"] == workspace.id[-4:]
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_v2_template_without_suffix_keeps_legacy_storage_naming(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["airlock_version"] = 2
+    mock_is_workspace_storage_account_available.return_value = True
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["unique_identifier_suffix"] == ""
+    assert mock_is_workspace_storage_account_available.call_args.args[1] == workspace.id[-4:]
 
 
 @pytest.mark.asyncio

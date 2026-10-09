@@ -170,9 +170,13 @@ class WorkspaceRepository(ResourceRepository):
             airlock_version = 1
         airlock_version_param = {"airlock_version": airlock_version}
 
-        full_workspace_id, unique_identifier_suffix = await self.generate_workspace_storage_naming(airlock_version)
-        # Only airlock_version >= 2 workspaces use the random suffix for storage account naming. The
-        # suffix is set once at creation, so legacy workspaces keep their names even after moving to v2.
+        # Only templates that consume unique_identifier_suffix get a random storage account name. Older
+        # airlock v2-capable templates keep the legacy naming, so no suffix is stored that the bundle would ignore.
+        supports_storage_suffix = "unique_identifier_suffix" in template.properties
+        full_workspace_id, unique_identifier_suffix = await self.generate_workspace_storage_naming(
+            airlock_version if supports_storage_suffix else 1
+        )
+        # The suffix is set once at creation, so legacy workspaces keep their names even after moving to v2.
         unique_identifier_suffix_param = {"unique_identifier_suffix": unique_identifier_suffix}
 
         # JSON Schema defaults validate input but are not materialised by the API. Persist the
