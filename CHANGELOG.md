@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Restore Dsv6 sizes for Airlock import and export review VMs because the Dsv7 default is unavailable in Switzerland North. (`tre-service-guacamole-import-reviewvm` 2.0.4, `tre-service-guacamole-export-reviewvm` 2.0.7) ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))
 * Fix denial-of-service dependency alerts by updating `source-map-js` to 1.2.2 in the UI and removing transitive `sprintf-js` from workflow tests through an `argparse` 2 override for `js-yaml` 3. (`ui` 0.10.3, `build-scripts` 1.0.3) ([#5118](https://github.com/microsoft/AzureTRE/pull/5118))
 * Align the `create_aad_groups` schema and Porter defaults to `true` across all three workspace bundles, preventing an unrelated edit from unintentionally removing workspace role groups and app-role assignments.
   Add regression checks for each bundle. (`tre-workspace-base` 2.12.2, `tre-workspace-unrestricted` 0.15.1, `tre-workspace-airlock-import-review` 0.18.1) ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
