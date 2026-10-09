@@ -89,6 +89,7 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
+@pytest.mark.airlock_validation
 async def test_draft_container_is_deleted_after_submit(setup_test_workspace, verify):
     """The draft SAS must stop working after asynchronous deletion completes."""
     workspace_path, workspace_id = setup_test_workspace
@@ -259,6 +260,7 @@ async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_
 
 @pytest.mark.timeout(150 * 60, func_only=True)
 @pytest.mark.airlock
+@pytest.mark.airlock_validation
 @async_test_timeout(50 * 60)
 async def test_airlock_review_vm_flow(
     setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify
