@@ -78,6 +78,8 @@ jobs:
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
               - 'devops/scripts/kv_add_network_exception.sh'
+              - 'core/terraform/deploy.sh'
+              - 'core/terraform/mgmt_storage_private_endpoint.sh'
               - 'devops/terraform/**'
               - '.github/actions/devcontainer_run_command/action.yml'
               - '.github/workflows/deploy_tre_reusable.yml'
