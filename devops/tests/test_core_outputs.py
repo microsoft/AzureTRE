@@ -26,19 +26,23 @@ class CoreOutputTests(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
-        for relative in ("Makefile", "core/terraform/outputs.sh", "core/terraform/json-to-env.sh"):
+        for relative in (
+            "Makefile",
+            "core/terraform/outputs.sh",
+            "core/terraform/json-to-env.sh",
+            "devops/scripts/load_env.sh",
+        ):
             target = self.root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / relative, target)
         self.core = self.root / "core"
         self.log = self.root / "calls.log"
         scripts = self.root / "devops/scripts"
-        scripts.mkdir(parents=True)
+        scripts.mkdir(parents=True, exist_ok=True)
         (scripts / "bootstrap_azure_env.sh").write_text("true\n")
         (scripts / "storage_enable_public_access.sh").write_text(
             'echo storage-enable >> "$CALL_LOG"\ntrap \'echo storage-disable >> "$CALL_LOG"\' EXIT\n'
         )
-        (scripts / "load_env.sh").write_text('set -a\n. "$1"\nset +a\n')
         deploy = scripts / "build_deploy_ui.sh"
         deploy.write_text('#!/bin/bash\necho "ui:$STORAGE_ACCOUNT" >> "$CALL_LOG"\n')
         deploy.chmod(0o755)
@@ -130,7 +134,19 @@ class CoreOutputTests(unittest.TestCase):
                 self.assertFalse(self.cache.exists())
 
     def test_invalid_mapped_values_are_not_published(self):
-        for value in (None, "", " \t\n", 1, False, [], {}):
+        for value in (
+            None,
+            "",
+            " \t\n",
+            "mock\nstorage",
+            "mock\rstorage",
+            "mock\x00storage",
+            "mock'storage",
+            1,
+            False,
+            [],
+            {},
+        ):
             with self.subTest(value=value):
                 output = json.loads(VALID_OUTPUT)
                 output["static_web_storage"]["value"] = value
@@ -179,15 +195,24 @@ class CoreOutputTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME='legacy-topic'", self.private.read_text())
 
-    def test_output_values_are_shell_quoted(self):
+    def test_output_values_match_environment_loaders(self):
         output = json.loads(VALID_OUTPUT)
-        value = "mock'\"$storage; echo injected"
+        value = 'mock"\\$storage; echo injected'
         output["static_web_storage"]["value"] = value
         self.env["OUTPUT_JSON"] = json.dumps(output)
         result = self.run_make()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(f"ui:{value}", self.calls)
         self.assertNotIn("injected", result.stdout)
+        # load_and_validate_env.sh sources private.env directly.
+        sourced = subprocess.run(
+            [BASH, "-c", '. "$1"; printf "%s" "$STORAGE_ACCOUNT"', "bash", str(self.private)],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.assertEqual(sourced.returncode, 0, sourced.stderr)
+        self.assertEqual(sourced.stdout, value)
 
     def test_empty_cache_is_regenerated(self):
         self.cache.write_text("")

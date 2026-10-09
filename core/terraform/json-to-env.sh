@@ -146,8 +146,12 @@ jq -ers '
                 error("Terraform output \($mapping.path) must have a string value. Check the state and regenerate core/tre_output.json.")
             elif (.value | test("\\S") | not) then
                 error("Terraform output \($mapping.path) is empty. Check the state and regenerate core/tre_output.json.")
+            elif (.value | contains("\u0000") or test("[\r\n\u0027]")) then
+                error("Terraform output \($mapping.path) contains a single quote, newline or NUL. Check the state and regenerate core/tre_output.json.")
             else
-                "\($mapping.env_var)=\(.value | @sh)"
+                # load_env.sh strips outer quotes without interpreting shell escapes.
+                # load_and_validate_env.sh also sources this file, so reject single quotes above.
+                "\($mapping.env_var)=\u0027\(.value)\u0027"
             end
         end
     )
