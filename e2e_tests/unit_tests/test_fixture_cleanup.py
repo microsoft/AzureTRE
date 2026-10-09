@@ -95,7 +95,8 @@ setup_test_aad_workspace = fixtures.setup_test_aad_workspace
 setup_test_airlock_import_review_workspace_and_guacamole_service = (
     fixtures.setup_test_airlock_import_review_workspace_and_guacamole_service
 )
-pytest_fixture_setup = fixtures.pytest_fixture_setup
+pytest_timeout_set_timer = fixtures.pytest_timeout_set_timer
+pytest_timeout_cancel_timer = fixtures.pytest_timeout_cancel_timer
 pytest_runtest_teardown = fixtures.pytest_runtest_teardown
 
 @pytest.fixture(scope="session")
@@ -352,6 +353,45 @@ async def test_service(setup_test_workspace_and_guacamole_service):
         self.assertEqual(len(report.findall(".//error")), 1)
         self.assertIn("Cleanup of /workspaces/review/workspace-services/service exceeded 0.05 seconds", result.stdout)
         self.assertLess(events.index(["service", "cancel_complete"]), events.index(["research", "start"]))
+
+    def test_unmanaged_function_finalizer_keeps_timeout_before_managed_cleanup(self):
+        source = (
+            RESOURCE_TEST
+            + """
+@pytest.fixture
+def unmanaged_fixture():
+    yield
+    event(["unmanaged", "start"])
+    time.sleep(1)
+    event(["unmanaged", "leaked"])
+
+@pytest.mark.timeout(0.05)
+def test_last(unmanaged_fixture):
+    assert True
+"""
+        )
+        result, report, events = self.run_pytest(source)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(report.findall(".//error")), 1)
+        self.assertIn("Timeout >0.05s", result.stdout)
+        self.assertEqual(events[0], ["unmanaged", "start"])
+        self.assert_sequential_cleanup(events[1:])
+
+    def test_unmanaged_session_finalizer_keeps_timeout_after_managed_cleanup(self):
+        source = """
+@pytest.fixture(scope="session")
+def unmanaged_fixture():
+    yield
+    event(["unmanaged", "start"])
+    time.sleep(1)
+    event(["unmanaged", "leaked"])
+""" + RESOURCE_TEST.replace("    setup_test_workspace,", "    unmanaged_fixture,\n    setup_test_workspace,")
+        result, report, events = self.run_pytest(source)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(report.findall(".//error")), 1)
+        self.assertIn("Timeout >", result.stdout)
+        self.assert_sequential_cleanup(events[:-1])
+        self.assertEqual(events[-1], ["unmanaged", "start"])
 
 
 class CleanupPollingDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
