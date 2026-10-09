@@ -1,6 +1,5 @@
 """One-off API recovery of the disabled review workspace recorded in #5183."""
 
-import base64
 import json
 import os
 from pathlib import Path
@@ -38,8 +37,8 @@ def main():
     assert group["id"].lower() == f"/subscriptions/{SUBSCRIPTION}/resourcegroups/rg-{TRE}"
     assert group["tags"]["tre_id"] == TRE
     assert group["tags"]["ci_git_ref"] == "refs/pull/5165/merge"
-    certificate = base64.b64decode((temporary / "airlock-api-cert.b64").read_text().strip())
-    api_tls = ssl.create_default_context(cadata=ssl.DER_cert_to_PEM_cert(certificate))
+    # Public certificate read from the configured Key Vault secret via the resource processor.
+    api_tls = ssl.create_default_context(cafile=str(Path(__file__).with_name("airlock_5183_api.pem")))
     tokens = {}
 
     def token(scope):

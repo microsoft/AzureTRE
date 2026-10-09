@@ -38,13 +38,11 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Validate scope and obtain the configured public TLS certificate
+      - name: Validate environment scope
         shell: bash
         run: |
           set -euo pipefail
           az group show --name rg-tre06624892 --output json > "$RUNNER_TEMP/airlock-core-group.json"
-          az keyvault certificate show --vault-name kv-tre06624892 --name letsencrypt \
-            --query cer --output tsv > "$RUNNER_TEMP/airlock-api-cert.b64"
       - name: Inspect or recover the identified review workspace
         env:
           RECOVERY_ACTION: ${{ inputs.action }}
