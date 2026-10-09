@@ -31,7 +31,7 @@ TERMINAL = {
 
 def main():
     action = os.environ["RECOVERY_ACTION"]
-    assert action in ("inspect", "delete")
+    assert action in ("inspect", "status", "delete")
     temporary = Path(os.environ["RUNNER_TEMP"])
     group = json.loads((temporary / "airlock-core-group.json").read_text())
     assert group["id"].lower() == f"/subscriptions/{SUBSCRIPTION}/resourcegroups/rg-{TRE}"
@@ -66,6 +66,20 @@ def main():
             return json.load(response), response.headers
 
     admin_scope = f"api://{os.environ['API_CLIENT_ID']}"
+    if action == "status":
+        try:
+            operations = api(WORKSPACE_PATH + "/operations", admin_scope)[0]["operations"]
+        except HTTPError as error:
+            if error.code != 404:
+                raise
+            print("Workspace no longer present.")
+            return
+        for operation in operations:
+            print(json.dumps({"id": operation["id"], "state": operation["status"],
+                              "steps": [{"title": step["stepTitle"], "state": step["status"],
+                                         "resource_id": step["resourceId"]}
+                                        for step in operation["steps"]]}))
+        return
     workspace = api(WORKSPACE_PATH, admin_scope)[0]["workspace"]
     assert workspace["id"] == WORKSPACE
     assert workspace["templateName"] == "tre-workspace-airlock-import-review"

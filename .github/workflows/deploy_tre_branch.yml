@@ -7,7 +7,7 @@ on:  # yamllint disable-line rule:truthy
       action:
         description: Inspect or delete the disabled review workspace from run 11059
         type: choice
-        options: [inspect, delete]
+        options: [inspect, status, delete]
         default: inspect
         required: true
 
@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-refs/pull/5165/merge
+  group: ${{ inputs.action == 'status' && 'status-airlock-5183' || 'deploy-refs/pull/5165/merge' }}
   cancel-in-progress: false
 
 jobs:
