@@ -429,6 +429,7 @@ uninstall:
         - ${ bundle.parameters.enable_backup }
         - ${ bundle.parameters.delete_backups_on_uninstall }
         - ${ bundle.parameters.workspace_subscription_id }
+        - ${ bundle.parameters.unique_identifier_suffix }
       envs:
         ARM_USE_AZUREAD: "true"
         ARM_USE_OIDC: "true"
