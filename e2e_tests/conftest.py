@@ -4,12 +4,13 @@ import asyncio
 from typing import Tuple
 import config
 import logging
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
 from helpers import get_admin_token, get_template
+from e2e_tests.resources.nexus import nexus_prerequisites
 
 
 LOGGER = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ _SESSION_CLEANUP_FIXTURES = {
     "setup_test_workspace_and_guacamole_service",
     "setup_test_aad_workspace",
     "setup_test_airlock_import_review_workspace_and_guacamole_service",
+    "setup_nexus_prerequisites",
 }
 
 
@@ -228,17 +230,32 @@ async def get_workspace_owner_token(workspace_id, verify):
 
 async def disable_and_delete_ws_resource(resource_path, workspace_id, verify):
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
-    await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify)
+    await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify, allow_failed_disable=True)
 
 
 async def disable_and_delete_tre_resource(resource_path, verify):
     admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(f"/api{resource_path}", admin_token, verify)
+    await disable_and_delete_resource(f"/api{resource_path}", admin_token, verify, allow_failed_disable=True)
+
+
+@pytest.fixture(scope="session")
+async def setup_nexus_prerequisites(verify):
+    # Dependencies must outlive review VMs and their workspace finaliser.
+    resources = AsyncExitStack()
+    try:
+        async with asyncio.timeout(60 * 60):
+            await resources.enter_async_context(nexus_prerequisites(verify))
+        yield
+    finally:
+        async with resource_cleanup_timeout("Nexus prerequisites"):
+            await resources.aclose()
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
-async def setup_test_airlock_import_review_workspace_and_guacamole_service(verify) -> Tuple[str, str, str, str, str]:
+async def setup_test_airlock_import_review_workspace_and_guacamole_service(
+    setup_nexus_prerequisites, verify
+) -> Tuple[str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(
@@ -248,22 +265,24 @@ async def setup_test_airlock_import_review_workspace_and_guacamole_service(verif
         pre_created_workspace_id=pre_created_workspace_id,
     )
 
-    admin_token = await get_admin_token(verify=verify)
-    workspace_owner_token, _ = await get_workspace_auth_details(
-        admin_token=admin_token, workspace_id=workspace_id, verify=verify
-    )
-    pre_created_workspace_service_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_SERVICE_ID
+    try:
+        admin_token = await get_admin_token(verify=verify)
+        workspace_owner_token, _ = await get_workspace_auth_details(
+            admin_token=admin_token, workspace_id=workspace_id, verify=verify
+        )
+        pre_created_workspace_service_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_SERVICE_ID
 
-    workspace_service_path, workspace_service_id = await create_or_get_test_workpace_service(
-        workspace_path,
-        workspace_owner_token=workspace_owner_token,
-        pre_created_workspace_service_id=pre_created_workspace_service_id,
-        verify=verify,
-    )
+        workspace_service_path, workspace_service_id = await create_or_get_test_workpace_service(
+            workspace_path,
+            workspace_owner_token=workspace_owner_token,
+            pre_created_workspace_service_id=pre_created_workspace_service_id,
+            verify=verify,
+        )
 
-    yield workspace_path, workspace_id, workspace_service_path, workspace_service_id
+        yield workspace_path, workspace_id, workspace_service_path, workspace_service_id
 
-    # Tear-down in a cascaded way
-    await clean_up_test_workspace(
-        pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify
-    )
+    finally:
+        # Tear-down in a cascaded way
+        await clean_up_test_workspace(
+            pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify
+        )

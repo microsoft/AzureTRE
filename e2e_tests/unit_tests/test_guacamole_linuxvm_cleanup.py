@@ -10,14 +10,14 @@ from jsonschema import validate
 
 from e2e_tests import helpers
 from e2e_tests import test_guacamole_linuxvm as linuxvm
-from e2e_tests.resources import resource, strings
+from e2e_tests.resources import nexus, resource, strings
 
 
 class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")))
-        self.enterContext(patch.object(linuxvm, "get_admin_token", new=AsyncMock(return_value="admin-token")))
+        self.enterContext(patch.object(nexus, "get_admin_token", new=AsyncMock(return_value="admin-token")))
         self.fixture = ("/workspaces/ws", "ws", "/workspaces/ws/workspace-services/service", "service")
         self.resource_path = self.fixture[2] + "/user-resources/linux"
         self.requests = []
@@ -35,6 +35,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         disable_status=202,
         disable_outcome=strings.RESOURCE_STATUS_UPDATED,
         delete_outcome=strings.RESOURCE_STATUS_DELETED,
+        resource_disabled=True,
     ):
         def handle(request):
             if request.url.path == "/api/shared-services":
@@ -52,6 +53,8 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
                     },
                 )
             self.requests.append(request)
+            if request.method == "GET" and request.url.path == f"/api{self.resource_path}":
+                return Response(200, json={"userResource": {"isEnabled": not resource_disabled}})
             phase = request.url.path.rsplit("/", 1)[-1]
             response_status = 200
             if request.method == "POST":
@@ -86,9 +89,10 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
 
         self.enterContext(patch.object(resource, "AsyncClient", side_effect=create_client))
 
-    def assert_deleted(self):
+    def assert_deleted(self, failed_disable=False):
         self.assertEqual(
-            [request.method for request in self.requests], ["POST", "GET", "PATCH", "GET", "DELETE", "GET"]
+            [request.method for request in self.requests],
+            ["POST", "GET", "PATCH", "GET"] + (["GET"] if failed_disable else []) + ["DELETE", "GET"],
         )
         self.assertEqual(self.requests[-2].url.path, f"/api{self.resource_path}")
 
@@ -103,7 +107,18 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
-        self.assert_deleted()
+        self.assert_deleted(failed_disable=True)
+
+    async def test_failed_disable_does_not_delete_an_enabled_resource(self):
+        self.mock_api(
+            strings.RESOURCE_STATUS_DEPLOYMENT_FAILED,
+            disable_outcome=strings.RESOURCE_STATUS_UPDATING_FAILED,
+            resource_disabled=False,
+        )
+        with self.assertRaises(AssertionError) as caught:
+            await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
+        self.assertIn("not confirmed disabled", str(caught.exception.__notes__))
+        self.assertNotIn("DELETE", [request.method for request in self.requests])
 
     async def test_polling_error_still_cleans_up(self):
         # Use a non-retried error to verify cleanup without delaying the test.

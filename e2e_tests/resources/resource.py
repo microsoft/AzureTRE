@@ -71,7 +71,18 @@ async def disable_and_delete_resource(endpoint, access_token, verify, *, allow_f
         # The API persists isEnabled=False before provisioning. Failed installs can
         # fail again during disable, but deletion is safe once that operation ends.
         failure_states = [] if allow_failed_disable else [strings.RESOURCE_STATUS_UPDATING_FAILED]
-        await wait_for(patch_done, client, operation_endpoint, access_token, failure_states)
+        disable_state = await wait_for(patch_done, client, operation_endpoint, access_token, failure_states)
+        if disable_state == strings.RESOURCE_STATUS_UPDATING_FAILED:
+            response = await client.get(full_endpoint, headers=get_auth_header(access_token), timeout=TIMEOUT)
+            assert_status(response, [status.HTTP_200_OK], "Could not verify disabled resource")
+            resources = [
+                response.json()[key]
+                for key in ("workspace", "workspaceService", "userResource", "sharedService")
+                if key in response.json()
+            ]
+            assert len(resources) == 1 and resources[0].get("isEnabled") is False, (
+                "Refusing deletion after failed disable: the resource is not confirmed disabled"
+            )
 
         # delete
         auth_headers = get_auth_header(access_token)
@@ -138,3 +149,4 @@ async def wait_for(func, client, operation_endpoint, access_token, failure_state
     except Exception:
         LOGGER.exception(f"Failed to deploy. Status message: {message}.\n{operation_steps}")
         raise
+    return done_state
