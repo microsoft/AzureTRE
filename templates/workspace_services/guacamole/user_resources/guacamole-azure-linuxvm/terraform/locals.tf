@@ -6,7 +6,7 @@ locals {
   service_resource_name_suffix   = "${var.tre_id}-ws-${local.short_workspace_id}-svc-${local.short_service_id}"
   vm_name                        = "linuxvm${local.short_service_id}"
   keyvault_name                  = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+  storage_name                   = var.workspace_storage_name != "" ? var.workspace_storage_name : lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   admin_username = (
     var.admin_username == "" ?
     (length(data.azuread_user.user[0].mail) > 0 && strcontains(data.azuread_user.user[0].user_principal_name, "#EXT#") ?

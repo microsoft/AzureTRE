@@ -64,7 +64,7 @@ A TRE Workspace will be provisioned in a separate Resource Group along with its 
 | kv-{TRE_ID}-ws-XXXX | Azure Key Vault | Management of TRE workspace secrets & certificates | [Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview) |
 | osdisk-windowsvm8f45 | Disk | Azure VM storage disk | [Managed Disks](https://docs.microsoft.com/en-us/azure/virtual-machines/managed-disks-overview) |
 | plan-09d0ba4f-f79f-4047-aa2c-03fc9df7b318 | App Service plan | Compute resources in which the workspace app services (Gitea) run | [App Hosting Plans](https://docs.microsoft.com/en-us/azure/app-service/overview-hosting-plans) |
-| stgwsb318 | Storage account | Workspace Storage account | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) |
+| stgwsb318 | Storage account | Workspace Storage account. Workspaces created with `airlock_version` 2 use a random suffix instead (e.g. `stgwsk3x9q2m7a1bz`) | [Storage Blobs](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) |
 | vnet-{TRE_ID}-ws-XXXX | Virtual Network | [Azure TRE VNET spoke](../networking) | [Virtual Networks](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview) |
 | windowsvm8f45 | Virtual Machine | [Windows VM instance](../../tre-templates/user-resources/guacamole-windows-vm) for research | [Windows Virtual Machine](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/overview) |
 

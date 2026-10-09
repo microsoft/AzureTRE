@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.3.12
+version: 0.4.0
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -24,6 +24,10 @@ credentials:
 parameters:
   - name: workspace_id
     type: string
+  - name: workspace_storage_name
+    type: string
+    default: ""
+    description: "Name of the parent workspace storage account, provided by the workspace storage_account_name output"
   - name: tre_id
     type: string
   - name: address_space
@@ -121,6 +125,7 @@ install:
       description: "Deploy OHDSI workspace service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         address_space: ${ bundle.parameters.address_space }
@@ -174,6 +179,7 @@ upgrade:
       description: "Upgrade shared service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         address_space: ${ bundle.parameters.address_space }
@@ -198,6 +204,7 @@ uninstall:
       description: "Tear down OHDSI workspace service"
       vars:
         workspace_id: ${ bundle.parameters.workspace_id }
+        workspace_storage_name: ${ bundle.parameters.workspace_storage_name }
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
         address_space: ${ bundle.parameters.address_space }

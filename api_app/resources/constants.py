@@ -2,6 +2,11 @@
 CORE_RESOURCE_GROUP_NAME = "rg-{}"
 WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 
+# Workspace storage account (templates/workspaces/base/terraform/locals.tf)
+STORAGE_ACCOUNT_NAME_WORKSPACE = "stgws{}"
+# Length of the random suffix used to name the storage account of airlock_version >= 2 workspaces
+UNIQUE_IDENTIFIER_SUFFIX_LENGTH = 12
+
 IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
 

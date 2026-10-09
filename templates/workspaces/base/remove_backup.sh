@@ -24,6 +24,7 @@ WORKSPACE_ID=$5
 ENABLE_BACKUP=$6
 DELETE_BACKUPS=$7
 WORKSPACE_SUBSCRIPTION_ID=${8:-}
+UNIQUE_IDENTIFIER_SUFFIX=${UNIQUE_IDENTIFIER_SUFFIX:-}
 
 ENABLE_BACKUP=$(echo "${ENABLE_BACKUP}" | tr '[:upper:]' '[:lower:]')
 DELETE_BACKUPS=$(echo "${DELETE_BACKUPS}" | tr '[:upper:]' '[:lower:]')
@@ -109,12 +110,29 @@ done
 # directly to the account are removed; the scope match is case-insensitive because
 # Azure lower-cases segments of the lock id.
 subscription_id=$(az account show --query "id" --output tsv)
-storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.Storage/storageAccounts/stgws${short_workspace_id}"
-storage_account_id_lower=$(echo "${storage_account_id}" | tr '[:upper:]' '[:lower:]')
-if ! lock_ids=$(az lock list --resource "${storage_account_id}" --query "[].id" --output tsv); then
-  echo "Error: failed to list resource locks on the workspace storage account. Aborting so the uninstall can be retried." >&2
-  exit 1
+# Matches the name Terraform derives: the unique suffix when set, else the legacy last-four of the id.
+if [ -n "${UNIQUE_IDENTIFIER_SUFFIX}" ]; then
+  storage_account_name="stgws${UNIQUE_IDENTIFIER_SUFFIX}"
+else
+  storage_account_name="stgws${short_workspace_id}"
 fi
+storage_account_id="/subscriptions/${subscription_id}/resourceGroups/${vault_resource_group}/providers/Microsoft.Storage/storageAccounts/${storage_account_name}"
+storage_account_id_lower=$(echo "${storage_account_id}" | tr '[:upper:]' '[:lower:]')
+lock_ids=""
+lock_error_file=$(mktemp)
+if ! lock_ids=$(az lock list --resource "${storage_account_id}" --query "[].id" --output tsv 2> "${lock_error_file}"); then
+  if grep -q "ResourceNotFound" "${lock_error_file}"; then
+    # A previous uninstall attempt may already have destroyed the account.
+    echo "Workspace storage account ${storage_account_name} not found, skipping lock removal."
+    lock_ids=""
+  else
+    cat "${lock_error_file}" >&2
+    rm -f "${lock_error_file}"
+    echo "Error: failed to list resource locks on the workspace storage account. Aborting so the uninstall can be retried." >&2
+    exit 1
+  fi
+fi
+rm -f "${lock_error_file}"
 while IFS= read -r lock_id; do
   [ -z "${lock_id}" ] && continue
   case "$(echo "${lock_id}" | tr '[:upper:]' '[:lower:]')" in

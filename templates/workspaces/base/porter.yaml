@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.12.2
+version: 2.13.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -33,6 +33,10 @@ parameters:
   - name: id
     type: string
     description: "the resource ID for this installation"
+  - name: unique_identifier_suffix
+    type: string
+    default: ""
+    description: "Random suffix used to name the workspace storage account of airlock_version 2 workspaces. Set by the API at creation."
   - name: azure_environment
     type: string
     default: "AzureCloud"
@@ -247,6 +251,11 @@ outputs:
     applyTo:
       - install
       - upgrade
+  - name: storage_account_name
+    type: string
+    applyTo:
+      - install
+      - upgrade
 
 mixins:
   - exec
@@ -261,6 +270,7 @@ install:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
+        unique_identifier_suffix: ${ bundle.parameters.unique_identifier_suffix }
         location: ${ bundle.parameters.azure_location }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
@@ -316,6 +326,7 @@ install:
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
         - name: airlock_signer_client_id
+        - name: storage_account_name
 
 upgrade:
   - terraform:
@@ -323,6 +334,7 @@ upgrade:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
+        unique_identifier_suffix: ${ bundle.parameters.unique_identifier_suffix }
         location: ${ bundle.parameters.azure_location }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }
@@ -378,6 +390,7 @@ upgrade:
         - name: workspace_researchers_group_id
         - name: workspace_airlock_managers_group_id
         - name: airlock_signer_client_id
+        - name: storage_account_name
   - az:
       description: "Set Azure Cloud Environment"
       arguments:
@@ -419,11 +432,14 @@ uninstall:
       envs:
         ARM_USE_AZUREAD: "true"
         ARM_USE_OIDC: "true"
+        # An env var, not an argument: the exec mixin drops empty arguments, which would shift positions.
+        UNIQUE_IDENTIFIER_SUFFIX: "${ bundle.parameters.unique_identifier_suffix }"
   - terraform:
       description: "Tear down workspace"
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         tre_resource_id: ${ bundle.parameters.id }
+        unique_identifier_suffix: ${ bundle.parameters.unique_identifier_suffix }
         location: ${ bundle.parameters.azure_location }
         workspace_subscription_id: ${ bundle.parameters.workspace_subscription_id }
         address_spaces: ${ bundle.parameters.address_spaces }

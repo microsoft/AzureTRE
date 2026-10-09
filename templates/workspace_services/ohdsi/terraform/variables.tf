@@ -1,6 +1,11 @@
 variable "workspace_id" {
   type = string
 }
+variable "workspace_storage_name" {
+  type        = string
+  default     = ""
+  description = "Name of the parent workspace storage account. When empty, the legacy name derived from the workspace ID is used."
+}
 variable "tre_id" {
   type = string
 }

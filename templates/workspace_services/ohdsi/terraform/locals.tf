@@ -5,7 +5,7 @@ locals {
   core_resource_group_name       = "rg-${var.tre_id}"
   service_suffix                 = "${local.workspace_resource_name_suffix}-svc-${local.short_service_id}"
   key_vault_name                 = lower("kv-${substr(local.workspace_resource_name_suffix, -20, -1)}")
-  storage_name                   = lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
+  storage_name                   = var.workspace_storage_name != "" ? var.workspace_storage_name : lower(replace("stg${substr(local.workspace_resource_name_suffix, -8, -1)}", "-", ""))
   porter_yaml                    = yamldecode(file("${path.module}/../porter.yaml"))
 
   # ATLAS Database
