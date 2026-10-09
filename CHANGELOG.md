@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Select an available VM size for shared-service E2E tests because the Nexus and admin VM defaults are restricted in the CI subscription. ([#5173](https://github.com/microsoft/AzureTRE/issues/5173))
 * Require explicit Nexus CE EULA acceptance for shared-service E2E tests, pass consent through the PR bot into the Nexus payload, and fail before Nexus or certificate changes when consent is absent. (`build-scripts` 1.0.4) ([#5132](https://github.com/microsoft/AzureTRE/issues/5132))
 * Fix denial-of-service dependency alerts by updating `source-map-js` to 1.2.2 in the UI and removing transitive `sprintf-js` from workflow tests through an `argparse` 2 override for `js-yaml` 3. (`ui` 0.10.3, `build-scripts` 1.0.3) ([#5118](https://github.com/microsoft/AzureTRE/pull/5118))
 * Align the `create_aad_groups` schema and Porter defaults to `true` across all three workspace bundles, preventing an unrelated edit from unintentionally removing workspace role groups and app-role assignments.

@@ -112,6 +112,9 @@ async def test_create_shared_service(template_name, verify) -> None:
         },
     }
 
+    if template_name == strings.ADMIN_VM_SHARED_SERVICE:
+        post_payload["properties"]["admin_jumpbox_vm_sku"] = "Standard_D2s_v3"
+
     if template_name == strings.AIRLOCK_NOTIFIER_SHARED_SERVICE:
         post_payload["properties"].update(create_airlock_notifier_properties)
 
@@ -162,6 +165,7 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
             "display_name": f"Shared service {strings.NEXUS_SHARED_SERVICE}",
             "description": f"{strings.NEXUS_SHARED_SERVICE} deployed via e2e tests",
             "ssl_cert_name": cert_name,
+            "vm_size": "Standard_D2s_v3",
             "accept_nexus_eula": config.TEST_ACCEPT_NEXUS_EULA,
         },
     }
