@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient, MockTransport, Response
 
-from e2e_tests import conftest as fixtures, helpers
+from e2e_tests import conftest as fixtures, helpers, test_airlock as airlock
 from e2e_tests.resources import resource
 
 
@@ -20,6 +20,7 @@ async def template(*args):
 class AcceptedResourceCleanupTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.requests = []
+        self.authorization = []
         self.path = "/workspaces/new-workspace"
         self.states = ["deploying", "deployed"]
         self.disable_status = 202
@@ -41,6 +42,7 @@ class AcceptedResourceCleanupTests(unittest.IsolatedAsyncioTestCase):
 
     async def handle(self, request):
         self.requests.append((request.method, request.url.path))
+        self.authorization.append(request.headers.get("Authorization"))
         code = 200
         phase = request.url.path.rsplit("/", 1)[-1]
         if request.method == "POST":
@@ -90,6 +92,62 @@ class AcceptedResourceCleanupTests(unittest.IsolatedAsyncioTestCase):
             async with asyncio.timeout(0.01):
                 await fixtures.create_or_get_test_workpace_service("/workspaces/existing", "token", "", True)
         self.assertEqual([path for method, path in self.requests if method == "DELETE"], ["/api" + self.path])
+
+    async def test_review_vm_timeout_finishes_child_cleanup_before_workspace_teardown(self):
+        self.path = "/workspaces/review/workspace-services/guacamole/user-resources/review-vm"
+        self.block_delete = True
+        events = []
+
+        async def post(**kwargs):
+            if kwargs.get("method") == "PATCH":
+                return "/workspaces/research", "research"
+            return await resource.post_resource(**kwargs)
+
+        self.enterContext(patch.object(airlock, "post_resource", post))
+        self.enterContext(patch.object(airlock, "get_workspace_owner_token", AsyncMock(return_value="research-token")))
+        self.enterContext(patch.object(airlock, "get_admin_token", AsyncMock(return_value="admin-token")))
+        self.enterContext(
+            patch.object(airlock, "get_resource", AsyncMock(return_value={"workspace": {"_etag": "etag"}}))
+        )
+        self.enterContext(
+            patch.object(airlock, "get_workspace_auth_details", AsyncMock(return_value=("review-token", None)))
+        )
+        self.enterContext(
+            patch.object(airlock, "submit_airlock_import_request", AsyncMock(return_value=("request", "unused")))
+        )
+        self.enterContext(patch.object(airlock, "get_request", AsyncMock()))
+
+        async def run_with_teardown():
+            try:
+                async with asyncio.timeout(0.01):
+                    await airlock.test_airlock_review_vm_flow(
+                        ("/workspaces/research", "research"),
+                        (
+                            "/workspaces/review",
+                            "review",
+                            "/workspaces/review/workspace-services/guacamole",
+                            "guacamole",
+                        ),
+                        True,
+                    )
+            finally:
+                events.append("workspace-teardown")
+
+        task = asyncio.create_task(run_with_teardown())
+        try:
+            await asyncio.wait_for(self.delete_started.wait(), 1)
+            self.assertEqual(events, [])
+            self.assertFalse(task.done())
+        finally:
+            self.release_delete.set()
+            with self.assertRaises(TimeoutError):
+                await task
+        self.assertEqual(events, ["workspace-teardown"])
+        self.assertEqual(self.requests[0], ("POST", "/api/workspaces/research/requests/request/review-user-resource"))
+        self.assertEqual(self.requests[-2:], [("DELETE", "/api" + self.path), ("GET", "/api/operations/delete")])
+        self.assertEqual(
+            self.authorization, ["Bearer research-token"] + ["Bearer review-token"] * (len(self.requests) - 1)
+        )
 
     async def test_failed_deployment_still_cleans_up_and_preserves_failure(self):
         self.states = ["deployment_failed"]

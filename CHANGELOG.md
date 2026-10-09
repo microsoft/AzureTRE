@@ -28,7 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Require reachable Nexus and a working Azure CLI during import/export review VM bootstrap. Preserve optional tool behaviour for standard Windows VMs. (`tre-service-guacamole-windowsvm` 3.0.5, `tre-service-guacamole-import-reviewvm` 2.0.5, `tre-service-guacamole-export-reviewvm` 2.0.8) ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
-* Wait for asynchronous Airlock draft-container deletion, provision Nexus prerequisites for review VM tests, and continue cleanup after a verified failed disable. Cancel timed-out review test polling before teardown and clean up resources accepted before setup cancellation.
+* Wait for asynchronous Airlock draft-container deletion, provision Nexus prerequisites for review VM tests, and continue cleanup after a verified failed disable. Cancel timed-out review test polling before teardown and clean up accepted workspaces, services and review VMs before parent teardown.
   Select the deletion and review-flow tests with the `airlock_validation` marker. ([#5181](https://github.com/microsoft/AzureTRE/issues/5181), [#5182](https://github.com/microsoft/AzureTRE/issues/5182), [#5183](https://github.com/microsoft/AzureTRE/issues/5183))
 * Restore Dsv6 sizes for Guacamole Linux and Airlock import/export review VMs because the Dsv7 default is unavailable in Switzerland North.
   (`tre-service-guacamole-linuxvm` 1.4.9, `tre-service-guacamole-import-reviewvm` 2.0.5, `tre-service-guacamole-export-reviewvm` 2.0.8) ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))

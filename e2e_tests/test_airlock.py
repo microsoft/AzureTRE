@@ -330,6 +330,7 @@ async def test_airlock_review_vm_flow(
         method="POST",
         wait=True,
         access_token_for_wait=import_workspace_owner_token,  # needs a different token as is created in a separate workspace
+        cleanup_failed_create=True,
     )
 
     LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
