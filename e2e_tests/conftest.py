@@ -4,6 +4,7 @@ import asyncio
 from typing import Tuple
 import config
 import logging
+from contextlib import asynccontextmanager
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
@@ -13,6 +14,45 @@ from helpers import get_admin_token, get_template
 
 LOGGER = logging.getLogger(__name__)
 pytestmark = pytest.mark.asyncio(loop_scope="session")
+CLEANUP_TIMEOUT_SECONDS = 60 * 60
+_SESSION_CLEANUP_STARTED = pytest.StashKey[bool]()
+_SESSION_CLEANUP_FIXTURES = {
+    "setup_test_workspace",
+    "setup_test_workspace_and_guacamole_service",
+    "setup_test_aad_workspace",
+    "setup_test_airlock_import_review_workspace_and_guacamole_service",
+}
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_fixture_setup(fixturedef, request):
+    outcome = yield
+    if outcome.excinfo is None and fixturedef.scope == "session" and fixturedef.argname in _SESSION_CLEANUP_FIXTURES:
+        request.session.stash[_SESSION_CLEANUP_STARTED] = True
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_teardown(item, nextitem):
+    if nextitem is None and item.session.stash.get(_SESSION_CLEANUP_STARTED, False):
+        # Session resource cleanup has its own cooperative timeout. A signal from
+        # the final test would interrupt the runner and abandon its cleanup task.
+        cancel_timer = getattr(item.config.hook, "pytest_timeout_cancel_timer", None)
+        if cancel_timer is not None:
+            cancel_timer(item=item)
+
+
+@asynccontextmanager
+async def resource_cleanup_timeout(resource_path):
+    timeout = asyncio.timeout(CLEANUP_TIMEOUT_SECONDS)
+    try:
+        async with timeout:
+            yield
+    except TimeoutError as error:
+        if not timeout.expired():
+            raise
+        message = f"Cleanup of {resource_path} exceeded {CLEANUP_TIMEOUT_SECONDS} seconds"
+        LOGGER.error("%s. Check the operation polling logs for its last observed state.", message)
+        raise TimeoutError(message) from error
 
 
 def pytest_addoption(parser):
@@ -104,16 +144,18 @@ async def create_or_get_test_workpace_service(
 async def clean_up_test_workspace(pre_created_workspace_id: str, workspace_path: str, verify: bool):
     # Only delete the workspace if it wasn't pre-created
     if pre_created_workspace_id == "":
-        LOGGER.info(f"Deleting workspace {pre_created_workspace_id}")
-        await disable_and_delete_tre_resource(workspace_path, verify)
+        LOGGER.info(f"Deleting workspace {workspace_path}")
+        async with resource_cleanup_timeout(workspace_path):
+            await disable_and_delete_tre_resource(workspace_path, verify)
 
 
 async def clean_up_test_workspace_service(
     pre_created_workspace_service_id: str, workspace_service_path: str, workspace_id: str, verify: bool
 ):
     if pre_created_workspace_service_id == "":
-        LOGGER.info(f"Deleting workspace service {pre_created_workspace_service_id}")
-        await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)
+        LOGGER.info(f"Deleting workspace service {workspace_service_path}")
+        async with resource_cleanup_timeout(workspace_service_path):
+            await disable_and_delete_ws_resource(workspace_service_path, workspace_id, verify)
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
