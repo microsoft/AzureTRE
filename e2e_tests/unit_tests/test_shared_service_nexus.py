@@ -61,6 +61,7 @@ class SharedServiceNexusConsentTests(unittest.IsolatedAsyncioTestCase):
         )
         validate(payloads[1]["properties"], json.loads(schema_file.read_text()))
         self.assertIs(payloads[1]["properties"]["accept_nexus_eula"], True)
+        self.assertEqual(payloads[1]["properties"].get("vm_size"), "Standard_D2s_v3")
         self.assertEqual(
             [call.args[0] for call in self.cleanup_created.await_args_list],
             ["/shared-services/nexus", "/shared-services/certs"],
