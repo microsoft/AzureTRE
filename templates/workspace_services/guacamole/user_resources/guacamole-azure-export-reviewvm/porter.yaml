@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-service-guacamole-export-reviewvm
-version: 2.0.8
+version: 2.0.9
 description: "An Azure TRE User Resource Template for reviewing Airlock export requests"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -122,7 +122,7 @@ mixins:
   - terraform:
       clientVersion: 1.9.8
   - az:
-      clientVersion: 2.67.0
+      clientVersion: 2.81.0
 
 install:
   - terraform:
