@@ -8,6 +8,7 @@ on:  # yamllint disable-line rule:truthy
       - "feature/**"
     paths:
       - 'e2e_tests/**'
+      - 'templates/**/porter.yaml'
       - '.github/workflows/e2e_helper_tests.yml'
 
 permissions:

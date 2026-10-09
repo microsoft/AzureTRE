@@ -28,6 +28,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      e2eBundle:
+        description: Exact Porter bundle name for isolated E2E case selection
+        type: string
+        default: ""
+        required: false
       acceptNexusEula:
         description: Explicit consent to the Nexus CE EULA when E2E tests create Nexus
         type: boolean
@@ -910,7 +915,7 @@ jobs:
     name: "Run E2E Tests"
     # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: >-
-      ${{ always() && inputs.e2eTestsCustomSelector != '' &&
+      ${{ always() && (inputs.e2eTestsCustomSelector != '' || inputs.e2eBundle != '') &&
       (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') }}
@@ -928,10 +933,27 @@ jobs:
           # then the default checkout will apply
           ref: ${{ inputs.prRef }}
 
+      - name: Prepare bundle validation
+        if: inputs.e2eBundle != ''
+        env:
+          TEST_BUNDLE: ${{ inputs.e2eBundle }}
+          TEST_BUNDLE_MARKER: ${{ inputs.e2eTestsCustomSelector }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
+          TEST_ACCEPT_NEXUS_EULA: ${{ inputs.acceptNexusEula }}
+          TEST_BUNDLE_CI_REF: ${{ inputs.ciGitRef }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT || 'AzureCloud' }}
+        run: python3 e2e_tests/run_bundle.py --prepare
+
       - name: Run E2E Tests
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }} make test-e2e-custom SELECTOR='${{ inputs.e2eTestsCustomSelector }}'"
+          COMMAND: >-
+            ${{ inputs.e2eBundle != ''
+                && 'TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle'
+                || format('TEST_ACCEPT_NEXUS_EULA={0} make test-e2e-custom SELECTOR=''{1}''',
+                          inputs.acceptNexusEula, inputs.e2eTestsCustomSelector) }}
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -956,7 +978,9 @@ jobs:
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: E2E Test Results
-          path: "./e2e_tests/pytest_e2e_*.xml"
+          path: |
+            ./e2e_tests/pytest_e2e_*.xml
+            ./e2e_tests/bundle-validation.json
 
   summary:
     name: Summary

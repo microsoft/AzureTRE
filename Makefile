@@ -554,6 +554,15 @@ test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 		else \
 			python -m pytest -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
 
+# Description: Run the exact cases declared for TEST_BUNDLE, or a validated CI request.
+# Example: TEST_BUNDLE=tre-workspace-service-azuresql make test-e2e-bundle
+.PHONY: test-e2e-bundle
+test-e2e-bundle: ## Run one bundle's explicit E2E cases
+	python3 "${MAKEFILE_DIR}/e2e_tests/run_bundle.py" --validate-only \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
+	&& python3 "${MAKEFILE_DIR}/e2e_tests/run_bundle.py"
+
 # Description: Setup the ability to debug the API and Resource Processor by  configuring settings and permissions required for debugging.
 # Example: make setup-local-debugging
 setup-local-debugging: ## 🛠️ Setup local debugging
