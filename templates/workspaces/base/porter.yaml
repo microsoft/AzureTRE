@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-base
-version: 2.13.0
+version: 2.13.2
 description: "A base Azure TRE workspace"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -429,10 +429,11 @@ uninstall:
         - ${ bundle.parameters.enable_backup }
         - ${ bundle.parameters.delete_backups_on_uninstall }
         - ${ bundle.parameters.workspace_subscription_id }
-        - ${ bundle.parameters.unique_identifier_suffix }
       envs:
         ARM_USE_AZUREAD: "true"
         ARM_USE_OIDC: "true"
+        # An env var, not an argument: the exec mixin drops empty arguments, which would shift positions.
+        UNIQUE_IDENTIFIER_SUFFIX: "${ bundle.parameters.unique_identifier_suffix }"
   - terraform:
       description: "Tear down workspace"
       vars:
