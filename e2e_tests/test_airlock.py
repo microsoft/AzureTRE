@@ -89,7 +89,7 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
-async def test_draft_container_is_sealed_after_submit(setup_test_workspace, verify):
+async def test_draft_container_is_deleted_after_submit(setup_test_workspace, verify):
     """The draft SAS must stop working after asynchronous deletion completes."""
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)

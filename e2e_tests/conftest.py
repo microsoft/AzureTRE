@@ -114,7 +114,11 @@ async def create_or_get_test_workspace(
     # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
     await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(
-        payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify
+        payload,
+        resource_strings.API_WORKSPACES,
+        access_token=admin_token,
+        verify=verify,
+        cleanup_failed_create=True,
     )
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
@@ -141,6 +145,7 @@ async def create_or_get_test_workpace_service(
         endpoint=f"/api{workspace_path}/{resource_strings.API_WORKSPACE_SERVICES}",
         access_token=workspace_owner_token,
         verify=verify,
+        cleanup_failed_create=True,
     )
 
     return workspace_service_path, workspace_service_id
