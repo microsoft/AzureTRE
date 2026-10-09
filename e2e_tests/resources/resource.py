@@ -120,15 +120,26 @@ async def temporary_resource(payload, endpoint, access_token, verify):
 
 
 async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
-    done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
-    record_operation(operation_endpoint, done_state, done)
+    done_state, message, operation_steps = "not yet observed", "", ""
     LOGGER.info(f"WAITING FOR OP: {operation_endpoint}")
-    while not done:
-        await asyncio.sleep(30)
-
+    try:
         done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
         record_operation(operation_endpoint, done_state, done)
-        LOGGER.info(f"{done}, {done_state}, {message}")
+        while not done:
+            await asyncio.sleep(30)
+
+            done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+            record_operation(operation_endpoint, done_state, done)
+            LOGGER.info(f"{done}, {done_state}, {message}")
+    except asyncio.CancelledError:
+        LOGGER.error(
+            "Stopped waiting for operation %s. Last observed state: %s; message: %s; steps: %s",
+            operation_endpoint,
+            done_state,
+            message,
+            operation_steps,
+        )
+        raise
     try:
         assert done_state not in failure_states
     except Exception:
