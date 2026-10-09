@@ -4,7 +4,13 @@ set -o pipefail
 
 echo "# Generated environment variables from tf output"
 
-jq -r '
+jq -ers '
+    if length != 1 or (.[0] | type) != "object" then
+        error("Expected one Terraform output object. Check the state and regenerate core/tre_output.json.")
+    else
+        .[0]
+    end
+    |
     [
         {
             "path": "core_resource_group_name",
@@ -116,25 +122,35 @@ jq -r '
             "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID"
         },
         {
+            # This mapping is retained for older caches but is not a root output.
             "path": "airlock_malware_scan_result_topic_name",
-            "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME"
+            "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME",
+            "optional": true
         }
     ]
         as $env_vars_to_extract
     |
-    with_entries(
-        select (
-            .key as $a
-            |
-            any( $env_vars_to_extract[]; .path == $a)
-        )
-        |
-        .key |= . as $old_key | ($env_vars_to_extract[] | select (.path == $old_key) | .env_var)
+    . as $outputs
+    |
+    $env_vars_to_extract
+    |
+    map(
+        . as $mapping
+        | if $mapping.optional and ($outputs | has($mapping.path) | not) then
+            empty
+        else
+            $outputs[$mapping.path]
+            | if type != "object" then
+                error("Missing or invalid Terraform output: \($mapping.path). Check the state and regenerate core/tre_output.json.")
+            elif (.value | type) != "string" then
+                error("Terraform output \($mapping.path) must have a string value. Check the state and regenerate core/tre_output.json.")
+            elif (.value | test("\\S") | not) then
+                error("Terraform output \($mapping.path) is empty. Check the state and regenerate core/tre_output.json.")
+            else
+                "\($mapping.env_var)=\(.value | @sh)"
+            end
+        end
     )
     |
-    to_entries
-    |
-    map("\(.key)=\"\(.value.value)\"")
-    |
     .[]
-    ' | sed "s/\"/'/g" # replace double quote with single quote to handle special chars
+    '
