@@ -11,6 +11,7 @@ from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
 from helpers import get_admin_token, get_template
 from e2e_tests.resources.nexus import nexus_prerequisites
+from e2e_tests.timeouts import async_test_timeout
 
 
 LOGGER = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ def verify(pytestconfig):
         return False
 
 
+@async_test_timeout(60 * 60)
 async def create_or_get_test_workspace(
     auth_type: str,
     verify: bool,
@@ -119,6 +121,7 @@ async def create_or_get_test_workspace(
     return workspace_path, workspace_id
 
 
+@async_test_timeout(60 * 60)
 async def create_or_get_test_workpace_service(
     workspace_path, workspace_owner_token, pre_created_workspace_service_id, verify
 ):
