@@ -1,5 +1,6 @@
 import pytest
 import logging
+from e2e_tests import config
 from e2e_tests.conftest import disable_and_delete_tre_resource
 from datetime import date
 
@@ -128,10 +129,17 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 @pytest.mark.shared_services
 @pytest.mark.timeout(60 * 60)
-@pytest.mark.skipif(
-    date.today().weekday() in [5, 6], reason="LetsEncrypt limits to 5 times a week. Skipping on SAT & SUN."
-)
 async def test_create_certs_nexus_shared_service(verify) -> None:
+    if not config.TEST_ACCEPT_NEXUS_EULA:
+        pytest.fail(
+            "Nexus CE EULA acceptance is required; Nexus lifecycle coverage is unproven. "
+            "After accepting the EULA, set TEST_ACCEPT_NEXUS_EULA=true locally, "
+            "acceptNexusEula=true in the branch workflow, or add accept_nexus_eula "
+            "to /test-shared-services. No Nexus or certificate resources were changed."
+        )
+    if date.today().weekday() in [5, 6]:
+        pytest.skip("Certificate rate-limit precaution: skipping on weekends; Nexus lifecycle coverage is unproven.")
+
     await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
     await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
 
@@ -154,6 +162,7 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
             "display_name": f"Shared service {strings.NEXUS_SHARED_SERVICE}",
             "description": f"{strings.NEXUS_SHARED_SERVICE} deployed via e2e tests",
             "ssl_cert_name": cert_name,
+            "accept_nexus_eula": config.TEST_ACCEPT_NEXUS_EULA,
         },
     }
 

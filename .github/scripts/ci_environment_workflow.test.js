@@ -75,6 +75,16 @@ describe('regional CI workflow routing', () => {
   beforeEach(() => { directory = fs.mkdtempSync(path.join(os.tmpdir(), 'azuretre-ci-id-')); });
   afterEach(() => { fs.rmSync(directory, { recursive: true, force: true }); });
 
+  test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
+    const jobs = workflow('pr_comment_bot.yml').jobs;
+    expect(jobs.pr_comment.outputs.acceptNexusEula).toBe('${{ steps.check_command.outputs.acceptNexusEula }}');
+    expect(jobs.run_test.with.acceptNexusEula).toBe("${{ needs.pr_comment.outputs.acceptNexusEula == 'true' }}");
+    const reusable = workflow('deploy_tre_reusable.yml');
+    expect(reusable.on.workflow_call.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const runner = reusable.jobs.e2e_tests_custom.steps.find(step => step.name === 'Run E2E Tests');
+    expect(runner.with.COMMAND).toContain('TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }}');
+  });
+
   test.each([
     ['pr_comment_bot.yml', 'prepare_pr_env', 'run_test', 'refs/pull/5092/merge'],
     ['deploy_tre_branch.yml', 'prepare-not-main', 'run-deploy-tre-not-main', 'refs/heads/fix/keyvault']
