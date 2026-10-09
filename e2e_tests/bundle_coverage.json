@@ -235,13 +235,16 @@
       "family": "user_resource",
       "prerequisites": [
         "tre-workspace-base",
-        "tre-service-guacamole"
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [],
       "related_tests": [],
       "coverage": [],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites (#5182)."
       ],
       "unavailable_reason": "No isolated export-review VM lifecycle case (#5127)."
     },
@@ -251,7 +254,9 @@
       "prerequisites": [
         "tre-workspace-base",
         "tre-workspace-airlock-import-review",
-        "tre-service-guacamole"
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [
         "test_airlock.py::test_airlock_review_vm_flow"
@@ -262,7 +267,8 @@
         "airlock-review-flow"
       ],
       "limitations": [
-        "Terminal review-VM deletion is not established by this case. Expected-error parsing requires the fix in #5177."
+        "Terminal review-VM deletion is not established by this case. Expected-error parsing requires the fix in #5177.",
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites (#5182)."
       ],
       "unavailable_reason": ""
     },
