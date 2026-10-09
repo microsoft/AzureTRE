@@ -131,10 +131,18 @@ class CoreOutputTests(unittest.TestCase):
         self.assertIn("terraform:output", self.calls)
         self.assertIn("ui:mockstorage", self.calls)
 
-    def test_conversion_failure_preserves_existing_environment(self):
+    def test_conversion_failure_preserves_environment_and_retries(self):
         self.env["OUTPUT_JSON"] = '{"static_web_storage": 1}'
         result = self.run_make()
         self.assert_stopped(result)
+        self.assertFalse(self.cache.exists())
+        terraform_outputs_before_retry = self.calls.count("terraform:output")
+
+        self.env["OUTPUT_JSON"] = VALID_OUTPUT
+        retry = self.run_make()
+        self.assertEqual(retry.returncode, 0, retry.stderr)
+        self.assertEqual(self.calls.count("terraform:output"), terraform_outputs_before_retry + 1)
+        self.assertIn("ui:mockstorage", self.calls)
 
     def test_converter_reports_invalid_json(self):
         result = subprocess.run(
