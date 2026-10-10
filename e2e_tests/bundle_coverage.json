@@ -242,7 +242,9 @@
       "family": "user_resource",
       "prerequisites": [
         "tre-workspace-base",
-        "tre-service-guacamole"
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [],
       "related_tests": [],
@@ -258,7 +260,9 @@
       "prerequisites": [
         "tre-workspace-base",
         "tre-workspace-airlock-import-review",
-        "tre-service-guacamole"
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [
         "test_airlock.py::test_airlock_review_vm_flow"

@@ -14,6 +14,20 @@ CATALOG = E2E_ROOT / "bundle_coverage.json"
 REQUEST_FILE = E2E_ROOT / "bundle-validation-request.json"
 DEFAULT_REPORT = E2E_ROOT / "bundle-validation.json"
 BUNDLE_NAME = re.compile(r"tre-[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+REQUEST_STRING_FIELDS = (
+    "bundle",
+    "marker",
+    "processes",
+    "requested_checkout_sha",
+    "workflow_sha",
+    "workflow_ref",
+    "ci_ref",
+    "tre_id",
+    "location",
+    "cloud",
+    "run_id",
+    "run_attempt",
+)
 
 
 def checkout_sha():
@@ -93,6 +107,27 @@ def request_from_environment(bundle):
     }
 
 
+def validate_prepared_request(prepared):
+    """Require the complete handoff without substituting current-process values."""
+    if not isinstance(prepared, dict):
+        raise ValueError("A prepared request must be a JSON object")
+    for field in (*REQUEST_STRING_FIELDS, "accept_nexus_eula"):
+        if field not in prepared:
+            raise ValueError(f"Prepared request is missing required field: {field}")
+    for field in REQUEST_STRING_FIELDS:
+        if not isinstance(prepared[field], str):
+            raise ValueError(f"Prepared request field {field} must be a string")
+    if type(prepared["accept_nexus_eula"]) is not bool:
+        raise ValueError("Nexus consent in a prepared request must be a boolean")
+    if not re.fullmatch(r"[0-9a-f]{40}", prepared["requested_checkout_sha"]):
+        raise ValueError("Prepared request must contain a full checkout SHA")
+    for field in ("tre_id", "location", "cloud"):
+        if not prepared[field].strip():
+            raise ValueError(f"Prepared request field {field} must not be empty")
+    # Unknown fields are excluded from the non-secret evidence report.
+    return {field: prepared[field] for field in (*REQUEST_STRING_FIELDS, "accept_nexus_eula")}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", default=os.environ.get("TEST_BUNDLE", ""))
@@ -111,15 +146,14 @@ def main(argv=None):
         if filename:
             if args.bundle or args.prepare:
                 raise ValueError("A prepared request cannot be combined with another bundle selection")
-            prepared = json.loads(Path(filename).read_text())
-            # Retain only known, non-secret metadata fields from the request file.
-            request = {key: prepared.get(key, value) for key, value in request.items()}
+            request = validate_prepared_request(json.loads(Path(filename).read_text()))
             if request["requested_checkout_sha"] != checkout_sha():
                 raise ValueError("Prepared request belongs to a different checkout")
-            if os.environ.get("TRE_ID") and request["tre_id"] != os.environ["TRE_ID"]:
-                raise ValueError("Prepared request belongs to a different TRE environment")
-        if type(request["accept_nexus_eula"]) is not bool:
-            raise ValueError("Nexus consent in a prepared request must be a boolean")
+            for field, variable in (("tre_id", "TRE_ID"), ("location", "LOCATION"), ("cloud", "AZURE_ENVIRONMENT")):
+                if os.environ.get(variable) and request[field] != os.environ[variable]:
+                    raise ValueError(f"Prepared request belongs to a different TRE environment ({field})")
+        elif args.prepare:
+            request = validate_prepared_request(request)
         entry, prerequisites = selection(request["bundle"], request["marker"], request["processes"])
         evidence.data.update(
             requested_bundle=request["bundle"],

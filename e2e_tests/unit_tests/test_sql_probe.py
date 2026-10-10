@@ -110,9 +110,13 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_only_the_temporary_secret_scoped_assignment_is_deleted(self):
         arm = SimpleNamespace(request=AsyncMock(return_value={}), delete=AsyncMock())
         vault = f"{GROUP}/providers/Microsoft.KeyVault/vaults/kv-test"
-        with self.assertRaisesRegex(RuntimeError, "query failed"):
+
+        async def failing_query():
             async with probe.secret_access(arm, vault, "sql-password", "principal", "sub"):
                 raise RuntimeError("query failed")
+
+        with self.assertRaisesRegex(RuntimeError, "query failed"):
+            await failing_query()
         call = arm.request.call_args
         assignment = call.args[1]
         self.assertTrue(
@@ -172,6 +176,10 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
         async def delete(*_, **__):
             events.append("delete")
 
+        async def timed_out_update():
+            async with sql.managed_test_resource({}, "/services", "token", True):
+                raise TimeoutError("update")
+
         with (
             patch.object(sql, "post_resource", AsyncMock(return_value=("/sql", "id"))),
             patch.object(sql, "get_resource", side_effect=get),
@@ -179,17 +187,19 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
             patch.object(sql.asyncio, "sleep", AsyncMock()),
         ):
             with self.assertRaisesRegex(TimeoutError, "update"):
-                async with sql.managed_test_resource({}, "/services", "token", True):
-                    raise TimeoutError("update")
+                await timed_out_update()
         self.assertEqual(events, ["poll", "poll", "delete"])
 
     async def test_cleanup_failure_preserves_original_query_error(self):
+        async def failing_query():
+            async with sql.managed_test_resource({}, "/services", "token", True):
+                raise ValueError("query")
+
         with (
             patch.object(sql, "post_resource", AsyncMock(return_value=("/sql", "id"))),
             patch.object(sql, "get_resource", AsyncMock(return_value={"operations": []})),
             patch.object(sql, "disable_and_delete_resource", AsyncMock(side_effect=RuntimeError("cleanup"))),
         ):
             with self.assertRaisesRegex(ValueError, "query") as raised:
-                async with sql.managed_test_resource({}, "/services", "token", True):
-                    raise ValueError("query")
+                await failing_query()
         self.assertIn("cleanup", raised.exception.__notes__[0])

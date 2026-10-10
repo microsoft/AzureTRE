@@ -8,6 +8,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+from unittest.mock import patch
 
 from e2e_tests import bundle_evidence, run_bundle
 
@@ -18,11 +19,32 @@ SQL_CASE = "test_azuresql.py::test_sql_query_survives_sku_upgrade"
 
 
 class BundleSelectionTests(unittest.TestCase):
+    def prepared_request(self):
+        request = run_bundle.request_from_environment(SQL)
+        request.update(tre_id="tre-test", location="switzerlandnorth", cloud="AzureCloud")
+        return request
+
+    def run_prepared_request(self, prepared, *arguments, environment=None):
+        with tempfile.TemporaryDirectory() as directory:
+            filename = Path(directory) / "request.json"
+            filename.write_text(json.dumps(prepared))
+            return self.run_selector(
+                *arguments, environment={"TEST_BUNDLE_REQUEST_FILE": str(filename), **(environment or {})}
+            )
+
     def run_selector(self, *arguments, environment=None):
         with tempfile.TemporaryDirectory() as directory:
             report = Path(directory) / "result.json"
             env = os.environ.copy()
-            for key in ("TEST_BUNDLE", "TEST_BUNDLE_REQUEST_FILE", "TEST_BUNDLE_MARKER", "E2E_TESTS_NUMBER_PROCESSES"):
+            for key in (
+                "TEST_BUNDLE",
+                "TEST_BUNDLE_REQUEST_FILE",
+                "TEST_BUNDLE_MARKER",
+                "E2E_TESTS_NUMBER_PROCESSES",
+                "TRE_ID",
+                "LOCATION",
+                "AZURE_ENVIRONMENT",
+            ):
                 env.pop(key, None)
             env.update(environment or {})
             result = subprocess.run(
@@ -103,32 +125,97 @@ class BundleSelectionTests(unittest.TestCase):
         cases = (
             ({"requested_checkout_sha": "0" * 40}, {}, "different checkout"),
             ({"tre_id": "another-tre"}, {"TRE_ID": "expected-tre"}, "different TRE"),
+            ({"location": "eastus"}, {"LOCATION": "switzerlandnorth"}, "different TRE"),
+            ({"cloud": "AzureUSGovernment"}, {"AZURE_ENVIRONMENT": "AzureCloud"}, "different TRE"),
             ({"accept_nexus_eula": "false"}, {}, "must be a boolean"),
         )
         for change, extra_env, message in cases:
-            with self.subTest(change=change), tempfile.TemporaryDirectory() as directory:
-                prepared = run_bundle.request_from_environment(SQL)
+            with self.subTest(change=change):
+                prepared = self.prepared_request()
                 prepared.update(change)
-                filename = Path(directory) / "request.json"
-                filename.write_text(json.dumps(prepared))
-                result, report = self.run_selector(
-                    "--validate-only", environment={"TEST_BUNDLE_REQUEST_FILE": str(filename), **extra_env}
-                )
+                result, report = self.run_prepared_request(prepared, "--validate-only", environment=extra_env)
                 self.assertEqual(result.returncode, 2)
                 self.assertIn(message, report["error"])
 
-    def test_request_metadata_does_not_copy_unknown_secret_fields(self):
+    def test_missing_request_fields_are_not_filled_from_the_current_environment(self):
+        complete = self.prepared_request()
+        for field in complete:
+            with self.subTest(field=field):
+                prepared = {key: value for key, value in complete.items() if key != field}
+                result, report = self.run_prepared_request(
+                    prepared,
+                    "--collect-only",
+                    environment={
+                        "TRE_ID": "tre-test",
+                        "LOCATION": "switzerlandnorth",
+                        "AZURE_ENVIRONMENT": "AzureCloud",
+                    },
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(f"missing required field: {field}", report["error"])
+                self.assertEqual(report["collected_tests"], [])
+
+    def test_invalid_prepared_request_shape_and_types_fail_before_collection(self):
+        for prepared in (None, [], "invalid", 1):
+            with self.subTest(prepared=prepared):
+                result, report = self.run_prepared_request(prepared, "--collect-only")
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("JSON object", report["error"])
+                self.assertEqual(report["collected_tests"], [])
+        for field in run_bundle.REQUEST_STRING_FIELDS:
+            with self.subTest(field=field):
+                prepared = {**self.prepared_request(), field: None}
+                result, report = self.run_prepared_request(prepared, "--collect-only")
+                self.assertEqual(result.returncode, 2)
+                self.assertIn(f"{field} must be a string", report["error"])
+                self.assertEqual(report["collected_tests"], [])
+
+    def test_prepared_request_requires_checkout_and_environment_identifiers(self):
+        for field in ("requested_checkout_sha", "tre_id", "location", "cloud"):
+            with self.subTest(field=field):
+                prepared = {**self.prepared_request(), field: " "}
+                result, report = self.run_prepared_request(prepared, "--collect-only")
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(report["status"], "selection_error")
+                self.assertEqual(report["collected_tests"], [])
+
+    def test_generated_request_round_trips_without_replacing_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
-            prepared = run_bundle.request_from_environment(SQL)
-            prepared["secret_password"] = "never-copy-this-value"
             filename = Path(directory) / "request.json"
-            filename.write_text(json.dumps(prepared))
-            result, report = self.run_selector(
-                "--validate-only", environment={"TEST_BUNDLE_REQUEST_FILE": str(filename)}
+            environment = {
+                "PATH": os.environ["PATH"],
+                "TRE_ID": "tre-test",
+                "LOCATION": "switzerlandnorth",
+                "AZURE_ENVIRONMENT": "AzureCloud",
+                "GITHUB_RUN_ID": "original-run",
+            }
+            with patch.dict(os.environ, environment, clear=True), patch.object(run_bundle, "REQUEST_FILE", filename):
+                code = run_bundle.main(["--bundle", SQL, "--prepare", "--report", str(Path(directory) / "report.json")])
+            self.assertEqual(code, 0)
+            prepared = json.loads(filename.read_text())
+            result, report = self.run_prepared_request(
+                prepared, "--collect-only", environment={"GITHUB_RUN_ID": "current-run"}
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertNotIn("never-copy-this-value", json.dumps(report))
-            self.assertEqual(report["requested_tests"], [SQL_CASE])
+            self.assertEqual(report["provenance"], prepared)
+            self.assertEqual(report["collected_tests"], [SQL_CASE])
+
+    def test_review_vm_inventory_includes_bootstrap_prerequisites(self):
+        catalog = run_bundle.load_catalog()
+        for bundle in ("tre-service-guacamole-import-reviewvm", "tre-service-guacamole-export-reviewvm"):
+            with self.subTest(bundle=bundle):
+                self.assertLessEqual(
+                    {"tre-shared-service-certs", "tre-shared-service-sonatype-nexus"},
+                    set(catalog[bundle]["prerequisites"]),
+                )
+
+    def test_request_metadata_does_not_copy_unknown_secret_fields(self):
+        prepared = self.prepared_request()
+        prepared["secret_password"] = "never-copy-this-value"
+        result, report = self.run_prepared_request(prepared, "--validate-only")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("never-copy-this-value", json.dumps(report))
+        self.assertEqual(report["requested_tests"], [SQL_CASE])
 
 
 class BundleEvidenceIntegrationTests(unittest.TestCase):
