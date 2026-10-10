@@ -3,11 +3,13 @@
 import json
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient, MockTransport, Response
-from jsonschema import validate
+from jsonschema import ValidationError, validate
 
+from api_app.services.schema_service import enrich_shared_service_template
 from e2e_tests import helpers
 from e2e_tests.resources import nexus
 from e2e_tests.resources import resource, strings
@@ -24,6 +26,10 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
                 (templates / "sonatype-nexus-vm/template_schema.json").read_text()
             ),
             strings.CERTS_SHARED_SERVICE: json.loads((templates / "certs/template_schema.json").read_text()),
+        }
+        self.schemas = {
+            name: enrich_shared_service_template(SimpleNamespace(model_dump=lambda schema=schema, **_: schema))
+            for name, schema in self.schemas.items()
         }
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(nexus, "get_admin_token", new=AsyncMock(return_value="admin-token")))
@@ -143,6 +149,19 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0]["properties"]["ssl_cert_name"], "existing-cert")
         self.assertEqual(self.deleted(), ["nexus"])
+
+    async def test_both_prerequisites_include_inherited_required_properties(self):
+        async with nexus.nexus_prerequisites(True):
+            pass
+        posts = [json.loads(request.content) for request in self.requests if request.method == "POST"]
+        self.assertEqual(len(posts), 2)
+        for payload in posts:
+            with self.subTest(template=payload["templateName"]):
+                schema = self.schemas[payload["templateName"]]
+                validate(payload["properties"], schema)
+                del payload["properties"]["description"]
+                with self.assertRaisesRegex(ValidationError, "'description' is a required property"):
+                    validate(payload["properties"], schema)
 
     async def test_unrelated_certificate_service_is_not_replaced(self):
         # The API allows only one active service per template.

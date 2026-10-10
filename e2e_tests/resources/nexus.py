@@ -51,6 +51,7 @@ async def nexus_prerequisites(verify):
                         "templateName": strings.CERTS_SHARED_SERVICE,
                         "properties": {
                             "display_name": "E2E Nexus certificate",
+                            "description": "Certificate prerequisite for E2E Nexus",
                             "domain_prefix": "nexus",
                             "cert_name": cert_name,
                         },
@@ -66,6 +67,7 @@ async def nexus_prerequisites(verify):
                     "templateName": strings.NEXUS_SHARED_SERVICE,
                     "properties": {
                         "display_name": "E2E Nexus",
+                        "description": "Nexus prerequisite for E2E workspace resources",
                         "ssl_cert_name": cert_name,
                         "accept_nexus_eula": config.TEST_ACCEPT_NEXUS_EULA,
                         "vm_size": "Standard_D2s_v3",
