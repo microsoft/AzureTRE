@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Select bundle tests before deployment and record their coverage limits and resource evidence. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -27,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Document slash-command coverage and remove the obsolete MLflow test selection. ([#5131](https://github.com/microsoft/AzureTRE/issues/5131))
 * Require Nexus consent, restore firewall settings after tests and give shared-service test groups separate time budgets. ([#5132](https://github.com/microsoft/AzureTRE/issues/5132))
 * Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Create Airlock prerequisites with explicit consent. Track owned review resources and wait for deletion. Preserve certificates if Nexus cleanup fails. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))

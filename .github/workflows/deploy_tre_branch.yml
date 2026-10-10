@@ -14,6 +14,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      e2eBundle:
+        description: Exact Porter bundle name from the coverage map; leave the marker selector empty
+        type: string
+        default: ""
+        required: false
       environment:
         description: The environment to run this workflow in
         type: environment
@@ -62,6 +67,21 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+      - name: Validate bundle selection
+        if: inputs.e2eBundle != ''
+        env:
+          TEST_BUNDLE: ${{ inputs.e2eBundle }}
+          TEST_BUNDLE_MARKER: ${{ inputs.e2eTestsCustomSelector }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.e2eProcesses }}
+        run: python3 e2e_tests/run_bundle.py --validate-only
+
+      - name: Upload bundle selection preflight
+        if: always() && inputs.e2eBundle != ''
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: Bundle Selection Preflight
+          path: ./e2e_tests/bundle-validation.json
+
       - id: run-id
         name: Get run id
         env:
@@ -98,6 +118,7 @@ jobs:
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
+      e2eBundle: ${{ inputs.e2eBundle }}
       acceptNexusEula: ${{ inputs.acceptNexusEula }}
       runCertificateTestsOnWeekends: ${{ inputs.runCertificateTestsOnWeekends }}
       skipDeployment: ${{ inputs.skipDeployment }}
