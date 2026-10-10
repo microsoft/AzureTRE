@@ -162,18 +162,25 @@
       "manifest": "templates/workspace_services/azuresql/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-windowsvm"
       ],
       "tests": [
+        "test_azuresql.py::test_sql_query_survives_sku_upgrade"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-azuresql]"
       ],
-      "related_tests": [],
       "coverage": [
         "install",
+        "private SQL write/read",
+        "S1-to-S2 configuration upgrade with retained data",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary secret-scoped role assignment.",
+        "Configuration upgrade uses the current bundle version. Previous-version migration remains separate (#5128). The SQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
