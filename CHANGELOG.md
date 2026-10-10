@@ -7,6 +7,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 
+* Add an independent CycleCloud server lifecycle with marketplace checks, VM power actions and bounded cleanup. ([#5159](https://github.com/microsoft/AzureTRE/issues/5159))
 * Add separate Databricks and private-authentication lifecycle selections with isolation checks, private ARM configuration checks and bounded cleanup. ([#5140](https://github.com/microsoft/AzureTRE/issues/5140), [#5160](https://github.com/microsoft/AzureTRE/issues/5160))
 * Register AML compute for branch validation and add private AML service and compute lifecycle checks with Automatic workspace prerequisites and bounded cleanup. ([#5138](https://github.com/microsoft/AzureTRE/issues/5138))
 * Add independent export review-VM validation with a private synthetic upload, review-data hash verification and automatic VM deletion. ([#5143](https://github.com/microsoft/AzureTRE/issues/5143))
