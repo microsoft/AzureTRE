@@ -60,10 +60,11 @@ class ReviewVmCleanupTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_successful_creation_is_cleaned_after_approval_failure(self):
         error = RuntimeError("approval failed")
+        approve = AsyncMock(side_effect=error)
         with self.assertRaises(RuntimeError) as caught:
             async with self.owner() as owned:
                 self.assertEqual(owned, self.path)
-                raise error
+                await approve()
         self.assertIs(caught.exception, error)
         self.assertIn(("DELETE", f"/api{self.path}"), self.requests)
 
@@ -94,9 +95,10 @@ class ReviewVmCleanupTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_cleanup_failure_preserves_the_original_body_failure(self):
         original = RuntimeError("approval failed")
+        approve = AsyncMock(side_effect=original)
         with patch.object(airlock, "delete_owned_resource_if_present", AsyncMock(side_effect=TimeoutError("stalled"))):
             with self.assertRaises(RuntimeError) as caught:
                 async with self.owner():
-                    raise original
+                    await approve()
         self.assertIs(caught.exception, original)
         self.assertIn(self.path, str(caught.exception.__notes__))
