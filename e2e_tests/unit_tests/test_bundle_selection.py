@@ -112,6 +112,20 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertEqual(report["status"], "not_run")
         self.assertFalse(report["full_lifecycle_proven"])
 
+    def test_base_workspace_collects_its_own_case_without_reusing_a_workspace(self):
+        result, report = self.run_selector(
+            "--bundle",
+            "tre-workspace-base",
+            "--collect-only",
+            environment={"TEST_WORKSPACE_ID": "existing-unrelated-workspace"},
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], ["test_workspace_base.py::test_base_workspace_lifecycle"])
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertEqual(report["resources"], [])
+        self.assertEqual(report["declared_prerequisites"], {})
+
     def test_unknown_partial_and_shell_like_identifiers_fail_before_collection(self):
         for identifier in ("azuresql", "tre-nonexistent", SQL + "; echo unexpected", SQL + "$(echo unexpected)"):
             with self.subTest(identifier=identifier):

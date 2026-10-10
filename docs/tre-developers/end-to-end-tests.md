@@ -68,6 +68,21 @@ Use one test process. Per-bundle runs reject a marker expression or multiple wor
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 
+### Base workspace lifecycle
+
+Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.
+The case always creates its own workspace with Automatic authentication and backups disabled. It does not reuse `TEST_WORKSPACE_ID`.
+It checks the deployed record and uses the configured workspace identity to list the new workspace's services.
+It then disables and deletes the workspace, waits for the delete operation and confirms that an API lookup returns HTTP 404.
+Body failures still trigger cleanup. If cleanup also fails, the original failure is preserved with an additional diagnostic note.
+
+Setup uses the existing one-hour deployment limit and failed-create recovery. The API checks have a five-minute limit.
+Cleanup has a separate one-hour budget. The case is opt-in through bundle selection or the `workspace_validation` marker.
+It does not add another workspace to the extended suite.
+
+These checks do not prove network isolation, storage access, upgrades, custom actions or backup restore and retention.
+Verify Azure resource removal separately when recording release evidence.
+
 ### SQL time limits
 
 The SQL bundle job has a 300-minute limit. Its first step sets an absolute lifecycle deadline at 270 minutes.
