@@ -26,6 +26,18 @@ def record_resource(payload, operation, method):
     _ACTIVE_REPORT.write()
 
 
+def record_reused_resource(resource):
+    """Record only the selected prerequisite's identity and deployed version."""
+    if _ACTIVE_REPORT is None:
+        return
+    record = {key: resource[key] for key in ("id", "templateName", "templateVersion") if key in resource}
+    if not record.get("id") or not record.get("templateName"):
+        raise ValueError("Selected prerequisite is missing its resource identity")
+    if record not in _ACTIVE_REPORT.data["reused_resources"]:
+        _ACTIVE_REPORT.data["reused_resources"].append(record)
+        _ACTIVE_REPORT.write()
+
+
 def record_operation(endpoint, state, done):
     if _ACTIVE_REPORT is None:
         return
@@ -44,6 +56,7 @@ class BundleReport:
             "collected_tests": [],
             "test_results": [],
             "resources": [],
+            "reused_resources": [],
             "operations": {},
         }
         self.expected_tests = set(data.get("requested_tests", []))

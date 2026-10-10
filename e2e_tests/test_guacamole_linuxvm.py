@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from packaging.version import Version
 
+from e2e_tests.bundle_evidence import record_reused_resource
 from e2e_tests import config
 from e2e_tests.conftest import get_workspace_owner_token
 from e2e_tests.helpers import get_admin_token
@@ -29,6 +30,14 @@ async def linux_vm_nexus(verify):
             "Nexus must be deployed and enabled"
         )
         assert Version(nexus["templateVersion"]) >= Version("3.11.0"), "Upgrade Nexus to bundle 3.11.0 before this test"
+        record_reused_resource(nexus)
+        for service in services:
+            if (
+                service["templateName"] == strings.CERTS_SHARED_SERVICE
+                and nexus.get("properties", {}).get("ssl_cert_name")
+                and service.get("properties", {}).get("cert_name") == nexus["properties"]["ssl_cert_name"]
+            ):
+                record_reused_resource(service)
         yield
         return
 
@@ -48,6 +57,7 @@ async def linux_vm_nexus(verify):
                 "The existing certificate service belongs to another domain. Deploy Nexus separately before this test."
             )
             cert_name = certs["properties"]["cert_name"]
+            record_reused_resource(certs)
         else:
             cert_name = f"nexus-linux-e2e-{uuid4().hex[:8]}"
             await resources.enter_async_context(
