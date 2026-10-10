@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Cover accepted-disable polling and bounded cleanup failure with E2E helper regressions. ([#5175](https://github.com/microsoft/AzureTRE/issues/5175))
 * Restore Dsv6 sizes for Guacamole Linux and Airlock import/export review VMs because the Dsv7 default is unavailable in Switzerland North.
   (`tre-service-guacamole-linuxvm` 1.4.9, `tre-service-guacamole-import-reviewvm` 2.0.4, `tre-service-guacamole-export-reviewvm` 2.0.7) ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))
 * Handle expected plain-text HTTP errors in the Airlock E2E request helper while preserving status assertions and JSON validation for successful responses. ([#5174](https://github.com/microsoft/AzureTRE/issues/5174))
