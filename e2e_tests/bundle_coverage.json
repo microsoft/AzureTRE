@@ -67,14 +67,29 @@
     "tre-shared-service-cyclecloud": {
       "manifest": "templates/shared_services/cyclecloud/porter.yaml",
       "family": "shared_service",
-      "prerequisites": [],
-      "tests": [],
-      "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "prerequisites": [
+        "tre-shared-service-firewall"
       ],
-      "unavailable_reason": "The existing shared-service case is disabled pending repair (#5154)."
+      "tests": [
+        "test_cyclecloud.py::test_cyclecloud_lifecycle"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "create",
+        "update",
+        "custom_actions",
+        "delete",
+        "configuration"
+      ],
+      "limitations": [
+        "Requires AzureCloud, accepted CycleCloud marketplace image terms, the regional image and Standard_DS3_v2 capacity. The test does not accept terms or change quotas.",
+        "Requires an empty CycleCloud slot, current firewall and one writer in a dedicated environment. The fixed DNS zone prevents parallel CycleCloud services.",
+        "Checks VM power actions, ARM configuration, TRE firewall rules, same-version metadata upgrade and bounded cleanup. Previous-version upgrades remain unproven.",
+        "Does not configure the CycleCloud application, create HPC clusters or prove browser access, private DNS reachability or application TLS trust.",
+        "The existing bundle grants its VM subscription Contributor and allows SharedSubnet access to ARM and GitHub. Storage public access is not disabled by this bundle. These controls do not prove workspace isolation.",
+        "Cleanup verifies the VM, disk, NIC, storage, private endpoint, DNS zone, captured identity roles and firewall rules. Key Vault credentials can remain soft-deleted; secret purge is not attempted."
+      ],
+      "unavailable_reason": ""
     },
     "tre-shared-service-databricks-private-auth": {
       "manifest": "templates/shared_services/databricks-auth/porter.yaml",
