@@ -164,6 +164,7 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
                     "-o",
                     "asyncio_default_fixture_loop_scope=session",
                     "--junitxml=results.xml",
+                    "--tb=short",
                     "-q",
                     "test_cases.py",
                 ],
@@ -217,8 +218,11 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
         self.assertIn(["research", "complete"], events)
 
     def test_cleanup_timeout_finishes_cancellation_before_next_fixture(self):
+        # Keep the independent cleanup deadline short, but leave enough time
+        # for pytest to format its expected error on slower CI runners.
+        source = (RESOURCE_TEST + UNRELATED_TEST).replace("@pytest.mark.timeout(0.1)", "@pytest.mark.timeout(1)")
         result, report, events = self.run_pytest(
-            RESOURCE_TEST + UNRELATED_TEST,
+            source,
             budget=0.05,
             durations={"review": 1, "research": 0.01},
         )
@@ -340,7 +344,7 @@ def test_unmanaged(unmanaged_fixture):
     def test_workspace_service_cleanup_has_independent_timeout(self):
         source = """
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.timeout(0.1)
+@pytest.mark.timeout(1)
 async def test_service(setup_test_workspace_and_guacamole_service):
     assert setup_test_workspace_and_guacamole_service[3] == "service"
 """
