@@ -7,6 +7,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 
+* Add separate Databricks and private-authentication lifecycle selections with isolation checks, private ARM configuration checks and bounded cleanup. (`build-scripts` 1.1.4) ([#5140](https://github.com/microsoft/AzureTRE/issues/5140), [#5160](https://github.com/microsoft/AzureTRE/issues/5160))
 * Register AML compute for branch validation and add private AML service and compute lifecycle checks with Automatic workspace prerequisites and bounded cleanup. ([#5138](https://github.com/microsoft/AzureTRE/issues/5138))
 * Add independent export review-VM validation with a private synthetic upload, review-data hash verification and automatic VM deletion. ([#5143](https://github.com/microsoft/AzureTRE/issues/5143))
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
@@ -35,7 +36,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-
+* Record the existing Databricks firewall prerequisite as reused in bundle evidence. ([#5217](https://github.com/microsoft/AzureTRE/pull/5217))
 * Fill the missing Switzerland North Databricks storage and Event Hubs endpoints for DNS lookup and firewall rules. (`tre-service-databricks` 1.0.20) ([#5140](https://github.com/microsoft/AzureTRE/issues/5140))
 * Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Reuse publicly trusted certificates for the same hostname across certificate service replacement. Restore retained PEM and PFX material in its stored format. (`tre-shared-service-certs` 0.7.16) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
