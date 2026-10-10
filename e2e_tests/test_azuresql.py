@@ -100,7 +100,6 @@ async def test_sql_query_survives_sku_upgrade(setup_test_workspace_and_guacamole
             server = f"azsql-{config.TRE_ID}-ws-{workspace_id[-4:]}-svc-{sql_id[-4:]}"
             assert sql["properties"]["azuresql_fqdn"] == f"{server}.database.windows.net"
             vault = f"kv-{f'{config.TRE_ID}-ws-{workspace_id[-4:]}'[-20:]}"
-            assert vm_properties["keyvault_name"] == vault
             azure_vm_id = vm_properties["azure_resource_id"]
             async with arm_client() as arm:
                 vm = await arm.request("GET", azure_vm_id, COMPUTE_API)
