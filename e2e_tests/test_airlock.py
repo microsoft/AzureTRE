@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 import pytest
 import asyncio
@@ -5,12 +6,20 @@ import logging
 from httpx import AsyncClient
 from azure.core.exceptions import ResourceNotFoundError
 
-from airlock.request import post_request, get_request, upload_blob_using_sas, delete_blob_using_sas, wait_for_status
-from resources.resource import get_resource, post_resource
+from airlock.request import (
+    post_request,
+    get_request,
+    upload_blob_using_sas,
+    delete_blob_using_sas,
+    wait_for_status,
+    wait_for_draft_container_deletion,
+)
+from e2e_tests.timeouts import async_test_timeout, cleanup_deadline
+from resources.resource import get_resource, post_resource, delete_owned_resource_if_present
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
 from e2e_tests.conftest import get_workspace_owner_token
-from helpers import get_admin_token
+from helpers import assert_status, get_admin_token, get_auth_header, get_full_endpoint
 from e2e_tests.token_provider import TokenProvider
 
 
@@ -81,17 +90,17 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.airlock
-async def test_draft_container_is_sealed_after_submit(setup_test_workspace, verify):
-    """A SAS handed out while the request was in Draft must stop working once it is submitted,
-    otherwise a researcher could alter the data after it has been scanned and reviewed."""
+@pytest.mark.airlock_validation
+async def test_draft_container_is_deleted_after_submit(setup_test_workspace, verify):
+    """The draft SAS must stop working after asynchronous deletion completes."""
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
     _, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
-    # Submission copies the data out and deletes the draft container, so the old SAS resolves to nothing.
-    with pytest.raises(ResourceNotFoundError):
-        await upload_blob_using_sas(BLOB_FILE_PATH, container_url)
+    # Azure permits draft access for up to 30 seconds after accepting deletion.
+    # The submitted copy is separate. Do not interpret a same-name conflict as denial.
+    await wait_for_draft_container_deletion(container_url)
 
 
 async def create_draft_import_request_with_file(workspace_path: str, workspace_owner_token: str, verify: bool):
@@ -250,8 +259,79 @@ async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_
     )
 
 
-@pytest.mark.timeout(50 * 60)
+@asynccontextmanager
+async def managed_review_vm(workspace_path, request_id, workspace_owner_token, review_token, verify):
+    resource_path, _ = await post_resource(
+        payload={},
+        endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
+        access_token=workspace_owner_token,
+        verify=verify,
+        method="POST",
+        wait=True,
+        access_token_for_wait=review_token,
+        cleanup_failed_create=True,
+    )
+    original = None
+    try:
+        yield resource_path
+    except BaseException as error:
+        original = error
+        raise
+    finally:
+
+        async def recover():
+            async with cleanup_deadline(60 * 60):
+                await delete_owned_resource_if_present(resource_path, review_token, verify)
+
+        recovery = asyncio.create_task(recover())
+        cancellation = None
+        while not recovery.done():
+            try:
+                await asyncio.shield(recovery)
+            except asyncio.CancelledError as error:
+                cancellation = error
+            except Exception:
+                break
+        try:
+            recovery.result()
+        except (Exception, asyncio.CancelledError) as error:
+            failure = original if original is not None else cancellation
+            if failure is None:
+                raise
+            failure.add_note(f"Cleanup of {resource_path} also failed: {error!r}")
+        if cancellation is not None and original is None:
+            raise cancellation
+
+
+async def wait_for_review_vm_deletion(resource_path, access_token, verify, *, timeout_seconds=30 * 60):
+    """Wait for automatic deletion without sending a second delete request."""
+    last_state = "not yet observed"
+    deadline = asyncio.timeout(timeout_seconds)
+    try:
+        async with deadline, AsyncClient(verify=verify, timeout=30) as client:
+            while True:
+                response = await client.get(
+                    get_full_endpoint(f"/api{resource_path}"), headers=get_auth_header(access_token)
+                )
+                if response.status_code == 404:
+                    return
+                assert_status(response, [200], "Could not check review VM deletion")
+                last_state = response.json()["userResource"]["deploymentStatus"]
+                assert not last_state.endswith("_failed"), f"Review VM deletion failed: {last_state}"
+                if last_state == "deleted":
+                    return
+                LOGGER.info("Waiting for review VM deletion: %s, %s", resource_path, last_state)
+                await asyncio.sleep(30)
+    except TimeoutError as error:
+        if not deadline.expired():
+            raise
+        raise TimeoutError(f"Review VM deletion timed out. Last state: {last_state}") from error
+
+
+@pytest.mark.timeout(150 * 60, func_only=True)
 @pytest.mark.airlock
+@pytest.mark.airlock_validation
+@async_test_timeout(50 * 60)
 async def test_airlock_review_vm_flow(
     setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify
 ):
@@ -312,35 +392,28 @@ async def test_airlock_review_vm_flow(
         f"/api/workspaces/{import_review_workspace_id}/requests/{request_id}", import_workspace_owner_token, verify, 404
     )
 
-    user_resource_path, user_resource_id = await post_resource(
-        payload={},
-        endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
-        access_token=workspace_owner_token,
-        verify=verify,
-        method="POST",
-        wait=True,
-        access_token_for_wait=import_workspace_owner_token,  # needs a different token as is created in a separate workspace
-    )
+    async with managed_review_vm(
+        workspace_path, request_id, workspace_owner_token, import_workspace_owner_token, verify
+    ) as user_resource_path:
+        LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
 
-    LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
+        # Approve request
+        LOGGER.info("Approving airlock request")
+        payload = {"approval": "True", "decisionExplanation": "the reason why this request was approved/rejected"}
+        request_result = await post_request(
+            payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
+        )
+        assert (
+            request_result["airlockRequest"]["reviews"][0]["decisionExplanation"]
+            == "the reason why this request was approved/rejected"
+        )
 
-    # Approve request
-    LOGGER.info("Approving airlock request")
-    payload = {"approval": "True", "decisionExplanation": "the reason why this request was approved/rejected"}
-    request_result = await post_request(
-        payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
-    )
-    assert (
-        request_result["airlockRequest"]["reviews"][0]["decisionExplanation"]
-        == "the reason why this request was approved/rejected"
-    )
+        await wait_for_status(
+            airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify
+        )
+        LOGGER.info("Airlock request has been approved")
 
-    await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
-    LOGGER.info("Airlock request has been approved")
-
-    # Check that deletion for user resource has started
-    user_resource = await get_resource(f"/api{user_resource_path}", import_workspace_owner_token, verify)
-    assert user_resource["userResource"]["deploymentStatus"] == "updating"
-    LOGGER.info("Review VM has started deletion successfully")
+        await wait_for_review_vm_deletion(user_resource_path, import_workspace_owner_token, verify)
+        LOGGER.info("Review VM deletion completed")
 
     # EXPORT FLOW
