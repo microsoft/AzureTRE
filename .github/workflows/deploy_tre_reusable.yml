@@ -682,6 +682,8 @@ jobs:
             BUNDLE_DIR: "./templates/workspace_services/ohdsi"
           - BUNDLE_TYPE: "workspace_service"
             BUNDLE_DIR: "./templates/workspace_services/azuresql"
+          - BUNDLE_TYPE: "workspace_service"
+            BUNDLE_DIR: "./templates/workspace_services/openai"
 
     environment: ${{ inputs.environmentName }}
     steps:
