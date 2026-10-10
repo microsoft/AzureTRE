@@ -28,6 +28,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      e2eBundle:
+        description: Exact Porter bundle name for isolated E2E case selection
+        type: string
+        default: ""
+        required: false
       acceptNexusEula:
         description: Explicit consent to the Nexus CE EULA when E2E tests create Nexus
         type: boolean
@@ -914,7 +919,7 @@ jobs:
     name: Select E2E test groups
     # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: >-
-      ${{ always() && inputs.e2eTestsCustomSelector != '' &&
+      ${{ always() && inputs.e2eBundle == '' && inputs.e2eTestsCustomSelector != '' &&
       (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') }}
@@ -947,7 +952,7 @@ jobs:
     name: "Run E2E Tests (${{ matrix.group.name }})"
     # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: >-
-      ${{ always() && inputs.e2eTestsCustomSelector != '' &&
+      ${{ always() && inputs.e2eBundle == '' && inputs.e2eTestsCustomSelector != '' &&
       (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') }}
@@ -1007,9 +1012,78 @@ jobs:
           name: E2E Test Results (${{ matrix.group.name }})
           path: "./e2e_tests/pytest_e2e_*.xml"
 
+  e2e_tests_bundle:
+    name: "Run E2E Tests (Bundle)"
+    # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
+    if: >-
+      ${{ always() && inputs.e2eBundle != '' &&
+      (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environmentName }}
+    needs:
+      [deploy_shared_services, register_bundles, register_user_resource_bundles]
+    timeout-minutes: 300
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+          # if the following values are missing (i.e. not triggered via comment workflow)
+          # then the default checkout will apply
+          ref: ${{ inputs.prRef }}
+
+      - name: Prepare bundle validation
+        if: inputs.e2eBundle != ''
+        env:
+          TEST_BUNDLE: ${{ inputs.e2eBundle }}
+          TEST_BUNDLE_MARKER: ${{ inputs.e2eTestsCustomSelector }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
+          TEST_ACCEPT_NEXUS_EULA: ${{ inputs.acceptNexusEula }}
+          TEST_BUNDLE_CI_REF: ${{ inputs.ciGitRef }}
+          TRE_ID: ${{ secrets.TRE_ID }}
+          LOCATION: ${{ vars.LOCATION }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT || 'AzureCloud' }}
+        run: python3 e2e_tests/run_bundle.py --prepare
+
+      - name: Run E2E Tests
+        uses: ./.github/actions/devcontainer_run_command
+        with:
+          COMMAND: >-
+            TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=${{ inputs.runCertificateTestsOnWeekends }}
+            TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
+          DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
+          CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT }}
+          LOCATION: ${{ vars.LOCATION }}
+          API_CLIENT_ID: "${{ secrets.API_CLIENT_ID }}"
+          AAD_TENANT_ID: "${{ secrets.AAD_TENANT_ID }}"
+          TEST_APP_ID: "${{ secrets.TEST_APP_ID }}"
+          TEST_WORKSPACE_APP_ID: "${{ secrets.TEST_WORKSPACE_APP_ID }}"
+          TEST_WORKSPACE_APP_SECRET: "${{ secrets.TEST_WORKSPACE_APP_SECRET }}"
+          TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
+          TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
+          TRE_ID: ${{ secrets.TRE_ID }}
+          IS_API_SECURED: false
+          WORKSPACE_APP_SERVICE_PLAN_SKU: ${{ vars.WORKSPACE_APP_SERVICE_PLAN_SKU }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.E2E_TESTS_NUMBER_PROCESSES }}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: E2E Test Results (Bundle)
+          path: |
+            ./e2e_tests/pytest_e2e_*.xml
+            ./e2e_tests/bundle-validation.json
+
   summary:
     name: Summary
-    needs: [e2e_tests_smoke, e2e_tests_plan, e2e_tests_custom]
+    needs: [e2e_tests_smoke, e2e_tests_plan, e2e_tests_custom, e2e_tests_bundle]
     runs-on: ubuntu-latest
     permissions:
       checks: write

@@ -8,6 +8,35 @@
 
 These commands can only be run when commented by a user who is identified as a repo collaborator (see [granting access to run commands](#granting-access-to-run-commands))
 
+### Test scope
+
+Each test command builds and deploys the environment and runs smoke tests, unless the documented exception applies.
+The table describes the selected assertions. A passing command does not prove every bundle or lifecycle action.
+
+| Command | Selected tests | Coverage limit |
+| --- | --- | --- |
+| `/test` | API health and template checks | No bundle lifecycle proof. Documentation-only changes receive a waiver. |
+| `/test-extended` | Guacamole with a Windows VM, unrestricted workspace and import review workspace | Three selected cases. The suite excludes Linux VMs and the general workspace-service cases. |
+| `/test-extended-aad` | Guacamole deployment and authentication redirect in an automatically configured Entra workspace | No full identity or permissions audit. |
+| `/test-shared-services` | Firewall changes and restoration, selected service lifecycles, and the combined certificate/Nexus case | Nexus requires EULA consent. A skipped certificate case provides no lifecycle proof. |
+| `/test-airlock` | Import requests, access checks, the import review VM flow and export request storage routing | No export review VM or migration proof. |
+| `/test-backups` | Base workspace deployment with backups enabled and disabled | No backup restore or retention proof. |
+
+The `workspace_services`, `linux_vm` and `airlock_validation` markers have no dedicated slash command.
+Use the branch workflow or the local test runner for these selections.
+The `airlock_validation` marker selects two Airlock cases. It does not select the full `airlock` suite.
+See [bundle selection](end-to-end-tests.md#validate-one-bundle) for exact cases and declared coverage gaps.
+
+### Environment and evidence
+
+Commands for the same Git reference share a deployment queue. Separate references can use separate environments.
+Before parallel runs, check Azure capacity and shared dependencies.
+PR-comment runs and branch-workflow runs use different environment identities.
+
+Record the checked-out commit, run URL, selected cases, skips and cleanup result.
+When using `skip_deployment`, also record the deployed version. The test commit does not prove which version is deployed.
+A waiver, successful build or successful collection is not an executed E2E result.
+
 ### `/help`
 
 This command will cause the pr-comment-bot to respond with a comment listing the available commands.
@@ -75,11 +104,22 @@ Push runs retain their existing extended/AAD selection. An excluded Nexus case p
 
 Shared-service tests allow one hour for prior-resource recovery, one hour for provisioning and one hour for each new resource's cleanup.
 Nexus and certificate recovery share the first deadline. Test watchdogs include a further 30-minute margin, including failed-create cleanup.
+To permit the certificate case at weekends, set `runCertificateTestsOnWeekends=true` in the branch workflow.
+
 The reusable workflow collects the selected cases and gives Nexus a separate five-hour job.
 The other cases run in their own job. These jobs run sequentially against the same environment, including when a group fails.
 Empty groups are omitted. Invalid or empty selections fail planning. Each job verifies the planned checkout and exact cases before execution.
 
 Slash commands use workflows from `main`. Before these routing changes reach `main`, validate the E2E path through `deploy_tre_branch.yml` on the reviewed upstream branch.
+
+### `/test-airlock [<sha>]`
+
+This command builds and deploys the PR environment, then runs smoke tests and the `airlock` selection.
+Review the code with the same checks as for `/test`. For an external PR, include the reviewed head SHA.
+The command does not support `skip_deployment`.
+
+The review VM needs Nexus. Use a suitable deployed Nexus service, or use the branch workflow with `acceptNexusEula=true`.
+The Airlock slash command does not accept the `accept_nexus_eula` flag.
 
 ### `/test-backups [<sha>]`
 
@@ -105,7 +145,7 @@ The `/test-destroy-env` command also destroys the environment associated with th
 
 ### `/test-force-approve`
 
-This command skips running tests for a build and marks the checks as completed.
+This command records a waiver and marks the checks as completed. It does not run tests.
 This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).
 
 
