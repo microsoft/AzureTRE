@@ -27,6 +27,10 @@ inputs:
   AAD_TENANT_ID:
     description: "The Tenant Id where the App is registered and the Test User is registered for the E2E Tests."
     required: false
+  TEST_AML_USER_OBJECT_ID:
+    description: "Existing Entra user object ID for the opt-in AML compute test"
+    required: false
+    default: ""
   TEST_APP_ID:
     description: "The Test Application Id used to interact with the API."
     required: false
@@ -238,6 +242,7 @@ runs:
       shell: bash
       env:
         TF_VAR_ci_git_ref: ${{ inputs.CI_GIT_REF }}
+        TEST_AML_USER_OBJECT_ID: ${{ inputs.TEST_AML_USER_OBJECT_ID }}
         CI_BOOTSTRAP_LEASE_RECOVERY: >-
           ${{ github.event_name == 'issue_comment' && startsWith(inputs.CI_GIT_REF, 'refs/pull/') }}
         CI_RECOVERY_PR_NUMBER: ${{ github.event.issue.number }}
@@ -289,6 +294,7 @@ runs:
           -e CI_ENVIRONMENT_ID \
           -e CI_RECOVERY_PR_NUMBER \
           -e CI_RECOVERY_GITHUB_TOKEN \
+          -e TEST_AML_USER_OBJECT_ID \
           -e GITHUB_ACTIONS \
           -e GITHUB_REPOSITORY \
           -e GITHUB_RUN_ID \
