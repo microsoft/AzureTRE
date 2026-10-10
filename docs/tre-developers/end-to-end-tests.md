@@ -68,6 +68,25 @@ Use one test process. Per-bundle runs reject a marker expression or multiple wor
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 
+### Certificate and Nexus selection
+
+Select `tre-shared-service-certs` to create and delete only the certificate shared service.
+The case checks the deployed API record and confirms HTTP 404 after deletion. It does not require Nexus EULA consent.
+It refuses to change resources when Nexus is present. Existing certificate resources must belong to earlier E2E tests before recovery can remove them.
+Cleanup has a separate deadline and retains the certificate service if Nexus appears before deletion.
+Use an isolated environment and run mutating suites sequentially. These guards do not provide a distributed lock.
+
+Select `tre-shared-service-sonatype-nexus` to run the existing certificate/Nexus lifecycle case.
+The report identifies certificates and the deployed firewall as prerequisites. Dependency creation does not complete their separate evidence records.
+Nexus selection still requires explicit EULA consent. Both selections retain the weekend certificate rate-limit precaution.
+After checking rate limits, use `runCertificateTestsOnWeekends=true` in the branch workflow or `TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=true` locally.
+A skipped case remains unproven coverage.
+
+The certificate-only case is opt-in through bundle selection or the `certificate_validation` marker.
+It is excluded from the ordinary `shared_services` selection to avoid an additional certificate request in that suite.
+The existing combined case remains in that suite. It deletes Nexus before its certificate dependency.
+Certificate content, renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and physical resource removal need separate evidence.
+
 ### Base workspace lifecycle
 
 Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.

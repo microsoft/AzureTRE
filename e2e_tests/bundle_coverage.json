@@ -41,16 +41,28 @@
     "tre-shared-service-certs": {
       "manifest": "templates/shared_services/certs/porter.yaml",
       "family": "shared_service",
-      "prerequisites": [],
-      "tests": [],
+      "prerequisites": [
+        "tre-shared-service-firewall"
+      ],
+      "tests": [
+        "test_shared_services.py::test_create_certificate_shared_service"
+      ],
       "related_tests": [
         "test_shared_services.py::test_create_certs_nexus_shared_service"
       ],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "coverage": [
+        "install",
+        "deployment-status",
+        "uninstall",
+        "api-removal"
       ],
-      "unavailable_reason": "The shared-service suite has a combined certificate/Nexus case. Independent bundle selection and coverage remain open (#5154)."
+      "limitations": [
+        "Requires the deployed firewall. Uses an isolated environment and refuses to start while Nexus exists. Only earlier E2E certificate resources can be recovered.",
+        "Skips at weekends unless explicitly overridden after checking certificate rate limits. A skip does not prove the lifecycle.",
+        "Validates the API lifecycle, not certificate contents, renewal, retained Key Vault artefacts, upgrades or physical resource removal.",
+        "Certificate cleanup is retained if Nexus is present. Run mutating suites sequentially; the guard is not a distributed lock."
+      ],
+      "unavailable_reason": ""
     },
     "tre-shared-service-cyclecloud": {
       "manifest": "templates/shared_services/cyclecloud/porter.yaml",
@@ -113,16 +125,25 @@
     "tre-shared-service-sonatype-nexus": {
       "manifest": "templates/shared_services/sonatype-nexus-vm/porter.yaml",
       "family": "shared_service",
-      "prerequisites": [],
-      "tests": [],
-      "related_tests": [
+      "prerequisites": [
+        "tre-shared-service-firewall",
+        "tre-shared-service-certs"
+      ],
+      "tests": [
         "test_shared_services.py::test_create_certs_nexus_shared_service"
       ],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
       ],
-      "unavailable_reason": "The shared-service suite has a combined certificate/Nexus case. Independent bundle selection and coverage remain open (#5154)."
+      "limitations": [
+        "Creates a certificate prerequisite and Nexus. Requires explicit Nexus EULA consent and the deployed firewall.",
+        "Skips at weekends unless explicitly overridden after checking certificate rate limits. A skip does not prove the lifecycle.",
+        "Recovers earlier E2E resources, preserves unrelated services, and retains certificates if Nexus cleanup fails. Use an isolated environment and sequential mutations.",
+        "Dependency creation does not complete separate certificate or firewall evidence. Package/proxy use, upgrades and physical resource removal need separate checks."
+      ],
+      "unavailable_reason": ""
     },
     "tre-service-azureml": {
       "manifest": "templates/workspace_services/azureml/porter.yaml",
