@@ -28,7 +28,7 @@ trusted-host = $NexusHost
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 [System.IO.File]::WriteAllLines($PipConfigFilePath, $ConfigBody, $Utf8NoBomEncoding)
 
-# Docker proxy config (best-effort — only applies if Docker is pre-installed)
+# Docker proxy config (best-effort; only applies if Docker is pre-installed)
 try {
   $dockerConfigDir = "$env:ProgramData\docker\config"
   if (!(Test-Path $dockerConfigDir)) {
@@ -55,6 +55,7 @@ $RStudioVersion         = "2026.07.1-147"
 $GitVersion             = "2.55.0"
 $MiniforgePath          = "C:\Miniforge3"
 $InstallAzureCli        = (${InstallAzureCli} -eq 1)
+$RequireAzureCli        = (${RequireAzureCli} -eq 1)
 $InstallVsCode          = (${InstallVsCode} -eq 1)
 $InstallStorageExplorer = (${InstallStorageExplorer} -eq 1)
 $InstallGit             = (${InstallGit} -eq 1)
@@ -103,10 +104,11 @@ function Install-TreTool {
     [Parameter(Mandatory = $true)][string]$OutFile,
     [Parameter(Mandatory = $true)][string]$FilePath,
     [Parameter(Mandatory = $true)][string[]]$ArgumentList,
-    [int]$MaxAttempts = 5
+    [int]$MaxAttempts = 5,
+    [switch]$Required
   )
 
-  # Skip installs on failure rather than aborting the whole VM configuration.
+  # Optional tools may fail without aborting the VM configuration.
   try {
     Write-Host "Downloading $Name from $Url"
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
@@ -122,11 +124,13 @@ function Install-TreTool {
     }
     Write-Host "Installing $Name"
     $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -Wait -PassThru -NoNewWindow
-    if ($process.ExitCode -ne 0) {
+    if ($process.ExitCode -notin @(0, 3010)) {
+      if ($Required) { throw "$Name installer exited with code $($process.ExitCode)" }
       Write-Host "WARNING: $Name installer exited with code $($process.ExitCode)"
     }
   }
   catch {
+    if ($Required) { throw "Required tool $Name could not be installed: $($_.Exception.Message)" }
     Write-Host "WARNING: Failed to install $Name - $($_.Exception.Message)"
   }
 }
@@ -205,7 +209,10 @@ function New-DesktopShortcut {
 
 # Make sure the proxy is up before pulling any of the installers below.
 if ($NexusActionsEnabled) {
-  Wait-ForNexus | Out-Null
+  $NexusReady = Wait-ForNexus
+  if ($RequireAzureCli -and -not $NexusReady) {
+    throw "Airlock review requires a reachable Nexus proxy. Check Nexus deployment, DNS and HTTPS connectivity."
+  }
 }
 else {
   Write-Host "No Nexus-backed install/config actions enabled - skipping the wait for the Nexus proxy."
@@ -221,14 +228,35 @@ if ($ConfigureConda)
 Configure-RProxy
 
 $AzureCliMsi = Join-Path $ToolsDir "azure-cli.msi"
+if ($RequireAzureCli -and -not $InstallAzureCli) {
+  throw "Airlock review requires Azure CLI installation to be enabled."
+}
 if ($InstallAzureCli) {
+  if ($RequireAzureCli) {
+    # Probe the required package inside the workspace network before installing tools.
+    try {
+      Invoke-WebRequest -Uri "${nexus_proxy_url}/repository/azure-cli/azure-cli-$AzureCliVersion-x64.msi" `
+        -Method Head -UseBasicParsing -TimeoutSec 30 | Out-Null
+    }
+    catch {
+      throw "Required Azure CLI package is unavailable through Nexus: $($_.Exception.Message)"
+    }
+  }
   Install-TreTool -Name "Azure CLI" `
     -Url "${nexus_proxy_url}/repository/azure-cli/azure-cli-$AzureCliVersion-x64.msi" `
     -OutFile $AzureCliMsi `
     -FilePath "msiexec.exe" `
-    -ArgumentList @("/i", "`"$AzureCliMsi`"", "/qn", "/norestart")
+    -ArgumentList @("/i", "`"$AzureCliMsi`"", "/qn", "/norestart") `
+    -Required:$RequireAzureCli
 
   $env:Path = "$Env:ProgramFiles\Microsoft SDKs\Azure\CLI2\wbin;$Env:ProgramFiles (x86)\Microsoft SDKs\Azure\CLI2\wbin;$env:Path"
+  if ($RequireAzureCli) {
+    if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+      throw "Required Azure CLI executable was not found after installation."
+    }
+    & az version --output json | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Required Azure CLI failed its version check." }
+  }
 }
 
 $VsCodeSetup = Join-Path $ToolsDir "vscode-setup.exe"
