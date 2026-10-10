@@ -68,6 +68,25 @@ Use one test process. Per-bundle runs reject a marker expression or multiple wor
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 
+### OpenAI selection
+
+Select `tre-workspace-service-openai` to run `test_openai.py::test_private_openai_lifecycle`.
+The branch workflow registers the OpenAI bundle. The test also replaces its generic case in the `workspace_services` group.
+The test requests `gpt-5.1 | 2025-11-13`, private access and one regional `Standard` capacity unit.
+It does not switch models or deployment types when Azure cannot satisfy those inputs.
+
+The prerequisite check uses the workspace resource group's actual region and the current subscription model and usage APIs.
+It requires a generally available chat model, a current Standard tier and at least one free capacity unit.
+It rejects retired model/tier dates, fine-tuning quotas and incomplete or blocked quota data.
+The CI identity needs permission to read model and quota data at subscription scope.
+The check does not grant roles or reserve capacity. Azure deployment can still fail after it passes.
+
+Prerequisite failures fail the selected test before service creation. They do not count as skipped or passing coverage.
+Service creation has a 45-minute deadline. Verification has a separate five-minute deadline.
+Failed creation and teardown use the existing helper's separate cleanup deadline.
+A configured workspace is retained. A fixture-created workspace uses the fixture's cleanup.
+Private inference, access control, upgrades and complete physical cleanup remain separate checks.
+
 ### Certificate and Nexus selection
 
 Select `tre-shared-service-certs` to create and delete only the certificate shared service.

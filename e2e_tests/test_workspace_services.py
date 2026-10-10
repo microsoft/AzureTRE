@@ -13,7 +13,6 @@ workspace_services = [
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
     strings.AZURESQL_SERVICE,
-    strings.OPENAI_SERVICE,
 ]
 
 
