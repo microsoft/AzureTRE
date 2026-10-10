@@ -1038,6 +1038,10 @@ jobs:
         if: inputs.e2eBundle == 'tre-service-azureml' || inputs.e2eBundle == 'tre-user-resource-aml-compute-instance'
         run: echo "AML_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
 
+      - name: Reserve CycleCloud cleanup and reporting time
+        if: inputs.e2eBundle == 'tre-shared-service-cyclecloud'
+        run: echo "CYCLECLOUD_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
+
       - name: Reserve Databricks cleanup and reporting time
         if: inputs.e2eBundle == 'tre-service-databricks' || inputs.e2eBundle == 'tre-shared-service-databricks-private-auth'
         run: echo "DATABRICKS_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
@@ -1080,6 +1084,7 @@ jobs:
             EXPORT_REVIEW_VALIDATION_DEADLINE=${{ env.EXPORT_REVIEW_VALIDATION_DEADLINE }}
             AML_VALIDATION_DEADLINE=${{ env.AML_VALIDATION_DEADLINE }}
             DATABRICKS_VALIDATION_DEADLINE=${{ env.DATABRICKS_VALIDATION_DEADLINE }}
+            CYCLECLOUD_VALIDATION_DEADLINE=${{ env.CYCLECLOUD_VALIDATION_DEADLINE }}
             TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
