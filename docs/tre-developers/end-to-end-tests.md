@@ -64,7 +64,9 @@ Check the selected entry's prerequisites and limitations before running it.
 5. Keep `skipDeployment` false for a new branch environment.
 
 The workflow validates selection before deployment. It passes the bundle name as data in a JSON request, rather than embedding it in shell code.
-The test runner rejects a request prepared for a different checkout or TRE environment.
+Prepared requests require every generated metadata field, a full checkout SHA and non-empty TRE, location and cloud identifiers.
+The test runner rejects incomplete requests and mismatches with the current checkout or configured TRE, location and cloud.
+Unknown fields are ignored. Workflow metadata may be empty outside GitHub Actions.
 Branch and PR-comment references derive different environment IDs. A completed test run does not remove its core environment.
 
 Existing slash commands retain their marker-based behaviour. They load workflow definitions from `main`; new branch-workflow inputs do not require merging first.
