@@ -217,9 +217,11 @@ describe('regional CI workflow routing', () => {
 
 describe('bundle and marker workflow integration', () => {
   const reusable = workflow('deploy_tre_reusable.yml');
-  const evaluate = (expression, inputs, results = ['success']) => vm.runInNewContext(
+  const evaluate = (expression, inputs, results = ['success'], needs = {
+    e2e_tests_smoke: { result: 'success' }, e2e_tests_plan: { result: 'success' }
+  }) => vm.runInNewContext(
     expression.trim().slice(3, -2).replaceAll('needs.*.result', 'results'),
-    { inputs, results, always: () => true, contains: (values, value) => values.includes(value) },
+    { inputs, results, needs, always: () => true, contains: (values, value) => values.includes(value) },
     { timeout: 1000 }
   );
 
@@ -234,6 +236,42 @@ describe('bundle and marker workflow integration', () => {
     expect(evaluate(reusable.jobs.e2e_tests_plan.if, inputs)).toBe(planned);
     expect(evaluate(reusable.jobs.e2e_tests_custom.if, inputs)).toBe(planned);
     expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs)).toBe(selected);
+  });
+
+  test('custom groups wait for smoke and their test plan', () => {
+    expect(reusable.jobs.e2e_tests_custom.needs).toEqual(expect.arrayContaining([
+      'e2e_tests_smoke', 'e2e_tests_plan'
+    ]));
+  });
+
+  describe.each([false, true])('custom groups with skipDeployment=%s', skipDeployment => {
+    const deploymentJobs = ['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles'];
+    const canRun = overrides => {
+      const needs = Object.fromEntries(deploymentJobs.map(name => [name, {
+        result: skipDeployment ? 'skipped' : 'success'
+      }]));
+      needs.e2e_tests_smoke = { result: 'success' };
+      needs.e2e_tests_plan = { result: 'success' };
+      for (const [name, result] of Object.entries(overrides)) needs[name] = { result };
+      const inputs = { e2eBundle: '', e2eTestsCustomSelector: 'extended', skipDeployment };
+      return evaluate(reusable.jobs.e2e_tests_custom.if, inputs,
+        Object.values(needs).map(job => job.result), needs);
+    };
+
+    test.each([
+      ['success', true], ['failure', false], ['cancelled', false], ['skipped', false]
+    ])('smoke result %s permits custom execution: %s', (result, expected) => {
+      expect(canRun({ e2e_tests_smoke: result })).toBe(expected);
+    });
+
+    test.each(['failure', 'cancelled', 'skipped'])('test plan result %s blocks custom execution', result => {
+      expect(canRun({ e2e_tests_plan: result })).toBe(false);
+    });
+
+    test.each(deploymentJobs.flatMap(name => ['failure', 'cancelled', 'skipped'].map(result => [name, result])))(
+      '%s result %s only permits intentional deployment skips', (name, result) => {
+        expect(canRun({ [name]: result })).toBe(skipDeployment && result === 'skipped');
+      });
   });
 
   test('bundle execution has one job and no dependency on marker planning', () => {
