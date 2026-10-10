@@ -331,6 +331,7 @@ async def wait_for_review_vm_deletion(resource_path, access_token, verify, *, ti
 @pytest.mark.timeout(150 * 60, func_only=True)
 @pytest.mark.airlock
 @pytest.mark.airlock_validation
+@pytest.mark.nexus_required
 @async_test_timeout(50 * 60)
 async def test_airlock_review_vm_flow(
     setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify
