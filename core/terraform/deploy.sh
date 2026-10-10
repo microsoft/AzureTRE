@@ -27,6 +27,8 @@ LOG_FILE="${TS}-tre-core.log"
 # core deployments. This may increase the risk of hitting Azure API rate limits.
 # If deployment reliability issues arise (e.g., frequent throttling), consider
 # lowering the parallelism value.
+# The management storage private endpoint is created before the main apply because
+# creating it changes the DNS of the storage account that holds the Terraform state.
 # This variables are loaded in for us
 # shellcheck disable=SC2154
 ../../devops/scripts/terraform_wrapper.sh \
@@ -36,7 +38,8 @@ LOG_FILE="${TS}-tre-core.log"
   -n "${TF_VAR_terraform_state_container_name}" \
   -k "${TRE_ID}" \
   -l "${LOG_FILE}" \
-  -c "terraform plan --parallelism=25 -out ${PLAN_FILE} && \
+  -c "./mgmt_storage_private_endpoint.sh && \
+  terraform plan --parallelism=25 -out ${PLAN_FILE} && \
   terraform apply -input=false -auto-approve --parallelism=25 ${PLAN_FILE} && \
   terraform output -json > ../tre_output.json"
 
