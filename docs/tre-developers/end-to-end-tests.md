@@ -96,6 +96,40 @@ Each owned resource receives a share of the remaining cleanup time, so one stall
 The case removes its VMs, service and workspace before releasing its Nexus prerequisites.
 Interactive desktop access, denied access, rejected exports, upgrades, custom actions and physical resource removal need separate evidence.
 
+### Azure ML selection
+
+Select `tre-service-azureml` for the private parent-service case.
+Select `tre-user-resource-aml-compute-instance` for the assigned compute case and its parent prerequisites.
+The branch workflow publishes the compute bundle and registers it after Azure ML.
+For local execution, build, publish and register the base workspace, Azure ML service and compute bundle first.
+Use the separate bundle job with one process and run mutating suites sequentially.
+
+Both cases create an Automatic workspace and require non-empty owner and researcher group IDs.
+They ignore configured workspace and service IDs. The old generic Azure ML case is replaced by the focused parent selection.
+The test identity needs the existing Automatic-workspace permissions. Automatic workspace group creation must be enabled.
+ARM inspection currently supports AzureCloud and requires matching authentication and Azure tenants.
+
+For compute, set the environment variable `TEST_AML_USER_OBJECT_ID` to an existing Entra user's object ID.
+In GitHub Actions, set the same name as a variable on the selected GitHub environment.
+Do not use an application or service-principal object ID.
+Preflight checks UUID syntax. It does not query the directory or establish the user's type, existence or access.
+The test does not read Graph, grant roles or add group membership.
+The assigned user still needs the normal workspace access before a separate interactive test.
+
+The compute case explicitly requests `Standard_D2_v3`. Check regional capacity and AML quota before execution.
+The test checks the deployed bundle versions, exact ARM IDs, TRE ownership tags, private subnet, disabled public IP and assigned user.
+It waits for the compute to reach `Running`. It removes compute before the service and workspace, and checks TRE and ARM removal.
+The parent case checks successful private AML workspace provisioning and removal.
+These ARM checks follow the [compute response contract](https://learn.microsoft.com/en-us/rest/api/azureml/compute/get).
+
+The bundle job sets a 270-minute absolute deadline before container startup, with 120 minutes reserved for cleanup.
+Cleanup runs in reverse dependency order and divides the remaining time among owned resources.
+Local runs start the same budget when the case begins. Failed provisioning and verification still trigger bounded cleanup.
+Missing prerequisites and failed assertions fail the case. They do not count as skipped or passing coverage.
+
+These cases do not prove notebook execution, interactive user access, prior-version upgrades or deletion of every dependent Azure artefact.
+The compute bundle defines no custom actions. Retain these limits in each bundle's evidence record.
+
 ### OpenAI selection
 
 Select `tre-workspace-service-openai` to run `test_openai.py::test_private_openai_lifecycle`.
