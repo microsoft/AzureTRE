@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from e2e_tests.bundle_evidence import record_resource, record_operation
 from contextlib import asynccontextmanager
 from e2e_tests.timeouts import cleanup_deadline
 from httpx import AsyncClient, Timeout
@@ -53,6 +54,7 @@ async def post_resource(
 
         assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be sent")
 
+        record_resource(payload, response.json()["operation"], method)
         resource_path = response.json()["operation"]["resourcePath"]
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
@@ -165,10 +167,12 @@ async def wait_for(func, client, operation_endpoint, access_token, failure_state
     LOGGER.info(f"WAITING FOR OP: {operation_endpoint}")
     try:
         done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+        record_operation(operation_endpoint, done_state, done)
         while not done:
             await asyncio.sleep(30)
 
             done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+            record_operation(operation_endpoint, done_state, done)
             LOGGER.info(f"{done}, {done_state}, {message}")
     except asyncio.CancelledError:
         LOGGER.error(

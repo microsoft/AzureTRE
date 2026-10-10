@@ -183,3 +183,48 @@ describe('regional CI workflow routing', () => {
     }
   });
 });
+
+describe('bundle and marker workflow integration', () => {
+  const reusable = workflow('deploy_tre_reusable.yml');
+  const evaluate = (expression, inputs, results = ['success']) => vm.runInNewContext(
+    expression.trim().slice(3, -2).replaceAll('needs.*.result', 'results'),
+    { inputs, results, always: () => true, contains: (values, value) => values.includes(value) },
+    { timeout: 1000 }
+  );
+
+  test.each([
+    ['tre-workspace-service-azuresql', '', false, true],
+    ['', 'shared_services', true, false],
+    ['', '', false, false]
+  ])('bundle %s and marker %s select only the requested path', (bundle, marker, planned, selected) => {
+    const inputs = { e2eBundle: bundle, e2eTestsCustomSelector: marker, skipDeployment: false };
+    expect(evaluate(reusable.jobs.e2e_tests_plan.if, inputs)).toBe(planned);
+    expect(evaluate(reusable.jobs.e2e_tests_custom.if, inputs)).toBe(planned);
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs)).toBe(selected);
+  });
+
+  test('bundle execution has one job and no dependency on marker planning', () => {
+    const bundle = reusable.jobs.e2e_tests_bundle;
+    expect(bundle.strategy).toBeUndefined();
+    expect(bundle.needs).toEqual(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles']);
+    const prepare = bundle.steps.find(step => step.name === 'Prepare bundle validation');
+    expect(prepare.env.TEST_BUNDLE).toBe('${{ inputs.e2eBundle }}');
+    expect(prepare.env.TEST_BUNDLE_MARKER).toBe('${{ inputs.e2eTestsCustomSelector }}');
+    expect(prepare.run).toBe('python3 e2e_tests/run_bundle.py --prepare');
+    const run = bundle.steps.find(step => step.name === 'Run E2E Tests');
+    expect(run.with.COMMAND).toContain('TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle');
+    expect(run.with.COMMAND).not.toContain('inputs.e2eBundle');
+    expect(bundle.steps.find(step => step.name === 'Upload Test Results').with.path).toContain('bundle-validation.json');
+    expect(reusable.jobs.summary.needs).toEqual(['e2e_tests_smoke', 'e2e_tests_plan', 'e2e_tests_custom', 'e2e_tests_bundle']);
+  });
+
+  test('bundle execution honours deployment failures and intentional reuse', () => {
+    const inputs = { e2eBundle: 'tre-workspace-service-azuresql', skipDeployment: false };
+    for (const result of ['failure', 'cancelled', 'skipped']) {
+      expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, [result])).toBe(false);
+    }
+    inputs.skipDeployment = true;
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, ['skipped'])).toBe(true);
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, ['failure'])).toBe(false);
+  });
+});
