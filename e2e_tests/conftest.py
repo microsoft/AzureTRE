@@ -5,12 +5,14 @@ import asyncio
 from typing import Tuple
 import config
 import logging
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import AsyncExitStack, asynccontextmanager, contextmanager
 
 from resources.resource import post_resource, disable_and_delete_resource
 from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
 from helpers import get_admin_token, get_template
+from e2e_tests.resources.nexus import nexus_prerequisites
+from e2e_tests.timeouts import async_test_timeout, cleanup_deadline
 
 
 LOGGER = logging.getLogger(__name__)
@@ -72,12 +74,12 @@ def pause_test_timeout_for_cleanup(request):
 @asynccontextmanager
 async def resource_cleanup_timeout(resource_path, request=None):
     with pause_test_timeout_for_cleanup(request):
-        timeout = asyncio.timeout(CLEANUP_TIMEOUT_SECONDS)
+        timeout = None
         try:
-            async with timeout:
+            async with cleanup_deadline(CLEANUP_TIMEOUT_SECONDS) as timeout:
                 yield
         except TimeoutError as error:
-            if not timeout.expired():
+            if timeout is None or not timeout.expired():
                 raise
             message = f"Cleanup of {resource_path} exceeded {CLEANUP_TIMEOUT_SECONDS} seconds"
             LOGGER.error("%s. Check the operation polling logs for its last observed state.", message)
@@ -96,6 +98,7 @@ def verify(pytestconfig):
         return False
 
 
+@async_test_timeout(60 * 60)
 async def create_or_get_test_workspace(
     auth_type: str,
     verify: bool,
@@ -139,13 +142,18 @@ async def create_or_get_test_workspace(
     # TODO: Temp fix to solve creation of workspaces - https://github.com/microsoft/AzureTRE/issues/2986
     await asyncio.sleep(random.uniform(1, 9))
     workspace_path, workspace_id = await post_resource(
-        payload, resource_strings.API_WORKSPACES, access_token=admin_token, verify=verify
+        payload,
+        resource_strings.API_WORKSPACES,
+        access_token=admin_token,
+        verify=verify,
+        cleanup_failed_create=True,
     )
 
     LOGGER.info(f"Workspace {workspace_id} {template_name} created")
     return workspace_path, workspace_id
 
 
+@async_test_timeout(60 * 60)
 async def create_or_get_test_workpace_service(
     workspace_path, workspace_owner_token, pre_created_workspace_service_id, verify
 ):
@@ -165,6 +173,7 @@ async def create_or_get_test_workpace_service(
         endpoint=f"/api{workspace_path}/{resource_strings.API_WORKSPACE_SERVICES}",
         access_token=workspace_owner_token,
         verify=verify,
+        cleanup_failed_create=True,
     )
 
     return workspace_service_path, workspace_service_id
@@ -257,19 +266,32 @@ async def get_workspace_owner_token(workspace_id, verify):
 
 async def disable_and_delete_ws_resource(resource_path, workspace_id, verify):
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
-    await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify)
+    await disable_and_delete_resource(f"/api{resource_path}", workspace_owner_token, verify, allow_failed_disable=True)
 
 
 async def disable_and_delete_tre_resource(resource_path, verify):
     admin_token = await get_admin_token(verify)
-    await disable_and_delete_resource(f"/api{resource_path}", admin_token, verify)
+    await disable_and_delete_resource(f"/api{resource_path}", admin_token, verify, allow_failed_disable=True)
+
+
+@pytest.fixture(scope="session")
+async def setup_nexus_prerequisites(verify, request):
+    # Dependencies must outlive review VMs and their workspace finaliser.
+    resources = AsyncExitStack()
+    try:
+        async with asyncio.timeout(60 * 60):
+            await resources.enter_async_context(nexus_prerequisites(verify))
+        yield
+    finally:
+        async with resource_cleanup_timeout("Nexus prerequisites", request):
+            await resources.aclose()
 
 
 # Session scope isn't in effect with python-xdist: https://github.com/microsoft/AzureTRE/issues/2868
 @pytest.fixture(scope="session")
 async def setup_test_airlock_import_review_workspace_and_guacamole_service(
-    verify, request
-) -> Tuple[str, str, str, str, str]:
+    setup_nexus_prerequisites, verify, request
+) -> Tuple[str, str, str, str]:
     pre_created_workspace_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID
     # Set up
     workspace_path, workspace_id = await create_or_get_test_workspace(
@@ -279,22 +301,39 @@ async def setup_test_airlock_import_review_workspace_and_guacamole_service(
         pre_created_workspace_id=pre_created_workspace_id,
     )
 
-    admin_token = await get_admin_token(verify=verify)
-    workspace_owner_token, _ = await get_workspace_auth_details(
-        admin_token=admin_token, workspace_id=workspace_id, verify=verify
-    )
+    workspace_service_path = None
     pre_created_workspace_service_id = config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_SERVICE_ID
+    try:
+        admin_token = await get_admin_token(verify=verify)
+        workspace_owner_token, _ = await get_workspace_auth_details(
+            admin_token=admin_token, workspace_id=workspace_id, verify=verify
+        )
 
-    workspace_service_path, workspace_service_id = await create_or_get_test_workpace_service(
-        workspace_path,
-        workspace_owner_token=workspace_owner_token,
-        pre_created_workspace_service_id=pre_created_workspace_service_id,
-        verify=verify,
-    )
+        workspace_service_path, workspace_service_id = await create_or_get_test_workpace_service(
+            workspace_path,
+            workspace_owner_token=workspace_owner_token,
+            pre_created_workspace_service_id=pre_created_workspace_service_id,
+            verify=verify,
+        )
 
-    yield workspace_path, workspace_id, workspace_service_path, workspace_service_id
+        yield workspace_path, workspace_id, workspace_service_path, workspace_service_id
 
-    # Tear-down in a cascaded way
-    await clean_up_test_workspace(
-        pre_created_workspace_id=pre_created_workspace_id, workspace_path=workspace_path, verify=verify, request=request
-    )
+    finally:
+        try:
+            # A reused parent has no cascading cleanup. Remove only a child
+            # created by this fixture. Preserve any pre-existing service.
+            if pre_created_workspace_id and workspace_service_path is not None:
+                await clean_up_test_workspace_service(
+                    pre_created_workspace_service_id,
+                    workspace_service_path,
+                    workspace_id,
+                    verify,
+                    request=request,
+                )
+        finally:
+            await clean_up_test_workspace(
+                pre_created_workspace_id=pre_created_workspace_id,
+                workspace_path=workspace_path,
+                verify=verify,
+                request=request,
+            )
