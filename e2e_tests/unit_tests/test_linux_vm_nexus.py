@@ -38,6 +38,8 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
         self.requests.append(request)
         if request.method == "GET" and request.url.path == strings.API_SHARED_SERVICES:
             return Response(200, json={"sharedServices": self.services})
+        if request.method == "GET" and request.url.path in ("/api/shared-services/nexus", "/api/shared-services/certs"):
+            return Response(200, json={"sharedService": {"isEnabled": False}})
         response_status = 200
         if request.method == "POST":
             payload = json.loads(request.content)

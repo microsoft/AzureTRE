@@ -35,8 +35,12 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         disable_status=202,
         disable_outcome=strings.RESOURCE_STATUS_UPDATED,
         delete_outcome=strings.RESOURCE_STATUS_DELETED,
+        resource_disabled=True,
     ):
+        install_polls = 0
+
         def handle(request):
+            nonlocal install_polls
             if request.url.path == "/api/shared-services":
                 return Response(
                     200,
@@ -52,6 +56,8 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
                     },
                 )
             self.requests.append(request)
+            if request.method == "GET" and request.url.path == f"/api{self.resource_path}":
+                return Response(200, json={"userResource": {"isEnabled": not resource_disabled}})
             phase = request.url.path.rsplit("/", 1)[-1]
             response_status = 200
             if request.method == "POST":
@@ -65,6 +71,10 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
             else:
                 self.assertEqual(request.method, "GET")
                 state = {"install": outcome, "disable": disable_outcome, "delete": delete_outcome}[phase]
+                if phase == "install":
+                    install_polls += 1
+                    if isinstance(state, Exception) and install_polls > 1:
+                        state = strings.RESOURCE_STATUS_DEPLOYMENT_FAILED
                 if isinstance(state, Exception):
                     raise state
             return Response(
@@ -86,9 +96,14 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
 
         self.enterContext(patch.object(resource, "AsyncClient", side_effect=create_client))
 
-    def assert_deleted(self):
+    def assert_deleted(self, failed_disable=False, failed_create=False):
         self.assertEqual(
-            [request.method for request in self.requests], ["POST", "GET", "PATCH", "GET", "DELETE", "GET"]
+            [request.method for request in self.requests],
+            ["POST", "GET"]
+            + (["GET"] if failed_create else [])
+            + ["PATCH", "GET"]
+            + (["GET"] if failed_disable else [])
+            + ["DELETE", "GET"],
         )
         self.assertEqual(self.requests[-2].url.path, f"/api{self.resource_path}")
 
@@ -103,16 +118,27 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         )
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
-        self.assert_deleted()
+        self.assert_deleted(failed_disable=True, failed_create=True)
 
-    async def test_polling_error_still_cleans_up(self):
+    async def test_failed_disable_does_not_delete_an_enabled_resource(self):
+        self.mock_api(
+            strings.RESOURCE_STATUS_DEPLOYMENT_FAILED,
+            disable_outcome=strings.RESOURCE_STATUS_UPDATING_FAILED,
+            resource_disabled=False,
+        )
+        with self.assertRaises(AssertionError) as caught:
+            await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
+        self.assertIn("not confirmed disabled", str(caught.exception.__notes__))
+        self.assertNotIn("DELETE", [request.method for request in self.requests])
+
+    async def test_transient_polling_error_waits_for_terminal_state_before_cleanup(self):
         # Use a non-retried error to verify cleanup without delaying the test.
         failure = RuntimeError("poll failed")
         self.mock_api(failure)
         with self.assertRaises(RuntimeError) as caught:
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertIs(caught.exception, failure)
-        self.assert_deleted()
+        self.assert_deleted(failed_create=True)
 
     async def test_cleanup_failure_preserves_bootstrap_error(self):
         failure = RuntimeError("bootstrap failed")
@@ -121,7 +147,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertIs(caught.exception, failure)
         self.assertIn("also failed", caught.exception.__notes__[0])
-        self.assert_deleted()
+        self.assert_deleted(failed_create=True)
 
     async def test_cleanup_failure_fails_a_successful_bootstrap(self):
         self.mock_api(strings.RESOURCE_STATUS_DEPLOYED, delete_outcome=strings.RESOURCE_STATUS_DELETING_FAILED)
@@ -140,7 +166,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError) as caught:
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertIn("also failed", caught.exception.__notes__[0])
-        self.assertEqual([request.method for request in self.requests], ["POST", "GET", "PATCH"])
+        self.assertEqual([request.method for request in self.requests], ["POST", "GET", "GET", "PATCH"])
 
     async def test_successful_bootstrap_still_requires_successful_disable(self):
         self.mock_api(strings.RESOURCE_STATUS_DEPLOYED, disable_outcome=strings.RESOURCE_STATUS_UPDATING_FAILED)
