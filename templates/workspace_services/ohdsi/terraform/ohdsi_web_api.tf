@@ -23,10 +23,11 @@ resource "azurerm_role_assignment" "keyvault_ohdsi_ws_role" {
 }
 
 resource "azurerm_linux_web_app" "ohdsi_webapi" {
-  name                      = local.ohdsi_webapi_name
-  location                  = data.azurerm_resource_group.ws.location
-  resource_group_name       = data.azurerm_resource_group.ws.name
-  virtual_network_subnet_id = data.azurerm_subnet.web_app.id
+  public_network_access_enabled = false
+  name                          = local.ohdsi_webapi_name
+  location                      = data.azurerm_resource_group.ws.location
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  virtual_network_subnet_id     = data.azurerm_subnet.web_app.id
 
   service_plan_id         = data.azurerm_service_plan.workspace.id
   https_only              = true
