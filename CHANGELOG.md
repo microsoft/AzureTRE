@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Create Airlock prerequisites with explicit consent. Track owned review resources and wait for deletion. Preserve certificates if Nexus cleanup fails. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
 * Handle expected plain-text Airlock errors and give fixture cleanup a separate, bounded timeout. ([#5174](https://github.com/microsoft/AzureTRE/issues/5174))
 * Install and verify required Azure CLI tools before configuring Windows review VMs. ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
