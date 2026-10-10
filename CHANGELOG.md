@@ -7,6 +7,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 
+* Add independent export review-VM validation with a private synthetic upload, review-data hash verification and automatic VM deletion. ([#5143](https://github.com/microsoft/AzureTRE/issues/5143))
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
 * Add separate certificate and Nexus bundle selections with explicit dependencies and certificate-only cleanup checks. ([#5154](https://github.com/microsoft/AzureTRE/issues/5154))
 * Add independent base-workspace validation for workspace API access, owned-resource cleanup and API removal. ([#5152](https://github.com/microsoft/AzureTRE/issues/5152))

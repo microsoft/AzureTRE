@@ -68,6 +68,34 @@ Use one test process. Per-bundle runs reject a marker expression or multiple wor
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 
+### Export review-VM selection
+
+Select `tre-service-guacamole-export-reviewvm` to run `test_airlock_export_review.py::test_airlock_export_review_vm_flow`.
+This case is opt-in. It is not part of `airlock` or `airlock_validation`, so existing Airlock jobs do not acquire another VM lifecycle.
+Use the separate bundle job with one process and run other mutating suites sequentially.
+
+The case requires AzureCloud and a configured manual test workspace application.
+The test identity must have both `WorkspaceOwner` and `AirlockManager` on that application.
+The CI identity needs VM read and managed Run Command permissions for the test resources.
+Use an enabled Nexus 3.11.0 or newer, or explicitly accept its EULA so the existing prerequisite helper can create it.
+The test does not add role assignments or network access rules.
+
+The case creates a separate workspace, Guacamole service and minimal Windows upload VM.
+It ignores configured workspace and service IDs and preserves any reused Nexus and certificate services.
+The upload VM sends one synthetic blob to the export draft through the workspace private endpoint.
+The SAS is a protected Run Command parameter. The probe does not print it.
+After the request reaches `in_review`, the case creates an export review VM in the same workspace.
+It checks the downloaded file's hash before approval, then waits for automatic VM deletion.
+Both VM bundle versions must match the checkout. The evidence report records their observed versions.
+Recovery cleanup cannot turn failed automatic deletion into a passing result.
+
+The bundle job sets a 270-minute absolute deadline before container startup.
+Provisioning and validation stop with 120 minutes reserved for cleanup, within the 300-minute job limit.
+Local runs start that budget when the case begins. Failed setup and probes also trigger bounded cleanup.
+Each owned resource receives a share of the remaining cleanup time, so one stalled delete cannot consume the entire reserve.
+The case removes its VMs, service and workspace before releasing its Nexus prerequisites.
+Interactive desktop access, denied access, rejected exports, upgrades, custom actions and physical resource removal need separate evidence.
+
 ### OpenAI selection
 
 Select `tre-workspace-service-openai` to run `test_openai.py::test_private_openai_lifecycle`.

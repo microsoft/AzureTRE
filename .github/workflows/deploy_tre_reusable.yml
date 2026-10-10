@@ -1028,6 +1028,10 @@ jobs:
       [deploy_shared_services, register_bundles, register_user_resource_bundles]
     timeout-minutes: 300
     steps:
+      - name: Reserve export review cleanup and reporting time
+        if: inputs.e2eBundle == 'tre-service-guacamole-export-reviewvm'
+        run: echo "EXPORT_REVIEW_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
+
       - name: Reserve SQL cleanup and reporting time
         if: inputs.e2eBundle == 'tre-workspace-service-azuresql'
         run: echo "SQL_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
@@ -1059,6 +1063,7 @@ jobs:
           COMMAND: >-
             TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=${{ inputs.runCertificateTestsOnWeekends }}
             SQL_VALIDATION_DEADLINE=${{ env.SQL_VALIDATION_DEADLINE }}
+            EXPORT_REVIEW_VALIDATION_DEADLINE=${{ env.EXPORT_REVIEW_VALIDATION_DEADLINE }}
             TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
