@@ -36,25 +36,50 @@ Check for changes to anything that is run during the build/deploy/test cycle, in
 - modifications to scripts
 - new python packages being installed
 
-### `/test-extended [<sha>] [skip_deployment]` / `/test-extended-aad [<sha>]`/ `/test-shared-services [<sha>]`
+### `/test-extended [<sha>] [skip_deployment]` / `/test-extended-aad [<sha>]`
 
-This command runs the build, deploy, and smoke & extended / shared services tests for a PR.
+These commands run the build, deployment, smoke tests and selected extended tests for a PR.
 
 For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), `/test-extended` is sufficient.
-
-If a change has been made which would affect any of the core shared services, make sure you run `/test-shared-services`.
 
 For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use `/test-extended <sha>` where `<sha>` is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).
 
 If the PR validation environment is already deployed, add `skip_deployment` to `/test-extended` to skip the build and deployment jobs and run the smoke and extended tests against the existing environment. For PRs from forks, include both the SHA and `skip_deployment`, for example `/test-extended <sha> skip_deployment`.
 
-The `skip_deployment` flag is not supported by `/test-extended-aad` or `/test-shared-services`.
+The `skip_deployment` flag is not supported by `/test-extended-aad`.
 
 **IMPORTANT**
 
 As with `/test`, this command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, run the same checks on the PR code as for `/test`.
+
+### `/test-shared-services [<sha>] accept_nexus_eula`
+
+This command builds and deploys the PR environment, then runs smoke and shared-service tests, including the certificate and Nexus lifecycle case.
+Review the PR code using the same checks as for `/test` before running it. For an external PR, include the reviewed head SHA.
+
+The shared-service suite creates Nexus and requires explicit acceptance of the [Sonatype Nexus Community Edition EULA](https://links.sonatype.com/products/nxrm/ce-eula).
+After accepting the EULA, add the exact `accept_nexus_eula` flag on the command's first line, for example `/test-shared-services <sha> accept_nexus_eula`.
+Omitting the flag prevents deployment and tests. The command does not support `skip_deployment`.
+
+For local execution, set `TEST_ACCEPT_NEXUS_EULA=true` before running the selected tests.
+For the branch workflow, set the boolean `acceptNexusEula` input to `true` and select `shared_services`.
+Without consent, the Nexus case fails before changing Nexus or certificate resources. The existing weekend certificate precaution still skips that case after consent is checked.
+A skipped case does not prove the Nexus lifecycle.
+
+For manual runs of `deploy_tre.yml` on `main`, use its `acceptNexusEula` input.
+For recurring main runs, an administrator can record consent with the repository variable `NEXUS_EULA_ACCEPTED=true`.
+Either setting supplies consent. Without either setting, scheduled/manual main runs exclude the `nexus` case and retain the other shared-service tests.
+Push runs retain their existing extended/AAD selection. An excluded Nexus case provides no Nexus lifecycle evidence.
+
+Shared-service tests allow one hour for prior-resource recovery, one hour for provisioning and one hour for each new resource's cleanup.
+Nexus and certificate recovery share the first deadline. Test watchdogs include a further 30-minute margin, including failed-create cleanup.
+The reusable workflow collects the selected cases and gives Nexus a separate five-hour job.
+The other cases run in their own job. These jobs run sequentially against the same environment, including when a group fails.
+Empty groups are omitted. Invalid or empty selections fail planning. Each job verifies the planned checkout and exact cases before execution.
+
+Slash commands use workflows from `main`. Before these routing changes reach `main`, validate the E2E path through `deploy_tre_branch.yml` on the reviewed upstream branch.
 
 ### `/test-backups [<sha>]`
 

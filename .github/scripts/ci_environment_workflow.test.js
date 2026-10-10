@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const yaml = require('js-yaml');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8'));
@@ -74,6 +75,61 @@ describe('regional CI workflow routing', () => {
   let directory;
   beforeEach(() => { directory = fs.mkdtempSync(path.join(os.tmpdir(), 'azuretre-ci-id-')); });
   afterEach(() => { fs.rmSync(directory, { recursive: true, force: true }); });
+
+  test.each([
+    ['schedule', false, '', false],
+    ['schedule', false, 'false', false],
+    ['schedule', false, 'true', true],
+    ['workflow_dispatch', false, '', false],
+    ['workflow_dispatch', true, '', true],
+    ['workflow_dispatch', false, 'true', true],
+    ['push', false, '', false],
+    ['push', false, 'true', true]
+  ])('main %s with input %s and configured consent %s selects the appropriate cases', (event, input, configured, consent) => {
+    const main = workflow('deploy_tre.yml');
+    expect(main.on.workflow_dispatch.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const caller = main.jobs['run-deploy-tre-main'].with;
+    // These workflow expressions use JavaScript-compatible boolean operators.
+    const evaluate = expression => vm.runInNewContext(expression.trim().slice(3, -2), {
+      github: { event_name: event }, inputs: { acceptNexusEula: input }, vars: { NEXUS_EULA_ACCEPTED: configured }
+    }, { timeout: 1000 });
+    expect(evaluate(caller.acceptNexusEula)).toBe(consent);
+    const selector = evaluate(caller.e2eTestsCustomSelector);
+    if (event === 'push') {
+      expect(selector).toBe('extended or extended_aad');
+    } else if (consent) {
+      expect(selector).toBe('extended or extended_aad or shared_services or airlock');
+    } else {
+      expect(selector).toBe('extended or extended_aad or (shared_services and not nexus) or (airlock and not nexus_required)');
+    }
+  });
+
+  test('Nexus receives a separate serial job, budget and result artifact', () => {
+    const reusable = workflow('deploy_tre_reusable.yml');
+    const plan = reusable.jobs.e2e_tests_plan;
+    const job = reusable.jobs.e2e_tests_custom;
+    expect(plan.permissions).toEqual({ contents: 'read' });
+    expect(plan.environment).toBeUndefined();
+    expect(plan.steps.find(step => step.id === 'select').run).toBe('python e2e_tests/ci_groups.py --plan');
+    expect(job.needs).toContain('e2e_tests_plan');
+    expect(job.strategy).toEqual({ 'fail-fast': false, 'max-parallel': 1,
+      matrix: { group: '${{ fromJSON(needs.e2e_tests_plan.outputs.groups) }}' } });
+    expect(job['timeout-minutes']).toBe(300);
+    expect(job.steps.find(step => step.name === 'Write selected cases').env.E2E_GROUP).toBe('${{ toJSON(matrix.group) }}');
+    expect(job.steps.find(step => step.name === 'Run E2E Tests').with.COMMAND).toContain('make test-e2e-ci-group');
+    expect(job.steps.find(step => step.name === 'Upload Test Results').with.name).toContain('${{ matrix.group.name }}');
+    expect(reusable.jobs.summary.needs).toContain('e2e_tests_plan');
+  });
+
+  test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
+    const jobs = workflow('pr_comment_bot.yml').jobs;
+    expect(jobs.pr_comment.outputs.acceptNexusEula).toBe('${{ steps.check_command.outputs.acceptNexusEula }}');
+    expect(jobs.run_test.with.acceptNexusEula).toBe("${{ needs.pr_comment.outputs.acceptNexusEula == 'true' }}");
+    const reusable = workflow('deploy_tre_reusable.yml');
+    expect(reusable.on.workflow_call.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const runner = reusable.jobs.e2e_tests_custom.steps.find(step => step.name === 'Run E2E Tests');
+    expect(runner.with.COMMAND).toContain('TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }}');
+  });
 
   test.each([
     ['pr_comment_bot.yml', 'prepare_pr_env', 'run_test', 'refs/pull/5092/merge'],
