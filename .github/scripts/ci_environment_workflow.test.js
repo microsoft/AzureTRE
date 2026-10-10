@@ -104,6 +104,23 @@ describe('regional CI workflow routing', () => {
     }
   });
 
+  test('Nexus receives a separate serial job, budget and result artifact', () => {
+    const reusable = workflow('deploy_tre_reusable.yml');
+    const plan = reusable.jobs.e2e_tests_plan;
+    const job = reusable.jobs.e2e_tests_custom;
+    expect(plan.permissions).toEqual({ contents: 'read' });
+    expect(plan.environment).toBeUndefined();
+    expect(plan.steps.find(step => step.id === 'select').run).toBe('python e2e_tests/ci_groups.py --plan');
+    expect(job.needs).toContain('e2e_tests_plan');
+    expect(job.strategy).toEqual({ 'fail-fast': false, 'max-parallel': 1,
+      matrix: { group: '${{ fromJSON(needs.e2e_tests_plan.outputs.groups) }}' } });
+    expect(job['timeout-minutes']).toBe(300);
+    expect(job.steps.find(step => step.name === 'Write selected cases').env.E2E_GROUP).toBe('${{ toJSON(matrix.group) }}');
+    expect(job.steps.find(step => step.name === 'Run E2E Tests').with.COMMAND).toContain('make test-e2e-ci-group');
+    expect(job.steps.find(step => step.name === 'Upload Test Results').with.name).toContain('${{ matrix.group.name }}');
+    expect(reusable.jobs.summary.needs).toContain('e2e_tests_plan');
+  });
+
   test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
     const jobs = workflow('pr_comment_bot.yml').jobs;
     expect(jobs.pr_comment.outputs.acceptNexusEula).toBe('${{ steps.check_command.outputs.acceptNexusEula }}');

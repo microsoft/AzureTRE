@@ -910,8 +910,41 @@ jobs:
           name: E2E Test (Smoke) Results
           path: "./e2e_tests/pytest_e2e_smoke.xml"
 
+  e2e_tests_plan:
+    name: Select E2E test groups
+    # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
+    if: >-
+      ${{ always() && inputs.e2eTestsCustomSelector != '' &&
+      (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') }}
+    runs-on: ubuntu-latest
+    needs:
+      [deploy_shared_services, register_bundles, register_user_resource_bundles]
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      groups: ${{ steps.select.outputs.groups }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.prRef }}
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+      - name: Install collection dependencies
+        run: python -m pip install -r e2e_tests/unit_tests/requirements.txt
+      - name: Select test groups
+        id: select
+        env:
+          E2E_SELECTOR: ${{ inputs.e2eTestsCustomSelector }}
+        run: python e2e_tests/ci_groups.py --plan
+
   e2e_tests_custom:
-    name: "Run E2E Tests"
+    name: "Run E2E Tests (${{ matrix.group.name }})"
     # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: >-
       ${{ always() && inputs.e2eTestsCustomSelector != '' &&
@@ -921,8 +954,15 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
     needs:
-      [deploy_shared_services, register_bundles, register_user_resource_bundles]
+      [deploy_shared_services, register_bundles, register_user_resource_bundles, e2e_tests_plan]
+    # Each serial group receives its own budget. Earlier cases cannot consume
+    # the Nexus provisioning and cleanup window.
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        group: ${{ fromJSON(needs.e2e_tests_plan.outputs.groups) }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -932,10 +972,15 @@ jobs:
           # then the default checkout will apply
           ref: ${{ inputs.prRef }}
 
+      - name: Write selected cases
+        env:
+          E2E_GROUP: ${{ toJSON(matrix.group) }}
+        run: printf '%s\n' "$E2E_GROUP" > e2e_tests/ci-group.json
+
       - name: Run E2E Tests
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }} TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=${{ inputs.runCertificateTestsOnWeekends }} make test-e2e-custom SELECTOR='${{ inputs.e2eTestsCustomSelector }}'"
+          COMMAND: "TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }} TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=${{ inputs.runCertificateTestsOnWeekends }} make test-e2e-ci-group"
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -959,12 +1004,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: E2E Test Results
+          name: E2E Test Results (${{ matrix.group.name }})
           path: "./e2e_tests/pytest_e2e_*.xml"
 
   summary:
     name: Summary
-    needs: [e2e_tests_smoke, e2e_tests_custom]
+    needs: [e2e_tests_smoke, e2e_tests_plan, e2e_tests_custom]
     runs-on: ubuntu-latest
     permissions:
       checks: write

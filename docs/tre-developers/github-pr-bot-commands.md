@@ -75,7 +75,9 @@ Push runs retain their existing extended/AAD selection. An excluded Nexus case p
 
 Shared-service tests allow one hour for prior-resource recovery, one hour for provisioning and one hour for each new resource's cleanup.
 Nexus and certificate recovery share the first deadline. Test watchdogs include a further 30-minute margin, including failed-create cleanup.
-The complete selected suite still shares the workflow job's five-hour limit. Use a dedicated shared-service run for lifecycle validation.
+The reusable workflow collects the selected cases and gives Nexus a separate five-hour job.
+The other cases run in their own job. These jobs run sequentially against the same environment, including when a group fails.
+Empty groups are omitted. Invalid or empty selections fail planning. Each job verifies the planned checkout and exact cases before execution.
 
 Slash commands use workflows from `main`. Before these routing changes reach `main`, validate the E2E path through `deploy_tre_branch.yml` on the reviewed upstream branch.
 
