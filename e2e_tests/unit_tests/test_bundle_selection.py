@@ -208,11 +208,15 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertIn("test_shared_services.py::test_create_certs_nexus_shared_service", collected)
         self.assertNotIn("test_shared_services.py::test_create_certificate_shared_service", collected)
 
-    def test_unavailable_bundle_fails_with_its_coverage_gap(self):
-        result, report = self.run_selector("--bundle", "tre-workspace-service-ohdsi", "--validate-only")
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("#5126", report["error"])
-        self.assertEqual(report["collected_tests"], [])
+    def test_ohdsi_selects_only_its_private_lifecycle_without_provisioning(self):
+        result, report = self.run_selector("--bundle", "tre-workspace-service-ohdsi", "--collect-only")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], ["test_ohdsi.py::test_private_ohdsi_lifecycle"])
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertEqual(report["resources"], [])
+        self.assertEqual(set(report["declared_prerequisites"]), {"tre-workspace-base", "tre-shared-service-firewall"})
+        self.assertTrue(any("Synapse" in limit for limit in report["limitations"]))
 
     def test_aml_parent_and_compute_select_separate_cases_without_provisioning(self):
         for bundle, case in (
