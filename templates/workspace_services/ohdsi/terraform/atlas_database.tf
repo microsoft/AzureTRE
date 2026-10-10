@@ -147,18 +147,19 @@ resource "terraform_data" "postgres_subnet_wait" {
 }
 
 resource "azurerm_postgresql_flexible_server" "postgres" {
-  name                   = "psql-server-${local.service_suffix}"
-  resource_group_name    = data.azurerm_resource_group.ws.name
-  location               = data.azurerm_resource_group.ws.location
-  delegated_subnet_id    = azurerm_subnet.postgres.id
-  private_dns_zone_id    = data.azurerm_private_dns_zone.postgres.id
-  sku_name               = var.postgres_sku
-  version                = local.postgres_version
-  administrator_login    = local.postgres_admin_username
-  administrator_password = azurerm_key_vault_secret.postgres_admin_password.value
-  storage_mb             = var.postgres_storage_size_in_mb
-  zone                   = "1"
-  tags                   = local.tre_workspace_service_tags
+  public_network_access_enabled = false
+  name                          = "psql-server-${local.service_suffix}"
+  resource_group_name           = data.azurerm_resource_group.ws.name
+  location                      = data.azurerm_resource_group.ws.location
+  delegated_subnet_id           = azurerm_subnet.postgres.id
+  private_dns_zone_id           = data.azurerm_private_dns_zone.postgres.id
+  sku_name                      = var.postgres_sku
+  version                       = local.postgres_version
+  administrator_login           = local.postgres_admin_username
+  administrator_password        = azurerm_key_vault_secret.postgres_admin_password.value
+  storage_mb                    = var.postgres_storage_size_in_mb
+  zone                          = "1"
+  tags                          = local.tre_workspace_service_tags
 
   timeouts {
     # If this doesn't complete in a realistic time, no point in waiting the full/default 60m
