@@ -23,6 +23,20 @@ import time
 from pathlib import Path
 import pytest
 from e2e_tests import conftest as fixtures
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def nexus_prerequisites(verify):
+    if settings.get("record_nexus"):
+        event(["nexus", "ready"])
+    try:
+        yield
+    finally:
+        if settings.get("record_nexus"):
+            event(["nexus", "delete"])
+
+fixtures.nexus_prerequisites = nexus_prerequisites
+
 settings = json.loads(Path("settings.json").read_text())
 fixtures.CLEANUP_TIMEOUT_SECONDS = settings["budget"]
 
@@ -41,6 +55,8 @@ async def auth_details(*args, **kwargs):
     return "offline-workspace-token", {}
 
 async def create_service(*args, **kwargs):
+    if settings.get("fail_service_setup"):
+        raise RuntimeError("SERVICE_SETUP_FAILED")
     return "/workspaces/review/workspace-services/service", "service"
 
 async def delete_resource(resource_path, *args):
@@ -73,6 +89,7 @@ fixtures.config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_ID = ""
 fixtures.config.TEST_AIRLOCK_IMPORT_REVIEW_WORKSPACE_SERVICE_ID = ""
 
 # Register the actual fixtures and hooks, with only Azure calls replaced.
+setup_nexus_prerequisites = fixtures.setup_nexus_prerequisites
 setup_test_workspace = fixtures.setup_test_workspace
 setup_test_workspace_and_guacamole_service = fixtures.setup_test_workspace_and_guacamole_service
 setup_test_aad_workspace = fixtures.setup_test_aad_workspace
@@ -123,19 +140,24 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
         budget=1,
         durations=None,
         failure_resource=None,
+        record_nexus=False,
+        fail_service_setup=False,
         slow_report=False,
     ):
         settings = {
             "budget": budget,
             "durations": durations or {"review": 0.2, "research": 0.2},
             "failure_resource": failure_resource,
+            "record_nexus": record_nexus,
+            "fail_service_setup": fail_service_setup,
             "slow_report": slow_report,
         }
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             (folder / "conftest.py").write_text(textwrap.dedent(FIXTURE_STUBS))
             (folder / "test_cases.py").write_text(
-                "import time\nimport pytest\nimport asyncio\nfrom conftest import event\n" + test_source
+                "import time\nimport pytest\nimport asyncio\nfrom conftest import event\nfrom e2e_tests.timeouts import async_test_timeout\n"
+                + test_source
             )
             (folder / "settings.json").write_text(json.dumps(settings))
             environment = os.environ.copy()
@@ -194,12 +216,27 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
                 self.assertEqual(len(report.findall(".//testcase")), 2)
                 self.assert_sequential_cleanup(events)
 
+    def test_nexus_outlives_review_workspace_cleanup(self):
+        result, _, events = self.run_pytest(RESOURCE_TEST, record_nexus=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertLess(events.index(["nexus", "ready"]), events.index(["review", "start"]))
+        self.assertLess(events.index(["review", "complete"]), events.index(["nexus", "delete"]))
+
     def test_restored_timer_does_not_interrupt_teardown_error_reporting(self):
         result, report, events = self.run_pytest(RESOURCE_TEST, failure_resource="review", slow_report=True)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual(len(report.findall(".//error")), 1)
         self.assertIn("DELETE_FAILED", result.stdout)
         self.assertNotIn("INTERNALERROR", result.stdout)
+        self.assertIn(["research", "complete"], events)
+
+    def test_service_setup_failure_still_cleans_up_review_workspace_before_nexus(self):
+        source = RESOURCE_TEST.replace("@pytest.mark.timeout(0.1)", "@pytest.mark.timeout(1, func_only=True)")
+        result, report, events = self.run_pytest(source, record_nexus=True, fail_service_setup=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("SERVICE_SETUP_FAILED", result.stdout)
+        self.assertEqual(len(report.findall(".//error")), 1)
+        self.assertLess(events.index(["review", "complete"]), events.index(["nexus", "delete"]))
         self.assertIn(["research", "complete"], events)
 
     def test_cleanup_timeout_finishes_cancellation_before_next_fixture(self):
@@ -259,6 +296,36 @@ def test_body_timeout():
         self.assertEqual(len(report.findall(".//error")), 0)
         self.assertIn("Timeout >0.05s", result.stdout)
         self.assert_sequential_cleanup(events)
+
+    def test_async_body_timeout_cancels_polling_before_next_test_and_cleanup(self):
+        source = (
+            RESOURCE_TEST
+            + """
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.timeout(1)
+@async_test_timeout(0.02)
+async def test_async_timeout():
+    try:
+        await asyncio.sleep(10)
+        event(["body", "leaked"])
+    finally:
+        await asyncio.sleep(0.03)
+        event(["body", "cancel_complete"])
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_after_timeout():
+    event(["next", "start"])
+    await asyncio.sleep(0.05)
+"""
+        )
+        result, report, events = self.run_pytest(source)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(report.findall(".//failure")), 1)
+        self.assertEqual(len(report.findall(".//error")), 0)
+        self.assertIn("TimeoutError", result.stdout)
+        self.assertEqual(events[:2], [["body", "cancel_complete"], ["next", "start"]])
+        self.assert_sequential_cleanup(events[2:])
+        self.assertNotIn("Task exception was never retrieved", result.stdout + result.stderr)
 
     def test_setup_timeout_remains_error_and_session_cleanup_finishes(self):
         source = (
