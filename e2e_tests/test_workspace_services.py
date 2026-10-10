@@ -8,7 +8,6 @@ from resources import strings
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 workspace_services = [
-    strings.AZUREML_SERVICE,
     strings.GITEA_SERVICE,
     strings.MYSQL_SERVICE,
     strings.HEALTH_SERVICE,
