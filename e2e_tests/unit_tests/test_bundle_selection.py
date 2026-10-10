@@ -135,6 +135,51 @@ class BundleSelectionTests(unittest.TestCase):
                 self.assertEqual(report["status"], "selection_error")
                 self.assertEqual(report["collected_tests"], [])
 
+    def test_certificate_and_nexus_selections_keep_target_and_dependency_evidence_separate(self):
+        firewall = "tre-shared-service-firewall"
+        certificate = "tre-shared-service-certs"
+        cases = (
+            (certificate, "test_create_certificate_shared_service", {firewall}),
+            ("tre-shared-service-sonatype-nexus", "test_create_certs_nexus_shared_service", {firewall, certificate}),
+        )
+        for bundle, case, prerequisites in cases:
+            with self.subTest(bundle=bundle):
+                result, report = self.run_selector("--bundle", bundle, "--collect-only")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(report["collected_tests"], ["test_shared_services.py::" + case])
+                self.assertEqual(set(report["declared_prerequisites"]), prerequisites)
+                self.assertEqual(report["status"], "not_run")
+                self.assertFalse(report["full_lifecycle_proven"])
+                self.assertEqual(report["resources"], [])
+
+    def test_shared_service_suite_does_not_add_another_certificate_request(self):
+        env = dict(os.environ, PYTHONPATH=os.pathsep.join((str(ROOT), str(ROOT / "e2e_tests"))))
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
+                "-o",
+                "addopts=",
+                "-m",
+                "shared_services",
+                "test_shared_services.py",
+            ],
+            cwd=ROOT / "e2e_tests",
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        collected = [line for line in result.stdout.splitlines() if line.startswith("test_shared_services.py::")]
+        self.assertEqual(len(collected), 5)
+        self.assertIn("test_shared_services.py::test_create_certs_nexus_shared_service", collected)
+        self.assertNotIn("test_shared_services.py::test_create_certificate_shared_service", collected)
+
     def test_unavailable_bundle_fails_with_its_coverage_gap(self):
         result, report = self.run_selector("--bundle", "tre-user-resource-aml-compute-instance", "--validate-only")
         self.assertEqual(result.returncode, 2)
