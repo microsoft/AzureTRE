@@ -18,3 +18,7 @@ token. Literal token strings remain supported but cannot be renewed.
 
 These tests check the request and renewal behaviour locally. A live extended
 test run is still needed to validate the fix against Azure.
+
+The bundle-selector tests also collect the real Azure SQL case without running
+fixtures. Small isolated pytest runs check exact parameter selection, skipped
+cases, teardown failures and artefact redaction. No Azure deployment is required.

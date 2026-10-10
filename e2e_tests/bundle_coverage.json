@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "bundles": {
+    "tre-shared-service-admin-vm": {
+      "manifest": "templates/shared_services/admin-vm/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [
+        "test_shared_services.py::test_create_shared_service[tre-shared-service-admin-vm]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "The case recovers earlier test resources and preserves unrelated services. Use an isolated validation environment."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-shared-service-airlock-notifier": {
+      "manifest": "templates/shared_services/airlock_notifier/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [
+        "test_shared_services.py::test_create_shared_service[tre-shared-service-airlock-notifier]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "The case recovers earlier test resources and preserves unrelated services. Use an isolated validation environment.",
+        "The case uses example SMTP settings and does not prove email delivery."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-shared-service-certs": {
+      "manifest": "templates/shared_services/certs/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [],
+      "related_tests": [
+        "test_shared_services.py::test_create_certs_nexus_shared_service"
+      ],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "The shared-service suite has a combined certificate/Nexus case. Independent bundle selection and coverage remain open (#5154)."
+    },
+    "tre-shared-service-cyclecloud": {
+      "manifest": "templates/shared_services/cyclecloud/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "The existing shared-service case is disabled pending repair (#5154)."
+    },
+    "tre-shared-service-databricks-private-auth": {
+      "manifest": "templates/shared_services/databricks-auth/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "No dedicated shared-service lifecycle case (#5154)."
+    },
+    "tre-shared-service-firewall": {
+      "manifest": "templates/shared_services/firewall/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [
+        "test_shared_services.py::test_patch_firewall"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "update"
+      ],
+      "limitations": [
+        "Requires the deployed core firewall shared service. Temporarily replaces its display name and application rules, then restores both. Restoration failures fail the case; concurrent edits are not overwritten. Install, functional traffic checks and uninstall are not covered."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-shared-service-gitea": {
+      "manifest": "templates/shared_services/gitea/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [
+        "test_shared_services.py::test_create_shared_service[tre-shared-service-gitea]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "The case recovers earlier test resources and preserves unrelated services. Use an isolated validation environment."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-shared-service-sonatype-nexus": {
+      "manifest": "templates/shared_services/sonatype-nexus-vm/porter.yaml",
+      "family": "shared_service",
+      "prerequisites": [],
+      "tests": [],
+      "related_tests": [
+        "test_shared_services.py::test_create_certs_nexus_shared_service"
+      ],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "The shared-service suite has a combined certificate/Nexus case. Independent bundle selection and coverage remain open (#5154)."
+    },
+    "tre-service-azureml": {
+      "manifest": "templates/workspace_services/azureml/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-service-azureml]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-user-resource-aml-compute-instance": {
+      "manifest": "templates/workspace_services/azureml/user_resources/aml_compute/porter.yaml",
+      "family": "user_resource",
+      "prerequisites": [
+        "tre-workspace-base",
+        "tre-service-azureml"
+      ],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "Bundle publication, registration and lifecycle coverage are missing (#5127)."
+    },
+    "tre-workspace-service-azuresql": {
+      "manifest": "templates/workspace_services/azuresql/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-azuresql]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-service-databricks": {
+      "manifest": "templates/workspace_services/databricks/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "Missing workspace-service case and parametrisation (#5126)."
+    },
+    "tre-workspace-service-gitea": {
+      "manifest": "templates/workspace_services/gitea/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-gitea]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-service-guacamole": {
+      "manifest": "templates/workspace_services/guacamole/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_create_guacamole_service_into_aad_workspace"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "authentication-redirect",
+        "workspace-cascade-cleanup"
+      ],
+      "limitations": [
+        "Requires an automatically provisioned Entra workspace. Independent service deletion and upgrades are not covered."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-service-guacamole-export-reviewvm": {
+      "manifest": "templates/workspace_services/guacamole/user_resources/guacamole-azure-export-reviewvm/porter.yaml",
+      "family": "user_resource",
+      "prerequisites": [
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
+      ],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites (#5182)."
+      ],
+      "unavailable_reason": "No isolated export-review VM lifecycle case (#5127)."
+    },
+    "tre-service-guacamole-import-reviewvm": {
+      "manifest": "templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/porter.yaml",
+      "family": "user_resource",
+      "prerequisites": [
+        "tre-workspace-base",
+        "tre-workspace-airlock-import-review",
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
+      ],
+      "tests": [
+        "test_airlock.py::test_airlock_review_vm_flow"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "airlock-review-flow",
+        "automatic-uninstall"
+      ],
+      "limitations": [
+        "The case checks the import review flow and waits for automatic VM deletion after approval.",
+        "Export review, migration and interactive desktop access need separate tests.",
+        "Use a suitable Nexus instance or give explicit Nexus EULA consent to create prerequisites."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-service-guacamole-linuxvm": {
+      "manifest": "templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/porter.yaml",
+      "family": "user_resource",
+      "prerequisites": [
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
+      ],
+      "tests": [
+        "test_guacamole_linuxvm.py::test_create_guacamole_linux_vm"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "bootstrap-completion",
+        "uninstall"
+      ],
+      "limitations": [
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites. VM availability and interactive access need separate validation."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-service-guacamole-windowsvm": {
+      "manifest": "templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/porter.yaml",
+      "family": "user_resource",
+      "prerequisites": [
+        "tre-workspace-base",
+        "tre-service-guacamole"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_create_guacamole_service_into_base_workspace"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "workspace-cascade-cleanup"
+      ],
+      "limitations": [
+        "The Guacamole redirect is checked, but an interactive VM connection and independent VM deletion are not covered."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-workspace-service-health": {
+      "manifest": "templates/workspace_services/health-services/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-health]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately.",
+        "Default inputs do not enable FHIR or DICOM. Endpoint validation requires an explicit configuration."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-workspace-service-mysql": {
+      "manifest": "templates/workspace_services/mysql/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-mysql]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-workspace-service-ohdsi": {
+      "manifest": "templates/workspace_services/ohdsi/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [],
+      "related_tests": [],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "Missing workspace-service case and parametrisation (#5126)."
+    },
+    "tre-workspace-service-openai": {
+      "manifest": "templates/workspace_services/openai/porter.yaml",
+      "family": "workspace_service",
+      "prerequisites": [
+        "tre-workspace-base"
+      ],
+      "tests": [],
+      "related_tests": [
+        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-openai]"
+      ],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "The branch deployment does not register this bundle (#5150)."
+    },
+    "tre-workspace-airlock-import-review": {
+      "manifest": "templates/workspaces/airlock-import-review/porter.yaml",
+      "family": "workspace",
+      "prerequisites": [],
+      "tests": [
+        "test_workspace_templates.py::test_create_workspace_templates[tre-workspace-airlock-import-review]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "deployment-status",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    },
+    "tre-workspace-base": {
+      "manifest": "templates/workspaces/base/porter.yaml",
+      "family": "workspace",
+      "prerequisites": [],
+      "tests": [],
+      "related_tests": [
+        "test_workspace_services.py::test_create_guacamole_service_into_base_workspace"
+      ],
+      "coverage": [],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": "Base workspace provisioning is fixture coverage in other bundle tests; an isolated lifecycle case is missing (#5152)."
+    },
+    "tre-workspace-unrestricted": {
+      "manifest": "templates/workspaces/unrestricted/porter.yaml",
+      "family": "workspace",
+      "prerequisites": [],
+      "tests": [
+        "test_workspace_templates.py::test_create_workspace_templates[tre-workspace-unrestricted]"
+      ],
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "deployment-status",
+        "uninstall"
+      ],
+      "limitations": [
+        "Functional, upgrade and custom-action coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
+    }
+  }
+}
