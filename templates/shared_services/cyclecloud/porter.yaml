@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.7.9
+version: 0.7.10
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -55,6 +55,13 @@ parameters:
     default: ""
 
 outputs:
+  - name: azure_resource_id
+    type: string
+    applyTo:
+      - install
+      - upgrade
+      - start
+      - stop
   - name: connection_uri
     type: string
     applyTo:
@@ -90,6 +97,7 @@ install:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: ${ bundle.parameters.id }
       outputs:
+        - name: azure_resource_id
         - name: connection_uri
         - name: shared_subnet_address_prefixes
 
@@ -110,6 +118,7 @@ upgrade:
         container_name: ${ bundle.parameters.tfstate_container_name }
         key: ${ bundle.parameters.id }
       outputs:
+        - name: azure_resource_id
         - name: connection_uri
         - name: shared_subnet_address_prefixes
 
