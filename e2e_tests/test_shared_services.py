@@ -1,9 +1,11 @@
+from copy import deepcopy
+import asyncio
 import pytest
 import logging
 from e2e_tests.conftest import disable_and_delete_tre_resource
 from datetime import date
 
-from resources.resource import post_resource
+from resources.resource import get_resource, post_resource
 from helpers import get_shared_service_by_name
 from resources import strings
 from helpers import get_admin_token
@@ -12,6 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.shared_services
+@pytest.mark.timeout(125 * 60)
 async def test_patch_firewall(verify):
     template_name = strings.FIREWALL_SHARED_SERVICE
 
@@ -71,14 +74,44 @@ async def test_patch_firewall(verify):
     )
     shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
 
-    await post_resource(
-        payload=patch_payload,
-        endpoint=f"/api{shared_service_path}",
-        access_token=admin_token,
-        verify=verify,
-        method="PATCH",
-        etag=shared_service_firewall["_etag"],
-    )
+    original_properties = {
+        "display_name": shared_service_firewall["properties"]["display_name"],
+        "rule_collections": deepcopy(shared_service_firewall["properties"].get("rule_collections", [])),
+    }
+    original_error = None
+    try:
+        async with asyncio.timeout(60 * 60):
+            await post_resource(
+                payload=patch_payload,
+                endpoint=f"/api{shared_service_path}",
+                access_token=admin_token,
+                verify=verify,
+                method="PATCH",
+                etag=shared_service_firewall["_etag"],
+            )
+    except BaseException as error:
+        original_error = error
+        raise
+    finally:
+        try:
+            async with asyncio.timeout(60 * 60):
+                current = (await get_resource(f"/api{shared_service_path}", admin_token, verify))["sharedService"]
+                current_properties = {key: current["properties"].get(key, []) for key in original_properties}
+                if current_properties != original_properties:
+                    if current_properties != patch_payload["properties"]:
+                        raise RuntimeError("Firewall properties changed concurrently; refusing to overwrite them")
+                    await post_resource(
+                        payload={"properties": original_properties},
+                        endpoint=f"/api{shared_service_path}",
+                        access_token=admin_token,
+                        verify=verify,
+                        method="PATCH",
+                        etag=current["_etag"],
+                    )
+        except Exception as restore_error:
+            if original_error is None:
+                raise
+            original_error.add_note(f"Firewall restoration also failed: {restore_error!r}")
 
 
 shared_service_templates_to_create = [

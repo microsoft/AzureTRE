@@ -88,7 +88,7 @@
         "update"
       ],
       "limitations": [
-        "Requires the deployed core firewall shared service. Install, functional traffic checks and uninstall are not covered."
+        "Requires the deployed core firewall shared service. Temporarily replaces its display name and application rules, then restores both. Restoration failures fail the case; concurrent edits are not overwritten. Install, functional traffic checks and uninstall are not covered."
       ],
       "unavailable_reason": ""
     },
