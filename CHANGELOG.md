@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Install and verify required Azure CLI tools before configuring Windows review VMs. ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
 * Use supported Dsv6 sizes for Guacamole Linux and Airlock review VMs. ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))
 * Use compatible Azure CLI runtimes for managed-identity login in the affected bundles. ([#5185](https://github.com/microsoft/AzureTRE/issues/5185))
 * Stop deployment when Terraform outputs are missing or invalid. Publish environment files only after validation. ([#5168](https://github.com/microsoft/AzureTRE/issues/5168))

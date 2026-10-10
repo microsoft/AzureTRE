@@ -28,6 +28,7 @@ module "windows_vm" {
 
   nexus_proxy_url          = local.nexus_proxy_url
   install_azure_cli        = true
+  require_azure_cli        = true
   install_vscode           = true
   install_storage_explorer = true
   install_git              = false
