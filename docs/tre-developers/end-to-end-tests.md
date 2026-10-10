@@ -283,3 +283,30 @@ Failed cleanup fails the test. Core Key Vault credentials can remain soft-delete
 This case does not configure the CycleCloud application or create an HPC cluster. Browser access, application TLS trust, private DNS reachability and prior-release upgrades remain unproven.
 The existing bundle grants subscription Contributor to its VM and permits SharedSubnet access to ARM and GitHub. It does not disable the storage public endpoint.
 A private endpoint and a successful server lifecycle do not prove workspace isolation or storage access restrictions.
+
+### Private OHDSI validation
+
+Select the bundle from a branch that contains its repaired bootstrap and validation case:
+
+```bash
+TEST_BUNDLE=tre-workspace-service-ohdsi make test-e2e-bundle
+```
+
+Use a dedicated AzureCloud environment with one writer and matching deployment and authentication tenants.
+Publish and register the checkout base-workspace, firewall and OHDSI bundles. Deploy the firewall before the test.
+Check PostgreSQL 14 capacity for `B_Standard_B1ms`, 32 GiB storage and availability zone 1 in the selected region.
+The case creates a fresh Automatic workspace. It disables backups and sets `configure_data_source=false` without data-source properties.
+
+The case checks both private web apps, their pinned images, PostgreSQL networking and the WebAPI identity's vault role.
+Successful installation includes the bundle's private WebAPI readiness check and local administrator setup.
+A metadata update exercises a same-version upgrade. The test checks the callback and firewall collections after each operation.
+It waits for terminal operations before updates or deletion. It owns accepted resources before evidence writes or client closure.
+
+The job sets `OHDSI_VALIDATION_DEADLINE` before container setup. The case reserves 120 minutes for cleanup within 270 minutes.
+Cleanup removes the service before its workspace. It checks Azure resource removal, app DNS records, callback removal and firewall restoration.
+If service cleanup fails, the case retains the workspace and fails. The shared core PostgreSQL DNS link remains in place.
+Key Vault items can remain soft-deleted under the existing retention policy.
+
+Browser sign-in, independent private HTTP and DNS probes, database data persistence and previous-version upgrades remain unproven.
+Synapse provisioning, CDM queries and clinical workflows need separate cases. Retained non-empty data-source properties are outside this case.
+The Synapse script does not currently inspect `configure_data_source`; empty properties avoid that path.
