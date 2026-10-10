@@ -66,17 +66,19 @@ async def test_patch_firewall(verify):
     admin_token = await get_admin_token(verify)
     shared_service_firewall = await get_shared_service_by_name(template_name, verify, admin_token)
 
-    if shared_service_firewall:
-        shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
+    assert shared_service_firewall, (
+        f"Firewall shared service '{template_name}' not found. Deploy it before running this test."
+    )
+    shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
 
-        await post_resource(
-            payload=patch_payload,
-            endpoint=f"/api{shared_service_path}",
-            access_token=admin_token,
-            verify=verify,
-            method="PATCH",
-            etag=shared_service_firewall["_etag"],
-        )
+    await post_resource(
+        payload=patch_payload,
+        endpoint=f"/api{shared_service_path}",
+        access_token=admin_token,
+        verify=verify,
+        method="PATCH",
+        etag=shared_service_firewall["_etag"],
+    )
 
 
 shared_service_templates_to_create = [
