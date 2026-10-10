@@ -195,6 +195,43 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertEqual(report["source_bundle_version"], "1.1.0")
         self.assertIn("tre-workspace-base", report["declared_prerequisites"])
 
+    def test_export_review_selects_only_its_private_lifecycle(self):
+        result, report = self.run_selector("--bundle", "tre-service-guacamole-export-reviewvm", "--collect-only")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(
+            report["collected_tests"], ["test_airlock_export_review.py::test_airlock_export_review_vm_flow"]
+        )
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertIn("tre-service-guacamole-windowsvm", report["declared_prerequisites"])
+        self.assertIn("synthetic-review-data", report["coverage"])
+
+    def test_observed_deployment_evidence_excludes_properties(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = bundle_evidence.BundleReport(Path(directory) / "report.json", {})
+            with patch.object(bundle_evidence, "_ACTIVE_REPORT", report):
+                bundle_evidence.record_deployed_resource(
+                    {
+                        "id": "vm",
+                        "templateName": "review",
+                        "templateVersion": "2.0.9",
+                        "properties": {"secret": "excluded"},
+                    },
+                    "/workspaces/ws/workspace-services/service/user-resources/vm",
+                )
+            self.assertEqual(
+                report.data["resources"],
+                [
+                    {
+                        "method": "GET",
+                        "resourceId": "vm",
+                        "resourcePath": "/workspaces/ws/workspace-services/service/user-resources/vm",
+                        "bundle": "review",
+                        "deployed_template_version": "2.0.9",
+                    }
+                ],
+            )
+
     def test_marker_and_parallel_worker_inputs_are_rejected(self):
         for extra in ({"TEST_BUNDLE_MARKER": "workspace_services"}, {"E2E_TESTS_NUMBER_PROCESSES": "2"}):
             with self.subTest(environment=extra):
