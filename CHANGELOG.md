@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Add separate certificate and Nexus bundle selections with explicit dependencies and certificate-only cleanup checks. ([#5154](https://github.com/microsoft/AzureTRE/issues/5154))
 * Add independent base-workspace validation for workspace API access, owned-resource cleanup and API removal. ([#5152](https://github.com/microsoft/AzureTRE/issues/5152))
 * Test private Azure SQL queries and data persistence after a database SKU change. Reserve cleanup time within the job deadline. ([#5139](https://github.com/microsoft/AzureTRE/issues/5139))
 * Select bundle tests before deployment and record their coverage limits and resource evidence. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))

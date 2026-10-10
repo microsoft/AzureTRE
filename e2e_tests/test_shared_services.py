@@ -4,6 +4,8 @@ from contextlib import AsyncExitStack, asynccontextmanager
 
 import pytest
 import logging
+from httpx import AsyncClient
+from starlette import status
 from e2e_tests import config
 from e2e_tests.conftest import disable_and_delete_tre_resource
 from datetime import date
@@ -17,11 +19,13 @@ from resources.resource import (
 from helpers import get_shared_service_by_name
 from resources import strings
 from helpers import get_admin_token
+from helpers import TIMEOUT, get_auth_header, get_full_endpoint
 
 LOGGER = logging.getLogger(__name__)
 RECOVERY_TIMEOUT_SECONDS = 60 * 60
 PROVISIONING_TIMEOUT_SECONDS = 60 * 60
 CLEANUP_TIMEOUT_SECONDS = 60 * 60
+CERTIFICATE_CHECK_TIMEOUT_SECONDS = 5 * 60
 # Recover old resources under one shared deadline. Failed creation can spend
 # another cleanup deadline inside post_resource before unwinding the exit stack.
 SINGLE_SERVICE_TIMEOUT_SECONDS = (
@@ -223,6 +227,49 @@ async def test_create_shared_service(template_name, verify) -> None:
     async with AsyncExitStack() as resources:
         async with asyncio.timeout(PROVISIONING_TIMEOUT_SECONDS):
             await resources.enter_async_context(managed_shared_service(post_payload, verify))
+
+
+@pytest.mark.certificate_validation
+@pytest.mark.timeout(SINGLE_SERVICE_TIMEOUT_SECONDS)
+async def test_create_certificate_shared_service(verify) -> None:
+    if date.today().weekday() in [5, 6] and not config.TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS:
+        pytest.skip("Certificate rate-limit precaution: skipping on weekends; certificate coverage is unproven.")
+
+    async with asyncio.timeout(RECOVERY_TIMEOUT_SECONDS):
+        admin_token = await get_admin_token(verify)
+        if await get_shared_service_by_name(strings.NEXUS_SHARED_SERVICE, verify, admin_token):
+            pytest.fail("Nexus is present. Certificate-only validation requires an isolated environment.")
+        await recover_previous_shared_services(verify, strings.CERTS_SHARED_SERVICE)
+
+    payload = {
+        "templateName": strings.CERTS_SHARED_SERVICE,
+        "properties": {
+            "display_name": f"Shared service {strings.CERTS_SHARED_SERVICE}",
+            "description": f"{strings.CERTS_SHARED_SERVICE} deployed via e2e tests",
+            "domain_prefix": "nexus",
+            "cert_name": "nexus-ssl",
+        },
+    }
+    async with AsyncExitStack() as resources:
+        async with asyncio.timeout(PROVISIONING_TIMEOUT_SECONDS):
+            resource_path = await resources.enter_async_context(managed_shared_service(payload, verify))
+        async with asyncio.timeout(CERTIFICATE_CHECK_TIMEOUT_SECONDS):
+            certificate = (await get_resource(f"/api{resource_path}", admin_token, verify))["sharedService"]
+            assert certificate["id"] == resource_path.rsplit("/", 1)[-1]
+            assert certificate["templateName"] == strings.CERTS_SHARED_SERVICE
+            assert certificate["deploymentStatus"] == strings.RESOURCE_STATUS_DEPLOYED
+            assert certificate["isEnabled"] is True
+            assert certificate["properties"]["domain_prefix"] == "nexus"
+            assert certificate["properties"]["cert_name"] == "nexus-ssl"
+
+    async with asyncio.timeout(CERTIFICATE_CHECK_TIMEOUT_SECONDS):
+        async with AsyncClient(verify=verify) as client:
+            response = await client.get(
+                get_full_endpoint(f"/api{resource_path}"), headers=get_auth_header(admin_token), timeout=TIMEOUT
+            )
+        assert response.status_code == status.HTTP_404_NOT_FOUND, (
+            f"Certificate service remains visible after uninstall: HTTP {response.status_code}"
+        )
 
 
 @pytest.mark.shared_services
