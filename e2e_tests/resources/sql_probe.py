@@ -30,11 +30,11 @@ class ArmClient:
         self.client = client
         self.credential = credential
 
-    async def request(self, method, resource_id, api_version, *, body=None, missing_ok=False, expand=False):
+    async def request(self, method, resource_id, api_version, *, body=None, missing_ok=False, expand=False, query=None):
         if not resource_id.startswith("/subscriptions/") or any(c in resource_id for c in "?#"):
             raise ValueError("Expected an ARM resource ID")
         token = await asyncio.to_thread(self.credential.get_token, f"{ARM}/.default")
-        params = {"api-version": api_version}
+        params = {**(query or {}), "api-version": api_version}
         if expand:
             params["$expand"] = "instanceView"
         response = await self.client.request(
