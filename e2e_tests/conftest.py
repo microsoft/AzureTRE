@@ -20,6 +20,7 @@ pytestmark = pytest.mark.asyncio(loop_scope="session")
 CLEANUP_TIMEOUT_SECONDS = 60 * 60
 _TEARDOWN_ITEM = pytest.StashKey[pytest.Item]()
 _ACTIVE_TIMEOUT = pytest.StashKey[tuple]()
+_MANAGED_CLEANUP_USED = pytest.StashKey[bool]()
 
 
 @pytest.hookimpl(hookwrapper=True, optionalhook=True)
@@ -41,6 +42,14 @@ def pytest_runtest_teardown(item):
     item.session.stash[_TEARDOWN_ITEM] = item
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    if call.when == "teardown" and item.stash.get(_MANAGED_CLEANUP_USED, False):
+        # All finalizers have finished. A restored timer must not interrupt
+        # traceback formatting and turn an ordinary failure into INTERNALERROR.
+        item.config.hook.pytest_timeout_cancel_timer(item=item)
+
+
 @contextmanager
 def pause_test_timeout_for_cleanup(request):
     item = request.session.stash.get(_TEARDOWN_ITEM, None) if request is not None else None
@@ -49,6 +58,7 @@ def pause_test_timeout_for_cleanup(request):
         yield
         return
     settings, started = active
+    item.stash[_MANAGED_CLEANUP_USED] = True
     remaining = settings.timeout - (time.monotonic() - started)
     # A timer that already failed the body/setup needs a fresh finite budget for
     # other finalizers. Otherwise preserve the unused budget, excluding cleanup.
