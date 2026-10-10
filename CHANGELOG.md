@@ -27,7 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Create the resource processor's management storage private endpoint in a targeted apply before the main core apply, then wait for the Terraform state endpoint to resolve consistently. This prevents the private endpoint's DNS change from breaking Terraform state access during the main apply. (`core` 0.18.12) ([#5176](https://github.com/microsoft/AzureTRE/issues/5176))
+* Create the management-storage private endpoint before the main core apply. On fresh deployments and reruns, require the expected private-link DNS alias, address resolution and successful backend reads. Add bounded checks, DNS diagnostics and the container DNS tools. (`core` 0.18.12, `devops` 0.6.14) ([#5176](https://github.com/microsoft/AzureTRE/issues/5176))
 * Fix denial-of-service dependency alerts by updating `source-map-js` to 1.2.2 in the UI and removing transitive `sprintf-js` from workflow tests through an `argparse` 2 override for `js-yaml` 3. (`ui` 0.10.3, `build-scripts` 1.0.3) ([#5118](https://github.com/microsoft/AzureTRE/pull/5118))
 * Align the `create_aad_groups` schema and Porter defaults to `true` across all three workspace bundles, preventing an unrelated edit from unintentionally removing workspace role groups and app-role assignments.
   Add regression checks for each bundle. (`tre-workspace-base` 2.12.2, `tre-workspace-unrestricted` 0.15.1, `tre-workspace-airlock-import-review` 0.18.1) ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
