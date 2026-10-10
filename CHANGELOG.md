@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Use compatible Azure CLI runtimes for managed-identity login in the affected bundles. ([#5185](https://github.com/microsoft/AzureTRE/issues/5185))
 * Stop deployment when Terraform outputs are missing or invalid. Publish environment files only after validation. ([#5168](https://github.com/microsoft/AzureTRE/issues/5168))
 * Wait for management storage DNS and backend readiness before core deployment. ([#5176](https://github.com/microsoft/AzureTRE/issues/5176))
 * Fix denial-of-service dependency alerts by updating `source-map-js` to 1.2.2 in the UI and removing transitive `sprintf-js` from workflow tests through an `argparse` 2 override for `js-yaml` 3. (`ui` 0.10.3, `build-scripts` 1.0.3) ([#5118](https://github.com/microsoft/AzureTRE/pull/5118))
