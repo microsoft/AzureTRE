@@ -1,23 +1,23 @@
-CREATE ROLE ${OHDSI_ADMIN_ROLE} CREATEDB REPLICATION VALID UNTIL 'infinity';
+-- Quote identifiers and values with psql. A retry can reuse roles already created.
+SELECT format('CREATE ROLE %I CREATEDB REPLICATION', :'admin_role')
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'admin_role') \gexec
+COMMENT ON ROLE :"admin_role" IS 'Administration group for OHDSI applications';
 
-COMMENT ON ROLE ${OHDSI_ADMIN_ROLE} IS 'Administration group for OHDSI applications';
+SELECT format('CREATE ROLE %I', :'app_role')
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'app_role') \gexec
+COMMENT ON ROLE :"app_role" IS 'Application group for OHDSI applications';
 
-CREATE ROLE ${OHDSI_APP_ROLE} VALID UNTIL 'infinity';
+SELECT format('CREATE ROLE %I LOGIN', :'admin_username')
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'admin_username') \gexec
+ALTER ROLE :"admin_username" PASSWORD :'admin_password' VALID UNTIL 'infinity';
+GRANT :"admin_role" TO :"admin_username";
+COMMENT ON ROLE :"admin_username" IS 'Admin user account for OHDSI applications';
 
-COMMENT ON ROLE ${OHDSI_APP_ROLE} IS 'Application groupfor OHDSI applications';
+SELECT format('CREATE ROLE %I LOGIN', :'app_username')
+WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'app_username') \gexec
+ALTER ROLE :"app_username" PASSWORD :'app_password' VALID UNTIL 'infinity';
+GRANT :"app_role" TO :"app_username";
+COMMENT ON ROLE :"app_username" IS 'Application user account for OHDSI applications';
 
-CREATE ROLE ${OHDSI_ADMIN_USERNAME} LOGIN ENCRYPTED PASSWORD ${admin_md5} VALID UNTIL 'infinity';
-
-GRANT ${OHDSI_ADMIN_ROLE} TO ${OHDSI_ADMIN_USERNAME};
-
-COMMENT ON ROLE ${OHDSI_ADMIN_USERNAME} IS 'Admin user account for OHDSI applications';
-
-CREATE ROLE ${OHDSI_APP_USERNAME} LOGIN ENCRYPTED PASSWORD ${app_md5} VALID UNTIL 'infinity';
-
-GRANT ${OHDSI_APP_ROLE} TO ${OHDSI_APP_USERNAME};
-
-COMMENT ON ROLE ${OHDSI_APP_USERNAME} IS 'Application user account for OHDSI applications';
-
-GRANT ALL ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_ADMIN_ROLE};
-
-GRANT CONNECT, TEMPORARY ON DATABASE ${DATABASE_NAME} TO GROUP ${OHDSI_APP_ROLE};
+GRANT ALL ON DATABASE :"database_name" TO GROUP :"admin_role";
+GRANT CONNECT, TEMPORARY ON DATABASE :"database_name" TO GROUP :"app_role";
