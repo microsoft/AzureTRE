@@ -23,6 +23,7 @@ resource "terraform_data" "deployment_atlas_security" {
       ATLAS_SECURITY_ADMIN_PASSWORD = azurerm_key_vault_secret.atlas_security_admin_password.value
       ATLAS_USERS                   = "admin,${azurerm_key_vault_secret.atlas_security_admin_password.value}"
       WEB_API_URL                   = local.ohdsi_webapi_url
+      WEB_API_VERSION               = local.ohdsi_api_docker_image_tag
     }
 
     command = "../scripts/atlas_security.sh"
