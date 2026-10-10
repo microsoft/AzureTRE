@@ -80,13 +80,25 @@
       "manifest": "templates/shared_services/databricks-auth/porter.yaml",
       "family": "shared_service",
       "prerequisites": [],
-      "tests": [],
-      "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "tests": [
+        "test_databricks.py::test_private_auth_lifecycle"
       ],
-      "unavailable_reason": "No dedicated shared-service lifecycle case (#5154)."
+      "related_tests": [
+        "test_databricks.py::test_private_databricks_lifecycle"
+      ],
+      "coverage": [
+        "install",
+        "private-configuration",
+        "uninstall",
+        "api-removal",
+        "arm-resource-removal"
+      ],
+      "limitations": [
+        "Requires an isolated AzureCloud TRE with no workspaces, no Databricks authentication service and an empty Databricks private DNS zone. Run one writer and one test process. Existing resources are never adopted.",
+        "Checks ARM configuration and DNS records, not browser sign-in, private DNS reachability, cluster or notebook execution, user access or previous-version upgrades. These bundles define no custom actions.",
+        "A failed dependent cleanup retains the authentication service. Preflight and deletion checks do not provide an atomic lock against concurrent deployments."
+      ],
+      "unavailable_reason": ""
     },
     "tre-shared-service-firewall": {
       "manifest": "templates/shared_services/firewall/porter.yaml",
@@ -227,15 +239,28 @@
       "manifest": "templates/workspace_services/databricks/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-shared-service-firewall",
+        "tre-shared-service-databricks-private-auth"
       ],
-      "tests": [],
+      "tests": [
+        "test_databricks.py::test_private_databricks_lifecycle"
+      ],
       "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "coverage": [
+        "install",
+        "private-configuration",
+        "uninstall",
+        "api-removal",
+        "arm-resource-removal"
       ],
-      "unavailable_reason": "Missing workspace-service case and parametrisation (#5126)."
+      "limitations": [
+        "Requires an isolated AzureCloud TRE with no workspaces, no Databricks authentication service and an empty Databricks private DNS zone. Run one writer and one test process. Existing resources are never adopted.",
+        "Checks ARM configuration and DNS records, not browser sign-in, private DNS reachability, cluster or notebook execution, user access or previous-version upgrades. These bundles define no custom actions.",
+        "A failed dependent cleanup retains the authentication service. Preflight and deletion checks do not provide an atomic lock against concurrent deployments.",
+        "Requires a deployed checkout-version firewall and complete regional endpoint data. The service pipeline changes the parent VNet and shared firewall. ARM provisioning does not prove that regional endpoints remain current. Managed storage names use only the last four service-ID characters and can collide globally."
+      ],
+      "unavailable_reason": ""
     },
     "tre-workspace-service-gitea": {
       "manifest": "templates/workspace_services/gitea/porter.yaml",
