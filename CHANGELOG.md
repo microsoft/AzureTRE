@@ -30,6 +30,9 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Retain cleanup ownership of review VMs through approval and status polling, including cancellation. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
+* Enforce one absolute deadline across nested E2E prerequisite cleanup. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
+* Record resolved Nexus and certificate prerequisite IDs and deployed versions in bundle-validation evidence. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Derive the SQL probe vault name from the workspace instead of reading an unexposed VM property. ([#5139](https://github.com/microsoft/AzureTRE/issues/5139))
 * Fail firewall bundle validation when the target shared service is absent, and restore its original properties after the test. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Reject incomplete bundle-validation requests without substituting current environment metadata. Declare certificate and Nexus prerequisites for both Airlock review VM bundles. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125), [#5180](https://github.com/microsoft/AzureTRE/pull/5180))

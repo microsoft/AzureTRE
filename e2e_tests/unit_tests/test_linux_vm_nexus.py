@@ -1,5 +1,6 @@
 """Test Nexus prerequisites, explicit consent and ownership of cleanup resources."""
 
+import asyncio
 import json
 import unittest
 from pathlib import Path
@@ -10,7 +11,7 @@ from httpx import AsyncClient, MockTransport, Response
 from jsonschema import ValidationError, validate
 
 from api_app.services.schema_service import enrich_shared_service_template
-from e2e_tests import helpers
+from e2e_tests import helpers, conftest as fixtures
 from e2e_tests.resources import nexus
 from e2e_tests.resources import resource, strings
 
@@ -203,6 +204,21 @@ class NexusPrerequisiteTests(unittest.IsolatedAsyncioTestCase):
                 await bootstrap_vm()
         self.assertIs(caught.exception, failure)
         self.assertEqual(self.deleted(), ["nexus", "certs"])
+
+    async def test_nested_cleanup_stops_at_one_deadline_and_retains_certificate(self):
+        owned = nexus.nexus_prerequisites(True)
+        await owned.__aenter__()
+        self.outcomes[("nexus", "disable")] = "updating"
+        with patch.object(fixtures, "CLEANUP_TIMEOUT_SECONDS", 0.01):
+            with self.assertRaises(TimeoutError):
+                async with fixtures.resource_cleanup_timeout("Nexus prerequisites"):
+                    await asyncio.wait_for(owned.__aexit__(None, None, None), 0.5)
+        mutations = [(request.method, request.url.path) for request in self.requests if request.method != "GET"]
+        self.assertEqual(mutations[-1], ("PATCH", "/api/shared-services/nexus"))
+        self.assertNotIn(("PATCH", "/api/shared-services/certs"), mutations)
+        count = len(self.requests)
+        await asyncio.sleep(0.01)
+        self.assertEqual(len(self.requests), count)
 
 
 if __name__ == "__main__":

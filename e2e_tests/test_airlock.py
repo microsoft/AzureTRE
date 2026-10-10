@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 import pytest
 import asyncio
@@ -13,8 +14,8 @@ from airlock.request import (
     wait_for_status,
     wait_for_draft_container_deletion,
 )
-from e2e_tests.timeouts import async_test_timeout
-from resources.resource import get_resource, post_resource
+from e2e_tests.timeouts import async_test_timeout, cleanup_deadline
+from resources.resource import get_resource, post_resource, delete_owned_resource_if_present
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
 from e2e_tests.conftest import get_workspace_owner_token
@@ -258,6 +259,34 @@ async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_
     )
 
 
+@asynccontextmanager
+async def managed_review_vm(workspace_path, request_id, workspace_owner_token, review_token, verify):
+    resource_path, _ = await post_resource(
+        payload={},
+        endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
+        access_token=workspace_owner_token,
+        verify=verify,
+        method="POST",
+        wait=True,
+        access_token_for_wait=review_token,
+        cleanup_failed_create=True,
+    )
+    original = None
+    try:
+        yield resource_path
+    except BaseException as error:
+        original = error
+        raise
+    finally:
+        try:
+            async with cleanup_deadline(60 * 60):
+                await delete_owned_resource_if_present(resource_path, review_token, verify)
+        except Exception as error:
+            if original is None:
+                raise
+            original.add_note(f"Cleanup of {resource_path} also failed: {error!r}")
+
+
 @pytest.mark.timeout(150 * 60, func_only=True)
 @pytest.mark.airlock
 @pytest.mark.airlock_validation
@@ -322,36 +351,30 @@ async def test_airlock_review_vm_flow(
         f"/api/workspaces/{import_review_workspace_id}/requests/{request_id}", import_workspace_owner_token, verify, 404
     )
 
-    user_resource_path, user_resource_id = await post_resource(
-        payload={},
-        endpoint=f"/api{workspace_path}/requests/{request_id}/review-user-resource",
-        access_token=workspace_owner_token,
-        verify=verify,
-        method="POST",
-        wait=True,
-        access_token_for_wait=import_workspace_owner_token,  # needs a different token as is created in a separate workspace
-        cleanup_failed_create=True,
-    )
+    async with managed_review_vm(
+        workspace_path, request_id, workspace_owner_token, import_workspace_owner_token, verify
+    ) as user_resource_path:
+        LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
 
-    LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
+        # Approve request
+        LOGGER.info("Approving airlock request")
+        payload = {"approval": "True", "decisionExplanation": "the reason why this request was approved/rejected"}
+        request_result = await post_request(
+            payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
+        )
+        assert (
+            request_result["airlockRequest"]["reviews"][0]["decisionExplanation"]
+            == "the reason why this request was approved/rejected"
+        )
 
-    # Approve request
-    LOGGER.info("Approving airlock request")
-    payload = {"approval": "True", "decisionExplanation": "the reason why this request was approved/rejected"}
-    request_result = await post_request(
-        payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
-    )
-    assert (
-        request_result["airlockRequest"]["reviews"][0]["decisionExplanation"]
-        == "the reason why this request was approved/rejected"
-    )
+        await wait_for_status(
+            airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify
+        )
+        LOGGER.info("Airlock request has been approved")
 
-    await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
-    LOGGER.info("Airlock request has been approved")
-
-    # Check that deletion for user resource has started
-    user_resource = await get_resource(f"/api{user_resource_path}", import_workspace_owner_token, verify)
-    assert user_resource["userResource"]["deploymentStatus"] == "updating"
-    LOGGER.info("Review VM has started deletion successfully")
+        # Check that deletion for user resource has started
+        user_resource = await get_resource(f"/api{user_resource_path}", import_workspace_owner_token, verify)
+        assert user_resource["userResource"]["deploymentStatus"] == "updating"
+        LOGGER.info("Review VM has started deletion successfully")
 
     # EXPORT FLOW
