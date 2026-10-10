@@ -19,6 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_STUBS = """
 import asyncio
 import json
+import time
 from pathlib import Path
 import pytest
 from e2e_tests import conftest as fixtures
@@ -98,6 +99,17 @@ setup_test_airlock_import_review_workspace_and_guacamole_service = (
 pytest_timeout_set_timer = fixtures.pytest_timeout_set_timer
 pytest_timeout_cancel_timer = fixtures.pytest_timeout_cancel_timer
 pytest_runtest_teardown = fixtures.pytest_runtest_teardown
+pytest_runtest_makereport = fixtures.pytest_runtest_makereport
+
+class SlowReportPlugin:
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(self, item, call):
+        yield
+        if call.when == "teardown" and settings.get("slow_report"):
+            time.sleep(0.2)
+
+def pytest_configure(config):
+    config.pluginmanager.register(SlowReportPlugin())
 
 @pytest.fixture(scope="session")
 def verify():
@@ -130,6 +142,7 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
         failure_resource=None,
         record_nexus=False,
         fail_service_setup=False,
+        slow_report=False,
     ):
         settings = {
             "budget": budget,
@@ -137,6 +150,7 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
             "failure_resource": failure_resource,
             "record_nexus": record_nexus,
             "fail_service_setup": fail_service_setup,
+            "slow_report": slow_report,
         }
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -164,6 +178,7 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
                     "-o",
                     "asyncio_default_fixture_loop_scope=session",
                     "--junitxml=results.xml",
+                    "--tb=short",
                     "-q",
                     "test_cases.py",
                 ],
@@ -207,6 +222,14 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
         self.assertLess(events.index(["nexus", "ready"]), events.index(["review", "start"]))
         self.assertLess(events.index(["review", "complete"]), events.index(["nexus", "delete"]))
 
+    def test_restored_timer_does_not_interrupt_teardown_error_reporting(self):
+        result, report, events = self.run_pytest(RESOURCE_TEST, failure_resource="review", slow_report=True)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(len(report.findall(".//error")), 1)
+        self.assertIn("DELETE_FAILED", result.stdout)
+        self.assertNotIn("INTERNALERROR", result.stdout)
+        self.assertIn(["research", "complete"], events)
+
     def test_service_setup_failure_still_cleans_up_review_workspace_before_nexus(self):
         source = RESOURCE_TEST.replace("@pytest.mark.timeout(0.1)", "@pytest.mark.timeout(1, func_only=True)")
         result, report, events = self.run_pytest(source, record_nexus=True, fail_service_setup=True)
@@ -217,8 +240,11 @@ class FixtureCleanupIntegrationTests(unittest.TestCase):
         self.assertIn(["research", "complete"], events)
 
     def test_cleanup_timeout_finishes_cancellation_before_next_fixture(self):
+        # Keep the independent cleanup deadline short, but leave enough time
+        # for pytest to format its expected error on slower CI runners.
+        source = (RESOURCE_TEST + UNRELATED_TEST).replace("@pytest.mark.timeout(0.1)", "@pytest.mark.timeout(1)")
         result, report, events = self.run_pytest(
-            RESOURCE_TEST + UNRELATED_TEST,
+            source,
             budget=0.05,
             durations={"review": 1, "research": 0.01},
         )
@@ -340,7 +366,7 @@ def test_unmanaged(unmanaged_fixture):
     def test_workspace_service_cleanup_has_independent_timeout(self):
         source = """
 @pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.timeout(0.1)
+@pytest.mark.timeout(1)
 async def test_service(setup_test_workspace_and_guacamole_service):
     assert setup_test_workspace_and_guacamole_service[3] == "service"
 """

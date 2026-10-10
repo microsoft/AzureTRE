@@ -6,6 +6,8 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+
+* Validate Azure SQL queries from a temporary workspace VM and preserve data through an S1-to-S2 configuration upgrade. Revoke temporary secret access and remove test resources. ([#5139](https://github.com/microsoft/AzureTRE/issues/5139))
 * Add explicit per-bundle E2E selection and coverage artefacts to branch validation, with a complete bundle inventory and clear reports for unavailable cases. (`build-scripts` 1.1.0) ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
