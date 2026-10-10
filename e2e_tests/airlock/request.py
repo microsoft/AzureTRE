@@ -26,6 +26,7 @@ async def post_request(payload, endpoint, access_token, verify, assert_status):
 
 
 async def get_request(endpoint, access_token, verify, assert_status):
+    """Return JSON on success or plain text for an expected HTTP error."""
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
         full_endpoint = get_full_endpoint(endpoint)
         auth_headers = get_auth_header(access_token)
@@ -37,6 +38,10 @@ async def get_request(endpoint, access_token, verify, assert_status):
         LOGGER.info(f"Response Status code: {response.status_code}")
 
         assert response.status_code == assert_status
+
+        # The API's HTTP exception handler returns plain text for error responses.
+        if response.is_error:
+            return response.text
 
         return response.json()
 
