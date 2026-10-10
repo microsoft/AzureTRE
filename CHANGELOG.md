@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Test private Azure SQL queries and data persistence after a database SKU change. Reserve cleanup time within the job deadline. ([#5139](https://github.com/microsoft/AzureTRE/issues/5139))
 * Select bundle tests before deployment and record their coverage limits and resource evidence. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))

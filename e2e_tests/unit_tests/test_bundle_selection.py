@@ -15,7 +15,7 @@ from e2e_tests import bundle_evidence, run_bundle
 
 ROOT = run_bundle.REPO_ROOT
 SQL = "tre-workspace-service-azuresql"
-SQL_CASE = f"test_workspace_services.py::test_install_workspace_service[{SQL}]"
+SQL_CASE = "test_azuresql.py::test_sql_query_survives_sku_upgrade"
 
 
 class BundleSelectionTests(unittest.TestCase):
@@ -93,7 +93,7 @@ class BundleSelectionTests(unittest.TestCase):
         collected = sorted(line for line in result.stdout.splitlines() if line.startswith("test_") and "::" in line)
         self.assertEqual(collected, expected)
 
-    def test_sql_collects_only_its_named_parametrised_case(self):
+    def test_sql_collects_only_its_named_lifecycle_case(self):
         result, report = self.run_selector(
             "--bundle", SQL, "--collect-only", environment={"TEST_WORKSPACE_ID": "existing-workspace-id"}
         )
