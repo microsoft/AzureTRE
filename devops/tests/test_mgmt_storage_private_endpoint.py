@@ -42,13 +42,11 @@ if command == "timeout":
     os.execvp(args[1], args[1:])
 if command == "az" and args[:3] == ["storage", "account", "show"]:
     finish(output="https://" + config["host"] + "/")
-if command == "terraform" and args[:2] == ["state", "list"]:
-    finish(output="\n".join(config["state"]))
 if command == "terraform" and args[:2] == ["state", "pull"]:
     ready = config["backend"][min(state["lookups"], len(config["backend"])) - 1]
     finish(0 if ready else 1, "SECRET_STATE_CONTENT" if ready else "backend unavailable")
 if command == "terraform" and args[0] == "plan":
-    finish()
+    finish(config["plan_exit"])
 if command == "terraform" and args[0] == "apply":
     finish(config["apply_exit"], "apply failed" if config["apply_exit"] else "")
 if command == "dig":
@@ -70,14 +68,14 @@ finish(99, "Unexpected mocked command: " + repr([command, *args]))
 
 class MgmtStoragePrivateEndpointTests(unittest.TestCase):
     def run_script(
-        self, state=(), dns=(True,), apply_exit=0, rp_type="vmss_porter", cnames=None, backend=(True,), host=HOST
+        self, plan_exit=2, dns=(True,), apply_exit=0, rp_type="vmss_porter", cnames=None, backend=(True,), host=HOST
     ):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "config.json").write_text(
                 json.dumps(
                     {
-                        "state": list(state),
+                        "plan_exit": plan_exit,
                         "dns": list(dns),
                         "apply_exit": apply_exit,
                         "cnames": cnames or [host.replace(".", ".privatelink.", 1) + "."],
@@ -119,16 +117,16 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
     def dns_attempts(self):
         return [c for c in self.calls if c[0] == "dig" and "CNAME" in c]
 
-    def test_existing_private_endpoint_skips_targeted_apply(self):
-        result = self.run_script(state=["azurerm_resource_group.core", PE_ADDRESS])
+    def test_unchanged_private_endpoint_skips_apply_but_checks_readiness(self):
+        result = self.run_script(plan_exit=0)
         self.assertEqual(result.returncode, 0, self.output)
-        self.assertEqual(self.terraform_calls("plan"), [])
+        self.assertEqual(len(self.terraform_calls("plan")), 1)
         self.assertEqual(self.terraform_calls("apply"), [])
         self.assertEqual(len(self.dns_attempts()), 3)
         self.assertEqual(len([c for c in self.calls if c[:3] == ["terraform", "state", "pull"]]), 3)
 
     def test_rerun_still_fails_if_dns_never_becomes_ready(self):
-        result = self.run_script(state=[PE_ADDRESS], dns=(False,))
+        result = self.run_script(plan_exit=0, dns=(False,))
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.terraform_calls("apply"), [])
         self.assertEqual(len(self.dns_attempts()), 30)
@@ -177,13 +175,17 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(self.calls, [])
 
-    def test_fresh_deployment_creates_only_private_endpoint_and_waits_for_dns(self):
+    def test_changed_target_is_applied_before_dns_checks(self):
         result = self.run_script(dns=(True, True, True))
         self.assertEqual(result.returncode, 0, self.output)
         plans = self.terraform_calls("plan")
         self.assertEqual(len(plans), 1)
         self.assertIn(f"-target={PE_ADDRESS}", plans[0])
-        self.assertEqual(len(self.terraform_calls("apply")), 1)
+        self.assertIn("-detailed-exitcode", plans[0])
+        applies = self.terraform_calls("apply")
+        self.assertEqual(len(applies), 1)
+        self.assertEqual(applies[0][-1], plans[0][plans[0].index("-out") + 1])
+        self.assertLess(self.calls.index(applies[0]), self.calls.index(self.dns_attempts()[0]))
         self.assertEqual(len(self.dns_attempts()), 3)
         self.assertEqual([c for c in self.calls if c[0] == "sleep"], [["sleep", "10"]] * 2)
         self.assertIn(HOST, self.output)
@@ -206,6 +208,13 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.dns_attempts(), [])
         self.assertIn("apply failed", self.output)
+
+    def test_targeted_plan_failure_stops_without_applying_or_waiting(self):
+        result = self.run_script(plan_exit=1)
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.terraform_calls("apply"), [])
+        self.assertEqual(self.dns_attempts(), [])
+        self.assertIn("plan failed (exit 1)", self.output)
 
 
 if __name__ == "__main__":

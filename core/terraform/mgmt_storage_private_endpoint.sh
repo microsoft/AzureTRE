@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Create the resource processor's management storage private endpoint before the main core apply.
+# Reconcile the resource processor's management storage private endpoint before the main core apply.
 #
 # The management storage account also holds the Terraform state. Creating its private endpoint
 # changes the storage account's public DNS alias chain, so state reads and writes during the same
-# apply can fail with "no such host". This script creates the private endpoint in a short targeted
+# apply can fail with "no such host". This script reconciles the private endpoint in a targeted
 # apply, then verifies the new DNS alias and backend reads before the main apply starts.
 #
 # Run from core/terraform after "terraform init".
@@ -88,17 +88,29 @@ for required_command in dig getent timeout; do
 done
 
 host=$(state_blob_host)
-state_addresses=$(terraform state list)
-if grep -qxF "${PE_ADDRESS}" <<< "${state_addresses}"; then
-  echo "Management storage private endpoint already in state; skipping targeted apply"
-else
-  echo "$(timestamp) Creating management storage private endpoint before the main core apply"
-  timeout 15 getent ahosts "${host}" | awk '{print "  before: " $0}' || echo "  before: ${host} did not resolve"
+echo "$(timestamp) Planning management storage private endpoint before the main core apply"
+timeout 15 getent ahosts "${host}" | awk '{print "  before: " $0}' || echo "  before: ${host} did not resolve"
 
-  PE_PLAN_FILE="$(date +"%s")-tre-core-mgmt-pe.tfplan"
-  terraform plan -input=false -target="${PE_ADDRESS}" -out "${PE_PLAN_FILE}"
-  terraform apply -input=false -auto-approve "${PE_PLAN_FILE}"
-  echo "$(timestamp) Management storage private endpoint apply finished"
+# State presence alone misses tainted resources, replacement and remote deletion.
+# Refresh the target and its dependencies, and apply the saved plan only when needed.
+PE_PLAN_FILE="$(date +"%s")-tre-core-mgmt-pe.tfplan"
+if terraform plan -input=false -detailed-exitcode -target="${PE_ADDRESS}" -out "${PE_PLAN_FILE}"; then
+  plan_exit=0
+else
+  plan_exit=$?
 fi
+case "${plan_exit}" in
+  0)
+    echo "Management storage private endpoint target has no planned changes; skipping targeted apply"
+    ;;
+  2)
+    terraform apply -input=false -auto-approve "${PE_PLAN_FILE}"
+    echo "$(timestamp) Management storage private endpoint apply finished"
+    ;;
+  *)
+    echo "Error: management storage private endpoint plan failed (exit ${plan_exit}). The main apply has not started." >&2
+    exit "${plan_exit}"
+    ;;
+esac
 
 wait_for_stable_dns "${host}"
