@@ -1,5 +1,9 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
+
+* _No changes yet._
+
+## (0.30.0)
 **BREAKING CHANGES**
 * Existing resources with legacy Porter parameter overrides must complete a resource upgrade before custom actions or uninstall. The current template version can be reused. See [upgrading resources](docs/tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters). (`resource_processor` 0.13.10) ([#4904](https://github.com/microsoft/AzureTRE/pull/4904))
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
@@ -84,6 +88,48 @@ BUG FIXES:
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
+
+COMPONENTS:
+
+| name | version |
+| ----- | ----- |
+| devops | 0.6.15 |
+| core | 0.18.13 |
+| ui | 0.10.3 |
+| api | 0.28.2 |
+| resource_processor | 0.13.12 |
+| airlock_processor | 0.8.35 |
+| cli | 0.2.12 |
+| build-scripts | 1.1.3 |
+| guacamole-server-image | 0.10.2 |
+| gitea-image | 0.3.12 |
+| tre-service-guacamole-linuxvm | 1.4.9 |
+| tre-service-guacamole-import-reviewvm | 2.0.6 |
+| tre-service-guacamole-export-reviewvm | 2.0.9 |
+| tre-service-guacamole-windowsvm | 3.0.5 |
+| tre-service-guacamole | 0.14.7 |
+| tre-service-databricks | 1.0.20 |
+| tre-workspace-service-ohdsi | 0.3.14 |
+| tre-workspace-service-gitea | 1.3.7 |
+| tre-workspace-service-mysql | 1.0.15 |
+| tre-workspace-service-azuresql | 1.0.20 |
+| tre-user-resource-aml-compute-instance | 0.5.15 |
+| tre-service-azureml | 1.1.8 |
+| tre-workspace-service-health | 0.3.8 |
+| tre-workspace-service-openai | 1.1.0 |
+| tre-workspace-airlock-import-review | 0.18.1 |
+| tre-workspace-unrestricted | 0.15.1 |
+| tre-workspace-base | 2.12.2 |
+| tre-shared-service-cyclecloud | 0.7.10 |
+| tre-shared-service-databricks-private-auth | 0.1.16 |
+| tre-shared-service-sonatype-nexus | 3.11.1 |
+| tre-shared-service-admin-vm | 0.5.7 |
+| tre-shared-service-firewall | 1.6.4 |
+| tre-shared-service-gitea | 1.2.5 |
+| tre-shared-service-certs | 0.7.13 |
+| tre-shared-service-airlock-notifier | 1.0.14 |
+
+**Full Changelog**: [v0.29.1...v0.30.0](https://github.com/microsoft/AzureTRE/compare/v0.29.1...v0.30.0)
 
 ## (0.29.1)
 **BREAKING CHANGES**
