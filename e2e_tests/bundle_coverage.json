@@ -404,15 +404,25 @@
       "prerequisites": [
         "tre-workspace-base"
       ],
-      "tests": [],
-      "related_tests": [
-        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-openai]"
+      "tests": [
+        "test_openai.py::test_private_openai_lifecycle"
       ],
-      "coverage": [],
+      "related_tests": [],
+      "coverage": [
+        "model-prerequisites",
+        "install",
+        "deployment-status",
+        "private-network-setting",
+        "uninstall",
+        "api-removal",
+        "active-account-removal"
+      ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "Requires AzureCloud, a registered 1.1.0 template, regional Standard model availability and subscription quota read access. Preflight does not reserve Azure capacity.",
+        "Uses the workspace subscription and actual resource-group region. A workspace in a different subscription from ARM_SUBSCRIPTION_ID is unsupported by this bundle.",
+        "Does not prove private inference, researcher access, model upgrades, private endpoint connectivity, secret removal or soft-deleted account purge."
       ],
-      "unavailable_reason": "The branch deployment does not register this bundle (#5150)."
+      "unavailable_reason": ""
     },
     "tre-workspace-airlock-import-review": {
       "manifest": "templates/workspaces/airlock-import-review/porter.yaml",

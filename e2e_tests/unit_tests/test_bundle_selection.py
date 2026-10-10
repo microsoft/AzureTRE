@@ -186,6 +186,15 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertIn("#5127", report["error"])
         self.assertEqual(report["collected_tests"], [])
 
+    def test_openai_selects_the_guarded_case_and_reports_remaining_coverage(self):
+        result, report = self.run_selector("--bundle", "tre-workspace-service-openai", "--collect-only")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], ["test_openai.py::test_private_openai_lifecycle"])
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertEqual(report["source_bundle_version"], "1.1.0")
+        self.assertIn("tre-workspace-base", report["declared_prerequisites"])
+
     def test_marker_and_parallel_worker_inputs_are_rejected(self):
         for extra in ({"TEST_BUNDLE_MARKER": "workspace_services"}, {"E2E_TESTS_NUMBER_PROCESSES": "2"}):
             with self.subTest(environment=extra):

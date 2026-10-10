@@ -24,7 +24,8 @@ resource "azurerm_cognitive_deployment" "openai" {
   }
 
   scale {
-    type = "Standard"
+    type     = "Standard"
+    capacity = 1
   }
 }
 
