@@ -265,16 +265,26 @@
         "tre-workspace-base",
         "tre-service-guacamole",
         "tre-shared-service-certs",
-        "tre-shared-service-sonatype-nexus"
+        "tre-shared-service-sonatype-nexus",
+        "tre-service-guacamole-windowsvm"
       ],
-      "tests": [],
+      "tests": [
+        "test_airlock_export_review.py::test_airlock_export_review_vm_flow"
+      ],
       "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately.",
-        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites (#5182)."
+      "coverage": [
+        "install",
+        "synthetic-review-data",
+        "export-approval",
+        "automatic-uninstall"
       ],
-      "unavailable_reason": "No isolated export-review VM lifecycle case (#5127)."
+      "limitations": [
+        "Requires AzureCloud, a manual test workspace app with WorkspaceOwner and AirlockManager, and CI Run Command permission.",
+        "Creates its own workspace, Guacamole service and Windows upload VM. It does not reuse configured workspace or service IDs.",
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites.",
+        "Interactive desktop access, access-denial cases, rejected exports, upgrades, custom actions and physical resource removal need separate evidence."
+      ],
+      "unavailable_reason": ""
     },
     "tre-service-guacamole-import-reviewvm": {
       "manifest": "templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/porter.yaml",

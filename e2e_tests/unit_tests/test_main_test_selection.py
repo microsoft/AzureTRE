@@ -46,6 +46,9 @@ class MainTestSelectionTests(unittest.TestCase):
         self.assertEqual(set(no_consent), {"other"})
         self.assertEqual(set(consent), {"other", "nexus"})
         self.assertEqual(len(consent["nexus"]), 1)
+        self.assertFalse(
+            any(node.startswith("test_airlock_export_review.py::") for group in consent.values() for node in group)
+        )
         self.assertEqual(consent["other"] - no_consent["other"], {review_vm})
         self.assertEqual(no_consent["other"] - consent["other"], set())
         self.assertIn("test_airlock.py::test_draft_container_is_deleted_after_submit", no_consent["other"])
