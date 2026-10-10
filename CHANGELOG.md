@@ -32,6 +32,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 
+* Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Reuse publicly trusted certificates for the same hostname across certificate service replacement. Restore retained PEM and PFX material in its stored format. (`tre-shared-service-certs` 0.7.16) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
 
 * Wait for stable private DNS and verified TLS before configuring certificate storage ([#5240](https://github.com/microsoft/AzureTRE/issues/5240)).
