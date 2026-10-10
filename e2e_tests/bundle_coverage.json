@@ -415,15 +415,26 @@
       "manifest": "templates/workspaces/base/porter.yaml",
       "family": "workspace",
       "prerequisites": [],
-      "tests": [],
+      "tests": [
+        "test_workspace_base.py::test_base_workspace_lifecycle"
+      ],
       "related_tests": [
         "test_workspace_services.py::test_create_guacamole_service_into_base_workspace"
       ],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "coverage": [
+        "install",
+        "deployment-status",
+        "workspace-identity-api-access",
+        "uninstall",
+        "api-removal"
       ],
-      "unavailable_reason": "Base workspace provisioning is fixture coverage in other bundle tests; an isolated lifecycle case is missing (#5152)."
+      "limitations": [
+        "Creates a new Automatic-auth workspace even when TEST_WORKSPACE_ID is configured. Backups are disabled.",
+        "Workspace service-list access checks the configured workspace identity, not network isolation or storage access.",
+        "The case checks terminal uninstall and an API 404. Independent Azure resource inventory remains a separate check.",
+        "Upgrade, custom-action, backup configuration, restore and retention coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
     },
     "tre-workspace-unrestricted": {
       "manifest": "templates/workspaces/unrestricted/porter.yaml",
