@@ -1072,6 +1072,10 @@ jobs:
       # The job timeout is 300 minutes. Each step below sets an absolute deadline 270 minutes
       # (270 * 60 seconds) after the job start. The lifecycle helper keeps the last 120 minutes
       # before the deadline for the clean-up. The 30 minutes after the deadline are for the report.
+      - name: Reserve CycleCloud cleanup and reporting time
+        if: inputs.e2eBundle == 'tre-shared-service-cyclecloud'
+        run: echo "CYCLECLOUD_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
+
       - name: Reserve SQL cleanup and reporting time
         if: inputs.e2eBundle == 'tre-workspace-service-azuresql'
         run: echo "SQL_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
@@ -1113,6 +1117,7 @@ jobs:
             SQL_VALIDATION_DEADLINE=${{ env.SQL_VALIDATION_DEADLINE }}
             MYSQL_VALIDATION_DEADLINE=${{ env.MYSQL_VALIDATION_DEADLINE }}
             GITEA_VALIDATION_DEADLINE=${{ env.GITEA_VALIDATION_DEADLINE }}
+            CYCLECLOUD_VALIDATION_DEADLINE=${{ env.CYCLECLOUD_VALIDATION_DEADLINE }}
             TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}

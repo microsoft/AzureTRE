@@ -151,6 +151,15 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertEqual(report["resources"], [])
         self.assertEqual(report["declared_prerequisites"], {})
 
+    def test_cyclecloud_selects_only_its_server_case_with_firewall_dependency(self):
+        result, report = self.run_selector("--bundle", "tre-shared-service-cyclecloud", "--collect-only")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], ["test_cyclecloud.py::test_cyclecloud_lifecycle"])
+        self.assertEqual(set(report["declared_prerequisites"]), {"tre-shared-service-firewall"})
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertEqual(report["resources"], [])
+
     def test_unknown_partial_and_shell_like_identifiers_fail_before_collection(self):
         for identifier in ("azuresql", "tre-nonexistent", SQL + "; echo unexpected", SQL + "$(echo unexpected)"):
             with self.subTest(identifier=identifier):
