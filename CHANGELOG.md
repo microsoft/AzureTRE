@@ -35,6 +35,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Fill the missing Switzerland North Databricks storage and Event Hubs endpoints for DNS lookup and firewall rules. (`tre-service-databricks` 1.0.20) ([#5140](https://github.com/microsoft/AzureTRE/issues/5140))
 * Record bounded, redacted operation-polling diagnostics without retrying HTTP failures. ([#5202](https://github.com/microsoft/AzureTRE/issues/5202))
 * Forward explicit Nexus consent from the Airlock test command. Reject invalid arguments and unsupported deployment reuse. (`build-scripts` 1.1.1) ([#5201](https://github.com/microsoft/AzureTRE/issues/5201))
 * Document slash-command coverage and remove the obsolete MLflow test selection. ([#5131](https://github.com/microsoft/AzureTRE/issues/5131))
