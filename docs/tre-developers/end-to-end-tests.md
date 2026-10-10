@@ -25,6 +25,17 @@ Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", 
 
 - This will also use `/workspaces/AzureTRE/core/private.env` file for other values.
 
+## Investigate operation-polling failures
+
+Unexpected HTTP responses fail operation polling. HTTP 500 is not retried or treated as successful deletion.
+The error log records a UTC timestamp, method, recognised operation path, status, media type, body size and coarse body classification.
+It includes allowlisted correlation headers only when their values match supported identifier formats.
+Unrecognised paths and header values are omitted or redacted. The diagnostic record excludes response bodies, credentials, host names and URL parameters.
+
+If a poll fails, use its timestamp, operation ID and available correlation IDs to find the API exception and App Service request record.
+Check API exception telemetry before a validation run. Record terminal resource deletion separately from the failed poll.
+These diagnostics help investigate the failure. They do not establish its cause or guarantee that server telemetry is available.
+
 ## Validate one bundle
 
 The [bundle coverage map](https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json) lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
