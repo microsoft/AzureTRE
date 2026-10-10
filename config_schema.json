@@ -219,7 +219,10 @@
         "workspace_api_client_secret": {
           "description": "Workspace AD Application secret. This will be created for you for future use - when creating workspaces.",
           "type": "string",
-          "minLength": 11
+          "minLength": 11,
+          "not": {
+            "pattern": "['\\r\\n\\u0000]"
+          }
         }
       },
       "required": [

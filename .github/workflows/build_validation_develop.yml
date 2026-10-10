@@ -65,6 +65,8 @@ jobs:
               - '**/porter-build-context.env'
             ci_cleanup:
               - 'Makefile'
+              - 'core/terraform/outputs.sh'
+              - 'core/terraform/json-to-env.sh'
               - 'core/terraform/scripts/letsencrypt.sh'
               - 'core/terraform/scripts/validate_certbot.sh'
               - 'devops/scripts/clean_ci_validation_envs.sh'
