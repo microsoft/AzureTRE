@@ -7,6 +7,7 @@
 const { createHash } = require('crypto');
 
 const SKIP_DEPLOYMENT_FLAG = "skip_deployment";
+const ACCEPT_NEXUS_EULA_FLAG = "accept_nexus_eula";
 
 async function getCommandFromComment({ core, context, github }) {
   const commentUsername = context.payload.comment.user.login;
@@ -54,6 +55,7 @@ async function getCommandFromComment({ core, context, github }) {
   const commentFirstLine = commentBody.split("\n")[0];
   let command = "none";
   let skipDeployment = false;
+  let acceptNexusEula = false;
   const trimmedFirstLine = commentFirstLine.trim();
   if (trimmedFirstLine[0] === "/") {
     // only allow actions for users with write access
@@ -122,9 +124,17 @@ async function getCommandFromComment({ core, context, github }) {
             break;
           }
 
+          const consentFlags = parts.slice(1).filter(part => part.startsWith(ACCEPT_NEXUS_EULA_FLAG));
+          if (consentFlags.length !== 1 || consentFlags[0] !== ACCEPT_NEXUS_EULA_FLAG) {
+            const message = `:warning: Nexus CE EULA acceptance is required for shared service tests. No deployment or tests were started. After accepting the EULA, re-run \`${commandText} [<sha>] ${ACCEPT_NEXUS_EULA_FLAG}\`.`;
+            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-shared-services";
+            acceptNexusEula = true;
           }
           break;
         }
@@ -177,6 +187,7 @@ async function getCommandFromComment({ core, context, github }) {
     }
   }
   logAndSetOutput(core, "skipDeployment", skipDeployment.toString());
+  logAndSetOutput(core, "acceptNexusEula", acceptNexusEula.toString());
   logAndSetOutput(core, "command", command);
   return command;
 }
@@ -227,7 +238,7 @@ function commandHasSkipDeploymentFlag(commandParts) {
 }
 
 function getShaFromCommandParts(commandParts) {
-  return commandParts.slice(1).find(part => part !== SKIP_DEPLOYMENT_FLAG);
+  return commandParts.slice(1).find(part => part !== SKIP_DEPLOYMENT_FLAG && part !== ACCEPT_NEXUS_EULA_FLAG);
 }
 
 async function addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUser, commentLink, command) {
@@ -301,7 +312,7 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test [<sha>] [skip_deployment] - build, deploy and run smoke tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended [<sha>] [skip_deployment] - build, deploy and run smoke & extended tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad - build, deploy and run smoke & extended AAD tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services - test the deployment of shared services on a PR build
+&nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services [<sha>] accept_nexus_eula - build, deploy and test shared services with explicit Nexus CE EULA acceptance
 &nbsp;&nbsp;&nbsp;&nbsp;/test-backups - build, deploy and run backup tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-airlock - build, deploy and run Airlock tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
