@@ -12,7 +12,7 @@ from resources.workspace import get_workspace_auth_details
 from resources import strings as resource_strings
 from helpers import get_admin_token, get_template
 from e2e_tests.resources.nexus import nexus_prerequisites
-from e2e_tests.timeouts import async_test_timeout
+from e2e_tests.timeouts import async_test_timeout, cleanup_deadline
 
 
 LOGGER = logging.getLogger(__name__)
@@ -74,12 +74,12 @@ def pause_test_timeout_for_cleanup(request):
 @asynccontextmanager
 async def resource_cleanup_timeout(resource_path, request=None):
     with pause_test_timeout_for_cleanup(request):
-        timeout = asyncio.timeout(CLEANUP_TIMEOUT_SECONDS)
+        timeout = None
         try:
-            async with timeout:
+            async with cleanup_deadline(CLEANUP_TIMEOUT_SECONDS) as timeout:
                 yield
         except TimeoutError as error:
-            if not timeout.expired():
+            if timeout is None or not timeout.expired():
                 raise
             message = f"Cleanup of {resource_path} exceeded {CLEANUP_TIMEOUT_SECONDS} seconds"
             LOGGER.error("%s. Check the operation polling logs for its last observed state.", message)

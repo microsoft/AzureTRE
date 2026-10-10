@@ -27,6 +27,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Retain cleanup ownership of review VMs through approval and status polling, including cancellation. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
+* Enforce one absolute deadline across nested E2E prerequisite cleanup. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
 * Include inherited required properties when E2E tests create certificate and Nexus prerequisites. Validate request payloads with the API schema enrichment function. ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
 * Require reachable Nexus and a working Azure CLI during import/export review VM bootstrap. Preserve optional tool behaviour for standard Windows VMs. (`tre-service-guacamole-windowsvm` 3.0.5, `tre-service-guacamole-import-reviewvm` 2.0.5, `tre-service-guacamole-export-reviewvm` 2.0.8) ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
 * Wait for asynchronous Airlock draft-container deletion, provision Nexus prerequisites for review VM tests, and continue cleanup after a verified failed disable. Cancel timed-out review test polling before teardown and clean up accepted workspaces, services and review VMs before parent teardown.

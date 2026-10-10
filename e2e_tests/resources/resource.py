@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from e2e_tests.timeouts import cleanup_deadline
 from httpx import AsyncClient, Timeout
 from starlette import status
 from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
@@ -92,7 +93,7 @@ async def post_resource(
 
 
 async def cleanup_accepted_create(resource_path, operation_endpoint, client, access_token, verify):
-    async with asyncio.timeout(FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS):
+    async with cleanup_deadline(FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS):
         # An accepted deployment may still be running when its caller times out.
         # Wait for it to finish before sending another provisioning action.
         await wait_for(install_done, client, operation_endpoint, access_token, [])
@@ -147,12 +148,16 @@ async def temporary_resource(payload, endpoint, access_token, verify):
         yield resource_path
     except BaseException as original_error:
         try:
-            await disable_and_delete_resource(f"/api{resource_path}", access_token, verify, allow_failed_disable=True)
+            async with cleanup_deadline(FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS):
+                await disable_and_delete_resource(
+                    f"/api{resource_path}", access_token, verify, allow_failed_disable=True
+                )
         except Exception as cleanup_error:
             original_error.add_note(f"Cleanup of {resource_path} also failed: {cleanup_error!r}")
         raise
     else:
-        await disable_and_delete_resource(f"/api{resource_path}", access_token, verify)
+        async with cleanup_deadline(FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS):
+            await disable_and_delete_resource(f"/api{resource_path}", access_token, verify)
 
 
 async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
@@ -180,3 +185,39 @@ async def wait_for(func, client, operation_endpoint, access_token, failure_state
         LOGGER.exception(f"Failed to deploy. Status message: {message}.\n{operation_steps}")
         raise
     return done_state
+
+
+async def delete_owned_resource_if_present(resource_path, access_token, verify):
+    """Wait for active operations and remove an owned resource, unless already deleted."""
+    terminal = {
+        "deployed",
+        "deployment_failed",
+        "updated",
+        "updating_failed",
+        "deleted",
+        "deleting_failed",
+        "action_succeeded",
+        "action_failed",
+        "pipeline_succeeded",
+        "pipeline_failed",
+    }
+    endpoint = get_full_endpoint(f"/api{resource_path}")
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
+        while True:
+            response = await client.get(endpoint, headers=get_auth_header(access_token), timeout=TIMEOUT)
+            if response.status_code == 404:
+                return
+            assert_status(response, [status.HTTP_200_OK], "Could not inspect the owned review VM")
+            state = response.json()["userResource"]["deploymentStatus"]
+            if state == "deleted":
+                return
+            operations = await client.get(
+                endpoint + "/operations", headers=get_auth_header(access_token), timeout=TIMEOUT
+            )
+            if operations.status_code == 404:
+                return
+            assert_status(operations, [status.HTTP_200_OK], "Could not inspect review VM operations")
+            if state in terminal and all(op["status"] in terminal for op in operations.json()["operations"]):
+                break
+            await asyncio.sleep(30)
+    await disable_and_delete_resource(f"/api{resource_path}", access_token, verify, allow_failed_disable=True)
