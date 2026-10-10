@@ -369,6 +369,33 @@
         ]
       },
       {
+        "stepId": "83a8b148-d455-416c-9779-320fb7ae279c",
+        "stepTitle": "Remove OHDSI firewall rules",
+        "resourceTemplateName": "tre-shared-service-firewall",
+        "resourceType": "shared-service",
+        "resourceAction": "upgrade",
+        "properties": [
+          {
+            "name": "network_rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "nrc_svc_{{ resource.id }}"
+            }
+          },
+          {
+            "name": "rule_collections",
+            "type": "array",
+            "arraySubstitutionAction": "remove",
+            "arrayMatchField": "name",
+            "value": {
+              "name": "arc_svc_{{ resource.id }}"
+            }
+          }
+        ]
+      },
+      {
         "stepId": "main"
       }
     ]
