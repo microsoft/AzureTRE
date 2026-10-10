@@ -96,6 +96,37 @@ Each owned resource receives a share of the remaining cleanup time, so one stall
 The case removes its VMs, service and workspace before releasing its Nexus prerequisites.
 Interactive desktop access, denied access, rejected exports, upgrades, custom actions and physical resource removal need separate evidence.
 
+### Databricks selection
+
+Select `tre-shared-service-databricks-private-auth` for the authentication service lifecycle.
+Select `tre-service-databricks` for its authentication prerequisite, a new base workspace and the private Databricks service.
+The branch workflow already publishes and registers both bundles. It completes smoke tests before starting the selected bundle job.
+Use one test process and one writer in a dedicated environment.
+Do not run these cases alongside smoke fixtures, other bundle tests, workspace deployments or manual resource changes.
+
+Both cases require AzureCloud, matching Azure and authentication tenants, and the existing CI Azure identity.
+Preflight requires no TRE workspaces, no authentication service and no records other than SOA in the core Databricks private DNS zone.
+It checks core resource ownership and the required network/DNS resources before creating anything.
+The workspace-service case also requires the checkout version of the deployed firewall bundle and complete endpoint data for the core region.
+The checks use the actual core resource group location. Configured workspace IDs are not reused.
+
+The authentication private endpoint is shared by workspaces in the same region and private DNS zone.
+Deleting it can break their browser sign-in. See [Databricks Private Link concepts](https://learn.microsoft.com/en-us/azure/databricks/security/network/concepts/private-link).
+The tests create and remove only owned resources. They recheck isolation before authentication removal and retain it if dependent cleanup fails.
+These checks do not provide an atomic lock against another writer. Clean up a failed isolated run before trying again.
+
+The tests compare registered and deployed versions with the checkout. ARM checks cover resource identity, ownership tags,
+private access, managed identity, injected subnets, private endpoints and their DNS configuration.
+Cleanup checks TRE removal and the declared ARM resources. The workspace-service case also checks removal of its firewall rule collections.
+The service pipeline upgrades its parent VNet and changes the shared firewall, which is why it requires exclusive use.
+The total deadline is 270 minutes, including a 120-minute cleanup reserve. The workflow starts that deadline before container setup.
+
+Browser sign-in, private DNS reachability, cluster and notebook execution, user access and previous-version upgrades remain unproven.
+Neither bundle defines custom actions. Endpoint completeness checks do not establish that every regional endpoint is current.
+Switzerland North's previously empty storage and Event Hubs lists are corrected using the
+[documented regional endpoints](https://learn.microsoft.com/en-us/azure/databricks/resources/ip-domain-region).
+The current DBFS storage name contains only the last four characters of the service ID, so a global name collision can still prevent deployment.
+
 ### Azure ML selection
 
 Select `tre-service-azureml` for the private parent-service case.
