@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const yaml = require('js-yaml');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8'));
@@ -74,6 +75,34 @@ describe('regional CI workflow routing', () => {
   let directory;
   beforeEach(() => { directory = fs.mkdtempSync(path.join(os.tmpdir(), 'azuretre-ci-id-')); });
   afterEach(() => { fs.rmSync(directory, { recursive: true, force: true }); });
+
+  test.each([
+    ['schedule', false, '', false],
+    ['schedule', false, 'false', false],
+    ['schedule', false, 'true', true],
+    ['workflow_dispatch', false, '', false],
+    ['workflow_dispatch', true, '', true],
+    ['workflow_dispatch', false, 'true', true],
+    ['push', false, '', false],
+    ['push', false, 'true', true]
+  ])('main %s with input %s and configured consent %s selects the appropriate cases', (event, input, configured, consent) => {
+    const main = workflow('deploy_tre.yml');
+    expect(main.on.workflow_dispatch.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const caller = main.jobs['run-deploy-tre-main'].with;
+    // These workflow expressions use JavaScript-compatible boolean operators.
+    const evaluate = expression => vm.runInNewContext(expression.trim().slice(3, -2), {
+      github: { event_name: event }, inputs: { acceptNexusEula: input }, vars: { NEXUS_EULA_ACCEPTED: configured }
+    }, { timeout: 1000 });
+    expect(evaluate(caller.acceptNexusEula)).toBe(consent);
+    const selector = evaluate(caller.e2eTestsCustomSelector);
+    if (event === 'push') {
+      expect(selector).toBe('extended or extended_aad');
+    } else if (consent) {
+      expect(selector).toBe('extended or extended_aad or shared_services or airlock');
+    } else {
+      expect(selector).toBe('extended or extended_aad or (shared_services and not nexus) or airlock');
+    }
+  });
 
   test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
     const jobs = workflow('pr_comment_bot.yml').jobs;

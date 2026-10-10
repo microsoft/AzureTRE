@@ -68,6 +68,15 @@ For the branch workflow, set the boolean `acceptNexusEula` input to `true` and s
 Without consent, the Nexus case fails before changing Nexus or certificate resources. The existing weekend certificate precaution still skips that case after consent is checked.
 A skipped case does not prove the Nexus lifecycle.
 
+For manual runs of `deploy_tre.yml` on `main`, use its `acceptNexusEula` input.
+For recurring main runs, an administrator can record consent with the repository variable `NEXUS_EULA_ACCEPTED=true`.
+Either setting supplies consent. Without either setting, scheduled/manual main runs exclude the `nexus` case and retain the other shared-service tests.
+Push runs retain their existing extended/AAD selection. An excluded Nexus case provides no Nexus lifecycle evidence.
+
+Shared-service tests allow one hour for prior-resource recovery, one hour for provisioning and one hour for each new resource's cleanup.
+Nexus and certificate recovery share the first deadline. Test watchdogs include a further 30-minute margin, including failed-create cleanup.
+The complete selected suite still shares the workflow job's five-hour limit. Use a dedicated shared-service run for lifecycle validation.
+
 Slash commands use workflows from `main`. Before these routing changes reach `main`, validate the E2E path through `deploy_tre_branch.yml` on the reviewed upstream branch.
 
 ### `/test-backups [<sha>]`

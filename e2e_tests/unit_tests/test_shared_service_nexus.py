@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -47,6 +48,24 @@ class SharedServiceNexusConsentTests(unittest.IsolatedAsyncioTestCase):
                     await shared.test_create_certs_nexus_shared_service(True)
         self.cleanup_existing.assert_not_awaited()
         self.token.assert_not_awaited()
+        self.post.assert_not_awaited()
+        self.cleanup_created.assert_not_awaited()
+
+    async def test_previous_resources_share_one_recovery_deadline_before_new_creation(self):
+        async def recover(name, verify):
+            if name == shared.strings.NEXUS_SHARED_SERVICE:
+                await asyncio.sleep(0.01)
+            else:
+                await asyncio.sleep(1)
+
+        self.cleanup_existing.side_effect = recover
+        with (
+            patch.object(shared.config, "TEST_ACCEPT_NEXUS_EULA", True),
+            patch.object(shared, "RECOVERY_TIMEOUT_SECONDS", 0.03),
+        ):
+            with self.assertRaises(TimeoutError):
+                await shared.test_create_certs_nexus_shared_service(True)
+        self.assertEqual(self.cleanup_existing.await_count, 2)
         self.post.assert_not_awaited()
         self.cleanup_created.assert_not_awaited()
 
@@ -96,6 +115,7 @@ class SharedServiceNexusConsentTests(unittest.IsolatedAsyncioTestCase):
             if payload["templateName"] == shared.strings.CERTS_SHARED_SERVICE:
                 return "/shared-services/certs", "certs"
             await asyncio.sleep(60)
+            return "/shared-services/nexus", "nexus"
 
         async def cleanup(*args):
             await asyncio.sleep(0.03)
@@ -225,3 +245,53 @@ class NexusConsentConfigurationTests(unittest.TestCase):
                     timeout=10,
                 )
                 self.assertEqual(result.stdout.strip(), expected)
+
+
+class SharedServiceWorkflowBudgetTests(unittest.TestCase):
+    def test_outer_watchdogs_include_failed_create_and_final_cleanup_with_job_margin(self):
+        single = next(mark.args[0] for mark in shared.test_create_shared_service.pytestmark if mark.name == "timeout")
+        nexus = next(
+            mark.args[0] for mark in shared.test_create_certs_nexus_shared_service.pytestmark if mark.name == "timeout"
+        )
+        setup = shared.RECOVERY_TIMEOUT_SECONDS + shared.PROVISIONING_TIMEOUT_SECONDS
+        self.assertGreater(
+            single, setup + max(shared.CLEANUP_TIMEOUT_SECONDS, shared.FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS)
+        )
+        self.assertGreater(nexus, setup + 2 * shared.CLEANUP_TIMEOUT_SECONDS)
+        self.assertGreater(nexus, setup + shared.FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS + shared.CLEANUP_TIMEOUT_SECONDS)
+        workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/deploy_tre_reusable.yml").read_text()
+        job_minutes = int(re.search(r"(?s)  e2e_tests_custom:\n.*?    timeout-minutes: (\d+)", workflow).group(1))
+        self.assertGreaterEqual(job_minutes * 60 - nexus, 30 * 60)
+
+    def test_main_selection_without_consent_excludes_only_nexus_from_shared_services(self):
+        root = Path(__file__).resolve().parents[2]
+        environment = dict(os.environ, PYTHONPATH=os.pathsep.join((str(root), str(root / "e2e_tests"))))
+        environment.pop("PYTEST_ADDOPTS", None)
+        for selector, expected_count in (("shared_services", 5), ("shared_services and not nexus", 4)):
+            with self.subTest(selector=selector):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        "--collect-only",
+                        "-q",
+                        "-o",
+                        "addopts=",
+                        "-m",
+                        selector,
+                        "test_shared_services.py",
+                    ],
+                    cwd=root / "e2e_tests",
+                    env=environment,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                selected = [line for line in result.stdout.splitlines() if line.startswith("test_shared_services.py::")]
+                self.assertEqual(len(selected), expected_count, result.stdout)
+                self.assertEqual(
+                    any("test_create_certs_nexus_shared_service" in line for line in selected), expected_count == 5
+                )

@@ -7,14 +7,34 @@ from e2e_tests import config
 from e2e_tests.conftest import disable_and_delete_tre_resource
 from datetime import date
 
-from resources.resource import disable_and_delete_resource, get_resource, post_resource
+from resources.resource import (
+    FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS,
+    disable_and_delete_resource,
+    get_resource,
+    post_resource,
+)
 from helpers import get_shared_service_by_name
 from resources import strings
 from helpers import get_admin_token
 
 LOGGER = logging.getLogger(__name__)
+RECOVERY_TIMEOUT_SECONDS = 60 * 60
 PROVISIONING_TIMEOUT_SECONDS = 60 * 60
 CLEANUP_TIMEOUT_SECONDS = 60 * 60
+# Recover old resources under one shared deadline. Failed creation can spend
+# another cleanup deadline inside post_resource before unwinding the exit stack.
+SINGLE_SERVICE_TIMEOUT_SECONDS = (
+    RECOVERY_TIMEOUT_SECONDS
+    + PROVISIONING_TIMEOUT_SECONDS
+    + max(CLEANUP_TIMEOUT_SECONDS, FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS)
+    + 30 * 60
+)
+NEXUS_TIMEOUT_SECONDS = (
+    RECOVERY_TIMEOUT_SECONDS
+    + PROVISIONING_TIMEOUT_SECONDS
+    + max(2 * CLEANUP_TIMEOUT_SECONDS, FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS + CLEANUP_TIMEOUT_SECONDS)
+    + 30 * 60
+)
 TERMINAL_STATES = {
     "deployed",
     "deployment_failed",
@@ -115,17 +135,19 @@ async def test_patch_firewall(verify):
     admin_token = await get_admin_token(verify)
     shared_service_firewall = await get_shared_service_by_name(template_name, verify, admin_token)
 
-    if shared_service_firewall:
-        shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
+    assert shared_service_firewall, (
+        f"Firewall shared service '{template_name}' not found. Deploy it before running this test."
+    )
+    shared_service_path = f"/shared-services/{shared_service_firewall['id']}"
 
-        await post_resource(
-            payload=patch_payload,
-            endpoint=f"/api{shared_service_path}",
-            access_token=admin_token,
-            verify=verify,
-            method="PATCH",
-            etag=shared_service_firewall["_etag"],
-        )
+    await post_resource(
+        payload=patch_payload,
+        endpoint=f"/api{shared_service_path}",
+        access_token=admin_token,
+        verify=verify,
+        method="PATCH",
+        etag=shared_service_firewall["_etag"],
+    )
 
 
 shared_service_templates_to_create = [
@@ -147,10 +169,10 @@ create_airlock_notifier_properties = {
 
 
 @pytest.mark.shared_services
-@pytest.mark.timeout(4 * 60 * 60)
+@pytest.mark.timeout(SINGLE_SERVICE_TIMEOUT_SECONDS)
 @pytest.mark.parametrize("template_name", shared_service_templates_to_create)
 async def test_create_shared_service(template_name, verify) -> None:
-    await disable_and_delete_shared_service_if_exists(template_name, verify)
+    await recover_previous_shared_services(verify, template_name)
 
     post_payload = {
         "templateName": template_name,
@@ -172,7 +194,8 @@ async def test_create_shared_service(template_name, verify) -> None:
 
 
 @pytest.mark.shared_services
-@pytest.mark.timeout(4 * 60 * 60)
+@pytest.mark.nexus
+@pytest.mark.timeout(NEXUS_TIMEOUT_SECONDS)
 async def test_create_certs_nexus_shared_service(verify) -> None:
     if not config.TEST_ACCEPT_NEXUS_EULA:
         pytest.fail(
@@ -184,8 +207,7 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
     if date.today().weekday() in [5, 6] and not config.TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS:
         pytest.skip("Certificate rate-limit precaution: skipping on weekends; Nexus lifecycle coverage is unproven.")
 
-    await disable_and_delete_shared_service_if_exists(strings.NEXUS_SHARED_SERVICE, verify)
-    await disable_and_delete_shared_service_if_exists(strings.CERTS_SHARED_SERVICE, verify)
+    await recover_previous_shared_services(verify, strings.NEXUS_SHARED_SERVICE, strings.CERTS_SHARED_SERVICE)
 
     cert_domain = "nexus"
     cert_name = "nexus-ssl"
@@ -217,6 +239,13 @@ async def test_create_certs_nexus_shared_service(verify) -> None:
         async with asyncio.timeout(PROVISIONING_TIMEOUT_SECONDS):
             await resources.enter_async_context(managed_shared_service(certs_post_payload, verify))
             await resources.enter_async_context(managed_shared_service(nexus_post_payload, verify))
+
+
+async def recover_previous_shared_services(verify, *template_names):
+    # Share this budget across all prior resources, before creating new ones.
+    async with asyncio.timeout(RECOVERY_TIMEOUT_SECONDS):
+        for template_name in template_names:
+            await disable_and_delete_shared_service_if_exists(template_name, verify)
 
 
 async def disable_and_delete_shared_service_if_exists(shared_service_name, verify) -> None:
