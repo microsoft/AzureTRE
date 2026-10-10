@@ -1029,13 +1029,18 @@ jobs:
       !contains(needs.*.result, 'cancelled') }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environmentName }}
+    # Smoke tests also write to TRE. Finish them before any selected bundle lifecycle.
     needs:
-      [deploy_shared_services, register_bundles, register_user_resource_bundles]
+      [deploy_shared_services, register_bundles, register_user_resource_bundles, e2e_tests_smoke]
     timeout-minutes: 300
     steps:
       - name: Reserve AML cleanup and reporting time
         if: inputs.e2eBundle == 'tre-service-azureml' || inputs.e2eBundle == 'tre-user-resource-aml-compute-instance'
         run: echo "AML_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
+
+      - name: Reserve Databricks cleanup and reporting time
+        if: inputs.e2eBundle == 'tre-service-databricks' || inputs.e2eBundle == 'tre-shared-service-databricks-private-auth'
+        run: echo "DATABRICKS_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
 
       - name: Reserve export review cleanup and reporting time
         if: inputs.e2eBundle == 'tre-service-guacamole-export-reviewvm'
@@ -1074,6 +1079,7 @@ jobs:
             SQL_VALIDATION_DEADLINE=${{ env.SQL_VALIDATION_DEADLINE }}
             EXPORT_REVIEW_VALIDATION_DEADLINE=${{ env.EXPORT_REVIEW_VALIDATION_DEADLINE }}
             AML_VALIDATION_DEADLINE=${{ env.AML_VALIDATION_DEADLINE }}
+            DATABRICKS_VALIDATION_DEADLINE=${{ env.DATABRICKS_VALIDATION_DEADLINE }}
             TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}

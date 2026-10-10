@@ -225,6 +225,8 @@ describe('bundle and marker workflow integration', () => {
 
   test.each([
     ['tre-workspace-service-azuresql', '', false, true],
+    ['tre-service-databricks', '', false, true],
+    ['tre-shared-service-databricks-private-auth', '', false, true],
     ['', 'shared_services', true, false],
     ['', '', false, false]
   ])('bundle %s and marker %s select only the requested path', (bundle, marker, planned, selected) => {
@@ -237,7 +239,7 @@ describe('bundle and marker workflow integration', () => {
   test('bundle execution has one job and no dependency on marker planning', () => {
     const bundle = reusable.jobs.e2e_tests_bundle;
     expect(bundle.strategy).toBeUndefined();
-    expect(bundle.needs).toEqual(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles']);
+    expect(bundle.needs).toEqual(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles', 'e2e_tests_smoke']);
     const prepare = bundle.steps.find(step => step.name === 'Prepare bundle validation');
     expect(prepare.env.TEST_BUNDLE).toBe('${{ inputs.e2eBundle }}');
     expect(prepare.env.TEST_BUNDLE_MARKER).toBe('${{ inputs.e2eTestsCustomSelector }}');
