@@ -34,6 +34,7 @@ jobs:
       branchCiGitRef: ${{ steps.check_command.outputs.branchCiGitRef }}
       ciGitRef: ${{ steps.check_command.outputs.ciGitRef }}
       skipDeployment: ${{ steps.check_command.outputs.skipDeployment }}
+      acceptNexusEula: ${{ steps.check_command.outputs.acceptNexusEula }}
     steps:
       # Ensure we have the script file for the github-script action to use
       - name: Checkout
@@ -225,6 +226,7 @@ jobs:
       DEVCONTAINER_TAG: ${{ needs.prepare_pr_env.outputs.refid }}
       # github-script outputs strings; compare explicitly before passing to the typed workflow input.
       skipDeployment: ${{ needs.pr_comment.outputs.skipDeployment == 'true' }}
+      acceptNexusEula: ${{ needs.pr_comment.outputs.acceptNexusEula == 'true' }}
     secrets:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
