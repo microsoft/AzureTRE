@@ -121,6 +121,37 @@ describe('regional CI workflow routing', () => {
     expect(reusable.jobs.summary.needs).toContain('e2e_tests_plan');
   });
 
+  test.each([
+    ['/test-airlock', false],
+    ['/test-airlock accept_nexus_eula', true],
+    ['/test-airlock 2345678 accept_nexus_eula', true],
+  ])('routes parsed Airlock consent into the E2E environment: %s', async (body, consent) => {
+    const { getCommandFromComment } = require('./build.js');
+    const { createGitHubContext, PR_NUMBER } = require('./test-helpers.js');
+    const { core, github, mockCoreSetOutput } = createGitHubContext();
+    const context = {
+      runId: 11112222,
+      payload: {
+        comment: { user: { login: 'admin' }, body, html_url: 'https://example.test/comment' },
+        issue: { number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES, user: { login: 'admin' } },
+        repository: { full_name: 'someOwner/someRepo' },
+      },
+    };
+    await getCommandFromComment({ core, context, github });
+    const outputs = Object.fromEntries(mockCoreSetOutput.mock.calls);
+    const jobs = workflow('pr_comment_bot.yml').jobs;
+    const evaluate = (expression, values) => vm.runInNewContext(expression.trim().slice(3, -2), values, { timeout: 1000 });
+    const forwarded = evaluate(jobs.pr_comment.outputs.acceptNexusEula, { steps: { check_command: { outputs } } });
+    const needs = { pr_comment: { outputs: { ...outputs, acceptNexusEula: forwarded } } };
+    const accepted = evaluate(jobs.run_test.with.acceptNexusEula, { needs });
+    expect(accepted).toBe(consent);
+    expect(evaluate(jobs.run_test.with.e2eTestsCustomSelector, { needs })).toBe('airlock');
+    expect(evaluate(jobs.run_test.with.skipDeployment, { needs })).toBe(false);
+    const runner = workflow('deploy_tre_reusable.yml').jobs.e2e_tests_custom.steps.find(step => step.name === 'Run E2E Tests');
+    const command = runner.with.COMMAND.replace(/\$\{\{ inputs.acceptNexusEula \}\}/g, String(accepted));
+    expect(command).toContain(`TEST_ACCEPT_NEXUS_EULA=${consent}`);
+  });
+
   test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
     const jobs = workflow('pr_comment_bot.yml').jobs;
     expect(jobs.pr_comment.outputs.acceptNexusEula).toBe('${{ steps.check_command.outputs.acceptNexusEula }}');
