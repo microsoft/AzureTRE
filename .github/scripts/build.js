@@ -155,9 +155,23 @@ async function getCommandFromComment({ core, context, github }) {
 
       case "/test-airlock":
         {
+          if (commandHasSkipDeploymentFlag(parts)) {
+            await addUnsupportedSkipDeploymentFlagComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, commandText);
+            break;
+          }
+
+          const consentFlags = parts.slice(1).filter(part => part === ACCEPT_NEXUS_EULA_FLAG);
+          const shaParts = parts.slice(1).filter(part => part !== ACCEPT_NEXUS_EULA_FLAG);
+          if (consentFlags.length > 1 || shaParts.length > 1 || shaParts.some(part => !/^[0-9a-f]{7,40}$/i.test(part))) {
+            const message = `:warning: Invalid Airlock arguments. No deployment or tests were started. Use \`${commandText} [<sha>] [${ACCEPT_NEXUS_EULA_FLAG}]\` with one optional SHA and one exact consent flag.`;
+            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "airlock tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-airlock";
+            acceptNexusEula = consentFlags.length === 1;
           }
           break;
         }
@@ -314,7 +328,7 @@ You can use the following commands:
 &nbsp;&nbsp;&nbsp;&nbsp;/test-extended-aad - build, deploy and run smoke & extended AAD tests on a PR
 &nbsp;&nbsp;&nbsp;&nbsp;/test-shared-services [<sha>] accept_nexus_eula - build, deploy and test shared services with explicit Nexus CE EULA acceptance
 &nbsp;&nbsp;&nbsp;&nbsp;/test-backups - build, deploy and run backup tests on a PR
-&nbsp;&nbsp;&nbsp;&nbsp;/test-airlock - build, deploy and run Airlock tests on a PR
+&nbsp;&nbsp;&nbsp;&nbsp;/test-airlock [<sha>] [accept_nexus_eula] - build, deploy and run Airlock tests with optional explicit Nexus CE EULA acceptance
 &nbsp;&nbsp;&nbsp;&nbsp;/test-force-approve - force approval of the PR tests (i.e. skip the deployment checks)
 &nbsp;&nbsp;&nbsp;&nbsp;/test-destroy-env - delete the validation environment for a PR (e.g. to enable testing a deployment from a clean start after previous tests)
 &nbsp;&nbsp;&nbsp;&nbsp;/help - show this help`;

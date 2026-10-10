@@ -112,14 +112,21 @@ Empty groups are omitted. Invalid or empty selections fail planning. Each job ve
 
 Slash commands use workflows from `main`. Before these routing changes reach `main`, validate the E2E path through `deploy_tre_branch.yml` on the reviewed upstream branch.
 
-### `/test-airlock [<sha>]`
+### `/test-airlock [<sha>] [accept_nexus_eula]`
 
 This command builds and deploys the PR environment, then runs smoke tests and the `airlock` selection.
 Review the code with the same checks as for `/test`. For an external PR, include the reviewed head SHA.
 The command does not support `skip_deployment`.
 
-The review VM needs Nexus. Use a suitable deployed Nexus service, or use the branch workflow with `acceptNexusEula=true`.
-The Airlock slash command does not accept the `accept_nexus_eula` flag.
+The review VM needs Nexus. To permit creation of the prerequisite, first accept the [Sonatype Nexus Community Edition EULA](https://links.sonatype.com/products/nxrm/ce-eula).
+Then add the exact `accept_nexus_eula` flag on the command's first line, for example `/test-airlock <sha> accept_nexus_eula`.
+The flag can appear before or after the SHA. Duplicate flags, `=true` or `=false` suffixes, and unknown arguments are rejected before deployment.
+
+Without the flag, consent remains false. The test can reuse a suitable deployed Nexus service.
+If no suitable service exists, the review-VM case fails before creating Nexus. A flag on a later comment line does not grant consent.
+Record selected cases, failures and skips. Independent Airlock passes do not prove the review-VM flow.
+
+For branch validation, use `acceptNexusEula=true`. Before the parser change reaches `main`, use the reviewed branch workflow.
 
 ### `/test-backups [<sha>]`
 
