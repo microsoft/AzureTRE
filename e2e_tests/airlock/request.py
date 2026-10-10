@@ -4,6 +4,9 @@ from httpx import AsyncClient, Timeout
 import os
 from urllib.parse import urlparse
 from azure.storage.blob import BlobClient
+from azure.storage.blob.aio import BlobClient as AsyncBlobClient
+from azure.core.exceptions import ResourceNotFoundError, ResourceExistsError
+from uuid import uuid4
 from airlock import strings
 from e2e_tests.helpers import get_auth_header, get_full_endpoint
 
@@ -81,6 +84,35 @@ async def delete_blob_using_sas(file_path: str, sas_url: str):
 
     client = BlobClient.from_blob_url(blob_url)
     client.delete_blob()
+
+
+async def wait_for_draft_container_deletion(sas_url: str, *, timeout=60, interval=2):
+    """Require ContainerNotFound after Azure's asynchronous container deletion."""
+    started = asyncio.get_running_loop().time()
+    parsed = urlparse(sas_url)
+    # A new name and overwrite avoid mistaking BlobAlreadyExists for revoked access.
+    blob_url = parsed._replace(path=f"{parsed.path.rstrip('/')}/revocation-probe-{uuid4().hex}").geturl()
+    async with AsyncBlobClient.from_blob_url(blob_url, retry_total=0, connection_timeout=5, read_timeout=10) as client:
+        try:
+            async with asyncio.timeout(timeout):
+                while True:
+                    try:
+                        await client.upload_blob(b"post-submission draft probe", overwrite=True)
+                    except ResourceNotFoundError as error:
+                        if getattr(error, "error_code", None) != "ContainerNotFound":
+                            raise
+                        LOGGER.info(
+                            "Draft container deletion confirmed after %.1f seconds (ContainerNotFound)",
+                            asyncio.get_running_loop().time() - started,
+                        )
+                        return
+                    except ResourceExistsError as error:
+                        # Azure can reject writes while deletion is still in progress.
+                        if getattr(error, "error_code", None) != "ContainerBeingDeleted":
+                            raise
+                    await asyncio.sleep(interval)
+        except TimeoutError:
+            raise AssertionError(f"Draft container deletion was not confirmed within {timeout} seconds") from None
 
 
 async def wait_for_status(request_status: str, workspace_owner_token, workspace_path, request_id, verify):
