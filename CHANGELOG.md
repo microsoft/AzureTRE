@@ -35,6 +35,7 @@ BUG FIXES:
 * Reuse publicly trusted certificates for the same hostname across certificate service replacement. Restore retained PEM and PFX material in its stored format. (`tre-shared-service-certs` 0.7.16) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
 
 * Wait for stable private DNS and verified TLS before configuring certificate storage ([#5240](https://github.com/microsoft/AzureTRE/issues/5240)).
+* Keep Microsoft identity TLS verification enabled when E2E tests disable verification for the TRE API. Preserve configured CA trust. ([#5237](https://github.com/microsoft/AzureTRE/issues/5237))
 * Keep multi-step uninstall resources visible until the full pipeline finishes. Preserve final-step failures and skip completed callbacks during redelivery. (`API` 0.28.4) ([#5233](https://github.com/microsoft/AzureTRE/issues/5233))
 * Report Porter uninstall lookup errors as failures so a failed child deletion stops parent cleanup. Add regression coverage for missing error output and the API cascade guard. (`resource_processor` 0.13.13, `API` 0.28.3) ([#5228](https://github.com/microsoft/AzureTRE/issues/5228))
 * Run selected bundle tests only after successful smoke tests, including deployment reuse. (`build-scripts` 1.1.3) ([#5226](https://github.com/microsoft/AzureTRE/pull/5226))
