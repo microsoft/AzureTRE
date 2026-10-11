@@ -93,6 +93,7 @@ jobs:
               - '.github/workflows/pr_comment_bot.yml'
               - 'devops/tests/**'
               - 'templates/shared_services/sonatype-nexus-vm/scripts/**'
+              - 'templates/shared_services/certs/**'
               - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'
