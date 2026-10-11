@@ -525,23 +525,32 @@ async def test_failed_child_uninstall_stops_parent_deletion(
     __,
     multi_step_operation,
     user_resource_multi,
-    basic_shared_service,
+    primary_workspace_service_resource,
 ):
     operation = copy.deepcopy(multi_step_operation)
     operation.id = OPERATION_ID
     user_resource_multi.id = "0e569b65-7e01-4a0b-a971-a41f5110c0c1"
-    basic_shared_service.id = "dc9b2f53-0784-4c4f-9b73-4a060a385bca"
+    primary_workspace_service_resource.id = "dc9b2f53-0784-4c4f-9b73-4a060a385bca"
+    parent = primary_workspace_service_resource
+    parent.isEnabled = False
+    parent.deploymentStatus = Status.Updated
+    parent_status_before = parent.deploymentStatus
     operation.action = RequestAction.UnInstall
     operation.steps = operation.steps[:2]
     child_step, parent_step = operation.steps
     child_step.resourceId = user_resource_multi.id
     child_step.resourceAction = RequestAction.UnInstall
     child_step.status = Status.Deleting
-    parent_step.resourceId = basic_shared_service.id
+    parent_step.resourceId = primary_workspace_service_resource.id
     parent_step.resourceAction = RequestAction.UnInstall
     parent_step.status = Status.AwaitingDeletion
-    operation.resourceId = basic_shared_service.id
+    operation.resourceId = primary_workspace_service_resource.id
     operation.status = Status.PipelineRunning
+    for step, resource in [(child_step, user_resource_multi), (parent_step, parent)]:
+        step.templateStepId = "main"
+        step.sourceTemplateResourceId = resource.id
+        step.resourceTemplateName = resource.templateName
+        step.resourceType = resource.resourceType
     parent_before = parent_step.model_copy(deep=True)
 
     message = {
@@ -552,7 +561,10 @@ async def test_failed_child_uninstall_stops_parent_deletion(
         "message": "Porter installation lookup timed out",
     }
     operations_repo.return_value.get_operation_by_id.return_value = operation
-    resources = {user_resource_multi.id: user_resource_multi, basic_shared_service.id: basic_shared_service}
+    resources = {
+        user_resource_multi.id: user_resource_multi,
+        primary_workspace_service_resource.id: primary_workspace_service_resource,
+    }
     resource_repo.return_value.get_resource_by_id.side_effect = lambda resource_id: resources[str(resource_id)]
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
@@ -567,7 +579,7 @@ async def test_failed_child_uninstall_stops_parent_deletion(
     assert saved_operation.steps[0].message == message["message"]
     assert saved_operation.steps[1] == parent_before
     assert user_resource_multi.deploymentStatus == Status.DeletingFailed
-    assert basic_shared_service.deploymentStatus == Status.DeletingFailed
+    assert parent.deploymentStatus == parent_status_before
     update_resource_for_step.assert_not_called()
     sb_sender_client().get_queue_sender().send_messages.assert_not_called()
 
