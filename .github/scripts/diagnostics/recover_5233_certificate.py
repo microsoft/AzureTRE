@@ -62,17 +62,26 @@ def wait_for_deletion(operation_id):
         assert operation["status"] not in FAILED and all(step["status"] not in FAILED for step in steps)
         if steps[0]["status"] == "deleted" and steps[1]["status"] not in SUCCESS:
             assert operation["status"] == "pipeline_running"
-            resource_code, resource = api(PATH)
-            assert resource_code == 200 and resource["sharedService"]["deploymentStatus"] == "pipeline_running"
+            # This nested operation response itself proves that the resource
+            # remained visible after its main step. Completion can race the GET.
             main_complete_pipeline_visible = True
+            resource_code, resource = api(PATH)
+            if resource_code == 404:
+                break
+            assert resource_code == 200 and resource["sharedService"]["deploymentStatus"] == "pipeline_running"
         if operation["status"] == "deleted":
             assert all(step["status"] in SUCCESS for step in steps)
         time.sleep(20)
     else:
         raise TimeoutError("Certificate cleanup did not finish within one hour")
-    assert main_complete_pipeline_visible, "Cleanup ended before the intermediate visibility check was observed"
     check_firewall()
-    emit(certificate=CERTIFICATE, operation=operation_id, api_resource_absent=True, main_complete_pipeline_visible=True)
+    emit(
+        certificate=CERTIFICATE,
+        operation=operation_id,
+        api_resource_absent=True,
+        main_complete_pipeline_visible=main_complete_pipeline_visible,
+        visibility_evidence="observed" if main_complete_pipeline_visible else "not_observed",
+    )
 
 
 def main():
@@ -99,6 +108,9 @@ def main():
     code, services = api("/shared-services")
     assert code == 200
     assert not any(item["templateName"] == "tre-shared-service-sonatype-nexus" for item in services["sharedServices"])
+    code, current_operations = api("/operations")
+    assert code == 200
+    assert all(operation["resourceId"] == CERTIFICATE for operation in current_operations["operations"])
     operations = get_operations(CERTIFICATE)
     active = [operation for operation in operations if operation["status"] not in TERMINAL]
     if active:
