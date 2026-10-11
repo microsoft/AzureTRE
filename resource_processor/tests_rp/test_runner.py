@@ -492,24 +492,46 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
-@patch("vmss_porter.runner.run_porter", return_value=(1, "", "could not find installation"))
-@patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
-async def test_invoke_porter_action_uninstall_failure(
-    mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
-):
-    """Test invoking a porter action with uninstall failure."""
-    mock_sb_client = AsyncMock(spec=ServiceBusClient)
-    mock_sb_sender = AsyncMock()
-    mock_sb_client.get_queue_sender.return_value = mock_sb_sender
-
+@pytest.mark.parametrize(
+    "action, expected_status",
+    [
+        ("install", "deployment_failed"),
+        ("upgrade", "updating_failed"),
+        ("uninstall", "deleting_failed"),
+        ("custom-action", "action_failed"),
+    ],
+)
+@pytest.mark.parametrize(
+    "error",
+    [
+        "could not find installation /test_id: could not read storage schema document: "
+        "rpc error: code = DeadlineExceeded desc = server selection error: context deadline exceeded",
+        "could not find installation /test_id: installation does not exist",
+        "",
+        None,
+    ],
+    ids=["storage-timeout", "missing-installation", "empty-error", "no-error"],
+)
+async def test_invoke_porter_action_nonzero_exit_reports_failure(action, expected_status, error):
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
     config = {"deployment_status_queue": "test_queue"}
-    msg_body = {"id": "test_id", "action": "uninstall", "stepId": "test_step_id", "operationId": "test_operation_id"}
+    msg_body = {"id": "test_id", "action": action, "stepId": "test_step_id", "operationId": "test_operation_id"}
 
-    result = await invoke_porter_action(msg_body, mock_sb_client, config)
+    with (
+        patch("vmss_porter.runner.build_porter_command", return_value=([["porter", action]], None, "params", None)),
+        patch("vmss_porter.runner.run_porter", return_value=(1, "", error)),
+        patch("vmss_porter.runner.get_porter_outputs", return_value=(True, {})) as outputs,
+    ):
+        result = await invoke_porter_action(msg_body, client, config)
 
-    assert result is True
-    mock_sb_sender.send_messages.assert_called()
+    assert result is False
+    outputs.assert_not_awaited()
+    assert sender.send_messages.await_count == 2
+    final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert final_status["status"] == expected_status
+    assert (error or "Porter exited with code 1 and no error output.") in final_status["message"]
 
 
 @pytest.mark.asyncio
@@ -786,6 +808,51 @@ async def test_invoke_porter_action_reports_legacy_guard_and_cleans_up(tmp_path)
     final_status = json.loads(str(sender.send_messages.call_args.args[0]))
     assert final_status["status"] == "deleting_failed"
     assert "Upgrade this resource" in final_status["message"]
+
+
+@pytest.mark.asyncio
+async def test_uninstall_storage_failure_after_parameter_check_preserves_failure(tmp_path):
+    parameters = tmp_path / "parameters.json"
+    installation = tmp_path / "installation.json"
+    parameters.write_text("parameter references")
+    installation.write_text("installation document")
+    action = ["porter", "uninstall", "resource"]
+    config = {
+        "azure_environment": "AzureCloud",
+        "vmss_msi_id": "msi",
+        "registry_server": "registry.azurecr.io",
+        "deployment_status_queue": "status",
+    }
+    msg_body = {"id": "resource", "action": "uninstall", "operationId": "operation", "stepId": "step"}
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    error = "could not find installation /resource: could not read storage schema document: DeadlineExceeded"
+    responses = [(0, None, None)] * 5 + [
+        (0, '[{"name":"resource"}]', None),
+        (0, '{"name":"resource","status":{"runId":"old-run"},"parameters":{}}', None),
+        (1, None, error),
+        (0, None, None),
+    ]
+    with (
+        patch(
+            "vmss_porter.runner.build_porter_command",
+            return_value=([action], str(parameters), "test-parameters", str(installation)),
+        ),
+        patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command,
+        patch("vmss_porter.runner.get_porter_outputs") as outputs,
+    ):
+        result = await invoke_porter_action(msg_body, client, config)
+
+    assert result is False
+    assert not parameters.exists()
+    assert not installation.exists()
+    assert command.await_args_list[-2].args[0] == action
+    assert command.await_args_list[-1].args[0] == ["porter", "parameters", "delete", "test-parameters"]
+    outputs.assert_not_awaited()
+    final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert final_status["status"] == "deleting_failed"
+    assert error in final_status["message"]
 
 
 @pytest.mark.asyncio
