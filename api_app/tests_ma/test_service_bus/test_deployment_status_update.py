@@ -510,6 +510,68 @@ async def test_multi_step_operation_ends_at_last_step(
     sb_sender_client().get_queue_sender().send_messages.assert_not_called()
 
 
+@patch("service_bus.deployment_status_updater.ResourceHistoryRepository.create")
+@patch("service_bus.deployment_status_updater.ResourceTemplateRepository.create")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+@patch("service_bus.deployment_status_updater.OperationRepository.create")
+@patch("service_bus.deployment_status_updater.ResourceRepository.create")
+@patch("service_bus.helpers.ServiceBusClient")
+async def test_failed_child_uninstall_stops_parent_deletion(
+    sb_sender_client,
+    resource_repo,
+    operations_repo,
+    update_resource_for_step,
+    _,
+    __,
+    multi_step_operation,
+    user_resource_multi,
+    basic_shared_service,
+):
+    operation = copy.deepcopy(multi_step_operation)
+    operation.id = OPERATION_ID
+    user_resource_multi.id = "0e569b65-7e01-4a0b-a971-a41f5110c0c1"
+    basic_shared_service.id = "dc9b2f53-0784-4c4f-9b73-4a060a385bca"
+    operation.action = RequestAction.UnInstall
+    operation.steps = operation.steps[:2]
+    child_step, parent_step = operation.steps
+    child_step.resourceId = user_resource_multi.id
+    child_step.resourceAction = RequestAction.UnInstall
+    child_step.status = Status.Deleting
+    parent_step.resourceId = basic_shared_service.id
+    parent_step.resourceAction = RequestAction.UnInstall
+    parent_step.status = Status.AwaitingDeletion
+    operation.resourceId = basic_shared_service.id
+    operation.status = Status.PipelineRunning
+    parent_before = parent_step.model_copy(deep=True)
+
+    message = {
+        "operationId": operation.id,
+        "stepId": child_step.id,
+        "id": child_step.resourceId,
+        "status": Status.DeletingFailed,
+        "message": "Porter installation lookup timed out",
+    }
+    operations_repo.return_value.get_operation_by_id.return_value = operation
+    resources = {user_resource_multi.id: user_resource_multi, basic_shared_service.id: basic_shared_service}
+    resource_repo.return_value.get_resource_by_id.side_effect = lambda resource_id: resources[str(resource_id)]
+    sb_sender_client().get_queue_sender().send_messages = AsyncMock()
+
+    updater = DeploymentStatusUpdater()
+    await updater.init_repos()
+    complete = await updater.process_message(ServiceBusReceivedMessageMock(message))
+
+    assert complete is True
+    saved_operation = operations_repo.return_value.update_item.call_args.args[0]
+    assert saved_operation.status == Status.DeletingFailed
+    assert saved_operation.steps[0].status == Status.DeletingFailed
+    assert saved_operation.steps[0].message == message["message"]
+    assert saved_operation.steps[1] == parent_before
+    assert user_resource_multi.deploymentStatus == Status.DeletingFailed
+    assert basic_shared_service.deploymentStatus == Status.DeletingFailed
+    update_resource_for_step.assert_not_called()
+    sb_sender_client().get_queue_sender().send_messages.assert_not_called()
+
+
 async def test_convert_outputs_to_dict():
     # Test case 1: Empty list of outputs
     outputs_list = []

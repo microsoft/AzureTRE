@@ -377,33 +377,22 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
                 logger.debug(f"Best-effort cleanup failed for '{installation_id}': {e}")
     logger.debug("Finished running porter execution command.")
 
-    action_completed_without_error = False
-
-    if returncode == 0:
-        action_completed_without_error = True
+    action_completed_without_error = returncode == 0
 
     # Handle command output
-    if returncode != 0 and err is not None:
+    if returncode != 0:
         # Construct a readable representation of the command(s)
         command_representation = ""
         for cmd in porter_command:
             command_representation += " ".join(cmd) + "; "
         command_representation = command_representation.rstrip("; ")
 
-        error_message = "Error message: " + " ".join(err.split("\n")) + "; Porter command: " + command_representation
-        action_completed_without_error = False
-
-        if "uninstall" == action and "could not find installation" in err:
-            logger.warning(
-                "The installation doesn't exist. Treating as a successful action to allow the flow to proceed."
-            )
-            action_completed_without_error = True
-            error_message = f"A success despite of underlying error. {error_message}"
-
-        if action_completed_without_error:
-            status_for_sb_message = statuses.pass_status_string_for[action]
-        else:
-            status_for_sb_message = statuses.failed_status_string_for[action]
+        error_output = err or f"Porter exited with code {returncode} and no error output."
+        error_message = (
+            "Error message: " + " ".join(error_output.split("\n")) + "; Porter command: " + command_representation
+        )
+        # Installation lookup errors can wrap storage failures. They do not prove that resources were deleted.
+        status_for_sb_message = statuses.failed_status_string_for[action]
 
         resource_request_message = service_bus_message_generator(msg_body, status_for_sb_message, error_message)
 
