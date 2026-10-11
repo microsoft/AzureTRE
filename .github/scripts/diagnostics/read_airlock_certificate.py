@@ -71,9 +71,17 @@ def main():
         safe["properties"] = {key: resource.get("properties", {}).get(key) for key in property_fields}
         code, operations = api(f"/shared-services/{resource['id']}/operations")
         assert code == 200
-        safe["operations"] = [
-            {key: operation.get(key) for key in operation_fields} for operation in operations["operations"]
-        ]
+        safe["operations"] = []
+        for operation in operations["operations"]:
+            summary = {key: operation.get(key) for key in operation_fields}
+            summary["steps"] = [
+                {
+                    key: step.get(key)
+                    for key in ("id", "templateStepId", "resourceId", "resourceAction", "status", "updatedWhen")
+                }
+                for step in operation.get("steps", [])
+            ]
+            safe["operations"].append(summary)
         print(json.dumps(safe), flush=True)
     print(json.dumps({"selected_resources": len(selected), "method": "GET"}), flush=True)
 
