@@ -504,8 +504,10 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(
 @pytest.mark.parametrize(
     "error",
     [
-        "could not find installation /test_id: could not read storage schema document: "
-        "rpc error: code = DeadlineExceeded desc = server selection error: context deadline exceeded",
+        (
+            "could not find installation /test_id: could not read storage schema document: "
+            + "rpc error: code = DeadlineExceeded desc = server selection error: context deadline exceeded"
+        ),
         "could not find installation /test_id: installation does not exist",
         "",
         None,
