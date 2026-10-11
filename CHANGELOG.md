@@ -40,6 +40,7 @@ BUG FIXES:
 * Document slash-command coverage and remove the obsolete MLflow test selection. ([#5131](https://github.com/microsoft/AzureTRE/issues/5131))
 * Require Nexus consent, restore firewall settings after tests and give shared-service test groups separate time budgets. ([#5132](https://github.com/microsoft/AzureTRE/issues/5132))
 * Create Airlock prerequisites with explicit consent. Track owned review resources and wait for deletion. Preserve certificates if Nexus cleanup fails. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
+* Verify Airlock draft deletion through ARM and the old SAS. Accept a storage permission denial only when the draft is absent and the submitted container remains present. ([#5181](https://github.com/microsoft/AzureTRE/issues/5181))
 * Handle expected plain-text Airlock errors and give fixture cleanup a separate, bounded timeout. ([#5174](https://github.com/microsoft/AzureTRE/issues/5174))
 * Install and verify required Azure CLI tools before configuring Windows review VMs. ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
 * Use supported Dsv6 sizes for Guacamole Linux and Airlock review VMs. ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))
