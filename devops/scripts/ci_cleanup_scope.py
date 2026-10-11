@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from ci_environment_id import validate_ref
+from ci_cleanup_activity import branch_activity, mutation_allowed
 from recover_bootstrap_lease import RecoveryError, github, require, verify_concurrency
 
 
@@ -124,7 +125,7 @@ def verify_lock(ctx):
         raise RecoveryError("Could not verify all cleanup jobs.")
     owners = [job for job in jobs.values() if job["name"] == expected_name and job.get("status") == "in_progress"]
     require(len(owners) == 1, "The current cleanup job is missing or ambiguous.")
-    verify_concurrency(ctx, job_id=owners[0]["id"])
+    return verify_concurrency(ctx, job_id=owners[0]["id"])
 
 
 def verify_target(groups, ref, group):
@@ -142,19 +143,29 @@ def verify_target(groups, ref, group):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("plan", "verify-lock", "verify-target"))
+    parser.add_argument("operation", choices=("plan", "verify-lock", "verify-target", "may-clean", "activity-time"))
     parser.add_argument("--group")
+    parser.add_argument("--commit-time", type=int)
+    parser.add_argument("--inactive-hours", type=int)
     args = parser.parse_args()
     try:
         if args.operation == "plan":
             print(json.dumps(references(inventory()), separators=(",", ":")))
         else:
             ctx = context()
-            verify_lock(ctx)
-            if args.operation == "verify-target":
+            members = verify_lock(ctx)
+            if args.operation in ("verify-target", "may-clean"):
                 verify_target(inventory(), ctx["ref"], args.group or "")
+                if args.operation == "may-clean":
+                    allowed = mutation_allowed(ctx, members, args.commit_time, args.inactive_hours)
+                    # Recheck ownership and queued work after reading history.
+                    if allowed:
+                        allowed = mutation_allowed(ctx, verify_lock(ctx))
+                    print("proceed" if allowed else "defer")
             else:
                 verify_account()
+                if args.operation == "activity-time":
+                    print(int(branch_activity(ctx, args.commit_time)))
     except (RecoveryError, ValueError, OSError, subprocess.SubprocessError) as error:
         print(f"ERROR: CI cleanup refused: {error}", file=sys.stderr)
         return 1
