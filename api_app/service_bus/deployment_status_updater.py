@@ -166,8 +166,15 @@ class DeploymentStatusUpdater:
             resource_id = uuid.UUID(step_to_update.resourceId)
 
             resource = await self.resource_repo.get_resource_by_id(resource_id)
-            resource.deploymentStatus = step_to_update.status
+            uninstall_pipeline = operation.action == RequestAction.UnInstall and len(operation.steps) > 1
+            resource.deploymentStatus = (
+                operation.status
+                if uninstall_pipeline and str(resource_id) == operation.resourceId
+                else step_to_update.status
+            )
             await self.resource_repo.update_item(resource)
+            if uninstall_pipeline and str(resource_id) != operation.resourceId:
+                await self.update_primary_uninstall_status(operation)
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
@@ -220,6 +227,8 @@ class DeploymentStatusUpdater:
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
+                    if uninstall_pipeline:
+                        await self.update_primary_uninstall_status(operation)
 
             result = True
 
@@ -231,6 +240,13 @@ class DeploymentStatusUpdater:
             logger.exception("Failed to update status")
 
         return result
+
+    async def update_primary_uninstall_status(self, operation: Operation):
+        # Cascaded deletion can contain several main steps. The operation owns
+        # the root resource, which must remain visible until every step finishes.
+        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(operation.resourceId))
+        primary_resource.deploymentStatus = operation.status
+        await self.resource_repo.update_item(primary_resource)
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()
@@ -248,17 +264,15 @@ class DeploymentStatusUpdater:
             operation.status = self.get_failure_status_for_action(operation.action)
             operation.message = f"Multi step pipeline failed on step {step.templateStepId}"
 
-            # pipeline failed - update the primary resource (from the main step) as failed too
-            main_step = None
-            for i, step in enumerate(operation.steps):
-                if step.templateStepId == "main":
-                    main_step = step
-                    break
-
-            if main_step:
-                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                primary_resource.deploymentStatus = operation.status
-                await self.resource_repo.update_item(primary_resource)
+            # Uninstall pipelines persist the root status in the caller. Keep
+            # the existing main-step behaviour for other pipeline actions.
+            if operation.action != RequestAction.UnInstall:
+                main_step = next((item for item in operation.steps if item.templateStepId == "main"), None)
+                if main_step:
+                    primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                    primary_resource.deploymentStatus = operation.status
+                    await self.resource_repo.update_item(primary_resource)
+            return
 
         if step.is_success() and is_last_step:
             operation.status = self.get_success_status_for_action(operation.action)

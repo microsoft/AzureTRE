@@ -11,6 +11,7 @@ from models.domain.resource import ResourceType
 
 from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
+from models.domain.workspace_service import WorkspaceService
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from service_bus.deployment_status_updater import DeploymentStatusUpdater
@@ -516,7 +517,8 @@ async def test_multi_step_operation_ends_at_last_step(
 @patch("service_bus.deployment_status_updater.OperationRepository.create")
 @patch("service_bus.deployment_status_updater.ResourceRepository.create")
 @patch("service_bus.helpers.ServiceBusClient")
-async def test_failed_child_uninstall_stops_parent_deletion(
+@pytest.mark.parametrize("child_status", [Status.Deleted, Status.DeletingFailed])
+async def test_child_uninstall_controls_parent_deletion(
     sb_sender_client,
     resource_repo,
     operations_repo,
@@ -526,15 +528,15 @@ async def test_failed_child_uninstall_stops_parent_deletion(
     multi_step_operation,
     user_resource_multi,
     primary_workspace_service_resource,
+    child_status,
 ):
     operation = copy.deepcopy(multi_step_operation)
     operation.id = OPERATION_ID
     user_resource_multi.id = "0e569b65-7e01-4a0b-a971-a41f5110c0c1"
     primary_workspace_service_resource.id = "dc9b2f53-0784-4c4f-9b73-4a060a385bca"
-    parent = primary_workspace_service_resource
+    parent = WorkspaceService(**primary_workspace_service_resource.model_dump(), workspaceId="test-workspace")
     parent.isEnabled = False
     parent.deploymentStatus = Status.Updated
-    parent_status_before = parent.deploymentStatus
     operation.action = RequestAction.UnInstall
     operation.steps = operation.steps[:2]
     child_step, parent_step = operation.steps
@@ -557,15 +559,19 @@ async def test_failed_child_uninstall_stops_parent_deletion(
         "operationId": operation.id,
         "stepId": child_step.id,
         "id": child_step.resourceId,
-        "status": Status.DeletingFailed,
-        "message": "Porter installation lookup timed out",
+        "status": child_status,
+        "message": "Child uninstall result",
     }
     operations_repo.return_value.get_operation_by_id.return_value = operation
     resources = {
         user_resource_multi.id: user_resource_multi,
-        primary_workspace_service_resource.id: primary_workspace_service_resource,
+        parent.id: parent,
     }
     resource_repo.return_value.get_resource_by_id.side_effect = lambda resource_id: resources[str(resource_id)]
+    resource_repo.return_value.get_resource_dict_by_id.side_effect = lambda resource_id: resources[
+        str(resource_id)
+    ].model_dump()
+    update_resource_for_step.return_value = parent
     sb_sender_client().get_queue_sender().send_messages = AsyncMock()
 
     updater = DeploymentStatusUpdater()
@@ -574,14 +580,19 @@ async def test_failed_child_uninstall_stops_parent_deletion(
 
     assert complete is True
     saved_operation = operations_repo.return_value.update_item.call_args.args[0]
-    assert saved_operation.status == Status.DeletingFailed
-    assert saved_operation.steps[0].status == Status.DeletingFailed
+    expected_parent_status = Status.DeletingFailed if child_status == Status.DeletingFailed else Status.PipelineRunning
+    assert saved_operation.status == expected_parent_status
+    assert saved_operation.steps[0].status == child_status
     assert saved_operation.steps[0].message == message["message"]
     assert saved_operation.steps[1] == parent_before
-    assert user_resource_multi.deploymentStatus == Status.DeletingFailed
-    assert parent.deploymentStatus == parent_status_before
-    update_resource_for_step.assert_not_called()
-    sb_sender_client().get_queue_sender().send_messages.assert_not_called()
+    assert user_resource_multi.deploymentStatus == child_status
+    assert parent.deploymentStatus == expected_parent_status
+    if child_status == Status.DeletingFailed:
+        update_resource_for_step.assert_not_called()
+        sb_sender_client().get_queue_sender().send_messages.assert_not_called()
+    else:
+        update_resource_for_step.assert_called_once()
+        sb_sender_client().get_queue_sender().send_messages.assert_called_once()
 
 
 async def test_convert_outputs_to_dict():
@@ -607,3 +618,92 @@ async def test_convert_outputs_to_dict():
         "list2": ["one", "two"],
     }
     assert status_updater.convert_outputs_to_dict(deployment_status_update_message.outputs) == expected_result
+
+
+@pytest.mark.parametrize(
+    "phase, message_status, expected_operation_status, expected_primary_status",
+    [
+        ("main", Status.Deleted, Status.PipelineRunning, Status.PipelineRunning),
+        ("final", Status.Updated, Status.Deleted, Status.Deleted),
+        ("final", Status.UpdatingFailed, Status.DeletingFailed, Status.DeletingFailed),
+        ("enqueue_failed", Status.Deleted, Status.DeletingFailed, Status.DeletingFailed),
+    ],
+)
+async def test_uninstall_waits_for_final_pipeline_step(
+    phase, message_status, expected_operation_status, expected_primary_status
+):
+    primary_id = "d9236f8f-7fbb-46d3-9c94-dea6daf32b7f"
+    dependency_id = "7af8f146-d751-4587-a22e-eb44c1c6fbe2"
+    primary = create_sample_workspace_object(primary_id)
+    primary.isEnabled = False
+    primary.deploymentStatus = Status.PipelineRunning if phase == "final" else Status.Deleting
+    dependency = create_sample_workspace_object(dependency_id)
+    dependency.deploymentStatus = Status.Updating
+    stored = {primary_id: primary, dependency_id: dependency}
+
+    operation = create_sample_operation(primary_id, RequestAction.UnInstall)
+    operation.steps[0].status = Status.Deleted if phase == "final" else Status.Deleting
+    operation.steps.append(
+        OperationStep(
+            id="firewall-step",
+            templateStepId="remove-firewall-rules",
+            resourceId=dependency_id,
+            resourceAction=RequestAction.Upgrade,
+            sourceTemplateResourceId=primary_id,
+            status=Status.Updating if phase == "final" else Status.AwaitingUpdate,
+        )
+    )
+    operation.status = Status.PipelineRunning
+    current_step = operation.steps[1 if phase == "final" else 0]
+    message = DeploymentStatusUpdateMessage(
+        operationId=operation.id,
+        stepId=current_step.id,
+        id=current_step.resourceId,
+        status=message_status,
+        message="Final firewall update failed" if message_status == Status.UpdatingFailed else "Completed",
+    )
+
+    updater = DeploymentStatusUpdater()
+    updater.operations_repo = AsyncMock()
+    updater.operations_repo.get_operation_by_id.return_value = operation
+    updater.resource_repo = AsyncMock()
+    updater.resource_template_repo = AsyncMock()
+    updater.resource_history_repo = AsyncMock()
+    updater.resource_repo.get_resource_by_id.side_effect = lambda resource_id: stored[str(resource_id)].model_copy(
+        deep=True
+    )
+    updater.resource_repo.get_resource_dict_by_id.side_effect = lambda resource_id: stored[
+        str(resource_id)
+    ].model_dump()
+
+    def save_resource(resource):
+        stored[resource.id] = resource.model_copy(deep=True)
+
+    def save_resource_dict(resource):
+        stored[resource["id"]] = stored[resource["id"]].model_copy(update=resource, deep=True)
+
+    updater.resource_repo.update_item.side_effect = save_resource
+    updater.resource_repo.update_item_dict.side_effect = save_resource_dict
+    with (
+        patch("service_bus.deployment_status_updater.update_resource_for_step", return_value=dependency),
+        patch("service_bus.deployment_status_updater.send_deployment_message", new_callable=AsyncMock) as send,
+    ):
+        if phase == "enqueue_failed":
+            send.side_effect = RuntimeError("Cannot enqueue final step")
+        assert await updater.update_status_in_database(message) is True
+
+    assert operation.status == expected_operation_status
+    assert stored[primary_id].deploymentStatus == expected_primary_status
+    assert stored[primary_id].isEnabled is False
+    if phase != "final":
+        assert stored[primary_id].deploymentStatus != Status.Deleted
+        send.assert_awaited_once()
+    else:
+        assert stored[dependency_id].deploymentStatus == message_status
+        send.assert_not_awaited()
+    if message_status == Status.UpdatingFailed:
+        assert operation.message == "Multi step pipeline failed on step remove-firewall-rules"
+        assert operation.steps[-1].message == "Final firewall update failed"
+    if phase == "enqueue_failed":
+        assert operation.steps[-1].status == Status.UpdatingFailed
+        assert "Cannot enqueue final step" in operation.steps[-1].message
