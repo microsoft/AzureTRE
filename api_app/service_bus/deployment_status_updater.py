@@ -151,7 +151,24 @@ class DeploymentStatusUpdater:
             if step_to_update is None:
                 raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
+            uninstall_pipeline = operation.action == RequestAction.UnInstall and len(operation.steps) > 1
+            if uninstall_pipeline and self.ignore_uninstall_callback(operation, current_step_index, message):
+                if (
+                    not step_to_update.statusUpdateComplete
+                    and step_to_update.status == message.status
+                    and operation.status == Status.DeletingFailed
+                    and any(later.is_failure() for later in operation.steps[current_step_index + 1 :])
+                ):
+                    # Dispatch can fail after the current step succeeds. Repair
+                    # a missed root write without replaying the earlier effects.
+                    await self.update_primary_uninstall_status(operation)
+                    step_to_update.statusUpdateComplete = True
+                    await self.operations_repo.update_item(operation)
+                return True
+
             # update the step status
+            if step_to_update.status != message.status:
+                step_to_update.statusUpdateComplete = False
             step_to_update.status = message.status
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
@@ -166,7 +183,6 @@ class DeploymentStatusUpdater:
             resource_id = uuid.UUID(step_to_update.resourceId)
 
             resource = await self.resource_repo.get_resource_by_id(resource_id)
-            uninstall_pipeline = operation.action == RequestAction.UnInstall and len(operation.steps) > 1
             resource.deploymentStatus = (
                 operation.status
                 if uninstall_pipeline and str(resource_id) == operation.resourceId
@@ -178,6 +194,9 @@ class DeploymentStatusUpdater:
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
+                if uninstall_pipeline and step_to_update.is_failure():
+                    step_to_update.statusUpdateComplete = True
+                    await self.operations_repo.update_item(operation)
                 return True
 
             # update the resource doc to persist any outputs
@@ -230,6 +249,12 @@ class DeploymentStatusUpdater:
                     if uninstall_pipeline:
                         await self.update_primary_uninstall_status(operation)
 
+            if uninstall_pipeline:
+                # Save only after the resource writes and dispatch. A retry must
+                # resume those effects if an earlier database write succeeded.
+                step_to_update.statusUpdateComplete = True
+                await self.operations_repo.update_item(operation)
+
             result = True
 
         except EntityDoesNotExist:
@@ -240,6 +265,25 @@ class DeploymentStatusUpdater:
             logger.exception("Failed to update status")
 
         return result
+
+    def ignore_uninstall_callback(self, operation: Operation, step_index: int, message: DeploymentStatusUpdateMessage):
+        step = operation.steps[step_index]
+        if step.is_success() or step.is_failure():
+            if step.status != message.status or step.statusUpdateComplete:
+                logger.info(f"Ignoring completed uninstall callback for {operation.id}/{step.id}")
+                return True
+
+        # Dispatch follows the previous resource writes. Once a later step has
+        # progressed, replaying those writes could overwrite newer resource data.
+        awaiting = (Status.AwaitingDeployment, Status.AwaitingUpdate, Status.AwaitingDeletion, Status.AwaitingAction)
+        if any(later.status not in awaiting for later in operation.steps[step_index + 1 :]):
+            logger.info(f"Ignoring earlier uninstall callback for {operation.id}/{step.id}")
+            return True
+
+        if any(not previous.is_success() for previous in operation.steps[:step_index]):
+            logger.info(f"Ignoring uninstall callback before its predecessors succeeded: {operation.id}/{step.id}")
+            return True
+        return False
 
     async def update_primary_uninstall_status(self, operation: Operation):
         # Cascaded deletion can contain several main steps. The operation owns

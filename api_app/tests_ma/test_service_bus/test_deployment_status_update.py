@@ -707,3 +707,226 @@ async def test_uninstall_waits_for_final_pipeline_step(
     if phase == "enqueue_failed":
         assert operation.steps[-1].status == Status.UpdatingFailed
         assert "Cannot enqueue final step" in operation.steps[-1].message
+
+
+@pytest.fixture
+def persisted_uninstall_pipeline():
+    primary = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
+    primary.isEnabled = False
+    primary.deploymentStatus = Status.Deleting
+    dependency = create_sample_workspace_object("7af8f146-d751-4587-a22e-eb44c1c6fbe2")
+    dependency.deploymentStatus = Status.Updated
+    operation = create_sample_operation(primary.id, RequestAction.UnInstall)
+    operation.status = Status.PipelineRunning
+    operation.steps[0].status = Status.Deleting
+    operation.steps.append(
+        OperationStep(
+            id="firewall-step",
+            templateStepId="remove-firewall-rules",
+            resourceId=dependency.id,
+            resourceAction=RequestAction.Upgrade,
+            sourceTemplateResourceId=primary.id,
+            status=Status.AwaitingUpdate,
+        )
+    )
+    stored = {"operation": operation, "resources": {primary.id: primary, dependency.id: dependency}}
+    updater = DeploymentStatusUpdater()
+    updater.operations_repo = AsyncMock()
+    updater.resource_repo = AsyncMock()
+    updater.resource_template_repo = AsyncMock()
+    updater.resource_history_repo = AsyncMock()
+    updater.operations_repo.get_operation_by_id.side_effect = lambda _: stored["operation"].model_copy(deep=True)
+
+    def save_operation(item):
+        stored["operation"] = item.model_copy(deep=True)
+
+    def save_resource(item):
+        stored["resources"][item.id] = item.model_copy(deep=True)
+
+    def save_resource_dict(item):
+        original = stored["resources"][item["id"]]
+        stored["resources"][item["id"]] = original.model_copy(update=item, deep=True)
+
+    updater.operations_repo.update_item.side_effect = save_operation
+    updater.resource_repo.get_resource_by_id.side_effect = lambda item_id: stored["resources"][str(item_id)].model_copy(
+        deep=True
+    )
+    updater.resource_repo.get_resource_dict_by_id.side_effect = lambda item_id: stored["resources"][
+        str(item_id)
+    ].model_dump()
+    updater.resource_repo.update_item.side_effect = save_resource
+    updater.resource_repo.update_item_dict.side_effect = save_resource_dict
+
+    def message(step_index, status):
+        step = stored["operation"].steps[step_index]
+        return DeploymentStatusUpdateMessage(
+            operationId=operation.id, stepId=step.id, id=step.resourceId, status=status, message="Result"
+        )
+
+    with (
+        patch("service_bus.deployment_status_updater.update_resource_for_step", return_value=dependency),
+        patch("service_bus.deployment_status_updater.send_deployment_message", new_callable=AsyncMock) as send,
+    ):
+        yield updater, stored, message, send
+
+
+async def test_uninstall_redelivery_does_not_dispatch_next_step_twice(persisted_uninstall_pipeline):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    callback = message(0, Status.Deleted)
+    assert await updater.update_status_in_database(callback) is True
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(callback) is True
+
+    assert stored == before
+    send.assert_awaited_once()
+
+
+@pytest.mark.parametrize("final_status", [Status.Updated, Status.UpdatingFailed])
+@pytest.mark.parametrize(
+    "callback_index, callback_status",
+    [(0, Status.Deleted), (0, Status.Deleting), (1, Status.Updating), (1, Status.Updated)],
+)
+async def test_uninstall_redelivery_preserves_final_outcome(
+    persisted_uninstall_pipeline, final_status, callback_index, callback_status
+):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    assert await updater.update_status_in_database(message(0, Status.Deleted)) is True
+    assert await updater.update_status_in_database(message(1, final_status)) is True
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(message(callback_index, callback_status)) is True
+
+    assert stored == before
+    send.assert_awaited_once()
+
+
+@pytest.mark.parametrize("later_status", [Status.Updating, Status.Updated, Status.UpdatingFailed])
+async def test_uninstall_older_callback_does_not_repeat_writes_after_later_progress(
+    persisted_uninstall_pipeline, later_status
+):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    # Older operations have no checkpoint. A later callback also proves dispatch
+    # completed if the process stopped before it could save the checkpoint.
+    operation = stored["operation"]
+    operation.steps[0].status = Status.Deleted
+    operation.steps[1].status = later_status
+    operation.status = {
+        Status.Updating: Status.PipelineRunning,
+        Status.Updated: Status.Deleted,
+        Status.UpdatingFailed: Status.DeletingFailed,
+    }[later_status]
+    legacy = operation.model_dump()
+    for step in legacy["steps"]:
+        del step["statusUpdateComplete"]
+    stored["operation"] = Operation.model_validate(legacy)
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(message(0, Status.Deleted)) is True
+
+    if later_status == Status.UpdatingFailed:
+        # A legacy record can also be an interrupted dispatch-failure write.
+        # Only the saved root outcome and the earlier checkpoint need repair.
+        before["operation"].steps[0].statusUpdateComplete = True
+        before["resources"][operation.resourceId].deploymentStatus = Status.DeletingFailed
+        updater.resource_repo.update_item.assert_awaited_once_with(before["resources"][operation.resourceId])
+    else:
+        updater.resource_repo.update_item.assert_not_awaited()
+    assert stored == before
+    updater.resource_repo.update_item_dict.assert_not_awaited()
+    send.assert_not_awaited()
+
+
+@pytest.mark.parametrize("write_method", ["update_item", "update_item_dict"])
+async def test_uninstall_redelivery_resumes_after_partial_resource_write(persisted_uninstall_pipeline, write_method):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    writer = getattr(updater.resource_repo, write_method)
+    save = writer.side_effect
+    writer.side_effect = RuntimeError("Interrupted database write")
+    callback = message(0, Status.Deleted)
+    assert await updater.update_status_in_database(callback) is False
+    assert stored["operation"].steps[0].status == Status.Deleted
+    assert stored["operation"].steps[0].statusUpdateComplete is False
+    send.assert_not_awaited()
+
+    writer.side_effect = save
+    assert await updater.update_status_in_database(callback) is True
+
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    assert stored["resources"][str(callback.id)].deploymentStatus == Status.PipelineRunning
+    send.assert_awaited_once()
+
+
+@pytest.mark.parametrize("final_status", [Status.Updated, Status.UpdatingFailed])
+async def test_uninstall_redelivery_finishes_terminal_resource_write(persisted_uninstall_pipeline, final_status):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    assert await updater.update_status_in_database(message(0, Status.Deleted)) is True
+    writer = updater.resource_repo.update_item
+    save = writer.side_effect
+
+    def fail_primary_write(item):
+        if item.id == stored["operation"].resourceId:
+            raise RuntimeError("Interrupted primary resource write")
+        save(item)
+
+    writer.side_effect = fail_primary_write
+    callback = message(1, final_status)
+    assert await updater.update_status_in_database(callback) is False
+    assert stored["operation"].steps[1].statusUpdateComplete is False
+
+    writer.side_effect = save
+    assert await updater.update_status_in_database(callback) is True
+
+    expected = Status.Deleted if final_status == Status.Updated else Status.DeletingFailed
+    assert stored["operation"].status == expected
+    assert stored["operation"].steps[1].statusUpdateComplete is True
+    assert stored["resources"][stored["operation"].resourceId].deploymentStatus == expected
+    send.assert_awaited_once()
+
+
+async def test_uninstall_checkpoint_failure_does_not_report_dispatch_failure(persisted_uninstall_pipeline):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    writer = updater.operations_repo.update_item
+    save = writer.side_effect
+
+    def fail_checkpoint(item):
+        if item.steps[0].statusUpdateComplete:
+            raise RuntimeError("Interrupted checkpoint write")
+        save(item)
+
+    writer.side_effect = fail_checkpoint
+    assert await updater.update_status_in_database(message(0, Status.Deleted)) is False
+
+    assert stored["operation"].status == Status.PipelineRunning
+    assert stored["operation"].steps[1].status == Status.AwaitingUpdate
+    assert stored["operation"].steps[0].statusUpdateComplete is False
+    send.assert_awaited_once()
+
+
+async def test_uninstall_redelivery_repairs_root_after_dispatch_failure(persisted_uninstall_pipeline):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    send.side_effect = RuntimeError("Cannot enqueue final step")
+    writer = updater.resource_repo.update_item
+    save = writer.side_effect
+
+    def fail_failure_write(item):
+        if item.deploymentStatus == Status.DeletingFailed:
+            raise RuntimeError("Interrupted root failure write")
+        save(item)
+
+    writer.side_effect = fail_failure_write
+    callback = message(0, Status.Deleted)
+    assert await updater.update_status_in_database(callback) is False
+    assert stored["operation"].status == Status.DeletingFailed
+    assert stored["resources"][str(callback.id)].deploymentStatus == Status.PipelineRunning
+    assert stored["operation"].steps[0].statusUpdateComplete is False
+    updater.resource_repo.update_item_dict.reset_mock()
+
+    writer.side_effect = save
+    assert await updater.update_status_in_database(callback) is True
+
+    assert stored["resources"][str(callback.id)].deploymentStatus == Status.DeletingFailed
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    updater.resource_repo.update_item_dict.assert_not_awaited()
+    send.assert_awaited_once()
