@@ -134,7 +134,7 @@ COMPONENTS:
 | tre-shared-service-admin-vm | 0.5.7 |
 | tre-shared-service-firewall | 1.6.4 |
 | tre-shared-service-gitea | 1.2.5 |
-| tre-shared-service-certs | 0.7.13 |
+| tre-shared-service-certs | 0.7.14 |
 | tre-shared-service-airlock-notifier | 1.0.14 |
 
 **Full Changelog**: [v0.29.1...v0.30.0](https://github.com/microsoft/AzureTRE/compare/v0.29.1...v0.30.0)
