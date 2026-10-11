@@ -130,7 +130,8 @@ class ScopeTests(unittest.TestCase):
 
     def test_new_queued_deployment_defers_command_after_history_check(self):
         owner = [{"run_id": 123, "job_id": 10, "status": "in_progress"}]
-        successor = {"run_id": 456, "job_id": 11, "status": "pending"}
+        # The updated caller queues the whole run before Preparation starts.
+        successor = {"run_id": 456, "status": "pending"}
         run = {"id": 456, "path": activity.BRANCH_WORKFLOW, "repository": {"full_name": self.ctx["repository"]}}
         output = io.StringIO()
         with (
@@ -236,7 +237,7 @@ class WorkflowContractTests(unittest.TestCase):
     def test_all_supported_writers_share_the_reference_group(self):
         workflows = SCRIPTS.parents[1] / ".github/workflows"
         deploy = (workflows / "deploy_tre_reusable.yml").read_text()
-        self.assertIn("group: deploy-${{ inputs.ciGitRef }}", deploy)
+        self.assertIn("|| format('deploy-{0}', inputs.ciGitRef)", deploy)
         self.assertIn("CI_GIT_REF: ${{ inputs.ciGitRef }}", deploy)
         explicit = (workflows / "pr_comment_bot.yml").read_text()
         for name in ("ciGitRef", "branchCiGitRef"):
