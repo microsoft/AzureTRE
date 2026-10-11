@@ -38,6 +38,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+
+* Wait for stable private DNS and verified TLS before configuring certificate storage ([#5240](https://github.com/microsoft/AzureTRE/issues/5240)).
 * Keep multi-step uninstall resources visible until the full pipeline finishes. Preserve final-step failures and skip completed callbacks during redelivery. (`API` 0.28.4) ([#5233](https://github.com/microsoft/AzureTRE/issues/5233))
 * Report Porter uninstall lookup errors as failures so a failed child deletion stops parent cleanup. Add regression coverage for missing error output and the API cascade guard. (`resource_processor` 0.13.13, `API` 0.28.3) ([#5228](https://github.com/microsoft/AzureTRE/issues/5228))
 * Run custom E2E groups only after successful smoke tests and planning, including deployment reuse. (`build-scripts` 1.1.3) ([#5225](https://github.com/microsoft/AzureTRE/issues/5225))
