@@ -35,8 +35,10 @@ def token():
     return TOKEN
 
 
-def api(endpoint):
-    method = "GET"
+def api(endpoint, method="GET"):
+    assert method == "GET" or (
+        method == "DELETE" and endpoint == "/shared-services/d9236f8f-7fbb-46d3-9c94-dea6daf32b7f"
+    )
     # Accept only paths under this exact API. Never forward credentials to a redirect.
     assert endpoint.startswith("/") and not endpoint.startswith("//")
     request = urllib.request.Request(BASE + endpoint, method=method, headers={"Authorization": "Bearer " + token()})

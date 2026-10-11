@@ -1,8 +1,14 @@
 ---
-name: Read Airlock certificate state
+name: Recover test certificate 5233
 
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
+    inputs:
+      execute:
+        description: Retry deletion of the disabled certificate recorded in issue 5233
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -13,10 +19,10 @@ concurrency:
 
 jobs:
   diagnose:
-    name: Read certificate and Nexus state
+    name: Check or recover the failed test certificate
     runs-on: ubuntu-latest
     environment: CICD
-    timeout-minutes: 5
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -24,10 +30,11 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
-      - name: Read certificate and Nexus metadata
+      - name: Check or recover only the certificate recorded in issue 5233
         env:
+          EXECUTE_RECOVERY: ${{ inputs.execute }}
           AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
           API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
           TEST_ACCOUNT_CLIENT_ID: ${{ secrets.TEST_ACCOUNT_CLIENT_ID }}
           TEST_ACCOUNT_CLIENT_SECRET: ${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}
-        run: python .github/scripts/diagnostics/read_airlock_certificate.py
+        run: python .github/scripts/diagnostics/recover_5233_certificate.py
