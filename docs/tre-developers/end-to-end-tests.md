@@ -36,6 +36,18 @@ If a poll fails, use its timestamp, operation ID and available correlation IDs t
 Check API exception telemetry before a validation run. Record terminal resource deletion separately from the failed poll.
 These diagnostics help investigate the failure. They do not establish its cause or guarantee that server telemetry is available.
 
+## Airlock draft deletion
+
+The draft-deletion case requires AzureCloud, `ARM_SUBSCRIPTION_ID`, `TRE_ID` and the existing CI Azure login.
+The CI identity must have ARM read access to blob containers in the TRE Airlock storage account.
+Local runs use the Azure CLI login. CI uses its existing federated identity. The test does not add permissions.
+
+After submission, the test checks that the old draft SAS cannot write a new blob.
+A `ContainerNotFound` or `AuthorizationPermissionMismatch` response must also have independent ARM evidence:
+the draft is absent, and the submitted container exists with matching workspace and import-stage metadata.
+A permission error alone cannot pass the test. Other storage errors and ARM lookup failures remain test failures.
+These checks share a 60-second deadline. Submitted file contents are checked separately by the review-VM lifecycle test.
+
 ## Validate one bundle
 
 The [bundle coverage map](https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json) lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
