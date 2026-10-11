@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.14
+version: 0.7.15
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -67,6 +67,14 @@ mixins:
       clientVersion: 2.81.0
 
 install:
+  - exec:
+      description: "Validate the certificate name"
+      command: python3
+      arguments:
+        - ./scripts/certificate_cache.py
+        - validate-name
+      flags:
+        cert-name: ${ bundle.parameters.cert_name }
   - terraform:
       description: "Deploy shared service"
       vars:
