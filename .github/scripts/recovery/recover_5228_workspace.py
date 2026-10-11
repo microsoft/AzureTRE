@@ -103,7 +103,13 @@ def check_workspace():
     code, result = api("GET", f"/workspaces/{WORKSPACE}/operations")
     assert code == 200 and result["operations"]
     assert all(operation["status"] in TERMINAL for operation in result["operations"])
-    assert api("GET", f"/workspaces/{WORKSPACE}/workspace-services/{SERVICE}")[0] == 404
+    code, active_result = api("GET", "/operations")
+    assert code == 200
+    assert not any(
+        operation["resourceId"] in {WORKSPACE, SERVICE, CHILD}
+        or operation.get("resourcePath", "").startswith(f"/workspaces/{WORKSPACE}")
+        for operation in active_result["operations"]
+    )
     print(
         json.dumps({"workspace": WORKSPACE, "status": workspace["deploymentStatus"], "active_operations": 0}),
         flush=True,
