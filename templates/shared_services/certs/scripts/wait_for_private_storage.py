@@ -28,6 +28,7 @@ def probe(hostname, expected_ip):
         if answers != {ipaddress.ip_address(expected_ip)}:
             return False, "DNS does not exclusively resolve to the expected private endpoint"
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         with socket.create_connection((expected_ip, 443), timeout=5) as connection:
             with context.wrap_socket(connection, server_hostname=hostname):
                 return True, "private DNS and TLS verification passed"

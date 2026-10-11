@@ -35,6 +35,21 @@ class CertificateStorageReadinessTests(unittest.TestCase):
         connect.assert_called_once_with((PRIVATE_IP, 443), timeout=5)
         context.wrap_socket.assert_called_once_with(connection.__enter__.return_value, server_hostname=HOSTNAME)
 
+    def test_probe_requires_tls12_and_preserves_certificate_and_hostname_checks(self):
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+        answers = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (PRIVATE_IP, 443))]
+        with (
+            patch.object(READINESS.socket, "getaddrinfo", return_value=answers),
+            patch.object(READINESS.socket, "create_connection", return_value=MagicMock()),
+            patch.object(READINESS.ssl, "create_default_context", return_value=context),
+            patch.object(context, "wrap_socket", return_value=MagicMock()),
+        ):
+            self.assertTrue(READINESS.probe(HOSTNAME, PRIVATE_IP)[0])
+        self.assertEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(context.check_hostname)
+
     def test_public_mixed_empty_and_wrong_private_answers_never_connect(self):
         for addresses in ([], ["52.239.251.164"], [PRIVATE_IP, "52.239.251.164"], ["10.0.1.28"]):
             with self.subTest(addresses=addresses):
