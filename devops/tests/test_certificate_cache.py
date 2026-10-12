@@ -1,5 +1,6 @@
 """Check certificate reuse using a local CA and mocked vault access."""
 
+import base64
 from datetime import datetime, timedelta, timezone
 import importlib.util
 import os
@@ -105,6 +106,7 @@ class CertificateCacheTests(unittest.TestCase):
         self.enterContext(patch.dict(os.environ, {"SSL_CERT_FILE": str(self.root / "ca.pem")}))
         self.metadata = {
             "attributes": {"enabled": True},
+            "policy": {"secretProperties": {"contentType": "application/x-pkcs12"}},
             "sid": "https://vault.test/secrets/retained/exact-version",
             "tags": {"tre-cache": CACHE.CACHE_TAG, "fqdn": FQDN},
             "x509ThumbprintHex": "ABC",
@@ -193,6 +195,70 @@ class CertificateCacheTests(unittest.TestCase):
             self.assertTrue(CACHE.restore("vault", FQDN, self.folder))
         self.assertIn(self.metadata["sid"], calls[0])
         self.assertNotIn("--name", calls[0])
+
+    def test_store_to_restore_round_trip_preserves_pem_chain_and_key(self):
+        original = CACHE.run
+        retained = {}
+        metadata = self.metadata | {"policy": {"secretProperties": {"contentType": "application/x-pem-file"}}}
+        restored = self.folder / "restored"
+        restored.mkdir()
+
+        def vault(*args):
+            if args[:3] == ("keyvault", "certificate", "import"):
+                retained["value"] = Path(args[args.index("--file") + 1]).read_text()
+            else:
+                self.assertEqual(args[:3], ("keyvault", "certificate", "show"))
+            return metadata
+
+        def command(args):
+            if args[:4] == ["az", "keyvault", "secret", "download"]:
+                self.assertIn(metadata["sid"], args)
+                destination = Path(args[args.index("--file") + 1])
+                encoding = args[args.index("--encoding") + 1]
+                if encoding == "base64":
+                    destination.write_bytes(base64.b64decode(retained["value"]))
+                else:
+                    self.assertEqual(encoding, "utf-8")
+                    destination.write_text(retained["value"])
+                return ""
+            return original(args)
+
+        with patch.object(CACHE, "azure", side_effect=vault), patch.object(CACHE, "run", side_effect=command):
+            CACHE.store("vault", FQDN, self.folder)
+            self.assertTrue(CACHE.restore("vault", FQDN, restored))
+        self.assertEqual((restored / "fullchain.pem").read_text(), (self.folder / "fullchain.pem").read_text())
+        self.assertTrue(CACHE.validate_material(restored, FQDN))
+        self.assertNotIn("PRIVATE KEY", (restored / "fullchain.pem").read_text())
+
+    def test_unknown_or_missing_content_type_stops_before_secret_download(self):
+        for policy in ({}, {"secretProperties": {"contentType": "text/plain"}}):
+            with (
+                self.subTest(policy=policy),
+                patch.object(CACHE, "azure", return_value=self.metadata | {"policy": policy}),
+            ):
+                with patch.object(CACHE, "run") as command, self.assertRaisesRegex(ValueError, "content type"):
+                    CACHE.restore("vault", FQDN, self.folder)
+                command.assert_not_called()
+
+    def test_incomplete_or_mismatched_retained_pem_is_rejected(self):
+        original = CACHE.run
+        metadata = self.metadata | {"policy": {"secretProperties": {"contentType": "application/x-pem-file"}}}
+        chain = (self.folder / "fullchain.pem").read_text()
+        key = (self.folder / "privkey.pem").read_text()
+        wrong_key = (self.root / "wrong/privkey.pem").read_text()
+        for name, material in (("no-key", chain), ("no-chain", key), ("mismatched-key", wrong_key + chain)):
+            restored = self.folder / name
+            restored.mkdir()
+
+            def command(args):
+                if args[:4] == ["az", "keyvault", "secret", "download"]:
+                    Path(args[args.index("--file") + 1]).write_text(material)
+                    return ""
+                return original(args)
+
+            with self.subTest(name=name), patch.object(CACHE, "azure", return_value=metadata):
+                with patch.object(CACHE, "run", side_effect=command), self.assertRaises((ValueError, RuntimeError)):
+                    CACHE.restore("vault", FQDN, restored)
 
     def test_store_checks_material_and_retains_before_alias_publication(self):
         def import_certificate(*args):

@@ -109,8 +109,13 @@ def restore(vault, fqdn, directory):
         raise ValueError("The retained certificate has no recognised ownership tag")
     if certificate.get("tags", {}).get("fqdn") != fqdn.lower():
         raise ValueError("The retained certificate belongs to another DNS name")
-    # Download the exact version inspected above. Key Vault exports an unencrypted PFX.
-    pfx = directory / "retained.pfx"
+    content_type = certificate.get("policy", {}).get("secretProperties", {}).get("contentType")
+    if content_type not in ("application/x-pem-file", "application/x-pkcs12"):
+        raise ValueError("The retained certificate has an unsupported or missing content type")
+    is_pem = content_type == "application/x-pem-file"
+    # Download the exact version in its stored format. PEM secrets contain text;
+    # PFX secrets contain base64 data. Downloading does not convert the format.
+    material = directory / ("retained.pem" if is_pem else "retained.pfx")
     run(
         [
             "az",
@@ -120,27 +125,48 @@ def restore(vault, fqdn, directory):
             "--id",
             certificate["sid"],
             "--file",
-            str(pfx),
+            str(material),
             "--encoding",
-            "base64",
+            "utf-8" if is_pem else "base64",
             "--only-show-errors",
         ]
     )
-    run(["openssl", "pkcs12", "-in", str(pfx), "-passin", "pass:", "-nokeys", "-out", str(directory / "fullchain.pem")])
-    run(
-        [
-            "openssl",
-            "pkcs12",
-            "-in",
-            str(pfx),
-            "-passin",
-            "pass:",
-            "-nocerts",
-            "-nodes",
-            "-out",
-            str(directory / "privkey.pem"),
-        ]
-    )
+    if is_pem:
+        certificates = re.findall(
+            r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----", material.read_text(), re.DOTALL
+        )
+        if not certificates:
+            raise ValueError("The retained PEM contains no certificates")
+        (directory / "fullchain.pem").write_text("\n".join(certificates) + "\n")
+        run(["openssl", "pkey", "-in", str(material), "-out", str(directory / "privkey.pem")])
+    else:
+        run(
+            [
+                "openssl",
+                "pkcs12",
+                "-in",
+                str(material),
+                "-passin",
+                "pass:",
+                "-nokeys",
+                "-out",
+                str(directory / "fullchain.pem"),
+            ]
+        )
+        run(
+            [
+                "openssl",
+                "pkcs12",
+                "-in",
+                str(material),
+                "-passin",
+                "pass:",
+                "-nocerts",
+                "-nodes",
+                "-out",
+                str(directory / "privkey.pem"),
+            ]
+        )
     if not validate_material(directory, fqdn):
         print("The retained certificate is due for renewal. Production issuance is required.")
         return False
