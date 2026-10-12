@@ -37,6 +37,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Fix OHDSI database credentials, bound WebAPI startup checks, disable public access and remove owned firewall rules on uninstall. (`tre-workspace-service-ohdsi` 0.3.14) ([#5149](https://github.com/microsoft/AzureTRE/issues/5149))
 * Export the CycleCloud VM ID for start and stop actions. (`tre-shared-service-cyclecloud` 0.7.10) ([#5159](https://github.com/microsoft/AzureTRE/issues/5159))
 * Record the existing Databricks firewall prerequisite as reused in bundle evidence. ([#5217](https://github.com/microsoft/AzureTRE/pull/5217))
 * Fill the missing Switzerland North Databricks storage and Event Hubs endpoints for DNS lookup and firewall rules. (`tre-service-databricks` 1.0.20) ([#5140](https://github.com/microsoft/AzureTRE/issues/5140))
