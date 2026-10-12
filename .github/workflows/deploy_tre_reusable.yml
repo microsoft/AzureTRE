@@ -1018,6 +1018,7 @@ jobs:
     # Same as smoke tests: skipDeployment intentionally bypasses deploy jobs but still runs E2E tests.
     if: >-
       ${{ always() && inputs.e2eBundle != '' &&
+      needs.e2e_tests_smoke.result == 'success' &&
       (inputs.skipDeployment || !contains(needs.*.result, 'skipped')) &&
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') }}

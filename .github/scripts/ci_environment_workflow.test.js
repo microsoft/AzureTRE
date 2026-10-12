@@ -218,7 +218,8 @@ describe('regional CI workflow routing', () => {
 describe('bundle and marker workflow integration', () => {
   const reusable = workflow('deploy_tre_reusable.yml');
   const evaluate = (expression, inputs, results = ['success'], needs = {
-    e2e_tests_smoke: { result: 'success' }, e2e_tests_plan: { result: 'success' }
+    e2e_tests_smoke: { result: 'success' }, e2e_tests_plan: { result: 'success' },
+    verify_deployment_lock: { result: 'success' }
   }) => vm.runInNewContext(
     expression.trim().slice(3, -2).replaceAll('needs.*.result', 'results'),
     { inputs, results, needs, always: () => true, contains: (values, value) => values.includes(value) },
@@ -248,6 +249,7 @@ describe('bundle and marker workflow integration', () => {
       const needs = Object.fromEntries(deploymentJobs.map(name => [name, {
         result: skipDeployment ? 'skipped' : 'success'
       }]));
+      needs.verify_deployment_lock = { result: 'success' };
       needs.e2e_tests_smoke = { result: 'success' };
       needs.e2e_tests_plan = { result: 'success' };
       for (const [name, result] of Object.entries(overrides)) needs[name] = { result };
@@ -270,6 +272,17 @@ describe('bundle and marker workflow integration', () => {
       '%s result %s only permits intentional deployment skips', (name, result) => {
         expect(canRun({ [name]: result })).toBe(skipDeployment && result === 'skipped');
       });
+  });
+
+  describe.each([false, true])('bundle execution with skipDeployment=%s', skipDeployment => {
+    test.each(['success', 'failure', 'cancelled', 'skipped'])('requires successful smoke tests: %s', result => {
+      const needs = Object.fromEntries(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles']
+        .map(name => [name, { result: skipDeployment ? 'skipped' : 'success' }]));
+      needs.e2e_tests_smoke = { result };
+      const inputs = { e2eBundle: 'tre-workspace-service-azuresql', e2eTestsCustomSelector: '', skipDeployment };
+      expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs,
+        Object.values(needs).map(job => job.result), needs)).toBe(result === 'success');
+    });
   });
 
   test('bundle execution has one job and no dependency on marker planning', () => {
