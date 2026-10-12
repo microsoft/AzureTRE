@@ -228,6 +228,8 @@ describe('bundle and marker workflow integration', () => {
 
   test.each([
     ['tre-workspace-service-azuresql', '', false, true],
+    ['tre-service-databricks', '', false, true],
+    ['tre-shared-service-databricks-private-auth', '', false, true],
     ['', 'shared_services', true, false],
     ['', '', false, false]
   ])('bundle %s and marker %s select only the requested path', (bundle, marker, planned, selected) => {
