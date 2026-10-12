@@ -77,14 +77,16 @@ describe('reference concurrency queues', () => {
 });
 
 function e2eCondition(job, lockResult, skipDeployment) {
-  const needs = job.needs.map(name => name === 'verify_deployment_lock' ? lockResult : (skipDeployment ? 'skipped' : 'success'));
-  const expression = job.if.trim().slice(3, -2)
-    .replaceAll('always()', 'true')
-    .replaceAll('inputs.e2eTestsCustomSelector', JSON.stringify('airlock'))
-    .replaceAll('inputs.skipDeployment', JSON.stringify(skipDeployment))
-    .replaceAll('needs.verify_deployment_lock.result', JSON.stringify(lockResult))
-    .replace(/contains\(needs\.\*\.result, '([^']+)'\)/g, (_, result) => JSON.stringify(needs.includes(result)));
-  return vm.runInNewContext(expression, {}, { timeout: 100 });
+  const needs = Object.fromEntries(job.needs.map(name => [name, {
+    result: name === 'verify_deployment_lock' ? lockResult
+      : name.startsWith('e2e_tests_') ? 'success' : (skipDeployment ? 'skipped' : 'success')
+  }]));
+  const inputs = { e2eBundle: '', e2eTestsCustomSelector: 'airlock', skipDeployment };
+  const results = Object.values(needs).map(value => value.result);
+  const expression = job.if.trim().slice(3, -2).replaceAll('needs.*.result', 'results');
+  return vm.runInNewContext(expression, {
+    needs, inputs, results, always: () => true, contains: (values, value) => values.includes(value)
+  }, { timeout: 100 });
 }
 
 describe('delegated deployment guard', () => {
