@@ -193,6 +193,12 @@ def main(argv=None):
             )
             if getattr(tre_config, name)
         }
+        aad_case = "test_workspace_services.py::test_create_guacamole_service_into_aad_workspace"
+        if tre_config.TEST_AAD_WORKSPACE_ID and aad_case in entry["tests"]:
+            raise ValueError(
+                "The selected AAD case requires a new workspace for service cleanup. "
+                "Clear TEST_AAD_WORKSPACE_ID before running this selection."
+            )
         activate(evidence)
         evidence.data["status"] = "collecting" if args.collect_only else "running"
         evidence.write()

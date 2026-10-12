@@ -44,6 +44,7 @@ class BundleSelectionTests(unittest.TestCase):
                 "TRE_ID",
                 "LOCATION",
                 "AZURE_ENVIRONMENT",
+                "TEST_AAD_WORKSPACE_ID",
             ):
                 env.pop(key, None)
             env.update(environment or {})
@@ -111,6 +112,29 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertEqual(report["collected_tests"], [SQL_CASE])
         self.assertEqual(report["status"], "not_run")
         self.assertFalse(report["full_lifecycle_proven"])
+
+    def test_aad_selection_rejects_a_reused_workspace_before_collection(self):
+        result, report = self.run_selector(
+            "--bundle",
+            "tre-service-guacamole",
+            "--collect-only",
+            environment={"TEST_AAD_WORKSPACE_ID": "existing-aad-workspace"},
+        )
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(report["status"], "selection_error")
+        self.assertEqual(report["collected_tests"], [])
+        self.assertEqual(report["resources"], [])
+        self.assertIn("Clear TEST_AAD_WORKSPACE_ID", report["error"])
+
+    def test_unrelated_selection_does_not_reject_a_configured_aad_workspace(self):
+        result, report = self.run_selector(
+            "--bundle",
+            SQL,
+            "--collect-only",
+            environment={"TEST_AAD_WORKSPACE_ID": "existing-aad-workspace"},
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], [SQL_CASE])
 
     def test_unknown_partial_and_shell_like_identifiers_fail_before_collection(self):
         for identifier in ("azuresql", "tre-nonexistent", SQL + "; echo unexpected", SQL + "$(echo unexpected)"):

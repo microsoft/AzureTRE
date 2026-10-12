@@ -52,6 +52,8 @@ TEST_BUNDLE=tre-workspace-service-azuresql make test-e2e-bundle
 ```
 
 Use one test process. Per-bundle runs reject a marker expression or multiple workers.
+If the selection includes the Guacamole AAD case, clear `TEST_AAD_WORKSPACE_ID`.
+That case requires an owned workspace so cascade cleanup removes its new service.
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 

@@ -226,7 +226,8 @@
         "workspace-cascade-cleanup"
       ],
       "limitations": [
-        "Requires an automatically provisioned Entra workspace. Independent service deletion and upgrades are not covered."
+        "Requires an automatically provisioned Entra workspace. Independent service deletion and upgrades are not covered.",
+        "The AAD case requires a new workspace. A configured TEST_AAD_WORKSPACE_ID is rejected to preserve cleanup."
       ],
       "unavailable_reason": ""
     },
