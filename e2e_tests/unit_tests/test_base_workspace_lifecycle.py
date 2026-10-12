@@ -22,6 +22,7 @@ OPERATIONS = {
 
 class BaseWorkspaceLifecycleTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        self.yield_to_loop = asyncio.sleep
         self.path = f"/workspaces/{WORKSPACE}"
         self.requests = []
         self.deleted = False
@@ -48,8 +49,11 @@ class BaseWorkspaceLifecycleTests(unittest.IsolatedAsyncioTestCase):
         install_failed=False,
         rejected=False,
         block_services=False,
+        block_delete=False,
     ):
         self.service_started = asyncio.Event()
+        self.delete_started = asyncio.Event()
+        self.delete_release = asyncio.Event()
 
         async def handle(request):
             self.requests.append(request)
@@ -69,6 +73,9 @@ class BaseWorkspaceLifecycleTests(unittest.IsolatedAsyncioTestCase):
                 phase, code, state = "disable", 202, "updating"
             elif request.method == "DELETE":
                 self.assertEqual(uri, "/api" + self.path)
+                self.delete_started.set()
+                if block_delete:
+                    await self.delete_release.wait()
                 phase, code, state = "delete", 200, "deleting"
             elif uri.endswith("/workspace-services"):
                 self.assertEqual(request.headers["authorization"], "Bearer workspace-token")
@@ -183,3 +190,45 @@ class BaseWorkspaceLifecycleTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.CancelledError):
             await asyncio.wait_for(task, 1)
         self.assert_owned_workspace_removed()
+
+    async def test_repeated_cancellation_during_recovery_preserves_original_cancellation(self):
+        self.mock_api(block_services=True, block_delete=True)
+        task = asyncio.create_task(base.test_base_workspace_lifecycle(True))
+        await asyncio.wait_for(self.service_started.wait(), 1)
+        task.cancel("body cancelled")
+        await asyncio.wait_for(self.delete_started.wait(), 1)
+        for _ in range(2):
+            task.cancel("cleanup cancelled")
+            await self.yield_to_loop(0)
+            self.assertFalse(task.done())
+        self.delete_release.set()
+        with self.assertRaises(asyncio.CancelledError) as caught:
+            await asyncio.wait_for(task, 1)
+        self.assertEqual(caught.exception.args, ("body cancelled",))
+        self.assert_owned_workspace_removed()
+
+    async def test_cancellation_during_cleanup_after_body_success_finishes_deletion(self):
+        self.mock_api(block_delete=True)
+        task = asyncio.create_task(base.test_base_workspace_lifecycle(True))
+        await asyncio.wait_for(self.delete_started.wait(), 1)
+        task.cancel("cleanup cancelled")
+        await self.yield_to_loop(0)
+        task.cancel("cleanup cancelled again")
+        await self.yield_to_loop(0)
+        self.assertFalse(task.done())
+        self.delete_release.set()
+        with self.assertRaises(asyncio.CancelledError) as caught:
+            await asyncio.wait_for(task, 1)
+        self.assertEqual(caught.exception.args, ("cleanup cancelled",))
+        self.assert_owned_workspace_removed()
+
+    async def test_cancelled_cleanup_keeps_its_deadline_and_reports_timeout(self):
+        self.mock_api(block_delete=True)
+        with patch.object(base, "CLEANUP_TIMEOUT_SECONDS", 0.05):
+            task = asyncio.create_task(base.test_base_workspace_lifecycle(True))
+            await asyncio.wait_for(self.delete_started.wait(), 1)
+            task.cancel("cleanup cancelled")
+            with self.assertRaises(asyncio.CancelledError) as caught:
+                await asyncio.wait_for(task, 1)
+        self.assertIn("TimeoutError", "\n".join(caught.exception.__notes__))
+        self.assertFalse(self.deleted)

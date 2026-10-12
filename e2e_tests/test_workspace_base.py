@@ -36,6 +36,7 @@ async def test_base_workspace_lifecycle(verify):
     workspace_path, workspace_id = await create_or_get_test_workspace(
         auth_type="Automatic", verify=verify, template_name=strings.BASE_WORKSPACE, pre_created_workspace_id=""
     )
+    original = None
     try:
         async with asyncio.timeout(BODY_TIMEOUT_SECONDS):
             admin_token = await get_admin_token(verify)
@@ -56,11 +57,26 @@ async def test_base_workspace_lifecycle(verify):
                     f"Workspace identity cannot list services: HTTP {response.status_code}"
                 )
                 assert response.json()["workspaceServices"] == [], "New workspace contains unexpected services"
-    except BaseException as original_error:
-        try:
-            await delete_and_check_workspace(workspace_path, verify)
-        except Exception as cleanup_error:
-            original_error.add_note(f"Workspace cleanup also failed: {cleanup_error!r}")
+    except BaseException as error:
+        original = error
         raise
-    else:
-        await delete_and_check_workspace(workspace_path, verify)
+    finally:
+        # Caller cancellation must wait for the cleanup task's own finite deadline.
+        cleanup = asyncio.create_task(delete_and_check_workspace(workspace_path, verify))
+        cancelled = None
+        while not cleanup.done():
+            try:
+                await asyncio.shield(cleanup)
+            except asyncio.CancelledError as error:
+                cancelled = cancelled or error
+            except Exception:
+                break
+        try:
+            cleanup.result()
+        except (Exception, asyncio.CancelledError) as cleanup_error:
+            failure = original or cancelled
+            if failure is None:
+                raise
+            failure.add_note(f"Workspace cleanup also failed: {cleanup_error!r}")
+        if original is None and cancelled is not None:
+            raise cancelled
