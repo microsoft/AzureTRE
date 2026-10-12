@@ -13,14 +13,17 @@ from airlock.request import (
     delete_blob_using_sas,
     wait_for_status,
     wait_for_draft_container_deletion,
+    submitted_container_id,
 )
 from e2e_tests.timeouts import async_test_timeout, cleanup_deadline
+from e2e_tests import config
 from resources.resource import get_resource, post_resource, delete_owned_resource_if_present
 from resources.workspace import get_workspace_auth_details
 from airlock import strings as airlock_strings
 from e2e_tests.conftest import get_workspace_owner_token
 from helpers import assert_status, get_admin_token, get_auth_header, get_full_endpoint
 from e2e_tests.token_provider import TokenProvider
+from e2e_tests.resources.sql_probe import arm_client
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
@@ -96,11 +99,15 @@ async def test_draft_container_is_deleted_after_submit(setup_test_workspace, ver
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
-    _, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
+    request_id, container_url = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
     # Azure permits draft access for up to 30 seconds after accepting deletion.
     # The submitted copy is separate. Do not interpret a same-name conflict as denial.
-    await wait_for_draft_container_deletion(container_url)
+    container_id = submitted_container_id(container_url, os.environ["ARM_SUBSCRIPTION_ID"], config.TRE_ID, request_id)
+    async with arm_client() as arm:
+        await wait_for_draft_container_deletion(
+            container_url, arm=arm, container_id=container_id, workspace_id=workspace_id
+        )
 
 
 async def create_draft_import_request_with_file(workspace_path: str, workspace_owner_token: str, verify: bool):
@@ -331,6 +338,7 @@ async def wait_for_review_vm_deletion(resource_path, access_token, verify, *, ti
 @pytest.mark.timeout(150 * 60, func_only=True)
 @pytest.mark.airlock
 @pytest.mark.airlock_validation
+@pytest.mark.nexus_required
 @async_test_timeout(50 * 60)
 async def test_airlock_review_vm_flow(
     setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify

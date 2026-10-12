@@ -18,6 +18,9 @@ TEST_ACCOUNT_CLIENT_ID: str = config("TEST_ACCOUNT_CLIENT_ID", default="")
 TEST_ACCOUNT_CLIENT_SECRET: str = config("TEST_ACCOUNT_CLIENT_SECRET", default="")
 # Explicit operator consent is required before tests create a Nexus instance.
 TEST_ACCEPT_NEXUS_EULA: bool = config("TEST_ACCEPT_NEXUS_EULA", cast=bool, default=False)
+TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS: bool = config(
+    "TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS", cast=bool, default=False
+)
 TEST_WORKSPACE_APP_ID: str = config("TEST_WORKSPACE_APP_ID", default="")
 TEST_WORKSPACE_APP_SECRET: str = config("TEST_WORKSPACE_APP_SECRET", default="")
 TEST_WORKSPACE_APP_PLAN: str = config("WORKSPACE_APP_SERVICE_PLAN_SKU", default="")

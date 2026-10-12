@@ -6,6 +6,10 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Add separate certificate and Nexus bundle selections with explicit dependencies and certificate-only cleanup checks. ([#5154](https://github.com/microsoft/AzureTRE/issues/5154))
+* Add independent base-workspace validation for workspace API access, owned-resource cleanup and API removal. Complete bounded cleanup before propagating caller cancellation. ([#5152](https://github.com/microsoft/AzureTRE/issues/5152))
+* Test private Azure SQL queries and data persistence after a database SKU change. Reserve cleanup time within the job deadline. ([#5139](https://github.com/microsoft/AzureTRE/issues/5139))
+* Select bundle tests before deployment and record their coverage limits and resource evidence. Reject a reused AAD workspace when the selected Guacamole case requires cascade cleanup. ([#5125](https://github.com/microsoft/AzureTRE/issues/5125))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -27,7 +31,22 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+
+* Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
+* Reuse publicly trusted certificates for the same hostname across certificate service replacement. Restore retained PEM and PFX material in its stored format. (`tre-shared-service-certs` 0.7.16) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
+
+* Wait for stable private DNS and verified TLS before configuring certificate storage ([#5240](https://github.com/microsoft/AzureTRE/issues/5240)).
+* Keep Microsoft identity TLS verification enabled when E2E tests disable verification for the TRE API. Preserve configured CA trust. ([#5237](https://github.com/microsoft/AzureTRE/issues/5237))
+* Keep multi-step uninstall resources visible until the full pipeline finishes. Preserve final-step failures and skip completed callbacks during redelivery. (`API` 0.28.4) ([#5233](https://github.com/microsoft/AzureTRE/issues/5233))
+* Report Porter uninstall lookup errors as failures so a failed child deletion stops parent cleanup. Add regression coverage for missing error output and the API cascade guard. (`resource_processor` 0.13.13, `API` 0.28.3) ([#5228](https://github.com/microsoft/AzureTRE/issues/5228))
+* Run selected bundle tests only after successful smoke tests, including deployment reuse. (`build-scripts` 1.1.3) ([#5226](https://github.com/microsoft/AzureTRE/pull/5226))
+* Run custom E2E groups only after successful smoke tests and planning, including deployment reuse. (`build-scripts` 1.1.3) ([#5225](https://github.com/microsoft/AzureTRE/issues/5225))
+* Record bounded, redacted operation-polling diagnostics without retrying HTTP failures. ([#5202](https://github.com/microsoft/AzureTRE/issues/5202))
+* Forward explicit Nexus consent from the Airlock test command. Reject invalid arguments and unsupported deployment reuse. (`build-scripts` 1.1.1) ([#5201](https://github.com/microsoft/AzureTRE/issues/5201))
+* Document slash-command coverage and remove the obsolete MLflow test selection. ([#5131](https://github.com/microsoft/AzureTRE/issues/5131))
+* Require Nexus consent, restore firewall settings after tests and give shared-service test groups separate time budgets. ([#5132](https://github.com/microsoft/AzureTRE/issues/5132))
 * Create Airlock prerequisites with explicit consent. Track owned review resources and wait for deletion. Preserve certificates if Nexus cleanup fails. ([#5183](https://github.com/microsoft/AzureTRE/issues/5183))
+* Verify Airlock draft deletion through ARM and the old SAS. Accept a storage permission denial only when the draft is absent and the submitted container remains present. ([#5181](https://github.com/microsoft/AzureTRE/issues/5181))
 * Handle expected plain-text Airlock errors and give fixture cleanup a separate, bounded timeout. ([#5174](https://github.com/microsoft/AzureTRE/issues/5174))
 * Install and verify required Azure CLI tools before configuring Windows review VMs. ([#5182](https://github.com/microsoft/AzureTRE/issues/5182))
 * Use supported Dsv6 sizes for Guacamole Linux and Airlock review VMs. ([#5172](https://github.com/microsoft/AzureTRE/issues/5172))
