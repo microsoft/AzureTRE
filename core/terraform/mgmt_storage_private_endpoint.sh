@@ -34,6 +34,24 @@ function state_blob_host() {
   echo "${endpoint%%/*}"
 }
 
+function state_blob_is_reachable() {
+  local exists
+  # Check the data plane without initialising state or acquiring a state lease.
+  # An authenticated not-found response is sufficient for a new state blob.
+  # shellcheck disable=SC2154
+  if ! exists=$(timeout 30 az storage blob exists \
+    --account-name "${TF_VAR_mgmt_storage_account_name}" \
+    --container-name "${TF_VAR_terraform_state_container_name}" \
+    --name "${TRE_ID}" --auth-mode login --only-show-errors \
+    --query exists --output tsv); then
+    return 1
+  fi
+  case "${exists}" in
+    true|false) return 0 ;;
+    *) echo "Unexpected response from the state blob existence check" >&2; return 1 ;;
+  esac
+}
+
 function wait_for_stable_dns() {
   local host="$1"
   local expected_alias="${host%%.*}.privatelink.${host#*.}"
@@ -49,7 +67,7 @@ function wait_for_stable_dns() {
     elif ! answer=$(timeout 15 getent ahosts "${host}" 2>&1) || [[ -z "${answer}" ]]; then
       successes=0
       echo "$(timestamp) DNS attempt ${attempt}/${DNS_MAX_ATTEMPTS}: ${host} did not resolve ${answer}"
-    elif ! backend_error=$(timeout 30 terraform state pull 2>&1 >/dev/null); then
+    elif ! backend_error=$(state_blob_is_reachable 2>&1); then
       successes=0
       echo "$(timestamp) DNS attempt ${attempt}/${DNS_MAX_ATTEMPTS}: backend read failed: ${backend_error}"
     else

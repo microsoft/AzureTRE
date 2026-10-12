@@ -42,9 +42,9 @@ if command == "timeout":
     os.execvp(args[1], args[1:])
 if command == "az" and args[:3] == ["storage", "account", "show"]:
     finish(output="https://" + config["host"] + "/")
-if command == "terraform" and args[:2] == ["state", "pull"]:
+if command == "az" and args[:3] == ["storage", "blob", "exists"]:
     ready = config["backend"][min(state["lookups"], len(config["backend"])) - 1]
-    finish(0 if ready else 1, "SECRET_STATE_CONTENT" if ready else "backend unavailable")
+    finish(0 if ready else 1, config["exists"] if ready else config["backend_error"])
 if command == "terraform" and args[0] == "plan":
     finish(config["plan_exit"])
 if command == "terraform" and args[0] == "apply":
@@ -68,7 +68,16 @@ finish(99, "Unexpected mocked command: " + repr([command, *args]))
 
 class MgmtStoragePrivateEndpointTests(unittest.TestCase):
     def run_script(
-        self, plan_exit=2, dns=(True,), apply_exit=0, rp_type="vmss_porter", cnames=None, backend=(True,), host=HOST
+        self,
+        plan_exit=2,
+        dns=(True,),
+        apply_exit=0,
+        rp_type="vmss_porter",
+        cnames=None,
+        backend=(True,),
+        host=HOST,
+        exists="true",
+        backend_error="backend unavailable",
     ):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -81,6 +90,8 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
                         "cnames": cnames or [host.replace(".", ".privatelink.", 1) + "."],
                         "backend": backend,
                         "host": host,
+                        "exists": exists,
+                        "backend_error": backend_error,
                     }
                 )
             )
@@ -94,6 +105,8 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
                 "PATH": str(root) + os.pathsep + os.environ["PATH"],
                 "TF_VAR_mgmt_storage_account_name": "mockstorage",
                 "TF_VAR_mgmt_resource_group_name": "mockgroup",
+                "TF_VAR_terraform_state_container_name": "tfstate",
+                "TRE_ID": "mock-tre",
                 "TF_VAR_resource_processor_type": rp_type,
             }
             result = subprocess.run(
@@ -117,13 +130,41 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
     def dns_attempts(self):
         return [c for c in self.calls if c[0] == "dig" and "CNAME" in c]
 
+    def blob_read_calls(self):
+        return [c for c in self.calls if c[:4] == ["az", "storage", "blob", "exists"]]
+
     def test_unchanged_private_endpoint_skips_apply_but_checks_readiness(self):
         result = self.run_script(plan_exit=0)
         self.assertEqual(result.returncode, 0, self.output)
         self.assertEqual(len(self.terraform_calls("plan")), 1)
         self.assertEqual(self.terraform_calls("apply"), [])
         self.assertEqual(len(self.dns_attempts()), 3)
-        self.assertEqual(len([c for c in self.calls if c[:3] == ["terraform", "state", "pull"]]), 3)
+        self.assertEqual(len(self.blob_read_calls()), 3)
+        self.assertEqual(self.terraform_calls("state"), [])
+        for call in self.blob_read_calls():
+            self.assertEqual(call[call.index("--auth-mode") + 1], "login")
+            self.assertEqual(call[call.index("--container-name") + 1], "tfstate")
+            self.assertEqual(call[call.index("--name") + 1], "mock-tre")
+
+    def test_missing_state_blob_is_reachable_without_initialising_state(self):
+        result = self.run_script(plan_exit=0, exists="false")
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(self.terraform_calls("state"), [])
+        self.assertEqual(len(self.blob_read_calls()), 3)
+        self.assertEqual([c for c in self.calls if c[:3] == ["az", "storage", "blob"]], self.blob_read_calls())
+
+    def test_denied_blob_access_cannot_count_as_a_missing_blob(self):
+        result = self.run_script(backend=(False,), backend_error="AuthorizationPermissionMismatch: HTTP 403")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.blob_read_calls()), 30)
+        self.assertIn("AuthorizationPermissionMismatch", self.output)
+
+    def test_missing_or_unexpected_blob_result_cannot_pass_readiness(self):
+        for exists in ("", "null", "unexpected"):
+            with self.subTest(exists=exists):
+                result = self.run_script(exists=exists)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Unexpected response", self.output)
 
     def test_rerun_still_fails_if_dns_never_becomes_ready(self):
         result = self.run_script(plan_exit=0, dns=(False,))
@@ -135,7 +176,7 @@ class MgmtStoragePrivateEndpointTests(unittest.TestCase):
         result = self.run_script(cnames=["blob.storage.example.test."])
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(self.dns_attempts()), 30)
-        self.assertEqual([c for c in self.calls if c[:3] == ["terraform", "state", "pull"]], [])
+        self.assertEqual(self.blob_read_calls(), [])
         self.assertIn("expected alias not observed", self.output)
 
     def test_stale_alias_resets_consecutive_successes(self):
