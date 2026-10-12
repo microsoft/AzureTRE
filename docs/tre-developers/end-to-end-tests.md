@@ -36,6 +36,18 @@ If a poll fails, use its timestamp, operation ID and available correlation IDs t
 Check API exception telemetry before a validation run. Record terminal resource deletion separately from the failed poll.
 These diagnostics help investigate the failure. They do not establish its cause or guarantee that server telemetry is available.
 
+## Airlock draft deletion
+
+The draft-deletion case requires AzureCloud, `ARM_SUBSCRIPTION_ID`, `TRE_ID` and the existing CI Azure login.
+The CI identity must have ARM read access to blob containers in the TRE Airlock storage account.
+Local runs use the Azure CLI login. CI uses its existing federated identity. The test does not add permissions.
+
+After submission, the test checks that the old draft SAS cannot write a new blob.
+A `ContainerNotFound` or `AuthorizationPermissionMismatch` response must also have independent ARM evidence:
+the draft is absent, and the submitted container exists with matching workspace and import-stage metadata.
+A permission error alone cannot pass the test. Other storage errors and ARM lookup failures remain test failures.
+These checks share a 60-second deadline. Submitted file contents are checked separately by the review-VM lifecycle test.
+
 ## Validate one bundle
 
 The [bundle coverage map](https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json) lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
@@ -69,6 +81,25 @@ If the selection includes the Guacamole AAD case, clear `TEST_AAD_WORKSPACE_ID`.
 That case requires an owned workspace so cascade cleanup removes its new service.
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
+
+### OpenAI selection
+
+Select `tre-workspace-service-openai` to run `test_openai.py::test_private_openai_lifecycle`.
+The branch workflow registers the OpenAI bundle. The test also replaces its generic case in the `workspace_services` group.
+The test requests `gpt-5.1 | 2025-11-13`, private access and one regional `Standard` capacity unit.
+It does not switch models or deployment types when Azure cannot satisfy those inputs.
+
+The prerequisite check uses the workspace resource group's actual region and the current subscription model and usage APIs.
+It requires a generally available chat model, a current Standard tier and at least one free capacity unit.
+It rejects retired model/tier dates, fine-tuning quotas and incomplete or blocked quota data.
+The CI identity needs permission to read model and quota data at subscription scope.
+The check does not grant roles or reserve capacity. Azure deployment can still fail after it passes.
+
+Prerequisite failures fail the selected test before service creation. They do not count as skipped or passing coverage.
+Service creation has a 45-minute deadline. Verification has a separate five-minute deadline.
+Failed creation and teardown use the existing helper's separate cleanup deadline.
+A configured workspace is retained. A fixture-created workspace uses the fixture's cleanup.
+Private inference, access control, upgrades and complete physical cleanup remain separate checks.
 
 ### Certificate and Nexus selection
 
