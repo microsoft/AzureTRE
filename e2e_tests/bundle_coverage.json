@@ -152,15 +152,21 @@
         "tre-workspace-base"
       ],
       "tests": [
-        "test_workspace_services.py::test_install_workspace_service[tre-service-azureml]"
+        "test_aml.py::test_private_aml_service_lifecycle"
       ],
-      "related_tests": [],
+      "related_tests": [
+        "test_aml.py::test_private_aml_compute_lifecycle"
+      ],
       "coverage": [
         "install",
-        "uninstall"
+        "private-configuration",
+        "uninstall",
+        "api-removal",
+        "arm-resource-removal"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "Requires AzureCloud, matching authentication and Azure tenants, Automatic workspace creation and automatic workspace groups. Creates an owned workspace; configured workspace IDs are not reused.",
+        "Checks the AML workspace ARM record. Notebook execution, user access, prior-version upgrades and complete physical cleanup of all dependent resources remain unproven."
       ],
       "unavailable_reason": ""
     },
@@ -171,13 +177,25 @@
         "tre-workspace-base",
         "tre-service-azureml"
       ],
-      "tests": [],
-      "related_tests": [],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "tests": [
+        "test_aml.py::test_private_aml_compute_lifecycle"
       ],
-      "unavailable_reason": "Bundle publication, registration and lifecycle coverage are missing (#5127)."
+      "related_tests": [],
+      "coverage": [
+        "install",
+        "private-configuration",
+        "assigned-user",
+        "running-state",
+        "uninstall",
+        "api-removal",
+        "arm-resource-removal"
+      ],
+      "limitations": [
+        "Requires the Automatic workspace and private Azure ML parent, AzureCloud, matching tenants and an explicit TEST_AML_USER_OBJECT_ID for an existing Entra user. No roles or group memberships are added by the test.",
+        "The user input receives UUID format validation only; the test does not query the directory or prove user access. Regional Standard_D2_v3 capacity and AML quota must be available.",
+        "ARM state and configuration do not prove notebook execution or user access. Prior-version upgrades and complete physical cleanup of all dependent resources remain unproven. The bundle defines no custom actions."
+      ],
+      "unavailable_reason": ""
     },
     "tre-workspace-service-azuresql": {
       "manifest": "templates/workspace_services/azuresql/porter.yaml",
