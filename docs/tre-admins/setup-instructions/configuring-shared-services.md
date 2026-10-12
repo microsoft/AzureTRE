@@ -32,7 +32,8 @@ You can verify whether this has been successful by navigating to your core keyva
 
 ### Certificate reuse and renewal
 
-From certificate bundle `0.7.15`, install and `renew` reuse a retained certificate when more than 30 days remain before expiry.
+From certificate bundle `0.7.16`, install and `renew` reuse a retained certificate when more than 30 days remain before expiry.
+Version `0.7.16` can also reuse certificates retained by version `0.7.15`.
 The bundle verifies public trust, the exact DNS name and the private key before reuse.
 It issues a new certificate when no retained certificate exists or renewal is due.
 A vault lookup, ownership or certificate validation failure stops the operation. It does not trigger another issuance attempt.
@@ -47,7 +48,7 @@ Deleting the core vault removes this retained material under the vault's existin
 If an administrator disables or deletes the retained certificate, investigate that change before enabling or recovering it.
 Do not remove the cache to bypass an issuance limit. Compromised certificates require revocation and replacement through the normal incident procedure.
 
-The cache starts with the first successful issuance by this bundle version. It does not search for or adopt certificates from earlier installs.
+The cache starts with the first successful issuance by a bundle that supports certificate retention. It does not search for or adopt uncached certificates.
 An ACME rate-limit response still fails the operation. Follow the retry time in that response.
 Run only one certificate lifecycle or dependent test suite per environment at a time.
 
