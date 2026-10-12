@@ -36,6 +36,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 
+* Fill the missing Switzerland North Databricks storage and Event Hubs endpoints for DNS lookup and firewall rules. (`tre-service-databricks` 1.0.20) ([#5140](https://github.com/microsoft/AzureTRE/issues/5140))
 * Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Reuse publicly trusted certificates for the same hostname across certificate service replacement. Restore retained PEM and PFX material in its stored format. (`tre-shared-service-certs` 0.7.16) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
 
