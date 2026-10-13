@@ -151,7 +151,24 @@ class DeploymentStatusUpdater:
             if step_to_update is None:
                 raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
+            uninstall_pipeline = operation.action == RequestAction.UnInstall and len(operation.steps) > 1
+            if uninstall_pipeline and self.ignore_uninstall_callback(operation, current_step_index, message):
+                if (
+                    not step_to_update.statusUpdateComplete
+                    and step_to_update.status == message.status
+                    and operation.status == Status.DeletingFailed
+                    and any(later.is_failure() for later in operation.steps[current_step_index + 1 :])
+                ):
+                    # Dispatch can fail after the current step succeeds. Repair
+                    # a missed root write without replaying the earlier effects.
+                    await self.update_primary_uninstall_status(operation)
+                    step_to_update.statusUpdateComplete = True
+                    await self.operations_repo.update_item(operation)
+                return True
+
             # update the step status
+            if step_to_update.status != message.status:
+                step_to_update.statusUpdateComplete = False
             step_to_update.status = message.status
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
@@ -166,11 +183,20 @@ class DeploymentStatusUpdater:
             resource_id = uuid.UUID(step_to_update.resourceId)
 
             resource = await self.resource_repo.get_resource_by_id(resource_id)
-            resource.deploymentStatus = step_to_update.status
+            resource.deploymentStatus = (
+                operation.status
+                if uninstall_pipeline and str(resource_id) == operation.resourceId
+                else step_to_update.status
+            )
             await self.resource_repo.update_item(resource)
+            if uninstall_pipeline and str(resource_id) != operation.resourceId:
+                await self.update_primary_uninstall_status(operation)
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
+                if uninstall_pipeline and step_to_update.is_failure():
+                    step_to_update.statusUpdateComplete = True
+                    await self.operations_repo.update_item(operation)
                 return True
 
             # update the resource doc to persist any outputs
@@ -220,6 +246,14 @@ class DeploymentStatusUpdater:
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
+                    if uninstall_pipeline:
+                        await self.update_primary_uninstall_status(operation)
+
+            if uninstall_pipeline:
+                # Save only after the resource writes and dispatch. A retry must
+                # resume those effects if an earlier database write succeeded.
+                step_to_update.statusUpdateComplete = True
+                await self.operations_repo.update_item(operation)
 
             result = True
 
@@ -231,6 +265,32 @@ class DeploymentStatusUpdater:
             logger.exception("Failed to update status")
 
         return result
+
+    def ignore_uninstall_callback(self, operation: Operation, step_index: int, message: DeploymentStatusUpdateMessage):
+        step = operation.steps[step_index]
+        if step.is_success() or step.is_failure():
+            if step.status != message.status or step.statusUpdateComplete:
+                logger.info(f"Ignoring completed uninstall callback for {operation.id}/{step.id}")
+                return True
+
+        # Dispatch follows the previous resource writes. Once a later step has
+        # progressed, replaying those writes could overwrite newer resource data.
+        awaiting = (Status.AwaitingDeployment, Status.AwaitingUpdate, Status.AwaitingDeletion, Status.AwaitingAction)
+        if any(later.status not in awaiting for later in operation.steps[step_index + 1 :]):
+            logger.info(f"Ignoring earlier uninstall callback for {operation.id}/{step.id}")
+            return True
+
+        if any(not previous.is_success() for previous in operation.steps[:step_index]):
+            logger.info(f"Ignoring uninstall callback before its predecessors succeeded: {operation.id}/{step.id}")
+            return True
+        return False
+
+    async def update_primary_uninstall_status(self, operation: Operation):
+        # Cascaded deletion can contain several main steps. The operation owns
+        # the root resource, which must remain visible until every step finishes.
+        primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(operation.resourceId))
+        primary_resource.deploymentStatus = operation.status
+        await self.resource_repo.update_item(primary_resource)
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):
         operation.updatedWhen = get_timestamp()
@@ -248,17 +308,15 @@ class DeploymentStatusUpdater:
             operation.status = self.get_failure_status_for_action(operation.action)
             operation.message = f"Multi step pipeline failed on step {step.templateStepId}"
 
-            # pipeline failed - update the primary resource (from the main step) as failed too
-            main_step = None
-            for i, step in enumerate(operation.steps):
-                if step.templateStepId == "main":
-                    main_step = step
-                    break
-
-            if main_step:
-                primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
-                primary_resource.deploymentStatus = operation.status
-                await self.resource_repo.update_item(primary_resource)
+            # Uninstall pipelines persist the root status in the caller. Keep
+            # the existing main-step behaviour for other pipeline actions.
+            if operation.action != RequestAction.UnInstall:
+                main_step = next((item for item in operation.steps if item.templateStepId == "main"), None)
+                if main_step:
+                    primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(main_step.resourceId))
+                    primary_resource.deploymentStatus = operation.status
+                    await self.resource_repo.update_item(primary_resource)
+            return
 
         if step.is_success() and is_last_step:
             operation.status = self.get_success_status_for_action(operation.action)
