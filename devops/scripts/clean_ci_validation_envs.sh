@@ -14,13 +14,7 @@ set -o nounset
 
 function stopEnv ()
 {
-  local decision
-  decision=$(python3 devops/scripts/ci_cleanup_scope.py may-clean --group "$1" "${@:2}")
-  if [[ "$decision" == defer ]]; then
-    echo "Validation activity defers stopping $1."
-    return 0
-  fi
-  [[ "$decision" == proceed ]] || { echo "Invalid cleanup activity decision" >&2; exit 1; }
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
   local tre_rg="$1"
   if [[ "$tre_rg" == *-mgmt ]]; then
     echo "Management-only environment ${tre_rg} has no core services to stop. Keeping it until the destroy threshold."
@@ -32,13 +26,7 @@ function stopEnv ()
 
 function destroyEnv ()
 {
-  local decision
-  decision=$(python3 devops/scripts/ci_cleanup_scope.py may-clean --group "$1" "${@:2}")
-  if [[ "$decision" == defer ]]; then
-    echo "Validation activity defers destroying $1."
-    return 0
-  fi
-  [[ "$decision" == proceed ]] || { echo "Invalid cleanup activity decision" >&2; exit 1; }
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
   # The destroy helper accepts the core name even when only management exists.
   devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${1%-mgmt}"
 }
@@ -158,16 +146,14 @@ while read -r rg_name rg_ref_name; do
        # checking when was the last commit on the branch.
       last_commit_date_string=$(git for-each-ref --sort='-committerdate:iso8601' --format=' %(committerdate:iso8601)%09%(refname)' "${ref_in_remote}" | cut -f1)
       echo "Native ref is ${rg_ref_name}, last commit was on: ${last_commit_date_string}"
-      last_commit_time=$(date -d "${last_commit_date_string}" +%s)
-      last_activity_time=$(python3 devops/scripts/ci_cleanup_scope.py activity-time --commit-time "$last_commit_time")
-      diff_in_hours=$(( ($(date +%s) - last_activity_time )/(60*60) ))
+      diff_in_hours=$(( ($(date +%s) - $(date -d "${last_commit_date_string}" +%s) )/(60*60) ))
 
       if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be destroyed."
-        destroyEnv "${rg_name}" --commit-time "$last_commit_time" --inactive-hours "$BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY"
+        destroyEnv "${rg_name}"
       elif (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be stopped."
-        stopEnv "${rg_name}" --commit-time "$last_commit_time" --inactive-hours "$BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP"
+        stopEnv "${rg_name}"
       fi
     fi
   fi

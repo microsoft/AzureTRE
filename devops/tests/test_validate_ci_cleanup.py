@@ -123,7 +123,6 @@ if Path(sys.argv[1]).name != "ci_cleanup_scope.py":
     os.execv(sys.executable, [sys.executable, *sys.argv[1:]])
 sys.path.insert(0, str(Path(sys.argv[1]).resolve().parent))
 import ci_cleanup_scope as scope
-import ci_cleanup_activity as activity
 import recover_bootstrap_lease as recovery
 
 def github(ctx, suffix):
@@ -138,7 +137,6 @@ def github(ctx, suffix):
     raise AssertionError("Unexpected GitHub request: " + suffix)
 
 scope.github = github
-activity.github = github
 recovery.github = github
 sys.argv = sys.argv[1:]
 sys.exit(scope.main())

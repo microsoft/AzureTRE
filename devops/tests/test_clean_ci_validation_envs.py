@@ -29,12 +29,6 @@ with (root / "calls.jsonl").open("a") as log:
 if command == "python3":
     if config.get("guard_error") or not os.environ.get("CI_CLEANUP_REF"):
         sys.exit("CI cleanup refused: exclusive ownership unavailable")
-    if "may-clean" in args:
-        if config.get("activity_error"):
-            sys.exit("CI cleanup refused: history incomplete")
-        print(config.get("activity_decision", "proceed"))
-    elif "activity-time" in args:
-        print(2000000000 - config.get("activity_age_hours", config["age_hours"]) * 3600)
     sys.exit(0)
 elif command == "gh":
     if args[0] == "api":
@@ -262,40 +256,6 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"]])
         self.assertFalse(any(call[0] == "gh" and any("actions/runs?" in item for item in call) for call in self.calls))
-
-    def test_native_branch_uses_latest_activity_for_stop_and_destroy(self):
-        self.config.update(groups=["rg-tretest\trefs/heads/feature/test"], age_hours=100)
-        for hours, action in ((1, None), (6, "control_tre.sh"), (60, "destroy_env_no_terraform.sh")):
-            with self.subTest(hours=hours):
-                self.config["activity_age_hours"] = hours
-                result = self.run_cleanup()
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual([call[0] for call in self.environment_actions()], [] if action is None else [action])
-                if action:
-                    guards = [call for call in self.calls if "may-clean" in call]
-                    self.assertEqual(len(guards), 1)
-                    self.assertIn("--commit-time", guards[0])
-                    self.assertIn("--inactive-hours", guards[0])
-
-    def test_activity_recheck_defers_old_and_orphaned_environments(self):
-        for ref, missing, prs in (
-            ("refs/pull/5085/merge", False, self.config["open_prs"]),
-            ("refs/pull/5085/merge", False, []),
-            ("refs/heads/feature/deleted", True, []),
-        ):
-            with self.subTest(ref=ref, missing=missing, prs=prs):
-                self.config.update(
-                    groups=["rg-tretest\t" + ref], missing_branch=missing, open_prs=prs, activity_decision="defer"
-                )
-                result = self.run_cleanup()
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(self.environment_actions(), [])
-
-    def test_activity_api_failure_prevents_mutation(self):
-        self.config["activity_error"] = True
-        result = self.run_cleanup()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(self.environment_actions(), [])
 
     def test_main_workspace_cleanup_is_separate_and_synchronous(self):
         self.config["selected_ref"] = True

@@ -226,7 +226,6 @@ def verify_concurrency(ctx, job_id=None):
             and job.get("name") == "Deploy PR / Deploy Management",
             f"The concurrency job is not this recovery attempt's management deployment; target={target}.",
         )
-    return members
 
 
 def verify_workflows(ctx, cache=None):

@@ -35,13 +35,8 @@ on: # yamllint disable-line rule:truthy
         default: false
         required: false
 
-# Register branch validation before Preparation can start. The reusable workflow
-# delegates this reference lock to the caller. Older workflow reruns keep their
-# original locking behaviour; dispatch this workflow to use the early lock.
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-  queue: max
+# The reusable deployment workflow holds the shared reference queue.
+# Separate caller queues can discard deployments before they reach that group.
 
 permissions:
   contents: read
@@ -95,7 +90,6 @@ jobs:
       actions: read # Required by the reusable management job
     with:
       ciGitRef: ${{ github.ref }}
-      callerOwnsDeploymentLock: true
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
