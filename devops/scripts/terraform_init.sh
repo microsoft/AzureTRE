@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source this helper before initialising a management Terraform backend.
-# Retry recognised probe permissions and workspace-listing failures before state locking.
+# Retry recognised probe, workspace-listing and state-read permission failures.
 
 retry_with_backoff() {
   local func="$1"
@@ -136,7 +136,14 @@ init_terraform() {
     echo "ERROR: Check the reported lock owner before attempting state recovery. No lock has been released by this helper." >&2
     return 2
   fi
-  # Retry only workspace-listing permission failures, not unknown state errors.
+  # Terraform's Azure backend returns state-read errors before locking or after
+  # releasing its lease. Lock and unlock failures must pass the guard above.
+  # Match the known storage code, not an unrelated 403 or unknown state error.
+  if grep -Fq 'Error loading state:' <<< "$terraform_output" \
+    && grep -Fq 'AuthorizationPermissionMismatch' <<< "$terraform_output"; then
+    return 1
+  fi
+  # Workspace listing also occurs before state locking.
   if grep -Fq 'Failed to get existing workspaces' <<< "$terraform_output" \
     && is_storage_permission_error "$terraform_output"; then
     return 1

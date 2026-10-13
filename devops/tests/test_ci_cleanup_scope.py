@@ -1,7 +1,9 @@
 """Verify cleanup ownership, pagination and the shared workflow lock contract."""
 
 from copy import deepcopy
+from contextlib import redirect_stderr, redirect_stdout
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -15,6 +17,7 @@ sys.path.insert(0, str(SCRIPTS))
 SPEC = importlib.util.spec_from_file_location("ci_cleanup_scope", SCRIPTS / "ci_cleanup_scope.py")
 scope = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(scope)
+import ci_cleanup_activity as activity  # noqa: E402
 
 
 class ScopeTests(unittest.TestCase):
@@ -125,6 +128,37 @@ class ScopeTests(unittest.TestCase):
             with self.assertRaises(scope.RecoveryError):
                 scope.verify_lock(self.ctx)
 
+    def test_new_queued_deployment_defers_command_after_history_check(self):
+        owner = [{"run_id": 123, "job_id": 10, "status": "in_progress"}]
+        # The updated caller queues the whole run before Preparation starts.
+        successor = {"run_id": 456, "status": "pending"}
+        run = {"id": 456, "path": activity.BRANCH_WORKFLOW, "repository": {"full_name": self.ctx["repository"]}}
+        output = io.StringIO()
+        with (
+            patch.object(sys, "argv", ["ci_cleanup_scope.py", "may-clean", "--group", "rg-tretest"]),
+            patch.object(scope, "verify_lock", side_effect=[owner, owner + [successor]]) as lock,
+            patch.object(scope, "inventory", return_value={"rg-tretest": self.ctx["ref"]}),
+            patch.object(activity, "github", return_value=run),
+            redirect_stdout(output),
+        ):
+            self.assertEqual(scope.main(), 0)
+        self.assertEqual(lock.call_count, 2)
+        self.assertEqual(output.getvalue(), "defer\n")
+
+    def test_lost_second_lock_fails_command_without_permission_to_mutate(self):
+        owner = [{"run_id": 123, "job_id": 10, "status": "in_progress"}]
+        output, error = io.StringIO(), io.StringIO()
+        with (
+            patch.object(sys, "argv", ["ci_cleanup_scope.py", "may-clean", "--group", "rg-tretest"]),
+            patch.object(scope, "verify_lock", side_effect=[owner, scope.RecoveryError("owner changed")]),
+            patch.object(scope, "inventory", return_value={"rg-tretest": self.ctx["ref"]}),
+            redirect_stdout(output),
+            redirect_stderr(error),
+        ):
+            self.assertEqual(scope.main(), 1)
+        self.assertEqual(output.getvalue(), "")
+        self.assertIn("owner changed", error.getvalue())
+
     def test_unscoped_non_ci_and_invalid_references_are_refused(self):
         for key, value in (
             ("CI_CLEANUP_REF", ""),
@@ -203,7 +237,7 @@ class WorkflowContractTests(unittest.TestCase):
     def test_all_supported_writers_share_the_reference_group(self):
         workflows = SCRIPTS.parents[1] / ".github/workflows"
         deploy = (workflows / "deploy_tre_reusable.yml").read_text()
-        self.assertIn("group: deploy-${{ inputs.ciGitRef }}", deploy)
+        self.assertIn("|| format('deploy-{0}', inputs.ciGitRef)", deploy)
         self.assertIn("CI_GIT_REF: ${{ inputs.ciGitRef }}", deploy)
         explicit = (workflows / "pr_comment_bot.yml").read_text()
         for name in ("ciGitRef", "branchCiGitRef"):
@@ -220,7 +254,7 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertNotIn("--no-wait", script)
         self.assertNotIn("actions/runs?", script)
         self.assertLess(script.index("ci_cleanup_scope.py verify-lock"), script.index("az group list"))
-        self.assertRegex(script, re.compile(r"function destroyEnv.*?verify-target.*?destroy_env_no_terraform", re.S))
+        self.assertRegex(script, re.compile(r"function destroyEnv.*?may-clean.*?destroy_env_no_terraform", re.S))
 
     def test_cleanup_job_keeps_the_lock_for_long_deletions(self):
         scheduled = (SCRIPTS.parents[1] / ".github/workflows/clean_validation_envs.yml").read_text()
