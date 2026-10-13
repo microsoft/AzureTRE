@@ -7,8 +7,8 @@ from pydantic import UUID4
 from jsonschema.exceptions import ValidationError
 
 from api.helpers import get_repository
+from api.dependencies.operations import get_operation_by_id_from_path
 from api.dependencies.workspaces import (
-    get_operation_by_id_from_path,
     get_workspace_by_id_from_path,
     get_deployed_workspace_by_id_from_path,
     get_deployed_workspace_service_by_id_from_path,
@@ -456,8 +456,9 @@ async def retrieve_workspace_operations_by_workspace_id(
     dependencies=[Depends(require_workspace_owner_or_tre_admin)],
 )
 async def retrieve_workspace_operation_by_workspace_id_and_operation_id(
-    workspace=Depends(get_workspace_by_id_from_path), operation=Depends(get_operation_by_id_from_path)
-) -> OperationInList:
+    workspace=Depends(get_workspace_by_id_from_path),
+    operation=Depends(get_operation_by_id_from_path(get_workspace_by_id_from_path)),
+) -> OperationInResponse:
     return OperationInResponse(operation=operation)
 
 
@@ -735,8 +736,9 @@ async def retrieve_workspace_service_operations_by_workspace_service_id(
     dependencies=[Depends(require_workspace_owner_or_airlock_manager), Depends(get_workspace_by_id_from_path)],
 )
 async def retrieve_workspace_service_operation_by_workspace_service_id_and_operation_id(
-    workspace_service=Depends(get_workspace_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)
-) -> OperationInList:
+    workspace_service=Depends(get_workspace_service_by_id_from_path),
+    operation=Depends(get_operation_by_id_from_path(get_workspace_service_by_id_from_path)),
+) -> OperationInResponse:
     return OperationInResponse(operation=operation)
 
 
@@ -1019,8 +1021,8 @@ async def retrieve_user_resource_operations_by_user_resource_id(
 async def retrieve_user_resource_operations_by_user_resource_id_and_operation_id(
     user_resource=Depends(get_user_resource_by_id_from_path),
     user=Depends(require_workspace_owner_or_researcher_or_airlock_manager),
-    operation=Depends(get_operation_by_id_from_path),
-) -> OperationInList:
+    operation=Depends(get_operation_by_id_from_path(get_user_resource_by_id_from_path)),
+) -> OperationInResponse:
     validate_user_has_valid_role_for_user_resource(user, user_resource)
     return OperationInResponse(operation=operation)
 

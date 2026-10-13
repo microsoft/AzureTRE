@@ -10,7 +10,8 @@ from db.errors import (
     VersionDowngradeDenied,
 )
 from api.helpers import get_repository
-from api.dependencies.shared_services import get_shared_service_by_id_from_path, get_operation_by_id_from_path
+from api.dependencies.operations import get_operation_by_id_from_path
+from api.dependencies.shared_services import get_shared_service_by_id_from_path
 from db.repositories.resource_templates import ResourceTemplateRepository
 from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.shared_services import SharedServiceRepository
@@ -269,7 +270,8 @@ async def retrieve_shared_service_operations_by_shared_service_id(
     dependencies=[Depends(require_tre_admin), Depends(get_shared_service_by_id_from_path)],
 )
 async def retrieve_shared_service_operation_by_shared_service_id_and_operation_id(
-    shared_service=Depends(get_shared_service_by_id_from_path), operation=Depends(get_operation_by_id_from_path)
+    shared_service=Depends(get_shared_service_by_id_from_path),
+    operation=Depends(get_operation_by_id_from_path(get_shared_service_by_id_from_path)),
 ) -> OperationInResponse:
     return OperationInResponse(operation=operation)
 
