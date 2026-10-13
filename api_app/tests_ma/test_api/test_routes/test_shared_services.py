@@ -485,7 +485,7 @@ class TestSharedServiceRoutesThatRequireAdminRights:
 
     @pytest.mark.parametrize(
         "resource_status, expected_http_status",
-        [(Status.PipelineRunning, 200), (Status.DeletingFailed, 200), (Status.Deleted, 404)],
+        [(Status.Deleting, 200), (Status.PipelineRunning, 200), (Status.DeletingFailed, 200), (Status.Deleted, 404)],
     )
     async def test_uninstall_operation_remains_readable_until_pipeline_finishes(
         self, app, client, resource_status, expected_http_status

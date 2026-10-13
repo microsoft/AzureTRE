@@ -151,8 +151,9 @@ class DeploymentStatusUpdater:
             if step_to_update is None:
                 raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
-            uninstall_pipeline = operation.action == RequestAction.UnInstall and len(operation.steps) > 1
-            if uninstall_pipeline and self.ignore_uninstall_callback(operation, current_step_index, message):
+            uninstall_operation = operation.action == RequestAction.UnInstall
+            uninstall_pending_status = Status.PipelineRunning if len(operation.steps) > 1 else Status.Deleting
+            if uninstall_operation and self.ignore_uninstall_callback(operation, current_step_index, message):
                 if (
                     not step_to_update.statusUpdateComplete
                     and step_to_update.status == message.status
@@ -175,6 +176,11 @@ class DeploymentStatusUpdater:
 
             # update the overall headline operation status
             await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+            if uninstall_operation and is_last_step and step_to_update.is_success():
+                # The callback succeeded, but its outputs are not saved yet.
+                # Keep polling active if that write fails and needs redelivery.
+                operation.status = uninstall_pending_status
+                operation.message = "Uninstall outputs are being saved."
 
             # save the operation
             await self.operations_repo.update_item(operation)
@@ -182,22 +188,22 @@ class DeploymentStatusUpdater:
             # copy the step status to the resource item, for convenience
             resource_id = uuid.UUID(step_to_update.resourceId)
             primary_status = (
-                Status.PipelineRunning if uninstall_pipeline and step_to_update.is_success() else operation.status
+                uninstall_pending_status if uninstall_operation and step_to_update.is_success() else operation.status
             )
 
             resource = await self.resource_repo.get_resource_by_id(resource_id)
             resource.deploymentStatus = (
                 primary_status
-                if uninstall_pipeline and str(resource_id) == operation.resourceId
+                if uninstall_operation and str(resource_id) == operation.resourceId
                 else step_to_update.status
             )
             await self.resource_repo.update_item(resource)
-            if uninstall_pipeline and str(resource_id) != operation.resourceId:
+            if uninstall_operation and str(resource_id) != operation.resourceId:
                 await self.update_primary_uninstall_status(operation, primary_status)
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
-                if uninstall_pipeline and step_to_update.is_failure():
+                if uninstall_operation and step_to_update.is_failure():
                     step_to_update.statusUpdateComplete = True
                     await self.operations_repo.update_item(operation)
                 return True
@@ -207,9 +213,11 @@ class DeploymentStatusUpdater:
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
 
-            if uninstall_pipeline and is_last_step:
-                # Keep the root visible until the final outputs are saved.
-                # Redelivery can then resume a failed root status write.
+            if uninstall_operation and is_last_step:
+                # Publish success only after saving the final outputs. Keep the
+                # root visible if the operation write still needs redelivery.
+                await self.update_overall_operation_status(operation, step_to_update, is_last_step)
+                await self.operations_repo.update_item(operation)
                 await self.update_primary_uninstall_status(operation)
 
             # more steps in the op to do?
@@ -254,10 +262,10 @@ class DeploymentStatusUpdater:
                     next_step.status = Status.UpdatingFailed
                     await self.update_overall_operation_status(operation, next_step, is_last_step)
                     await self.operations_repo.update_item(operation)
-                    if uninstall_pipeline:
+                    if uninstall_operation:
                         await self.update_primary_uninstall_status(operation)
 
-            if uninstall_pipeline:
+            if uninstall_operation:
                 # Save only after the resource writes and dispatch. A retry must
                 # resume those effects if an earlier database write succeeded.
                 step_to_update.statusUpdateComplete = True

@@ -298,21 +298,24 @@ async def test_when_updating_and_state_store_exception(logging_mock, resource_re
 @patch("service_bus.deployment_status_updater.OperationRepository.create")
 @patch("service_bus.deployment_status_updater.ResourceRepository.create")
 async def test_state_transitions_from_deployed_to_deleted(resource_repo, operations_repo_mock, _, __, ___):
-    updated_message = test_sb_message
+    updated_message = test_sb_message.copy()
     updated_message["status"] = Status.Deleted
     updated_message["message"] = "Has been deleted"
     service_bus_received_message_mock = ServiceBusReceivedMessageMock(updated_message)
 
     workspace = create_sample_workspace_object(test_sb_message["id"])
+    workspace.deploymentStatus = Status.Deployed
+    resource_repo.return_value.get_resource_by_id.return_value = workspace
     resource_repo.return_value.get_resource_dict_by_id.return_value = workspace.model_dump()
 
     operation = create_sample_operation(workspace.id, RequestAction.UnInstall)
-    operation.steps[0].status = Status.Deployed
+    operation.steps[0].status = Status.Deleting
     operations_repo_mock.return_value.get_operation_by_id.return_value = operation
 
     expected_operation = create_sample_operation(workspace.id, RequestAction.UnInstall)
     expected_operation.steps[0].status = Status.Deleted
     expected_operation.steps[0].message = updated_message["message"]
+    expected_operation.steps[0].statusUpdateComplete = True
     expected_operation.status = Status.Deleted
     expected_operation.message = updated_message["message"]
 
@@ -321,7 +324,8 @@ async def test_state_transitions_from_deployed_to_deleted(resource_repo, operati
     complete_message = await status_updater.process_message(service_bus_received_message_mock)
 
     assert complete_message is True
-    operations_repo_mock.return_value.update_item.assert_called_once_with(expected_operation)
+    operations_repo_mock.return_value.update_item.assert_awaited_with(expected_operation)
+    assert resource_repo.return_value.update_item.call_args.args[0].deploymentStatus == Status.Deleted
 
 
 @patch("service_bus.deployment_status_updater.ResourceHistoryRepository.create")
@@ -885,7 +889,7 @@ async def test_uninstall_redelivery_finishes_terminal_resource_write(persisted_u
     send.assert_awaited_once()
 
 
-@pytest.fixture(params=["primary", "dependency"])
+@pytest.fixture(params=["primary", "dependency", "single"])
 def pending_final_uninstall_callback(persisted_uninstall_pipeline, request):
     updater, stored, message, send = persisted_uninstall_pipeline
     operation = stored["operation"]
@@ -894,7 +898,13 @@ def pending_final_uninstall_callback(persisted_uninstall_pipeline, request):
     operation.steps[0].statusUpdateComplete = True
     stored["resources"][primary_id].deploymentStatus = Status.PipelineRunning
 
-    if request.param == "primary":
+    if request.param == "single":
+        operation.steps = operation.steps[:1]
+        operation.steps[0].statusUpdateComplete = False
+        operation.status = Status.Deleting
+        stored["resources"][primary_id].deploymentStatus = Status.Deleting
+        final_status = Status.Deleted
+    elif request.param == "primary":
         operation.steps[0].resourceId = dependency_id
         operation.steps[0].resourceAction = RequestAction.Upgrade
         operation.steps[0].status = Status.Updated
@@ -907,29 +917,40 @@ def pending_final_uninstall_callback(persisted_uninstall_pipeline, request):
         operation.steps[1].status = Status.Updating
         final_status = Status.Updated
 
-    callback = message(1, final_status)
+    callback = message(len(operation.steps) - 1, final_status)
     callback.outputs = [Output(Name="final_output", Value="saved", Type="string")]
     return updater, stored, callback, send
 
 
-@pytest.mark.parametrize("failed_write", ["outputs", "final_status"])
+@pytest.mark.parametrize("failed_write", ["outputs", "final_operation", "final_status"])
 async def test_final_uninstall_redelivery_keeps_root_visible_until_outputs_are_saved(
     pending_final_uninstall_callback, failed_write
 ):
     updater, stored, callback, send = pending_final_uninstall_callback
     primary_id = stored["operation"].resourceId
-    writer = updater.resource_repo.update_item_dict if failed_write == "outputs" else updater.resource_repo.update_item
+    pending_status = Status.Deleting if len(stored["operation"].steps) == 1 else Status.PipelineRunning
+    writer = {
+        "outputs": updater.resource_repo.update_item_dict,
+        "final_operation": updater.operations_repo.update_item,
+        "final_status": updater.resource_repo.update_item,
+    }[failed_write]
     save = writer.side_effect
 
     def interrupt_write(item):
-        if failed_write == "outputs" or (item.id == primary_id and item.deploymentStatus == Status.Deleted):
+        if (
+            failed_write == "outputs"
+            or (failed_write == "final_operation" and item.status == Status.Deleted)
+            or (failed_write == "final_status" and item.id == primary_id and item.deploymentStatus == Status.Deleted)
+        ):
             raise RuntimeError("Interrupted final callback write")
         save(item)
 
     writer.side_effect = interrupt_write
     assert await updater.update_status_in_database(callback) is False
 
-    assert stored["resources"][primary_id].deploymentStatus == Status.PipelineRunning
+    assert stored["resources"][primary_id].deploymentStatus == pending_status
+    expected_operation_status = Status.Deleted if failed_write == "final_status" else pending_status
+    assert stored["operation"].status == expected_operation_status
     assert stored["operation"].steps[-1].statusUpdateComplete is False
     output_resource = stored["resources"][str(callback.id)]
     if failed_write == "outputs":
@@ -943,6 +964,10 @@ async def test_final_uninstall_redelivery_keeps_root_visible_until_outputs_are_s
 
     assert stored["resources"][str(callback.id)].properties["final_output"] == "saved"
     assert stored["resources"][primary_id].deploymentStatus == Status.Deleted
+    assert stored["operation"].status == Status.Deleted
+    assert stored["operation"].message == (
+        callback.message if len(stored["operation"].steps) == 1 else "Multi step pipeline completed successfully"
+    )
     assert stored["operation"].steps[-1].statusUpdateComplete is True
     send.assert_not_awaited()
 
@@ -953,6 +978,26 @@ async def test_final_uninstall_redelivery_keeps_root_visible_until_outputs_are_s
     assert stored == before
     updater.resource_repo.update_item.assert_not_awaited()
     updater.resource_repo.update_item_dict.assert_not_awaited()
+
+
+@pytest.mark.parametrize("final_status", [Status.Deleted, Status.DeletingFailed])
+@pytest.mark.parametrize("callback_status", [Status.Deleted, Status.Deleting, Status.DeletingFailed])
+async def test_single_step_uninstall_redelivery_preserves_final_outcome(
+    persisted_uninstall_pipeline, final_status, callback_status
+):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    stored["operation"].steps = stored["operation"].steps[:1]
+    stored["operation"].status = Status.Deleting
+    assert await updater.update_status_in_database(message(0, final_status)) is True
+    assert stored["operation"].status == final_status
+    assert stored["resources"][stored["operation"].resourceId].deploymentStatus == final_status
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(message(0, callback_status)) is True
+
+    assert stored == before
+    send.assert_not_awaited()
 
 
 async def test_uninstall_checkpoint_failure_does_not_report_dispatch_failure(persisted_uninstall_pipeline):

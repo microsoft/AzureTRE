@@ -28,7 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Require working Nexus and Azure CLI prerequisites for review VM setup. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
-* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results and allow cleanup when Porter confirms that an installation is absent. Keep resource and operation status available until the deletion pipeline and final output writes finish. (`API` 0.28.5) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results and allow cleanup when Porter confirms that an installation is absent. Keep resource and operation status available until all uninstall steps and final output writes finish, including single-step uninstalls. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
