@@ -1,4 +1,4 @@
-"""Exercise core output failures through the real UI Make target, without Azure."""
+"""Exercise core output failures through deployment and the UI Make target, without Azure."""
 
 import json
 import os
@@ -36,8 +36,11 @@ class CoreOutputTests(unittest.TestCase):
         for relative in (
             "Makefile",
             "config_schema.json",
+            "core/terraform/deploy.sh",
             "core/terraform/outputs.sh",
+            "core/terraform/write_outputs.sh",
             "core/terraform/json-to-env.sh",
+            "devops/scripts/terraform_wrapper.sh",
             "devops/scripts/load_env.sh",
             "devops/scripts/load_and_validate_env.sh",
             "devops/scripts/construct_tre_url.sh",
@@ -63,6 +66,7 @@ class CoreOutputTests(unittest.TestCase):
         terraform.write_text(
             '#!/bin/bash\necho "terraform:$1" >> "$CALL_LOG"\n'
             'if [ "$1" = init ]; then exit "${INIT_EXIT:-0}"; fi\n'
+            'if [ "$1" = plan ] || [ "$1" = apply ]; then exit 0; fi\n'
             'printf "%s" "$OUTPUT_JSON"\n'
             'if [ "${OUTPUT_EXIT:-0}" != 0 ]; then echo "Failed to load state" >&2; fi\n'
             'exit "${OUTPUT_EXIT:-0}"\n'
@@ -81,6 +85,106 @@ class CoreOutputTests(unittest.TestCase):
         self.private = self.core / "private.env"
         self.private.write_text("EXISTING='keep me'\n")
         self.cache = self.core / "tre_output.json"
+
+    def run_deploy(self):
+        for relative in (
+            "devops/scripts/kv_add_network_exception.sh",
+            "core/terraform/migrate.sh",
+            "core/terraform/mgmt_storage_private_endpoint.sh",
+        ):
+            target = self.root / relative
+            target.write_text("#!/bin/bash\ntrue\n")
+            target.chmod(0o755)
+        tags = self.core / "terraform/update_tags.sh"
+        tags.write_text('#!/bin/bash\necho update-tags >> "$CALL_LOG"\n')
+        tags.chmod(0o755)
+
+        # Match util-linux script's default status and transcript behaviour.
+        # The real wrapper must recognise the failed command in the transcript.
+        script = self.root / "bin/script"
+        script.write_text(
+            '#!/bin/bash\nbash -c "$2" > "$3" 2>&1\n'
+            'command_exit=$?\ncat "$3"\n'
+            'printf \'\\nCOMMAND_EXIT_CODE="%s"\\n\' "$command_exit" >> "$3"\n'
+            "exit 0\n"
+        )
+        script.chmod(0o755)
+        self.log.unlink(missing_ok=True)
+        result = subprocess.run(
+            [BASH, "./deploy.sh"],
+            cwd=self.core / "terraform",
+            env={
+                **self.env,
+                "TF_LOG": "",
+                "TF_VAR_mgmt_storage_account_name": "mockstorage",
+                "TF_VAR_mgmt_resource_group_name": "mockgroup",
+                "TF_VAR_terraform_state_container_name": "mockcontainer",
+                "TRE_ID": "mocktre",
+            },
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        self.calls = self.log.read_text().splitlines()
+        self.assertEqual(self.calls[-1], "storage-disable")
+        self.assertEqual(list(self.core.glob("*.tmp.*")), [])
+        self.assertEqual(self.private.read_text(), "EXISTING='keep me'\n")
+        return result
+
+    def test_deploy_failed_output_preserves_cache_and_stops_deployment(self):
+        for cached in (False, True):
+            for output in ("", '{"partial":', VALID_OUTPUT):
+                for output_exit in (1, 23):
+                    with self.subTest(cached=cached, output=output, output_exit=output_exit):
+                        if cached:
+                            self.cache.write_text(VALID_OUTPUT)
+                        else:
+                            self.cache.unlink(missing_ok=True)
+                        self.env.update(OUTPUT_JSON=output, OUTPUT_EXIT=str(output_exit))
+                        result = self.run_deploy()
+                        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                        self.assertNotIn("update-tags", self.calls)
+                        if cached:
+                            self.assertEqual(self.cache.read_text(), VALID_OUTPUT)
+                        else:
+                            self.assertFalse(self.cache.exists())
+
+    def test_deploy_invalid_output_preserves_cache_and_stops_deployment(self):
+        invalid_outputs = ["", "{}", "[]", "null", '{"partial":', VALID_OUTPUT + "\n" + VALID_OUTPUT]
+        for value in (None, "", "invalid\nvalue", 1):
+            output = json.loads(VALID_OUTPUT)
+            output["static_web_storage"]["value"] = value
+            invalid_outputs.append(json.dumps(output))
+        for output in invalid_outputs:
+            with self.subTest(output=output):
+                self.cache.write_text(VALID_OUTPUT)
+                self.env["OUTPUT_JSON"] = output
+                result = self.run_deploy()
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(self.cache.read_text(), VALID_OUTPUT)
+                self.assertNotIn("update-tags", self.calls)
+
+    def test_deploy_success_replaces_cache_after_failed_refresh(self):
+        self.cache.write_text(VALID_OUTPUT)
+        self.env.update(OUTPUT_JSON='{"partial":', OUTPUT_EXIT="23")
+        failed = self.run_deploy()
+        self.assertEqual(failed.returncode, 1, failed.stdout + failed.stderr)
+        self.assertEqual(self.cache.read_text(), VALID_OUTPUT)
+
+        refreshed = json.loads(VALID_OUTPUT)
+        refreshed["static_web_storage"]["value"] = "refreshedstorage"
+        self.env.update(OUTPUT_JSON=json.dumps(refreshed), OUTPUT_EXIT="0")
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(self.cache.read_text()), refreshed)
+        self.assertIn("update-tags", self.calls)
+        output_calls_before_ui = self.calls.count("terraform:output")
+
+        self.env["OUTPUT_EXIT"] = "23"
+        ui = self.run_make()
+        self.assertEqual(ui.returncode, 0, ui.stdout + ui.stderr)
+        self.assertEqual(self.calls.count("terraform:output"), output_calls_before_ui)
+        self.assertIn("ui:refreshedstorage", self.calls)
 
     def run_make(self):
         result = subprocess.run(

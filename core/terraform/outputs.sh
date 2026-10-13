@@ -23,7 +23,7 @@ if [ ! -s "$core_outputs_file" ]; then
 
   # Keep Terraform output temporary until it has been validated and converted.
   core_outputs_temporary=$(mktemp ../tre_output.json.tmp.XXXXXX) || return $?
-  if terraform output -json > "$core_outputs_temporary"; then
+  if ./write_outputs.sh "$core_outputs_temporary"; then
     core_outputs_file="$core_outputs_temporary"
   else
     core_outputs_exit=$?
