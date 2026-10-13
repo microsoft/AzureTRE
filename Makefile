@@ -497,8 +497,7 @@ test-e2e-smoke:	## 🧪 Run E2E smoke tests
 # Description: Run E2E extended tests
 # # The E2E extended tests include:
 # # - test_create_workspace_templates: POST Request to create a workspace template
-# # - test_create_guacamole_service_into_base_workspace: POST Request to create a workspace and a separate POST call to create a guacamole workspace service into the base workspace
-# # - test_airlock_flow: test import and export flow
+# # - test_create_guacamole_service_into_base_workspace: create Guacamole and a Windows VM
 # Example: make test-e2e-extended
 test-e2e-extended: ## 🧪 Run E2E extended tests
 	$(call target_title, "Running E2E extended tests") && \
@@ -532,7 +531,7 @@ test-e2e-backups: ## 🧪 Run E2E backup tests
 
 # Description: Run E2E airlock tests
 # # The E2E airlock tests include:
-# # - tests marked with the `airlock` selector that verify airlock import/export flows and their access controls
+# # - tests marked with the `airlock` selector that verify import flows, access controls and export request storage routing
 # Example: make test-e2e-airlock
 test-e2e-airlock: ## 🧪 Run E2E airlock tests
 	$(call target_title, "Running E2E airlock tests") && \
@@ -553,6 +552,15 @@ test-e2e-custom: ## 🧪 Run E2E tests with custom selector (SELECTOR=)
 			python -m pytest -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; \
 		else \
 			python -m pytest -n "${E2E_TESTS_NUMBER_PROCESSES_DEFAULT}" -m "${SELECTOR}" --verify $${IS_API_SECURED:-true} --junit-xml "pytest_e2e_$${SELECTOR// /_}.xml"; fi
+
+# Description: Run the exact cases declared for TEST_BUNDLE, or a validated CI request.
+# Example: TEST_BUNDLE=tre-workspace-service-azuresql make test-e2e-bundle
+.PHONY: test-e2e-bundle
+test-e2e-bundle: ## Run one bundle's explicit E2E cases
+	python3 "${MAKEFILE_DIR}/e2e_tests/run_bundle.py" --validate-only \
+	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
+	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/e2e_tests/.env \
+	&& python3 "${MAKEFILE_DIR}/e2e_tests/run_bundle.py"
 
 # Description: Execute exact cases selected for one CI job.
 test-e2e-ci-group: ## 🧪 Run one selected E2E CI group
