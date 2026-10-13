@@ -28,7 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Preserve cached Terraform outputs when core deployment output generation or validation fails. (`core` 0.18.14) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
-* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results, allow cleanup when Porter confirms that an installation is absent, and keep operation status available until the deletion pipeline finishes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results and allow cleanup when Porter confirms that an installation is absent. Keep resource and operation status available until the deletion pipeline and final output writes finish. (`API` 0.28.5) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
 * Wait for management storage, retry recognised state-read permission failures and validate Terraform outputs. Protect active and recently used validation environments from scheduled cleanup. ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))

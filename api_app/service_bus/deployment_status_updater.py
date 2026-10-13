@@ -181,16 +181,19 @@ class DeploymentStatusUpdater:
 
             # copy the step status to the resource item, for convenience
             resource_id = uuid.UUID(step_to_update.resourceId)
+            primary_status = (
+                Status.PipelineRunning if uninstall_pipeline and step_to_update.is_success() else operation.status
+            )
 
             resource = await self.resource_repo.get_resource_by_id(resource_id)
             resource.deploymentStatus = (
-                operation.status
+                primary_status
                 if uninstall_pipeline and str(resource_id) == operation.resourceId
                 else step_to_update.status
             )
             await self.resource_repo.update_item(resource)
             if uninstall_pipeline and str(resource_id) != operation.resourceId:
-                await self.update_primary_uninstall_status(operation)
+                await self.update_primary_uninstall_status(operation, primary_status)
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
@@ -203,6 +206,11 @@ class DeploymentStatusUpdater:
             resource = await self.resource_repo.get_resource_dict_by_id(resource_id)
             resource_to_persist = self.create_updated_resource_document(resource, message)
             await self.resource_repo.update_item_dict(resource_to_persist)
+
+            if uninstall_pipeline and is_last_step:
+                # Keep the root visible until the final outputs are saved.
+                # Redelivery can then resume a failed root status write.
+                await self.update_primary_uninstall_status(operation)
 
             # more steps in the op to do?
             if is_last_step is False:
@@ -285,11 +293,11 @@ class DeploymentStatusUpdater:
             return True
         return False
 
-    async def update_primary_uninstall_status(self, operation: Operation):
+    async def update_primary_uninstall_status(self, operation: Operation, status: Status | None = None):
         # Cascaded deletion can contain several main steps. The operation owns
         # the root resource, which must remain visible until every step finishes.
         primary_resource = await self.resource_repo.get_resource_by_id(uuid.UUID(operation.resourceId))
-        primary_resource.deploymentStatus = operation.status
+        primary_resource.deploymentStatus = operation.status if status is None else status
         await self.resource_repo.update_item(primary_resource)
 
     async def update_overall_operation_status(self, operation: Operation, step: OperationStep, is_last_step: bool):

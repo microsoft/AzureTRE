@@ -7,7 +7,7 @@ import uuid
 
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP
 from models.domain.request_action import RequestAction
-from models.domain.resource import ResourceType
+from models.domain.resource import Output, ResourceType
 
 from db.errors import EntityDoesNotExist
 from models.domain.workspace import Workspace
@@ -883,6 +883,76 @@ async def test_uninstall_redelivery_finishes_terminal_resource_write(persisted_u
     assert stored["operation"].steps[1].statusUpdateComplete is True
     assert stored["resources"][stored["operation"].resourceId].deploymentStatus == expected
     send.assert_awaited_once()
+
+
+@pytest.fixture(params=["primary", "dependency"])
+def pending_final_uninstall_callback(persisted_uninstall_pipeline, request):
+    updater, stored, message, send = persisted_uninstall_pipeline
+    operation = stored["operation"]
+    primary_id = operation.resourceId
+    dependency_id = operation.steps[1].resourceId
+    operation.steps[0].statusUpdateComplete = True
+    stored["resources"][primary_id].deploymentStatus = Status.PipelineRunning
+
+    if request.param == "primary":
+        operation.steps[0].resourceId = dependency_id
+        operation.steps[0].resourceAction = RequestAction.Upgrade
+        operation.steps[0].status = Status.Updated
+        operation.steps[1].resourceId = primary_id
+        operation.steps[1].resourceAction = RequestAction.UnInstall
+        operation.steps[1].status = Status.Deleting
+        final_status = Status.Deleted
+    else:
+        operation.steps[0].status = Status.Deleted
+        operation.steps[1].status = Status.Updating
+        final_status = Status.Updated
+
+    callback = message(1, final_status)
+    callback.outputs = [Output(Name="final_output", Value="saved", Type="string")]
+    return updater, stored, callback, send
+
+
+@pytest.mark.parametrize("failed_write", ["outputs", "final_status"])
+async def test_final_uninstall_redelivery_keeps_root_visible_until_outputs_are_saved(
+    pending_final_uninstall_callback, failed_write
+):
+    updater, stored, callback, send = pending_final_uninstall_callback
+    primary_id = stored["operation"].resourceId
+    writer = updater.resource_repo.update_item_dict if failed_write == "outputs" else updater.resource_repo.update_item
+    save = writer.side_effect
+
+    def interrupt_write(item):
+        if failed_write == "outputs" or (item.id == primary_id and item.deploymentStatus == Status.Deleted):
+            raise RuntimeError("Interrupted final callback write")
+        save(item)
+
+    writer.side_effect = interrupt_write
+    assert await updater.update_status_in_database(callback) is False
+
+    assert stored["resources"][primary_id].deploymentStatus == Status.PipelineRunning
+    assert stored["operation"].steps[-1].statusUpdateComplete is False
+    output_resource = stored["resources"][str(callback.id)]
+    if failed_write == "outputs":
+        assert "final_output" not in output_resource.properties
+    else:
+        assert output_resource.properties["final_output"] == "saved"
+    send.assert_not_awaited()
+
+    writer.side_effect = save
+    assert await updater.update_status_in_database(callback) is True
+
+    assert stored["resources"][str(callback.id)].properties["final_output"] == "saved"
+    assert stored["resources"][primary_id].deploymentStatus == Status.Deleted
+    assert stored["operation"].steps[-1].statusUpdateComplete is True
+    send.assert_not_awaited()
+
+    before = copy.deepcopy(stored)
+    updater.resource_repo.update_item.reset_mock()
+    updater.resource_repo.update_item_dict.reset_mock()
+    assert await updater.update_status_in_database(callback) is True
+    assert stored == before
+    updater.resource_repo.update_item.assert_not_awaited()
+    updater.resource_repo.update_item_dict.assert_not_awaited()
 
 
 async def test_uninstall_checkpoint_failure_does_not_report_dispatch_failure(persisted_uninstall_pipeline):
