@@ -15,7 +15,7 @@ from e2e_tests import bundle_evidence, run_bundle
 
 ROOT = run_bundle.REPO_ROOT
 SQL = "tre-workspace-service-azuresql"
-SQL_CASE = f"test_workspace_services.py::test_install_workspace_service[{SQL}]"
+SQL_CASE = "test_azuresql.py::test_sql_query_survives_sku_upgrade"
 
 
 class BundleSelectionTests(unittest.TestCase):
@@ -94,7 +94,7 @@ class BundleSelectionTests(unittest.TestCase):
         collected = sorted(line for line in result.stdout.splitlines() if line.startswith("test_") and "::" in line)
         self.assertEqual(collected, expected)
 
-    def test_sql_collects_only_its_named_parametrised_case(self):
+    def test_sql_collects_only_its_named_lifecycle_case(self):
         result, report = self.run_selector(
             "--bundle", SQL, "--collect-only", environment={"TEST_WORKSPACE_ID": "existing-workspace-id"}
         )
@@ -135,6 +135,20 @@ class BundleSelectionTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(report["collected_tests"], [SQL_CASE])
+
+    def test_base_workspace_collects_its_own_case_without_reusing_a_workspace(self):
+        result, report = self.run_selector(
+            "--bundle",
+            "tre-workspace-base",
+            "--collect-only",
+            environment={"TEST_WORKSPACE_ID": "existing-unrelated-workspace"},
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(report["collected_tests"], ["test_workspace_base.py::test_base_workspace_lifecycle"])
+        self.assertEqual(report["status"], "not_run")
+        self.assertFalse(report["full_lifecycle_proven"])
+        self.assertEqual(report["resources"], [])
+        self.assertEqual(report["declared_prerequisites"], {})
 
     def test_unknown_partial_and_shell_like_identifiers_fail_before_collection(self):
         for identifier in ("azuresql", "tre-nonexistent", SQL + "; echo unexpected", SQL + "$(echo unexpected)"):
