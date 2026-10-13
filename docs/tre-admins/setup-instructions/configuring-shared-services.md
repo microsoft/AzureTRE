@@ -30,30 +30,6 @@ Once deployed, the certs service will use Letsencrypt to generate a certificate 
 
 You can verify whether this has been successful by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
 
-### Certificate reuse and renewal
-
-From certificate bundle `0.7.16`, install and `renew` reuse a retained certificate when more than 30 days remain before expiry.
-Version `0.7.16` can also reuse certificates retained by version `0.7.15`.
-The bundle verifies public trust, the exact DNS name and the private key before reuse.
-It issues a new certificate when no retained certificate exists or renewal is due.
-A vault lookup, ownership or certificate validation failure stops the operation. It does not trigger another issuance attempt.
-
-The core Key Vault retains one certificate named `tre-acme-<SHA-256 of the lowercase hostname>` for each hostname.
-The `tre-cache=certificate-v1` and `fqdn` tags identify this certificate.
-The certificate includes an exportable private key and uses the existing vault access controls.
-Names starting with `tre-acme-` are reserved. Use another name for the service certificate.
-
-Uninstall removes the service certificate and its infrastructure. It retains the hostname certificate for later installs, including installs with a different service certificate name.
-Deleting the core vault removes this retained material under the vault's existing soft-delete and purge-protection rules.
-If an administrator disables or deletes the retained certificate, investigate that change before enabling or recovering it.
-Do not remove the cache to bypass an issuance limit. Compromised certificates require revocation and replacement through the normal incident procedure.
-
-The cache starts with the first successful issuance by a bundle that supports certificate retention. It does not search for or adopt uncached certificates.
-An ACME rate-limit response still fails the operation. Follow the retry time in that response.
-Run only one certificate lifecycle or dependent test suite per environment at a time.
-
-### Deploy Nexus
-
 After verifying the certificate has been generated, you can deploy Nexus:
 
 1. Run the below command in your terminal to build, publish and register the Nexus shared service bundle:

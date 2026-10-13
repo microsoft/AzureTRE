@@ -6,8 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
-* Validate base-workspace and private Azure SQL lifecycles with bounded cleanup and safe operation-polling diagnostics. ([#5257](https://github.com/microsoft/AzureTRE/pull/5257))
-* Select individual bundle tests, report coverage limits and run selected tests after successful smoke tests. ([#5256](https://github.com/microsoft/AzureTRE/pull/5256))
+* Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL and Airlock storage. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -29,11 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Verify Airlock draft-container deletion through independent storage checks and rejected SAS writes. ([#5258](https://github.com/microsoft/AzureTRE/pull/5258))
-* Use supported review VM sizes and validate Windows tools. Forward explicit Nexus consent and bound Airlock and shared-service resource cleanup. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
-* Wait for private certificate storage readiness, reuse trusted certificates and verify TLS for E2E identity authentication. ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
-* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results, allow cleanup when Porter confirms that an installation is absent, and keep operation status available until the deletion pipeline finishes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
-* Wait for management storage, retry recognised state-read permission failures and validate Terraform outputs. Protect active and recently used validation environments from scheduled cleanup. ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
+* Protect active validation environments, require successful smoke tests before custom tests, and give E2E cleanup separate deadlines. Forward explicit Nexus consent and verify TLS for identity authentication. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))

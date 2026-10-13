@@ -47,11 +47,6 @@ variable "install_azure_cli" {
   type    = bool
   default = true
 }
-variable "require_azure_cli" {
-  description = "Fail bootstrap when Nexus or Azure CLI is unavailable, as required by Airlock review VMs"
-  type        = bool
-  default     = false
-}
 variable "install_vscode" {
   type    = bool
   default = true
