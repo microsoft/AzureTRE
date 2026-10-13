@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-certs
-version: 0.7.16
+version: 0.8.0
 description: "An Azure TRE shared service to generate certificates for a specified internal domain using Letsencrypt"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -58,6 +58,10 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: certificate_cache_vault_name
+    type: string
+    default: ""
+    description: "Dedicated private CI cache vault. An empty value disables certificate retention."
 
 mixins:
   - exec
@@ -133,16 +137,7 @@ install:
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
         password_name: ${ bundle.outputs.password_name }
-  - az:
-      description: "Stop application gateway"
-      arguments:
-        - network
-        - application-gateway
-        - stop
-      flags:
-        resource-group: ${ bundle.outputs.resource_group_name }
-        name: ${ bundle.outputs.application_gateway_name }
-
+        cache_vault_name: ${ bundle.parameters.certificate_cache_vault_name }
 upgrade:
   - exec:
       description: "Upgrade shared service"
@@ -209,15 +204,6 @@ renew:
         - set
       flags:
         subscription: ${ bundle.credentials.azure_subscription_id }
-  - az:
-      description: "Start application gateway"
-      arguments:
-        - network
-        - application-gateway
-        - start
-      flags:
-        resource-group: ${ bundle.outputs.resource_group_name }
-        name: ${ bundle.outputs.application_gateway_name }
   - exec:
       description: "Renew certificate"
       command: bash
@@ -231,12 +217,5 @@ renew:
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
         password_name: ${ bundle.outputs.password_name }
-  - az:
-      description: "Stop application gateway"
-      arguments:
-        - network
-        - application-gateway
-        - stop
-      flags:
-        resource-group: ${ bundle.outputs.resource_group_name }
-        name: ${ bundle.outputs.application_gateway_name }
+        cache_vault_name: ${ bundle.parameters.certificate_cache_vault_name }
+        start_gateway: "true"

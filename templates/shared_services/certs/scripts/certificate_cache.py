@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Retain verified certificates in the core vault across service replacement."""
+"""Retain verified CI certificates in a dedicated vault across service replacement."""
 
 import argparse
 import hashlib

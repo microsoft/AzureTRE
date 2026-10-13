@@ -4,6 +4,8 @@ set -o pipefail
 umask 077
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+start_gateway=false
+cache_vault_name=""
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -35,6 +37,14 @@ while [ "$1" != "" ]; do
         shift
         password_name=$1
         ;;
+    --start_gateway)
+        shift
+        start_gateway=$1
+        ;;
+    --cache_vault_name)
+        shift
+        cache_vault_name=$1
+        ;;
     *)
         echo "Unexpected argument: '$1'"
         usage
@@ -52,17 +62,57 @@ done
 # done with processing args and can set this
 set -o nounset
 
-work_dir=$(mktemp -d)
-trap 'rm -rf "$work_dir"' EXIT
-cache_args=(--cert-name "$cert_name" --vault "$keyvault_name" --fqdn "$fqdn" --directory "$work_dir")
-
-if python3 "${script_dir}/certificate_cache.py" restore "${cache_args[@]}"; then
-    echo "Using the retained certificate without an ACME request"
-else
-    cache_status=$?
-    if [[ "$cache_status" -ne 3 ]]; then
-        exit "$cache_status"
+work_dir=""
+cleanup() {
+    local script_exit=$?
+    trap - EXIT
+    if [[ -n "$work_dir" ]] && ! rm -rf "$work_dir"; then
+        echo "Failed to remove temporary certificate files" >&2
+        if [[ "$script_exit" -eq 0 ]]; then script_exit=1; fi
     fi
+    if ! az network application-gateway stop \
+        --resource-group "$resource_group_name" \
+        --name "$application_gateway_name" \
+        --output none --only-show-errors; then
+        echo "Failed to stop the certificate application gateway. Check its state before retrying." >&2
+        if [[ "$script_exit" -eq 0 ]]; then script_exit=1; fi
+    fi
+    exit "$script_exit"
+}
+trap cleanup EXIT
+
+case "$start_gateway" in
+    true)
+        az network application-gateway start \
+            --resource-group "$resource_group_name" \
+            --name "$application_gateway_name" \
+            --output none --only-show-errors
+        ;;
+    false) ;;
+    *) echo "start_gateway must be true or false" >&2; exit 2 ;;
+esac
+
+work_dir=$(mktemp -d)
+reuse_certificate=false
+cache_args=(--cert-name "$cert_name" --vault "$cache_vault_name" --fqdn "$fqdn" --directory "$work_dir")
+
+if [[ -n "$cache_vault_name" ]]; then
+    if [[ "$(printf %s "$cache_vault_name" | tr '[:upper:]' '[:lower:]')" == "$(printf %s "$keyvault_name" | tr '[:upper:]' '[:lower:]')" ]]; then
+        echo "The certificate cache must use a separate vault. Check the CI cache configuration." >&2
+        exit 2
+    fi
+    if python3 "${script_dir}/certificate_cache.py" restore "${cache_args[@]}"; then
+        echo "Using the retained certificate without an ACME request"
+        reuse_certificate=true
+    else
+        cache_status=$?
+        if [[ "$cache_status" -ne 3 ]]; then
+            exit "$cache_status"
+        fi
+    fi
+fi
+
+if [[ "$reuse_certificate" == false ]]; then
     echo "Checking for index.html file in storage account"
 
     # Create the default index.html page
@@ -120,8 +170,10 @@ EOF
 
     cp "${ledir}/live/${fqdn}/privkey.pem" "${work_dir}/privkey.pem"
     cp "${ledir}/live/${fqdn}/fullchain.pem" "${work_dir}/fullchain.pem"
-    # Persist issuance before updating the service alias. A later failure can reuse it.
-    python3 "${script_dir}/certificate_cache.py" store "${cache_args[@]}"
+    if [[ -n "$cache_vault_name" ]]; then
+        # Persist CI issuance before updating the alias. A later failure can reuse it.
+        python3 "${script_dir}/certificate_cache.py" store "${cache_args[@]}"
+    fi
 fi
 
 # Convert the generated certificate to a .pfx

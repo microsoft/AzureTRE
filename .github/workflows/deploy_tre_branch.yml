@@ -91,6 +91,7 @@ jobs:
     with:
       ciGitRef: ${{ github.ref }}
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
+      enableCiCertificateCache: true
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
       acceptNexusEula: ${{ inputs.acceptNexusEula }}

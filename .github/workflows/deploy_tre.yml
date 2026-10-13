@@ -36,6 +36,7 @@ jobs:
       actions: read # Required by the reusable management job
     with:
       ciGitRef: ${{ github.ref }}
+      enableCiCertificateCache: true
       e2eTestsCustomSelector: >-
         ${{ (github.event_name == 'push' && 'extended or extended_aad')
         || 'extended or extended_aad or shared_services or airlock' }}

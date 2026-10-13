@@ -225,6 +225,16 @@ variable "kv_purge_protection_enabled" {
   default     = true
 }
 
+variable "enable_ci_certificate_cache" {
+  type        = bool
+  default     = false
+  description = "Retain certificates in a dedicated private vault for CI validation only."
+  validation {
+    condition     = !var.enable_ci_certificate_cache || (trimspace(var.ci_git_ref) != "" && var.resource_processor_type == "vmss_porter")
+    error_message = "The CI certificate cache requires ci_git_ref and the vmss_porter resource processor."
+  }
+}
+
 variable "logging_level" {
   type        = string
   default     = "INFO"
