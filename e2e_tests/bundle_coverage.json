@@ -183,18 +183,25 @@
       "manifest": "templates/workspace_services/azuresql/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-windowsvm"
       ],
       "tests": [
+        "test_azuresql.py::test_sql_query_survives_sku_upgrade"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-azuresql]"
       ],
-      "related_tests": [],
       "coverage": [
         "install",
+        "private SQL write/read",
+        "S1-to-S2 configuration upgrade with retained data",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary secret-scoped role assignment.",
+        "Configuration upgrade uses the current bundle version. Previous-version migration remains separate (#5128). The SQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
@@ -430,15 +437,26 @@
       "manifest": "templates/workspaces/base/porter.yaml",
       "family": "workspace",
       "prerequisites": [],
-      "tests": [],
+      "tests": [
+        "test_workspace_base.py::test_base_workspace_lifecycle"
+      ],
       "related_tests": [
         "test_workspace_services.py::test_create_guacamole_service_into_base_workspace"
       ],
-      "coverage": [],
-      "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+      "coverage": [
+        "install",
+        "deployment-status",
+        "workspace-identity-api-access",
+        "uninstall",
+        "api-removal"
       ],
-      "unavailable_reason": "Base workspace provisioning is fixture coverage in other bundle tests; an isolated lifecycle case is missing (#5152)."
+      "limitations": [
+        "Creates a new Automatic-auth workspace even when TEST_WORKSPACE_ID is configured. Backups are disabled.",
+        "Workspace service-list access checks the configured workspace identity, not network isolation or storage access.",
+        "The case checks terminal uninstall and an API 404. Independent Azure resource inventory remains a separate check.",
+        "Upgrade, custom-action, backup configuration, restore and retention coverage must be assessed separately."
+      ],
+      "unavailable_reason": ""
     },
     "tre-workspace-unrestricted": {
       "manifest": "templates/workspaces/unrestricted/porter.yaml",

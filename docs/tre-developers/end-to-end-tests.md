@@ -25,6 +25,17 @@ Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", 
 
 - This will also use `/workspaces/AzureTRE/core/private.env` file for other values.
 
+## Investigate operation-polling failures
+
+Unexpected HTTP responses fail operation polling. HTTP 500 is not retried or treated as successful deletion.
+The error log records a UTC timestamp, method, recognised operation path, status, media type, body size and coarse body classification.
+It includes allowlisted correlation headers only when their values match supported identifier formats.
+Unrecognised paths and header values are omitted or redacted. The diagnostic record excludes response bodies, credentials, host names and URL parameters.
+
+If a poll fails, use its timestamp, operation ID and available correlation IDs to find the API exception and App Service request record.
+Check API exception telemetry before a validation run. Record terminal resource deletion separately from the failed poll.
+These diagnostics help investigate the failure. They do not establish its cause or guarantee that server telemetry is available.
+
 ## Validate one bundle
 
 The [bundle coverage map](https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json) lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
@@ -39,7 +50,9 @@ Use the E2E Python environment from the repository root:
 python3 e2e_tests/run_bundle.py --bundle tre-workspace-service-azuresql --collect-only
 ```
 
-This collects the named Azure SQL parametrisation without creating resources.
+This collects `test_azuresql.py::test_sql_query_survives_sku_upgrade` without creating resources.
+The case checks a private SQL query and data persistence after an S1-to-S2 SKU change.
+
 The report records `not_run`, even when collection succeeds.
 Unknown names, unavailable cases, missing tests and unexpected collected cases fail explicitly.
 
@@ -75,6 +88,31 @@ The certificate-only case is opt-in through bundle selection or the `certificate
 It is excluded from the ordinary `shared_services` selection to avoid an additional certificate request in that suite.
 The existing combined case remains in that suite. It deletes Nexus before its certificate dependency.
 Certificate content, renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and physical resource removal need separate evidence.
+
+### Base workspace lifecycle
+
+Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.
+The case always creates its own workspace with Automatic authentication and backups disabled. It does not reuse `TEST_WORKSPACE_ID`.
+It checks the deployed record and uses the configured workspace identity to list the new workspace's services.
+It then disables and deletes the workspace, waits for the delete operation and confirms that an API lookup returns HTTP 404.
+Body failures still trigger cleanup. If cleanup also fails, the original failure is preserved with an additional diagnostic note.
+
+Setup uses the existing one-hour deployment limit and failed-create recovery. The API checks have a five-minute limit.
+Cleanup has a separate one-hour budget. The case is opt-in through bundle selection or the `workspace_validation` marker.
+It does not add another workspace to the extended suite.
+
+These checks do not prove network isolation, storage access, upgrades, custom actions or backup restore and retention.
+Verify Azure resource removal separately when recording release evidence.
+
+### SQL time limits
+
+The SQL bundle job has a 300-minute limit. Its first step sets an absolute lifecycle deadline at 270 minutes.
+Setup and queries stop with 120 minutes remaining for cleanup. Container startup uses the same budget.
+The SQL case manages its own workspace and Guacamole service so that setup and cleanup share this deadline.
+It preserves pre-created resources and divides the remaining cleanup time between the resources it created.
+Failed-create recovery and temporary probe cleanup also count towards the lifecycle deadline.
+The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
+For a local run, the 270-minute lifecycle budget starts when the SQL case begins.
 
 ### Run the branch workflow before merge
 
