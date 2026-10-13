@@ -1,5 +1,6 @@
 """Exercise Airlock response handling without deploying Azure resources."""
 
+import asyncio
 import json
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -62,6 +63,22 @@ class DraftDeletionTests(unittest.IsolatedAsyncioTestCase):
             patch.object(request.AsyncBlobClient, "from_blob_url", return_value=self.context)
         )
         self.sas = "https://storage.example.test/draft?sig=private-sas"
+        self.arm = AsyncMock()
+        self.container_id = "/subscriptions/test/resourceGroups/rg-test/providers/Microsoft.Storage/storageAccounts/test/blobServices/default/containers/request"
+        self.submitted = {
+            "id": self.container_id,
+            "properties": {
+                "metadata": {"workspace_id": "workspace", "request_type": "import", "stage": "import-in-progress"}
+            },
+        }
+        self.arm.request.side_effect = lambda method, resource_id, *args, **kwargs: (
+            None if resource_id.endswith("-draft") else self.submitted
+        )
+
+    async def wait(self, **kwargs):
+        await request.wait_for_draft_container_deletion(
+            self.sas, arm=self.arm, container_id=self.container_id, workspace_id="workspace", **kwargs
+        )
 
     def missing(self, code="ContainerNotFound"):
         error = ResourceNotFoundError("Not found")
@@ -70,7 +87,7 @@ class DraftDeletionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_transient_writes_are_retried_until_container_not_found(self):
         self.client.upload_blob.side_effect = [{"etag": "written"}, self.missing()]
-        await request.wait_for_draft_container_deletion(self.sas, interval=0)
+        await self.wait(interval=0)
         self.assertEqual(self.client.upload_blob.await_count, 2)
         self.assertTrue(self.client.upload_blob.call_args.kwargs["overwrite"])
         self.assertIn("/draft/revocation-probe-", self.factory.call_args.args[0])
@@ -79,13 +96,14 @@ class DraftDeletionTests(unittest.IsolatedAsyncioTestCase):
         error = ResourceExistsError("Deleting")
         error.error_code = "ContainerBeingDeleted"
         self.client.upload_blob.side_effect = [error, self.missing()]
-        await request.wait_for_draft_container_deletion(self.sas, interval=0)
+        await self.wait(interval=0)
         self.assertEqual(self.client.upload_blob.await_count, 2)
 
     async def test_writes_that_continue_past_deadline_fail(self):
         self.client.upload_blob.return_value = {"etag": "still writable"}
         with self.assertRaisesRegex(AssertionError, "not confirmed within"):
-            await request.wait_for_draft_container_deletion(self.sas, timeout=0.01, interval=0.001)
+            await self.wait(timeout=0.01, interval=0.001)
+        self.arm.request.assert_not_awaited()
 
     async def test_conflict_authentication_and_wrong_not_found_errors_fail(self):
         for error in (
@@ -96,15 +114,102 @@ class DraftDeletionTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(error=error):
                 self.client.upload_blob.side_effect = error
                 with self.assertRaises(type(error)):
-                    await request.wait_for_draft_container_deletion(self.sas, interval=0)
+                    await self.wait(interval=0)
 
     async def test_probe_names_are_distinct_and_client_closes(self):
         self.client.upload_blob.side_effect = self.missing()
-        await request.wait_for_draft_container_deletion(self.sas)
+        await self.wait()
         first = self.factory.call_args.args[0]
-        await request.wait_for_draft_container_deletion(self.sas)
+        await self.wait()
         self.assertNotEqual(first, self.factory.call_args.args[0])
         self.assertEqual(self.context.__aexit__.await_count, 2)
+
+    def forbidden(self, code="AuthorizationPermissionMismatch"):
+        error = HttpResponseError("Denied")
+        error.status_code = 403
+        error.error_code = code
+        return error
+
+    async def test_permission_denial_requires_independent_deletion_evidence(self):
+        self.client.upload_blob.side_effect = self.forbidden()
+        self.arm.request.side_effect = [{"id": "draft still present"}, None, self.submitted]
+        await self.wait(interval=0)
+        self.assertEqual(self.client.upload_blob.await_count, 2)
+        self.assertEqual(self.arm.request.await_count, 3)
+        self.arm.request.assert_any_await("GET", f"{self.container_id}-draft", "2023-05-01", missing_ok=True)
+        self.arm.request.assert_any_await("GET", self.container_id, "2023-05-01")
+
+    async def test_sas_denial_does_not_pass_while_draft_exists(self):
+        for error in (self.forbidden(), self.missing()):
+            with self.subTest(error=error):
+                self.client.upload_blob.side_effect = error
+                self.arm.request.side_effect = None
+                self.arm.request.return_value = {"id": "draft still present"}
+                with self.assertRaisesRegex(AssertionError, "not confirmed within"):
+                    await self.wait(timeout=0.01, interval=0.001)
+
+    async def test_missing_submitted_container_or_arm_access_failure_fails(self):
+        self.client.upload_blob.side_effect = self.forbidden()
+        for replies in ([RuntimeError("ARM 403")], [None, RuntimeError("ARM 404")]):
+            with self.subTest(replies=replies):
+                self.arm.request.side_effect = replies
+                with self.assertRaises(RuntimeError):
+                    await self.wait()
+
+    async def test_submitted_container_must_match_request_workspace_and_stage(self):
+        self.client.upload_blob.side_effect = self.forbidden()
+        for field in ("id", "workspace_id", "request_type", "stage"):
+            with self.subTest(field=field):
+                submitted = json.loads(json.dumps(self.submitted))
+                if field == "id":
+                    submitted[field] = "wrong-container"
+                else:
+                    submitted["properties"]["metadata"][field] = "wrong-value"
+                self.arm.request.side_effect = [None, submitted]
+                with self.assertRaises(AssertionError):
+                    await self.wait()
+
+    async def test_other_storage_denials_fail_without_arm_lookup(self):
+        for code in ("AuthenticationFailed", "AuthorizationFailure", "AuthorizationSourceIPMismatch"):
+            with self.subTest(code=code):
+                self.client.upload_blob.side_effect = self.forbidden(code)
+                with self.assertRaises(HttpResponseError):
+                    await self.wait()
+        self.arm.request.assert_not_awaited()
+
+    async def test_arm_lookup_shares_the_probe_deadline(self):
+        self.client.upload_blob.side_effect = self.forbidden()
+
+        async def stalled_lookup(*args, **kwargs):
+            await asyncio.sleep(60)
+
+        self.arm.request.side_effect = stalled_lookup
+        with self.assertRaisesRegex(AssertionError, "not confirmed within"):
+            await self.wait(timeout=0.01)
+        self.context.__aexit__.assert_awaited_once()
+
+
+class ContainerIdentityTests(unittest.TestCase):
+    def test_arm_id_is_bound_to_configured_environment_and_request(self):
+        subscription = "11111111-1111-1111-1111-111111111111"
+        request_id = "22222222-2222-2222-2222-222222222222"
+        url = f"https://stalairlocktretest.blob.core.windows.net/{request_id}-draft?sig=private"
+        result = request.submitted_container_id(url, subscription, "tre-test", request_id)
+        self.assertEqual(
+            result,
+            f"/subscriptions/{subscription}/resourceGroups/rg-tre-test/providers/Microsoft.Storage/storageAccounts/stalairlocktretest/blobServices/default/containers/{request_id}",
+        )
+        for invalid in (
+            url.replace("https:", "http:"),
+            url.replace("tretest.", "other."),
+            url.replace("-draft?", "?"),
+            url.replace(request_id, "another-request"),
+            url.split("?", 1)[0],
+            url + "#fragment",
+        ):
+            with self.subTest(url=invalid):
+                with self.assertRaises(ValueError):
+                    request.submitted_container_id(invalid, subscription, "tre-test", request_id)
 
 
 if __name__ == "__main__":
