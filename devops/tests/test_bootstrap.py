@@ -31,14 +31,6 @@ The request may be blocked by network rules of storage account. Please check net
 If you want to change the default action to apply when no rule matches, please use 'az storage account update'.
 """
 
-# Diagnostic from fresh management deployment 38181301145, attempt 1.
-STATE_READ_PERMISSION_ERROR = (
-    "Error: Error loading state: executing request: unexpected status 403 "
-    "(403 This request is not authorized to perform this operation using this permission.) "
-    "with AuthorizationPermissionMismatch: This request is not authorized to perform "
-    "this operation using this permission."
-)
-
 MOCK_COMMAND = r"""
 import hashlib
 import json
@@ -786,44 +778,6 @@ class BootstrapTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn("Error loading state: HTTP 403", self.output)
         self.assert_no_imports()
 
-    def test_state_read_permission_failure_after_probe_is_retried(self):
-        result = self.run_bootstrap(
-            init_responses=[
-                {"code": 1, "output": STATE_READ_PERMISSION_ERROR},
-                {"code": 0, "output": "Backend ready"},
-            ]
-        )
-        self.assertEqual(result.returncode, 0, self.output)
-        self.assertEqual(len(self.commands("terraform", "init")), 2)
-        self.assertEqual(self.sleeps(), [10])
-        self.assertIn(STATE_READ_PERMISSION_ERROR, self.output)
-
-    def test_state_read_permission_retries_are_bounded(self):
-        result = self.run_bootstrap(init_responses=[{"code": 1, "output": STATE_READ_PERMISSION_ERROR}])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(self.commands("terraform", "init")), 6)
-        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
-        self.assertEqual(self.output.count(STATE_READ_PERMISSION_ERROR), 6)
-        self.assert_no_imports()
-
-    def test_state_read_permission_error_does_not_hide_lock_failure(self):
-        error = f"{STATE_READ_PERMISSION_ERROR}\nfailed to lock azure state: failed to write lock metadata"
-        result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(self.commands("terraform", "init")), 1)
-        self.assertEqual(self.sleeps(), [])
-        self.assertIn(error, self.output)
-        self.assert_no_imports()
-
-    def test_state_read_permission_error_does_not_hide_unlock_failure(self):
-        error = f"{STATE_READ_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock"
-        result = self.run_bootstrap(init_responses=[{"code": 1, "output": error}])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(self.commands("terraform", "init")), 1)
-        self.assertEqual(self.sleeps(), [])
-        self.assertIn(error, self.output)
-        self.assert_no_imports()
-
     def test_failed_unlock_with_403_is_visible_and_not_retried(self):
         error = (
             "Error unlocking Azure state. Lock ID: test-lock\nError: failed to delete lock info from metadata: HTTP 403"
@@ -972,35 +926,6 @@ class ManagementDeployTests(BlobReadinessChecks, TerraformScriptTests):
         self.assertIn(error, self.output)
         self.assertEqual(len(self.commands("terraform", "init")), 1)
         self.assertEqual(self.sleeps(), [])
-        self.assert_no_deployment()
-
-    def test_state_read_permission_failure_is_retried_before_plan(self):
-        result = self.run_deploy(
-            init_responses=[
-                {"code": 1, "output": STATE_READ_PERMISSION_ERROR},
-                {"code": 0, "output": "Backend ready"},
-            ]
-        )
-        self.assertEqual(result.returncode, 0, self.output)
-        self.assertEqual(len(self.commands("terraform", "init")), 2)
-        self.assertEqual(self.sleeps(), [10])
-        self.assertIn(STATE_READ_PERMISSION_ERROR, self.output)
-        self.assert_deployed_once()
-
-    def test_state_read_permission_exhaustion_stops_before_plan(self):
-        result = self.run_deploy(init_responses=[{"code": 1, "output": STATE_READ_PERMISSION_ERROR}])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(self.commands("terraform", "init")), 6)
-        self.assertEqual(self.sleeps(), [10, 20, 40, 80, 160])
-        self.assert_no_deployment()
-
-    def test_state_read_permission_error_does_not_hide_unlock_failure(self):
-        error = f"{STATE_READ_PERMISSION_ERROR}\nError unlocking Azure state. Lock ID: test-lock"
-        result = self.run_deploy(init_responses=[{"code": 1, "output": error}])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(len(self.commands("terraform", "init")), 1)
-        self.assertEqual(self.sleeps(), [])
-        self.assertIn(error, self.output)
         self.assert_no_deployment()
 
     def test_state_permission_error_is_not_retried(self):

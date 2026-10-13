@@ -64,9 +64,6 @@ class OperationStep(AzureTREModel):
     status: Optional[Status] = Field(None, title="Operation step status")
     message: Optional[str] = Field("", title="Additional operation step status information")
     updatedWhen: Optional[float] = Field(default=None, title="POSIX Timestamp for When the operation step was updated")
-    statusUpdateComplete: bool = Field(
-        False, description="Whether the terminal status resource writes and next-step dispatch have completed"
-    )
     # An example for this property will be if we have a step that is responsible for updating the firewall, and its origin was the guacamole workspace service, the id here will be the guacamole id
     sourceTemplateResourceId: Optional[str] = Field(
         default=None, title="sourceTemplateResourceId", description="Id of the parent of the resource to update"

@@ -1,16 +1,9 @@
 #!/bin/bash
 set -e
-set -o pipefail
 
 echo "# Generated environment variables from tf output"
 
-jq -ers '
-    if length != 1 or (.[0] | type) != "object" then
-        error("Expected one Terraform output object. Check the state and regenerate core/tre_output.json.")
-    else
-        .[0]
-    end
-    |
+jq -r '
     [
         {
             "path": "core_resource_group_name",
@@ -122,40 +115,25 @@ jq -ers '
             "env_var": "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_RESOURCE_ID"
         },
         {
-            # This mapping is retained for older caches but is not a root output.
             "path": "airlock_malware_scan_result_topic_name",
-            "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME",
-            "optional": true
+            "env_var": "AIRLOCK_MALWARE_SCAN_RESULT_TOPIC_NAME"
         }
     ]
         as $env_vars_to_extract
     |
-    . as $outputs
-    |
-    $env_vars_to_extract
-    |
-    map(
-        . as $mapping
-        | if $mapping.optional and ($outputs | has($mapping.path) | not) then
-            empty
-        else
-            $outputs[$mapping.path]
-            | if type != "object" then
-                error("Missing or invalid Terraform output: \($mapping.path). Check the state and regenerate core/tre_output.json.")
-            elif (.value | type) != "string" then
-                error("Terraform output \($mapping.path) must have a string value. Check the state and regenerate core/tre_output.json.")
-            elif (.value | test("\\S") | not) then
-                error("Terraform output \($mapping.path) is empty. Check the state and regenerate core/tre_output.json.")
-            # jq 1.6 treats a NUL needle as empty in contains().
-            elif (.value | index("\u0000") != null or test("[\r\n\u0027]")) then
-                error("Terraform output \($mapping.path) contains a single quote, newline or NUL. Check the state and regenerate core/tre_output.json.")
-            else
-                # load_env.sh strips outer quotes without interpreting shell escapes.
-                # load_and_validate_env.sh also sources this file, so reject single quotes above.
-                "\($mapping.env_var)=\u0027\(.value)\u0027"
-            end
-        end
+    with_entries(
+        select (
+            .key as $a
+            |
+            any( $env_vars_to_extract[]; .path == $a)
+        )
+        |
+        .key |= . as $old_key | ($env_vars_to_extract[] | select (.path == $old_key) | .env_var)
     )
     |
+    to_entries
+    |
+    map("\(.key)=\"\(.value.value)\"")
+    |
     .[]
-    '
+    ' | sed "s/\"/'/g" # replace double quote with single quote to handle special chars
