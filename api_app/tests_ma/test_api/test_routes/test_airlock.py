@@ -64,6 +64,7 @@ def sample_airlock_request_object(
     airlock_request = AirlockRequest(
         id=airlock_request_id,
         workspaceId=workspace_id,
+        createdBy=create_test_user(),
         title="test title",
         businessJustification="test business justification",
         type="import",

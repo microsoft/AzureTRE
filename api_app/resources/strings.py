@@ -230,6 +230,8 @@ AIRLOCK_REQUEST_TYPE_EXPORT = "export"
 
 # Airlock Messages
 AIRLOCK_REQUEST_DOES_NOT_EXIST = "Airlock request does not exist"
+AIRLOCK_REQUEST_NOT_OWNED = "Only the request creator or a workspace owner can modify this Airlock request."
+AIRLOCK_REQUESTS_RETRIEVAL_FAILED = "Unable to retrieve Airlock requests."
 AIRLOCK_REQUEST_ILLEGAL_STATUS_CHANGE = "Airlock request status change was illegal"
 AIRLOCK_REQUEST_IN_PROGRESS = "Airlock request is being processed, please try again later."
 AIRLOCK_REQUEST_IS_CANCELED = "Airlock request was cancelled."

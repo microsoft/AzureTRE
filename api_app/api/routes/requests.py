@@ -4,8 +4,14 @@ from typing import List, Optional
 from api.helpers import get_repository
 from resources import strings
 from db.repositories.airlock_requests import AirlockRequestRepository
-from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import (
+    AirlockRequest,
+    AirlockRequestSortField,
+    AirlockRequestStatus,
+    AirlockRequestType,
+)
 from auth.rbac import require_tre_user_or_admin
+from services.logging import logger
 
 router = APIRouter(dependencies=[Depends(require_tre_user_or_admin)])
 
@@ -17,7 +23,7 @@ async def get_requests(
     airlock_manager: bool = False,
     type: Optional[AirlockRequestType] = None,
     status: Optional[AirlockRequestStatus] = None,
-    order_by: Optional[str] = None,
+    order_by: Optional[AirlockRequestSortField] = None,
     order_ascending: bool = True,
 ) -> List[AirlockRequest]:
     try:
@@ -37,6 +43,12 @@ async def get_requests(
         return requests
 
     except ValueError as ve:
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(ve))
+        logger.exception("Failed retrieving Airlock requests")
+        raise HTTPException(
+            status_code=status_code.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUESTS_RETRIEVAL_FAILED
+        ) from ve
     except Exception as e:
-        raise HTTPException(status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        logger.exception("Failed retrieving Airlock requests")
+        raise HTTPException(
+            status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR, detail=strings.AIRLOCK_REQUESTS_RETRIEVAL_FAILED
+        ) from e

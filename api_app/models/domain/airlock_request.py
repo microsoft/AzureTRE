@@ -32,6 +32,20 @@ class AirlockRequestType(StrEnum):
     Export = strings.AIRLOCK_REQUEST_TYPE_EXPORT
 
 
+class AirlockRequestSortField(StrEnum):
+    Title = "title"
+    Type = "type"
+    Status = "status"
+    CreatedWhen = "createdWhen"
+    UpdatedWhen = "updatedWhen"
+    CreatedTime = "createdTime"
+
+    @property
+    def database_field(self) -> str:
+        # Retain the field name sent by the workspace Airlock UI.
+        return self.CreatedWhen.value if self == self.CreatedTime else self.value
+
+
 class AirlockActions(StrEnum):
     Review = strings.AIRLOCK_ACTION_REVIEW
     Cancel = strings.AIRLOCK_ACTION_CANCEL

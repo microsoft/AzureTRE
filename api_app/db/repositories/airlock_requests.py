@@ -14,6 +14,7 @@ from db.errors import EntityDoesNotExist
 from models.domain.airlock_request import (
     AirlockFile,
     AirlockRequest,
+    AirlockRequestSortField,
     AirlockRequestStatus,
     AirlockReview,
     AirlockReviewDecision,
@@ -171,9 +172,10 @@ class AirlockRequestRepository(BaseRepository):
         creator_user_id: Optional[str] = None,
         type: Optional[AirlockRequestType] = None,
         status: Optional[AirlockRequestStatus] = None,
-        order_by: Optional[str] = None,
+        order_by: Optional[AirlockRequestSortField] = None,
         order_ascending=True,
     ) -> List[AirlockRequest]:
+        sort_field = AirlockRequestSortField(order_by) if order_by is not None else None
         query = self.airlock_requests_query()
 
         # optional filters
@@ -196,8 +198,8 @@ class AirlockRequestRepository(BaseRepository):
             query += " WHERE " + " AND ".join(conditions)
 
         # optional sorting
-        if order_by:
-            query += " ORDER BY c." + order_by
+        if sort_field is not None:
+            query += " ORDER BY c." + sort_field.database_field
             query += " ASC" if order_ascending else " DESC"
 
         airlock_requests = await self.query(query=query, parameters=parameters)
@@ -215,9 +217,11 @@ class AirlockRequestRepository(BaseRepository):
         user_id: str,
         type: Optional[AirlockRequestType] = None,
         status: Optional[AirlockRequestStatus] = None,
-        order_by: Optional[str] = None,
+        order_by: Optional[AirlockRequestSortField] = None,
         order_ascending=True,
     ) -> List[AirlockRequest]:
+        if order_by is not None:
+            order_by = AirlockRequestSortField(order_by)
         workspace_repo = await WorkspaceRepository.create()
         access_service = get_aad_service()
 

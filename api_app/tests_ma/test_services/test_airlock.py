@@ -110,7 +110,7 @@ def sample_airlock_request(status=AirlockRequestStatus.Draft, airlock_version=2)
         businessJustification="some test reason",
         status=status,
         createdWhen=CURRENT_TIME,
-        createdBy=AirlockNotificationUserData(name="John Doe", email="john@example.com"),
+        createdBy={"id": "user-guid-here", "name": "John Doe", "email": "john@example.com"},
         updatedWhen=CURRENT_TIME,
         updatedBy=AirlockNotificationUserData(name="Test User", email="test@user.com"),
     )
