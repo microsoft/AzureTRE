@@ -27,6 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Use supported review VM sizes and validate Windows tools. Forward explicit Nexus consent and bound Airlock and shared-service resource cleanup. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Wait for private certificate storage readiness, reuse trusted certificates and verify TLS for E2E identity authentication. ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
 * Correct managed-identity login in bundle runtimes. Preserve failed uninstall results, allow cleanup when Porter confirms that an installation is absent, and keep operation status available until the deletion pipeline finishes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
 * Wait for management storage, retry recognised state-read permission failures and validate Terraform outputs. Protect active and recently used validation environments from scheduled cleanup. ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
