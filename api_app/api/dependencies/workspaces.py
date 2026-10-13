@@ -10,7 +10,6 @@ from db.repositories.workspaces import WorkspaceRepository
 from models.domain.user_resource import UserResource
 from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
-from models.domain.operation import Operation
 
 from resources import strings
 
@@ -78,12 +77,3 @@ async def get_user_resource_by_id_from_path(
         return await user_resource_repo.get_user_resource_by_id(workspace_id, service_id, resource_id)
     except EntityDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.USER_RESOURCE_DOES_NOT_EXIST)
-
-
-async def get_operation_by_id_from_path(
-    operation_id: UUID4 = Path(...), operations_repo=Depends(get_repository(OperationRepository))
-) -> Operation:
-    try:
-        return await operations_repo.get_operation_by_id(operation_id=operation_id)
-    except EntityDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=strings.OPERATION_DOES_NOT_EXIST)

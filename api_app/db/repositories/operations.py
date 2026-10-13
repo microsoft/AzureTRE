@@ -237,6 +237,17 @@ class OperationRepository(BaseRepository):
             raise EntityDoesNotExist
         return TypeAdapter(Operation).validate_python(operation[0])
 
+    async def get_operation_by_id_for_resource(self, operation_id: str, resource_id: str) -> Operation:
+        query = self.operations_query() + " c.id = @operationId AND c.resourceId = @resourceId"
+        parameters = [
+            {"name": "@operationId", "value": operation_id},
+            {"name": "@resourceId", "value": resource_id},
+        ]
+        operation = await self.query(query=query, parameters=parameters)
+        if not operation:
+            raise EntityDoesNotExist
+        return TypeAdapter(Operation).validate_python(operation[0])
+
     async def get_my_operations(self, user_id: str) -> List[Operation]:
         query = (
             self.operations_query()

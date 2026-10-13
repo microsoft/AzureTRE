@@ -15,7 +15,7 @@ from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
 
 from api.dependencies.workspaces import get_workspace_by_id_from_path, get_deployed_workspace_by_id_from_path
 from api.dependencies.airlock import get_airlock_request_by_id_from_path
-from models.domain.airlock_request import AirlockRequestStatus, AirlockRequestType
+from models.domain.airlock_request import AirlockRequestSortField, AirlockRequestStatus, AirlockRequestType
 from models.schemas.airlock_request_url import AirlockRequestTokenInResponse
 from models.schemas.airlock_request import (
     AirlockRequestAndOperationInResponse,
@@ -45,6 +45,7 @@ from services.airlock import (
     get_airlock_requests_by_user_and_workspace,
     cancel_request,
     revoke_request,
+    validate_user_can_modify_airlock_request,
 )
 from services.legacy_airlock_guard import ensure_workspace_airlock_version_supported
 from services.logging import logger
@@ -111,7 +112,7 @@ async def get_all_airlock_requests_by_workspace(
     creator_user_id: Optional[str] = None,
     type: Optional[AirlockRequestType] = None,
     status: Optional[AirlockRequestStatus] = None,
-    order_by: Optional[str] = None,
+    order_by: Optional[AirlockRequestSortField] = None,
     order_ascending: bool = True,
 ) -> AirlockRequestWithAllowedUserActionsInList:
     try:
@@ -131,7 +132,9 @@ async def get_all_airlock_requests_by_workspace(
         return AirlockRequestWithAllowedUserActionsInList(airlockRequests=airlock_requests_with_allowed_user_actions)
     except (ValidationError, ValueError) as e:
         logger.exception("Failed retrieving all the airlock requests for a workspace")
-        raise HTTPException(status_code=status_code.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status_code.HTTP_400_BAD_REQUEST, detail=strings.AIRLOCK_REQUESTS_RETRIEVAL_FAILED
+        ) from e
 
 
 @airlock_workspace_router.get(
@@ -166,6 +169,7 @@ async def create_submit_request(
     airlock_request_repo=Depends(get_repository(AirlockRequestRepository)),
     workspace=Depends(get_workspace_by_id_from_path),
 ) -> AirlockRequestWithAllowedUserActions:
+    validate_user_can_modify_airlock_request(user, airlock_request)
     updated_request = await update_and_publish_event_airlock_request(
         airlock_request, airlock_request_repo, user, workspace, new_status=AirlockRequestStatus.Submitted
     )
@@ -191,6 +195,7 @@ async def create_cancel_request(
     operation_repo=Depends(get_repository(OperationRepository)),
     resource_template_repo=Depends(get_repository(ResourceTemplateRepository)),
 ) -> AirlockRequestWithAllowedUserActions:
+    validate_user_can_modify_airlock_request(user, airlock_request)
     updated_request = await cancel_request(
         airlock_request,
         user,

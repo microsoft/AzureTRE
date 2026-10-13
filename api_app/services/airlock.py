@@ -8,6 +8,7 @@ from fastapi import HTTPException, status
 from core import config, credentials
 from models.domain.airlock_request import (
     AirlockRequest,
+    AirlockRequestSortField,
     AirlockRequestStatus,
     AirlockRequestType,
     AirlockReviewUserResource,
@@ -48,6 +49,17 @@ from event_grid.event_sender import send_status_changed_event, send_airlock_noti
 STORAGE_ENDPOINT = config.STORAGE_ENDPOINT_SUFFIX
 
 
+def can_modify_airlock_request(user: User, airlock_request: AirlockRequest) -> bool:
+    return "WorkspaceOwner" in user.roles or (
+        "WorkspaceResearcher" in user.roles and bool(user.id) and airlock_request.createdBy.get("id") == user.id
+    )
+
+
+def validate_user_can_modify_airlock_request(user: User, airlock_request: AirlockRequest):
+    if not can_modify_airlock_request(user, airlock_request):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_REQUEST_NOT_OWNED)
+
+
 def validate_user_allowed_to_access_storage_account(user: User, airlock_request: AirlockRequest):
     allowed_roles = []
 
@@ -58,6 +70,9 @@ def validate_user_allowed_to_access_storage_account(user: User, airlock_request:
 
     if not _user_has_one_of_roles(user=user, roles=allowed_roles):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=strings.AIRLOCK_UNAUTHORIZED_TO_SA)
+
+    if airlock_request.status == AirlockRequestStatus.Draft:
+        validate_user_can_modify_airlock_request(user, airlock_request)
 
     return
 
@@ -571,7 +586,7 @@ async def get_airlock_requests_by_user_and_workspace(
     creator_user_id: Optional[str] = None,
     type: Optional[AirlockRequestType] = None,
     status: Optional[AirlockRequestStatus] = None,
-    order_by: Optional[str] = None,
+    order_by: Optional[AirlockRequestSortField] = None,
     order_ascending=True,
 ) -> List[AirlockRequest]:
     return await airlock_request_repo.get_airlock_requests(
@@ -599,10 +614,10 @@ def get_allowed_actions(
     if can_review_request and "AirlockManager" in user.roles:
         allowed_actions.append(AirlockActions.Review)
 
-    if can_cancel_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
+    if can_cancel_request and can_modify_airlock_request(user, request):
         allowed_actions.append(AirlockActions.Cancel)
 
-    if can_submit_request and ("WorkspaceOwner" in user.roles or "WorkspaceResearcher" in user.roles):
+    if can_submit_request and can_modify_airlock_request(user, request):
         allowed_actions.append(AirlockActions.Submit)
 
     if can_revoke_request and "AirlockManager" in user.roles:
