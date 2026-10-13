@@ -514,7 +514,9 @@ async def test_invoke_porter_action_upgrade_failure_install_failure(
     ],
     ids=["storage-timeout", "missing-installation", "empty-error", "no-error"],
 )
-async def test_invoke_porter_action_nonzero_exit_reports_failure(action, expected_status, error):
+async def test_invoke_porter_action_nonzero_exit_without_confirmed_absence_reports_failure(
+    action, expected_status, error
+):
     sender = AsyncMock()
     client = Mock()
     client.get_queue_sender.return_value = sender
@@ -524,6 +526,7 @@ async def test_invoke_porter_action_nonzero_exit_reports_failure(action, expecte
     with (
         patch("vmss_porter.runner.build_porter_command", return_value=([["porter", action]], None, "params", None)),
         patch("vmss_porter.runner.run_porter", return_value=(1, "", error)),
+        patch("vmss_porter.runner.run_command_helper", return_value=(1, None, "Storage is unavailable")) as lookup,
         patch("vmss_porter.runner.get_porter_outputs", return_value=(True, {})) as outputs,
     ):
         result = await invoke_porter_action(msg_body, client, config)
@@ -534,6 +537,10 @@ async def test_invoke_porter_action_nonzero_exit_reports_failure(action, expecte
     final_status = json.loads(str(sender.send_messages.call_args.args[0]))
     assert final_status["status"] == expected_status
     assert (error or "Porter exited with code 1 and no error output.") in final_status["message"]
+    if action == "uninstall" and "could not find installation" in (error or ""):
+        lookup.assert_awaited_once()
+    else:
+        lookup.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -835,6 +842,7 @@ async def test_uninstall_storage_failure_after_parameter_check_preserves_failure
         (0, '{"name":"resource","status":{"runId":"old-run"},"parameters":{}}', None),
         (1, None, error),
         (0, None, None),
+        (1, None, "Storage is still unavailable"),
     ]
     with (
         patch(
@@ -849,12 +857,111 @@ async def test_uninstall_storage_failure_after_parameter_check_preserves_failure
     assert result is False
     assert not parameters.exists()
     assert not installation.exists()
-    assert command.await_args_list[-2].args[0] == action
-    assert command.await_args_list[-1].args[0] == ["porter", "parameters", "delete", "test-parameters"]
+    assert command.await_args_list[-3].args[0] == action
+    assert command.await_args_list[-2].args[0] == ["porter", "parameters", "delete", "test-parameters"]
+    assert command.await_args_list[-1].args[0] == [
+        "porter",
+        "installations",
+        "list",
+        "--name",
+        "resource",
+        "--output",
+        "json",
+        "--verbosity",
+        "error",
+    ]
     outputs.assert_not_awaited()
     final_status = json.loads(str(sender.send_messages.call_args.args[0]))
     assert final_status["status"] == "deleting_failed"
     assert error in final_status["message"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "confirmation, expected_success",
+    [
+        pytest.param((0, "[]", None), True, id="confirmed-absent"),
+        pytest.param((0, '[{"name":"resource"}]', None), False, id="installation-exists"),
+        pytest.param((0, '[{"name":"another-resource"}]', None), False, id="unexpected-installation"),
+        pytest.param((1, "[]", "Storage is unavailable"), False, id="failed-empty-lookup"),
+        pytest.param((0, "invalid JSON", None), False, id="invalid-json"),
+        pytest.param((0, "{}", None), False, id="object-response"),
+        pytest.param((0, "null", None), False, id="null-response"),
+        pytest.param((0, "", None), False, id="empty-output"),
+        pytest.param((0, None, None), False, id="no-output"),
+        pytest.param(RuntimeError("Lookup failed"), False, id="lookup-exception"),
+        pytest.param(TimeoutError(), False, id="lookup-timeout"),
+        pytest.param(asyncio.CancelledError(), None, id="cancelled-lookup"),
+    ],
+)
+async def test_uninstall_missing_installation_requires_fresh_confirmation(tmp_path, confirmation, expected_success):
+    parameters = tmp_path / "parameters.json"
+    installation = tmp_path / "installation.json"
+    parameters.write_text("parameter references")
+    installation.write_text("installation document")
+    action = ["porter", "uninstall", "resource"]
+    config = {
+        "azure_environment": "AzureCloud",
+        "vmss_msi_id": "msi",
+        "registry_server": "registry.azurecr.io",
+        "deployment_status_queue": "status",
+    }
+    message = {"id": "resource", "action": "uninstall", "operationId": "operation", "stepId": "step"}
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    error = "could not find installation /resource: installation does not exist"
+    # The parameter check already saw an empty list. It cannot replace the fresh
+    # lookup after uninstall fails, because storage availability can change.
+    responses = [(0, None, None)] * 5 + [
+        (0, "[]", None),
+        (1, None, error),
+        (0, None, None),
+        confirmation,
+    ]
+    with (
+        patch(
+            "vmss_porter.runner.build_porter_command",
+            return_value=([action], str(parameters), "test-parameters", str(installation)),
+        ),
+        patch("vmss_porter.runner.run_command_helper", new_callable=AsyncMock, side_effect=responses) as command,
+        patch("vmss_porter.runner.get_porter_outputs") as outputs,
+    ):
+        if expected_success is None:
+            with pytest.raises(asyncio.CancelledError):
+                await invoke_porter_action(message, client, config)
+        else:
+            result = await invoke_porter_action(message, client, config)
+            assert result is expected_success
+
+    assert not parameters.exists()
+    assert not installation.exists()
+    assert command.await_args_list[-3].args[0] == action
+    assert command.await_args_list[-2].args[0] == ["porter", "parameters", "delete", "test-parameters"]
+    assert command.await_args_list[-1].args[0] == [
+        "porter",
+        "installations",
+        "list",
+        "--name",
+        "resource",
+        "--output",
+        "json",
+        "--verbosity",
+        "error",
+    ]
+    assert command.await_args_list[-1].kwargs["log_output"] is False
+    outputs.assert_not_awaited()
+    if expected_success is None:
+        assert sender.send_messages.await_count == 1
+    else:
+        assert sender.send_messages.await_count == 2
+        final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+        assert final_status["status"] == ("deleted" if expected_success else "deleting_failed")
+        assert "outputs" not in final_status
+        if expected_success:
+            assert "Porter confirmed that the installation is absent" in final_status["message"]
+        else:
+            assert error in final_status["message"]
 
 
 @pytest.mark.asyncio

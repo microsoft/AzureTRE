@@ -325,6 +325,34 @@ async def _cleanup_param_set(param_set_name: str, param_set_file: str, installat
                     logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
 
 
+async def _confirm_porter_installation_absent(installation_id: str, config: dict) -> bool:
+    """Confirm absence with a fresh storage query, without logging installation data."""
+    try:
+        code, output, _ = await asyncio.wait_for(
+            run_command_helper(
+                [
+                    "porter",
+                    "installations",
+                    "list",
+                    "--name",
+                    installation_id,
+                    "--output",
+                    "json",
+                    "--verbosity",
+                    "error",
+                ],
+                config,
+                "Confirm missing installation",
+                log_output=False,
+            ),
+            timeout=30,
+        )
+        return code == 0 and json.loads(output) == []
+    except Exception:
+        # An unreadable store, invalid response or timeout does not prove absence.
+        return False
+
+
 async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, config: dict) -> bool:
     """
     Handle resource message by invoking specified porter action (i.e. install, uninstall)
@@ -380,7 +408,20 @@ async def invoke_porter_action(msg_body: dict, sb_client: ServiceBusClient, conf
     action_completed_without_error = returncode == 0
 
     # Handle command output
-    if returncode != 0:
+    if (
+        returncode != 0
+        and action == "uninstall"
+        and "could not find installation" in (err or "")
+        and await _confirm_porter_installation_absent(installation_id, config)
+    ):
+        # The error text only triggers the check. A successful empty query is
+        # required before completing deletion without installation outputs.
+        action_completed_without_error = True
+        status_for_sb_message = statuses.pass_status_string_for[action]
+        resource_request_message = service_bus_message_generator(
+            msg_body, status_for_sb_message, "Uninstall completed: Porter confirmed that the installation is absent."
+        )
+    elif returncode != 0:
         # Construct a readable representation of the command(s)
         command_representation = ""
         for cmd in porter_command:
