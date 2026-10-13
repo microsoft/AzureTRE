@@ -13,9 +13,9 @@ variables {
   resource_group_name             = "rg-test"
   tenant_id                       = "00000000-0000-0000-0000-000000000001"
   resource_processor_principal_id = "00000000-0000-0000-0000-000000000002"
-  deployer_principal_id            = "00000000-0000-0000-0000-000000000003"
-  shared_subnet_id                 = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/SharedSubnet"
-  private_dns_zone_id              = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+  deployer_principal_id           = "00000000-0000-0000-0000-000000000003"
+  shared_subnet_id                = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/SharedSubnet"
+  private_dns_zone_id             = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
   log_analytics_workspace_id      = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-test/providers/Microsoft.OperationalInsights/workspaces/logs-test"
   tags                            = { tre_id = "test" }
 }
