@@ -12,6 +12,28 @@ _OPERATION_PATH = re.compile(
     rf"/api/(?:workspaces/{_UUID}/(?:workspace-services/{_UUID}/(?:user-resources/{_UUID}/)?)?"
     rf"|shared-services/{_UUID}/)?operations/{_UUID}"
 )
+_OPERATION_STATES = {
+    strings.RESOURCE_STATUS_AWAITING_DEPLOYMENT,
+    strings.RESOURCE_STATUS_DEPLOYING,
+    strings.RESOURCE_STATUS_DEPLOYED,
+    strings.RESOURCE_STATUS_DEPLOYMENT_FAILED,
+    strings.RESOURCE_STATUS_AWAITING_DELETION,
+    strings.RESOURCE_STATUS_DELETING,
+    strings.RESOURCE_STATUS_DELETED,
+    strings.RESOURCE_STATUS_DELETING_FAILED,
+    strings.RESOURCE_STATUS_AWAITING_UPDATE,
+    strings.RESOURCE_STATUS_UPDATING,
+    strings.RESOURCE_STATUS_UPDATED,
+    strings.RESOURCE_STATUS_UPDATING_FAILED,
+    strings.RESOURCE_STATUS_AWAITING_ACTION,
+    strings.RESOURCE_ACTION_STATUS_INVOKING,
+    strings.RESOURCE_ACTION_STATUS_SUCCEEDED,
+    strings.RESOURCE_ACTION_STATUS_FAILED,
+    strings.RESOURCE_ACTION_STATUS_PIPELINE_RUNNING,
+    strings.RESOURCE_ACTION_STATUS_PIPELINE_FAILED,
+    strings.RESOURCE_ACTION_STATUS_PIPELINE_SUCCEEDED,
+    "not yet observed",
+}
 _CORRELATION_HEADERS = {
     "x-ms-request-id": _UUID,
     "x-ms-correlation-request-id": _UUID,
@@ -21,9 +43,19 @@ _CORRELATION_HEADERS = {
 }
 
 
+def operation_log_path(operation_endpoint):
+    """Keep recognised operation paths without URL parameters or fragments."""
+    path = operation_endpoint.split("?", 1)[0].split("#", 1)[0]
+    return path if _OPERATION_PATH.fullmatch(path) else "<redacted>"
+
+
+def operation_log_state(state):
+    """Exclude arbitrary response content from operation-state diagnostics."""
+    return state if isinstance(state, str) and state in _OPERATION_STATES else "<redacted>"
+
+
 def polling_failure_details(response, operation_endpoint):
     """Return bounded metadata. Never copy bodies, URL parameters or arbitrary headers."""
-    path = operation_endpoint.split("?", 1)[0].split("#", 1)[0]
     media_type = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     allowed_media_types = {"application/json", "application/problem+json", "text/plain", "text/html"}
     prefix = response.content[:64].lstrip().lower()
@@ -38,7 +70,7 @@ def polling_failure_details(response, operation_endpoint):
     return {
         "utc_time": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "method": "GET",
-        "path": path if _OPERATION_PATH.fullmatch(path) else "<redacted>",
+        "path": operation_log_path(operation_endpoint),
         "status": response.status_code,
         "content_type": media_type if media_type in allowed_media_types else "other_or_missing",
         "body_bytes": len(response.content),
@@ -99,7 +131,7 @@ async def check_deployment(client, operation_endpoint, access_token):
     elif response.status_code == 404:
         # 404 indicates the resource has been deleted (filtered out by get_by_id methods)
         # This is a valid state for deletion operations
-        LOGGER.info(f"Resource not found (404) - treating as deleted: {operation_endpoint}")
+        LOGGER.info("Resource not found (404) - treating as deleted: %s", operation_log_path(operation_endpoint))
         return strings.RESOURCE_STATUS_DELETED, "Resource has been deleted", ""
     else:
         LOGGER.error("Operation polling failed: %s", polling_failure_details(response, operation_endpoint))

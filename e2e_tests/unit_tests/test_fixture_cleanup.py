@@ -422,11 +422,13 @@ def unmanaged_fixture():
 
 class CleanupPollingDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
     async def test_cancellation_records_last_observed_operation_state(self):
+        endpoint = "/api/operations/2913b8be-2594-4088-8d93-42a296fe69cc"
         check = AsyncMock(return_value=(False, "pipeline_running", "Waiting for resource", "Step 1"))
         with self.assertLogs(resource.LOGGER, level="ERROR") as logs:
             with self.assertRaises(TimeoutError):
                 async with asyncio.timeout(0.01):
-                    await resource.wait_for(check, None, "/api/operations/cleanup", "token", [])
-        self.assertIn("/api/operations/cleanup", logs.output[0])
+                    await resource.wait_for(check, None, endpoint, "token", [])
+        self.assertIn(endpoint, logs.output[0])
         self.assertIn("pipeline_running", logs.output[0])
-        self.assertIn("Waiting for resource", logs.output[0])
+        self.assertNotIn("Waiting for resource", logs.output[0])
+        self.assertNotIn("Step 1", logs.output[0])

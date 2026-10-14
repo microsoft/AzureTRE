@@ -6,7 +6,13 @@ from e2e_tests.timeouts import cleanup_deadline
 from httpx import AsyncClient, Timeout
 from starlette import status
 from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
-from e2e_tests.resources.deployment import delete_done, install_done, patch_done
+from e2e_tests.resources.deployment import (
+    delete_done,
+    install_done,
+    operation_log_path,
+    operation_log_state,
+    patch_done,
+)
 
 from resources import strings
 
@@ -163,30 +169,29 @@ async def temporary_resource(payload, endpoint, access_token, verify):
 
 
 async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
-    done_state, message, operation_steps = "not yet observed", "", ""
-    LOGGER.info(f"WAITING FOR OP: {operation_endpoint}")
+    done_state = "not yet observed"
+    log_path = operation_log_path(operation_endpoint)
+    LOGGER.info("WAITING FOR OP: %s", log_path)
     try:
-        done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+        done, done_state, _, _ = await func(client, operation_endpoint, access_token)
         record_operation(operation_endpoint, done_state, done)
         while not done:
             await asyncio.sleep(30)
 
-            done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+            done, done_state, _, _ = await func(client, operation_endpoint, access_token)
             record_operation(operation_endpoint, done_state, done)
-            LOGGER.info(f"{done}, {done_state}, {message}")
+            LOGGER.info("Operation %s. Last observed state: %s", log_path, operation_log_state(done_state))
     except asyncio.CancelledError:
         LOGGER.error(
-            "Stopped waiting for operation %s. Last observed state: %s; message: %s; steps: %s",
-            operation_endpoint,
-            done_state,
-            message,
-            operation_steps,
+            "Stopped waiting for operation %s. Last observed state: %s",
+            log_path,
+            operation_log_state(done_state),
         )
         raise
     try:
         assert done_state not in failure_states
     except Exception:
-        LOGGER.exception(f"Failed to deploy. Status message: {message}.\n{operation_steps}")
+        LOGGER.exception("Operation %s failed. Last observed state: %s", log_path, operation_log_state(done_state))
         raise
     return done_state
 

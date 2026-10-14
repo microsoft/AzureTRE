@@ -8,6 +8,11 @@ from httpx import AsyncClient, MockTransport, Response
 from e2e_tests import conftest as fixtures, helpers
 from e2e_tests.resources import resource
 
+OPERATIONS = {
+    "disable": "2913b8be-2594-4088-8d93-42a296fe69cc",
+    "delete": "05c22c61-9d22-49d7-b333-65b86a0d70dd",
+}
+
 
 class DisableDeadlineTests(unittest.IsolatedAsyncioTestCase):
     async def run_cleanup(self, stall):
@@ -20,13 +25,14 @@ class DisableDeadlineTests(unittest.IsolatedAsyncioTestCase):
             elif request.method == "DELETE":
                 phase, state, code = "delete", "deleting", 200
             else:
-                phase, code = request.url.path.rsplit("/", 1)[-1], 200
+                operation_id = request.url.path.rsplit("/", 1)[-1]
+                phase, code = {value: key for key, value in OPERATIONS.items()}[operation_id], 200
                 if phase == "disable":
                     await asyncio.sleep(1 if stall else 0.001)
                 state = {"disable": "updated", "delete": "deleted"}[phase]
             return Response(
                 code,
-                headers={"Location": f"/api/operations/{phase}"},
+                headers={"Location": f"/api/operations/{OPERATIONS[phase]}"},
                 json={
                     "operation": {
                         "resourceId": "owned-workspace",
@@ -55,6 +61,6 @@ class DisableDeadlineTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaisesRegex(TimeoutError, "Cleanup of /workspaces/owned-workspace exceeded"):
                 await asyncio.wait_for(self.run_cleanup(True), 0.5)
         self.assertEqual([method for method, _ in self.requests], ["PATCH", "GET"])
-        self.assertIn("/api/operations/disable", "\n".join(logs.output))
+        self.assertIn(f"/api/operations/{OPERATIONS['disable']}", "\n".join(logs.output))
         await asyncio.sleep(0.01)
         self.assertEqual([method for method, _ in self.requests], ["PATCH", "GET"])

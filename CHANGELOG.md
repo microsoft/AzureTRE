@@ -28,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Keep response content and URL parameters out of E2E operation polling logs, including cancellation and deployment failures. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Protect active validation environments, require successful smoke tests before custom tests, and give E2E cleanup separate deadlines. Forward explicit Nexus consent and verify TLS for identity authentication. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))

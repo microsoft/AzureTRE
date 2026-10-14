@@ -1,12 +1,13 @@
 """Keep useful HTTP failure evidence without exposing response data or credentials."""
 
+import asyncio
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from httpx import AsyncClient, MockTransport, Response
 
 from e2e_tests import helpers
-from e2e_tests.resources import deployment, strings
+from e2e_tests.resources import deployment, resource, strings
 
 
 WORKSPACE = "9f293650-29c7-4291-a074-c5c0aaedd7b7"
@@ -130,3 +131,66 @@ class PollingDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
                     state, _, _ = await deployment.check_deployment(client, ENDPOINT, "token")
                 self.assertEqual(state, expected)
                 log.assert_not_called()
+
+
+class ResourcePollingDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.enterContext(patch.object(resource, "record_operation"))
+
+    async def test_cancellation_excludes_response_content_and_url_parameters(self):
+        check = AsyncMock(return_value=(False, "pipeline_running", "message-secret", "step-secret"))
+        with patch.object(resource.asyncio, "sleep", new=AsyncMock(side_effect=asyncio.CancelledError)):
+            with self.assertLogs(resource.LOGGER, level="INFO") as logs:
+                with self.assertRaises(asyncio.CancelledError):
+                    await resource.wait_for(
+                        check, None, ENDPOINT + "?sig=query-secret#fragment-secret", "token-secret", []
+                    )
+        log = "\n".join(logs.output)
+        self.assertIn(ENDPOINT, log)
+        self.assertIn("pipeline_running", log)
+        for secret in ("message-secret", "step-secret", "query-secret", "fragment-secret", "token-secret"):
+            self.assertNotIn(secret, log)
+
+    async def test_progress_and_terminal_logs_exclude_response_content(self):
+        for state in ("deployed", "deployment_failed"):
+            with self.subTest(state=state):
+                check = AsyncMock(
+                    side_effect=[
+                        (False, "pipeline_running", "message-secret", "step-secret"),
+                        (True, state, "message-secret", "step-secret"),
+                    ]
+                )
+                with patch.object(resource.asyncio, "sleep", new=AsyncMock()):
+                    with self.assertLogs(resource.LOGGER, level="INFO") as logs:
+                        if state == "deployment_failed":
+                            with self.assertRaises(AssertionError):
+                                await resource.wait_for(check, None, ENDPOINT, "token-secret", [state])
+                        else:
+                            result = await resource.wait_for(check, None, ENDPOINT, "token-secret", [])
+                            self.assertEqual(result, state)
+                log = "\n".join(logs.output)
+                self.assertIn(ENDPOINT, log)
+                self.assertIn(state, log)
+                for secret in ("message-secret", "step-secret", "token-secret"):
+                    self.assertNotIn(secret, log)
+
+    async def test_cancellation_before_first_response_preserves_unknown_state(self):
+        check = AsyncMock(side_effect=asyncio.CancelledError)
+        with self.assertLogs(resource.LOGGER, level="ERROR") as logs:
+            with self.assertRaises(asyncio.CancelledError):
+                await resource.wait_for(check, None, ENDPOINT, "token-secret", [])
+        self.assertIn(ENDPOINT, logs.output[0])
+        self.assertIn("not yet observed", logs.output[0])
+        self.assertNotIn("token-secret", logs.output[0])
+
+    async def test_unknown_paths_and_states_are_redacted_and_bounded(self):
+        secret = "response-secret" * 1000
+        check = AsyncMock(return_value=(False, secret, secret, secret))
+        with patch.object(resource.asyncio, "sleep", new=AsyncMock(side_effect=asyncio.CancelledError)):
+            with self.assertLogs(resource.LOGGER, level="INFO") as logs:
+                with self.assertRaises(asyncio.CancelledError):
+                    await resource.wait_for(check, None, "/api/operations/" + secret, "token-secret", [])
+        log = "\n".join(logs.output)
+        self.assertIn("<redacted>", log)
+        self.assertNotIn("response-secret", log)
+        self.assertLess(len(log), 500)
