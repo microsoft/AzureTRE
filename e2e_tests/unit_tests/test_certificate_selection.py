@@ -3,6 +3,8 @@
 import asyncio
 import json
 from pathlib import Path
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -27,25 +29,55 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
             patch.object(shared, "disable_and_delete_shared_service_if_exists", AsyncMock())
         )
         self.post = self.enterContext(
-            patch.object(shared, "post_resource", AsyncMock(return_value=("/shared-services/certs", "certs")))
+            patch.object(
+                shared,
+                "post_resource",
+                AsyncMock(
+                    side_effect=[("/shared-services/certs", "certs"), ("/shared-services/reinstalled", "reinstalled")]
+                ),
+            )
         )
         self.cleanup = self.enterContext(patch.object(shared, "disable_and_delete_tre_resource", AsyncMock()))
         self.record = {
             "id": "certs",
             "templateName": shared.strings.CERTS_SHARED_SERVICE,
+            "templateVersion": "0.9.0",
             "deploymentStatus": "deployed",
             "isEnabled": True,
             "properties": {"domain_prefix": "nexus", "cert_name": "nexus-ssl"},
         }
-        self.get = self.enterContext(
-            patch.object(shared, "get_resource", AsyncMock(return_value={"sharedService": self.record}))
+        self.template_version = "0.9.0"
+
+        async def get_record(endpoint, *args):
+            return {"sharedService": {**self.record, "id": endpoint.rsplit("/", 1)[-1]}}
+
+        self.get = AsyncMock(side_effect=get_record)
+
+        async def get_resource(endpoint, *args):
+            if endpoint.startswith(shared.strings.API_SHARED_SERVICE_TEMPLATES):
+                return {"template": {"version": self.template_version}}
+            return await self.get(endpoint, *args)
+
+        self.enterContext(patch.object(shared, "get_resource", get_resource))
+        self.checks = SimpleNamespace(
+            snapshot=AsyncMock(
+                return_value={"hostname": "nexus-tre.test", "sha256": "a" * 64, "gateway_stopped": True}
+            ),
+            confirm_reuse=AsyncMock(),
+            confirm_removed=AsyncMock(),
         )
+
+        @asynccontextmanager
+        async def checks():
+            yield self.checks
+
+        self.enterContext(patch.object(shared, "certificate_checks", checks))
         self.lookup_status = 404
         self.lookups = []
 
         def lookup(request):
             self.assertEqual(request.method, "GET")
-            self.assertEqual(request.url.path, "/api/shared-services/certs")
+            self.assertIn(request.url.path, ("/api/shared-services/certs", "/api/shared-services/reinstalled"))
             self.assertEqual(request.headers["Authorization"], "Bearer token")
             self.lookups.append(request)
             return httpx.Response(self.lookup_status, request=request)
@@ -59,15 +91,18 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_creates_only_certificates_without_nexus_consent_and_confirms_removal(self):
         await shared.test_create_certificate_shared_service(True)
-        self.post.assert_awaited_once()
+        self.assertEqual(self.post.await_count, 2)
         arguments = self.post.await_args.kwargs
         self.assertEqual(arguments["payload"]["templateName"], shared.strings.CERTS_SHARED_SERVICE)
         self.assertTrue(arguments["cleanup_failed_create"])
         schema = Path(__file__).resolve().parents[2] / "templates/shared_services/certs/template_schema.json"
         validate(arguments["payload"]["properties"], json.loads(schema.read_text()))
         self.recover.assert_awaited_once_with(shared.strings.CERTS_SHARED_SERVICE, True)
-        self.cleanup.assert_awaited_once_with("/shared-services/certs", True)
-        self.assertEqual(len(self.lookups), 1)
+        self.assertEqual(self.cleanup.await_count, 2)
+        self.assertEqual(len(self.lookups), 2)
+        self.checks.confirm_removed.assert_awaited()
+        self.assertEqual(self.checks.confirm_removed.await_count, 3)
+        self.checks.confirm_reuse.assert_awaited_once_with("/shared-services/reinstalled", "a" * 64)
 
     async def test_existing_nexus_prevents_recovery_and_creation(self):
         self.find_service.return_value = {"id": "existing-nexus"}
@@ -91,8 +126,8 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.date.today.return_value.weekday.return_value = 5
         with patch.object(shared.config, "TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS", True):
             await shared.test_create_certificate_shared_service(True)
-        self.post.assert_awaited_once()
-        self.cleanup.assert_awaited_once()
+        self.assertEqual(self.post.await_count, 2)
+        self.assertEqual(self.cleanup.await_count, 2)
 
     async def test_wrong_deployed_record_fails_and_still_cleans_up(self):
         self.record["deploymentStatus"] = "deployment_failed"
@@ -110,7 +145,7 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Delete failed", failure.__notes__[0])
 
     async def test_nexus_appearing_during_the_case_retains_the_certificate(self):
-        self.find_service.side_effect = [None, {"id": "new-nexus"}]
+        self.find_service.side_effect = [None, None, {"id": "new-nexus"}]
         with self.assertRaisesRegex(RuntimeError, "Retaining certificate dependency"):
             await shared.test_create_certificate_shared_service(True)
         self.cleanup.assert_not_awaited()
@@ -119,6 +154,7 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
     async def test_visible_record_after_deletion_fails_the_case(self):
         for code in (200, 403, 500):
             with self.subTest(code=code):
+                self.post.side_effect = [("/shared-services/certs", "certs")]
                 self.lookup_status = code
                 with self.assertRaisesRegex(AssertionError, f"HTTP {code}"):
                     await shared.test_create_certificate_shared_service(True)
@@ -161,3 +197,59 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(TimeoutError):
                 await shared.test_create_certificate_shared_service(True)
         self.post.assert_not_awaited()
+
+    async def test_old_bundle_fails_before_recovery_or_new_creation(self):
+        for version in ("0.7.13", "0.8.9", "0.9.0-rc1", "invalid"):
+            with self.subTest(version=version):
+                self.template_version = version
+                with self.assertRaisesRegex(pytest.fail.Exception, "Deploy the reuse fix first"):
+                    await shared.test_create_certificate_shared_service(True)
+        self.recover.assert_not_awaited()
+        self.post.assert_not_awaited()
+
+    async def test_changed_thumbprint_fails_and_cleans_both_installations(self):
+        original = self.checks.snapshot.return_value
+        self.checks.snapshot.side_effect = [original, {**original, "sha256": "b" * 64}]
+        with self.assertRaisesRegex(AssertionError, "did not preserve"):
+            await shared.test_create_certificate_shared_service(True)
+        self.assertEqual(self.cleanup.await_count, 2)
+        self.checks.confirm_reuse.assert_not_awaited()
+
+    async def test_missing_reuse_log_fails_and_cleans_reinstalled_service(self):
+        self.checks.confirm_reuse.side_effect = TimeoutError("No reuse evidence")
+        with self.assertRaisesRegex(TimeoutError, "No reuse evidence"):
+            await shared.test_create_certificate_shared_service(True)
+        self.assertEqual(self.cleanup.await_count, 2)
+
+    async def test_first_cleanup_failure_prevents_reinstallation(self):
+        self.cleanup.side_effect = RuntimeError("Delete failed")
+        with self.assertRaisesRegex(RuntimeError, "Delete failed"):
+            await shared.test_create_certificate_shared_service(True)
+        self.post.assert_awaited_once()
+
+    async def test_arm_cleanup_failure_prevents_reinstallation(self):
+        self.checks.confirm_removed.side_effect = [None, TimeoutError("Gateway remains")]
+        with self.assertRaisesRegex(TimeoutError, "Gateway remains"):
+            await shared.test_create_certificate_shared_service(True)
+        self.post.assert_awaited_once()
+
+    async def test_nexus_appearing_before_reinstall_prevents_new_creation(self):
+        self.find_service.side_effect = [None, None, None, {"id": "new-nexus"}]
+        with self.assertRaisesRegex(pytest.fail.Exception, "Nexus is present"):
+            await shared.test_create_certificate_shared_service(True)
+        self.post.assert_awaited_once()
+        self.cleanup.assert_awaited_once()
+
+    def test_lifecycle_timeout_leaves_job_setup_and_report_time(self):
+        self.assertLess(shared.CERTIFICATE_LIFECYCLE_TIMEOUT_SECONDS, 290 * 60)
+        required = (
+            shared.CERTIFICATE_CHECK_TIMEOUT_SECONDS
+            + shared.CERTIFICATE_RECOVERY_TIMEOUT_SECONDS
+            + 2
+            * (
+                shared.CERTIFICATE_PROVISION_TIMEOUT_SECONDS
+                + 3 * shared.CERTIFICATE_CHECK_TIMEOUT_SECONDS
+                + max(shared.CLEANUP_TIMEOUT_SECONDS, shared.FAILED_CREATE_CLEANUP_TIMEOUT_SECONDS)
+            )
+        )
+        self.assertGreater(shared.CERTIFICATE_LIFECYCLE_TIMEOUT_SECONDS, required)

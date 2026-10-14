@@ -84,8 +84,21 @@ Check the selected entry's prerequisites and limitations before running it.
 
 ### Certificate and Nexus selection
 
-Select `tre-shared-service-certs` to create and delete only the certificate shared service.
-The case checks the deployed API record and confirms HTTP 404 after deletion. It does not require Nexus EULA consent.
+Select `tre-shared-service-certs` to install, uninstall and reinstall the certificate shared service with the same hostname and certificate name.
+The case requires certificate bundle version `0.9.0` or later and pins both installations to the selected template version.
+It checks the deployed API record, the gateway's public certificate SAN and validity, and the gateway's stopped state.
+Reinstallation must preserve the SHA-256 certificate fingerprint and produce a matching resource processor reuse log without issuance evidence.
+After each uninstall, the case requires API HTTP 404 and ARM confirmation that the gateway, public IP and challenge storage are absent.
+The bundle report records public metadata, reuse and cleanup results. It does not require Nexus EULA consent.
+
+The evidence helper currently supports `AzureCloud`. It uses the existing deployment identity for ARM and Log Analytics reads.
+It checks log access before resource changes. It does not read private keys, open vault network access or add permissions.
+Only aggregate log counts enter the test process. Missing, partial or delayed evidence beyond the deadline fails the case.
+See [Application Gateway public certificate metadata](https://learn.microsoft.com/en-us/dotnet/api/microsoft.azure.management.network.models.applicationgatewaysslcertificate.publiccertdata)
+and [Azure Monitor query authentication](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/access-api).
+
+Each installation has a 45-minute provisioning deadline. Cleanup has its own 60-minute deadline.
+The complete case has a 285-minute limit, leaving 15 minutes within the five-hour bundle job for setup and reporting.
 It refuses to change resources when Nexus is present. Existing certificate resources must belong to earlier E2E tests before recovery can remove them.
 Cleanup has a separate deadline and retains the certificate service if Nexus appears before deletion.
 Use an isolated environment and run mutating suites sequentially. These guards do not provide a distributed lock.
@@ -99,7 +112,13 @@ A skipped case remains unproven coverage.
 The certificate-only case is opt-in through bundle selection or the `certificate_validation` marker.
 It is excluded from the ordinary `shared_services` selection to avoid an additional certificate request in that suite.
 The existing combined case remains in that suite. It deletes Nexus before its certificate dependency.
-Certificate content, renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and physical resource removal need separate evidence.
+Certificate chain validation, actual renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and other Azure resource removal need separate evidence.
+The case does not purge certificates. A first installation can reuse a certificate retained by an earlier run.
+
+Before merging the certificate fix, run this case from a trusted upstream branch that contains both the certificate implementation and these tests.
+Select `e2eBundle=tre-shared-service-certs` in `deploy_tre_branch.yml` and leave the marker selector empty.
+PR slash commands use workflow definitions from `main`. `/test` runs smoke tests and `/test-shared-services` excludes this certificate-only case.
+A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.
 
 ### Base workspace lifecycle
 

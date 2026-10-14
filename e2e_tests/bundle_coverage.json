@@ -52,14 +52,20 @@
       ],
       "coverage": [
         "install",
-        "deployment-status",
+        "api-configuration",
+        "certificate-hostname-and-validity",
+        "certificate-reuse-after-reinstall",
+        "gateway-stopped",
         "uninstall",
-        "api-removal"
+        "api-removal",
+        "gateway-ip-storage-removal"
       ],
       "limitations": [
-        "Requires the deployed firewall. Uses an isolated environment and refuses to start while Nexus exists. Only earlier E2E certificate resources can be recovered.",
+        "Requires tre-shared-service-certs 0.9.0 or later, the deployed firewall and an isolated AzureCloud environment. Refuses to start while Nexus exists. Only earlier E2E certificate resources can be recovered.",
+        "Uses the existing deployment identity for ARM and Log Analytics reads. Requires AppTraces and read access. Does not read Key Vault secrets or change vault network rules or permissions.",
+        "Compares the public gateway certificate fingerprint and hostname across uninstall and reinstall. Requires a matching resource processor reuse log and rejects issuance evidence. Missing or partial log evidence fails the case.",
+        "Checks API removal and absence of the gateway, public IP and challenge storage. Does not enumerate all dependent Azure resources or inspect vault soft-deletion, secret values, certificate chains, renewal or upgrades.",
         "Skips at weekends unless explicitly overridden after checking certificate rate limits. A skip does not prove the lifecycle.",
-        "Validates the API lifecycle, not certificate contents, renewal, retained Key Vault artefacts, upgrades or physical resource removal.",
         "Certificate cleanup is retained if Nexus is present. Run mutating suites sequentially; the guard is not a distributed lock."
       ],
       "unavailable_reason": ""

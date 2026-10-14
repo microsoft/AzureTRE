@@ -6,7 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
-* Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL and Airlock storage. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock storage and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))

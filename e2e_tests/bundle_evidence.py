@@ -47,6 +47,22 @@ def record_operation(endpoint, state, done):
     _ACTIVE_REPORT.write()
 
 
+def record_certificate_check(phase, resource_path, metadata, *, reused=False, removed=False):
+    """Retain public certificate evidence, never raw Azure responses or logs."""
+    if _ACTIVE_REPORT is None:
+        return
+    _ACTIVE_REPORT.data["certificate_checks"].append(
+        {
+            "phase": phase,
+            "resource_path": resource_path,
+            **{key: metadata[key] for key in ("hostname", "sha256", "gateway_stopped") if key in metadata},
+            "reuse_confirmed": reused,
+            "api_gateway_ip_storage_removed": removed,
+        }
+    )
+    _ACTIVE_REPORT.write()
+
+
 class BundleReport:
     def __init__(self, filename, data):
         self.filename = Path(filename)
@@ -58,6 +74,7 @@ class BundleReport:
             "resources": [],
             "reused_resources": [],
             "operations": {},
+            "certificate_checks": [],
         }
         self.expected_tests = set(data.get("requested_tests", []))
         self.write()
