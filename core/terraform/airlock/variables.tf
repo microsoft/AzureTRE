@@ -80,6 +80,10 @@ variable "log_analytics_workspace_id" {
 variable "blob_core_dns_zone_id" {
   type = string
 }
+variable "core_vnet_id" {
+  type        = string
+  description = "Core VNet, linked to the account-specific DNS zone so the airlock processor resolves the shared global workspace storage account to the core private endpoint"
+}
 variable "file_core_dns_zone_id" {
   type = string
 }
@@ -106,4 +110,10 @@ variable "enable_cmk_encryption" {
 variable "encryption_key_versionless_id" {
   type        = string
   description = "Versionless ID of the encryption key in the key vault"
+}
+
+variable "enable_legacy_airlock" {
+  type        = bool
+  default     = true
+  description = "Deploy v1 legacy per-stage airlock storage accounts. Required for workspaces using airlock_version=1."
 }

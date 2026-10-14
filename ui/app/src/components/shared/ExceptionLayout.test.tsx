@@ -5,7 +5,7 @@ import { ExceptionLayout } from "./ExceptionLayout";
 import { APIError } from "../../models/exceptions";
 
 // Mock FluentUI components using centralized utility
-vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon"]));
+vi.mock("@fluentui/react", () => createPartialFluentUIMock(["MessageBar", "Link", "Icon", "DefaultButton"]));
 
 describe("ExceptionLayout Component", () => {
   const createMockError = (overrides: Partial<APIError> = {}): APIError => {
@@ -37,18 +37,22 @@ describe("ExceptionLayout Component", () => {
     expect(screen.getByText("Attempted resource: /test/endpoint")).toBeInTheDocument();
   });
 
-  it("renders nothing for 429 status (rate limiting)", async () => {
+  it("renders a retry message for 429 status (rate limiting)", async () => {
     const error = createMockError({ status: 429 });
+    const retry = vi.fn();
 
-    let container: HTMLElement | null = null;
     await act(async () => {
-      container = render(<ExceptionLayout e={error} />).container;
+      render(<ExceptionLayout e={error} onRetry={retry} />);
     });
 
-    expect(container!.firstChild).toBeNull();
+    expect(
+      screen.getByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(retry).toHaveBeenCalledOnce();
   });
 
-  it("renders default error message for other status codes", async () => {
+  it("renders a friendly retry message for API unavailability", async () => {
     const error = createMockError({
       status: 500,
       userMessage: "Internal server error",
@@ -60,9 +64,23 @@ describe("ExceptionLayout Component", () => {
     });
 
     expect(screen.getByTestId("message-bar")).toBeInTheDocument();
-    expect(screen.getByText("Internal server error")).toBeInTheDocument();
-    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    expect(
+      screen.getByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
     expect(screen.getByTestId("dismiss-button")).toBeInTheDocument();
+  });
+
+  it("calls the retry callback when requested", async () => {
+    const retry = vi.fn();
+    await act(async () => {
+      render(<ExceptionLayout e={createMockError()} onRetry={retry} />);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(retry).toHaveBeenCalledOnce();
   });
 
   it("shows and hides details when toggle link is clicked", async () => {
@@ -106,11 +124,17 @@ describe("ExceptionLayout Component", () => {
   });
 
   it("displays '(none)' for missing status code", async () => {
-    const error = createMockError({ status: undefined });
+    const error = createMockError({ status: undefined, userMessage: "No operations found" });
 
     await act(async () => {
       render(<ExceptionLayout e={error} />);
     });
+
+    expect(screen.getByText("No operations found")).toBeInTheDocument();
+    expect(
+      screen.queryByText("The TRE API is currently unavailable. Please try again later or contact your administrator."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
 
     // Show details to see the status code
     await act(async () => {

@@ -162,6 +162,7 @@ plan-core: tre-start
 # Example: make letsencrypt
 letsencrypt:
 	$(call target_title, "Requesting LetsEncrypt SSL certificate") \
+	&& . "${MAKEFILE_DIR}/core/terraform/scripts/validate_certbot.sh" \
 	&& . ${MAKEFILE_DIR}/devops/scripts/bootstrap_azure_env.sh \
 	&& pushd ${MAKEFILE_DIR}/core/terraform/ > /dev/null && . ./outputs.sh && popd > /dev/null \
 	&& . ${MAKEFILE_DIR}/devops/scripts/load_env.sh ${MAKEFILE_DIR}/core/private.env \
@@ -243,7 +244,10 @@ lint: ## 🧹 Lint all files
 		-e LOG_LEVEL=INFO \
 		-e DEFAULT_BRANCH=main \
 		-e VALIDATE_MARKDOWN=true \
-		-e VALIDATE_PYTHON_FLAKE8=true \
+		-e VALIDATE_PYTHON_RUFF=true \
+		-e VALIDATE_PYTHON_RUFF_FORMAT=true \
+		-e PYTHON_RUFF_CONFIG_FILE=../../pyproject.toml \
+		-e PYTHON_RUFF_FORMAT_CONFIG_FILE=../../pyproject.toml \
 		-e VALIDATE_YAML=true \
 		-e VALIDATE_TERRAFORM_TFLINT=true \
 		-e VALIDATE_JAVA=true \
@@ -259,7 +263,7 @@ lint: ## 🧹 Lint all files
 		-e TYPESCRIPT_ES_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-e TSX_CONFIG_FILE=../../ui/app/eslint.config.js \
 		-v $${LOCAL_WORKSPACE_FOLDER}:/tmp/lint \
-		ghcr.io/super-linter/super-linter:slim-v8.3.2
+		ghcr.io/super-linter/super-linter:slim-v8.7.0
 
 # Description: Lint documentation files
 # # This will validate all files, not only the changed ones as the CI version does.
@@ -527,6 +531,14 @@ test-e2e-shared-services: ## 🧪 Run E2E shared service tests
 test-e2e-backups: ## 🧪 Run E2E backup tests
 	$(call target_title, "Running E2E backup tests") && \
 	$(MAKE) test-e2e-custom SELECTOR=backups
+
+# Description: Run E2E airlock tests
+# # The E2E airlock tests include:
+# # - tests marked with the `airlock` selector that verify airlock import/export flows and their access controls
+# Example: make test-e2e-airlock
+test-e2e-airlock: ## 🧪 Run E2E airlock tests
+	$(call target_title, "Running E2E airlock tests") && \
+	$(MAKE) test-e2e-custom SELECTOR=airlock
 
 # Description: Run E2E tests with custom selector
 # Arguments: SELECTOR - the selector to run the tests with

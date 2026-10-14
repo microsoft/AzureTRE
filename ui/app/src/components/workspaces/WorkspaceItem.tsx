@@ -7,7 +7,11 @@ import { ResourceHeader } from "../shared/ResourceHeader";
 import { useNavigate } from "react-router-dom";
 import { ResourceBody } from "../shared/ResourceBody";
 
-export const WorkspaceItem: React.FunctionComponent = () => {
+interface WorkspaceItemProps {
+  onRefresh?: () => void;
+}
+
+export const WorkspaceItem: React.FunctionComponent<WorkspaceItemProps> = (props: WorkspaceItemProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
   const navigate = useNavigate();
 
@@ -19,7 +23,7 @@ export const WorkspaceItem: React.FunctionComponent = () => {
 
   return (
     <>
-      <ResourceHeader resource={workspaceCtx.workspace} latestUpdate={latestUpdate} />
+      <ResourceHeader resource={workspaceCtx.workspace} latestUpdate={latestUpdate} onRefresh={props.onRefresh} />
       <ResourceBody resource={workspaceCtx.workspace} />
     </>
   );

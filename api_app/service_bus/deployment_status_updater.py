@@ -23,7 +23,7 @@ from resources import strings
 from services.logging import logger, tracer
 
 
-class DeploymentStatusUpdater():
+class DeploymentStatusUpdater:
     def __init__(self):
         pass
 
@@ -43,43 +43,64 @@ class DeploymentStatusUpdater():
 
             while True:
                 try:
-                    current_time = time.time()
-                    polling_count += 1
-                    # Log a heartbeat message every 60 seconds to show the service is still working
-                    if current_time - last_heartbeat_time >= 60:
-                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
-                        last_heartbeat_time = current_time
-                        polling_count = 0
-
                     async with credentials.get_credential_async_context() as credential:
-                        service_bus_client = ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential)
+                        async with ServiceBusClient(
+                            config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential
+                        ) as service_bus_client:
+                            client_created_time = time.time()
+                            while True:
+                                try:
+                                    if time.time() - client_created_time > 3600:
+                                        logger.info(
+                                            "ServiceBusClient has been active for 1 hour. Recreating for freshness..."
+                                        )
+                                        break
 
-                        logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
-                        # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                        async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
-                            logger.info(f"Got a session containing messages: {receiver.session.session_id}")
-                            async with AutoLockRenewer() as renewer:
-                                renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
-                                async for msg in receiver:
-                                    complete_message = await self.process_message(msg)
-                                    if complete_message:
-                                        await receiver.complete_message(msg)
-                                    else:
-                                        # could have been any kind of transient issue, we'll abandon back to the queue, and retry
-                                        await receiver.abandon_message(msg)
-                            logger.info(f"Closing session: {receiver.session.session_id}")
+                                    current_time = time.time()
+                                    polling_count += 1
+                                    if current_time - last_heartbeat_time >= 60:
+                                        logger.info(
+                                            f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute"
+                                        )
+                                        last_heartbeat_time = current_time
+                                        polling_count = 0
 
-                except OperationTimeoutError:
-                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
-                    logger.debug("No sessions for this process. Will look again...")
+                                    logger.debug(
+                                        f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue..."
+                                    )
+                                    # max_wait_time=1 -> don't hold the session open after processing of the message has finished
+                                    async with service_bus_client.get_queue_receiver(
+                                        queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE,
+                                        max_wait_time=1,
+                                        session_id=NEXT_AVAILABLE_SESSION,
+                                    ) as receiver:
+                                        logger.info(f"Got a session containing messages: {receiver.session.session_id}")
+                                        async with AutoLockRenewer() as renewer:
+                                            renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
+                                            async for msg in receiver:
+                                                complete_message = await self.process_message(msg)
+                                                if complete_message:
+                                                    await receiver.complete_message(msg)
+                                                else:
+                                                    # could have been any kind of transient issue, we'll abandon back to the queue, and retry
+                                                    await receiver.abandon_message(msg)
+                                        logger.info(f"Closing session: {receiver.session.session_id}")
+
+                                except OperationTimeoutError:
+                                    # Timeout occurred whilst connecting to a session - this is expected and indicates no non-empty sessions are available
+                                    logger.debug("No sessions for this process. Will look again...")
 
                 except ServiceBusConnectionError:
                     # Occasionally there will be a transient / network-level error in connecting to SB.
                     logger.info("Unknown Service Bus connection error. Will retry...")
+                    await asyncio.sleep(10)
+
+                except asyncio.CancelledError:
+                    raise
 
                 except Exception as e:
-                    # Catch all other exceptions, log them via .exception to get the stack trace, and reconnect
                     logger.exception(f"Unknown exception. Will retry - {e}")
+                    await asyncio.sleep(10)
 
     async def process_message(self, msg):
         complete_message = False
@@ -175,12 +196,24 @@ class DeploymentStatusUpdater():
                         step_resource=parent_resource,
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,
-                        user=operation.user)
+                        user=operation.user,
+                    )
 
                     # create + send the message
-                    logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
-                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
-                    await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                    logger.info(
+                        f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}"
+                    )
+                    content = json.dumps(
+                        resource_to_send.get_resource_request_message_payload(
+                            operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction
+                        )
+                    )
+                    await send_deployment_message(
+                        content=content,
+                        correlation_id=operation.id,
+                        session_id=resource_to_send.id,
+                        action=next_step.resourceAction,
+                    )
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
@@ -282,12 +315,12 @@ class DeploymentStatusUpdater():
             obj_type = msg.Type
 
             #
-            if obj_type == 'string' and isinstance(value, str):
+            if obj_type == "string" and isinstance(value, str):
                 value = value.strip("'").strip('"')
-            elif obj_type == 'boolean':
+            elif obj_type == "boolean":
                 if isinstance(value, str):
                     value = value.strip("'").strip('"')
-                value = (value.lower() == 'true')
+                value = value.lower() == "true"
 
             result_dict[name] = value
 

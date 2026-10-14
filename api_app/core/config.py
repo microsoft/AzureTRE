@@ -5,7 +5,7 @@ from _version import __version__
 
 warnings.filterwarnings("ignore", message="Config file '.env' not found.")
 
-config = Config('.env')
+config = Config(".env")
 
 # API settings
 API_PREFIX = "/api"
@@ -23,10 +23,10 @@ CORE_ADDRESS_SPACE: str = config("CORE_ADDRESS_SPACE", default="")
 TRE_ADDRESS_SPACE: str = config("TRE_ADDRESS_SPACE", default="")
 
 # State store configuration
-STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")      # Cosmos DB endpoint
+STATE_STORE_ENDPOINT: str = config("STATE_STORE_ENDPOINT", default="")  # Cosmos DB endpoint
 STATE_STORE_SSL_VERIFY: bool = config("STATE_STORE_SSL_VERIFY", cast=bool, default=True)
-STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")                # Cosmos DB access key
-COSMOSDB_ACCOUNT_NAME: str = config("COSMOSDB_ACCOUNT_NAME", default="")                # Cosmos DB account name
+STATE_STORE_KEY: str = config("STATE_STORE_KEY", default="")  # Cosmos DB access key
+COSMOSDB_ACCOUNT_NAME: str = config("COSMOSDB_ACCOUNT_NAME", default="")  # Cosmos DB account name
 STATE_STORE_DATABASE = "AzureTRE"
 STATE_STORE_RESOURCES_CONTAINER = "Resources"
 STATE_STORE_RESOURCE_TEMPLATES_CONTAINER = "ResourceTemplates"
@@ -44,7 +44,9 @@ SERVICE_BUS_STEP_RESULT_QUEUE: str = config("SERVICE_BUS_STEP_RESULT_QUEUE", def
 
 # Event grid configuration
 EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT: str = config("EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT", default="")
-EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config("EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT", default="")
+EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT: str = config(
+    "EVENT_GRID_AIRLOCK_NOTIFICATION_TOPIC_ENDPOINT", default=""
+)
 
 # Managed identity configuration
 MANAGED_IDENTITY_CLIENT_ID: str = config("MANAGED_IDENTITY_CLIENT_ID", default="")
@@ -69,6 +71,9 @@ API_AUDIENCE: str = config("API_AUDIENCE", default=API_CLIENT_ID)
 
 AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS: int = config("AIRLOCK_SAS_TOKEN_EXPIRY_PERIOD_IN_HOURS", default=1)
 ENABLE_AIRLOCK_EMAIL_CHECK: bool = config("ENABLE_AIRLOCK_EMAIL_CHECK", cast=bool, default=False)
+ENABLE_LEGACY_AIRLOCK: bool = config("ENABLE_LEGACY_AIRLOCK", cast=bool, default=True)
+
+APP_GATEWAY_FQDN: str = config("APP_GATEWAY_FQDN", default="")
 
 API_ROOT_SCOPE: str = f"api://{API_CLIENT_ID}/user_impersonation"
 

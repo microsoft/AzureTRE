@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { SharedServiceItem } from "./SharedServiceItem";
 import { SharedService } from "../../models/sharedService";
@@ -10,13 +10,14 @@ import { ResourceType } from "../../models/resourceType";
 const mockApiCall = vi.fn();
 const mockNavigate = vi.fn();
 const mockUseComponentManager = vi.fn();
+let mockSharedServiceId = "test-shared-service-id";
 
 // Mock useParams to return a shared service ID
 vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return {
     ...actual,
-    useParams: () => ({ sharedServiceId: "test-shared-service-id" }),
+    useParams: () => ({ sharedServiceId: mockSharedServiceId }),
     useNavigate: () => mockNavigate,
   };
 });
@@ -32,10 +33,11 @@ vi.mock("../../hooks/useComponentManager", () => ({
 
 // Mock child components
 vi.mock("./ResourceHeader", () => {
-  const ResourceHeader = ({ resource, _latestUpdate, readonly }: any) => (
+  const ResourceHeader = ({ resource, _latestUpdate, readonly, onRefresh }: any) => (
     <div data-testid="resource-header">
       <div>Resource: {resource.id}</div>
       <div>Readonly: {readonly?.toString()}</div>
+      <button onClick={onRefresh}>Refresh</button>
     </div>
   );
   ResourceHeader.displayName = "ResourceHeader";
@@ -108,6 +110,7 @@ const renderWithRouter = (component: React.ReactElement) => {
 describe("SharedServiceItem Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSharedServiceId = "test-shared-service-id";
     mockUseComponentManager.mockReturnValue({
       componentAction: "none",
       operation: null,
@@ -173,6 +176,52 @@ describe("SharedServiceItem Component", () => {
       expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
       expect(screen.getByText("Error retrieving shared service")).toBeInTheDocument();
     });
+  });
+
+  it("preserves the loaded service after a retryable refresh failure", async () => {
+    mockApiCall.mockResolvedValueOnce({ sharedService: mockSharedService });
+    mockApiCall.mockRejectedValueOnce({ status: 503 });
+
+    renderWithRouter(<SharedServiceItem />);
+    await screen.findByTestId("resource-header");
+
+    fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
+
+    await waitFor(() => expect(mockApiCall).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId("resource-header")).toBeInTheDocument();
+    expect(screen.getByTestId("resource-body")).toBeInTheDocument();
+    expect(screen.queryByTestId("exception-layout")).not.toBeInTheDocument();
+  });
+
+  it("does not show a previously loaded service when loading another route ID fails", async () => {
+    mockApiCall.mockResolvedValueOnce({ sharedService: mockSharedService });
+    mockApiCall.mockRejectedValueOnce({ status: 503 }).mockRejectedValueOnce({ status: 503 });
+    const { rerender } = renderWithRouter(<SharedServiceItem />);
+    await screen.findByTestId("resource-header");
+
+    mockSharedServiceId = "another-shared-service-id";
+    rerender(
+      <BrowserRouter>
+        <SharedServiceItem />
+      </BrowserRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("exception-layout")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Resource: test-shared-service-id")).not.toBeInTheDocument();
+    expect(mockApiCall).toHaveBeenLastCalledWith("shared-services/another-shared-service-id", "GET");
+
+    mockSharedServiceId = "test-shared-service-id";
+    rerender(
+      <BrowserRouter>
+        <SharedServiceItem />
+      </BrowserRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("resource-header")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("exception-layout")).not.toBeInTheDocument();
   });
 
   it("makes API call with correct parameters", async () => {

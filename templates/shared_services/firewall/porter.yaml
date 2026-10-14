@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-firewall
-version: 1.6.2
+version: 1.6.4
 description: "An Azure TRE Firewall shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -43,10 +43,12 @@ parameters:
     description: "The ID of the Azure Firewall Policy to use"
   - name: rule_collections
     type: string
+    path: /cnab/app/rule_collections.b64
     default: "W10=" # b64 for []
     description: "Application rule collection array"
   - name: network_rule_collections
     type: string
+    path: /cnab/app/network_rule_collections.b64
     default: "W10=" # b64 for []
     description: "Network rule collection array"
   - name: arm_environment
@@ -62,8 +64,8 @@ install:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
-        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
-        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        api_driven_rule_collections_file: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_file: ${ bundle.parameters.network_rule_collections }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -78,8 +80,8 @@ upgrade:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
-        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
-        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        api_driven_rule_collections_file: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_file: ${ bundle.parameters.network_rule_collections }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -94,8 +96,8 @@ uninstall:
       vars:
         tre_id: ${ bundle.parameters.tre_id }
         firewall_policy_id: ${ bundle.parameters.firewall_policy_id }
-        api_driven_rule_collections_b64: ${ bundle.parameters.rule_collections }
-        api_driven_network_rule_collections_b64: ${ bundle.parameters.network_rule_collections }
+        api_driven_rule_collections_file: ${ bundle.parameters.rule_collections }
+        api_driven_network_rule_collections_file: ${ bundle.parameters.network_rule_collections }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -8,6 +8,12 @@ variable "mgmt_resource_group_name" {
   description = "Shared management resource group"
 }
 
+variable "ci_git_ref" {
+  type        = string
+  description = "Git reference owning the CI validation environment. Empty outside CI."
+  default     = ""
+}
+
 variable "location" {
   type        = string
   description = "Location used for all resources"

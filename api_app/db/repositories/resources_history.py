@@ -26,10 +26,8 @@ class ResourceHistoryRepository(BaseRepository):
     def resource_history_query(self, resourceId: str):
         logger.debug("Validate sanity of resourceId")
         self.is_valid_uuid(resourceId)
-        query = 'SELECT * FROM c WHERE c.resourceId = @resourceId'
-        parameters = [
-            {'name': '@resourceId', 'value': resourceId}
-        ]
+        query = "SELECT * FROM c WHERE c.resourceId = @resourceId"
+        parameters = [{"name": "@resourceId", "value": resourceId}]
         return query, parameters
 
     async def get_resource_history_by_resource_id(self, resource_id: str) -> List[ResourceHistoryItem]:
@@ -53,7 +51,7 @@ class ResourceHistoryRepository(BaseRepository):
             resourceVersion=resource.resourceVersion,
             updatedWhen=resource.updatedWhen,
             user=resource.user,
-            templateVersion=resource.templateVersion
+            templateVersion=resource.templateVersion,
         )
         logger.info(f"Saving history item for {resource.id}")
         try:

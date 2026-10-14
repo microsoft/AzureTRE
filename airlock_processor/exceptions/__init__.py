@@ -4,3 +4,7 @@ class NoFilesInRequestException(Exception):
 
 class TooManyFilesInRequestException(Exception):
     pass
+
+
+class NoDataInRequestException(Exception):
+    pass

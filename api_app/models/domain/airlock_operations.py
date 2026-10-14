@@ -11,12 +11,14 @@ class EventGridMessageData(AzureTREModel):
     request_id: str = Field(title="", description="")
     request_files: Optional[List[AirlockFile]] = Field(default=None, title="", description="")
     status_message: Optional[str] = Field(default=None, title="", description="")
+    scan_result: Optional[dict] = Field(default=None, title="", description="")
 
 
 class StepResultStatusUpdateMessage(AzureTREModel):
     """
     Model for service bus message flowing back to API to update status in DB
     """
+
     id: UUID4 = Field(title="", description="")
     subject: str = Field(title="", description="")
     data: EventGridMessageData = Field(title="", description="")

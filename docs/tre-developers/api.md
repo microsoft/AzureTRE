@@ -74,9 +74,9 @@ To find logs in LogAnalytics, go to your resource group, then to LogAnalytics in
 There, you can run a query like
 
 ```cmd
-AppTraces 
+AppTraces
 | where AppRoleName == "api"
-| order by TimeGenerated desc 
+| order by TimeGenerated desc
 ```
 
 ### API logs using deployment center

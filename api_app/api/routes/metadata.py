@@ -13,5 +13,5 @@ def metadata() -> Metadata:
         api_version=__version__,
         api_client_id=config.API_CLIENT_ID,
         api_root_scope=config.API_ROOT_SCOPE,
-        aad_tenant_id=config.AAD_TENANT_ID
+        aad_tenant_id=config.AAD_TENANT_ID,
     )

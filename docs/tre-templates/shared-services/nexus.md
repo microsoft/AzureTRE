@@ -44,6 +44,39 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
+## Upgrade apt repositories to raw proxies
+
+Nexus bundle `3.11.0` replaces the `ubuntu`, `ubuntu-security`, `docker` and `microsoft-apt` apt repositories with raw proxies.
+The repository URLs stay the same. Clients select the distribution and product path, provided that the upstream still serves them.
+
+Schedule the upgrade outside package installation activity. Nexus deletes and recreates repositories whose format changes, making each feed temporarily unavailable.
+The replacement repositories rebuild their caches from upstream. The Nexus VM does not need to be recreated.
+Repository-list failures are retried and stop the upgrade if they persist.
+
+Upgrade Nexus before deploying Guacamole Linux VM bundle `1.4.7`.
+This VM bundle requests the `$RELEASE-security` suite and waits for cloud-init to complete before reporting deployment success.
+For existing Linux VMs, set the security source suite to the VM's release plus `-security`, for example `jammy-security`.
+Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-failed VMs need a separate repair or replacement.
+
+## Validate Linux VM provisioning
+
+Run the `linux_vm` E2E test explicitly to check Ubuntu 22.04 bootstrap through Nexus.
+The test reuses an enabled, successfully deployed Nexus service at bundle version `3.11.0` or later.
+It reports an error if an existing Nexus service needs repair or an upgrade.
+
+If Nexus is absent, the test can create its certificate service and Nexus after explicit acceptance of the [Sonatype Nexus Community Edition EULA](https://links.sonatype.com/products/nxrm/ce-eula).
+Set `TEST_ACCEPT_NEXUS_EULA=true` only after accepting that agreement.
+The test reuses an existing certificate service for the Nexus domain where available, and removes only services that it creates.
+If an existing certificate service uses another domain, deploy Nexus separately before testing.
+Certificate creation uses Let's Encrypt and is subject to its issuance limits.
+
+Run `make test-e2e-custom SELECTOR=linux_vm` in the configured E2E environment.
+For the **Deploy Azure TRE (branch)** workflow, set `e2eTestsCustomSelector` to `linux_vm`.
+If the test must create Nexus, select `acceptNexusEula` after accepting the agreement.
+The workflow leaves this consent input disabled by default.
+If the environment already runs this branch's core and bundles, select `skipDeployment` to rerun tests without deploying again.
+Leave `skipDeployment` disabled when validating deployment changes.
+
 ## Setup and usage
 
 1. A TRE Administrator can access Nexus though the admin jumpbox provisioned as part of the TRE deployment. The username is `adminuser` and the password is located in the Key Vault under `vm-<tre-id>-jumpbox-password`
@@ -86,16 +119,16 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | PyPI | PyPI | [https://pypi.org/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/pypi/` | Allow use of pip commands. |
 | Conda | conda | [https://repo.anaconda.com/pkgs] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/conda-repo/` | Configure conda to have access to default conda packages. |
 | Conda Mirror | conda | [https://conda.anaconda.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/conda-mirror/` | Configure conda to have access to conda mirror packages. |
-| Docker | apt | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker/` | Install Docker via apt on Linux systems. |
+| Docker | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker/` | Install Docker via apt on Linux systems. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
 | Docker GPG | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-public-key/` | Provide public key to sign apt source for above Docker apt. |
 | Docker Hub | docker | [https://registry-1.docker.io] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-hub/` | Provide docker access to public images repo. |
-| Ubuntu Packages | apt | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Provide access to Ubuntu apt packages on Ubuntu systems. |
-| Ubuntu Security Packages | apt | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Provide access to Ubuntu Security apt packages on Ubuntu systems. |
+| Ubuntu Packages | raw | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Ubuntu apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
+| Ubuntu Security | raw | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Ubuntu security apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
 | Almalinux | yum | [https://repo.almalinux.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/almalinux` | Install Almalinux packages |
 | R-Proxy | r | [https://cran.r-project.org/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-proxy` | Provide access to CRAN packages for R |
 | R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to download R Studio |
 | Fedora Project | yum | [https://download-ib01.fedoraproject.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/fedoraproject` | Install Fedora Project Linux packages |
-| Microsoft Apt | apt | [https://packages.microsoft.com] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-apt` | Provide access to Microsoft Apt packages |
+| Microsoft Apt | raw | [https://packages.microsoft.com] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-apt` | Microsoft apt packages. The remoteUrl is the host root; per-product paths and the Ubuntu release are supplied by the client sources list. A raw proxy passes these through for any release. |
 | Microsoft Keys | raw | [https://packages.microsoft.com/keys/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-keys` | Provide access to Microsoft keys |
 | Microsoft Yum | yum | [https://packages.microsoft.com/yumrepos] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-yum` | Provide access to Microsoft Yum packages |
 | Microsoft Download | raw | [https://download.microsoft.com/download] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/microsoft-download` | Provide access to Microsoft Downloads |
@@ -207,7 +240,7 @@ for ext in "${extensions[@]}"; do
     IFS='.' read -r publisher extension <<< "$publisher_extension"
     vsix_file="${publisher}-${extension}-${version}.vsix"
     curl -o "$vsix_file" "${base_url}/${publisher}/vsextensions/${extension}/${version}/vspackage"
-    
+
     # Install the extension if --install flag is set
     if [ "$INSTALL" = true ]; then
         code --install-extension "$vsix_file"

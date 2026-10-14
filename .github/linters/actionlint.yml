@@ -1,0 +1,15 @@
+---
+# GitHub supports queue: max, but actionlint v1.7.12 does not recognise it.
+# https://github.com/rhysd/actionlint/issues/687
+# Remove these exact parser exceptions when actionlint supports queue.
+# ci_environment_workflow.test.js validates all reference group settings.
+paths:
+  .github/workflows/clean_validation_envs.yml:
+    ignore:
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'
+  .github/workflows/deploy_tre_reusable.yml:
+    ignore:
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'
+  .github/workflows/pr_comment_bot.yml:
+    ignore:
+      - '^unexpected key "queue" for "concurrency" section\. expected one of "cancel-in-progress", "group"$'

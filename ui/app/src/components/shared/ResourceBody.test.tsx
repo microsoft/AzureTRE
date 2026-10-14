@@ -5,7 +5,9 @@ import { ResourceBody } from "./ResourceBody";
 import { Resource } from "../../models/resource";
 import { ResourceType } from "../../models/resourceType";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostResource } from "../../models/costs";
+import { WorkspaceRoleName } from "../../models/roleNames";
 
 // Mock child components
 vi.mock("./ResourceDebug", () => {
@@ -33,7 +35,11 @@ vi.mock("./ResourceOperationsList", () => {
 });
 
 vi.mock("./SecuredByRole", () => {
-  const SecuredByRole = ({ element }: any) => element;
+  const SecuredByRole = ({ element, allowedWorkspaceRoles }: any) => (
+    <div data-testid="secured-by-role" data-allowed-workspace-roles={allowedWorkspaceRoles?.join(",")}>
+      {element}
+    </div>
+  );
   SecuredByRole.displayName = "SecuredByRole";
   return { SecuredByRole };
 });
@@ -117,19 +123,23 @@ const mockWorkspaceContext = {
       name: "Test User",
       email: "test@example.com",
       roleAssignments: [],
-      roles: ["workspace_owner"],
+      roles: ["WorkspaceOwner"],
     },
     workspaceURL: "https://workspace.example.com",
   },
   workspaceApplicationIdURI: "test-app-id-uri",
-  roles: ["workspace_owner"],
+  roles: ["WorkspaceOwner"],
   setCosts: vi.fn(),
   setRoles: vi.fn(),
   setWorkspace: vi.fn(),
 };
 
 const renderWithWorkspaceContext = (component: React.ReactElement) => {
-  return render(<WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>);
+  return render(
+    <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+      <WorkspaceContext.Provider value={mockWorkspaceContext}>{component}</WorkspaceContext.Provider>
+    </AppRolesContext.Provider>,
+  );
 };
 
 describe("ResourceBody Component", () => {
@@ -234,10 +244,57 @@ describe("ResourceBody Component", () => {
 
     renderWithWorkspaceContext(<ResourceBody resource={sharedServiceResource} />);
 
-    // Should still render all tabs for shared service
+    // History and Operations for shared services are TRE Admin only, so a Workspace Owner doesn't get those tabs
     const tabs = screen.getAllByTestId("pivot-item");
-    expect(tabs).toHaveLength(4); // Overview, Details, History, Operations
+    expect(tabs).toHaveLength(2); // Overview, Details
   });
+
+  it("hides Details and Operations of a workspace service from researchers", () => {
+    const serviceResource = { ...mockResource, resourceType: ResourceType.WorkspaceService };
+
+    render(
+      <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider value={{ ...mockWorkspaceContext, roles: [WorkspaceRoleName.WorkspaceResearcher] }}>
+          <ResourceBody resource={serviceResource} />
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
+    const headers = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+    expect(headers).toEqual(["Overview"]);
+  });
+
+  it.each([ResourceType.Workspace, ResourceType.WorkspaceService])(
+    "shows Details of a %s to airlock managers",
+    (resourceType) => {
+      render(
+        <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+          <WorkspaceContext.Provider value={{ ...mockWorkspaceContext, roles: [WorkspaceRoleName.AirlockManager] }}>
+            <ResourceBody resource={{ ...mockResource, resourceType }} />
+          </WorkspaceContext.Provider>
+        </AppRolesContext.Provider>,
+      );
+
+      const headers = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+      expect(headers).toContain("Details");
+    },
+  );
+
+  it.each([ResourceType.WorkspaceService, ResourceType.UserResource])(
+    "shows History and Operations of a %s to airlock managers",
+    (resourceType) => {
+      render(
+        <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+          <WorkspaceContext.Provider value={{ ...mockWorkspaceContext, roles: [WorkspaceRoleName.AirlockManager] }}>
+            <ResourceBody resource={{ ...mockResource, resourceType }} />
+          </WorkspaceContext.Provider>
+        </AppRolesContext.Provider>,
+      );
+
+      const headers = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+      expect(headers).toEqual(expect.arrayContaining(["History", "Operations"]));
+    },
+  );
 
   it("handles user resource type", () => {
     const userResource = {
@@ -263,6 +320,31 @@ describe("ResourceBody Component", () => {
     // Should render all tabs for workspace
     const tabs = screen.getAllByTestId("pivot-item");
     expect(tabs).toHaveLength(4); // Overview, Details, History, Operations
+  });
+
+  it("does not show workspace history or operations to researchers", () => {
+    const workspaceResource = {
+      ...mockResource,
+      resourceType: ResourceType.Workspace,
+    };
+    const researcherContext = {
+      ...mockWorkspaceContext,
+      roles: ["WorkspaceResearcher"],
+    };
+    render(
+      <AppRolesContext.Provider value={{ roles: [], setAppRoles: vi.fn() }}>
+        <WorkspaceContext.Provider value={researcherContext}>
+          <ResourceBody resource={workspaceResource} />
+        </WorkspaceContext.Provider>
+      </AppRolesContext.Provider>,
+    );
+
+    const tabs = screen.getAllByTestId("pivot-item").map((tab) => tab.getAttribute("data-header"));
+    expect(tabs).toContain("Overview");
+    expect(tabs).not.toContain("History");
+    expect(tabs).not.toContain("Details");
+    expect(tabs).not.toContain("Operations");
+    expect(screen.queryByTestId("resource-history-list")).not.toBeInTheDocument();
   });
 
   it("renders only overview tab when readonly", () => {

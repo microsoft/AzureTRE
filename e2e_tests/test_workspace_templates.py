@@ -14,14 +14,12 @@ from helpers import get_admin_token
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
-workspace_templates = [
-    (strings.BASE_WORKSPACE)
-]
+workspace_templates = [(strings.BASE_WORKSPACE)]
 
 workspace_templates_test_create = [
     # Base workspace template is excluded as covered by other extended tests
     (strings.UNRESTRICTED_WORKSPACE),
-    (strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE)
+    (strings.AIRLOCK_IMPORT_REVIEW_WORKSPACE),
 ]
 
 
@@ -30,10 +28,12 @@ workspace_templates_test_create = [
 async def test_get_workspace_templates(template_name, verify) -> None:
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify)
-        response = await client.get(f"{config.TRE_URL}{strings.API_WORKSPACE_TEMPLATES}", headers=get_auth_header(admin_token))
+        response = await client.get(
+            f"{config.TRE_URL}{strings.API_WORKSPACE_TEMPLATES}", headers=get_auth_header(admin_token)
+        )
 
         template_names = [templates["name"] for templates in response.json()["templates"]]
-        assert (template_name in template_names), f"No {template_name} template found"
+        assert template_name in template_names, f"No {template_name} template found"
 
 
 @pytest.mark.smoke
@@ -48,7 +48,9 @@ async def test_get_workspace_template(template_name, verify) -> None:
 @pytest.mark.parametrize("template_name", workspace_templates_test_create)
 async def test_create_workspace_templates(template_name, verify) -> None:
 
-    workspace_path, workspace_id = await create_or_get_test_workspace(auth_type="Automatic", verify=verify, template_name=template_name)
+    workspace_path, workspace_id = await create_or_get_test_workspace(
+        auth_type="Automatic", verify=verify, template_name=template_name
+    )
 
     async with AsyncClient(verify=verify) as client:
         admin_token = await get_admin_token(verify=verify)

@@ -1,0 +1,156 @@
+---
+name: Dockerfile Build Check
+
+# Scheduled builds detect failures in external image and package dependencies.
+# Pull requests build selected targets, including shared Porter build inputs.
+
+on:  # yamllint disable-line rule:truthy
+  schedule:
+    - cron: "0 6 * * 1"  # Every Monday at 06:00 UTC
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+    paths:
+      - "**/Dockerfile"
+      - "**/Dockerfile.tmpl"
+      - "**/porter.yaml"
+      - "**/porter-build-context.env"
+      - "templates/workspaces/base/**"
+      - "templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/**"
+      - "templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/**"
+      - ".devcontainer/**"
+      - "devops/scripts/porter_build_bundle.sh"
+      - ".github/scripts/dockerfile_build*"
+      - ".github/workflows/build_all_dockerfiles.yml"
+
+# Cancel superseded PR runs. Keep manual and scheduled runs independent.
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover Targets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read  # For path filter
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Filter changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        id: filter
+        with:
+          list-files: json
+          filters: |
+            workflow:
+              - '.github/scripts/dockerfile_build*'
+              - '.github/workflows/build_all_dockerfiles.yml'
+            build_inputs:
+              - '**/Dockerfile'
+              - '**/Dockerfile.tmpl'
+              - '**/porter.yaml'
+              - '**/porter-build-context.env'
+              - 'templates/workspaces/base/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-windowsvm/**'
+              - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-import-reviewvm/**'
+              - '.devcontainer/**'
+              - 'devops/scripts/porter_build_bundle.sh'
+
+      - name: Build matrix
+        id: matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_CHANGED: ${{ steps.filter.outputs.workflow }}
+          CHANGED_FILES: ${{ steps.filter.outputs.build_inputs_files }}
+        run: .github/scripts/dockerfile_build_matrix.sh
+
+  build:
+    name: Build ${{ matrix.target.name }}
+    needs: discover
+    if: needs.discover.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      # Fresh hosted jobs do not import a shared build cache.
+      - name: Build target with one retry
+        env:
+          TARGET_KIND: ${{ matrix.target.kind }}
+          DOCKERFILE: ${{ matrix.target.dockerfile }}
+          CONTEXT: ${{ matrix.target.context }}
+          BUILD_ARGS: ${{ matrix.target.build_args }}
+          BUNDLE_DIR: ${{ matrix.target.dir }}
+        run: .github/scripts/dockerfile_build_retry.sh .github/scripts/dockerfile_build_target.sh
+
+      - name: Record result
+        if: always()
+        env:
+          NAME: ${{ matrix.target.name }}
+          SAFE_NAME: ${{ matrix.target.safe_name }}
+          KIND: ${{ matrix.target.kind }}
+          RESULT: ${{ job.status }}
+        run: |
+          mkdir -p build-results
+          printf '%s\t%s\t%s\n' "$NAME" "$KIND" "$RESULT" > "build-results/${SAFE_NAME}.tsv"
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
+        with:
+          name: dockerfile-build-result-${{ matrix.target.safe_name }}
+          path: build-results
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 7
+
+  report:
+    name: Build Report
+    needs:
+      - discover
+      - build
+    if: always() && needs.discover.result == 'success' && needs.discover.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          persist-credentials: false
+
+      - name: Download results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          pattern: dockerfile-build-result-*
+          path: build-results
+          merge-multiple: true
+
+      - name: Write summary
+        if: always()
+        env:
+          EXPECTED_MATRIX: ${{ needs.discover.outputs.matrix }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: node .github/scripts/dockerfile_build_report.js

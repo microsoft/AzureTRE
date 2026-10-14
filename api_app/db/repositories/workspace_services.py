@@ -27,20 +27,20 @@ class WorkspaceServiceRepository(ResourceRepository):
 
     @staticmethod
     def workspace_services_query(workspace_id: str):
-        query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.workspaceId = @workspaceId"
         parameters = [
-            {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
-            {'name': '@workspaceId', 'value': workspace_id}
+            {"name": "@resourceType", "value": ResourceType.WorkspaceService},
+            {"name": "@workspaceId", "value": workspace_id},
         ]
         return query, parameters
 
     @staticmethod
     def active_workspace_services_query(workspace_id: str):
-        query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId'
+        query = "SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.workspaceId = @workspaceId"
         parameters = [
-            {'name': '@deletedStatus', 'value': Status.Deleted},
-            {'name': '@resourceType', 'value': ResourceType.WorkspaceService},
-            {'name': '@workspaceId', 'value': workspace_id}
+            {"name": "@deletedStatus", "value": Status.Deleted},
+            {"name": "@resourceType", "value": ResourceType.WorkspaceService},
+            {"name": "@workspaceId", "value": workspace_id},
         ]
         return query, parameters
 
@@ -52,19 +52,21 @@ class WorkspaceServiceRepository(ResourceRepository):
         workspace_services = await self.query(query=query, parameters=parameters)
         return TypeAdapter(List[WorkspaceService]).validate_python(workspace_services)
 
-    async def get_deployed_workspace_service_by_id(self, workspace_id: str, service_id: str, operations_repo: OperationRepository) -> WorkspaceService:
+    async def get_deployed_workspace_service_by_id(
+        self, workspace_id: str, service_id: str, operations_repo: OperationRepository
+    ) -> WorkspaceService:
         workspace_service = await self.get_workspace_service_by_id(workspace_id, service_id)
 
-        if (not await operations_repo.resource_has_deployed_operation(resource_id=service_id)):
+        if not await operations_repo.resource_has_deployed_operation(resource_id=service_id):
             raise ResourceIsNotDeployed
 
         return workspace_service
 
     async def get_workspace_service_by_id(self, workspace_id: str, service_id: str) -> WorkspaceService:
         query, parameters = self.workspace_services_query(str(workspace_id))
-        query += ' AND c.id = @serviceId AND c.deploymentStatus != @deletedStatus'
-        parameters.append({'name': '@serviceId', 'value': str(service_id)})
-        parameters.append({'name': '@deletedStatus', 'value': Status.Deleted})
+        query += " AND c.id = @serviceId AND c.deploymentStatus != @deletedStatus"
+        parameters.append({"name": "@serviceId", "value": str(service_id)})
+        parameters.append({"name": "@deletedStatus", "value": Status.Deleted})
         workspace_services = await self.query(query=query, parameters=parameters)
         if not workspace_services:
             raise EntityDoesNotExist
@@ -73,10 +75,14 @@ class WorkspaceServiceRepository(ResourceRepository):
     def get_workspace_service_spec_params(self):
         return self.get_resource_base_spec_params()
 
-    async def create_workspace_service_item(self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str, user_roles=List[str]) -> Tuple[WorkspaceService, ResourceTemplate]:
+    async def create_workspace_service_item(
+        self, workspace_service_input: WorkspaceServiceInCreate, workspace_id: str, user_roles=List[str]
+    ) -> Tuple[WorkspaceService, ResourceTemplate]:
         full_workspace_service_id = str(uuid.uuid4())
 
-        template = await self.validate_input_against_template(workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService, user_roles)
+        template = await self.validate_input_against_template(
+            workspace_service_input.templateName, workspace_service_input, ResourceType.WorkspaceService, user_roles
+        )
 
         # we don't want something in the input to overwrite the system parameters, so dict.update can't work.
         resource_spec_parameters = {**workspace_service_input.properties, **self.get_workspace_service_spec_params()}
@@ -87,13 +93,34 @@ class WorkspaceServiceRepository(ResourceRepository):
             templateName=workspace_service_input.templateName,
             templateVersion=template.version,
             properties=resource_spec_parameters,
-            resourcePath=f'/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}',
-            etag=''
+            resourcePath=f"/workspaces/{workspace_id}/workspace-services/{full_workspace_service_id}",
+            etag="",
         )
 
         return workspace_service, template
 
-    async def patch_workspace_service(self, workspace_service: WorkspaceService, workspace_service_patch: ResourcePatch, etag: str, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, user: User, force_version_update: bool) -> Tuple[WorkspaceService, ResourceTemplate]:
+    async def patch_workspace_service(
+        self,
+        workspace_service: WorkspaceService,
+        workspace_service_patch: ResourcePatch,
+        etag: str,
+        resource_template_repo: ResourceTemplateRepository,
+        resource_history_repo: ResourceHistoryRepository,
+        user: User,
+        force_version_update: bool,
+    ) -> Tuple[WorkspaceService, ResourceTemplate]:
         # get workspace service template
-        workspace_service_template = await resource_template_repo.get_template_by_name_and_version(workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService)
-        return await self.patch_resource(workspace_service, workspace_service_patch, workspace_service_template, etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)
+        workspace_service_template = await resource_template_repo.get_template_by_name_and_version(
+            workspace_service.templateName, workspace_service.templateVersion, ResourceType.WorkspaceService
+        )
+        return await self.patch_resource(
+            workspace_service,
+            workspace_service_patch,
+            workspace_service_template,
+            etag,
+            resource_template_repo,
+            resource_history_repo,
+            user,
+            strings.RESOURCE_ACTION_UPDATE,
+            force_version_update,
+        )

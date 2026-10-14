@@ -1,9 +1,9 @@
-
 from services.aad_authentication import AzureADAuthorization, AuthConfigValidationError
 
 
 def extract_auth_information(workspace_creation_properties: dict) -> dict:
     from fastapi import HTTPException, status
+
     aad_service = get_aad_service()
     try:
         return aad_service.extract_workspace_auth_information(workspace_creation_properties)

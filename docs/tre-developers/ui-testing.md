@@ -80,10 +80,10 @@ describe("YourComponent", () => {
 
   it("handles user interactions", async () => {
     render(<YourComponent />);
-    
+
     const button = screen.getByRole("button", { name: "Click me" });
     fireEvent.click(button);
-    
+
     await waitFor(() => {
       expect(screen.getByText("Button clicked")).toBeInTheDocument();
     });
@@ -98,7 +98,7 @@ Due to FluentUI's complexity and testing environment limitations, components are
 ```typescript
 vi.mock("@fluentui/react", async () => {
   const actual = await vi.importActual("@fluentui/react");
-  
+
   return {
     ...actual,
     Stack: ({ children, horizontal }: any) => (
@@ -126,10 +126,10 @@ For components with async operations (API calls, timers):
 ```typescript
 it("handles async operations", async () => {
   render(<AsyncComponent />);
-  
+
   // Trigger async operation
   fireEvent.click(screen.getByRole("button"));
-  
+
   // Wait for operation to complete
   await waitFor(() => {
     expect(screen.getByText("Success")).toBeInTheDocument();
@@ -217,11 +217,11 @@ import { useCustomHook } from './useCustomHook';
 
 it('updates state correctly', () => {
   const { result } = renderHook(() => useCustomHook());
-  
+
   act(() => {
     result.current.updateValue('new value');
   });
-  
+
   expect(result.current.value).toBe('new value');
 });
 ```
@@ -231,13 +231,13 @@ it('updates state correctly', () => {
 ```typescript
 it('validates form input', async () => {
   render(<FormComponent />);
-  
+
   const input = screen.getByLabelText('Email');
   const submitButton = screen.getByRole('button', { name: 'Submit' });
-  
+
   fireEvent.change(input, { target: { value: 'invalid-email' } });
   fireEvent.click(submitButton);
-  
+
   await waitFor(() => {
     expect(screen.getByText('Invalid email format')).toBeInTheDocument();
   });
@@ -251,13 +251,13 @@ it('catches and displays errors', () => {
   const ThrowError = () => {
     throw new Error('Test error');
   };
-  
+
   render(
     <ErrorBoundary>
       <ThrowError />
     </ErrorBoundary>
   );
-  
+
   expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
 });
 ```

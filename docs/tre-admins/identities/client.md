@@ -54,4 +54,3 @@ The following Redirect URIs will be added to the application
 | Variable | Description | Location |
 | -------- | ----------- | -------- |
 | SWAGGER_UI_CLIENT_ID | The Client Id | `./config.yaml` |
-

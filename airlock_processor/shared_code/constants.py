@@ -4,6 +4,22 @@ WORKSPACE_RESOURCE_GROUP_NAME = "rg-{}-ws-{}"
 
 IMPORT_TYPE = "import"
 EXPORT_TYPE = "export"
+
+STORAGE_ACCOUNT_NAME_AIRLOCK_CORE = "stalairlock"
+STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL = "stalairlockg"
+
+STAGE_IMPORT_EXTERNAL = "import-external"
+STAGE_IMPORT_IN_PROGRESS = "import-in-progress"
+STAGE_IMPORT_APPROVED = "import-approved"
+STAGE_IMPORT_REJECTED = "import-rejected"
+STAGE_IMPORT_BLOCKED = "import-blocked"
+STAGE_EXPORT_INTERNAL = "export-internal"
+STAGE_EXPORT_IN_PROGRESS = "export-in-progress"
+STAGE_EXPORT_APPROVED = "export-approved"
+STAGE_EXPORT_REJECTED = "export-rejected"
+STAGE_EXPORT_BLOCKED = "export-blocked"
+
+# Retained for legacy workspace compatibility.
 # Import
 STORAGE_ACCOUNT_NAME_IMPORT_EXTERNAL = "stalimex"
 STORAGE_ACCOUNT_NAME_IMPORT_INPROGRESS = "stalimip"
@@ -35,9 +51,13 @@ STAGE_FAILED = "failed"
 NO_FILES_IN_REQUEST_MESSAGE = "Request did not contain any files."
 TOO_MANY_FILES_IN_REQUEST_MESSAGE = "Request contained more than 1 file."
 UNKNOWN_REASON_MESSAGE = "Request failed due to an unknown reason."
+NO_DATA_IN_REQUEST_MESSAGE = "Request data could not be found in storage."
 
 # Event Grid
 STEP_RESULT_EVENT_DATA_VERSION = "1.0"
 DATA_DELETION_EVENT_DATA_VERSION = "1.0"
 
 NO_THREATS = "No threats found"
+
+# Draft data lives in its own container so submission can delete it, revoking any SAS already issued.
+DRAFT_CONTAINER_SUFFIX = "-draft"

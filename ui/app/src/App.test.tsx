@@ -54,9 +54,21 @@ vi.mock("./hooks/useAuthApiCall", () => ({
 }));
 
 // Mock components that might cause issues
-vi.mock("./components/shared/TopNav", () => ({
-  TopNav: () => <div data-testid="top-nav">Top Navigation</div>,
-}));
+// TopNav and WorkspaceProvider share the workspace context, so the user menu can show workspace roles.
+vi.mock("./components/shared/TopNav", async () => {
+  const React = await import("react");
+  const { WorkspaceContext } = await import("./contexts/WorkspaceContext");
+  return {
+    TopNav: () => {
+      const ctx = React.useContext(WorkspaceContext);
+      return (
+        <div data-testid="top-nav">
+          Top Navigation {ctx.workspace?.properties?.display_name} {ctx.roles.join(",")}
+        </div>
+      );
+    },
+  };
+});
 
 vi.mock("./components/shared/Footer", () => ({
   Footer: () => <div data-testid="footer">Footer</div>,
@@ -66,9 +78,20 @@ vi.mock("./components/root/RootLayout", () => ({
   RootLayout: () => <div data-testid="root-layout">Root Layout</div>,
 }));
 
-vi.mock("./components/workspaces/WorkspaceProvider", () => ({
-  WorkspaceProvider: () => <div data-testid="workspace-provider">Workspace Provider</div>,
-}));
+vi.mock("./components/workspaces/WorkspaceProvider", async () => {
+  const React = await import("react");
+  const { WorkspaceContext } = await import("./contexts/WorkspaceContext");
+  return {
+    WorkspaceProvider: () => {
+      const ctx = React.useContext(WorkspaceContext);
+      React.useEffect(() => {
+        ctx.setWorkspace({ id: "test-workspace", properties: { display_name: "Test Workspace" } } as any);
+        ctx.setRoles(["WorkspaceOwner"]);
+      }, []);
+      return <div data-testid="workspace-provider">Workspace Provider</div>;
+    },
+  };
+});
 
 vi.mock("./components/shared/create-update-resource/CreateUpdateResource", () => ({
   CreateUpdateResource: ({ isOpen }: { isOpen: boolean }) =>
@@ -147,6 +170,20 @@ describe("App Component", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("workspace-provider")).toBeInTheDocument();
+    });
+  });
+
+  it("shares the workspace context with the top navigation", async () => {
+    await act(async () => {
+      render(
+        <TestWrapper initialEntries={["/workspaces/test-workspace/"]}>
+          <App />
+        </TestWrapper>,
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("top-nav")).toHaveTextContent("Test Workspace WorkspaceOwner");
     });
   });
 });

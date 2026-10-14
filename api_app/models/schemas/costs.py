@@ -1,5 +1,8 @@
-from models.domain.costs import generate_cost_report_dict_example, GranularityEnum, \
-    generate_workspace_cost_report_dict_example
+from models.domain.costs import (
+    generate_cost_report_dict_example,
+    GranularityEnum,
+    generate_workspace_cost_report_dict_example,
+)
 
 
 def get_cost_report_responses():
@@ -18,19 +21,12 @@ def get_cost_report_responses():
                             "summary": "No granularity",
                             "description": "each costs array will hold aggregation of costs between time period",
                             "value": generate_cost_report_dict_example(GranularityEnum.none),
-                        }
+                        },
                     }
                 }
-            }
+            },
         },
-        401: {
-            "description": "Unauthorized",
-            "content": {
-                "text/plain": {
-                    "example": "Not authenticated"
-                }
-            }
-        },
+        401: {"description": "Unauthorized", "content": {"text/plain": {"example": "Not authenticated"}}},
         429: {
             "description": "Too Many Requests",
             "content": {
@@ -39,11 +35,11 @@ def get_cost_report_responses():
                         "error": {
                             "code": "429",
                             "message": "Too many requests to Azure cost management API. Please retry.",
-                            "retry-after": "30"
+                            "retry-after": "30",
                         }
                     }
                 }
-            }
+            },
         },
         503: {
             "description": "Service Unavailable",
@@ -53,12 +49,12 @@ def get_cost_report_responses():
                         "error": {
                             "code": "503",
                             "message": "Azure cost management API is temporarly unavaiable. Please retry.",
-                            "retry-after": "30"
+                            "retry-after": "30",
                         }
                     }
                 }
-            }
-        }
+            },
+        },
     }
 
 
@@ -78,19 +74,12 @@ def get_workspace_cost_report_responses():
                             "summary": "No granularity",
                             "description": "Each costs array will hold aggregation of costs between time period",
                             "value": generate_workspace_cost_report_dict_example("My Workspace", GranularityEnum.none),
-                        }
+                        },
                     }
                 }
-            }
+            },
         },
-        401: {
-            "description": "Unauthorized",
-            "content": {
-                "text/plain": {
-                    "example": "Not authenticated"
-                }
-            }
-        },
+        401: {"description": "Unauthorized", "content": {"text/plain": {"example": "Not authenticated"}}},
         429: {
             "description": "Too Many Requests",
             "content": {
@@ -99,11 +88,11 @@ def get_workspace_cost_report_responses():
                         "error": {
                             "code": "429",
                             "message": "Too many requests to Azure cost management API. Please retry.",
-                            "retry-after": "30"
+                            "retry-after": "30",
                         }
                     }
                 }
-            }
+            },
         },
         503: {
             "description": "Service Unavailable",
@@ -113,10 +102,10 @@ def get_workspace_cost_report_responses():
                         "error": {
                             "code": "503",
                             "message": "Azure cost management API is temporarly unavaiable. Please retry.",
-                            "retry-after": "30"
+                            "retry-after": "30",
                         }
                     }
                 }
-            }
-        }
+            },
+        },
     }

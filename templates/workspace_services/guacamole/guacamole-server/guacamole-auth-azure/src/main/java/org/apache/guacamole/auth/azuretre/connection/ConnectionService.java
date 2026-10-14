@@ -46,7 +46,7 @@ public final class ConnectionService {
     private static final int HTTP_SUCCESS_MAX = 299;
 
     /** API call timeout in seconds. */
-    private static final int API_TIMEOUT_SECONDS = 5;
+    private static final int API_TIMEOUT_SECONDS = 30;
 
     /** Logger for this class. */
     private static final Logger LOGGER = LoggerFactory.getLogger(

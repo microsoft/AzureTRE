@@ -69,6 +69,18 @@ variable "enable_airlock" {
   description = "Controls the deployment of Airlock resources in the workspace."
 }
 
+variable "airlock_version" {
+  type = number
+  # Defaults to legacy so a direct terraform run never destroys v1 storage.
+  default     = 1
+  description = "Airlock storage version: 1 = legacy per-stage storage accounts, 2 = consolidated metadata-based storage."
+
+  validation {
+    condition     = contains([1, 2], var.airlock_version)
+    error_message = "airlock_version must be 1 (legacy per-stage storage accounts) or 2 (consolidated metadata-based storage)."
+  }
+}
+
 variable "aad_redirect_uris_b64" {
   type    = string # B64 encoded list of objects like [{"name": "my uri 1", "value": "https://..."}, {}]
   default = "W10=" #b64 for []
@@ -175,11 +187,11 @@ variable "enable_dns_policy" {
 variable "enable_airlock_malware_scanning" {
   type        = bool
   default     = false
-  description = "Enable Airlock malware scanning for the workspace"
+  description = "Enable Airlock malware scanning for the workspace. Only used by the legacy (v1) airlock module; v2 scanning is configured on the consolidated core accounts."
 }
 
 variable "airlock_malware_scan_result_topic_name" {
   type        = string
-  description = "The name of the topic to publish scan results to"
+  description = "The name of the topic to publish scan results to. Only used by the legacy (v1) airlock module."
   default     = null
 }

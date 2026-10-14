@@ -14,21 +14,89 @@ set -o nounset
 
 function stopEnv ()
 {
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
   local tre_rg="$1"
+  if [[ "$tre_rg" == *-mgmt ]]; then
+    echo "Management-only environment ${tre_rg} has no core services to stop. Keeping it until the destroy threshold."
+    return 0
+  fi
   local tre_id=${tre_rg#"rg-"}
   TRE_ID=${tre_id} devops/scripts/control_tre.sh stop
 }
+
+function destroyEnv ()
+{
+  python3 devops/scripts/ci_cleanup_scope.py verify-target --group "$1"
+  # The destroy helper accepts the core name even when only management exists.
+  devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${1%-mgmt}"
+}
+
+# Every mutating invocation must own the same reference group as deployment.
+# The planner only reads inventory; matrix jobs select and recheck targets after
+# acquiring their lock. Refuse legacy unscoped invocations.
+python3 devops/scripts/ci_cleanup_scope.py verify-lock
+
+if [[ "${CI_CLEANUP_REF}" == refs/heads/main ]]; then
+  # The TRE_ID secret can be absent for cleanup. The previous sweep then matched nothing.
+  if [[ -z "${MAIN_TRE_ID:-}" ]]; then
+    echo "MAIN_TRE_ID is not set. Skipping main workspace cleanup."
+    exit 0
+  fi
+  [[ "${MAIN_TRE_ID}" =~ ^[a-zA-Z0-9-]+$ ]] || { echo "Invalid main TRE ID" >&2; exit 1; }
+  workspace_groups=$(az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv)
+  # Workspace groups are independent. Delete them in parallel, but keep the
+  # reference lock until every deletion has finished.
+  pids=""
+  while read -r rg_name; do
+    [[ -n "$rg_name" ]] || continue
+    echo "Deleting resource group: ${rg_name}"
+    az group delete --yes --name "${rg_name}" &
+    pids="${pids} $!"
+  done <<< "${workspace_groups}"
+  failed=0
+  for pid in ${pids}; do
+    wait "${pid}" || failed=1
+  done
+  if (( failed )); then
+    echo "One or more main workspace resource group deletions failed." >&2
+  fi
+  exit "${failed}"
+fi
 
 az config set extension.use_dynamic_install=yes_without_prompt
 
 echo "Refs:"
 git show-ref
 
-open_prs=$(gh pr list --state open --json number,title,headRefName,updatedAt)
+open_prs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_page=100" |
+  jq --slurp --compact-output --exit-status '
+    if length == 0 or any(.[]; type != "array") then error("Invalid pull request pages")
+    elif any(.[][]; (.number | type) != "number" or (.head.ref | type) != "string" or (.updated_at | type) != "string") then
+      error("Invalid pull request details")
+    else [.[][] | {number, headRefName: .head.ref, updatedAt: .updated_at}]
+    end')
 
-# Resource groups that start with a specific string and have the ci_git_ref tag whose value starts with "ref"
-az group list --query "[?starts_with(name, 'rg-tre') && tags.ci_git_ref != null && starts_with(tags.ci_git_ref, 'refs')].[name, tags.ci_git_ref]" -o tsv |
+# Take a snapshot before deletion. A paired management group is handled through its
+# core group, even if the core group disappears during this sweep. Untagged groups
+# are never independent cleanup targets, including legacy management orphans.
+resource_groups=$(az group list --query "[?starts_with(name, 'rg-tre')].{name:name, ci_git_ref:tags.ci_git_ref}" -o json)
+cleanup_groups=$(jq -rs '
+  if length != 1 then error("Expected one resource group list") else .[0] end |
+  if type != "array" then error("Invalid resource group list")
+  elif any(.[]; (.name | type) != "string" or (.ci_git_ref != null and (.ci_git_ref | type) != "string")) then
+    error("Invalid resource group details")
+  else . as $groups | .[]
+    | select((.ci_git_ref // "") | test("^refs/(pull/[0-9]+/merge|heads/.+)$"))
+    | .name as $name
+    | select(($name | endswith("-mgmt") | not) or
+        ($groups | any(.name == ($name | rtrimstr("-mgmt"))) | not))
+    | [.name, .ci_git_ref] | @tsv
+  end' <<< "$resource_groups")
+
+echo "$cleanup_groups" |
 while read -r rg_name rg_ref_name; do
+  [[ -n "$rg_name" ]] || continue
+  [[ "$rg_ref_name" == "$CI_CLEANUP_REF" ]] || continue
   if [[ "${rg_ref_name}" == refs/pull* ]]
   then
     # this rg originated from an external PR (i.e. a fork)
@@ -37,7 +105,7 @@ while read -r rg_name rg_ref_name; do
     if [ "${is_open_pr}" == "0" ]
     then
       echo "PR ${pr_num} (derived from ref ${rg_ref_name}) is not open. Environment in ${rg_name} will be deleted."
-      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+      destroyEnv "${rg_name}"
       continue
     fi
 
@@ -62,7 +130,7 @@ while read -r rg_name rg_ref_name; do
 
     if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY )); then
       echo "No recent activity on ${head_ref}. Environment in ${rg_name} will be destroyed."
-      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+      destroyEnv "${rg_name}"
     elif (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP )); then
       echo "No recent activity on ${head_ref}. Environment in ${rg_name} will be stopped."
       stopEnv "${rg_name}"
@@ -73,7 +141,7 @@ while read -r rg_name rg_ref_name; do
     if ! git show-ref -q "$ref_in_remote"
     then
       echo "Ref ${rg_ref_name} does not exist, and environment ${rg_name} can be deleted."
-      devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+      destroyEnv "${rg_name}"
     else
        # checking when was the last commit on the branch.
       last_commit_date_string=$(git for-each-ref --sort='-committerdate:iso8601' --format=' %(committerdate:iso8601)%09%(refname)' "${ref_in_remote}" | cut -f1)
@@ -82,7 +150,7 @@ while read -r rg_name rg_ref_name; do
 
       if (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_DESTROY )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be destroyed."
-        devops/scripts/destroy_env_no_terraform.sh --core-tre-rg "${rg_name}" --no-wait
+        destroyEnv "${rg_name}"
       elif (( diff_in_hours > BRANCH_LAST_ACTIVITY_IN_HOURS_FOR_STOP )); then
         echo "No recent activity on ${rg_ref_name}. Environment in ${rg_name} will be stopped."
         stopEnv "${rg_name}"
@@ -90,17 +158,3 @@ while read -r rg_name rg_ref_name; do
     fi
   fi
 done
-
-# check if any workflows run on the main branch (except the cleanup=current one)
-# to prevent us deleting a workspace for which an E2E (on main) is currently running
-if [[ -z $(gh api "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs?branch=main&status=in_progress" | jq --arg name "$GITHUB_WORKFLOW" '.workflow_runs | select(.[].name != $name)') ]]
-then
-  # if not, we can delete old workspace resource groups that were left due to errors.
-  az group list --query "[?starts_with(name, 'rg-${MAIN_TRE_ID}-ws-')].name" -o tsv |
-  while read -r rg_name; do
-    echo "Deleting resource group: ${rg_name}"
-    az group delete --yes --no-wait --name "${rg_name}"
-  done
-else
-  echo "Workflows are running on the main branch, can't delete e2e workspaces."
-fi

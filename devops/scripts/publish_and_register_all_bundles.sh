@@ -39,4 +39,3 @@ find ./templates -mindepth 1 -maxdepth 1 -type d | while read -r template_type_d
     fi
   done
 done
-

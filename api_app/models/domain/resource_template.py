@@ -19,12 +19,14 @@ def _strip_none_recursive(obj: Any) -> None:
 
 
 class Property(AzureTREModel):
-    model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, extra="allow")  # extra preserves unknown JSON Schema keywords (e.g. $ref, oneOf, format)
+    model_config = ConfigDict(
+        populate_by_name=True, arbitrary_types_allowed=True, extra="allow"
+    )  # extra preserves unknown JSON Schema keywords (e.g. $ref, oneOf, format)
 
-    @model_serializer(mode='plain')
+    @model_serializer(mode="plain")
     def _serialize(self) -> dict:
         # Emit only explicitly-set fields plus extra keywords; strip None at all nesting levels
-        if not hasattr(self, 'model_fields_set'):
+        if not hasattr(self, "model_fields_set"):
             # Pydantic passed an uncoerced plain dict (e.g. via item-level assignment to properties)
             result = dict(self.items())
             _strip_none_recursive(result)
@@ -35,7 +37,7 @@ class Property(AzureTREModel):
         _strip_none_recursive(data)
         return data
 
-    type: Optional[str] = Field(default=None, title="Property type")
+    type: Optional[Union[str, List[str]]] = Field(default=None, title="Property type")
     title: str = Field(default="", title="Property description")
     description: Optional[str] = Field(default=None, title="Property description")
     default: Any = Field(default=None, title="Default value for the property")
@@ -64,17 +66,35 @@ class CustomAction(AzureTREModel):
 class PipelineStepProperty(AzureTREModel):
     name: str = Field(title="name", description="name of the property to update")
     type: str = Field(title="type", description="data type of the property to update")
-    value: Optional[Union[dict, str]] = Field(default=None, title="value", description="value to use in substitution for the property to update")
-    arraySubstitutionAction: Optional[str] = Field(default="", title="Array Substitution Action", description="How to treat existing values of this property in an array [overwrite | append | replace | remove]")
-    arrayMatchField: Optional[str] = Field(default="", title="Array match field", description="Name of the field to use for finding an item in an array - to replace/remove it")
+    value: Optional[Union[dict, str]] = Field(
+        default=None, title="value", description="value to use in substitution for the property to update"
+    )
+    arraySubstitutionAction: Optional[str] = Field(
+        default="",
+        title="Array Substitution Action",
+        description="How to treat existing values of this property in an array [overwrite | append | replace | remove]",
+    )
+    arrayMatchField: Optional[str] = Field(
+        default="",
+        title="Array match field",
+        description="Name of the field to use for finding an item in an array - to replace/remove it",
+    )
 
 
 class PipelineStep(AzureTREModel):
     stepId: Optional[str] = Field(default=None, title="stepId", description="Unique id identifying the step")
-    stepTitle: Optional[str] = Field(default=None, title="stepTitle", description="Human readable title of what the step is for")
-    resourceTemplateName: Optional[str] = Field(default=None, title="resourceTemplateName", description="Name of the template for the resource under change")
-    resourceType: Optional[ResourceType] = Field(default=None, title="resourceType", description="Type of resource under change")
-    resourceAction: Optional[str] = Field(default=None, title="resourceAction", description="Action - install / upgrade / uninstall etc")
+    stepTitle: Optional[str] = Field(
+        default=None, title="stepTitle", description="Human readable title of what the step is for"
+    )
+    resourceTemplateName: Optional[str] = Field(
+        default=None, title="resourceTemplateName", description="Name of the template for the resource under change"
+    )
+    resourceType: Optional[ResourceType] = Field(
+        default=None, title="resourceType", description="Type of resource under change"
+    )
+    resourceAction: Optional[str] = Field(
+        default=None, title="resourceAction", description="Action - install / upgrade / uninstall etc"
+    )
     properties: Optional[List[PipelineStepProperty]] = None
 
 
@@ -87,10 +107,13 @@ class Pipeline(AzureTREModel):
 class ResourceTemplate(AzureTREModel):
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True, validate_assignment=True)
 
-    @model_serializer(mode='wrap')
+    @model_serializer(mode="wrap")
     def _serialize(self, handler: Any, info: Any) -> dict:
         data = handler(self)
         _strip_none_recursive(data)  # covers allOf and other plain-dict fields missed by exclude_none
+        for field_name, schema_key in (("schema_uri", "$schema"), ("schema_id", "$id"), ("defs", "$defs")):
+            if field_name in data:
+                data[schema_key] = data.pop(field_name)
         return data
 
     id: str
@@ -101,10 +124,18 @@ class ResourceTemplate(AzureTREModel):
     resourceType: ResourceType = Field(title="Type of resource this template is for (workspace/service)")
     current: bool = Field(title="Is this the current version of this template")
     type: str = "object"
+    schema_uri: Optional[str] = Field(default=None, alias="$schema")
+    schema_id: Optional[str] = Field(default=None, alias="$id")
+    defs: Optional[dict] = Field(default=None, alias="$defs")
     required: List[str] = Field(title="List of properties which must be provided")
-    authorizedRoles: Optional[List[str]] = Field(default_factory=list, title="If not empty, the user is required to have one of these roles to install the template")
+    authorizedRoles: Optional[List[str]] = Field(
+        default_factory=list,
+        title="If not empty, the user is required to have one of these roles to install the template",
+    )
     properties: Dict[str, Property] = Field(title="Template properties")
-    allOf: Optional[List[dict]] = Field(default=None, title="All Of", description="Used for conditionally showing and validating fields")
+    allOf: Optional[List[dict]] = Field(
+        default=None, title="All Of", description="Used for conditionally showing and validating fields"
+    )
     actions: List[CustomAction] = Field(default_factory=list, title="Template actions")
     customActions: List[CustomAction] = Field(default_factory=list, title="Template custom actions")
     pipeline: Optional[Pipeline] = Field(default=None, title="Template pipeline to define updates to other resources")

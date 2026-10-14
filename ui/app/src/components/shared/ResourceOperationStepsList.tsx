@@ -1,43 +1,39 @@
 import React from "react";
-import { DefaultPalette, IStackItemStyles, Stack, Link } from "@fluentui/react";
+import { getTheme, Link, Stack, Text } from "@fluentui/react";
 import { OperationStep, failedStates } from "../../models/operation";
 import { ErrorPanel } from "./ErrorPanel";
+import { statusLabel, StatusIcon } from "./ResourceDetailsLayout";
 
 interface ResourceOperationStepsListProps {
-  header: String;
-  val?: OperationStep[];
+  steps?: OperationStep[];
 }
 
-export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperationStepsListProps> = (
-  props: ResourceOperationStepsListProps,
-) => {
-  const stackItemStyles: IStackItemStyles = {
-    root: {
-      padding: "5px 0",
-      color: DefaultPalette.neutralSecondary,
-    },
-  };
+const theme = getTheme();
 
+export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperationStepsListProps> = (props) => {
   const [openErrorPanelIndex, setOpenErrorPanelIndex] = React.useState<number | null>(null);
+
   return (
-    <Stack wrap horizontal>
-      <Stack.Item styles={stackItemStyles} style={{ width: "20%" }}>
-        {props.header}
-      </Stack.Item>
-      <div style={{ width: "80%" }}>
-        {props.val?.map((step: OperationStep, i: number) => {
-          const isError = step.status && failedStates.includes(step.status);
-          return (
-            <Stack.Item styles={stackItemStyles} key={i}>
-              <div>
-                {i + 1}
-                {")"} {step.stepTitle}
-              </div>
+    <Stack as="ol" tokens={{ childrenGap: 8 }} styles={{ root: { listStyle: "none", padding: 0, margin: 0 } }}>
+      {props.steps?.map((step: OperationStep, i: number) => {
+        const isError = step.status && failedStates.includes(step.status);
+        return (
+          <Stack as="li" key={i} horizontal tokens={{ childrenGap: 10 }}>
+            <div
+              style={{ paddingTop: 2 }}
+              role="img"
+              aria-label={`Status: ${statusLabel(step.status)}`}
+              title={statusLabel(step.status)}
+            >
+              <StatusIcon status={step.status} />
+            </div>
+            <Stack styles={{ root: { minWidth: 0 } }}>
+              <Text>
+                {i + 1}. {step.stepTitle}
+              </Text>
               {isError ? (
                 <>
-                  <Link onClick={() => setOpenErrorPanelIndex(i)}>
-                    An error occurred; click to view the error details
-                  </Link>
+                  <Link onClick={() => setOpenErrorPanelIndex(i)}>View error details</Link>
                   {openErrorPanelIndex === i && (
                     <ErrorPanel
                       errorMessage={step.message}
@@ -47,12 +43,16 @@ export const ResourceOperationStepsList: React.FunctionComponent<ResourceOperati
                   )}
                 </>
               ) : (
-                <div style={{ color: DefaultPalette.neutralTertiary }}>{step.message}</div>
+                step.message && (
+                  <Text variant="small" style={{ color: theme.palette.neutralSecondary, wordBreak: "break-word" }}>
+                    {step.message}
+                  </Text>
+                )
               )}
-            </Stack.Item>
-          );
-        })}
-      </div>
+            </Stack>
+          </Stack>
+        );
+      })}
     </Stack>
   );
 };

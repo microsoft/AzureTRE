@@ -11,25 +11,29 @@ from db.repositories.operations import OperationRepository
 from db.repositories.workspaces import WorkspaceRepository
 from models.domain.operation import Status
 from models.domain.resource import ResourceType
+from models.domain.resource_template import Property
 from models.domain.workspace import Workspace
 from models.schemas.workspace import WorkspaceInCreate
 
 
 @pytest.fixture
 def basic_workspace_request():
-    return WorkspaceInCreate(templateName="base-tre", properties={"display_name": "test", "description": "test", "client_id": "123", "tre_id": "test"})
+    return WorkspaceInCreate(
+        templateName="base-tre",
+        properties={"display_name": "test", "description": "test", "client_id": "123", "tre_id": "test"},
+    )
 
 
 @pytest_asyncio.fixture
 async def workspace_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=MagicMock()):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=MagicMock()):
         workspace_repo = await WorkspaceRepository().create()
         yield workspace_repo
 
 
 @pytest_asyncio.fixture
 async def operations_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=MagicMock()):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=MagicMock()):
         operations_repo = await OperationRepository().create()
         yield operations_repo
 
@@ -42,7 +46,7 @@ def workspace():
         etag="",
         properties={},
         templateName="my-workspace-service",
-        resourcePath="test"
+        resourcePath="test",
     )
     return workspace
 
@@ -66,7 +70,22 @@ async def test_get_active_workspaces_queries_db(workspace_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(workspace_repo, workspace, operations_repo):
+async def test_legacy_airlock_migration_adds_only_the_missing_version(workspace_repo, workspace):
+    workspace_repo.query = AsyncMock(return_value=[{"id": workspace.id, "properties": {}}])
+    workspace_repo.add_item_property_if_undefined = AsyncMock()
+
+    migrated = await workspace_repo.set_default_airlock_version_for_legacy_workspaces()
+
+    assert migrated == [workspace.id]
+    workspace_repo.add_item_property_if_undefined.assert_awaited_once_with(
+        workspace.id, "/properties/airlock_version", 1
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_deployed_workspace_by_id_raises_resource_is_not_deployed_if_not_deployed(
+    workspace_repo, workspace, operations_repo
+):
     workspace_id = "000000d3-82da-4bfc-b6e9-9a7853ef753e"
     sample_workspace = workspace
 
@@ -102,11 +121,11 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
     workspace_query_item_result = AsyncMock()
     workspace_query_item_result.__aiter__.return_value = [workspace.model_dump()]
     workspace_repo.container.query_items = MagicMock(return_value=workspace_query_item_result)
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.id = @workspaceId AND c.deploymentStatus != @deletedStatus"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.Workspace},
-        {'name': '@workspaceId', 'value': workspace.id},
-        {'name': '@deletedStatus', 'value': Status.Deleted}
+        {"name": "@resourceType", "value": ResourceType.Workspace},
+        {"name": "@workspaceId", "value": workspace.id},
+        {"name": "@deletedStatus", "value": Status.Deleted},
     ]
 
     await workspace_repo.get_workspace_by_id(workspace.id)
@@ -114,12 +133,19 @@ async def test_get_workspace_by_id_queries_db(workspace_repo, workspace):
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.generate_new_cidr')
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-async def test_create_workspace_item_creates_a_workspace_with_the_right_values(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_creates_a_workspace_with_the_right_values(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
     workspace_to_create = basic_workspace_request
     # make sure the input has 'None' for values that we expect to be set
     workspace_to_create.properties.pop("address_space", None)
@@ -136,7 +162,15 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
     assert workspace.templateName == workspace_to_create.templateName
     assert workspace.resourceType == ResourceType.Workspace
 
-    for key in ["display_name", "description", "azure_location", "workspace_id", "tre_id", "address_space", "workspace_owner_object_id"]:
+    for key in [
+        "display_name",
+        "description",
+        "azure_location",
+        "workspace_id",
+        "tre_id",
+        "address_space",
+        "workspace_owner_object_id",
+    ]:
         assert key in workspace.properties
         assert len(workspace.properties[key]) > 0
 
@@ -149,10 +183,120 @@ async def test_create_workspace_item_creates_a_workspace_with_the_right_values(m
 
 
 @pytest.mark.asyncio
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_persists_default_airlock_version_when_omitted(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties.pop("airlock_version", None)
+    workspace_to_create.properties["auth_type"] = "Automatic"
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 2
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_defaults_manual_auth_to_airlock_v2(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties.pop("airlock_version", None)
+    workspace_to_create.properties["auth_type"] = "Manual"
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties["airlock_version"] = Property(default=2, enum=[1, 2])
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 2
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_preserves_explicit_airlock_version(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["airlock_version"] = 1
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 1
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_workspace_item_defaults_legacy_template_to_airlock_v1(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
+    # A template that does not declare airlock_version is legacy (v1) and must not be stamped v2.
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties.pop("airlock_version", None)
+    mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
+    mock_is_workspace_storage_account_available.return_value.return_value = False
+    basic_resource_template.properties.pop("airlock_version", None)
+    validate_input_mock.return_value = basic_resource_template
+    new_cidr_mock.return_value = "1.2.3.4/24"
+
+    workspace, _ = await workspace_repo.create_workspace_item(workspace_to_create, {}, "test_object_id", ["test_role"])
+
+    assert workspace.properties["airlock_version"] == 1
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
 async def test_get_address_space_based_on_size_with_small_address_space(workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "small"
@@ -160,10 +304,10 @@ async def test_get_address_space_based_on_size_with_small_address_space(workspac
 
 
 @pytest.mark.asyncio
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
 async def test_get_address_space_based_on_size_with_medium_address_space(workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "medium"
@@ -172,10 +316,10 @@ async def test_get_address_space_based_on_size_with_medium_address_space(workspa
 
 
 @pytest.mark.asyncio
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
 async def test_get_address_space_based_on_size_with_large_address_space(workspace_repo, basic_workspace_request):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "large"
@@ -184,13 +328,19 @@ async def test_get_address_space_based_on_size_with_large_address_space(workspac
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_create_workspace_item_creates_a_workspace_with_custom_address_space(mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_create_workspace_item_creates_a_workspace_with_custom_address_space(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties["address_space"] = "10.2.4.0/24"
@@ -205,13 +355,19 @@ async def test_create_workspace_item_creates_a_workspace_with_custom_address_spa
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_create_workspace_item_throws_exception_with_bad_custom_address_space(mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request, basic_resource_template):
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_create_workspace_item_throws_exception_with_bad_custom_address_space(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties["address_space"] = "192.168.0.0/24"
@@ -225,7 +381,9 @@ async def test_create_workspace_item_throws_exception_with_bad_custom_address_sp
 
 
 @pytest.mark.asyncio
-async def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(workspace_repo, basic_workspace_request):
+async def test_get_address_space_based_on_size_with_custom_address_space_and_missing_address(
+    workspace_repo, basic_workspace_request
+):
     workspace_to_create = basic_workspace_request
     workspace_to_create.properties["address_space_size"] = "custom"
     workspace_to_create.properties.pop("address_space", None)
@@ -235,12 +393,14 @@ async def test_get_address_space_based_on_size_with_custom_address_space_and_mis
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.get_active_workspaces')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_get_address_space_based_on_size_with_address_space_only(get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+@patch("db.repositories.workspaces.WorkspaceRepository.get_active_workspaces")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_address_space_only(
+    get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace
+):
     workspace_with_address_space = copy.deepcopy(workspace)
     workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
 
@@ -252,12 +412,14 @@ async def test_get_address_space_based_on_size_with_address_space_only(get_activ
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.get_active_workspaces')
-@patch('core.config.RESOURCE_LOCATION', "useast2")
-@patch('core.config.TRE_ID', "9876")
-@patch('core.config.CORE_ADDRESS_SPACE', "10.1.0.0/22")
-@patch('core.config.TRE_ADDRESS_SPACE', "10.0.0.0/12")
-async def test_get_address_space_based_on_size_with_address_space_and_address_spaces(get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace):
+@patch("db.repositories.workspaces.WorkspaceRepository.get_active_workspaces")
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_address_space_and_address_spaces(
+    get_active_workspaces_mock, workspace_repo, basic_workspace_request, workspace
+):
     workspace_with_address_space = copy.deepcopy(workspace)
     workspace_with_address_space.properties["address_space"] = "10.1.4.0/24"
 
@@ -268,7 +430,11 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
     workspace_with_both.properties["address_spaces"] = ["10.1.7.0/24", "10.1.8.0/24"]
     workspace_with_both.properties["address_space"] = "10.1.7.0/24"
 
-    get_active_workspaces_mock.return_value = [workspace_with_address_space, workspace_with_address_spaces, workspace_with_both]
+    get_active_workspaces_mock.return_value = [
+        workspace_with_address_space,
+        workspace_with_address_spaces,
+        workspace_with_both,
+    ]
     workspace_to_create = basic_workspace_request
     address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
 
@@ -276,9 +442,11 @@ async def test_get_address_space_based_on_size_with_address_space_and_address_sp
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-async def test_create_workspace_item_raises_value_error_if_template_is_invalid(mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request):
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+async def test_create_workspace_item_raises_value_error_if_template_is_invalid(
+    mock_is_workspace_storage_account_available, validate_input_mock, workspace_repo, basic_workspace_request
+):
     workspace_input = basic_workspace_request
 
     mock_is_workspace_storage_account_available.return_value = AsyncMock().return_value
@@ -316,7 +484,7 @@ def test_workspace_owner_is_not_overwritten_if_present_in_workspace_properties(w
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
+@patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_name_available(mock_storage_client):
     workspace_id = "workspace1234"
     suffix = workspace_id[-4:]
@@ -337,7 +505,7 @@ async def test_is_workspace_storage_account_available_when_name_available(mock_s
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
+@patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_name_not_available(mock_storage_client):
     workspace_id = "workspace1234"
     suffix = workspace_id[-4:]
@@ -346,9 +514,7 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
     mock_storage_client_instance.close = AsyncMock()
 
     mock_result_unavailable = MagicMock(name_available=False)
-    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [
-        mock_result_unavailable
-    ]
+    mock_storage_client_instance.storage_accounts.check_name_availability.side_effect = [mock_result_unavailable]
     mock_storage_client.return_value = mock_storage_client_instance
     workspace_repo = WorkspaceRepository()
 
@@ -362,7 +528,7 @@ async def test_is_workspace_storage_account_available_when_name_not_available(mo
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
+@patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_check_raises_exception(mock_storage_client):
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
@@ -377,11 +543,19 @@ async def test_is_workspace_storage_account_available_when_check_raises_exceptio
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.asyncio.wait_for')
-@patch('db.repositories.workspaces.generate_new_cidr')
-@patch('db.repositories.workspaces.WorkspaceRepository.validate_input_against_template')
-@patch('db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available')
-async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_workspace_storage_account_available, validate_input_mock, new_cidr_mock, mock_wait_for, workspace_repo, basic_workspace_request, basic_resource_template):
+@patch("db.repositories.workspaces.asyncio.wait_for")
+@patch("db.repositories.workspaces.generate_new_cidr")
+@patch("db.repositories.workspaces.WorkspaceRepository.validate_input_against_template")
+@patch("db.repositories.workspaces.WorkspaceRepository.is_workspace_storage_account_available")
+async def test_create_workspace_item_raises_timeout_error_after_timeout(
+    mock_is_workspace_storage_account_available,
+    validate_input_mock,
+    new_cidr_mock,
+    mock_wait_for,
+    workspace_repo,
+    basic_workspace_request,
+    basic_resource_template,
+):
     workspace_to_create = basic_workspace_request
     mock_is_workspace_storage_account_available.return_value = False
     validate_input_mock.return_value = basic_resource_template
@@ -390,6 +564,7 @@ async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_
     async def mock_wait_for_se(coro, timeout=None):
         coro.close()
         raise asyncio.TimeoutError
+
     mock_wait_for.side_effect = mock_wait_for_se
 
     with pytest.raises(StorageAccountNameGenerationTimeout) as exc_info:
@@ -400,7 +575,7 @@ async def test_create_workspace_item_raises_timeout_error_after_timeout(mock_is_
 
 
 @pytest.mark.asyncio
-@patch('db.repositories.workspaces.StorageManagementClient')
+@patch("db.repositories.workspaces.StorageManagementClient")
 async def test_is_workspace_storage_account_available_when_check_times_out(mock_storage_client):
     workspace_id = "workspace1234"
     mock_storage_client_instance = MagicMock()
@@ -414,3 +589,75 @@ async def test_is_workspace_storage_account_available_when_check_times_out(mock_
         await workspace_repo.is_workspace_storage_account_available(MagicMock(), workspace_id)
 
     assert mock_storage_client_instance.storage_accounts.check_name_availability.call_count == 1
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_string_19(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    # request a /19
+    workspace_to_create.properties["address_space_size"] = "19"
+    address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert address_space.endswith("/19")
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+async def test_get_address_space_based_on_size_with_string_29(workspace_repo, basic_workspace_request):
+    workspace_to_create = basic_workspace_request
+    # request a /29
+    workspace_to_create.properties["address_space_size"] = "29"
+    address_space = await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert address_space.endswith("/29")
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+@pytest.mark.parametrize("invalid_size", ["15", "30"])
+async def test_get_address_space_based_on_size_with_invalid_string_raises_error(
+    workspace_repo, basic_workspace_request, invalid_size
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = invalid_size
+    with pytest.raises(InvalidInput) as ex:
+        await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert str(ex.value) == "'address_space_size' numeric value must be between 16 and 29"
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+@pytest.mark.parametrize("empty_size", [None, "", "  "])
+async def test_get_address_space_based_on_size_with_none_or_empty_address_space_size(
+    workspace_repo, basic_workspace_request, empty_size
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = empty_size
+    assert "10.1.4.0/24" == await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+
+
+@pytest.mark.asyncio
+@patch("core.config.RESOURCE_LOCATION", "useast2")
+@patch("core.config.TRE_ID", "9876")
+@patch("core.config.CORE_ADDRESS_SPACE", "10.1.0.0/22")
+@patch("core.config.TRE_ADDRESS_SPACE", "10.0.0.0/12")
+@pytest.mark.parametrize("invalid_preset", ["huge", "extra_large", "invalid"])
+async def test_get_address_space_based_on_size_with_unrecognized_preset_raises_error(
+    workspace_repo, basic_workspace_request, invalid_preset
+):
+    workspace_to_create = basic_workspace_request
+    workspace_to_create.properties["address_space_size"] = invalid_preset
+    with pytest.raises(InvalidInput) as ex:
+        await workspace_repo.get_address_space_based_on_size(workspace_to_create.properties)
+    assert str(ex.value) == f"Invalid 'address_space_size': {invalid_preset}"

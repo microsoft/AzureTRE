@@ -11,29 +11,59 @@ import { RoleName, WorkspaceRoleName } from "../../models/roleNames";
 import { ResourceType } from "../../models/resourceType";
 import { SecuredByRole } from "./SecuredByRole";
 import { WorkspaceContext } from "../../contexts/WorkspaceContext";
+import { AppRolesContext } from "../../contexts/AppRolesContext";
 
 interface ResourceBodyProps {
   resource: Resource;
   readonly?: boolean;
 }
 
+// Module-level so the role arrays keep a stable identity across renders (they are effect dependencies downstream).
+// Researchers get a simplified view: details of their own user resources, but not of workspaces or workspace services.
+const detailsRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
+  [ResourceType.SharedService]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.WorkspaceService]: [
+    RoleName.TREAdmin,
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.AirlockManager,
+  ],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
+};
+
+const operationsRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.SharedService]: [RoleName.TREAdmin],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
+};
+
+const historyRolesByResourceType = {
+  [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
+  [ResourceType.SharedService]: [RoleName.TREAdmin],
+  [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.AirlockManager],
+  [ResourceType.UserResource]: [
+    WorkspaceRoleName.WorkspaceOwner,
+    WorkspaceRoleName.WorkspaceResearcher,
+    WorkspaceRoleName.AirlockManager,
+  ],
+};
+
 export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: ResourceBodyProps) => {
   const workspaceCtx = useContext(WorkspaceContext);
+  const appRolesCtx = useContext(AppRolesContext);
+  const userRoles = [...appRolesCtx.roles, ...workspaceCtx.roles];
+  const hasAnyRole = (roles?: Array<string>) => !!roles && roles.some((r) => userRoles.includes(r));
 
-  const operationsRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.SharedService]: [RoleName.TREAdmin],
-    [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
-  };
-
-  const historyRolesByResourceType = {
-    [ResourceType.Workspace]: [RoleName.TREAdmin, WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.SharedService]: [RoleName.TREAdmin],
-    [ResourceType.WorkspaceService]: [WorkspaceRoleName.WorkspaceOwner],
-    [ResourceType.UserResource]: [WorkspaceRoleName.WorkspaceOwner, WorkspaceRoleName.WorkspaceResearcher],
-  };
-
+  const detailsRoles = detailsRolesByResourceType[props.resource.resourceType];
   const operationsRoles = operationsRolesByResourceType[props.resource.resourceType];
   const historyRoles = historyRolesByResourceType[props.resource.resourceType];
   const workspaceId = workspaceCtx.workspace?.id || "";
@@ -54,31 +84,31 @@ export const ResourceBody: React.FunctionComponent<ResourceBodyProps> = (props: 
           </ReactMarkdown>
         </div>
       </PivotItem>
-      {!props.readonly && (
+      {!props.readonly && hasAnyRole(detailsRoles) && (
         <PivotItem headerText="Details">
           <ResourcePropertyPanel resource={props.resource} />
           <ResourceDebug resource={props.resource} />
         </PivotItem>
       )}
-      {!props.readonly && historyRoles && (
+      {!props.readonly && hasAnyRole(historyRoles) && (
         <PivotItem headerText="History">
           <SecuredByRole
             allowedAppRoles={historyRoles}
             allowedWorkspaceRoles={historyRoles}
             workspaceId={workspaceId}
             errorString={`Must have ${historyRoles.join(" or ")} role`}
-            element={<ResourceHistoryList resource={props.resource} />}
+            element={<ResourceHistoryList resource={props.resource} allowedRoles={historyRoles} />}
           />
         </PivotItem>
       )}
-      {!props.readonly && operationsRoles && (
+      {!props.readonly && hasAnyRole(operationsRoles) && (
         <PivotItem headerText="Operations">
           <SecuredByRole
             allowedAppRoles={operationsRoles}
             allowedWorkspaceRoles={operationsRoles}
             workspaceId={workspaceId}
             errorString={`Must have ${operationsRoles.join(" or ")} role`}
-            element={<ResourceOperationsList resource={props.resource} />}
+            element={<ResourceOperationsList resource={props.resource} allowedRoles={operationsRoles} />}
           />
         </PivotItem>
       )}

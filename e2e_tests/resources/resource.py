@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import asynccontextmanager
 from httpx import AsyncClient, Timeout
 from starlette import status
 from e2e_tests.helpers import assert_status, get_auth_header, get_full_endpoint
@@ -22,9 +23,10 @@ async def get_resource(endpoint, access_token, verify):
         return response.json()
 
 
-async def post_resource(payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None):
+async def post_resource(
+    payload, endpoint, access_token, verify, method="POST", wait=True, etag="*", access_token_for_wait=None
+):
     async with AsyncClient(verify=verify, timeout=30.0) as client:
-
         full_endpoint = get_full_endpoint(endpoint)
         auth_headers = get_auth_header(access_token)
 
@@ -43,15 +45,20 @@ async def post_resource(payload, endpoint, access_token, verify, method="POST", 
         operation_endpoint = response.headers["Location"]
 
         if wait:
-            wait_auth_headers = get_auth_header(access_token_for_wait) if access_token_for_wait else auth_headers
-            await wait_for(check_method, client, operation_endpoint, wait_auth_headers, [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED])
+            wait_token = access_token_for_wait if access_token_for_wait is not None else access_token
+            await wait_for(
+                check_method,
+                client,
+                operation_endpoint,
+                wait_token,
+                [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED, strings.RESOURCE_STATUS_UPDATING_FAILED],
+            )
 
         return resource_path, resource_id
 
 
-async def disable_and_delete_resource(endpoint, access_token, verify):
+async def disable_and_delete_resource(endpoint, access_token, verify, *, allow_failed_disable=False):
     async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
-
         full_endpoint = get_full_endpoint(endpoint)
         auth_headers = get_auth_header(access_token)
         auth_headers["etag"] = "*"  # for now, send in the wildcard to skip around etag checking
@@ -61,26 +68,59 @@ async def disable_and_delete_resource(endpoint, access_token, verify):
         response = await client.patch(full_endpoint, headers=auth_headers, json=payload, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_202_ACCEPTED], "The resource couldn't be disabled")
         operation_endpoint = response.headers["Location"]
-        await wait_for(patch_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_UPDATING_FAILED])
+        # The API persists isEnabled=False before provisioning. Failed installs can
+        # fail again during disable, but deletion is safe once that operation ends.
+        failure_states = [] if allow_failed_disable else [strings.RESOURCE_STATUS_UPDATING_FAILED]
+        await wait_for(patch_done, client, operation_endpoint, access_token, failure_states)
 
         # delete
+        auth_headers = get_auth_header(access_token)
+        auth_headers["etag"] = "*"
         response = await client.delete(full_endpoint, headers=auth_headers, timeout=TIMEOUT)
         assert_status(response, [status.HTTP_200_OK], "The resource couldn't be deleted")
 
         resource_id = response.json()["operation"]["resourceId"]
         operation_endpoint = response.headers["Location"]
 
-        await wait_for(delete_done, client, operation_endpoint, auth_headers, [strings.RESOURCE_STATUS_DELETING_FAILED])
+        await wait_for(delete_done, client, operation_endpoint, access_token, [strings.RESOURCE_STATUS_DELETING_FAILED])
         return resource_id
 
 
-async def wait_for(func, client, operation_endpoint, headers, failure_states: list):
-    done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
-    LOGGER.info(f'WAITING FOR OP: {operation_endpoint}')
+@asynccontextmanager
+async def temporary_resource(payload, endpoint, access_token, verify):
+    """Create a test resource and remove it after success or failed provisioning."""
+    async with AsyncClient(verify=verify, timeout=TIMEOUT) as client:
+        response = await client.post(get_full_endpoint(endpoint), headers=get_auth_header(access_token), json=payload)
+        assert_status(response, [status.HTTP_202_ACCEPTED], "The test resource could not be created")
+        resource_path = response.json()["operation"]["resourcePath"]
+        try:
+            await wait_for(
+                install_done,
+                client,
+                response.headers["Location"],
+                access_token,
+                [strings.RESOURCE_STATUS_DEPLOYMENT_FAILED],
+            )
+            yield resource_path
+        except BaseException as original_error:
+            try:
+                await disable_and_delete_resource(
+                    f"/api{resource_path}", access_token, verify, allow_failed_disable=True
+                )
+            except Exception as cleanup_error:
+                original_error.add_note(f"Cleanup of {resource_path} also failed: {cleanup_error!r}")
+            raise
+        else:
+            await disable_and_delete_resource(f"/api{resource_path}", access_token, verify)
+
+
+async def wait_for(func, client, operation_endpoint, access_token, failure_states: list):
+    done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
+    LOGGER.info(f"WAITING FOR OP: {operation_endpoint}")
     while not done:
         await asyncio.sleep(30)
 
-        done, done_state, message, operation_steps = await func(client, operation_endpoint, headers)
+        done, done_state, message, operation_steps = await func(client, operation_endpoint, access_token)
         LOGGER.info(f"{done}, {done_state}, {message}")
     try:
         assert done_state not in failure_states

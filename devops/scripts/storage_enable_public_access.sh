@@ -17,6 +17,9 @@ LAST_PUBLIC_ACCESS_ERROR=""
 function storage_enable_public_access() {
   local storage_account_name="$1"
   local resource_group_name="$2"
+  # Allow more time for network rules and data access to become ready.
+  local max_attempts=30
+  local attempt
 
   echo -e "\nEnabling public access on storage account"
   # Check that the storage account exists before making changes
@@ -30,17 +33,20 @@ function storage_enable_public_access() {
   # Enable public network access with explicit default action allow
   az storage account update --resource-group "$resource_group_name" --name "$storage_account_name" --public-network-access Enabled --default-action Allow --output none
 
-  for ATTEMPT in {1..10}; do
+  for ((attempt=1; attempt<=max_attempts; attempt++)); do
     if is_public_access_enabled "$storage_account_name"; then
       echo -e " Storage account $storage_account_name is now publicly accessible\n"
       return
     fi
 
-    echo " Unable to confirm public access on storage account $storage_account_name after $ATTEMPT/10. Waiting for update to take effect..."
+    if [[ "$attempt" -eq "$max_attempts" ]]; then
+      break
+    fi
+    echo " Unable to confirm public access on storage account $storage_account_name after $attempt/$max_attempts. Waiting for update to take effect..."
     sleep 10
   done
 
-  echo -e "Error: Could not enable public access for $storage_account_name after 10 attempts.\n"
+  echo -e "Error: Could not enable public access for $storage_account_name after $max_attempts attempts.\n"
   echo -e "$LAST_PUBLIC_ACCESS_ERROR\n"
   exit 1
 }
@@ -48,6 +54,8 @@ function storage_enable_public_access() {
 function storage_disable_public_access() {
   local storage_account_name="$1"
   local resource_group_name="$2"
+  local max_attempts=30
+  local attempt
 
   echo -e "\nDisabling public access on storage account"
   # Check that the storage account exists before making changes
@@ -62,7 +70,7 @@ function storage_disable_public_access() {
   # Disable public network access with explicit default action deny
   az storage account update --resource-group "$resource_group_name" --name "$storage_account_name" --public-network-access Disabled --default-action Deny --output none
 
-  for ATTEMPT in {1..10}; do
+  for ((attempt=1; attempt<=max_attempts; attempt++)); do
     if ! is_public_access_enabled "$storage_account_name"; then
       echo -e " Public access has been disabled successfully\n"
       # Clean up the guard variable for this storage account
@@ -71,11 +79,14 @@ function storage_disable_public_access() {
       return
     fi
 
-    echo " Unable to confirm public access is disabled on storage account $storage_account_name after $ATTEMPT/10. Waiting for update to take effect..."
+    if [[ "$attempt" -eq "$max_attempts" ]]; then
+      break
+    fi
+    echo " Unable to confirm public access is disabled on storage account $storage_account_name after $attempt/$max_attempts. Waiting for update to take effect..."
     sleep 10
   done
 
-  echo -e "Error: Could not disable public access for $storage_account_name after 10 attempts.\n"
+  echo -e "Error: Could not disable public access for $storage_account_name after $max_attempts attempts.\n"
   return 1
 }
 

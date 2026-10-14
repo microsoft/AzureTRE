@@ -76,11 +76,13 @@ async def test_get_service_bus_status_other_exception(service_bus_client_mock, g
 
 @patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient")
-async def test_get_resource_processor_status_healthy(resource_processor_client_mock, get_credential_async_context) -> None:
+async def test_get_resource_processor_status_healthy(
+    resource_processor_client_mock, get_credential_async_context
+) -> None:
     get_credential_async_context.return_value = AsyncMock()
     resource_processor_client_mock().virtual_machine_scale_set_vms.return_value = AsyncMock()
     vm_mock = MagicMock()
-    vm_mock.instance_id = 'mocked_id'
+    vm_mock.instance_id = "mocked_id"
     resource_processor_client_mock().virtual_machine_scale_set_vms.list.return_value = AsyncIterator([vm_mock])
 
     instance_view_mock = MagicMock()
@@ -97,12 +99,14 @@ async def test_get_resource_processor_status_healthy(resource_processor_client_m
 
 @patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient", return_value=MagicMock())
-async def test_get_resource_processor_status_not_healthy(resource_processor_client_mock, get_credential_async_context) -> None:
+async def test_get_resource_processor_status_not_healthy(
+    resource_processor_client_mock, get_credential_async_context
+) -> None:
     get_credential_async_context.return_value = AsyncMock()
 
     resource_processor_client_mock().virtual_machine_scale_set_vms.return_value = AsyncMock()
     vm_mock = MagicMock()
-    vm_mock.instance_id = 'mocked_id'
+    vm_mock.instance_id = "mocked_id"
     resource_processor_client_mock().virtual_machine_scale_set_vms.list.return_value = AsyncIterator([vm_mock])
 
     instance_view_mock = MagicMock()
@@ -119,7 +123,9 @@ async def test_get_resource_processor_status_not_healthy(resource_processor_clie
 
 @patch("core.credentials.get_credential_async_context")
 @patch("services.health_checker.ComputeManagementClient")
-async def test_get_resource_processor_status_other_exception(resource_processor_client_mock, get_credential_async_context) -> None:
+async def test_get_resource_processor_status_other_exception(
+    resource_processor_client_mock, get_credential_async_context
+) -> None:
     get_credential_async_context.return_value = AsyncMock()
     resource_processor_client_mock.return_value = None
     resource_processor_client_mock.side_effect = Exception()

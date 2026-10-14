@@ -2,4 +2,3 @@
 
 GET {{baseUrl}}/health
 Accept: application/json
-

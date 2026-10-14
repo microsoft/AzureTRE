@@ -1,5 +1,5 @@
 import { Spinner, SpinnerSize, Stack } from "@fluentui/react";
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Admin } from "../../App";
 import { ApiEndpoint } from "../../models/apiEndpoints";
@@ -13,45 +13,65 @@ import { SharedServices } from "../shared/SharedServices";
 import { SharedServiceItem } from "../shared/SharedServiceItem";
 import { SecuredByRole } from "../shared/SecuredByRole";
 import { RoleName } from "../../models/roleNames";
-import { APIError } from "../../models/exceptions";
+import { APIError, isRetryableApiError } from "../../models/exceptions";
 import { ExceptionLayout } from "../shared/ExceptionLayout";
 import { AppRolesContext } from "../../contexts/AppRolesContext";
 import { CostsContext } from "../../contexts/CostsContext";
 import config from "../../config.json";
+import { useRefresh } from "../../hooks/useRefresh";
+
+const COST_MAX_RETRIES = 5;
+const COST_RETRY_BASE_MS = 5 * 1000;
+const COST_RETRY_MAX_MS = 60 * 1000;
 
 export const RootLayout: React.FunctionComponent = () => {
   const [workspaces, setWorkspaces] = useState([] as Array<Workspace>);
   const [loadingState, setLoadingState] = useState(LoadingState.Loading);
   const [loadingCostState, setLoadingCostState] = useState(LoadingState.Loading);
   const [apiError, setApiError] = useState({} as APIError);
-  const [costApiError, setCostApiError] = useState({} as APIError);
   const apiCall = useAuthApiCall();
   const appRolesCtx = useContext(AppRolesContext);
   const costsWriteCtx = useRef(useContext(CostsContext));
+  const hasLoadedWorkspaces = useRef(false);
 
-  useEffect(() => {
-    const getWorkspaces = async () => {
-      try {
-        const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
-        setLoadingState(LoadingState.Ok);
-        r && r.workspaces && setWorkspaces(r.workspaces);
-      } catch (e: any) {
-        e.userMessage = "Error retrieving resources";
-        setApiError(e);
+  const getWorkspaces = useCallback(async () => {
+    try {
+      const r = await apiCall(ApiEndpoint.Workspaces, HttpMethod.Get, undefined, undefined, ResultType.JSON);
+      hasLoadedWorkspaces.current = true;
+      setLoadingState(LoadingState.Ok);
+      r && r.workspaces && setWorkspaces(r.workspaces);
+    } catch (e: any) {
+      e.userMessage = "Error retrieving resources";
+      setApiError(e);
+      // Keep the loaded list only for transient failures; terminal errors replace it with the error view.
+      if (!hasLoadedWorkspaces.current || !isRetryableApiError(e)) {
         setLoadingState(LoadingState.Error);
       }
-    };
-
-    getWorkspaces();
+    }
   }, [apiCall]);
+  const refreshWorkspaces = useRefresh(getWorkspaces);
+
+  // Load through the refresh hook so the initial request is serialized with manual and polling refreshes.
+  useEffect(() => {
+    refreshWorkspaces();
+  }, [getWorkspaces, refreshWorkspaces]);
 
   useEffect(() => {
+    let active = true;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const setCostState = (state: LoadingState) => {
+      costsWriteCtx.current.setCosts([]);
+      setLoadingCostState(state);
+      costsWriteCtx.current.setLoadingState(state);
+    };
     const getCosts = async () => {
+      if (!active) return;
       try {
         if (appRolesCtx.roles.includes(RoleName.TREAdmin)) {
           costsWriteCtx.current.setLoadingState(LoadingState.Loading);
           const r = await apiCall(ApiEndpoint.Costs, HttpMethod.Get, undefined, undefined, ResultType.JSON);
-
+          if (!active) return;
           costsWriteCtx.current.setCosts([...r.workspaces, ...r.shared_services]);
 
           costsWriteCtx.current.setLoadingState(LoadingState.Ok);
@@ -61,26 +81,29 @@ export const RootLayout: React.FunctionComponent = () => {
           setLoadingCostState(LoadingState.AccessDenied);
         }
       } catch (e: any) {
-        if (e instanceof APIError) {
-          if (e.status === 404 /*subscription not supported*/) {
-            config.debug && console.warn(e.message);
-            setLoadingCostState(LoadingState.NotSupported);
-          } else if (e.status === 429 /*too many requests*/ || e.status === 503 /*service unavailable*/) {
-            let msg = JSON.parse(e.message);
-            let retryAfter = Number(msg.error["retry-after"]);
-            config.debug && console.info("retrying after " + retryAfter + " seconds");
-            setTimeout(getCosts, retryAfter * 1000);
-          } else {
-            e.userMessage = "Error retrieving costs";
-            setLoadingCostState(LoadingState.Error);
-          }
-        } else {
-          e.userMessage = "Error retrieving costs";
-          setLoadingCostState(LoadingState.Error);
+        if (!active) return;
+        if (e?.status === 404 /*subscription not supported*/) {
+          config.debug && console.warn(e.message);
+          setCostState(LoadingState.NotSupported);
+          return;
         }
-
-        costsWriteCtx.current.setLoadingState(LoadingState.Error);
-        setCostApiError(e);
+        if (isRetryableApiError(e) && attempts < COST_MAX_RETRIES) {
+          let retryAfter = 0;
+          try {
+            retryAfter = Number(e.message && JSON.parse(e.message).error?.["retry-after"]);
+          } catch {
+            retryAfter = 0;
+          }
+          // Honour the server's retry-after when given, otherwise back off; stay loading while waiting.
+          const delayMs =
+            retryAfter > 0 ? retryAfter * 1000 : Math.min(COST_RETRY_BASE_MS * 2 ** attempts, COST_RETRY_MAX_MS);
+          attempts += 1;
+          config.debug && console.info(`retrying cost request after ${delayMs / 1000} seconds`);
+          retryTimer = setTimeout(getCosts, delayMs);
+          return;
+        }
+        // Other failures (or retries exhausted) leave costs unavailable for now, not permanently unsupported.
+        setCostState(LoadingState.Error);
       }
     };
 
@@ -89,7 +112,11 @@ export const RootLayout: React.FunctionComponent = () => {
     const ctx = costsWriteCtx.current;
 
     // run this on unmount - to clear the context
-    return () => ctx.setCosts([]);
+    return () => {
+      active = false;
+      if (retryTimer) clearTimeout(retryTimer);
+      ctx.setCosts([]);
+    };
   }, [apiCall, appRolesCtx.roles]);
 
   const addWorkspace = (w: Workspace) => {
@@ -116,7 +143,6 @@ export const RootLayout: React.FunctionComponent = () => {
     case LoadingState.Ok:
       return (
         <>
-          {loadingCostState === LoadingState.Error && <ExceptionLayout e={costApiError} />}
           <Stack horizontal className="tre-body-inner">
             <Stack.Item className="tre-left-nav" style={{ marginTop: 2 }}>
               <LeftNav />
@@ -131,6 +157,7 @@ export const RootLayout: React.FunctionComponent = () => {
                       addWorkspace={(w: Workspace) => addWorkspace(w)}
                       updateWorkspace={(w: Workspace) => updateWorkspace(w)}
                       removeWorkspace={(w: Workspace) => removeWorkspace(w)}
+                      onRefresh={refreshWorkspaces}
                     />
                   }
                 />
@@ -177,7 +204,7 @@ export const RootLayout: React.FunctionComponent = () => {
         </>
       );
     case LoadingState.Error:
-      return <ExceptionLayout e={apiError} />;
+      return <ExceptionLayout e={apiError} onRetry={refreshWorkspaces} />;
     default:
       return (
         <div style={{ marginTop: "20px" }}>
