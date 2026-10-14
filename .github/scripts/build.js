@@ -131,6 +131,13 @@ async function getCommandFromComment({ core, context, github }) {
             break;
           }
 
+          const shaParts = parts.slice(1).filter(part => part !== ACCEPT_NEXUS_EULA_FLAG);
+          if (shaParts.length > 1 || shaParts.some(part => !/^[0-9a-f]{7,40}$/i.test(part))) {
+            const message = `:warning: Invalid shared-service arguments. No deployment or tests were started. Use \`${commandText} [<sha>] ${ACCEPT_NEXUS_EULA_FLAG}\` with one optional SHA and one exact consent flag.`;
+            await addActionComment({ github }, repoOwner, repoName, prNumber, commentUsername, commentLink, message);
+            break;
+          }
+
           const runTests = await handleTestCommand({ core, github }, parts, "shared service tests", runId, { number: prNumber, authorUsername: prAuthorUsername, repoOwner, repoName, headSha: prHeadSha, refId: prRefId, details: pr }, { username: commentUsername, link: commentLink });
           if (runTests) {
             command = "run-tests-shared-services";

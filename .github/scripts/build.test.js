@@ -499,6 +499,40 @@ describe('getCommandFromComment', () => {
         });
 
         test.each([
+          '/test-shared-services 2345678 accept_nexus_eula',
+          '/test-shared-services accept_nexus_eula 2345678',
+          '/test-shared-services ' + 'a'.repeat(40) + ' accept_nexus_eula',
+        ])('accepts one optional SHA on an internal PR: %s', async body => {
+          const context = createCommentContext({ body });
+          await getCommandFromComment({ core, context, github });
+          expect(outputFor(mockCoreSetOutput, 'command')).toBe('run-tests-shared-services');
+          expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('true');
+        });
+
+        describe.each([
+          { description: 'internal', pullRequestNumber: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES, authorUsername: 'admin' },
+          { description: 'external', pullRequestNumber: PR_NUMBER.FORK_NON_DOCS_CHANGES, authorUsername: 'non-contributor' },
+        ])('argument validation for $description PRs', ({ pullRequestNumber, authorUsername }) => {
+          test.each([
+            '/test-shared-services typo accept_nexus_eula',
+            '/test-shared-services accept_nexus_eula typo',
+            '/test-shared-services 234567 accept_nexus_eula',
+            '/test-shared-services ' + 'a'.repeat(41) + ' accept_nexus_eula',
+            '/test-shared-services 2345678 2345678 accept_nexus_eula',
+            '/test-shared-services 2345678 accept_nexus_eula unexpected',
+          ])('does not dispatch malformed arguments: %s', async body => {
+            const context = createCommentContext({ body, pullRequestNumber, authorUsername });
+            await getCommandFromComment({ core, context, github });
+            expect(outputFor(mockCoreSetOutput, 'command')).toBe('none');
+            expect(outputFor(mockCoreSetOutput, 'acceptNexusEula')).toBe('false');
+            expect(mockGithubRestIssuesCreateComment).toHaveComment({
+              owner: 'someOwner', repo: 'someRepo', issue_number: pullRequestNumber,
+              bodyMatcher: /Invalid shared-service arguments.*No deployment or tests were started/,
+            });
+          });
+        });
+
+        test.each([
           '/test-shared-services',
           '/test-shared-services accept_nexus_eula=false',
           '/test-shared-services accept_nexus_eula=true',
