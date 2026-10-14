@@ -11,6 +11,8 @@ Within evaluation or development, you may want to "pause" the TRE environment du
 
 This will allocate the Azure Firewall settings with a public IP and start the Azure Application Gateway service, starting billing of both services.
 
+If the Service Bus was deleted by `make tre-stop DELETE_SERVICE_BUS=true`, run `make deploy-core` to recreate it and start the TRE.
+
 ```bash
 make tre-start
 ```
@@ -22,6 +24,14 @@ This will deallocate the Azure Firewall public IP and stop the Azure Application
 ```bash
 make tre-stop
 ```
+
+To also delete the Service Bus while stopping the TRE, use:
+
+```bash
+DELETE_SERVICE_BUS=true make tre-stop
+```
+
+Run `make deploy-core` to recreate the Service Bus and start the TRE.
 
 ## Automating `stop`
 
