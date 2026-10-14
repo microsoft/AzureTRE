@@ -23,8 +23,8 @@ You can use the Certs Shared Service to set one up by following these steps:
 
 3. Select the Certs template, then fill in the required details. *Domain prefix* should be set to `nexus` and *Cert name* should be `nexus-ssl`.
 
-!!! caution
-    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
+The bundle recovers a soft-deleted certificate during installation when the vault's retention policy still permits recovery.
+An access or recovery failure stops installation. Inspect the operation before retrying; do not purge certificates as routine cleanup.
 
 Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
 
@@ -32,58 +32,43 @@ You can verify whether this has been successful by navigating to your core keyva
 
 ### Certificate reuse and renewal
 
-Certificate bundle `0.8.0` disables retention by default. Normal installs and `renew` actions request a certificate and publish the active certificate in the core vault.
-The certificate script attempts to stop its Application Gateway after success or failure. A failed stop also fails the operation.
+Certificate bundle `0.9.0` checks the configured certificate name in the core vault before requesting another certificate.
+This behaviour applies to normal deployments and CI. It needs no extra vault or CI setting.
 
-CI validation can reuse certificates to avoid repeated issuance when tests replace a service.
-The PR, branch and main validation workflows explicitly set `enableCiCertificateCache` to `true`.
-Other callers of the reusable workflow default to `false`.
-The input sets the core Terraform variable `enable_ci_certificate_cache`, which also defaults to `false`.
-It requires a CI Git reference and the VMSS Porter resource processor.
+Install and `renew` reuse an enabled certificate when it has the exact requested DNS name, a trusted chain, a matching private key and more than 30 days before expiry.
+The certificate remains at its existing name, such as `nexus-ssl`. The password secret and consumer references remain unchanged.
+If no issued version exists, or an otherwise valid certificate is due for renewal, the bundle requests a certificate.
+A lookup error, disabled version or invalid certificate stops the operation without another issuance attempt.
 
-| Setting | Normal deployment | CI with retention enabled |
-| --- | --- | --- |
-| Retained material | None created | One hostname certificate in `kv-acme-{TRE_ID}` |
-| Active certificate and password | Core vault, `kv-{TRE_ID}` | Core vault, `kv-{TRE_ID}` |
-| Cache network access | No cache vault | Private endpoint in the shared subnet, with public access disabled |
-| Cache roles created by TRE | None | Certificates Officer and Secrets User for the resource processor, Administrator for the CI deployer |
-| Cache lifetime | Not applicable | Survives certificate service uninstall, until the CI core is removed or retention is disabled |
+Terraform creates a temporary self-signed certificate before the script runs. On reinstallation, Terraform can recover earlier versions, then import the temporary certificate again.
+The helper recognises that exact temporary certificate and checks the newest issued version under the same name.
+It does not skip an invalid or disabled issued version to use an older one. An incomplete or ambiguous version history also stops reuse.
+Certificate lookup has a three-minute deadline.
 
-The cache vault grants no access to the API, Nexus, Gitea or Application Gateway identities.
-Subscription and resource-group permissions still apply through Azure RBAC inheritance. Review those grants when configuring the CI environment.
-Cache access is recorded in the TRE Log Analytics workspace.
-Core deployment supplies the internal `certificate_cache_vault_name` bundle parameter. An empty value disables retention.
-The script rejects the core vault as a cache destination.
+Uninstall removes the service infrastructure and soft-deletes the certificate and password under the existing vault policy.
+Reinstallation can reuse recovered material until that policy removes it. Purged certificates cannot be reused.
+Use the same hostname and certificate name for replacement. Run only one certificate lifecycle or dependent test suite per environment at a time.
+The certificate-only test requires an environment without Nexus because removing its certificate dependency can interrupt Nexus.
 
-Install and `renew` reuse a retained certificate only when more than 30 days remain before expiry.
-The bundle verifies ownership, public trust, the exact DNS name and the private key before reuse.
-It requests a certificate when no cache entry exists or renewal is due.
-A vault lookup, ownership or certificate validation failure stops the operation without another issuance attempt.
+The script validates newly issued material before import. After import, a retry can reuse the certificate if a later password or gateway update fails.
+If issuance succeeds but import fails, there is no stored certificate to reuse. ACME errors still fail the operation; follow any retry time returned by the issuer.
+On success or failure, the script removes temporary private files and attempts to stop its Application Gateway.
+A failed stop also fails the operation. Cleanup preserves an earlier failure.
 
-Each cache entry is named `tre-acme-<SHA-256 of the lowercase hostname>` and has `tre-cache=certificate-v1` and `fqdn` tags.
-It includes an exportable private key. Names starting with `tre-acme-` are reserved for these entries.
-Uninstall removes the active service certificate and infrastructure, but preserves the CI cache for later installs.
-Removing the CI core or disabling retention deletes the cache vault under its soft-delete and purge-protection policy.
-The cache uses the core setting `kv_purge_protection_enabled`, which defaults to `true`.
-
-If an administrator disables or deletes a cache entry, investigate that change before enabling or recovering it.
-Do not remove the cache to bypass an issuance limit. Compromised certificates require revocation and replacement through the normal incident procedure.
-The cache starts with the first successful issuance. It does not adopt certificates from other vaults or service aliases.
-An ACME rate-limit response still fails the operation. Follow the retry time in that response.
-Run only one certificate lifecycle or dependent test suite per environment at a time.
+This uses the existing core-vault permissions. Identities that can read certificate secrets retain that access.
+Certificate reuse does not add permission isolation. Review existing grants separately when tightening access.
+Scheduled renewal, custom-domain configuration and distribution of updates to other services are separate capabilities.
 
 #### Environments that used earlier draft bundles
 
-Draft versions `0.7.15` and `0.7.16` stored hostname caches in the core vault.
-Version `0.8.0` does not read, move or delete those entries automatically. Upgrading alone does not remove the earlier retained keys.
+Earlier drafts retained `tre-acme-` entries in the core vault or used a dedicated `kv-acme-{TRE_ID}` vault.
+Version `0.9.0` reads the active certificate name. It does not read, move or delete those cache entries.
+Confirm that the required certificate exists at its active name before retiring an earlier cache.
+Review the Terraform plan before deploying code that removes the dedicated vault module, because it can delete that vault and related resources.
+Handle old cache entries as separate cleanup. Do not purge them or delete active service certificates as part of that cleanup.
 
-1. List the `tre-acme-` certificates in `kv-{TRE_ID}`.
-2. Confirm each entry's `tre-cache=certificate-v1` and `fqdn` tags before removing it.
-3. Soft-delete the confirmed cache certificates. Keep the active service aliases, such as `nexus-ssl`.
-4. Check inherited access and confirm that core-vault readers can no longer download those cache secrets.
-
-Azure retains deleted objects under the vault's recovery policy. Do not purge them as part of routine cleanup.
-A later CI install must issue its first certificate into the new vault, subject to the ACME issuance limits.
+The bundle's `upgrade` action does not change infrastructure. Registering the new template alone does not update an installed bundle.
+Verify the installed resource's bundle version before relying on the new reuse behaviour.
 
 ### Deploy Nexus
 

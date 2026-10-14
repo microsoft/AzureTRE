@@ -23,11 +23,6 @@ on: # yamllint disable-line rule:truthy
         type: string
         required: false
         default: ""
-      enableCiCertificateCache:
-        description: Retain certificates in a dedicated private vault for CI validation
-        type: boolean
-        required: false
-        default: false
       e2eTestsCustomSelector:
         description: The pytest marker selector for the e2e tests to be run
         type: string
@@ -414,10 +409,7 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: >-
-            TF_VAR_ci_git_ref=${{ inputs.ciGitRef }}
-            TF_VAR_enable_ci_certificate_cache=${{ inputs.enableCiCertificateCache }}
-            TF_LOG=${{ vars.TF_LOG }} make deploy-core
+          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ vars.TF_LOG }} make deploy-core"
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

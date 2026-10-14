@@ -213,7 +213,6 @@ jobs:
       prHeadSha: ${{ needs.pr_comment.outputs.prHeadSha }}
       ciGitRef: ${{ needs.pr_comment.outputs.ciGitRef }}
       ciEnvironmentId: ${{ needs.prepare_pr_env.outputs.refid }}
-      enableCiCertificateCache: true
       e2eTestsCustomSelector: >-
         ${{ (needs.pr_comment.outputs.command == 'run-tests-extended' && 'extended') ||
         (needs.pr_comment.outputs.command == 'run-tests-extended-aad' && 'extended_aad') ||

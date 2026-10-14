@@ -58,10 +58,6 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
-  - name: certificate_cache_vault_name
-    type: string
-    default: ""
-    description: "Dedicated private CI cache vault. An empty value disables certificate retention."
 
 mixins:
   - exec
@@ -71,14 +67,6 @@ mixins:
       clientVersion: 2.81.0
 
 install:
-  - exec:
-      description: "Validate the certificate name"
-      command: python3
-      arguments:
-        - ./scripts/certificate_cache.py
-        - validate-name
-      flags:
-        cert-name: ${ bundle.parameters.cert_name }
   - terraform:
       description: "Deploy shared service"
       vars:
@@ -125,7 +113,7 @@ install:
       flags:
         subscription: ${ bundle.credentials.azure_subscription_id }
   - exec:
-      description: "Generate certificate"
+      description: "Reuse or issue the certificate"
       command: bash
       arguments:
         - ./scripts/letsencrypt.sh
@@ -137,7 +125,6 @@ install:
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
         password_name: ${ bundle.outputs.password_name }
-        cache_vault_name: ${ bundle.parameters.certificate_cache_vault_name }
 upgrade:
   - exec:
       description: "Upgrade shared service"
@@ -217,5 +204,4 @@ renew:
         keyvault_name: ${ bundle.outputs.keyvault_name }
         cert_name: ${ bundle.parameters.cert_name }
         password_name: ${ bundle.outputs.password_name }
-        cache_vault_name: ${ bundle.parameters.certificate_cache_vault_name }
         start_gateway: "true"

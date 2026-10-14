@@ -6,7 +6,6 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
-* Add validated core-vault certificate lookup, including recovery of issued versions behind the temporary bootstrap certificate. (`tre-shared-service-certs` 0.9.0, `devops` 0.6.19) ([#5245](https://github.com/microsoft/AzureTRE/issues/5245))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -28,7 +27,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Wait for private certificate storage readiness and stop the certificate gateway after success or failure. Reuse trusted certificates across CI service replacement in a dedicated private vault. Retention is disabled by default. (`core` 0.19.0, `devops` 0.6.18, `build-scripts` 1.1.0, `tre-shared-service-certs` 0.8.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
+* Wait for private certificate storage readiness and stop the certificate gateway after success or failure. Reuse validated certificates from the core vault, including issued versions recovered after service replacement. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))

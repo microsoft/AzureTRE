@@ -5,7 +5,6 @@ umask 077
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 start_gateway=false
-cache_vault_name=""
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -40,10 +39,6 @@ while [ "$1" != "" ]; do
     --start_gateway)
         shift
         start_gateway=$1
-        ;;
-    --cache_vault_name)
-        shift
-        cache_vault_name=$1
         ;;
     *)
         echo "Unexpected argument: '$1'"
@@ -94,21 +89,14 @@ esac
 
 work_dir=$(mktemp -d)
 reuse_certificate=false
-cache_args=(--cert-name "$cert_name" --vault "$cache_vault_name" --fqdn "$fqdn" --directory "$work_dir")
+reuse_args=(--cert-name "$cert_name" --vault "$keyvault_name" --fqdn "$fqdn" --directory "$work_dir")
 
-if [[ -n "$cache_vault_name" ]]; then
-    if [[ "$(printf %s "$cache_vault_name" | tr '[:upper:]' '[:lower:]')" == "$(printf %s "$keyvault_name" | tr '[:upper:]' '[:lower:]')" ]]; then
-        echo "The certificate cache must use a separate vault. Check the CI cache configuration." >&2
-        exit 2
-    fi
-    if python3 "${script_dir}/certificate_cache.py" restore "${cache_args[@]}"; then
-        echo "Using the retained certificate without an ACME request"
-        reuse_certificate=true
-    else
-        cache_status=$?
-        if [[ "$cache_status" -ne 3 ]]; then
-            exit "$cache_status"
-        fi
+if python3 "${script_dir}/certificate_reuse.py" restore "${reuse_args[@]}"; then
+    reuse_certificate=true
+else
+    reuse_status=$?
+    if [[ "$reuse_status" -ne 3 ]]; then
+        exit "$reuse_status"
     fi
 fi
 
@@ -170,10 +158,8 @@ EOF
 
     cp "${ledir}/live/${fqdn}/privkey.pem" "${work_dir}/privkey.pem"
     cp "${ledir}/live/${fqdn}/fullchain.pem" "${work_dir}/fullchain.pem"
-    if [[ -n "$cache_vault_name" ]]; then
-        # Persist CI issuance before updating the alias. A later failure can reuse it.
-        python3 "${script_dir}/certificate_cache.py" store "${cache_args[@]}"
-    fi
+    python3 "${script_dir}/certificate_reuse.py" validate \
+        --fqdn "$fqdn" --directory "$work_dir"
 fi
 
 # Convert the generated certificate to a .pfx
@@ -187,7 +173,8 @@ openssl pkcs12 -export \
     -out "${CERT_DIR}/aci.pfx" \
     -passout "file:${CERT_DIR}/password"
 
-# Save cert and password to KeyVault
+# Store the issued material before updating the password or gateway.
+# A later failure can reuse this certificate on retry.
 echo "Importing cert to KeyVault ${keyvault_name}"
 sid=$(az keyvault certificate import \
     -o json \
