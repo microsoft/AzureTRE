@@ -37,6 +37,9 @@ To be reused, the certificate must:
 - Have a trusted certificate chain and a matching private key.
 - Have more than 30 days remaining before expiry.
 
+The service converts certificates stored in PEM format to PFX for Application Gateway.
+This reuses the certificate without another request to Let's Encrypt.
+
 If no issued certificate exists, the service requests one. It also requests a replacement when an otherwise valid certificate expires within 30 days.
 The bundle's `renew` action uses the same checks. Renewal is not scheduled automatically.
 

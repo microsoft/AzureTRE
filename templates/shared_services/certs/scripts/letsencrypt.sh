@@ -95,7 +95,11 @@ reuse_args=(--cert-name "$cert_name" --vault "$keyvault_name" --fqdn "$fqdn" --d
 
 if python3 "${script_dir}/certificate_reuse.py" restore "${reuse_args[@]}"; then
     reuse_certificate=true
-    reuse_current=$(jq -er '.is_current | select(type == "boolean") | tostring' "${work_dir}/reuse.json")
+    reuse_current=$(jq -er '
+        select((.is_current | type) == "boolean")
+        | select(.content_type == "application/x-pkcs12" or .content_type == "application/x-pem-file")
+        | (.is_current and (.content_type == "application/x-pkcs12")) | tostring
+    ' "${work_dir}/reuse.json")
     if [[ "$reuse_current" == true ]]; then
         sid=$(jq -er '.secret_id | select(type == "string" and length > 0)' "${work_dir}/reuse.json")
     fi
@@ -169,7 +173,7 @@ EOF
 fi
 
 if [[ "$reuse_current" == false ]]; then
-    # Import newly issued material or restore an issued version behind the temporary certificate.
+    # Import new certificates, older recovered versions or PEM material converted to PFX.
     echo "Got cert. Converting to PFX"
     CERT_DIR="${work_dir}"
     CERT_PASSWORD=$(openssl rand -base64 30)

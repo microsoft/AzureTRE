@@ -278,9 +278,15 @@ def restore_before_deadline(vault, name, fqdn, directory):
     if current["id"] != latest["id"] or current["attributes"].get("enabled") is not True:
         raise CertificateReuseError("The active certificate changed during lookup")
     if reusable:
-        # The shell only needs to import when an older issued version must become current again.
+        # The shell imports older versions and converts PEM secrets to PFX for Application Gateway.
         (directory / "reuse.json").write_text(
-            json.dumps({"is_current": certificate["id"] == latest["id"], "secret_id": certificate["sid"]})
+            json.dumps(
+                {
+                    "is_current": certificate["id"] == latest["id"],
+                    "secret_id": certificate["sid"],
+                    "content_type": content_type,
+                }
+            )
         )
         print(f"Reusing certificate {name}, SHA-256 fingerprint {digest}; no ACME request required")
     else:

@@ -231,7 +231,7 @@ class CertificateReuseTests(unittest.TestCase):
         self.assertIn(("keyvault", "secret", "show", "--id", self.latest["sid"]), self.calls)
         self.assertEqual(
             json.loads((self.folder / "reuse.json").read_text()),
-            {"is_current": True, "secret_id": self.latest["sid"]},
+            {"is_current": True, "secret_id": self.latest["sid"], "content_type": "application/x-pkcs12"},
         )
 
     def test_first_install_with_only_the_bootstrap_requires_issuance(self):
@@ -248,7 +248,7 @@ class CertificateReuseTests(unittest.TestCase):
         self.assertEqual((self.folder / "selected.der").read_bytes(), self.publics["valid"])
         self.assertEqual(
             json.loads((self.folder / "reuse.json").read_text()),
-            {"is_current": False, "secret_id": issued["sid"]},
+            {"is_current": False, "secret_id": issued["sid"], "content_type": "application/x-pkcs12"},
         )
 
     def test_selection_handles_more_than_one_service_page_and_unsorted_versions(self):
@@ -293,6 +293,10 @@ class CertificateReuseTests(unittest.TestCase):
         self.assertTrue(self.restore())
         self.assertTrue(REUSE.validate_material(self.folder, FQDN))
         self.assertNotIn("PRIVATE KEY", (self.folder / "fullchain.pem").read_text())
+        self.assertEqual(
+            json.loads((self.folder / "reuse.json").read_text()),
+            {"is_current": True, "secret_id": self.latest["sid"], "content_type": "application/x-pem-file"},
+        )
 
     def test_wrong_vault_name_or_version_is_rejected_before_secret_access(self):
         sid = self.latest["sid"]

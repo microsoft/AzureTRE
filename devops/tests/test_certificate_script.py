@@ -20,6 +20,7 @@ class CertificateScriptTests(unittest.TestCase):
         issuance_status=0,
         *,
         reuse_current=True,
+        reuse_content_type="application/x-pkcs12",
         reuse_metadata=None,
         start=None,
         start_status=0,
@@ -107,7 +108,13 @@ elif command=='az':
                     "CALL_LOG": str(log),
                     "REUSE_STATUS": str(reuse_status),
                     "REUSE_METADATA": (
-                        json.dumps({"is_current": reuse_current, "secret_id": CURRENT_SECRET_ID})
+                        json.dumps(
+                            {
+                                "is_current": reuse_current,
+                                "secret_id": CURRENT_SECRET_ID,
+                                "content_type": reuse_content_type,
+                            }
+                        )
                         if reuse_metadata is None
                         else reuse_metadata
                     ),
@@ -151,8 +158,32 @@ elif command=='az':
         gateway = next(call for call in calls if call[1:4] == ["network", "application-gateway", "ssl-cert"])
         self.assertEqual(gateway[gateway.index("--key-vault-secret-id") + 1], IMPORTED_SECRET_ID)
 
+    def test_current_pem_certificate_is_converted_and_imported_before_gateway_update(self):
+        result, calls = self.execute(reuse_content_type="application/x-pem-file")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call[0] == "certbot" for call in calls))
+        conversion = next(i for i, call in enumerate(calls) if call[:3] == ["openssl", "pkcs12", "-export"])
+        certificate = next(i for i, call in enumerate(calls) if call[1:4] == ["keyvault", "certificate", "import"])
+        gateway = next(i for i, call in enumerate(calls) if call[1:4] == ["network", "application-gateway", "ssl-cert"])
+        self.assertLess(conversion, certificate)
+        self.assertLess(certificate, gateway)
+        self.assertEqual(calls[gateway][calls[gateway].index("--key-vault-secret-id") + 1], IMPORTED_SECRET_ID)
+
+    def test_unknown_reuse_content_type_stops_before_import_or_gateway_update(self):
+        for content_type in (None, "", "application/octet-stream"):
+            with self.subTest(content_type=content_type):
+                result, calls = self.execute(reuse_content_type=content_type)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(any(call[0] in ("openssl", "certbot") or call[1:2] == ["keyvault"] for call in calls))
+                self.assertFalse(any(call[1:4] == ["network", "application-gateway", "ssl-cert"] for call in calls))
+
     def test_missing_or_invalid_reuse_metadata_stops_before_writes(self):
-        for metadata in ("", "{}", '{"is_current":"true"}', '{"is_current":true,"secret_id":null}'):
+        for metadata in (
+            "",
+            "{}",
+            '{"is_current":"true","content_type":"application/x-pkcs12"}',
+            '{"is_current":true,"secret_id":null,"content_type":"application/x-pkcs12"}',
+        ):
             with self.subTest(metadata=metadata):
                 result, calls = self.execute(reuse_metadata=metadata)
                 self.assertNotEqual(result.returncode, 0)
