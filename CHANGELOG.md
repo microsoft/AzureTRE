@@ -28,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Read missing gateway certificate metadata through the resource processor and isolate reuse evidence by installation message span. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Reject invalid or duplicate SHA arguments before starting shared-service tests. (`build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Read the shared-service template response correctly before certificate lifecycle validation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Keep response content and URL parameters out of E2E operation polling logs, including cancellation and deployment failures. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))

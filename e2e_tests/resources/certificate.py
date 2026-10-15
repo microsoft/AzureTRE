@@ -5,15 +5,19 @@ import base64
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 import os
+import json
+from pathlib import Path
+import shlex
 import re
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 
 from e2e_tests import config
 from e2e_tests.cloud import get_cloud
-from e2e_tests.resources.sql_probe import arm_client
+from e2e_tests.resources.sql_probe import arm_client, delete_after, COMPUTE_API
+from e2e_tests.resources.certificate_probe import PREFIX
 
 
 NETWORK_API = "2024-05-01"
@@ -22,7 +26,7 @@ LOGS_API = "2023-09-01"
 CHECK_TIMEOUT_SECONDS = 5 * 60
 
 
-def certificate_metadata(gateway, public_ip, group, tre_id, resource_id):
+def certificate_reference(gateway, public_ip, group, tre_id, resource_id):
     """Return only public metadata after checking resource ownership and identity."""
     expected_tags = {"tre_id": tre_id, "tre_shared_service_id": resource_id}
     for resource, suffix in (
@@ -43,7 +47,17 @@ def certificate_metadata(gateway, public_ip, group, tre_id, resource_id):
     assert re.fullmatch(
         rf"https://kv-{re.escape(tre_id)}\.vault\.azure\.net/secrets/nexus-ssl/[a-fA-F0-9]+", secret_id
     ), "The gateway certificate must reference the named certificate in the core vault"
-    data = base64.b64decode(properties["publicCertData"], validate=True)
+    return fqdn, properties
+
+
+def certificate_metadata(gateway, public_ip, group, tre_id, resource_id, public_cert_data=None):
+    fqdn, properties = certificate_reference(gateway, public_ip, group, tre_id, resource_id)
+    encoded = properties.get("publicCertData")
+    if encoded is None or encoded == "":
+        encoded = public_cert_data
+    if not encoded:
+        raise ValueError("No public certificate data was returned for the gateway reference")
+    data = base64.b64decode(encoded, validate=True)
     cert = (
         x509.load_pem_x509_certificate(data)
         if data.startswith(b"-----BEGIN CERTIFICATE-----")
@@ -65,10 +79,14 @@ def reuse_query(resource_id, digest):
     return f"""
 let received = AppTraces
 | where Message contains 'Message received for resource_id={resource_id},'
-| where isnotempty(OperationId)
-| distinct OperationId;
+| where isnotempty(OperationId) and isnotempty(ParentId)
+| distinct OperationId, ParentId;
+let installations = AppTraces
+| where Message contains 'install action starting for {resource_id}...'
+| distinct OperationId, ParentId;
 AppTraces
-| where OperationId in (received)
+| join kind=leftsemi (received) on OperationId, ParentId
+| join kind=leftsemi (installations) on OperationId, ParentId
 | summarize
     reused=countif(Message contains 'Reusing certificate nexus-ssl, SHA-256 fingerprint {digest}; no ACME request required'),
     issued=countif(Message contains 'Certificate issuance required:'),
@@ -104,6 +122,7 @@ class CertificateChecks:
         storage = f"stwebcerts{tre_id}".replace("-", "")
         self.storage_id = f"{self.group}/providers/Microsoft.Storage/storageAccounts/{storage}"
         self.logs_id = None
+        self.probe_vm = None
 
     async def prepare(self):
         workspace = await self.arm.request(
@@ -112,6 +131,77 @@ class CertificateChecks:
         self.logs_id = str(UUID(workspace["properties"]["customerId"]))
         # Check query access before recovering or creating any shared service.
         await self.query(reuse_query("00000000-0000-0000-0000-000000000000", "0" * 64))
+        await self.prepare_probe()
+
+    async def prepare_probe(self):
+        vmss_id = f"{self.group}/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-rp-porter-{self.tre_id}"
+        vmss = await self.arm.request("GET", vmss_id, COMPUTE_API)
+        assert vmss.get("id", "").lower() == vmss_id.lower(), "Unexpected resource-processor scale set"
+        assert vmss.get("tags", {}).get("tre_id") == self.tre_id, "Resource processor belongs to another TRE"
+        identity_id = f"{self.group}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-vmss-{self.tre_id}"
+        identities = vmss.get("identity", {}).get("userAssignedIdentities", {})
+        identities = [value for key, value in identities.items() if key.lower() == identity_id.lower()]
+        assert len(identities) == 1, "Expected the TRE resource-processor identity"
+        client_id = str(UUID(identities[0]["clientId"]))
+        instances = await self.arm.request("GET", vmss_id + "/virtualMachines", COMPUTE_API)
+        for instance in instances.get("value", []):
+            vm_id = instance.get("id", "")
+            if not re.fullmatch(re.escape(vmss_id) + r"/virtualMachines/[0-9]+", vm_id, re.I):
+                raise ValueError("Unexpected resource-processor VM")
+            view = await self.arm.request("GET", vm_id + "/instanceView", COMPUTE_API)
+            if any(item.get("code") == "PowerState/running" for item in view.get("statuses", [])):
+                self.probe_vm = (vm_id, vmss["location"], client_id)
+                return
+        raise RuntimeError("No running resource-processor VM is available for public certificate reads")
+
+    async def public_certificate(self, secret_id):
+        if not re.fullmatch(
+            rf"https://kv-{re.escape(self.tre_id)}\.vault\.azure\.net/secrets/nexus-ssl/[a-fA-F0-9]+", secret_id
+        ):
+            raise ValueError("Unexpected certificate reference")
+        certificate_url = secret_id.replace("/secrets/", "/certificates/")
+        vm_id, location, client_id = self.probe_vm
+        script = Path(__file__).with_name("certificate_probe.py").read_text()
+        script = f"python3 - {shlex.quote(certificate_url)} {shlex.quote(client_id)} <<'PY'\n{script}\nPY"
+        command = f"{vm_id}/runCommands/certificate-evidence-{uuid4().hex}"
+        # Delete only this temporary command, including after timeout or cancellation.
+        async with delete_after(self.arm, command, COMPUTE_API):
+            async with asyncio.timeout(180):
+                await self.arm.request(
+                    "PUT",
+                    command,
+                    COMPUTE_API,
+                    body={
+                        "location": location,
+                        "properties": {
+                            "source": {"script": script},
+                            "timeoutInSeconds": 120,
+                            "treatFailureAsDeploymentFailure": True,
+                        },
+                    },
+                )
+                while True:
+                    result = await self.arm.request("GET", command, COMPUTE_API, expand=True)
+                    properties = result.get("properties", {})
+                    view = properties.get("instanceView", {})
+                    state = view.get("executionState")
+                    if properties.get("provisioningState") == "Failed" or state in ("Failed", "Canceled", "TimedOut"):
+                        raise RuntimeError("Public certificate probe failed")
+                    if state == "Succeeded":
+                        if view.get("exitCode") != 0:
+                            raise RuntimeError("Public certificate probe returned a non-zero exit code")
+                        lines = [
+                            line[len(PREFIX) :]
+                            for line in view.get("output", "").splitlines()
+                            if line.startswith(PREFIX)
+                        ]
+                        if len(lines) != 1:
+                            raise RuntimeError("Public certificate probe returned incomplete evidence")
+                        certificate = json.loads(lines[0])
+                        if certificate.get("id") != certificate_url or certificate.get("sid") != secret_id:
+                            raise ValueError("Public certificate probe returned a different certificate version")
+                        return certificate["cer"]
+                    await asyncio.sleep(5)
 
     async def query(self, query):
         token = await asyncio.to_thread(self.arm.credential.get_token, "https://api.loganalytics.io/.default")
@@ -134,7 +224,11 @@ class CertificateChecks:
                     break
                 await asyncio.sleep(10)
             public_ip = await self.arm.request("GET", self.ip_id, NETWORK_API)
-            evidence = certificate_metadata(gateway, public_ip, self.group, self.tre_id, resource_id)
+            _, properties = certificate_reference(gateway, public_ip, self.group, self.tre_id, resource_id)
+            encoded = properties.get("publicCertData")
+            if encoded is None or encoded == "":
+                encoded = await self.public_certificate(properties["keyVaultSecretId"])
+            evidence = certificate_metadata(gateway, public_ip, self.group, self.tre_id, resource_id, encoded)
             return {**evidence, "gateway_stopped": True}
 
     async def confirm_reuse(self, resource_path, digest):

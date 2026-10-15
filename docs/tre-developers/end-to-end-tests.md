@@ -83,10 +83,14 @@ Reinstallation must preserve the SHA-256 certificate fingerprint and produce a m
 After each uninstall, the case requires API HTTP 404 and ARM confirmation that the gateway, public IP and challenge storage are absent.
 The bundle report records public metadata, reuse and cleanup results. It does not require Nexus EULA consent.
 
-The evidence helper currently supports `AzureCloud`. It uses the existing deployment identity for ARM and Log Analytics reads.
-It checks log access before resource changes. It does not read private keys, open vault network access or add permissions.
+The evidence helper currently supports `AzureCloud`. It uses the existing deployment identity for ARM and Log Analytics access.
+If the gateway omits public certificate data, the helper reads the exact referenced certificate version through the resource-processor VM.
+This uses a temporary managed Run Command and the VM's existing identity and private network access.
+The deployment identity must be able to create, read and delete that command on the resource-processor VM.
+The helper removes the command after success, failure or cancellation. It reads public certificate data only, without changing vault access or permissions.
+Log evidence is limited to the installation's message spans, so other installations in the same trace cannot affect the result.
 Only aggregate log counts enter the test process. Missing, partial or delayed evidence beyond the deadline fails the case.
-See [Application Gateway public certificate metadata](https://learn.microsoft.com/en-us/dotnet/api/microsoft.azure.management.network.models.applicationgatewaysslcertificate.publiccertdata)
+See [Key Vault public certificate retrieval](https://learn.microsoft.com/en-us/rest/api/keyvault/certificates/get-certificate/get-certificate)
 and [Azure Monitor query authentication](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/access-api).
 
 Each installation has a 45-minute provisioning deadline. Cleanup has its own 60-minute deadline.

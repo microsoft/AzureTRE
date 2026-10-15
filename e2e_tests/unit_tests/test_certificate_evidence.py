@@ -120,8 +120,10 @@ class CertificateMetadataTests(unittest.TestCase):
     def test_query_correlates_resource_trace_and_returns_only_counts(self):
         query = certs.reuse_query(RESOURCE, "a" * 64)
         self.assertIn(f"Message received for resource_id={RESOURCE},", query)
-        self.assertIn("where OperationId in (received)", query)
         self.assertIn("summarize", query)
+        self.assertIn("join kind=leftsemi (received) on OperationId, ParentId", query)
+        self.assertIn("join kind=leftsemi (installations) on OperationId, ParentId", query)
+        self.assertIn(f"install action starting for {RESOURCE}...", query)
         self.assertIn("no ACME request required", query)
         with self.assertRaises(ValueError):
             certs.reuse_query("'; AppTraces", "a" * 64)
@@ -230,7 +232,57 @@ class CertificateAzureReadTests(unittest.IsolatedAsyncioTestCase):
     async def test_prepare_checks_logs_access_before_creating_resources(self):
         self.arm.request.return_value = {"properties": {"customerId": WORKSPACE}}
         self.checks.query = AsyncMock(return_value={"reused": 0, "issued": 0, "completed": 0})
-        await self.checks.prepare()
+        with patch.object(self.checks, "prepare_probe", AsyncMock()) as prepare_probe:
+            await self.checks.prepare()
+        prepare_probe.assert_awaited_once()
         self.assertEqual(self.checks.logs_id, WORKSPACE)
         self.checks.query.assert_awaited_once()
         self.assertEqual(self.arm.request.call_args.args[0], "GET")
+
+
+class CertificateFallbackTests(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_or_empty_gateway_data_uses_the_exact_vault_reference(self):
+        for missing in (None, ""):
+            with self.subTest(missing=missing):
+                gateway, ip, digest = resources()
+                properties = gateway["properties"]["sslCertificates"][0]["properties"]
+                data = properties.pop("publicCertData")
+                if missing is not None:
+                    properties["publicCertData"] = missing
+                arm = SimpleNamespace(request=AsyncMock(side_effect=[gateway, ip]))
+                checks = certs.CertificateChecks(arm, SUBSCRIPTION, TRE_ID)
+                checks.public_certificate = AsyncMock(return_value=data)
+                result = await checks.snapshot(f"/shared-services/{RESOURCE}")
+                self.assertEqual(result, {"hostname": HOSTNAME, "sha256": digest, "gateway_stopped": True})
+                checks.public_certificate.assert_awaited_once_with(properties["keyVaultSecretId"])
+
+    async def test_fallback_keeps_hostname_and_validity_checks(self):
+        for parameters in ({"hostname": "other.example.com"}, {"days": 29}):
+            gateway, ip, _ = resources(**parameters)
+            properties = gateway["properties"]["sslCertificates"][0]["properties"]
+            data = properties.pop("publicCertData")
+            arm = SimpleNamespace(request=AsyncMock(side_effect=[gateway, ip]))
+            checks = certs.CertificateChecks(arm, SUBSCRIPTION, TRE_ID)
+            checks.public_certificate = AsyncMock(return_value=data)
+            with self.subTest(parameters=parameters), self.assertRaises(AssertionError):
+                await checks.snapshot(f"/shared-services/{RESOURCE}")
+
+    async def test_wrong_ownership_is_rejected_before_fallback(self):
+        gateway, ip, _ = resources()
+        gateway["tags"]["tre_id"] = "another-tre"
+        arm = SimpleNamespace(request=AsyncMock(side_effect=[gateway, ip]))
+        checks = certs.CertificateChecks(arm, SUBSCRIPTION, TRE_ID)
+        checks.public_certificate = AsyncMock()
+        with self.assertRaises(AssertionError):
+            await checks.snapshot(f"/shared-services/{RESOURCE}")
+        checks.public_certificate.assert_not_awaited()
+
+    async def test_malformed_gateway_data_does_not_fall_back(self):
+        gateway, ip, _ = resources()
+        gateway["properties"]["sslCertificates"][0]["properties"]["publicCertData"] = "invalid!"
+        arm = SimpleNamespace(request=AsyncMock(side_effect=[gateway, ip]))
+        checks = certs.CertificateChecks(arm, SUBSCRIPTION, TRE_ID)
+        checks.public_certificate = AsyncMock()
+        with self.assertRaises(ValueError):
+            await checks.snapshot(f"/shared-services/{RESOURCE}")
+        checks.public_certificate.assert_not_awaited()
