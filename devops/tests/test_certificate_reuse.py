@@ -5,6 +5,7 @@ from contextlib import redirect_stdout
 import copy
 import hashlib
 import io
+import json
 import re
 from datetime import datetime, timedelta, timezone
 import importlib.util
@@ -202,6 +203,10 @@ class CertificateReuseTests(unittest.TestCase):
         self.assertNotIn("PRIVATE KEY", output.getvalue())
         self.assertFalse(any("list-versions" in call for call in self.calls))
         self.assertIn(("keyvault", "secret", "show", "--id", self.latest["sid"]), self.calls)
+        self.assertEqual(
+            json.loads((self.folder / "reuse.json").read_text()),
+            {"is_current": True, "secret_id": self.latest["sid"]},
+        )
 
     def test_first_install_with_only_the_bootstrap_requires_issuance(self):
         self.certificates.clear()
@@ -210,10 +215,15 @@ class CertificateReuseTests(unittest.TestCase):
         self.assertFalse(any(call[:3] == ("keyvault", "secret", "show") for call in self.calls))
 
     def test_reinstall_reuses_issued_material_behind_multiple_bootstrap_versions(self):
+        issued = self.latest
         self.add_certificate("b" * 32, 200, "bootstrap")
         self.latest = self.add_certificate("c" * 32, 300, "bootstrap")
         self.assertTrue(self.restore())
         self.assertEqual((self.folder / "selected.der").read_bytes(), self.publics["valid"])
+        self.assertEqual(
+            json.loads((self.folder / "reuse.json").read_text()),
+            {"is_current": False, "secret_id": issued["sid"]},
+        )
 
     def test_selection_handles_more_than_one_service_page_and_unsorted_versions(self):
         for index in range(1, 28):

@@ -89,10 +89,15 @@ esac
 
 work_dir=$(mktemp -d)
 reuse_certificate=false
+reuse_current=false
 reuse_args=(--cert-name "$cert_name" --vault "$keyvault_name" --fqdn "$fqdn" --directory "$work_dir")
 
 if python3 "${script_dir}/certificate_reuse.py" restore "${reuse_args[@]}"; then
     reuse_certificate=true
+    reuse_current=$(jq -er '.is_current | select(type == "boolean") | tostring' "${work_dir}/reuse.json")
+    if [[ "$reuse_current" == true ]]; then
+        sid=$(jq -er '.secret_id | select(type == "string" and length > 0)' "${work_dir}/reuse.json")
+    fi
 else
     reuse_status=$?
     if [[ "$reuse_status" -ne 3 ]]; then
@@ -162,33 +167,35 @@ EOF
         --fqdn "$fqdn" --directory "$work_dir"
 fi
 
-# Convert the generated certificate to a .pfx
-echo "Got cert. Converting to PFX"
-CERT_DIR="${work_dir}"
-CERT_PASSWORD=$(openssl rand -base64 30)
-printf %s "$CERT_PASSWORD" > "${CERT_DIR}/password"
-openssl pkcs12 -export \
-    -inkey "${CERT_DIR}/privkey.pem" \
-    -in "${CERT_DIR}/fullchain.pem" \
-    -out "${CERT_DIR}/aci.pfx" \
-    -passout "file:${CERT_DIR}/password"
+if [[ "$reuse_current" == false ]]; then
+    # Import newly issued material or restore an issued version behind the temporary certificate.
+    echo "Got cert. Converting to PFX"
+    CERT_DIR="${work_dir}"
+    CERT_PASSWORD=$(openssl rand -base64 30)
+    printf %s "$CERT_PASSWORD" > "${CERT_DIR}/password"
+    openssl pkcs12 -export \
+        -inkey "${CERT_DIR}/privkey.pem" \
+        -in "${CERT_DIR}/fullchain.pem" \
+        -out "${CERT_DIR}/aci.pfx" \
+        -passout "file:${CERT_DIR}/password"
 
-# Store the issued material before updating the password or gateway.
-# A later failure can reuse this certificate on retry.
-echo "Importing cert to KeyVault ${keyvault_name}"
-sid=$(az keyvault certificate import \
-    -o json \
-    --vault-name "${keyvault_name}" \
-    --name "${cert_name}" \
-    --file "${CERT_DIR}/aci.pfx" \
-    --password "${CERT_PASSWORD}" \
-    | jq -r '.sid')
+    # Store the issued material before updating the password or gateway.
+    # A later failure can reuse this certificate on retry.
+    echo "Importing cert to KeyVault ${keyvault_name}"
+    sid=$(az keyvault certificate import \
+        -o json \
+        --vault-name "${keyvault_name}" \
+        --name "${cert_name}" \
+        --file "${CERT_DIR}/aci.pfx" \
+        --password "${CERT_PASSWORD}" \
+        | jq -r '.sid')
 
-echo "Saving certificate password to KV with key ${password_name}"
-az keyvault secret set --name "$password_name" \
-  --vault-name "${keyvault_name}" \
-  --file "${CERT_DIR}/password" \
-  --output none --only-show-errors
+    echo "Saving certificate password to KV with key ${password_name}"
+    az keyvault secret set --name "$password_name" \
+      --vault-name "${keyvault_name}" \
+      --file "${CERT_DIR}/password" \
+      --output none --only-show-errors
+fi
 
 echo "Updating SSL cert in app gateway"
 az network application-gateway ssl-cert update \

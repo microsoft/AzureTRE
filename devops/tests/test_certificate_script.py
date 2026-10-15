@@ -9,6 +9,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "templates/shared_services/certs/scripts/letsencrypt.sh"
+CURRENT_SECRET_ID = "https://vault.vault.azure.net/secrets/nexus-e2e-random/" + "a" * 32
+IMPORTED_SECRET_ID = "https://vault.vault.azure.net/secrets/nexus-e2e-random/" + "b" * 32
 
 
 class CertificateScriptTests(unittest.TestCase):
@@ -17,6 +19,8 @@ class CertificateScriptTests(unittest.TestCase):
         reuse_status=0,
         issuance_status=0,
         *,
+        reuse_current=True,
+        reuse_metadata=None,
         start=False,
         start_status=0,
         stop_status=0,
@@ -36,7 +40,11 @@ import json,os,pathlib,sys
 args=sys.argv[1:]; command=pathlib.Path(sys.argv[0]).name
 with open(os.environ['CALL_LOG'],'a') as file: file.write(json.dumps([command,*args])+'\\n')
 if command=='python3':
- if 'restore' in args: sys.exit(int(os.environ['REUSE_STATUS']))
+ if 'restore' in args:
+  if os.environ['REUSE_STATUS']=='0' and os.environ['REUSE_METADATA']:
+   d=pathlib.Path(args[args.index('--directory')+1])
+   (d/'reuse.json').write_text(os.environ['REUSE_METADATA'])
+  sys.exit(int(os.environ['REUSE_STATUS']))
  if 'validate' in args: sys.exit(int(os.environ['VALIDATION_STATUS']))
 elif command=='certbot':
  if os.environ['ISSUANCE_STATUS']!='0': sys.exit(int(os.environ['ISSUANCE_STATUS']))
@@ -49,7 +57,7 @@ elif command=='az':
  elif args[:3]==['network','application-gateway','stop']: sys.exit(int(os.environ['STOP_STATUS']))
  elif args[:3]==['keyvault','certificate','import']:
   if os.environ['ALIAS_STATUS']!='0': sys.exit(int(os.environ['ALIAS_STATUS']))
-  print(json.dumps({'sid':'https://vault.test/secrets/cert/version'}))
+  print(json.dumps({'sid':os.environ['IMPORTED_SECRET_ID']}))
  elif args[:4]==['network','application-gateway','ssl-cert','update']: sys.exit(int(os.environ['GATEWAY_STATUS']))
  elif args[:3]==['keyvault','secret','set']:
   if os.environ['PASSWORD_STATUS']!='0': sys.exit(int(os.environ['PASSWORD_STATUS']))
@@ -88,6 +96,12 @@ elif command=='az':
                     "PATH": str(folder) + os.pathsep + os.environ["PATH"],
                     "CALL_LOG": str(log),
                     "REUSE_STATUS": str(reuse_status),
+                    "REUSE_METADATA": (
+                        json.dumps({"is_current": reuse_current, "secret_id": CURRENT_SECRET_ID})
+                        if reuse_metadata is None
+                        else reuse_metadata
+                    ),
+                    "IMPORTED_SECRET_ID": IMPORTED_SECRET_ID,
                     "ISSUANCE_STATUS": str(issuance_status),
                     "START_STATUS": str(start_status),
                     "STOP_STATUS": str(stop_status),
@@ -113,7 +127,27 @@ elif command=='az':
         restore = next(call for call in calls if "restore" in call)
         self.assertEqual(restore[restore.index("--vault") + 1], "vault")
         self.assertEqual(restore[restore.index("--cert-name") + 1], "nexus-e2e-random")
-        self.assertTrue(any(call[1:4] == ["keyvault", "certificate", "import"] for call in calls))
+        self.assertFalse(any(call[0] == "openssl" or call[1:2] == ["keyvault"] for call in calls))
+        gateway = next(call for call in calls if call[1:4] == ["network", "application-gateway", "ssl-cert"])
+        self.assertEqual(gateway[gateway.index("--key-vault-secret-id") + 1], CURRENT_SECRET_ID)
+
+    def test_recovered_older_certificate_is_imported_without_acme(self):
+        result, calls = self.execute(reuse_current=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call[0] == "certbot" for call in calls))
+        self.assertEqual(sum(call[1:4] == ["keyvault", "certificate", "import"] for call in calls), 1)
+        self.assertEqual(sum(call[1:4] == ["keyvault", "secret", "set"] for call in calls), 1)
+        gateway = next(call for call in calls if call[1:4] == ["network", "application-gateway", "ssl-cert"])
+        self.assertEqual(gateway[gateway.index("--key-vault-secret-id") + 1], IMPORTED_SECRET_ID)
+
+    def test_missing_or_invalid_reuse_metadata_stops_before_writes(self):
+        for metadata in ("", "{}", '{"is_current":"true"}', '{"is_current":true,"secret_id":null}'):
+            with self.subTest(metadata=metadata):
+                result, calls = self.execute(reuse_metadata=metadata)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(any(call[0] in ("openssl", "certbot") or call[1:2] == ["keyvault"] for call in calls))
+                self.assertFalse(any(call[1:4] == ["network", "application-gateway", "ssl-cert"] for call in calls))
+                self.assertEqual(calls[-1][1:4], ["network", "application-gateway", "stop"])
 
     def test_bootstrap_or_due_certificate_issues_once_and_validates_before_import(self):
         result, calls = self.execute(reuse_status=3)
@@ -141,14 +175,17 @@ elif command=='az':
         self.assertEqual(result.returncode, 25)
         self.assertFalse(any(call[1:2] == ["keyvault"] for call in calls))
 
-    def test_retry_after_password_failure_reuses_the_already_imported_certificate(self):
-        failed, initial = self.execute(reuse_status=3, password_status=26)
-        self.assertEqual(failed.returncode, 26)
-        self.assertTrue(any(call[1:4] == ["keyvault", "certificate", "import"] for call in initial))
-        retried, calls = self.execute(reuse_status=0)
-        self.assertEqual(retried.returncode, 0, retried.stderr)
-        self.assertFalse(any(call[0] == "certbot" for call in calls))
-        self.assertTrue(any(call[1:4] == ["keyvault", "secret", "set"] for call in calls))
+    def test_retry_after_password_or_gateway_failure_uses_the_imported_certificate_without_vault_writes(self):
+        for failure in ({"password_status": 26}, {"gateway_status": 26}):
+            with self.subTest(failure=failure):
+                failed, initial = self.execute(reuse_status=3, **failure)
+                self.assertEqual(failed.returncode, 26)
+                self.assertTrue(any(call[1:4] == ["keyvault", "certificate", "import"] for call in initial))
+                retried, calls = self.execute(reuse_status=0)
+                self.assertEqual(retried.returncode, 0, retried.stderr)
+                self.assertFalse(any(call[0] in ("openssl", "certbot") or call[1:2] == ["keyvault"] for call in calls))
+                gateway = next(call for call in calls if call[1:4] == ["network", "application-gateway", "ssl-cert"])
+                self.assertEqual(gateway[gateway.index("--key-vault-secret-id") + 1], CURRENT_SECRET_ID)
 
     def test_success_stops_gateway_after_updating_certificate(self):
         result, calls = self.execute()
@@ -161,8 +198,8 @@ elif command=='az':
             {"reuse_status": 23},
             {"reuse_status": 3, "issuance_status": 24},
             {"reuse_status": 3, "validation_status": 25},
-            {"alias_status": 26},
-            {"password_status": 27},
+            {"reuse_current": False, "alias_status": 26},
+            {"reuse_current": False, "password_status": 27},
             {"gateway_status": 28},
             {"start": True, "start_status": 29},
         ):
@@ -175,6 +212,7 @@ elif command=='az':
         result, calls = self.execute(start=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(call[0] == "certbot" for call in calls))
+        self.assertFalse(any(call[0] == "openssl" or call[1:2] == ["keyvault"] for call in calls))
         self.assertEqual(calls[0][1:4], ["network", "application-gateway", "start"])
         self.assertEqual(calls[-1][1:4], ["network", "application-gateway", "stop"])
 

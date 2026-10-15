@@ -257,6 +257,10 @@ def restore_before_deadline(vault, name, fqdn, directory):
     if current["id"] != latest["id"] or current["attributes"].get("enabled") is not True:
         raise CertificateReuseError("The active certificate changed during lookup")
     if reusable:
+        # The shell only needs to import when an older issued version must become current again.
+        (directory / "reuse.json").write_text(
+            json.dumps({"is_current": certificate["id"] == latest["id"], "secret_id": certificate["sid"]})
+        )
         print(f"Reusing certificate {name}, SHA-256 fingerprint {digest}; no ACME request required")
     else:
         print(
