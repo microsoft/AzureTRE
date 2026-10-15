@@ -53,12 +53,12 @@ resource "azurerm_storage_account_static_website" "staticweb_site" {
 # Endpoint creation can finish before the DNS answers become stable.
 resource "terraform_data" "staticweb_private_endpoint_ready" {
   triggers_replace = {
-    endpoint = azurerm_private_endpoint.blobpe.id
-    address  = azurerm_private_endpoint.blobpe.private_service_connection[0].private_ip_address
-    helper   = filesha256("${path.module}/../scripts/wait_for_private_storage.py")
+    address = azurerm_private_endpoint.blobpe.private_service_connection[0].private_ip_address
+    helper  = filesha256("${path.module}/../scripts/wait_for_private_storage.py")
   }
 
   lifecycle {
+    # Rerun after endpoint updates, even when its ID and private IP are unchanged.
     replace_triggered_by = [azurerm_private_endpoint.blobpe]
   }
 
