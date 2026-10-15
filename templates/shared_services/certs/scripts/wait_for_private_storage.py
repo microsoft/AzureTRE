@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Wait for consecutive private DNS and verified TLS checks before storage writes."""
+"""Wait for consecutive private DNS and verified TLS checks on a storage endpoint."""
 
 import argparse
 import ipaddress
@@ -94,7 +94,7 @@ def wait_for_private_storage(
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--hostname", default=os.environ.get("STORAGE_BLOB_HOST"))
+    parser.add_argument("--hostname", default=os.environ.get("STORAGE_HOST"))
     parser.add_argument("--expected-ip", default=os.environ.get("STORAGE_PRIVATE_IP"))
     parser.add_argument("--probe", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()

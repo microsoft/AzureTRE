@@ -4,6 +4,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import socket
 import ssl
@@ -18,22 +19,26 @@ SPEC = importlib.util.spec_from_file_location("certificate_storage_readiness", H
 READINESS = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(READINESS)
 HOSTNAME = "certificate.blob.core.windows.net"
+WEB_HOSTNAME = "certificate.z6.web.core.windows.net"
 PRIVATE_IP = "10.0.1.27"
 
 
 class CertificateStorageReadinessTests(unittest.TestCase):
     def test_private_address_uses_verified_tls_and_storage_hostname(self):
-        connection = MagicMock()
-        context = MagicMock()
         answers = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (PRIVATE_IP, 443))]
-        with (
-            patch.object(READINESS.socket, "getaddrinfo", return_value=answers),
-            patch.object(READINESS.socket, "create_connection", return_value=connection) as connect,
-            patch.object(READINESS.ssl, "create_default_context", return_value=context),
-        ):
-            self.assertTrue(READINESS.probe(HOSTNAME, PRIVATE_IP)[0])
-        connect.assert_called_once_with((PRIVATE_IP, 443), timeout=5)
-        context.wrap_socket.assert_called_once_with(connection.__enter__.return_value, server_hostname=HOSTNAME)
+        for hostname in (HOSTNAME, WEB_HOSTNAME):
+            connection = MagicMock()
+            context = MagicMock()
+            with (
+                self.subTest(hostname=hostname),
+                patch.object(READINESS.socket, "getaddrinfo", return_value=answers) as lookup,
+                patch.object(READINESS.socket, "create_connection", return_value=connection) as connect,
+                patch.object(READINESS.ssl, "create_default_context", return_value=context),
+            ):
+                self.assertTrue(READINESS.probe(hostname, PRIVATE_IP)[0])
+            lookup.assert_called_once_with(hostname, 443, type=socket.SOCK_STREAM)
+            connect.assert_called_once_with((PRIVATE_IP, 443), timeout=5)
+            context.wrap_socket.assert_called_once_with(connection.__enter__.return_value, server_hostname=hostname)
 
     def test_probe_requires_tls12_and_preserves_certificate_and_hostname_checks(self):
         context = ssl.create_default_context()
@@ -185,6 +190,17 @@ class CertificateStorageReadinessTests(unittest.TestCase):
             contextlib.redirect_stderr(io.StringIO()),
         ):
             self.assertEqual(READINESS.main(), 1)
+
+    def test_cli_reads_blob_and_web_endpoint_settings_from_the_environment(self):
+        for hostname in (HOSTNAME, WEB_HOSTNAME):
+            with (
+                self.subTest(hostname=hostname),
+                patch.object(sys, "argv", [str(HELPER)]),
+                patch.dict(os.environ, {"STORAGE_HOST": hostname, "STORAGE_PRIVATE_IP": PRIVATE_IP}),
+                patch.object(READINESS, "wait_for_private_storage") as wait,
+            ):
+                self.assertEqual(READINESS.main(), 0)
+            wait.assert_called_once_with(hostname, PRIVATE_IP)
 
     def test_probe_mode_reports_json_for_parent(self):
         output = io.StringIO()
