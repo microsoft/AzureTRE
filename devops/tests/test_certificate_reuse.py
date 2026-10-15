@@ -186,8 +186,8 @@ class CertificateReuseTests(unittest.TestCase):
             return ""
         return self.original_run(arguments)
 
-    def restore(self):
-        return REUSE.restore("vault", "nexus-ssl", FQDN, self.folder)
+    def restore(self, fqdn=FQDN):
+        return REUSE.restore("vault", "nexus-ssl", fqdn, self.folder)
 
     def test_bootstrap_fingerprint_matches_the_checked_in_terraform_certificate(self):
         self.assertEqual(
@@ -239,6 +239,50 @@ class CertificateReuseTests(unittest.TestCase):
         self.latest = self.add_certificate("b" * 32, 200, "bootstrap")
         self.assertFalse(self.restore())
         self.assertFalse(any(call[:3] == ("keyvault", "secret", "show") for call in self.calls))
+
+    def test_changed_hostname_requires_issuance_for_current_and_recovered_certificates(self):
+        arguments = [
+            str(HELPER),
+            "restore",
+            "--vault",
+            "vault",
+            "--cert-name",
+            "nexus-ssl",
+            "--fqdn",
+            "new-nexus.example.test",
+            "--directory",
+            str(self.folder),
+        ]
+        for content_type in ("application/x-pkcs12", "application/x-pem-file"):
+            for recovered in (False, True):
+                with self.subTest(content_type=content_type, recovered=recovered):
+                    self.certificates.clear()
+                    self.latest = self.add_certificate("a" * 32, 100, content_type=content_type)
+                    if recovered:
+                        self.latest = self.add_certificate("b" * 32, 200, "bootstrap")
+                    with patch.object(REUSE.sys, "argv", arguments), redirect_stdout(io.StringIO()) as output:
+                        self.assertEqual(REUSE.main(), 3)
+                    self.assertIn("hostname is not covered", output.getvalue())
+                    self.assertFalse((self.folder / "reuse.json").exists())
+                    self.assertEqual((self.folder / "selected.der").read_bytes(), self.publics["valid"])
+
+    def test_changed_hostname_does_not_accept_invalid_certificate_material(self):
+        valid_chain = (self.root / "valid/fullchain.pem").read_text()
+        valid_key = (self.root / "valid/privkey.pem").read_text()
+        wrong_key = (self.root / "wrong/privkey.pem").read_text()
+        cases = (
+            ("malformed", "invalid PEM", self.root / "ca.pem", "no certificates"),
+            ("wrong key", valid_chain + wrong_key, self.root / "ca.pem", "do not match"),
+            ("untrusted", valid_key + valid_chain, self.folder / "missing-ca.pem", "command failed"),
+        )
+        for reason, material, trust_store, diagnostic in cases:
+            with self.subTest(reason=reason):
+                self.latest = self.add_certificate("a" * 32, 100, content_type="application/x-pem-file")
+                self.secrets[self.latest["sid"]]["value"] = material
+                with patch.dict(os.environ, {"SSL_CERT_FILE": str(trust_store)}):
+                    with self.assertRaisesRegex((ValueError, REUSE.CertificateReuseError), diagnostic):
+                        self.restore("new-nexus.example.test")
+                self.assertFalse((self.folder / "reuse.json").exists())
 
     def test_reinstall_reuses_issued_material_behind_multiple_bootstrap_versions(self):
         issued = self.latest
@@ -335,8 +379,10 @@ class CertificateReuseTests(unittest.TestCase):
 
     def test_change_during_lookup_is_rejected(self):
         self.current = self.add_certificate("b" * 32, 200)
-        with self.assertRaisesRegex(REUSE.CertificateReuseError, "changed during lookup"):
-            self.restore()
+        for fqdn in (FQDN, "new-nexus.example.test"):
+            self.calls.clear()
+            with self.subTest(fqdn=fqdn), self.assertRaisesRegex(REUSE.CertificateReuseError, "changed during lookup"):
+                self.restore(fqdn)
 
     def test_disabled_active_certificate_is_rejected(self):
         self.latest["attributes"]["enabled"] = False
@@ -354,8 +400,9 @@ class CertificateReuseTests(unittest.TestCase):
 
     def test_mismatched_certificate_secret_does_not_reuse_material(self):
         self.public[self.latest["id"]] = self.publics["wrong"]
-        with self.assertRaisesRegex(REUSE.CertificateReuseError, "does not match"):
-            self.restore()
+        for fqdn in (FQDN, "new-nexus.example.test"):
+            with self.subTest(fqdn=fqdn), self.assertRaisesRegex(REUSE.CertificateReuseError, "does not match"):
+                self.restore(fqdn)
 
     def test_all_cli_operations_are_read_only(self):
         self.latest = self.add_certificate("b" * 32, 200, "bootstrap")
@@ -409,6 +456,11 @@ class CertificateReuseTests(unittest.TestCase):
         for name in ("wrong", "wildcard"):
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, "exact requested DNS"):
                 REUSE.validate_material(self.root / name, FQDN)
+
+    def test_newly_issued_certificate_for_another_hostname_is_rejected_by_cli(self):
+        arguments = [str(HELPER), "validate", "--fqdn", "new-nexus.example.test", "--directory", str(self.folder)]
+        with patch.object(REUSE.sys, "argv", arguments):
+            self.assertEqual(REUSE.main(), 1)
 
     def test_untrusted_chain_is_rejected(self):
         with patch.dict(os.environ, {"SSL_CERT_FILE": str(self.folder / "missing-ca.pem")}, clear=False):

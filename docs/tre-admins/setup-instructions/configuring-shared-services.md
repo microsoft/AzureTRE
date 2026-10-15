@@ -41,6 +41,7 @@ The service converts certificates stored in PEM format to PFX for Application Ga
 This reuses the certificate without another request to Let's Encrypt.
 
 If no issued certificate exists, the service requests one. It also requests a replacement when an otherwise valid certificate expires within 30 days.
+If the requested hostname changes, the service requests a certificate for the new hostname after validating the existing certificate material.
 The bundle's `renew` action uses the same checks. Renewal is not scheduled automatically.
 
 Check the installed bundle version before relying on reuse.

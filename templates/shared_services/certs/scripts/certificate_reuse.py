@@ -156,15 +156,16 @@ def select_certificate(latest, vault, vault_url, name, directory):
     return None, None
 
 
-def validate_material(directory, fqdn, now=None):
-    """Check exact SAN, public trust, validity and the private key before reuse."""
+def validate_material(directory, fqdn, now=None, *, allow_hostname_change=False):
+    """Validate material; return whether it covers the hostname and is reusable."""
     leaf = directory / "leaf.pem"
     fullchain = directory / "fullchain.pem"
     key = directory / "privkey.pem"
     run(["openssl", "x509", "-in", str(fullchain), "-out", str(leaf)])
     san = run(["openssl", "x509", "-in", str(leaf), "-noout", "-ext", "subjectAltName"])
     names = re.findall(r"DNS:([^,\s]+)", san)
-    if fqdn.lower() not in [name.lower() for name in names]:
+    hostname_matches = fqdn.lower() in [name.lower() for name in names]
+    if not hostname_matches and not allow_hostname_change:
         raise ValueError("Certificate does not contain the exact requested DNS name")
     dates = run(["openssl", "x509", "-in", str(leaf), "-noout", "-dates"])
     bounds = dict(line.split("=", 1) for line in dates.strip().splitlines())
@@ -182,14 +183,16 @@ def validate_material(directory, fqdn, now=None):
     # Verify the chain at an instant within the certificate validity period.
     # Expired but otherwise valid material requests renewal below.
     verify_time = now.timestamp() if now < end else end.timestamp() - 1
+    # An existing certificate for another hostname still needs a valid chain and key.
+    # Newly issued material must always match the requested hostname.
+    hostname_check = ["-verify_hostname", fqdn] if hostname_matches else []
     run(
         [
             "openssl",
             "verify",
             "-purpose",
             "sslserver",
-            "-verify_hostname",
-            fqdn,
+            *hostname_check,
             "-attime",
             str(int(verify_time)),
             "-untrusted",
@@ -197,7 +200,7 @@ def validate_material(directory, fqdn, now=None):
             str(leaf),
         ]
     )
-    return (end - now).total_seconds() > RENEW_BEFORE_SECONDS
+    return hostname_matches and (end - now).total_seconds() > RENEW_BEFORE_SECONDS
 
 
 def restore(vault, name, fqdn, directory):
@@ -269,7 +272,7 @@ def restore_before_deadline(vault, name, fqdn, directory):
             )
         else:
             raise CertificateReuseError("The certificate secret has an unsupported content type")
-        reusable = validate_material(directory, fqdn)
+        reusable = validate_material(directory, fqdn, allow_hostname_change=True)
         public = directory / "selected.der"
         run(["openssl", "x509", "-in", str(directory / "leaf.pem"), "-outform", "DER", "-out", str(public)])
         if hashlib.sha256(public.read_bytes()).hexdigest() != digest:
@@ -291,7 +294,8 @@ def restore_before_deadline(vault, name, fqdn, directory):
         print(f"Reusing certificate {name}, SHA-256 fingerprint {digest}; no ACME request required")
     else:
         print(
-            "Certificate issuance required: " + ("renewal is due" if certificate else "only bootstrap versions exist")
+            "Certificate issuance required: "
+            + ("hostname is not covered or renewal is due" if certificate else "only bootstrap versions exist")
         )
     return reusable
 

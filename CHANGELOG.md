@@ -28,7 +28,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Wait for private certificate storage readiness and stop the certificate gateway after success or failure. Reuse validated certificates from the core vault, including issued versions recovered after service replacement.
-  Keep the current PFX certificate version and password during reuse. Convert valid PEM material to PFX before gateway use. Restart the certificate gateway on installation retries. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
+  Keep the current PFX certificate version and password during reuse. Convert valid PEM material to PFX before gateway use. Restart the certificate gateway on installation retries.
+  Request a new certificate when the hostname changes, while rejecting invalid or inconsistent certificate material. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
