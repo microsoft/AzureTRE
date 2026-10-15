@@ -23,52 +23,43 @@ You can use the Certs Shared Service to set one up by following these steps:
 
 3. Select the Certs template, then fill in the required details. *Domain prefix* should be set to `nexus` and *Cert name* should be `nexus-ssl`.
 
-The bundle recovers a soft-deleted certificate during installation when the vault's retention policy still permits recovery.
-An access or recovery failure stops installation. Inspect the operation before retrying; do not purge certificates as routine cleanup.
+The service stores the certificate in the core Key Vault, `kv-{TRE_ID}`.
+It checks for a reusable certificate before requesting one from Let's Encrypt for `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
-Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
-
-You can verify whether this has been successful by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
+After installation completes, check that the vault contains a certificate named `nexus-ssl`, or the name you supplied.
 
 ### Certificate reuse and renewal
 
-Certificate bundle `0.9.0` checks the configured certificate name in the core vault before requesting another certificate.
-This behaviour applies to normal deployments and CI. It needs no extra vault or CI setting.
+Certificate bundle `0.9.0` checks the certificate in the core vault before requesting another one.
+To be reused, the certificate must:
 
-Install and `renew` reuse an enabled certificate when it has the exact requested DNS name, a trusted chain, a matching private key and more than 30 days before expiry.
-The certificate remains at its existing name, such as `nexus-ssl`. The password secret and consumer references remain unchanged.
-If no issued version exists, or an otherwise valid certificate is due for renewal, the bundle requests a certificate.
-A lookup error, disabled version or invalid certificate stops the operation without another issuance attempt.
+- Be enabled and match the exact requested DNS name.
+- Have a trusted certificate chain and a matching private key.
+- Have more than 30 days remaining before expiry.
 
-Terraform creates a temporary self-signed certificate before the script runs. On reinstallation, Terraform can recover earlier versions, then import the temporary certificate again.
-The helper recognises that exact temporary certificate and checks the newest issued version under the same name.
-It does not skip an invalid or disabled issued version to use an older one. An incomplete or ambiguous version history also stops reuse.
-Certificate lookup has a three-minute deadline.
+If no issued certificate exists, the service requests one. It also requests a replacement when an otherwise valid certificate expires within 30 days.
+The bundle's `renew` action uses the same checks. Renewal is not scheduled automatically.
 
-Uninstall removes the service infrastructure and soft-deletes the certificate and password under the existing vault policy.
-Reinstallation can reuse recovered material until that policy removes it. Purged certificates cannot be reused.
-Use the same hostname and certificate name for replacement. Run only one certificate lifecycle or dependent test suite per environment at a time.
-The certificate-only test requires an environment without Nexus because removing its certificate dependency can interrupt Nexus.
+Check the installed bundle version before relying on reuse.
+Registering a new template does not update an installed service, and the bundle's `upgrade` action does not change infrastructure.
 
-The script validates newly issued material before import. After import, a retry can reuse the certificate if a later password or gateway update fails.
-If issuance succeeds but import fails, there is no stored certificate to reuse. ACME errors still fail the operation; follow any retry time returned by the issuer.
-On success or failure, the script removes temporary private files and attempts to stop its Application Gateway.
-A failed stop also fails the operation. Cleanup preserves an earlier failure.
+#### Removal and reinstallation
 
-This uses the existing core-vault permissions. Identities that can read certificate secrets retain that access.
-Certificate reuse does not add permission isolation. Review existing grants separately when tightening access.
-Scheduled renewal, custom-domain configuration and distribution of updates to other services are separate capabilities.
+Removing the certificate service can interrupt Nexus. Plan the removal with any services that depend on its certificate.
 
-#### Environments that used earlier draft bundles
+Removal soft-deletes the certificate and password under the core vault's retention policy.
+Reinstallation can recover and reuse the newest issued certificate while the vault retains it.
+Use the same hostname and certificate name when reinstalling. Purged certificates cannot be recovered.
+Run only one certificate installation, renewal or removal at a time in each TRE.
 
-Earlier drafts retained `tre-acme-` entries in the core vault or used a dedicated `kv-acme-{TRE_ID}` vault.
-Version `0.9.0` reads the active certificate name. It does not read, move or delete those cache entries.
-Confirm that the required certificate exists at its active name before retiring an earlier cache.
-Review the Terraform plan before deploying code that removes the dedicated vault module, because it can delete that vault and related resources.
-Handle old cache entries as separate cleanup. Do not purge them or delete active service certificates as part of that cleanup.
+#### Failed certificate operations
 
-The bundle's `upgrade` action does not change infrastructure. Registering the new template alone does not update an installed bundle.
-Verify the installed resource's bundle version before relying on the new reuse behaviour.
+If a vault lookup fails, or the certificate is disabled or invalid, the operation stops without requesting another certificate.
+Check the operation details and correct the reported problem before retrying. Do not purge certificates as routine cleanup.
+If Let's Encrypt returns a retry time, wait until that time before retrying.
+
+After each operation, the service attempts to stop the Application Gateway used for certificate validation.
+If that stop fails, the operation reports a failure. Check the gateway status when investigating a failed operation.
 
 ### Deploy Nexus
 
