@@ -6,7 +6,6 @@ import copy
 import hashlib
 import io
 import json
-import re
 from datetime import datetime, timedelta, timezone
 import importlib.util
 import os
@@ -105,13 +104,10 @@ class CertificateReuseTests(unittest.TestCase):
             target = cls.root / (kind + ".der")
             cls.command("x509", "-in", str(cls.root / kind / "fullchain.pem"), "-outform", "DER", "-out", str(target))
             cls.publics[kind] = target.read_bytes()
-        terraform = HELPER.parents[1] / "terraform/certificate.tf"
-        encoded = re.search(r'contents\s*=\s*"([^"]+)"', terraform.read_text())[1]
-        (cls.root / "bootstrap.pfx").write_bytes(base64.b64decode(encoded))
         cls.command(
             "pkcs12",
             "-in",
-            str(cls.root / "bootstrap.pfx"),
+            str(REUSE.BOOTSTRAP_PFX),
             "-passin",
             "pass:0000000000",
             "-nokeys",
@@ -194,7 +190,37 @@ class CertificateReuseTests(unittest.TestCase):
         return REUSE.restore("vault", "nexus-ssl", FQDN, self.folder)
 
     def test_bootstrap_fingerprint_matches_the_checked_in_terraform_certificate(self):
-        self.assertEqual(hashlib.sha256(self.publics["bootstrap"]).hexdigest(), REUSE.BOOTSTRAP_SHA256)
+        self.assertEqual(
+            hashlib.sha256(self.publics["bootstrap"]).hexdigest(), REUSE.bootstrap_fingerprint(self.folder)
+        )
+
+    def test_bootstrap_identity_is_read_from_the_bundled_file(self):
+        replacement = self.folder / "replacement.pfx"
+        self.command(
+            "pkcs12",
+            "-export",
+            "-inkey",
+            str(self.folder / "privkey.pem"),
+            "-in",
+            str(self.folder / "fullchain.pem"),
+            "-out",
+            str(replacement),
+            "-passout",
+            "pass:0000000000",
+        )
+        with patch.object(REUSE, "BOOTSTRAP_PFX", replacement):
+            self.assertEqual(
+                hashlib.sha256(self.publics["valid"]).hexdigest(), REUSE.bootstrap_fingerprint(self.folder)
+            )
+
+    def test_missing_or_invalid_bootstrap_file_stops_lookup(self):
+        invalid = self.folder / "invalid.pfx"
+        invalid.write_text("not a PFX")
+        for source in (self.folder / "missing.pfx", invalid):
+            with self.subTest(source=source), patch.object(REUSE, "BOOTSTRAP_PFX", source):
+                with self.assertRaises(REUSE.CertificateReuseError):
+                    self.restore()
+                self.assertFalse((self.folder / "reuse.json").exists())
 
     def test_existing_certificate_is_reused_without_listing_older_versions(self):
         with redirect_stdout(io.StringIO()) as output:

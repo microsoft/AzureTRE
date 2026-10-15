@@ -16,8 +16,7 @@ import sys
 import time
 from urllib.parse import urlsplit
 
-# SHA-256 of the temporary certificate in terraform/certificate.tf.
-BOOTSTRAP_SHA256 = "3ed811d4bce0589f02071b23c7b163eb7f6eee803fe344ee9e6940bae8966edf"
+BOOTSTRAP_PFX = Path(__file__).resolve().parents[1] / "terraform/bootstrap.pfx"
 RENEW_BEFORE_SECONDS = 30 * 24 * 60 * 60
 ISSUANCE_REQUIRED = 3
 LOOKUP_TIMEOUT_SECONDS = 180
@@ -100,10 +99,32 @@ def fingerprint(certificate, directory):
     return hashlib.sha256(public.read_bytes()).hexdigest()
 
 
+def bootstrap_fingerprint(directory):
+    """Identify the same temporary certificate that Terraform imports."""
+    public = directory / "bootstrap.pem"
+    der = directory / "bootstrap.der"
+    run(
+        [
+            "openssl",
+            "pkcs12",
+            "-in",
+            str(BOOTSTRAP_PFX),
+            "-passin",
+            "pass:0000000000",
+            "-nokeys",
+            "-out",
+            str(public),
+        ]
+    )
+    run(["openssl", "x509", "-in", str(public), "-outform", "DER", "-out", str(der)])
+    return hashlib.sha256(der.read_bytes()).hexdigest()
+
+
 def select_certificate(latest, vault, vault_url, name, directory):
     version_id(latest["id"], vault_url, name, "certificates")
+    bootstrap_digest = bootstrap_fingerprint(directory)
     digest = fingerprint(latest, directory)
-    if digest != BOOTSTRAP_SHA256:
+    if digest != bootstrap_digest:
         return latest, digest
 
     # Azure CLI consumes all service pages. Do not limit or trust the returned order.
@@ -125,7 +146,7 @@ def select_certificate(latest, vault, vault_url, name, directory):
             if certificate["id"] != item["id"]:
                 raise CertificateReuseError("Certificate version changed during lookup")
             digest = fingerprint(certificate, directory)
-            if digest != BOOTSTRAP_SHA256:
+            if digest != bootstrap_digest:
                 issued.append((certificate, digest))
         if len(issued) > 1:
             raise CertificateReuseError("Cannot determine the newest issued certificate version")
