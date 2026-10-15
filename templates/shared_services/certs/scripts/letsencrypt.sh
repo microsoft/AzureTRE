@@ -4,7 +4,8 @@ set -o pipefail
 umask 077
 
 script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-start_gateway=false
+# Installation retries must restart the gateway stopped by the previous attempt.
+start_gateway=true
 
 while [ "$1" != "" ]; do
     case $1 in
