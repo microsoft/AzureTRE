@@ -55,7 +55,7 @@ class CertificateLifecycleTests(unittest.IsolatedAsyncioTestCase):
 
         async def get_resource(endpoint, *args):
             if endpoint.startswith(shared.strings.API_SHARED_SERVICE_TEMPLATES):
-                return {"template": {"version": self.template_version}}
+                return {"name": shared.strings.CERTS_SHARED_SERVICE, "version": self.template_version}
             return await self.get(endpoint, *args)
 
         self.enterContext(patch.object(shared, "get_resource", get_resource))

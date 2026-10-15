@@ -256,11 +256,9 @@ async def test_create_certificate_shared_service(verify) -> None:
         admin_token = await get_admin_token(verify)
         if await get_shared_service_by_name(strings.NEXUS_SHARED_SERVICE, verify, admin_token):
             pytest.fail("Nexus is present. Certificate-only validation requires an isolated environment.")
-        template = (
-            await get_resource(
-                f"{strings.API_SHARED_SERVICE_TEMPLATES}/{strings.CERTS_SHARED_SERVICE}", admin_token, verify
-            )
-        )["template"]
+        template = await get_resource(
+            f"{strings.API_SHARED_SERVICE_TEMPLATES}/{strings.CERTS_SHARED_SERVICE}", admin_token, verify
+        )
         version = template["version"]
         if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version) or tuple(map(int, version.split("."))) < (0, 9, 0):
             pytest.fail(
