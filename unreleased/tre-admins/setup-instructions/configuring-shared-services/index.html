@@ -1207,6 +1207,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deploy &amp; configure Nexus service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#certificate-reuse-and-renewal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate reuse and renewal
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Certificate reuse and renewal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removal-and-reinstallation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removal and reinstallation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failed-certificate-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failed certificate operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-nexus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy Nexus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4609,6 +4665,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Deploy &amp; configure Nexus service">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#certificate-reuse-and-renewal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate reuse and renewal
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Certificate reuse and renewal">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removal-and-reinstallation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removal and reinstallation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failed-certificate-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failed certificate operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-nexus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy Nexus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4712,12 +4824,37 @@
 <p>Select the Certs template, then fill in the required details. <em>Domain prefix</em> should be set to <code>nexus</code> and <em>Cert name</em> should be <code>nexus-ssl</code>.</p>
 </li>
 </ol>
-<div class="admonition caution">
-<p class="admonition-title">Caution</p>
-<p>If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same <code>cert_name</code>, you may encounter this: <code>Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state</code>. You need to either manually recover the certificate or purge it before redeploying.</p>
-</div>
-<p>Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by <code>-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, so in our case, having entered <code>nexus</code>, this will be <code>nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>, which will be the public domain for our Nexus service.</p>
-<p>You can verify whether this has been successful by navigating to your core keyvault (<code>kv-{TRE_ID}</code>) and looking for a certificate called <code>nexus-ssl</code> (or whatever you called it).</p>
+<p>The service stores the certificate in the core Key Vault, <code>kv-{TRE_ID}</code>.
+It checks for a reusable certificate before requesting one from Let's Encrypt for <code>nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com</code>.</p>
+<p>After installation completes, check that the vault contains a certificate named <code>nexus-ssl</code>, or the name you supplied.</p>
+<h3 id="certificate-reuse-and-renewal">Certificate reuse and renewal</h3>
+<p>Certificate bundle <code>0.9.0</code> checks the certificate in the core vault before requesting another one.
+To be reused, the certificate must:</p>
+<ul>
+<li>Be enabled and match the exact requested DNS name.</li>
+<li>Have a trusted certificate chain and a matching private key.</li>
+<li>Have more than 30 days remaining before expiry.</li>
+</ul>
+<p>The service converts certificates stored in PEM format to PFX for Application Gateway.
+This reuses the certificate without another request to Let's Encrypt.</p>
+<p>If no issued certificate exists, the service requests one. It also requests a replacement when an otherwise valid certificate expires within 30 days.
+If the requested hostname changes, the service requests a certificate for the new hostname after validating the existing certificate material.
+The bundle's <code>renew</code> action uses the same checks. Renewal is not scheduled automatically.</p>
+<p>Check the installed bundle version before relying on reuse.
+Registering a new template does not update an installed service, and the bundle's <code>upgrade</code> action does not change infrastructure.</p>
+<h4 id="removal-and-reinstallation">Removal and reinstallation</h4>
+<p>Removing the certificate service can interrupt Nexus. Plan the removal with any services that depend on its certificate.</p>
+<p>Removal soft-deletes the certificate and password under the core vault's retention policy.
+Reinstallation can recover and reuse the newest issued certificate while the vault retains it.
+Use the same hostname and certificate name when reinstalling. Purged certificates cannot be recovered.
+Run only one certificate installation, renewal or removal at a time in each TRE.</p>
+<h4 id="failed-certificate-operations">Failed certificate operations</h4>
+<p>If a vault lookup fails, or the certificate is disabled or invalid, the operation stops without requesting another certificate.
+Check the operation details and correct the reported problem before retrying. Do not purge certificates as routine cleanup.
+If Let's Encrypt returns a retry time, wait until that time before retrying.</p>
+<p>After each operation, the service attempts to stop the Application Gateway used for certificate validation.
+If that stop fails, the operation reports a failure. Check the gateway status when investigating a failed operation.</p>
+<h3 id="deploy-nexus">Deploy Nexus</h3>
 <p>After verifying the certificate has been generated, you can deploy Nexus:</p>
 <ol>
 <li>

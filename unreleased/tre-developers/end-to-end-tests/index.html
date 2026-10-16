@@ -3784,6 +3784,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#certificate-lifecycle-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate lifecycle tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#debugging-the-end-to-end-tests" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4588,6 +4599,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#certificate-lifecycle-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate lifecycle tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#debugging-the-end-to-end-tests" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4627,6 +4649,12 @@
 <p>When running tests locally, use the <code>prepare-for-e2e</code> Makefile target:</p>
 <div class="highlight"><pre><span></span><code>make prepare-for-e2e
 </code></pre></div>
+<h2 id="certificate-lifecycle-tests">Certificate lifecycle tests</h2>
+<p>Use a TRE without Nexus for tests that remove and reinstall the certificate shared service.
+Removing its certificate can interrupt Nexus.
+Run only one certificate lifecycle test suite per TRE at a time.
+Do not run it alongside Airlock or shared-service tests that use the same certificate service.
+Use the same hostname and certificate name when testing reuse after reinstallation.</p>
 <h2 id="debugging-the-end-to-end-tests">Debugging the End-to-End tests</h2>
 <p>Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.</p>
 <ul>
