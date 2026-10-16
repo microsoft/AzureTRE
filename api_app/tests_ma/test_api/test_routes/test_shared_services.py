@@ -1,4 +1,6 @@
 import random
+import sqlite3
+from contextlib import closing
 from unittest.mock import AsyncMock
 import uuid
 import pytest
@@ -12,6 +14,8 @@ from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERA
 
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
+from models.domain.operation import Status
+from db.repositories.shared_services import SharedServiceRepository
 from resources import strings
 from auth.rbac import require_tre_admin, require_tre_user_or_admin
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -478,3 +482,43 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         # Check that the error message contains the key information about the validation error
         assert "fakeField" in response.text
         assert "extra inputs are not permitted" in response.text.lower()
+
+    @pytest.mark.parametrize(
+        "resource_status, expected_http_status",
+        [(Status.Deleting, 200), (Status.PipelineRunning, 200), (Status.DeletingFailed, 200), (Status.Deleted, 404)],
+    )
+    async def test_uninstall_operation_remains_readable_until_pipeline_finishes(
+        self, app, client, resource_status, expected_http_status
+    ):
+        resource = sample_shared_service()
+        resource.isEnabled = False
+        resource.deploymentStatus = resource_status
+        operation = sample_resource_operation(resource_id=SHARED_SERVICE_ID, operation_id=OPERATION_ID)
+        operation.action = "uninstall"
+        operation.status = resource_status
+
+        # Execute the repository's actual equality predicates locally. Only the
+        # database transport is replaced; the lookup and HTTP dependencies run.
+        with closing(sqlite3.connect(":memory:")) as database:
+            database.execute("CREATE TABLE c (id TEXT, resourceType TEXT, deploymentStatus TEXT)")
+            database.execute("INSERT INTO c VALUES (?, ?, ?)", (resource.id, resource.resourceType, resource_status))
+
+            def query_documents(query, parameters):
+                rows = database.execute(query, {item["name"].removeprefix("@"): item["value"] for item in parameters})
+                return [resource.model_dump() for _ in rows]
+
+            with (
+                patch.object(SharedServiceRepository, "query", side_effect=query_documents),
+                patch(
+                    "api.dependencies.operations.OperationRepository.get_operation_by_id_for_resource",
+                    return_value=operation,
+                ) as operation_lookup,
+            ):
+                response = await client.get(f"/api/shared-services/{SHARED_SERVICE_ID}/operations/{OPERATION_ID}")
+
+        assert response.status_code == expected_http_status
+        if expected_http_status == 200:
+            assert response.json()["operation"]["status"] == resource_status
+            operation_lookup.assert_awaited_once_with(operation_id=OPERATION_ID, resource_id=SHARED_SERVICE_ID)
+        else:
+            operation_lookup.assert_not_awaited()
