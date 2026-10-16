@@ -30,6 +30,11 @@ BUG FIXES:
 * Fix certificate provisioning retries and reuse valid certificates from the core Key Vault.
   Check private storage readiness before issuance and request a new certificate when the hostname changes.
   Stop the validation gateway after success or failure. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
+* Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Wait for Nexus admin authentication before configuring repositories. (`tre-shared-service-sonatype-nexus` 3.11.2) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Correct managed-identity login in bundle runtimes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Preserve failed uninstall results and allow cleanup when Porter confirms the installation is absent. Keep resource and operation status available until uninstall steps and final output writes finish. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Wait for management storage readiness and retry recognised state-access permission failures. Retry bootstrap state creation only when the state blob is confirmed absent. (`devops` 0.6.15) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
+* Validate Terraform outputs and preserve the previous cache if output generation or validation fails. (`core` 0.18.14) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
