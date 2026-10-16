@@ -27,9 +27,11 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
-* Wait for successful Nexus admin authentication before configuring EULA acceptance, anonymous access and repositories. Bound readiness requests and stop without configuration changes if authentication remains unavailable. (`tre-shared-service-sonatype-nexus` 3.11.2) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
-* Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Require working Nexus and Azure CLI prerequisites for review VM setup. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
-* Correct managed-identity login in bundle runtimes. Preserve failed uninstall results and allow cleanup when Porter confirms that an installation is absent. Keep resource and operation status available until all uninstall steps and final output writes finish, including single-step uninstalls. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Wait for Nexus admin authentication before configuring repositories. (`tre-shared-service-sonatype-nexus` 3.11.2) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Correct managed-identity login in bundle runtimes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Preserve failed uninstall results and allow cleanup when Porter confirms the installation is absent. Keep resource and operation status available until uninstall steps and final output writes finish. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Wait for management storage readiness and retry recognised state-access permission failures. Retry bootstrap state creation only when the state blob is confirmed absent. (`devops` 0.6.15) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
+* Validate Terraform outputs and preserve the previous cache if output generation or validation fails. (`core` 0.18.14) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
