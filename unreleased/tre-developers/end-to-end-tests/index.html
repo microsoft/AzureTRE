@@ -3805,6 +3805,111 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#airlock-draft-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airlock draft deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-one-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate one bundle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validate one bundle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-selection-without-deploying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check selection without deploying
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-against-a-configured-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run against a configured environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#certificate-and-nexus-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate and Nexus selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-workspace-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base workspace lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sql-time-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL time limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-branch-workflow-before-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the branch workflow before merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-the-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read the evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4620,6 +4725,111 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#airlock-draft-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Airlock draft deletion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validate-one-bundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate one bundle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Validate one bundle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-selection-without-deploying" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check selection without deploying
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-against-a-configured-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run against a configured environment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#certificate-and-nexus-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Certificate and Nexus selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-workspace-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base workspace lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sql-time-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL time limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#run-the-branch-workflow-before-merge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the branch workflow before merge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-the-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read the evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4663,6 +4873,119 @@ Use the same hostname and certificate name when testing reuse after reinstallati
 <ul>
 <li>This will also use <code>/workspaces/AzureTRE/core/private.env</code> file for other values.</li>
 </ul>
+<p>If an E2E test fails while waiting for an operation, check its test log.
+Use the timestamp and operation ID to find the matching API logs.</p>
+<h2 id="airlock-draft-deletion">Airlock draft deletion</h2>
+<p>The draft-deletion case requires AzureCloud, <code>ARM_SUBSCRIPTION_ID</code>, <code>TRE_ID</code> and the existing CI Azure login.
+The CI identity must have ARM read access to blob containers in the TRE Airlock storage account.
+Local runs use the Azure CLI login. CI uses its existing federated identity. The test does not add permissions.</p>
+<p>After submission, the test checks that the old draft SAS cannot write a new blob.
+A <code>ContainerNotFound</code> or <code>AuthorizationPermissionMismatch</code> response must also have independent ARM evidence:
+the draft is absent, and the submitted container exists with matching workspace and import-stage metadata.
+A permission error alone cannot pass the test. Other storage errors and ARM lookup failures remain test failures.
+These checks share a 60-second deadline. They do not compare submitted file contents. The review-VM lifecycle test also does not verify file contents.</p>
+<h2 id="validate-one-bundle">Validate one bundle</h2>
+<p>The <a href="https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json">bundle coverage map</a> lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
+Selecting a bundle runs only its declared cases. Fixtures may deploy prerequisite resources.
+A passing case does not prove the bundle's full functional, upgrade or custom-action lifecycle.</p>
+<h3 id="check-selection-without-deploying">Check selection without deploying</h3>
+<p>Use the E2E Python environment from the repository root:</p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>e2e_tests/run_bundle.py<span class="w"> </span>--bundle<span class="w"> </span>tre-workspace-service-azuresql<span class="w"> </span>--collect-only
+</code></pre></div>
+<p>This collects <code>test_azuresql.py::test_sql_query_survives_sku_upgrade</code> without creating resources.
+The case checks a private SQL query and data persistence after an S1-to-S2 SKU change.</p>
+<p>The report records <code>not_run</code>, even when collection succeeds.
+Unknown names, unavailable cases, missing tests and unexpected collected cases fail explicitly.</p>
+<h3 id="run-against-a-configured-environment">Run against a configured environment</h3>
+<p>After configuring the prerequisites above, run:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">TEST_BUNDLE</span><span class="o">=</span>tre-workspace-service-azuresql<span class="w"> </span>make<span class="w"> </span>test-e2e-bundle
+</code></pre></div>
+<p>Use one test process. Per-bundle runs reject a marker expression or multiple workers.
+If the selection includes the Guacamole AAD case, clear <code>TEST_AAD_WORKSPACE_ID</code>.
+That case requires an owned workspace so cascade cleanup removes its new service.
+Some shared-service cases replace existing services, so use an isolated validation environment.
+Check the selected entry's prerequisites and limitations before running it.</p>
+<h3 id="certificate-and-nexus-selection">Certificate and Nexus selection</h3>
+<p>Select <code>tre-shared-service-certs</code> to install, uninstall and reinstall the certificate shared service with the same hostname and certificate name.
+The case requires certificate bundle version <code>0.9.0</code> or later and pins both installations to the selected template version.
+It checks the deployed API record, the gateway's public certificate SAN and validity, and the gateway's stopped state.
+Reinstallation must preserve the SHA-256 certificate fingerprint and produce a matching resource processor reuse log without issuance evidence.
+After each uninstall, the case requires API HTTP 404 and ARM confirmation that the gateway, public IP and challenge storage are absent.
+The bundle report records public metadata, reuse and cleanup results. It does not require Nexus EULA consent.</p>
+<p>The evidence helper currently supports <code>AzureCloud</code>. It uses the existing deployment identity for ARM and Log Analytics access.
+If the gateway omits public certificate data, the helper reads the exact referenced certificate version through the resource-processor VM.
+This uses a temporary managed Run Command and the VM's existing identity and private network access.
+The deployment identity must be able to create, read and delete that command on the resource-processor VM.
+The helper removes the command after success, failure or cancellation. It reads public certificate data only, without changing vault access or permissions.
+Log evidence is limited to the installation's message spans, so other installations in the same trace cannot affect the result.
+Only aggregate log counts enter the test process. Missing, partial or delayed evidence beyond the deadline fails the case.
+See <a href="https://learn.microsoft.com/en-us/rest/api/keyvault/certificates/get-certificate/get-certificate">Key Vault public certificate retrieval</a>
+and <a href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/access-api">Azure Monitor query authentication</a>.</p>
+<p>Each installation has a 45-minute provisioning deadline. Cleanup has its own 60-minute deadline.
+The complete case has a 285-minute limit, leaving 15 minutes within the five-hour bundle job for setup and reporting.
+It refuses to change resources when Nexus is present. Existing certificate resources must belong to earlier E2E tests before recovery can remove them.
+Cleanup has a separate deadline and retains the certificate service if Nexus appears before deletion.
+Use an isolated environment and run mutating suites sequentially. These guards do not provide a distributed lock.</p>
+<p>Select <code>tre-shared-service-sonatype-nexus</code> to run the existing certificate/Nexus lifecycle case.
+The report identifies certificates and the deployed firewall as prerequisites. Dependency creation does not complete their separate evidence records.
+Nexus selection still requires explicit EULA consent. Both selections retain the weekend certificate rate-limit precaution.
+After checking rate limits, use <code>runCertificateTestsOnWeekends=true</code> in the branch workflow or <code>TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=true</code> locally.
+A skipped case remains unproven coverage.</p>
+<p>The certificate-only case is opt-in through bundle selection or the <code>certificate_validation</code> marker.
+It is excluded from the ordinary <code>shared_services</code> selection to avoid an additional certificate request in that suite.
+The existing combined case remains in that suite. It deletes Nexus before its certificate dependency.
+Certificate chain validation, actual renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and other Azure resource removal need separate evidence.
+The case does not purge certificates. A first installation can reuse a certificate retained by an earlier run.</p>
+<p>Before merging the certificate fix, run this case from a trusted upstream branch that contains both the certificate implementation and these tests.
+Select <code>e2eBundle=tre-shared-service-certs</code> in <code>deploy_tre_branch.yml</code> and leave the marker selector empty.
+PR slash commands use workflow definitions from <code>main</code>. <code>/test</code> runs smoke tests and <code>/test-shared-services</code> excludes this certificate-only case.
+A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.</p>
+<h3 id="base-workspace-lifecycle">Base workspace lifecycle</h3>
+<p>Select <code>tre-workspace-base</code> to run <code>test_workspace_base.py::test_base_workspace_lifecycle</code> independently.
+The case always creates its own workspace with Automatic authentication and backups disabled. It does not reuse <code>TEST_WORKSPACE_ID</code>.
+It checks the deployed record and uses the configured workspace identity to list the new workspace's services.
+It then disables and deletes the workspace, waits for the delete operation and confirms that an API lookup returns HTTP 404.
+Body failures still trigger cleanup. If cleanup also fails, the original failure is preserved with an additional diagnostic note.</p>
+<p>Setup uses the existing one-hour deployment limit and failed-create recovery. The API checks have a five-minute limit.
+Cleanup has a separate one-hour budget. The case is opt-in through bundle selection or the <code>workspace_validation</code> marker.
+It does not add another workspace to the extended suite.</p>
+<p>These checks do not prove network isolation, storage access, upgrades, custom actions or backup restore and retention.
+Verify Azure resource removal separately when recording release evidence.</p>
+<h3 id="sql-time-limits">SQL time limits</h3>
+<p>The SQL bundle job has a 300-minute limit. Its first step sets an absolute lifecycle deadline at 270 minutes.
+Setup and queries stop with 120 minutes remaining for cleanup. Container startup uses the same budget.
+The SQL case manages its own workspace and Guacamole service so that setup and cleanup share this deadline.
+It preserves pre-created resources and divides the remaining cleanup time between the resources it created.
+Failed-create recovery and temporary probe cleanup also count towards the lifecycle deadline.
+The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
+For a local run, the 270-minute lifecycle budget starts when the SQL case begins.</p>
+<h3 id="run-the-branch-workflow-before-merge">Run the branch workflow before merge</h3>
+<ol>
+<li>Push the reviewed changes to a branch in <code>microsoft/AzureTRE</code>.</li>
+<li>Select that branch in <strong>Deploy Azure TRE (branch)</strong>.</li>
+<li>Set <code>e2eBundle</code> to the exact Porter bundle name.</li>
+<li>Leave <code>e2eTestsCustomSelector</code> empty and set <code>e2eProcesses</code> to <code>1</code>.</li>
+<li>Keep <code>skipDeployment</code> false for a new branch environment.</li>
+</ol>
+<p>The workflow validates selection before deployment. It passes the bundle name as data in a JSON request, rather than embedding it in shell code.
+Prepared requests require every generated metadata field, a full checkout SHA and non-empty TRE, location and cloud identifiers.
+The test runner rejects incomplete requests and mismatches with the current checkout or configured TRE, location and cloud.
+Unknown fields are ignored. Workflow metadata may be empty outside GitHub Actions.
+Branch and PR-comment references derive different environment IDs. A completed test run does not remove its core environment.</p>
+<p>Bundle tests run in a separate job. Marker selections use the existing sequential test groups.
+Both paths publish their results to the workflow summary.</p>
+<p>Existing slash commands retain their marker-based behaviour. They load workflow definitions from <code>main</code>; new branch-workflow inputs do not require merging first.</p>
+<h3 id="read-the-evidence">Read the evidence</h3>
+<p>The <strong>E2E Test Results (Bundle)</strong> artefact contains:</p>
+<ul>
+<li><code>pytest_e2e_bundle.xml</code>: test, failure, skip and teardown results.</li>
+<li><code>bundle-validation.json</code>: requested bundle, source version, declared prerequisite versions, requested and collected cases, coverage limitations, commit/workflow provenance, environment identity and observed resource/operation IDs.</li>
+</ul>
+<p>The JSON report copies only selected identifiers and operation states. It excludes resource properties, tokens and failure tracebacks.
+Source versions describe the checked-out manifests; verify deployed versions separately when reusing an environment.
+<code>passed_selected_cases</code> means the selected assertions and their teardown passed. The report always leaves <code>full_lifecycle_proven</code> false for a separate evidence review.
+An entirely skipped selection exits unsuccessfully. Individual skipped cases retain their reasons, and a mixed pass/skip result is marked <code>partial</code>.</p>
+<p>Unavailable bundles fail with the gap recorded in the map. Adding a selector does not implement missing tests or fix bundle publication and registration gaps.</p>
 
 
 

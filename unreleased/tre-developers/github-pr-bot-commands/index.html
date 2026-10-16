@@ -3886,6 +3886,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#test-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment and evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3908,10 +3930,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
+  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
+        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-shared-services-sha-accept_nexus_eula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-shared-services [&lt;sha&gt;] accept_nexus_eula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-airlock-sha-accept_nexus_eula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-airlock [&lt;sha&gt;] [accept_nexus_eula]
       
     </span>
   </a>
@@ -4639,6 +4683,28 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#test-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment and evidence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4661,10 +4727,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha" class="md-nav__link">
+  <a href="#test-extended-sha-skip_deployment-test-extended-aad-sha" class="md-nav__link">
     <span class="md-ellipsis">
       
-        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]/ /test-shared-services [&lt;sha&gt;]
+        /test-extended [&lt;sha&gt;] [skip_deployment] / /test-extended-aad [&lt;sha&gt;]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-shared-services-sha-accept_nexus_eula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-shared-services [&lt;sha&gt;] accept_nexus_eula
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-airlock-sha-accept_nexus_eula" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        /test-airlock [&lt;sha&gt;] [accept_nexus_eula]
       
     </span>
   </a>
@@ -4743,6 +4831,61 @@
 - these commands are not immediate - you need to wait for the GitHub action that performs the task to start up.
 - builds triggered via these commands will use the workflow definitions from <code>main</code>. To test workflow changes before merging to <code>main</code>, the changes need to be pushed to a branch in the main repo and then the <code>deploy_tre_branch.yml</code> workflow can be run against that branch.</p>
 <p>These commands can only be run when commented by a user who is identified as a repo collaborator (see <a href="#granting-access-to-run-commands">granting access to run commands</a>)</p>
+<h3 id="test-scope">Test scope</h3>
+<p>Each test command builds and deploys the environment and runs smoke tests, unless the documented exception applies.
+The table describes the selected assertions. A passing command does not prove every bundle or lifecycle action.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Selected tests</th>
+<th>Coverage limit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/test</code></td>
+<td>API health and template checks</td>
+<td>No bundle lifecycle proof. Documentation-only changes receive a waiver.</td>
+</tr>
+<tr>
+<td><code>/test-extended</code></td>
+<td>Guacamole with a Windows VM, unrestricted workspace and import review workspace</td>
+<td>Three selected cases. The suite excludes Linux VMs and the general workspace-service cases.</td>
+</tr>
+<tr>
+<td><code>/test-extended-aad</code></td>
+<td>Guacamole deployment and authentication redirect in an automatically configured Entra workspace</td>
+<td>No full identity or permissions audit.</td>
+</tr>
+<tr>
+<td><code>/test-shared-services</code></td>
+<td>Firewall changes and restoration, selected service lifecycles, and the combined certificate/Nexus case</td>
+<td>Nexus requires EULA consent. A skipped certificate case provides no lifecycle proof.</td>
+</tr>
+<tr>
+<td><code>/test-airlock</code></td>
+<td>Import requests, access checks, the import review VM flow and export request storage routing</td>
+<td>No export review VM or migration proof.</td>
+</tr>
+<tr>
+<td><code>/test-backups</code></td>
+<td>Base workspace deployment with backups enabled and disabled</td>
+<td>No backup restore or retention proof.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>workspace_services</code>, <code>linux_vm</code>, <code>airlock_validation</code> and <code>sql_validation</code> markers have no dedicated slash command.
+Use the branch workflow or the local test runner for these selections.
+The <code>airlock_validation</code> marker selects two Airlock cases. It does not select the full <code>airlock</code> suite.
+See <a href="../end-to-end-tests/#validate-one-bundle">bundle selection</a> for exact cases and declared coverage gaps.</p>
+<h3 id="environment-and-evidence">Environment and evidence</h3>
+<p>Commands for the same Git reference share a deployment queue. Separate references can use separate environments.
+Before parallel runs, check Azure capacity and shared dependencies.
+PR-comment runs and branch-workflow runs use different environment identities.</p>
+<p>Record the checked-out commit, run URL, selected cases, skips and cleanup result.
+When using <code>skip_deployment</code>, also record the deployed version. The test commit does not prove which version is deployed.
+A waiver, successful build or successful collection is not an executed E2E result.</p>
 <h3 id="help"><code>/help</code></h3>
 <p>This command will cause the pr-comment-bot to respond with a comment listing the available commands.</p>
 <h3 id="test-sha-skip_deployment"><code>/test [&lt;sha&gt;] [skip_deployment]</code></h3>
@@ -4760,17 +4903,48 @@ Before running tests on a PR, ensure that there are no changes in the PR that co
 - modifications to the Makefile
 - modifications to scripts
 - new python packages being installed</p>
-<h3 id="test-extended-sha-skip_deployment-test-extended-aad-sha-test-shared-services-sha"><code>/test-extended [&lt;sha&gt;] [skip_deployment]</code> / <code>/test-extended-aad [&lt;sha&gt;]</code>/ <code>/test-shared-services [&lt;sha&gt;]</code></h3>
-<p>This command runs the build, deploy, and smoke &amp; extended / shared services tests for a PR.</p>
+<h3 id="test-extended-sha-skip_deployment-test-extended-aad-sha"><code>/test-extended [&lt;sha&gt;] [skip_deployment]</code> / <code>/test-extended-aad [&lt;sha&gt;]</code></h3>
+<p>These commands run the build, deployment, smoke tests and selected extended tests for a PR.</p>
 <p>For PRs from maintainers (i.e. users with write access to microsoft/AzureTRE), <code>/test-extended</code> is sufficient.</p>
-<p>If a change has been made which would affect any of the core shared services, make sure you run <code>/test-shared-services</code>.</p>
 <p>For other PRs, the checks below should be carried out. Once satisfied that the PR is safe to run tests against, you should use <code>/test-extended &lt;sha&gt;</code> where <code>&lt;sha&gt;</code> is the SHA for the commit that you have verified.
 You can use the full or short form of the SHA, but it must be at least 7 characters (GitHub UI shows 7 characters).</p>
 <p>If the PR validation environment is already deployed, add <code>skip_deployment</code> to <code>/test-extended</code> to skip the build and deployment jobs and run the smoke and extended tests against the existing environment. For PRs from forks, include both the SHA and <code>skip_deployment</code>, for example <code>/test-extended &lt;sha&gt; skip_deployment</code>.</p>
-<p>The <code>skip_deployment</code> flag is not supported by <code>/test-extended-aad</code> or <code>/test-shared-services</code>.</p>
+<p>The <code>skip_deployment</code> flag is not supported by <code>/test-extended-aad</code>.</p>
 <p><strong>IMPORTANT</strong></p>
 <p>As with <code>/test</code>, this command works on PRs from forks, and makes the deployment secrets available.
 Before running tests on a PR, run the same checks on the PR code as for <code>/test</code>.</p>
+<h3 id="test-shared-services-sha-accept_nexus_eula"><code>/test-shared-services [&lt;sha&gt;] accept_nexus_eula</code></h3>
+<p>This command builds and deploys the PR environment, then runs smoke and shared-service tests, including the certificate and Nexus lifecycle case.
+Review the PR code using the same checks as for <code>/test</code> before running it. For an external PR, include the reviewed head SHA.</p>
+<p>The shared-service suite creates Nexus and requires explicit acceptance of the <a href="https://links.sonatype.com/products/nxrm/ce-eula">Sonatype Nexus Community Edition EULA</a>.
+After accepting the EULA, add the exact <code>accept_nexus_eula</code> flag on the command's first line, for example <code>/test-shared-services &lt;sha&gt; accept_nexus_eula</code>.
+Omitting the flag prevents deployment and tests. The command does not support <code>skip_deployment</code>.</p>
+<p>For local execution, set <code>TEST_ACCEPT_NEXUS_EULA=true</code> before running the selected tests.
+For the branch workflow, set the boolean <code>acceptNexusEula</code> input to <code>true</code> and select <code>shared_services</code>.
+Without consent, the Nexus case fails before changing Nexus or certificate resources. The existing weekend certificate precaution still skips that case after consent is checked.
+A skipped case does not prove the Nexus lifecycle.</p>
+<p>For manual runs of <code>deploy_tre.yml</code> on <code>main</code>, use its <code>acceptNexusEula</code> input.
+For recurring main runs, an administrator can record consent with the repository variable <code>NEXUS_EULA_ACCEPTED=true</code>.
+Either setting supplies consent. Without either setting, scheduled/manual main runs exclude the <code>nexus</code> case and retain the other shared-service tests.
+Push runs retain their existing extended/AAD selection. An excluded Nexus case provides no Nexus lifecycle evidence.</p>
+<p>Shared-service tests allow one hour for prior-resource recovery, one hour for provisioning and one hour for each new resource's cleanup.
+Nexus and certificate recovery share the first deadline. Test watchdogs include a further 30-minute margin, including failed-create cleanup.
+To permit the certificate case at weekends, set <code>runCertificateTestsOnWeekends=true</code> in the branch workflow.</p>
+<p>The reusable workflow collects the selected cases and gives Nexus a separate five-hour job.
+The other cases run in their own job. These jobs run sequentially against the same environment, including when a group fails.
+Empty groups are omitted. Invalid or empty selections fail planning. Each job verifies the planned checkout and exact cases before execution.</p>
+<p>Slash commands use workflows from <code>main</code>. Before these routing changes reach <code>main</code>, validate the E2E path through <code>deploy_tre_branch.yml</code> on the reviewed upstream branch.</p>
+<h3 id="test-airlock-sha-accept_nexus_eula"><code>/test-airlock [&lt;sha&gt;] [accept_nexus_eula]</code></h3>
+<p>This command builds and deploys the PR environment, then runs smoke tests and the <code>airlock</code> selection.
+Review the code with the same checks as for <code>/test</code>. For an external PR, include the reviewed head SHA.
+The command does not support <code>skip_deployment</code>.</p>
+<p>The review VM needs Nexus. To permit creation of the prerequisite, first accept the <a href="https://links.sonatype.com/products/nxrm/ce-eula">Sonatype Nexus Community Edition EULA</a>.
+Then add the exact <code>accept_nexus_eula</code> flag on the command's first line, for example <code>/test-airlock &lt;sha&gt; accept_nexus_eula</code>.
+The flag can appear before or after the SHA. Duplicate flags, <code>=true</code> or <code>=false</code> suffixes, and unknown arguments are rejected before deployment.</p>
+<p>Without the flag, consent remains false. The test can reuse a suitable deployed Nexus service.
+If no suitable service exists, the review-VM case fails before creating Nexus. A flag on a later comment line does not grant consent.
+Record selected cases, failures and skips. Independent Airlock passes do not prove the review-VM flow.</p>
+<p>For branch validation, use <code>acceptNexusEula=true</code>. Before the parser change reaches <code>main</code>, use the reviewed branch workflow.</p>
 <h3 id="test-backups-sha"><code>/test-backups [&lt;sha&gt;]</code></h3>
 <p>This command runs the build, deploy, and backup tests for a PR.</p>
 <p>Use this command when a change has been made that could affect workspace backup functionality.</p>
@@ -4784,7 +4958,7 @@ Before running tests on a PR, run the same checks on the PR code as for <code>/t
 <p>When running <code>/test</code> multiple times on a PR, the same TRE ID and environment are used by default. The <code>/test-destroy-env</code> command destroys a previously created validation environment, allowing you to re-run <code>/test</code> with a clean starting point.</p>
 <p>The <code>/test-destroy-env</code> command also destroys the environment associated with the PR branch (created by running the <code>deploy_tre_branch</code> workflow).</p>
 <h3 id="test-force-approve"><code>/test-force-approve</code></h3>
-<p>This command skips running tests for a build and marks the checks as completed.
+<p>This command records a waiver and marks the checks as completed. It does not run tests.
 This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).</p>
 <h2 id="granting-access-to-run-commands">Granting access to run commands</h2>
 <p>Currently, the GitHub API to determine whether a user is a collaborator doesn't seem to respect permissions that a user is granted via a group. As a result, users need to be directly granted <code>write</code> permission in the repo to be able to run the comment bot commands.</p>
