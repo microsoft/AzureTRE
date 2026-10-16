@@ -58,6 +58,7 @@ BUG FIXES:
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
+* Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
 
 ## (0.29.1)
 **BREAKING CHANGES**
@@ -97,7 +98,6 @@ BUG FIXES:
 * Add `bx-msedge.net.` and `vsassets.io.` to the default DNS allowlist. Allow Nexus downloads from `*.gallery.vsassets.io` and `*.gallerycdn.vsassets.io` when DNS security policy is enabled. (`core` 0.16.18, `tre-shared-service-sonatype-nexus` 3.10.3) ([#5071](https://github.com/microsoft/AzureTRE/pull/5071))
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
-* Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
 * Fix pytest deprecation warnings in API test fixtures. ([#5069](https://github.com/microsoft/AzureTRE/pull/5069))
 * Fix Service Bus client lifecycle management in the API and resource processor to prevent connection socket and AMQP channel leaks. Close credentials on errors and handle cancellation and retry delays. ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
