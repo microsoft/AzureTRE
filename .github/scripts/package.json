@@ -1,6 +1,6 @@
 {
   "name": "build-scripts",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Scripts used in the GitHub workflows",
   "main": "build.js",
   "license": "MIT",
@@ -12,5 +12,10 @@
   "scripts": {
     "test": "jest --verbose",
     "test-watch": "jest --watchAll --verbose"
+  },
+  "overrides": {
+    "js-yaml@3": {
+      "argparse": "^2.0.1"
+    }
   }
 }

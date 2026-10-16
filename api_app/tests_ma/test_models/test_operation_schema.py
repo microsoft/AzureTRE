@@ -17,9 +17,7 @@ def test_get_sample_operation_is_valid():
 
 def test_operation_in_response_schema_is_valid():
     operation_id = "7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"
-    sample_data = {
-        "operation": get_sample_operation(operation_id)
-    }
+    sample_data = {"operation": get_sample_operation(operation_id)}
     # This validates the schema extra example logic
     response = OperationInResponse(**sample_data)
     assert response.operation.id == operation_id
@@ -27,9 +25,7 @@ def test_operation_in_response_schema_is_valid():
 
 def test_operation_in_list_schema_is_valid():
     operation_id = "7ac667f0-fd3f-4a6c-815b-82d0cb7a2132"
-    sample_data = {
-        "operations": [get_sample_operation(operation_id)]
-    }
+    sample_data = {"operations": [get_sample_operation(operation_id)]}
     # This validates the schema extra example logic
     op_list = OperationInList(**sample_data)
     assert len(op_list.operations) == 1

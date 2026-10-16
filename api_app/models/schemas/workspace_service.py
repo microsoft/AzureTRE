@@ -16,40 +16,56 @@ def get_sample_workspace_service(workspace_id: str, workspace_service_id: str) -
             "display_name": "my workspace service",
             "description": "some description",
         },
-        "resourceType": ResourceType.WorkspaceService
+        "resourceType": ResourceType.WorkspaceService,
     }
 
 
 class WorkspaceServiceInResponse(BaseModel):
     workspaceService: WorkspaceService
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "workspaceService": get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748")
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "workspaceService": get_sample_workspace_service(
+                    "933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748"
+                )
+            }
         }
-    })
+    )
 
 
 class WorkspaceServicesInList(BaseModel):
     workspaceServices: List[WorkspaceService] = Field(default_factory=list, title="Workspace services")
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "workspaceServices": [
-                get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748"),
-                get_sample_workspace_service("933ad738-7265-4b5f-9eae-a1a62928772e", "abcc9fba-726e-4db6-a1b8-9018a2165748")
-            ]
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "workspaceServices": [
+                    get_sample_workspace_service(
+                        "933ad738-7265-4b5f-9eae-a1a62928772e", "2fdc9fba-726e-4db6-a1b8-9018a2165748"
+                    ),
+                    get_sample_workspace_service(
+                        "933ad738-7265-4b5f-9eae-a1a62928772e", "abcc9fba-726e-4db6-a1b8-9018a2165748"
+                    ),
+                ]
+            }
         }
-    })
+    )
 
 
 class WorkspaceServiceInCreate(BaseModel):
     templateName: str = Field(title="Workspace service type", description="Bundle name")
-    properties: dict = Field(default_factory=dict, title="Workspace service parameters", description="Values for the parameters required by the workspace service resource specification")
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "templateName": "tre-service-guacamole",
-            "properties": {
-                "display_name": "my workspace service",
-                "description": "some description",
+    properties: dict = Field(
+        default_factory=dict,
+        title="Workspace service parameters",
+        description="Values for the parameters required by the workspace service resource specification",
+    )
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "templateName": "tre-service-guacamole",
+                "properties": {
+                    "display_name": "my workspace service",
+                    "description": "some description",
+                },
             }
         }
-    })
+    )

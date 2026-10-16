@@ -126,4 +126,3 @@ else
         --cert-file "${CERT_DIR}/aci.pfx" \
         --cert-password "${CERT_PASSWORD}"
 fi
-

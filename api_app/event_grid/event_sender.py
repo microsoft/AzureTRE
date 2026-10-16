@@ -2,7 +2,12 @@ import re
 
 from typing import Dict, Optional
 from azure.eventgrid import EventGridEvent
-from models.domain.events import AirlockNotificationRequestData, AirlockNotificationWorkspaceData, StatusChangedData, AirlockNotificationData
+from models.domain.events import (
+    AirlockNotificationRequestData,
+    AirlockNotificationWorkspaceData,
+    StatusChangedData,
+    AirlockNotificationData,
+)
 from event_grid.helpers import publish_event
 from core import config
 from models.domain.airlock_request import AirlockRequest, AirlockRequestStatus, AirlockRequestType
@@ -10,7 +15,11 @@ from models.domain.workspace import Workspace
 from services.logging import logger
 
 
-async def send_status_changed_event(airlock_request: AirlockRequest, previous_status: Optional[AirlockRequestStatus], workspace: Optional[Workspace] = None):
+async def send_status_changed_event(
+    airlock_request: AirlockRequest,
+    previous_status: Optional[AirlockRequestStatus],
+    workspace: Optional[Workspace] = None,
+):
     request_id = airlock_request.id
     new_status = airlock_request.status.value
     previous_status = previous_status.value if previous_status else None
@@ -30,21 +39,35 @@ async def send_status_changed_event(airlock_request: AirlockRequest, previous_st
 
     status_changed_event = EventGridEvent(
         event_type="statusChanged",
-        data=StatusChangedData(request_id=request_id, new_status=new_status, previous_status=previous_status, type=request_type, workspace_id=workspace_id_for_event, review_workspace_id=review_workspace_id, airlock_version=airlock_request.airlock_version).model_dump(mode="json"),
+        data=StatusChangedData(
+            request_id=request_id,
+            new_status=new_status,
+            previous_status=previous_status,
+            type=request_type,
+            workspace_id=workspace_id_for_event,
+            review_workspace_id=review_workspace_id,
+            airlock_version=airlock_request.airlock_version,
+        ).model_dump(mode="json"),
         subject=f"{request_id}/statusChanged",
-        data_version="2.0"
+        data_version="2.0",
     )
-    logger.info(f"Sending status changed event with request ID {request_id}, new status: {new_status}, previous status: {previous_status}")
+    logger.info(
+        f"Sending status changed event with request ID {request_id}, new status: {new_status}, previous status: {previous_status}"
+    )
     await publish_event(status_changed_event, config.EVENT_GRID_STATUS_CHANGED_TOPIC_ENDPOINT)
 
 
-async def send_airlock_notification_event(airlock_request: AirlockRequest, workspace: Workspace, role_assignment_details: Dict[str, str]):
+async def send_airlock_notification_event(
+    airlock_request: AirlockRequest, workspace: Workspace, role_assignment_details: Dict[str, str]
+):
     def to_snake_case(string: str):
-        return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+        return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
 
     request_id = airlock_request.id
     status = airlock_request.status.value
-    recipient_emails_by_role = {to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()}
+    recipient_emails_by_role = {
+        to_snake_case(role_name): role_id for role_name, role_id in role_assignment_details.items()
+    }
 
     data = AirlockNotificationData(
         event_type="status_changed",
@@ -58,11 +81,13 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
             request_type=airlock_request.type,
             files=airlock_request.files,
             status=airlock_request.status.value,
-            business_justification=airlock_request.businessJustification),
+            business_justification=airlock_request.businessJustification,
+        ),
         workspace=AirlockNotificationWorkspaceData(
             id=workspace.id,
             display_name=workspace.properties["display_name"],
-            description=workspace.properties["description"]),
+            description=workspace.properties["description"],
+        ),
     )
 
     # For EventGridEvent, data should be a Dict[str, object]
@@ -73,7 +98,7 @@ async def send_airlock_notification_event(airlock_request: AirlockRequest, works
         event_type="airlockNotification",
         data=data_dict,
         subject=f"{request_id}/airlockNotification",
-        data_version="4.0"
+        data_version="4.0",
     )
 
     logger.info(f"Sending airlock notification event with request ID {request_id}, status: {status}")

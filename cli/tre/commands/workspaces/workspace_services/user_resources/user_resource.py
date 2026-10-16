@@ -43,18 +43,14 @@ def user_resource_id_completion(ctx: click.Context, param: click.Parameter, inco
 )
 @click.pass_context
 def user_resource(ctx: click.Context, user_resource_id) -> None:
-    ctx.obj = UserResourceContext.add_user_resource_id_to_context_obj(
-        ctx, user_resource_id
-    )
+    ctx.obj = UserResourceContext.add_user_resource_id_to_context_obj(ctx, user_resource_id)
 
 
 @click.command(name="show", help="Show user resource")
 @output_option()
 @query_option()
 @pass_user_resource_context
-def user_resource_show(
-    user_resource_context: UserResourceContext, output_format, query
-) -> None:
+def user_resource_show(user_resource_context: UserResourceContext, output_format, query) -> None:
     log = logging.getLogger(__name__)
 
     workspace_id = user_resource_context.workspace_id
@@ -124,9 +120,7 @@ def user_resource_update(
 
     if definition is None:
         if definition_file is None:
-            raise click.UsageError(
-                "Please specify either a definition or a definition file"
-            )
+            raise click.UsageError("Please specify either a definition or a definition file")
         definition = definition_file.read()
 
     definition_dict = json.loads(definition)
@@ -260,9 +254,7 @@ def user_resource_delete(
         raise click.UsageError("Missing user resource ID")
 
     if not yes:
-        click.confirm(
-            "Are you sure you want to delete this user resource?", err=True, abort=True
-        )
+        click.confirm("Are you sure you want to delete this user resource?", err=True, abort=True)
 
     client = ApiClient.get_api_client_from_config()
     workspace_scope = client.get_workspace_scope(log, workspace_id)

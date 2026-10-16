@@ -217,6 +217,6 @@ See [Registering workspace templates](../tre-admins/registering-templates.md).
 
   ```cmd
   make bundle-build DIR=./templates/<scope>/<bundle_name>
-  make bundle-publish DIR=./templates/<scope>/<bundle_name> 
+  make bundle-publish DIR=./templates/<scope>/<bundle_name>
   make bundle-register DIR=./templates/<scope>/<bundle_name> BUNDLE_TYPE=<scope>
   ```

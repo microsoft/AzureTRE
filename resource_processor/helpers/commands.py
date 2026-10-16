@@ -47,7 +47,9 @@ async def _stop_command(proc, communication, *, wait_for_completion=False):
     await asyncio.shield(communication)
 
 
-async def run_command_helper(cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True):
+async def run_command_helper(
+    cmd_parts: list, config: dict, description: str, log_error: bool = True, log_output: bool = True
+):
     logger.debug(f"Executing {description}")
 
     proc = await asyncio.create_subprocess_exec(
@@ -55,7 +57,7 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=config["porter_env"],
-        start_new_session=True
+        start_new_session=True,
     )
 
     # Keep draining output while shutting down, including after repeated cancellation.
@@ -63,7 +65,9 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
     try:
         stdout, stderr = await asyncio.shield(communication)
     except asyncio.CancelledError:
-        shutdown = asyncio.create_task(_stop_command(proc, communication, wait_for_completion=_is_porter_invocation(cmd_parts)))
+        shutdown = asyncio.create_task(
+            _stop_command(proc, communication, wait_for_completion=_is_porter_invocation(cmd_parts))
+        )
         while not shutdown.done():
             try:
                 await asyncio.shield(shutdown)
@@ -78,13 +82,13 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
     if stdout:
         stdout_text = stdout.decode()
         if log_output:
-            shell_output_logger(stdout_text, '[stdout]', logging.INFO)
+            shell_output_logger(stdout_text, "[stdout]", logging.INFO)
 
     if stderr:
         stderr_text = stderr.decode()
         if log_output:
             stderr_log_level = logging.WARN if log_error else logging.DEBUG
-            shell_output_logger(stderr_text, '[stderr]', stderr_log_level)
+            shell_output_logger(stderr_text, "[stderr]", stderr_log_level)
 
     if proc.returncode != 0:
         if log_error:
@@ -98,19 +102,26 @@ async def run_command_helper(cmd_parts: list, config: dict, description: str, lo
 
 
 def azure_login_command(config):
-    commands = [
-        ["az", "cloud", "set", "--name", config['azure_environment']]
-    ]
+    commands = [["az", "cloud", "set", "--name", config["azure_environment"]]]
 
     if config.get("vmss_msi_id"):
         # Use the Managed Identity when in VMSS context
-        commands.append(["az", "login", "--identity", "--client-id", config['vmss_msi_id']])
+        commands.append(["az", "login", "--identity", "--client-id", config["vmss_msi_id"]])
     else:
         # Use a Service Principal when running locally
-        commands.append(["az", "login", "--service-principal",
-                         "--username", config['arm_client_id'],
-                         "--password", config['arm_client_secret'],
-                         "--tenant", config['arm_tenant_id']])
+        commands.append(
+            [
+                "az",
+                "login",
+                "--service-principal",
+                "--username",
+                config["arm_client_id"],
+                "--password",
+                config["arm_client_secret"],
+                "--tenant",
+                config["arm_tenant_id"],
+            ]
+        )
 
     return commands
 
@@ -131,7 +142,7 @@ def apply_porter_credentials_sets_command(config):
 
 
 def azure_acr_login_command(config):
-    acr_name = _get_acr_name(acr_fqdn=config['registry_server'])
+    acr_name = _get_acr_name(acr_fqdn=config["registry_server"])
     return [["az", "acr", "login", "--name", acr_name]]
 
 
@@ -140,7 +151,9 @@ async def build_porter_command(config, msg_body, custom_action=False):
     param_set_entries = []
 
     if porter_parameter_keys is None:
-        raise PorterParameterDiscoveryError("Cannot read bundle parameters from Porter. Check registry access and retry.")
+        raise PorterParameterDiscoveryError(
+            "Cannot read bundle parameters from Porter. Check registry access and retry."
+        )
     else:
         for parameter_name in porter_parameter_keys:
             # try to find the param in order of priorities:
@@ -176,12 +189,9 @@ async def build_porter_command(config, msg_body, custom_action=False):
                     val_base64_bytes = base64.b64encode(val_bytes)
                     parameter_value = val_base64_bytes.decode("ascii")
 
-                param_set_entries.append({
-                    "name": parameter_name,
-                    "source": {"value": str(parameter_value)}
-                })
+                param_set_entries.append({"name": parameter_name, "source": {"value": str(parameter_value)}})
 
-    installation_id = msg_body['id']
+    installation_id = msg_body["id"]
     param_set_name = f"tre-params-{installation_id}-{uuid.uuid4().hex[:8]}"
 
     param_set_file = None
@@ -193,34 +203,34 @@ async def build_porter_command(config, msg_body, custom_action=False):
                 "schemaVersion": "1.0.1",
                 "name": param_set_name,
                 "namespace": "",
-                "parameters": param_set_entries
+                "parameters": param_set_entries,
             }
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 param_set_file = f.name
                 # Parameter sets are stored verbatim by Porter. Keep values out of
                 # that database, including secrets not identified by the template.
                 value_directory = param_set_file + ".values"
                 os.mkdir(value_directory, mode=0o700)
                 for parameter in param_set_entries:
-                    with tempfile.NamedTemporaryFile(mode='w', dir=value_directory, delete=False) as value_file:
+                    with tempfile.NamedTemporaryFile(mode="w", dir=value_directory, delete=False) as value_file:
                         value_file.write(parameter["source"]["value"])
                         parameter["source"] = {"path": value_file.name}
                 json.dump(param_set, f)
 
-        if not custom_action and msg_body['action'] in ("install", "upgrade"):
+        if not custom_action and msg_body["action"] in ("install", "upgrade"):
             installation = {
                 "schemaType": "Installation",
                 "schemaVersion": "1.0.2",
                 "name": installation_id,
                 "bundle": {
                     "repository": f"{config['registry_server']}/{msg_body['name']}",
-                    "version": msg_body['version']
+                    "version": msg_body["version"],
                 },
                 "parameters": {},
                 "parameterSets": [param_set_name] if param_set_entries else [],
-                "credentialSets": ["arm_auth", "aad_auth"]
+                "credentialSets": ["arm_auth", "aad_auth"],
             }
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 installation_file = f.name
                 json.dump(installation, f)
 
@@ -229,11 +239,8 @@ async def build_porter_command(config, msg_body, custom_action=False):
             commands.append(["porter", "parameters", "apply", param_set_file])
 
         if custom_action:
-            command = ["porter", "invoke", "--action", msg_body['action'], installation_id]
-            command.extend([
-                "--reference",
-                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-            ])
+            command = ["porter", "invoke", "--action", msg_body["action"], installation_id]
+            command.extend(["--reference", f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"])
             if param_set_file:
                 command.extend(["--parameter-set", param_set_name])
             command.append("--force")
@@ -247,11 +254,8 @@ async def build_porter_command(config, msg_body, custom_action=False):
             # Porter v1.4.0 logs parameter diffs, including secrets, at INFO.
             commands.append(["porter", "installation", "apply", installation_file, "--force", "--verbosity", "warning"])
         else:
-            command = ["porter", msg_body['action'], installation_id]
-            command.extend([
-                "--reference",
-                f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"
-            ])
+            command = ["porter", msg_body["action"], installation_id]
+            command.extend(["--reference", f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}"])
             if param_set_file:
                 command.extend(["--parameter-set", param_set_name])
             command.append("--force")
@@ -283,17 +287,8 @@ def cleanup_parameter_value_files(param_set_file):
 
 
 async def build_porter_command_for_outputs(msg_body):
-    installation_id = msg_body['id']
-    command = [
-        "porter",
-        "installations",
-        "output",
-        "list",
-        "--installation",
-        installation_id,
-        "--output",
-        "json"
-    ]
+    installation_id = msg_body["id"]
+    command = ["porter", "installations", "output", "list", "--installation", installation_id, "--output", "json"]
     return [command]
 
 
@@ -316,7 +311,7 @@ async def get_porter_parameter_keys(config, msg_body):
         "--reference",
         f"{config['registry_server']}/{msg_body['name']}:v{msg_body['version']}",
         "--output",
-        "json"
+        "json",
     ]
 
     returncode, stdout_text, _ = await run_command_helper(explain_cmd, config, "Porter explain command")
@@ -336,11 +331,11 @@ async def get_porter_parameter_keys(config, msg_body):
 def get_special_porter_param_value(config, parameter_name: str, msg_body):
     # some parameters might not have identical names and this comes to handle that
     if parameter_name == "mgmt_acr_name":
-        return _get_acr_name(acr_fqdn=config['registry_server'])
+        return _get_acr_name(acr_fqdn=config["registry_server"])
     if parameter_name == "mgmt_resource_group_name":
         return config["tfstate_resource_group_name"]
     if parameter_name == "azure_environment":
-        return config['azure_environment']
+        return config["azure_environment"]
     if parameter_name == "workspace_id":
         return msg_body.get("workspaceId")  # not included in all messages
     if parameter_name == "parent_service_id":
@@ -351,12 +346,12 @@ def get_special_porter_param_value(config, parameter_name: str, msg_body):
         return value
     # Parameters that relate to the cloud type
     if parameter_name == "aad_authority_url":
-        return config['aad_authority_url']
+        return config["aad_authority_url"]
     if parameter_name == "microsoft_graph_fqdn":
-        return urlparse(config['microsoft_graph_fqdn']).netloc
+        return urlparse(config["microsoft_graph_fqdn"]).netloc
     if parameter_name == "arm_environment":
         return config["arm_environment"]
 
 
 def _get_acr_name(acr_fqdn: str):
-    return acr_fqdn.split('.', 1)[0]
+    return acr_fqdn.split(".", 1)[0]

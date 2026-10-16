@@ -27,12 +27,18 @@ def ensure_workspace_airlock_version_supported(properties: dict, default_version
         )
 
 
-async def ensure_airlock_version_change_allowed(workspace: Resource, resource_patch: ResourcePatch, request_repo: AirlockRequestRepository) -> None:
+async def ensure_airlock_version_change_allowed(
+    workspace: Resource, resource_patch: ResourcePatch, request_repo: AirlockRequestRepository
+) -> None:
     """Reject version changes while airlock requests are still in flight."""
     if not resource_patch.properties:
         return
     current_version = workspace.properties.get("airlock_version", 1)
-    if current_version >= 2 and workspace.properties.get("enable_airlock", True) and resource_patch.properties.get("enable_airlock") is False:
+    if (
+        current_version >= 2
+        and workspace.properties.get("enable_airlock", True)
+        and resource_patch.properties.get("enable_airlock") is False
+    ):
         # The v2 signer and its conditioned role assignment are needed to delete request containers
         # retained in shared storage. Workspace deletion performs that cleanup before removing them.
         logger.warning("Blocked Airlock disablement for v2 workspace %s", workspace.id)
@@ -51,7 +57,9 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     if new_version < current_version:
         # Downgrading destroys the v2 signer and conditioned role assignments that guard existing
         # shared containers, with no path to re-grant access to data created under v2.
-        logger.warning("Blocked airlock_version downgrade %s->%s for workspace %s", current_version, new_version, workspace.id)
+        logger.warning(
+            "Blocked airlock_version downgrade %s->%s for workspace %s", current_version, new_version, workspace.id
+        )
         raise ValueError(
             f"Cannot change airlock_version from {current_version} to {new_version}: downgrading is not "
             f"supported because it removes access to data created under the newer version."
@@ -61,7 +69,10 @@ async def ensure_airlock_version_change_allowed(workspace: Resource, resource_pa
     if request_ids:
         logger.warning(
             "Blocked airlock_version change %s->%s for workspace %s due to %d in-flight airlock request(s)",
-            current_version, new_version, workspace.id, len(request_ids)
+            current_version,
+            new_version,
+            workspace.id,
+            len(request_ids),
         )
         raise ValueError(
             f"Cannot change airlock_version from {current_version} to {new_version} while "

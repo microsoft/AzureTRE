@@ -11,8 +11,8 @@
             "type": "string",
             "description": "Operation type.",
             "enum": [
-                "Create", 
-                "Update", 
+                "Create",
+                "Update",
                 "Delete"
             ]
         },
@@ -20,9 +20,9 @@
             "type": "string",
             "description": "Operation status.",
             "enum": [
-                "Pending", 
-                "Processing", 
-                "Succeeded", 
+                "Pending",
+                "Processing",
+                "Succeeded",
                 "Failed"
             ]
         },
@@ -42,7 +42,7 @@
         "lastUpdatedAt": {
             "type": "string",
             "description": "Operation last update time."
-        },        
+        },
         "events": {
             "type": "array",
             "description": "Operation event.",
@@ -85,9 +85,9 @@
                     "type": "string",
                     "description": "Event classification.",
                     "enum": [
-                        "low", 
-                        "medium", 
-                        "high", 
+                        "low",
+                        "medium",
+                        "high",
                         "critical"
                     ]
                 },

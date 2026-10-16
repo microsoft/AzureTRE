@@ -21,12 +21,14 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def basic_user_resource_request():
-    return UserResourceInCreate(templateName="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"})
+    return UserResourceInCreate(
+        templateName="user-resource-type", properties={"display_name": "test", "description": "test", "tre_id": "test"}
+    )
 
 
 @pytest_asyncio.fixture
 async def user_resource_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=None):
         user_resource_repo = await UserResourceRepository().create()
         yield user_resource_repo
 
@@ -37,20 +39,24 @@ def user_resource():
         id=RESOURCE_ID,
         templateVersion="0.1.0",
         properties={},
-        etag='',
+        etag="",
         templateName="my-user-resource",
-        resourcePath="test"
+        resourcePath="test",
     )
     return user_resource
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template')
-@patch('core.config.TRE_ID', "9876")
-async def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(validate_input_mock, user_resource_repo, basic_user_resource_request, basic_user_resource_template):
+@patch("db.repositories.user_resources.UserResourceRepository.validate_input_against_template")
+@patch("core.config.TRE_ID", "9876")
+async def test_create_user_resource_item_creates_a_user_resource_with_the_right_values(
+    validate_input_mock, user_resource_repo, basic_user_resource_request, basic_user_resource_template
+):
     user_resource_to_create = basic_user_resource_request
     validate_input_mock.return_value = basic_user_resource_template
 
-    user_resource, _ = await user_resource_repo.create_user_resource_item(user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID, [])
+    user_resource, _ = await user_resource_repo.create_user_resource_item(
+        user_resource_to_create, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID, []
+    )
 
     assert user_resource.templateName == basic_user_resource_request.templateName
     assert user_resource.resourceType == ResourceType.UserResource
@@ -62,20 +68,24 @@ async def test_create_user_resource_item_creates_a_user_resource_with_the_right_
     assert user_resource.properties["tre_id"] != "test"
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.validate_input_against_template', side_effect=ValueError)
-async def test_create_user_resource_item_raises_value_error_if_template_is_invalid(_, user_resource_repo, basic_user_resource_request):
+@patch("db.repositories.user_resources.UserResourceRepository.validate_input_against_template", side_effect=ValueError)
+async def test_create_user_resource_item_raises_value_error_if_template_is_invalid(
+    _, user_resource_repo, basic_user_resource_request
+):
     with pytest.raises(ValueError):
-        await user_resource_repo.create_user_resource_item(basic_user_resource_request, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID, [])
+        await user_resource_repo.create_user_resource_item(
+            basic_user_resource_request, WORKSPACE_ID, SERVICE_ID, "parent-service-type", USER_ID, []
+        )
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+@patch("db.repositories.user_resources.UserResourceRepository.query", return_value=[])
 async def test_get_user_resources_for_workspace_queries_db(query_mock, user_resource_repo):
-    expected_query = 'SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId'
+    expected_query = "SELECT * FROM c WHERE c.deploymentStatus != @deletedStatus AND c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId"
     expected_parameters = [
-        {'name': '@deletedStatus', 'value': Status.Deleted},
-        {'name': '@resourceType', 'value': ResourceType.UserResource},
-        {'name': '@serviceId', 'value': SERVICE_ID},
-        {'name': '@workspaceId', 'value': WORKSPACE_ID}
+        {"name": "@deletedStatus", "value": Status.Deleted},
+        {"name": "@resourceType", "value": ResourceType.UserResource},
+        {"name": "@serviceId", "value": SERVICE_ID},
+        {"name": "@workspaceId", "value": WORKSPACE_ID},
     ]
 
     await user_resource_repo.get_user_resources_for_workspace_service(WORKSPACE_ID, SERVICE_ID)
@@ -83,7 +93,7 @@ async def test_get_user_resources_for_workspace_queries_db(query_mock, user_reso
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.query')
+@patch("db.repositories.user_resources.UserResourceRepository.query")
 async def test_get_user_resource_returns_resource_if_found(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.model_dump()]
 
@@ -92,16 +102,16 @@ async def test_get_user_resource_returns_resource_if_found(query_mock, user_reso
     assert actual_resource == user_resource
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.query')
+@patch("db.repositories.user_resources.UserResourceRepository.query")
 async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo, user_resource):
     query_mock.return_value = [user_resource.model_dump()]
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.parentWorkspaceServiceId = @serviceId AND c.workspaceId = @workspaceId AND c.id = @resourceId AND c.deploymentStatus != @deletedStatus"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.UserResource},
-        {'name': '@serviceId', 'value': SERVICE_ID},
-        {'name': '@workspaceId', 'value': WORKSPACE_ID},
-        {'name': '@resourceId', 'value': RESOURCE_ID},
-        {'name': '@deletedStatus', 'value': Status.Deleted}
+        {"name": "@resourceType", "value": ResourceType.UserResource},
+        {"name": "@serviceId", "value": SERVICE_ID},
+        {"name": "@workspaceId", "value": WORKSPACE_ID},
+        {"name": "@resourceId", "value": RESOURCE_ID},
+        {"name": "@deletedStatus", "value": Status.Deleted},
     ]
 
     await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
@@ -109,13 +119,13 @@ async def test_get_user_resource_by_id_queries_db(query_mock, user_resource_repo
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+@patch("db.repositories.user_resources.UserResourceRepository.query", return_value=[])
 async def test_get_user_resource_by_id_raises_entity_does_not_exist_if_not_found(_, user_resource_repo):
     with pytest.raises(EntityDoesNotExist):
         await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)
 
 
-@patch('db.repositories.user_resources.UserResourceRepository.query', return_value=[])
+@patch("db.repositories.user_resources.UserResourceRepository.query", return_value=[])
 async def test_get_user_resource_by_id_raises_entity_does_not_exist_if_resource_is_deleted(_, user_resource_repo):
     with pytest.raises(EntityDoesNotExist):
         await user_resource_repo.get_user_resource_by_id(WORKSPACE_ID, SERVICE_ID, RESOURCE_ID)

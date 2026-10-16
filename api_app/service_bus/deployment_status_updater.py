@@ -23,7 +23,7 @@ from resources import strings
 from services.logging import logger, tracer
 
 
-class DeploymentStatusUpdater():
+class DeploymentStatusUpdater:
     def __init__(self):
         pass
 
@@ -44,24 +44,36 @@ class DeploymentStatusUpdater():
             while True:
                 try:
                     async with credentials.get_credential_async_context() as credential:
-                        async with ServiceBusClient(config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential) as service_bus_client:
+                        async with ServiceBusClient(
+                            config.SERVICE_BUS_FULLY_QUALIFIED_NAMESPACE, credential
+                        ) as service_bus_client:
                             client_created_time = time.time()
                             while True:
                                 try:
                                     if time.time() - client_created_time > 3600:
-                                        logger.info("ServiceBusClient has been active for 1 hour. Recreating for freshness...")
+                                        logger.info(
+                                            "ServiceBusClient has been active for 1 hour. Recreating for freshness..."
+                                        )
                                         break
 
                                     current_time = time.time()
                                     polling_count += 1
                                     if current_time - last_heartbeat_time >= 60:
-                                        logger.info(f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute")
+                                        logger.info(
+                                            f"Queue reader heartbeat: Polled {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue {polling_count} times in the last minute"
+                                        )
                                         last_heartbeat_time = current_time
                                         polling_count = 0
 
-                                    logger.debug(f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue...")
+                                    logger.debug(
+                                        f"Looking for new messages on {config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE} queue..."
+                                    )
                                     # max_wait_time=1 -> don't hold the session open after processing of the message has finished
-                                    async with service_bus_client.get_queue_receiver(queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE, max_wait_time=1, session_id=NEXT_AVAILABLE_SESSION) as receiver:
+                                    async with service_bus_client.get_queue_receiver(
+                                        queue_name=config.SERVICE_BUS_DEPLOYMENT_STATUS_UPDATE_QUEUE,
+                                        max_wait_time=1,
+                                        session_id=NEXT_AVAILABLE_SESSION,
+                                    ) as receiver:
                                         logger.info(f"Got a session containing messages: {receiver.session.session_id}")
                                         async with AutoLockRenewer() as renewer:
                                             renewer.register(receiver, receiver.session, max_lock_renewal_duration=60)
@@ -184,12 +196,24 @@ class DeploymentStatusUpdater():
                         step_resource=parent_resource,
                         resource_to_update_id=next_step.resourceId,
                         primary_action=operation.action,
-                        user=operation.user)
+                        user=operation.user,
+                    )
 
                     # create + send the message
-                    logger.info(f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}")
-                    content = json.dumps(resource_to_send.get_resource_request_message_payload(operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction))
-                    await send_deployment_message(content=content, correlation_id=operation.id, session_id=resource_to_send.id, action=next_step.resourceAction)
+                    logger.info(
+                        f"Sending next step in operation to deployment queue -> step_id: {next_step.templateStepId}, action: {next_step.resourceAction}"
+                    )
+                    content = json.dumps(
+                        resource_to_send.get_resource_request_message_payload(
+                            operation_id=operation.id, step_id=next_step.id, action=next_step.resourceAction
+                        )
+                    )
+                    await send_deployment_message(
+                        content=content,
+                        correlation_id=operation.id,
+                        session_id=resource_to_send.id,
+                        action=next_step.resourceAction,
+                    )
                 except Exception as e:
                     logger.exception("Unable to send update for resource in pipeline step")
                     next_step.message = repr(e)
@@ -291,12 +315,12 @@ class DeploymentStatusUpdater():
             obj_type = msg.Type
 
             #
-            if obj_type == 'string' and isinstance(value, str):
+            if obj_type == "string" and isinstance(value, str):
                 value = value.strip("'").strip('"')
-            elif obj_type == 'boolean':
+            elif obj_type == "boolean":
                 if isinstance(value, str):
                     value = value.strip("'").strip('"')
-                value = (value.lower() == 'true')
+                value = value.lower() == "true"
 
             result_dict[name] = value
 

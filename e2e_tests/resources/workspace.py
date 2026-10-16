@@ -23,10 +23,10 @@ async def get_workspace(client, workspace_id: str, headers) -> dict:
 async def get_identifier_uri(client, workspace_id: str, auth_headers) -> str:
     workspace = await get_workspace(client, workspace_id, auth_headers)
 
-    if ("properties" not in workspace):
+    if "properties" not in workspace:
         raise Exception("Properties not found in workspace.")
 
-    if ("scope_id" not in workspace["properties"]):
+    if "scope_id" not in workspace["properties"]:
         raise Exception("Scope Id not found in workspace properties.")
 
     # Cope with the fact that scope id can have api:// at the front.

@@ -111,6 +111,26 @@ data "cloudinit_config" "config" {
   }
 }
 
+resource "azurerm_virtual_machine_extension" "cloud_init_wait" {
+  virtual_machine_id         = azurerm_linux_virtual_machine.linuxvm.id
+  name                       = "${azurerm_linux_virtual_machine.linuxvm.name}-CloudInitWait"
+  publisher                  = "Microsoft.Azure.Extensions"
+  type                       = "CustomScript"
+  type_handler_version       = "2.1"
+  auto_upgrade_minor_version = true
+  tags                       = local.tre_user_resources_tags
+
+  protected_settings = jsonencode({
+    "commandToExecute" : "cloud-init status --wait && cloud-init status | grep -q 'status: done' || (echo 'Cloud-init failed'; exit 1)"
+  })
+
+  timeouts {
+    create = "30m"
+  }
+
+  lifecycle { ignore_changes = [tags] }
+}
+
 resource "azurerm_key_vault_secret" "linuxvm_password" {
   name         = local.vm_password_secret_name
   value        = "${local.admin_username}\n${random_password.password.result}"

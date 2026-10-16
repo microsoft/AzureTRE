@@ -136,4 +136,3 @@ resource "azurerm_private_dns_a_record" "cyclecloud_vm" {
 
   lifecycle { ignore_changes = [tags] }
 }
-

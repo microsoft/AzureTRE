@@ -37,6 +37,3 @@ find . -type f -name "porter.yaml" -not -path "*/.cnab/*" -print0 | sort | while
 do
   template_version "$file"
 done
-
-
-

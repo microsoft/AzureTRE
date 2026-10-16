@@ -47,35 +47,23 @@ def test_substitution_for_user_resource_primary_resource_with_parents(
     # ws parent (2 levels up)
     # single array val
     val_to_sub = "{{ resource.parent.parent.properties.address_prefix }}"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
     assert val == ["172.1.1.1", "192.168.1.1"]
 
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.parent.parent.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
     assert val == ["*.pypi.org", "security.ubuntu.com"]
 
     # single string val, with text. Will be concatenated into text.
-    val_to_sub = (
-        "I think {{ resource.parent.parent.templateName }} is the best template!"
-    )
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
-    )
+    val_to_sub = "I think {{ resource.parent.parent.templateName }} is the best template!"
+    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
     assert val == "I think ws template name is the best template!"
 
     # multiple string vals, with text. Will be concatenated.
     val_to_sub = "I think {{ resource.parent.parent.templateName }} is the best template, and {{ resource.parent.parent.templateVersion }} is a good version!"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None
-    )
-    assert (
-        val == "I think ws template name is the best template, and 8 is a good version!"
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, parent_ws_resource_dict, None)
+    assert val == "I think ws template name is the best template, and 8 is a good version!"
 
     # Verify the correct dictionary is provided
     val_to_sub = "{{ resource.parent.properties.display_name }}"
@@ -85,34 +73,23 @@ def test_substitution_for_user_resource_primary_resource_with_parents(
     # ws svc parent (1 level up)
     # single array val
     val_to_sub = "{{ resource.parent.properties.address_prefix }}"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
     assert val == ["172.2.2.2", "192.168.2.2"]
 
     # array val to inject, with text. Text will be dropped.
     val_to_sub = "{{ resource.parent.properties.fqdn }} - this text will be removed because fqdn is a list and shouldn't be concatenated into a string"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
     assert val == ["*.pypi.org", "files.pythonhosted.org"]
 
     # single string val, with text. Will be concatenated into text.
     val_to_sub = "I think {{ resource.parent.templateName }} is the best template!"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
     assert val == "I think svc template name is the best template!"
 
     # multiple string vals, with text. Will be concatenated.
     val_to_sub = "I think {{ resource.parent.templateName }} is the best template, and {{ resource.parent.templateVersion }} is a good version!"
-    val = substitute_value(
-        val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict
-    )
-    assert (
-        val
-        == "I think svc template name is the best template, and 9 is a good version!"
-    )
+    val = substitute_value(val_to_sub, primary_user_resource_dict, None, parent_ws_svc_resource_dict)
+    assert val == "I think svc template name is the best template, and 9 is a good version!"
 
     # multiple sources (primary + both parents) multiple string vals, with text. Will be concatenated.
     val_to_sub = "I am the primary resource ( a user resource - {{ resource.properties.display_name }}), my workspace service parent is {{ resource.parent.properties.display_name }} and my parent workspace is {{ resource.parent.parent.properties.display_name }}"
@@ -204,10 +181,7 @@ def test_substitution_for_shared_service_primary_resource_parents(basic_shared_s
     # single array val
     val_to_sub = "I am a shared service WITHOUT any parents, my name is '{{ resource.properties.display_name }}'"
     val = substitute_value(val_to_sub, primary_resource_dict, None, None)
-    assert (
-        val
-        == "I am a shared service WITHOUT any parents, my name is 'shared_service_resource name'"
-    )
+    assert val == "I am a shared service WITHOUT any parents, my name is 'shared_service_resource name'"
 
     # shared service cant have any parents
     val_to_sub = "{{ resource.parent.properties.display_name }}"
@@ -219,12 +193,8 @@ def test_substitution_for_shared_service_primary_resource_parents(basic_shared_s
         val = substitute_value(val_to_sub, primary_resource_dict, None, None)
 
 
-def test_simple_substitution(
-    simple_pipeline_step, primary_resource, resource_to_update
-):
-    obj = substitute_properties(
-        simple_pipeline_step, primary_resource, None, None, resource_to_update
-    )
+def test_simple_substitution(simple_pipeline_step, primary_resource, resource_to_update):
+    obj = substitute_properties(simple_pipeline_step, primary_resource, None, None, resource_to_update)
 
     assert obj["just_text"] == "Updated by 123"
     assert obj["just_text_2"] == "No substitution, just a fixed string here"
@@ -257,7 +227,7 @@ def test_substitution_list_strings(primary_resource, resource_to_update):
                     ],
                 },
             )
-        ]
+        ],
     )
     obj = substitute_properties(
         pipeline_step_with_list_strings,
@@ -271,9 +241,7 @@ def test_substitution_list_strings(primary_resource, resource_to_update):
 
 
 def test_substitution_props(pipeline_step, primary_resource, resource_to_update):
-    obj = substitute_properties(
-        pipeline_step, primary_resource, None, None, resource_to_update
-    )
+    obj = substitute_properties(pipeline_step, primary_resource, None, None, resource_to_update)
 
     assert obj["rule_collections"][0]["rules"][0]["target_fqdns"] == [
         "*.pypi.org",
@@ -284,16 +252,11 @@ def test_substitution_props(pipeline_step, primary_resource, resource_to_update)
         "172.0.0.1",
         "192.168.0.1",
     ]
-    assert (
-        obj["rule_collections"][0]["rules"][0]["protocols"][1]["type"]
-        == "MyCoolProtocol"
-    )
+    assert obj["rule_collections"][0]["rules"][0]["protocols"][1]["type"] == "MyCoolProtocol"
     assert obj["rule_collections"][0]["rules"][0]["description"] == "Deployed by 123"
 
 
-def test_substitution_array_append_remove(
-    pipeline_step, primary_resource, resource_to_update
-):
+def test_substitution_array_append_remove(pipeline_step, primary_resource, resource_to_update):
     # do the first substitution, and assert there's a single rule collection
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "append"
@@ -365,9 +328,7 @@ def test_substitution_array_append_remove(
     assert len(obj["rule_collections"]) == 0
 
 
-def test_substitution_array_append_replace(
-    pipeline_step, primary_resource, resource_to_update
-):
+def test_substitution_array_append_replace(pipeline_step, primary_resource, resource_to_update):
     # add object 1
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "append"
@@ -412,9 +373,7 @@ def test_substitution_array_append_replace(
     assert obj["rule_collections"][1]["action"] == "Deny Object 2"
 
 
-def test_substitution_array_replace_not_found(
-    pipeline_step, primary_resource, resource_to_update
-):
+def test_substitution_array_replace_not_found(pipeline_step, primary_resource, resource_to_update):
     # try to replace an item not there - it should just append
     step = copy.deepcopy(pipeline_step)
     step.properties[0].arraySubstitutionAction = "replace"

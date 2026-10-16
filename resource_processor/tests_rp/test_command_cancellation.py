@@ -37,8 +37,17 @@ ready.write_text('ready')
 while True:
     time.sleep(1)
 """
-    command = [sys.executable, "-c", script, str(ready), str(interrupted), str(parameter_file),
-               str(installation_file), str(value_file), str(ignore_interrupt)]
+    command = [
+        sys.executable,
+        "-c",
+        script,
+        str(ready),
+        str(interrupted),
+        str(parameter_file),
+        str(installation_file),
+        str(value_file),
+        str(ignore_interrupt),
+    ]
     processes = []
     spawn = asyncio.create_subprocess_exec
 
@@ -61,14 +70,20 @@ while True:
     config = {"porter_env": dict(os.environ), "deployment_status_queue": "test"}
     msg = {"id": "test", "action": "install", "operationId": "operation", "stepId": "step"}
     monkeypatch.setattr("helpers.commands._CANCEL_GRACE_PERIOD_SECONDS", 0.3, raising=False)
-    with patch("helpers.commands.asyncio.create_subprocess_exec", side_effect=capture_process), \
-            patch("vmss_porter.runner.azure_login_command", return_value=[]), \
-            patch("vmss_porter.runner.azure_acr_login_command", return_value=[]), \
-            patch("vmss_porter.runner.apply_porter_credentials_sets_command", return_value=[]), \
-            patch("vmss_porter.runner.build_porter_command", return_value=([command], str(parameter_file), "test", str(installation_file))), \
-            patch("vmss_porter.runner.run_command_helper", side_effect=execute):
+    with (
+        patch("helpers.commands.asyncio.create_subprocess_exec", side_effect=capture_process),
+        patch("vmss_porter.runner.azure_login_command", return_value=[]),
+        patch("vmss_porter.runner.azure_acr_login_command", return_value=[]),
+        patch("vmss_porter.runner.apply_porter_credentials_sets_command", return_value=[]),
+        patch(
+            "vmss_porter.runner.build_porter_command",
+            return_value=([command], str(parameter_file), "test", str(installation_file)),
+        ),
+        patch("vmss_porter.runner.run_command_helper", side_effect=execute),
+    ):
         task = asyncio.create_task(invoke_porter_action(msg, client, config))
         try:
+
             async def wait_until_ready():
                 while not ready.exists():
                     await asyncio.sleep(0.01)
