@@ -23,6 +23,8 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
             "description": "Verify jammy package installation and cloud-init completion",
             "os_image": "Ubuntu 22.04 LTS",
             "vm_size": "2 CPU | 8GB RAM",
+            # CI uses a service principal, so the bundle cannot derive a username from its owner.
+            "admin_username": "researcher",
         },
     }
 

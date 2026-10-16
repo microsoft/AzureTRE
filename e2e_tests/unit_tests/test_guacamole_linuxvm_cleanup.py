@@ -107,9 +107,11 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(self.requests[-2].url.path, f"/api{self.resource_path}")
 
-    async def test_success_cleans_up_vm_in_reused_service(self):
+    async def test_success_uses_explicit_username_and_cleans_up_vm(self):
         self.mock_api(strings.RESOURCE_STATUS_DEPLOYED)
         await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
+        payload = json.loads(self.requests[0].content)
+        self.assertEqual(payload["properties"]["admin_username"], "researcher")
         self.assert_deleted()
 
     async def test_failed_bootstrap_cleans_up_after_failed_disable(self):

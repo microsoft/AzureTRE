@@ -28,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Set an explicit admin username in Linux VM validation so the bundle does not look up the CI service principal as an Entra user. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Set an explicit 30-second timeout for the smoke health request so Azure health checks have time to complete. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Read missing gateway certificate metadata through the resource processor and isolate reuse evidence by installation message span. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Reject invalid or duplicate SHA arguments before starting shared-service tests. (`build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
