@@ -114,13 +114,14 @@ async def get_admin_token(verify) -> TokenProvider:
 
 
 def get_token(scope_uri, verify) -> TokenProvider:
+    """Keep the TRE API's ``verify`` argument for callers, but always verify identity TLS."""
     if config.TEST_ACCOUNT_CLIENT_ID != "" and config.TEST_ACCOUNT_CLIENT_SECRET != "":
         # Logging in as an Enterprise Application: Use Client Credentials flow
         credential = ClientSecretCredential(
             config.AAD_TENANT_ID,
             config.TEST_ACCOUNT_CLIENT_ID,
             config.TEST_ACCOUNT_CLIENT_SECRET,
-            connection_verify=verify,
+            connection_verify=True,
             authority=cloud.get_aad_authority_fqdn(),
         )
         scope = f"{scope_uri}/.default"
@@ -130,7 +131,7 @@ def get_token(scope_uri, verify) -> TokenProvider:
             config.TEST_APP_ID,
             config.TEST_USER_NAME,
             config.TEST_USER_PASSWORD,
-            connection_verify=verify,
+            connection_verify=True,
             authority=cloud.get_aad_authority_fqdn(),
             tenant_id=config.AAD_TENANT_ID,
         )

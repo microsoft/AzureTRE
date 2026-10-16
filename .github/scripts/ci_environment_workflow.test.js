@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const yaml = require('js-yaml');
+const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '../..');
 const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/workflows', name), 'utf8'));
@@ -10,7 +11,6 @@ const workflow = name => yaml.load(fs.readFileSync(path.join(root, '.github/work
 describe('reference concurrency queues', () => {
   test.each([
     ['deploy_tre.yml', 'run-deploy-tre-main', '${{ github.ref }}'],
-    ['deploy_tre_branch.yml', 'run-deploy-tre-not-main', '${{ github.ref }}'],
     ['pr_comment_bot.yml', 'run_test', '${{ needs.pr_comment.outputs.ciGitRef }}']
   ])('%s routes deployment into the shared queue without an outer queue', (file, job, ref) => {
     const caller = workflow(file);
@@ -18,6 +18,7 @@ describe('reference concurrency queues', () => {
     expect(caller.jobs[job].concurrency).toBeUndefined();
     expect(caller.jobs[job].uses).toBe('./.github/workflows/deploy_tre_reusable.yml');
     expect(caller.jobs[job].with.ciGitRef).toBe(ref);
+    expect(caller.jobs[job].with.callerOwnsDeploymentLock).toBeUndefined();
     // Preparation may run independently, but must not add another waiting group.
     const needs = caller.jobs[job].needs || [];
     for (const dependency of Array.isArray(needs) ? needs : [needs]) {
@@ -25,8 +26,30 @@ describe('reference concurrency queues', () => {
     }
   });
 
+  test('branch validation owns the reference queue before preparation', () => {
+    const caller = workflow('deploy_tre_branch.yml');
+    expect(caller.concurrency).toEqual({ group: 'deploy-${{ github.ref }}', 'cancel-in-progress': false, queue: 'max' });
+    const job = caller.jobs['run-deploy-tre-not-main'];
+    expect(job.uses).toBe('./.github/workflows/deploy_tre_reusable.yml');
+    expect(job.with.ciGitRef).toBe('${{ github.ref }}');
+    expect(job.with.callerOwnsDeploymentLock).toBe(true);
+    expect(Object.values(caller.jobs).every(value => value.concurrency === undefined)).toBe(true);
+  });
+
+  test('delegation avoids a nested reference lock and preserves the default queue', () => {
+    const reusable = workflow('deploy_tre_reusable.yml');
+    expect(reusable.on.workflow_call.inputs.callerOwnsDeploymentLock).toMatchObject({
+      type: 'boolean', required: false, default: false
+    });
+    expect(reusable.concurrency).toEqual({
+      group: "${{ inputs.callerOwnsDeploymentLock && format('deploy-delegated-{0}-{1}', github.run_id, github.run_attempt) " +
+        "|| format('deploy-{0}', inputs.ciGitRef) }}",
+      'cancel-in-progress': false,
+      queue: 'max'
+    });
+  });
+
   test.each([
-    ['deploy_tre_reusable.yml', null, 'deploy-${{ inputs.ciGitRef }}'],
     ['pr_comment_bot.yml', 'destroy_pr_env', 'deploy-${{ needs.pr_comment.outputs.ciGitRef }}'],
     ['pr_comment_bot.yml', 'destroy_branch_env', 'deploy-${{ needs.pr_comment.outputs.branchCiGitRef }}'],
     ['clean_validation_envs.yml', 'clean', 'deploy-${{ matrix.ref }}'],
@@ -53,6 +76,62 @@ describe('reference concurrency queues', () => {
   });
 });
 
+function e2eCondition(job, lockResult, skipDeployment) {
+  const needs = Object.fromEntries(job.needs.map(name => [name, {
+    result: name === 'verify_deployment_lock' ? lockResult
+      : name.startsWith('e2e_tests_') ? 'success' : (skipDeployment ? 'skipped' : 'success')
+  }]));
+  const inputs = { e2eBundle: '', e2eTestsCustomSelector: 'airlock', skipDeployment };
+  const results = Object.values(needs).map(value => value.result);
+  const expression = job.if.trim().slice(3, -2).replaceAll('needs.*.result', 'results');
+  return vm.runInNewContext(expression, {
+    needs, inputs, results, always: () => true, contains: (values, value) => values.includes(value)
+  }, { timeout: 100 });
+}
+
+describe('delegated deployment guard', () => {
+  test('the guard reads workflow source and has no Azure credentials', () => {
+    const job = workflow('deploy_tre_reusable.yml').jobs.verify_deployment_lock;
+    expect(job.permissions).toEqual({ actions: 'read', contents: 'read' });
+    expect(job.steps[0].if).toBe('inputs.callerOwnsDeploymentLock');
+    expect(job.steps[0].with).toEqual({ 'persist-credentials': false, ref: '${{ github.sha }}' });
+    const check = job.steps.find(step => step.run?.includes('verify_deployment_lock.py'));
+    expect(check.if).toBe('inputs.callerOwnsDeploymentLock');
+    expect(check.env).toEqual({
+      CI_DEPLOYMENT_LOCK_DELEGATED: '${{ inputs.callerOwnsDeploymentLock }}',
+      CI_GIT_REF: '${{ inputs.ciGitRef }}',
+      GITHUB_TOKEN: '${{ github.token }}'
+    });
+    const fallback = job.steps.find(step => step.if === '${{ !inputs.callerOwnsDeploymentLock }}');
+    expect(fallback.run).toBe('echo "The reusable workflow holds the deployment reference lock."');
+  });
+
+  test('every Azure job depends on the guard', () => {
+    const jobs = workflow('deploy_tre_reusable.yml').jobs;
+    expect(Object.keys(jobs).filter(name => !jobs[name].needs)).toEqual(['verify_deployment_lock']);
+    expect(jobs.deploy_management.needs).toEqual(['verify_deployment_lock']);
+    for (const name of ['e2e_tests_smoke', 'e2e_tests_custom']) {
+      expect(jobs[name].needs).toContain('verify_deployment_lock');
+    }
+  });
+
+  test.each(['success', 'failure', 'cancelled', 'skipped'])('E2E requires guard success when its result is %s', result => {
+    const jobs = workflow('deploy_tre_reusable.yml').jobs;
+    for (const name of ['e2e_tests_smoke', 'e2e_tests_custom']) {
+      for (const skipDeployment of [true, false]) {
+        expect(e2eCondition(jobs[name], result, skipDeployment)).toBe(result === 'success');
+      }
+    }
+  });
+
+  test('guard changes select the DevOps tests', () => {
+    const filter = workflow('build_validation_develop.yml').jobs;
+    const steps = Object.values(filter).flatMap(job => job.steps || []);
+    const paths = yaml.load(steps.find(step => step.id === 'filter').with.filters);
+    expect(paths.ci_cleanup).toContain('devops/scripts/verify_deployment_lock.py');
+  });
+});
+
 function prepare(job, location, ref, output) {
   const step = job.steps.find(value => value.id === 'environment-id' || value.id === 'run-id');
   execFileSync('bash', ['-c', step.run], {
@@ -74,6 +153,92 @@ describe('regional CI workflow routing', () => {
   let directory;
   beforeEach(() => { directory = fs.mkdtempSync(path.join(os.tmpdir(), 'azuretre-ci-id-')); });
   afterEach(() => { fs.rmSync(directory, { recursive: true, force: true }); });
+
+  test.each([
+    ['schedule', false, '', false],
+    ['schedule', false, 'false', false],
+    ['schedule', false, 'true', true],
+    ['workflow_dispatch', false, '', false],
+    ['workflow_dispatch', true, '', true],
+    ['workflow_dispatch', false, 'true', true],
+    ['push', false, '', false],
+    ['push', false, 'true', true]
+  ])('main %s with input %s and configured consent %s selects the appropriate cases', (event, input, configured, consent) => {
+    const main = workflow('deploy_tre.yml');
+    expect(main.on.workflow_dispatch.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const caller = main.jobs['run-deploy-tre-main'].with;
+    // These workflow expressions use JavaScript-compatible boolean operators.
+    const evaluate = expression => vm.runInNewContext(expression.trim().slice(3, -2), {
+      github: { event_name: event }, inputs: { acceptNexusEula: input }, vars: { NEXUS_EULA_ACCEPTED: configured }
+    }, { timeout: 1000 });
+    expect(evaluate(caller.acceptNexusEula)).toBe(consent);
+    const selector = evaluate(caller.e2eTestsCustomSelector);
+    if (event === 'push') {
+      expect(selector).toBe('extended or extended_aad');
+    } else if (consent) {
+      expect(selector).toBe('extended or extended_aad or shared_services or airlock');
+    } else {
+      expect(selector).toBe('extended or extended_aad or (shared_services and not nexus) or (airlock and not nexus_required)');
+    }
+  });
+
+  test('Nexus receives a separate serial job, budget and result artifact', () => {
+    const reusable = workflow('deploy_tre_reusable.yml');
+    const plan = reusable.jobs.e2e_tests_plan;
+    const job = reusable.jobs.e2e_tests_custom;
+    expect(plan.permissions).toEqual({ contents: 'read' });
+    expect(plan.environment).toBeUndefined();
+    expect(plan.steps.find(step => step.id === 'select').run).toBe('python e2e_tests/ci_groups.py --plan');
+    expect(job.needs).toContain('e2e_tests_plan');
+    expect(job.strategy).toEqual({ 'fail-fast': false, 'max-parallel': 1,
+      matrix: { group: '${{ fromJSON(needs.e2e_tests_plan.outputs.groups) }}' } });
+    expect(job['timeout-minutes']).toBe(300);
+    expect(job.steps.find(step => step.name === 'Write selected cases').env.E2E_GROUP).toBe('${{ toJSON(matrix.group) }}');
+    expect(job.steps.find(step => step.name === 'Run E2E Tests').with.COMMAND).toContain('make test-e2e-ci-group');
+    expect(job.steps.find(step => step.name === 'Upload Test Results').with.name).toContain('${{ matrix.group.name }}');
+    expect(reusable.jobs.summary.needs).toContain('e2e_tests_plan');
+  });
+
+  test.each([
+    ['/test-airlock', false],
+    ['/test-airlock accept_nexus_eula', true],
+    ['/test-airlock 2345678 accept_nexus_eula', true],
+  ])('routes parsed Airlock consent into the E2E environment: %s', async (body, consent) => {
+    const { getCommandFromComment } = require('./build.js');
+    const { createGitHubContext, PR_NUMBER } = require('./test-helpers.js');
+    const { core, github, mockCoreSetOutput } = createGitHubContext();
+    const context = {
+      runId: 11112222,
+      payload: {
+        comment: { user: { login: 'admin' }, body, html_url: 'https://example.test/comment' },
+        issue: { number: PR_NUMBER.UPSTREAM_NON_DOCS_CHANGES, user: { login: 'admin' } },
+        repository: { full_name: 'someOwner/someRepo' },
+      },
+    };
+    await getCommandFromComment({ core, context, github });
+    const outputs = Object.fromEntries(mockCoreSetOutput.mock.calls);
+    const jobs = workflow('pr_comment_bot.yml').jobs;
+    const evaluate = (expression, values) => vm.runInNewContext(expression.trim().slice(3, -2), values, { timeout: 1000 });
+    const forwarded = evaluate(jobs.pr_comment.outputs.acceptNexusEula, { steps: { check_command: { outputs } } });
+    const needs = { pr_comment: { outputs: { ...outputs, acceptNexusEula: forwarded } } };
+    const accepted = evaluate(jobs.run_test.with.acceptNexusEula, { needs });
+    expect(accepted).toBe(consent);
+    expect(evaluate(jobs.run_test.with.e2eTestsCustomSelector, { needs })).toBe('airlock');
+    expect(evaluate(jobs.run_test.with.skipDeployment, { needs })).toBe(false);
+    const runner = workflow('deploy_tre_reusable.yml').jobs.e2e_tests_custom.steps.find(step => step.name === 'Run E2E Tests');
+    const command = runner.with.COMMAND.replace(/\$\{\{ inputs.acceptNexusEula \}\}/g, String(accepted));
+    expect(command).toContain(`TEST_ACCEPT_NEXUS_EULA=${consent}`);
+  });
+
+  test('explicit Nexus consent reaches the reusable E2E runner as a boolean', () => {
+    const jobs = workflow('pr_comment_bot.yml').jobs;
+    expect(jobs.pr_comment.outputs.acceptNexusEula).toBe('${{ steps.check_command.outputs.acceptNexusEula }}');
+    expect(jobs.run_test.with.acceptNexusEula).toBe("${{ needs.pr_comment.outputs.acceptNexusEula == 'true' }}");
+    const reusable = workflow('deploy_tre_reusable.yml');
+    expect(reusable.on.workflow_call.inputs.acceptNexusEula).toMatchObject({ type: 'boolean', default: false });
+    const runner = reusable.jobs.e2e_tests_custom.steps.find(step => step.name === 'Run E2E Tests');
+    expect(runner.with.COMMAND).toContain('TEST_ACCEPT_NEXUS_EULA=${{ inputs.acceptNexusEula }}');
+  });
 
   test.each([
     ['pr_comment_bot.yml', 'prepare_pr_env', 'run_test', 'refs/pull/5092/merge'],
@@ -125,5 +290,101 @@ describe('regional CI workflow routing', () => {
       expect(step.run).toContain('destroy_ci_ref_env.py --ref "$CI_GIT_REF" --subscription "$AZURE_SUBSCRIPTION_ID"');
       expect(step.env.CI_GIT_REF).toMatch(/outputs\.(ciGitRef|branchCiGitRef)/);
     }
+  });
+});
+
+describe('bundle and marker workflow integration', () => {
+  const reusable = workflow('deploy_tre_reusable.yml');
+  const evaluate = (expression, inputs, results = ['success'], needs = {
+    e2e_tests_smoke: { result: 'success' }, e2e_tests_plan: { result: 'success' },
+    verify_deployment_lock: { result: 'success' }
+  }) => vm.runInNewContext(
+    expression.trim().slice(3, -2).replaceAll('needs.*.result', 'results'),
+    { inputs, results, needs, always: () => true, contains: (values, value) => values.includes(value) },
+    { timeout: 1000 }
+  );
+
+  test.each([
+    ['tre-workspace-service-azuresql', '', false, true],
+    ['', 'shared_services', true, false],
+    ['', '', false, false]
+  ])('bundle %s and marker %s select only the requested path', (bundle, marker, planned, selected) => {
+    const inputs = { e2eBundle: bundle, e2eTestsCustomSelector: marker, skipDeployment: false };
+    expect(evaluate(reusable.jobs.e2e_tests_plan.if, inputs)).toBe(planned);
+    expect(evaluate(reusable.jobs.e2e_tests_custom.if, inputs)).toBe(planned);
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs)).toBe(selected);
+  });
+
+  test('custom groups wait for smoke and their test plan', () => {
+    expect(reusable.jobs.e2e_tests_custom.needs).toEqual(expect.arrayContaining([
+      'e2e_tests_smoke', 'e2e_tests_plan'
+    ]));
+  });
+
+  describe.each([false, true])('custom groups with skipDeployment=%s', skipDeployment => {
+    const deploymentJobs = ['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles'];
+    const canRun = overrides => {
+      const needs = Object.fromEntries(deploymentJobs.map(name => [name, {
+        result: skipDeployment ? 'skipped' : 'success'
+      }]));
+      needs.verify_deployment_lock = { result: 'success' };
+      needs.e2e_tests_smoke = { result: 'success' };
+      needs.e2e_tests_plan = { result: 'success' };
+      for (const [name, result] of Object.entries(overrides)) needs[name] = { result };
+      const inputs = { e2eBundle: '', e2eTestsCustomSelector: 'extended', skipDeployment };
+      return evaluate(reusable.jobs.e2e_tests_custom.if, inputs,
+        Object.values(needs).map(job => job.result), needs);
+    };
+
+    test.each([
+      ['success', true], ['failure', false], ['cancelled', false], ['skipped', false]
+    ])('smoke result %s permits custom execution: %s', (result, expected) => {
+      expect(canRun({ e2e_tests_smoke: result })).toBe(expected);
+    });
+
+    test.each(['failure', 'cancelled', 'skipped'])('test plan result %s blocks custom execution', result => {
+      expect(canRun({ e2e_tests_plan: result })).toBe(false);
+    });
+
+    test.each(deploymentJobs.flatMap(name => ['failure', 'cancelled', 'skipped'].map(result => [name, result])))(
+      '%s result %s only permits intentional deployment skips', (name, result) => {
+        expect(canRun({ [name]: result })).toBe(skipDeployment && result === 'skipped');
+      });
+  });
+
+  describe.each([false, true])('bundle execution with skipDeployment=%s', skipDeployment => {
+    test.each(['success', 'failure', 'cancelled', 'skipped'])('requires successful smoke tests: %s', result => {
+      const needs = Object.fromEntries(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles']
+        .map(name => [name, { result: skipDeployment ? 'skipped' : 'success' }]));
+      needs.e2e_tests_smoke = { result };
+      const inputs = { e2eBundle: 'tre-workspace-service-azuresql', e2eTestsCustomSelector: '', skipDeployment };
+      expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs,
+        Object.values(needs).map(job => job.result), needs)).toBe(result === 'success');
+    });
+  });
+
+  test('bundle execution has one job and no dependency on marker planning', () => {
+    const bundle = reusable.jobs.e2e_tests_bundle;
+    expect(bundle.strategy).toBeUndefined();
+    expect(bundle.needs).toEqual(['deploy_shared_services', 'register_bundles', 'register_user_resource_bundles', 'e2e_tests_smoke']);
+    const prepare = bundle.steps.find(step => step.name === 'Prepare bundle validation');
+    expect(prepare.env.TEST_BUNDLE).toBe('${{ inputs.e2eBundle }}');
+    expect(prepare.env.TEST_BUNDLE_MARKER).toBe('${{ inputs.e2eTestsCustomSelector }}');
+    expect(prepare.run).toBe('python3 e2e_tests/run_bundle.py --prepare');
+    const run = bundle.steps.find(step => step.name === 'Run E2E Tests');
+    expect(run.with.COMMAND).toContain('TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle');
+    expect(run.with.COMMAND).not.toContain('inputs.e2eBundle');
+    expect(bundle.steps.find(step => step.name === 'Upload Test Results').with.path).toContain('bundle-validation.json');
+    expect(reusable.jobs.summary.needs).toEqual(['e2e_tests_smoke', 'e2e_tests_plan', 'e2e_tests_custom', 'e2e_tests_bundle']);
+  });
+
+  test('bundle execution honours deployment failures and intentional reuse', () => {
+    const inputs = { e2eBundle: 'tre-workspace-service-azuresql', skipDeployment: false };
+    for (const result of ['failure', 'cancelled', 'skipped']) {
+      expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, [result])).toBe(false);
+    }
+    inputs.skipDeployment = true;
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, ['skipped'])).toBe(true);
+    expect(evaluate(reusable.jobs.e2e_tests_bundle.if, inputs, ['failure'])).toBe(false);
   });
 });

@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -27,6 +28,9 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Give E2E cleanup separate deadlines and allow 30 seconds for smoke health requests. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Verify TLS for identity authentication and keep response content and URL parameters out of E2E operation polling logs. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Fix certificate provisioning retries and reuse valid certificates from the core Key Vault.
   Check private storage readiness before issuance and request a new certificate when the hostname changes.
   Stop the validation gateway after success or failure. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
