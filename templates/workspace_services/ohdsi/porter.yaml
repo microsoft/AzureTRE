@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-workspace-service-ohdsi
-version: 0.3.12
+version: 0.3.13
 description: "An OHDSI workspace service"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -70,7 +70,7 @@ mixins:
   - terraform:
       clientVersion: 1.9.8
   - az:
-      clientVersion: 2.67.0
+      clientVersion: 2.81.0
   - exec
 
 outputs:

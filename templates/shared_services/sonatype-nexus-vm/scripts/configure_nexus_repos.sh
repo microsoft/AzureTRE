@@ -65,12 +65,19 @@ if ! retry_with_backoff check_repos_config; then
 fi
 
 nexus_ready() {
-  curl -s http://localhost/service/rest/v1/status -k > /dev/null
+  local status_code
+  # The public status endpoint can respond before admin authentication is ready.
+  if ! status_code=$(curl --silent --show-error -u admin:"$NEXUS_ADMIN_PASSWORD" \
+    'http://localhost/service/rest/v1/security/anonymous' \
+    --connect-timeout 10 --max-time 30 -o /dev/null -w '%{http_code}'); then
+    return 1
+  fi
+  [ "$status_code" = "200" ]
 }
 
-echo 'Waiting for Nexus service to be fully available...'
+echo 'Waiting for Nexus admin authentication to be ready...'
 if ! retry_with_backoff nexus_ready; then
-  echo 'ERROR - Timeout while waiting for Nexus to be available'
+  echo 'ERROR - Timeout while waiting for Nexus admin authentication. Configuration was not started.'
   exit 1
 fi
 

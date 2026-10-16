@@ -146,7 +146,7 @@ terraform {
 BOOTSTRAP_BACKEND
 
 # shellcheck disable=SC2154
-if ! retry_with_backoff init_terraform; then
+if ! retry_with_backoff init_terraform bootstrap.tfstate; then
   echo "ERROR: Terraform backend initialisation failed. See the error above." >&2
   exit 1
 fi

@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # Source this helper before initialising a management Terraform backend.
-# Retry recognised probe permissions and workspace-listing failures before state locking.
+# Retry recognised probe, workspace-listing and state-read permission failures.
 
 retry_with_backoff() {
   local func="$1"
+  shift
   local sleep_time
   local status
 
   for sleep_time in 10 20 40 80 160; do
-    if "$func"; then
+    if "$func" "$@"; then
       return 0
     else
       status=$?
@@ -21,7 +22,7 @@ retry_with_backoff() {
     echo "Retrying ${func} in ${sleep_time} seconds..." >&2
     sleep "$sleep_time"
   done
-  "$func"
+  "$func" "$@"
 }
 
 is_storage_permission_error() {
@@ -120,7 +121,34 @@ check_blob_access() (
     --lease-id "$probe_lease_id" --metadata "readiness_probe=$probe_lease_id" || return $?
 )
 
+bootstrap_state_is_absent() {
+  local workspace blob_exists
+  # The bootstrap caller writes this backend key. CLI overrides or a named
+  # workspace could select a different blob, so they cannot use this retry.
+  if [[ -n "${TF_CLI_ARGS:-}${TF_CLI_ARGS_init:-}" ]] \
+    || ! workspace=$(terraform workspace show -no-color 2>&1) \
+    || [[ "$workspace" != default ]]; then
+    echo "ERROR: Cannot confirm the bootstrap state key. Check the Terraform workspace and CLI arguments." >&2
+    return 1
+  fi
+
+  if ! blob_exists=$(az storage blob exists \
+    --account-name "$TF_VAR_mgmt_storage_account_name" \
+    --container-name "$TF_VAR_terraform_state_container_name" \
+    --name bootstrap.tfstate --auth-mode login --only-show-errors \
+    --query exists --output json 2>&1); then
+    printf 'ERROR: Could not check whether bootstrap state exists.\n%s\n' "$blob_exists" >&2
+    return 1
+  fi
+  if [[ "$blob_exists" != false ]]; then
+    echo "ERROR: Bootstrap state exists or its absence could not be confirmed. Check the state before retrying." >&2
+    return 1
+  fi
+  return 0
+}
+
 init_terraform() {
+  local bootstrap_state_key="${1:-}"
   local terraform_output
   local status
   if terraform_output=$(terraform init -input=false -backend=true -reconfigure -no-color 2>&1); then
@@ -131,12 +159,31 @@ init_terraform() {
   fi
 
   printf 'ERROR: terraform init failed (exit %s).\n%s\n' "$status" "$terraform_output" >&2
+  # Terraform 1.14.3 reports this pair when a permission failure is followed by
+  # a missing-blob response while reading lock metadata. It can occur before
+  # acquiring a lease. Match only this diagnostic and confirm state is absent.
+  local bootstrap_creation_error
+  bootstrap_creation_error='Error: Error loading state: failed to lock azure state: executing request: unexpected status 403 (403 This request is not authorized to perform this operation using this permission.) with EOF'
+  bootstrap_creation_error+=$'\nexecuting request: unexpected status 404 (404 The specified blob does not exist.) with EOF'
+  if [[ "$bootstrap_state_key" == bootstrap.tfstate && "$terraform_output" == *"$bootstrap_creation_error" ]] \
+    && ! grep -Eiq 'Error:|lock|unlock' <<< "${terraform_output%"$bootstrap_creation_error"}" \
+    && bootstrap_state_is_absent; then
+    echo "Bootstrap state is absent after the permission failure." >&2
+    return 1
+  fi
   # An unlock failure can also contain a 403. Never hide it or retry it as role propagation.
   if grep -Eiq 'Error (acquiring|releasing|locking|unlocking)|failed to (lock|unlock)|state blob is already locked|Lock Info:|Lock ID:' <<< "$terraform_output"; then
     echo "ERROR: Check the reported lock owner before attempting state recovery. No lock has been released by this helper." >&2
     return 2
   fi
-  # Retry only workspace-listing permission failures, not unknown state errors.
+  # Terraform's Azure backend returns state-read errors before locking or after
+  # releasing its lease. Lock and unlock failures must pass the guard above.
+  # Match the known storage code, not an unrelated 403 or unknown state error.
+  if grep -Fq 'Error loading state:' <<< "$terraform_output" \
+    && grep -Fq 'AuthorizationPermissionMismatch' <<< "$terraform_output"; then
+    return 1
+  fi
+  # Workspace listing also occurs before state locking.
   if grep -Fq 'Failed to get existing workspaces' <<< "$terraform_output" \
     && is_storage_permission_error "$terraform_output"; then
     return 1

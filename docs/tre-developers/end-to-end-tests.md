@@ -17,6 +17,14 @@ When running tests locally, use the `prepare-for-e2e` Makefile target:
 make prepare-for-e2e
 ```
 
+## Certificate lifecycle tests
+
+Use a TRE without Nexus for tests that remove and reinstall the certificate shared service.
+Removing its certificate can interrupt Nexus.
+Run only one certificate lifecycle test suite per TRE at a time.
+Do not run it alongside Airlock or shared-service tests that use the same certificate service.
+Use the same hostname and certificate name when testing reuse after reinstallation.
+
 ## Debugging the End-to-End tests
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.
@@ -38,7 +46,7 @@ After submission, the test checks that the old draft SAS cannot write a new blob
 A `ContainerNotFound` or `AuthorizationPermissionMismatch` response must also have independent ARM evidence:
 the draft is absent, and the submitted container exists with matching workspace and import-stage metadata.
 A permission error alone cannot pass the test. Other storage errors and ARM lookup failures remain test failures.
-These checks share a 60-second deadline. Submitted file contents are checked separately by the review-VM lifecycle test.
+These checks share a 60-second deadline. They do not compare submitted file contents. The review-VM lifecycle test also does not verify file contents.
 
 ## Validate one bundle
 
