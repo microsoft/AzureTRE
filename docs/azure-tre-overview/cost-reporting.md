@@ -58,20 +58,20 @@ GET /api/costs
 ```json
 {
     "coreServices": [
-        {"date":"", "cost":"", "currency":""} 
+        {"date":"", "cost":"", "currency":""}
         ],
     "sharedServices": [ {
         "id":"shared service id",
         "name":"shared service name",
         "costs": [
-            {"date":"", "cost":"", "currency":""} 
+            {"date":"", "cost":"", "currency":""}
             ]
         }],
     "workspaces": [ {
         "id": "workspace id",
-        "name": "workspace name", 
+        "name": "workspace name",
         "costs":[
-            {"date":"", "cost":"", "currency":""} 
+            {"date":"", "cost":"", "currency":""}
             ]}
         ]
 }
@@ -102,15 +102,15 @@ GET /api/workspaces/{workspace_id}/costs
 ```json
 {
       "id": "workspace id",
-      "name": "workspace name", 
+      "name": "workspace name",
       "workspaceServices":[{
         "id": "workspace service id",
-        "name": "workspace service name", 
-          "costs":[{"date":"", "cost":"", "currency":""}], 
+        "name": "workspace service name",
+          "costs":[{"date":"", "cost":"", "currency":""}],
           "userResources":[{
             "id": "user resource id",
-            "name": "user resource name", 
-            "costs":[{"date":"", "cost":"", "currency":""}], 
+            "name": "user resource name",
+            "costs":[{"date":"", "cost":"", "currency":""}],
           }]
         }]
 }

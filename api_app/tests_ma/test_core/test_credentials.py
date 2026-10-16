@@ -3,7 +3,7 @@ import pytest
 
 from azure.identity.aio import (
     DefaultAzureCredential as DefaultAzureCredentialASync,
-    ManagedIdentityCredential as ManagedIdentityCredentialASync
+    ManagedIdentityCredential as ManagedIdentityCredentialASync,
 )
 
 from core.credentials import get_credential_async, get_credential_async_context

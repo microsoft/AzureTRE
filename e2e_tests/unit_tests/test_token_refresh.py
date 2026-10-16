@@ -39,15 +39,19 @@ class ExpiringCredential:
 
 
 def operation_response(state, status_code=200, endpoint="/api/operations/test"):
-    return Response(status_code, headers={"Location": endpoint}, json={
-        "operation": {
-            "status": state,
-            "message": "Test operation",
-            "steps": [],
-            "resourceId": "test-resource",
-            "resourcePath": "/workspaces/test-resource",
-        }
-    })
+    return Response(
+        status_code,
+        headers={"Location": endpoint},
+        json={
+            "operation": {
+                "status": state,
+                "message": "Test operation",
+                "steps": [],
+                "resourceId": "test-resource",
+                "resourcePath": "/workspaces/test-resource",
+            }
+        },
+    )
 
 
 class TokenFactoryTests(unittest.TestCase):
@@ -55,8 +59,15 @@ class TokenFactoryTests(unittest.TestCase):
         self.enterContext(patch.object(helpers.cloud, "get_aad_authority_fqdn", return_value="login.example.test"))
 
     def test_client_credentials_reuse_credential_and_scope(self):
-        with patch.multiple(helpers.config, AAD_TENANT_ID="tenant", TEST_ACCOUNT_CLIENT_ID="client", TEST_ACCOUNT_CLIENT_SECRET="dummy-secret"), \
-                patch.object(helpers, "ClientSecretCredential") as factory:
+        with (
+            patch.multiple(
+                helpers.config,
+                AAD_TENANT_ID="tenant",
+                TEST_ACCOUNT_CLIENT_ID="client",
+                TEST_ACCOUNT_CLIENT_SECRET="dummy-secret",
+            ),
+            patch.object(helpers, "ClientSecretCredential") as factory,
+        ):
             credential = factory.return_value
             credential.get_token.side_effect = [AccessToken("first", 100), AccessToken("renewed", 200)]
             provider = helpers.get_token("api://workspace", verify=True)
@@ -64,17 +75,38 @@ class TokenFactoryTests(unittest.TestCase):
             self.assertEqual(helpers.get_auth_header(provider), {"Authorization": "Bearer first"})
             # E2E tests import helpers both with and without the package prefix.
             self.assertEqual(short_helpers.get_auth_header(provider), {"Authorization": "Bearer renewed"})
-            factory.assert_called_once_with("tenant", "client", "dummy-secret", connection_verify=True, authority="login.example.test")
-            self.assertEqual([call.args for call in credential.get_token.call_args_list], [("api://workspace/.default",)] * 2)
+            factory.assert_called_once_with(
+                "tenant", "client", "dummy-secret", connection_verify=True, authority="login.example.test"
+            )
+            self.assertEqual(
+                [call.args for call in credential.get_token.call_args_list], [("api://workspace/.default",)] * 2
+            )
 
     def test_password_credentials_keep_user_scope_and_tls_setting(self):
-        with patch.multiple(helpers.config, AAD_TENANT_ID="tenant", TEST_ACCOUNT_CLIENT_ID="", TEST_ACCOUNT_CLIENT_SECRET="", TEST_APP_ID="app", TEST_USER_NAME="user", TEST_USER_PASSWORD="dummy-password"), \
-                patch.object(helpers, "UsernamePasswordCredential") as factory:
+        with (
+            patch.multiple(
+                helpers.config,
+                AAD_TENANT_ID="tenant",
+                TEST_ACCOUNT_CLIENT_ID="",
+                TEST_ACCOUNT_CLIENT_SECRET="",
+                TEST_APP_ID="app",
+                TEST_USER_NAME="user",
+                TEST_USER_PASSWORD="dummy-password",
+            ),
+            patch.object(helpers, "UsernamePasswordCredential") as factory,
+        ):
             factory.return_value.get_token.return_value = AccessToken("user-token", 100)
             provider = helpers.get_token("api://workspace", verify=False)
 
             self.assertEqual(helpers.get_auth_header(provider), {"Authorization": "Bearer user-token"})
-            factory.assert_called_once_with("app", "user", "dummy-password", connection_verify=False, authority="login.example.test", tenant_id="tenant")
+            factory.assert_called_once_with(
+                "app",
+                "user",
+                "dummy-password",
+                connection_verify=False,
+                authority="login.example.test",
+                tenant_id="tenant",
+            )
             factory.return_value.get_token.assert_called_once_with("api://workspace/user_impersonation")
 
     def test_literal_tokens_remain_supported(self):
@@ -125,8 +157,14 @@ class PollingTests(unittest.IsolatedAsyncioTestCase):
 
         self.mock_http(handle)
         result = await resource.post_resource(
-            {}, "/api/workspaces", mutation_token, True, method=method,
-            etag='"resource-etag"', access_token_for_wait=wait_token)
+            {},
+            "/api/workspaces",
+            mutation_token,
+            True,
+            method=method,
+            etag='"resource-etag"',
+            access_token_for_wait=wait_token,
+        )
 
         self.assertEqual(result, ("/workspaces/test-resource", "test-resource"))
         self.assertEqual([r.method for r in self.requests], [method, "GET", "GET"])
@@ -217,22 +255,33 @@ class PollingTests(unittest.IsolatedAsyncioTestCase):
     async def test_wait_false_does_not_request_polling_credentials(self):
         unused_credential = Mock()
         self.mock_http(lambda _: operation_response("deploying", 202))
-        await resource.post_resource({}, "/api/workspaces", self.provider("research"), True,
-                                     wait=False, access_token_for_wait=TokenProvider(unused_credential, "review"))
+        await resource.post_resource(
+            {},
+            "/api/workspaces",
+            self.provider("research"),
+            True,
+            wait=False,
+            access_token_for_wait=TokenProvider(unused_credential, "review"),
+        )
         unused_credential.get_token.assert_not_called()
         self.assertEqual([r.method for r in self.requests], ["POST"])
 
     async def test_terminal_deployment_failure_is_still_reported(self):
-        self.mock_http(lambda r: operation_response(
-            "deploying" if r.method == "POST" else strings.RESOURCE_STATUS_DEPLOYMENT_FAILED,
-            202 if r.method == "POST" else 200))
+        self.mock_http(
+            lambda r: operation_response(
+                "deploying" if r.method == "POST" else strings.RESOURCE_STATUS_DEPLOYMENT_FAILED,
+                202 if r.method == "POST" else 200,
+            )
+        )
         with self.assertRaises(AssertionError):
             await resource.post_resource({}, "/api/workspaces", self.provider("workspace"), True)
         self.assertEqual([r.method for r in self.requests], ["POST", "GET"])
 
     async def test_delete_404_remains_a_terminal_success(self):
         async with AsyncClient(transport=MockTransport(lambda _: Response(404))) as client:
-            done, state, _, _ = await deployment.delete_done(client, "/api/operations/delete", self.provider("workspace"))
+            done, state, _, _ = await deployment.delete_done(
+                client, "/api/operations/delete", self.provider("workspace")
+            )
         self.assertTrue(done)
         self.assertEqual(state, strings.RESOURCE_STATUS_DELETED)
 

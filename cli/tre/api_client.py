@@ -28,9 +28,7 @@ class ApiException(click.ClickException):
 
 
 class ApiClient:
-    def __init__(self,
-                 base_url: str,
-                 verify: bool):
+    def __init__(self, base_url: str, verify: bool):
         self.base_url = base_url
         self.verify = verify
 
@@ -39,9 +37,7 @@ class ApiClient:
 
         config_path = Path("~/.config/tre/environment.json").expanduser()
         if not config_path.exists():
-            raise click.ClickException(
-                "You need to log in (tre login) before calling this command"
-            )
+            raise click.ClickException("You need to log in (tre login) before calling this command")
 
         config_text = config_path.read_text(encoding="utf-8")
         config = json.loads(config_text)
@@ -60,7 +56,7 @@ class ApiClient:
                 config["client-id"],
                 config["client-secret"],
                 config["aad-tenant-id"],
-                config["api-scope"]
+                config["api-scope"],
             )
         elif login_method == "device-code":
             return DeviceCodeApiClient(
@@ -69,7 +65,7 @@ class ApiClient:
                 config["token-cache-file"],
                 config["client-id"],
                 config["aad-tenant-id"],
-                config["api-scope"]
+                config["api-scope"],
             )
         elif login_method == "interactive":
             return InteractiveApiClient(
@@ -78,7 +74,7 @@ class ApiClient:
                 config["token-cache-file"],
                 config["client-id"],
                 config["aad-tenant-id"],
-                config["api-scope"]
+                config["api-scope"],
             )
         else:
             raise click.ClickException(f"Unhandled login method: {login_method}")
@@ -104,16 +100,16 @@ class ApiClient:
         json_data=None,
         scope_id: str = None,
         throw_on_error: bool = True,
-        params: "Union[dict[str, str], None]" = None
+        params: "Union[dict[str, str], None]" = None,
     ) -> Response:
         with Client(verify=self.verify) as client:
             headers = headers.copy()
-            headers['Authorization'] = f"Bearer {self.get_auth_token(log, scope_id)}"
-            response = client.request(method, f'{self.base_url}{url}', headers=headers, json=json_data, params=params)
+            headers["Authorization"] = f"Bearer {self.get_auth_token(log, scope_id)}"
+            response = client.request(method, f"{self.base_url}{url}", headers=headers, json=json_data, params=params)
             if throw_on_error and response.is_error:
                 error_info = {
-                    'status_code': response.status_code,
-                    'body': response.text,
+                    "status_code": response.status_code,
+                    "body": response.text,
                 }
                 raise ApiException(message=json.dumps(error_info, indent=2))
             return response
@@ -122,7 +118,7 @@ class ApiClient:
         workspace_response = self.call_api(
             log,
             "GET",
-            f'/api/workspaces/{workspace_id}',
+            f"/api/workspaces/{workspace_id}",
         )
         workspace_json = workspace_response.json()
         workspace_scope = workspace_json["workspace"]["properties"]["scope_id"]
@@ -133,13 +129,7 @@ class ApiClient:
 
 
 class ClientCredentialsApiClient(ApiClient):
-    def __init__(self,
-                 base_url: str,
-                 verify: bool,
-                 client_id: str,
-                 client_secret: str,
-                 aad_tenant_id: str,
-                 scope: str):
+    def __init__(self, base_url: str, verify: bool, client_id: str, client_secret: str, aad_tenant_id: str, scope: str):
         while base_url.endswith("/"):
             base_url = base_url[0:-1]
         super().__init__(base_url, verify)
@@ -149,17 +139,15 @@ class ClientCredentialsApiClient(ApiClient):
         self._scope = scope
 
     def get_auth_token(self, log, scope):
-        return get_auth_token_client_credentials(log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify)
+        return get_auth_token_client_credentials(
+            log, self._client_id, self._client_secret, self._aad_tenant_id, scope or self._scope, self.verify
+        )
 
 
 class DeviceCodeApiClient(ApiClient):
-    def __init__(self,
-                 base_url: str,
-                 verify: bool,
-                 token_cache_file: str,
-                 client_id: str,
-                 aad_tenant_id: str,
-                 scope: str):
+    def __init__(
+        self, base_url: str, verify: bool, token_cache_file: str, client_id: str, aad_tenant_id: str, scope: str
+    ):
         super().__init__(base_url, verify)
         self._token_cache_file = token_cache_file
         self._client_id = client_id
@@ -200,7 +188,7 @@ class DeviceCodeApiClient(ApiClient):
             if "user_code" not in flow:
                 raise click.ClickException("unable to initiate device flow")
 
-            click.echo(flow['message'], err=True)
+            click.echo(flow["message"], err=True)
             auth_result = app.acquire_token_by_device_flow(flow)
 
             if cache.has_state_changed:
@@ -223,13 +211,9 @@ class DeviceCodeApiClient(ApiClient):
 
 
 class InteractiveApiClient(ApiClient):
-    def __init__(self,
-                 base_url: str,
-                 verify: bool,
-                 token_cache_file: str,
-                 client_id: str,
-                 aad_tenant_id: str,
-                 scope: str):
+    def __init__(
+        self, base_url: str, verify: bool, token_cache_file: str, client_id: str, aad_tenant_id: str, scope: str
+    ):
         super().__init__(base_url, verify)
         self._token_cache_file = token_cache_file
         self._client_id = client_id

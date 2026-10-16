@@ -10,24 +10,38 @@ LOGGER = logging.getLogger(__name__)
 async def delete_done(client, operation_endpoint, access_token):
     delete_terminal_states = [strings.RESOURCE_STATUS_DELETED, strings.RESOURCE_STATUS_DELETING_FAILED]
     deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, access_token)
-    return (True, deployment_status, message, operation_steps) if deployment_status in delete_terminal_states else (False, deployment_status, message, operation_steps)
+    return (
+        (True, deployment_status, message, operation_steps)
+        if deployment_status in delete_terminal_states
+        else (False, deployment_status, message, operation_steps)
+    )
 
 
 async def install_done(client, operation_endpoint, access_token):
     install_terminal_states = [strings.RESOURCE_STATUS_DEPLOYED, strings.RESOURCE_STATUS_DEPLOYMENT_FAILED]
     deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, access_token)
-    return (True, deployment_status, message, operation_steps) if deployment_status in install_terminal_states else (False, deployment_status, message, operation_steps)
+    return (
+        (True, deployment_status, message, operation_steps)
+        if deployment_status in install_terminal_states
+        else (False, deployment_status, message, operation_steps)
+    )
 
 
 async def patch_done(client, operation_endpoint, access_token):
     install_terminal_states = [strings.RESOURCE_STATUS_UPDATED, strings.RESOURCE_STATUS_UPDATING_FAILED]
     deployment_status, message, operation_steps = await check_deployment(client, operation_endpoint, access_token)
-    return (True, deployment_status, message, operation_steps) if deployment_status in install_terminal_states else (False, deployment_status, message, operation_steps)
+    return (
+        (True, deployment_status, message, operation_steps)
+        if deployment_status in install_terminal_states
+        else (False, deployment_status, message, operation_steps)
+    )
 
 
-@backoff.on_exception(backoff.constant,
-                      TimeoutException,  # catching all timeout types (Connection, Read, etc.)
-                      max_time=90)
+@backoff.on_exception(
+    backoff.constant,
+    TimeoutException,  # catching all timeout types (Connection, Read, etc.)
+    max_time=90,
+)
 async def check_deployment(client, operation_endpoint, access_token):
     full_endpoint = get_full_endpoint(operation_endpoint)
 
@@ -50,8 +64,8 @@ async def check_deployment(client, operation_endpoint, access_token):
 
 
 def stringify_operation_steps(steps):
-    string = ''
+    string = ""
     for i, step in enumerate(steps, 1):
-        string += f'Step {i}: {step["stepTitle"]}\n'
-        string += f'{step["message"]}\n\n'
+        string += f"Step {i}: {step['stepTitle']}\n"
+        string += f"{step['message']}\n\n"
     return string

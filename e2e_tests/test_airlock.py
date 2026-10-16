@@ -23,12 +23,9 @@ SECOND_BLOB_FILE_PATH = "./test_airlock_second_sample.txt"
 
 async def submit_airlock_import_request(workspace_path: str, workspace_owner_token: TokenProvider, verify: bool):
     LOGGER.info("Creating airlock import request")
-    payload = {
-        "type": airlock_strings.IMPORT,
-        "businessJustification": "some business justification"
-    }
+    payload = {"type": airlock_strings.IMPORT, "businessJustification": "some business justification"}
 
-    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    request_result = await post_request(payload, f"/api{workspace_path}/requests", workspace_owner_token, verify, 201)
 
     assert request_result["airlockRequest"]["type"] == airlock_strings.IMPORT
     assert request_result["airlockRequest"]["businessJustification"] == "some business justification"
@@ -38,7 +35,9 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
     # get container link
     LOGGER.info("Getting airlock request container URL")
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    request_result = await get_request(
+        f"/api{workspace_path}/requests/{request_id}/link", workspace_owner_token, verify, 200
+    )
     container_url = request_result["containerUrl"]
 
     # upload blob
@@ -70,7 +69,9 @@ async def submit_airlock_import_request(workspace_path: str, workspace_owner_tok
 
     # submit request
     LOGGER.info("Submitting airlock request")
-    request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
+    request_result = await post_request(
+        None, f"/api{workspace_path}/requests/{request_id}/submit", workspace_owner_token, verify, 200
+    )
     assert request_result["airlockRequest"]["status"] == airlock_strings.SUBMITTED_STATUS
 
     await wait_for_status(airlock_strings.IN_REVIEW_STATUS, workspace_owner_token, workspace_path, request_id, verify)
@@ -94,14 +95,13 @@ async def test_draft_container_is_sealed_after_submit(setup_test_workspace, veri
 
 
 async def create_draft_import_request_with_file(workspace_path: str, workspace_owner_token: str, verify: bool):
-    payload = {
-        "type": airlock_strings.IMPORT,
-        "businessJustification": "some business justification"
-    }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    payload = {"type": airlock_strings.IMPORT, "businessJustification": "some business justification"}
+    request_result = await post_request(payload, f"/api{workspace_path}/requests", workspace_owner_token, verify, 201)
     request_id = request_result["airlockRequest"]["id"]
 
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    request_result = await get_request(
+        f"/api{workspace_path}/requests/{request_id}/link", workspace_owner_token, verify, 200
+    )
     container_url = request_result["containerUrl"]
 
     # Container creation is asynchronous, so a successful upload is what confirms it exists.
@@ -117,10 +117,12 @@ async def create_draft_import_request_with_file(workspace_path: str, workspace_o
 
 
 async def submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, expected_message):
-    await post_request(None, f'/api{workspace_path}/requests/{request_id}/submit', workspace_owner_token, verify, 200)
+    await post_request(None, f"/api{workspace_path}/requests/{request_id}/submit", workspace_owner_token, verify, 200)
     await wait_for_status(airlock_strings.FAILED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}', workspace_owner_token, verify, 200)
+    request_result = await get_request(
+        f"/api{workspace_path}/requests/{request_id}", workspace_owner_token, verify, 200
+    )
     assert expected_message in request_result["airlockRequest"]["statusMessage"]
 
 
@@ -130,10 +132,14 @@ async def test_submit_with_no_files_is_rejected(setup_test_workspace, verify):
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
-    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+    request_id, container_url = await create_draft_import_request_with_file(
+        workspace_path, workspace_owner_token, verify
+    )
     await delete_blob_using_sas(BLOB_FILE_PATH, container_url)
 
-    await submit_and_expect_failure(workspace_path, workspace_owner_token, request_id, verify, "did not contain any files")
+    await submit_and_expect_failure(
+        workspace_path, workspace_owner_token, request_id, verify, "did not contain any files"
+    )
 
 
 @pytest.mark.timeout(30 * 60)
@@ -142,7 +148,9 @@ async def test_submit_with_multiple_files_is_rejected(setup_test_workspace, veri
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
-    request_id, container_url = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
+    request_id, container_url = await create_draft_import_request_with_file(
+        workspace_path, workspace_owner_token, verify
+    )
 
     # upload_blob_using_sas names the blob after the file, so a second distinct name is needed.
     with open(SECOND_BLOB_FILE_PATH, "w") as second_file:
@@ -160,7 +168,9 @@ async def test_cancelled_request_reaches_terminal_state(setup_test_workspace, ve
 
     request_id, _ = await create_draft_import_request_with_file(workspace_path, workspace_owner_token, verify)
 
-    request_result = await post_request(None, f'/api{workspace_path}/requests/{request_id}/cancel', workspace_owner_token, verify, 200)
+    request_result = await post_request(
+        None, f"/api{workspace_path}/requests/{request_id}/cancel", workspace_owner_token, verify, 200
+    )
     assert request_result["airlockRequest"]["status"] == airlock_strings.CANCELLED_STATUS
 
 
@@ -173,7 +183,9 @@ async def test_rejected_request_reaches_terminal_state(setup_test_workspace, ver
     request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
     payload = {"approval": "False", "decisionExplanation": "rejected by the e2e test"}
-    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await post_request(
+        payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
+    )
     await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
 
@@ -187,10 +199,12 @@ async def test_container_link_is_refused_once_request_leaves_draft(setup_test_wo
     request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
     payload = {"approval": "False", "decisionExplanation": "rejected so the data is no longer reachable"}
-    await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
+    await post_request(
+        payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
+    )
     await wait_for_status(airlock_strings.REJECTED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
 
-    await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 400)
+    await get_request(f"/api{workspace_path}/requests/{request_id}/link", workspace_owner_token, verify, 400)
 
 
 @pytest.mark.timeout(30 * 60)
@@ -208,7 +222,7 @@ async def test_client_supplied_airlock_version_is_ignored(setup_test_workspace, 
         "businessJustification": "some business justification",
         "airlock_version": 1 if expected_version != 1 else 2,
     }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests', workspace_owner_token, verify, 201)
+    request_result = await post_request(payload, f"/api{workspace_path}/requests", workspace_owner_token, verify, 201)
     assert request_result["airlockRequest"]["airlock_version"] == expected_version
 
 
@@ -222,23 +236,31 @@ async def test_in_progress_data_is_not_reachable_from_the_public_internet(setup_
 
     request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
-    request_result = await get_request(f'/api{workspace_path}/requests/{request_id}/link', workspace_owner_token, verify, 200)
+    request_result = await get_request(
+        f"/api{workspace_path}/requests/{request_id}/link", workspace_owner_token, verify, 200
+    )
     base, sas = request_result["containerUrl"].split("?")
     blob_url = f"{base}/{BLOB_NAME}?{sas}"
 
     async with AsyncClient(timeout=30.0, verify=verify) as client:
         public_response = await client.get(blob_url)
 
-    assert public_response.status_code == 403, f"in-progress data was readable from the public internet: {public_response.status_code}"
+    assert public_response.status_code == 403, (
+        f"in-progress data was readable from the public internet: {public_response.status_code}"
+    )
 
 
 @pytest.mark.timeout(50 * 60)
 @pytest.mark.airlock
-async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify):
+async def test_airlock_review_vm_flow(
+    setup_test_workspace, setup_test_airlock_import_review_workspace_and_guacamole_service, verify
+):
     workspace_path, workspace_id = setup_test_workspace
     workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
 
-    _, import_review_workspace_id, _, import_review_workspace_service_id = setup_test_airlock_import_review_workspace_and_guacamole_service
+    _, import_review_workspace_id, _, import_review_workspace_service_id = (
+        setup_test_airlock_import_review_workspace_and_guacamole_service
+    )
 
     # Preparation: Update the research workspace so that it has the import review details
     patch_payload = {
@@ -249,13 +271,13 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
                 "import": {
                     "import_vm_workspace_id": import_review_workspace_id,
                     "import_vm_workspace_service_id": import_review_workspace_service_id,
-                    "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm"
+                    "import_vm_user_resource_template_name": "tre-service-guacamole-import-reviewvm",
                 },
                 "export": {
                     "export_vm_workspace_service_id": "",
-                    "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm"
-                }
-            }
+                    "export_vm_user_resource_template_name": "tre-service-guacamole-export-reviewvm",
+                },
+            },
         }
     }
     # Get workspace to get the etag
@@ -276,15 +298,19 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
     # Submit the request
     request_id, _ = await submit_airlock_import_request(workspace_path, workspace_owner_token, verify)
 
-    LOGGER.info(f'Airlock Request ID {request_id} has been created')
+    LOGGER.info(f"Airlock Request ID {request_id} has been created")
 
     # Create a review VM
     admin_token = await get_admin_token(verify)
-    import_workspace_owner_token, _ = await get_workspace_auth_details(admin_token=admin_token, workspace_id=import_review_workspace_id, verify=verify)
+    import_workspace_owner_token, _ = await get_workspace_auth_details(
+        admin_token=admin_token, workspace_id=import_review_workspace_id, verify=verify
+    )
 
     # The request belongs to the research workspace, so it must not be reachable by id through
     # another workspace the caller happens to have access to.
-    await get_request(f'/api/workspaces/{import_review_workspace_id}/requests/{request_id}', import_workspace_owner_token, verify, 404)
+    await get_request(
+        f"/api/workspaces/{import_review_workspace_id}/requests/{request_id}", import_workspace_owner_token, verify, 404
+    )
 
     user_resource_path, user_resource_id = await post_resource(
         payload={},
@@ -293,19 +319,21 @@ async def test_airlock_review_vm_flow(setup_test_workspace, setup_test_airlock_i
         verify=verify,
         method="POST",
         wait=True,
-        access_token_for_wait=import_workspace_owner_token  # needs a different token as is created in a separate workspace
+        access_token_for_wait=import_workspace_owner_token,  # needs a different token as is created in a separate workspace
     )
 
     LOGGER.info(f"Airlock Review VM has been created: {user_resource_path}")
 
     # Approve request
     LOGGER.info("Approving airlock request")
-    payload = {
-        "approval": "True",
-        "decisionExplanation": "the reason why this request was approved/rejected"
-    }
-    request_result = await post_request(payload, f'/api{workspace_path}/requests/{request_id}/review', workspace_owner_token, verify, 200)
-    assert request_result["airlockRequest"]["reviews"][0]["decisionExplanation"] == "the reason why this request was approved/rejected"
+    payload = {"approval": "True", "decisionExplanation": "the reason why this request was approved/rejected"}
+    request_result = await post_request(
+        payload, f"/api{workspace_path}/requests/{request_id}/review", workspace_owner_token, verify, 200
+    )
+    assert (
+        request_result["airlockRequest"]["reviews"][0]["decisionExplanation"]
+        == "the reason why this request was approved/rejected"
+    )
 
     await wait_for_status(airlock_strings.APPROVED_STATUS, workspace_owner_token, workspace_path, request_id, verify)
     LOGGER.info("Airlock request has been approved")

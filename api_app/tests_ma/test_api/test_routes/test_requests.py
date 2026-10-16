@@ -11,7 +11,7 @@ pytestmark = pytest.mark.asyncio
 
 
 class TestRequestsThatDontRequireAdminRigths:
-    @pytest.fixture(autouse=True, scope='class')
+    @pytest.fixture(autouse=True, scope="class")
     @classmethod
     def log_in_with_non_admin_user(cls, app, non_admin_user):
         app.dependency_overrides[require_tre_user_or_admin] = non_admin_user
@@ -25,41 +25,65 @@ class TestRequestsThatDontRequireAdminRigths:
         assert response.status_code == status.HTTP_200_OK
 
     @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager")
-    async def test_get_airlock_manager_requests_returns_200(self, mock_get_airlock_requests_for_airlock_manager, app, client):
+    async def test_get_airlock_manager_requests_returns_200(
+        self, mock_get_airlock_requests_for_airlock_manager, app, client
+    ):
         mock_get_airlock_requests_for_airlock_manager.return_value = []
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_airlock_requests_for_airlock_manager.assert_called_once()
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", side_effect=Exception("Internal Server Error"))
+    @patch(
+        "api.routes.requests.AirlockRequestRepository.get_airlock_requests",
+        side_effect=Exception("Internal Server Error"),
+    )
     async def test_get_all_requests_returns_500(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS))
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", side_effect=Exception("Internal Server Error"))
+    @patch(
+        "api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager",
+        side_effect=Exception("Internal Server Error"),
+    )
     async def test_get_airlock_manager_requests_returns_500(self, _, app, client):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests", return_value=[{"id": "1", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
-    async def test_get_requests_with_status_filter_returns_correct_results(self, mock_get_airlock_requests, app, client):
-        response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"status": AirlockRequestStatus.InReview})
+    @patch(
+        "api.routes.requests.AirlockRequestRepository.get_airlock_requests",
+        return_value=[{"id": "1", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}],
+    )
+    async def test_get_requests_with_status_filter_returns_correct_results(
+        self, mock_get_airlock_requests, app, client
+    ):
+        response = await client.get(
+            app.url_path_for(strings.API_LIST_REQUESTS), params={"status": AirlockRequestStatus.InReview}
+        )
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_airlock_requests.assert_called_once_with(
-            creator_user_id='user-guid-here', type=None, status=AirlockRequestStatus.InReview, order_by=None, order_ascending=True
+            creator_user_id="user-guid-here",
+            type=None,
+            status=AirlockRequestStatus.InReview,
+            order_by=None,
+            order_ascending=True,
         )
         assert len(response.json()) == 1
         assert response.json()[0]["status"] == AirlockRequestStatus.InReview
 
-    @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager", return_value=[{"id": "2", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}])
-    async def test_get_requests_with_airlock_manager_filter_returns_correct_results(self, mock_get_airlock_requests_for_airlock_manager, app, client):
+    @patch(
+        "api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager",
+        return_value=[{"id": "2", "type": AirlockRequestType.Import, "status": AirlockRequestStatus.InReview}],
+    )
+    async def test_get_requests_with_airlock_manager_filter_returns_correct_results(
+        self, mock_get_airlock_requests_for_airlock_manager, app, client
+    ):
         response = await client.get(app.url_path_for(strings.API_LIST_REQUESTS), params={"airlock_manager": True})
 
         assert response.status_code == status.HTTP_200_OK
         mock_get_airlock_requests_for_airlock_manager.assert_called_once_with(
-            user_id='user-guid-here', type=None, status=None, order_by=None, order_ascending=True
+            user_id="user-guid-here", type=None, status=None, order_by=None, order_ascending=True
         )
         assert len(response.json()) == 1
         assert response.json()[0]["status"] == AirlockRequestStatus.InReview
@@ -77,19 +101,19 @@ class TestRequestsThatDontRequireAdminRigths:
                 "type": AirlockRequestType.Import,
                 "status": AirlockRequestStatus.InReview,
                 "order_by": "updatedWhen",
-                "order_ascending": False
-            }
+                "order_ascending": False,
+            },
         )
 
         assert response.status_code == status.HTTP_200_OK
 
         # Verify the method was called with exactly the expected parameters
         mock_get_airlock_manager.assert_called_once_with(
-            user_id='user-guid-here',
+            user_id="user-guid-here",
             type=AirlockRequestType.Import,
             status=AirlockRequestStatus.InReview,
             order_by="updatedWhen",
-            order_ascending=False
+            order_ascending=False,
         )
 
     @patch("api.routes.requests.AirlockRequestRepository.get_airlock_requests_for_airlock_manager")
@@ -100,11 +124,7 @@ class TestRequestsThatDontRequireAdminRigths:
         # This should not raise any TypeError about missing arguments
         response = await client.get(
             app.url_path_for(strings.API_LIST_REQUESTS),
-            params={
-                "airlock_manager": True,
-                "order_by": "updatedWhen",
-                "order_ascending": False
-            }
+            params={"airlock_manager": True, "order_by": "updatedWhen", "order_ascending": False},
         )
 
         # If there's a missing argument issue, this test will fail with a 500 error
@@ -113,9 +133,5 @@ class TestRequestsThatDontRequireAdminRigths:
 
         # Verify the method was called with the correct arguments
         mock_get_airlock_manager.assert_called_once_with(
-            user_id='user-guid-here',
-            type=None,
-            status=None,
-            order_by="updatedWhen",
-            order_ascending=False
+            user_id="user-guid-here", type=None, status=None, order_by="updatedWhen", order_ascending=False
         )

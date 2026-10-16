@@ -14,8 +14,13 @@ def azure(subscription, *args):
     # The existing destroy helper uses the default account. Verify that default,
     # rather than selecting the requested account for this identity check.
     subscription_args = [] if args == ("account", "show") else ["--subscription", subscription]
-    result = subprocess.run(["az", *args, *subscription_args, "--only-show-errors", "--output", "json"],
-                            capture_output=True, text=True, timeout=90, check=True)
+    result = subprocess.run(
+        ["az", *args, *subscription_args, "--only-show-errors", "--output", "json"],
+        capture_output=True,
+        text=True,
+        timeout=90,
+        check=True,
+    )
     return json.loads(result.stdout)
 
 
@@ -48,7 +53,11 @@ def targets(groups, ref, subscription):
 
 def verify_account(subscription):
     account = azure(subscription, "account", "show")
-    if not isinstance(account, dict) or not isinstance(account.get("id"), str) or account["id"].lower() != subscription.lower():
+    if (
+        not isinstance(account, dict)
+        or not isinstance(account.get("id"), str)
+        or account["id"].lower() != subscription.lower()
+    ):
         raise ValueError("The default Azure subscription does not match. Cleanup stopped.")
 
 
@@ -67,13 +76,16 @@ def destroy(ref, subscription):
         if group not in targets(inventory, ref, subscription):
             raise ValueError("CI resource group ownership changed. Cleanup stopped.")
         names = {row["name"].lower() for row in inventory}
-        current = [azure(subscription, "group", "show", "--name", name)
-                   for name in (group, group + "-mgmt") if name in names]
+        current = [
+            azure(subscription, "group", "show", "--name", name) for name in (group, group + "-mgmt") if name in names
+        ]
         if targets(current, ref, subscription) != [group]:
             raise ValueError("CI resource group ownership changed. Cleanup stopped.")
         verify_account(subscription)
         print("Destroying CI environment " + group, flush=True)
-        subprocess.run(["bash", str(Path(__file__).with_name("destroy_env_no_terraform.sh")), "--core-tre-rg", group], check=True)
+        subprocess.run(
+            ["bash", str(Path(__file__).with_name("destroy_env_no_terraform.sh")), "--core-tre-rg", group], check=True
+        )
 
 
 def main():

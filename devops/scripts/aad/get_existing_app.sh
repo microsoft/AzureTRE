@@ -33,7 +33,6 @@ function get_existing_app() {
           *)
               echo "Invalid option: $1."
               show_existing_app_usage
-              exit 2
           ;;
       esac
     done

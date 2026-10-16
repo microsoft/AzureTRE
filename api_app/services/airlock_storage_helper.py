@@ -9,11 +9,7 @@ def get_container_name_for_request(request_id: str, status: AirlockRequestStatus
     return request_id
 
 
-def get_storage_account_name_for_request(
-    request_type: str,
-    status: AirlockRequestStatus,
-    tre_id: str
-) -> str:
+def get_storage_account_name_for_request(request_type: str, status: AirlockRequestStatus, tre_id: str) -> str:
     if request_type == constants.IMPORT_TYPE:
         if status in [AirlockRequestStatus.Approved, AirlockRequestStatus.ApprovalInProgress]:
             return constants.STORAGE_ACCOUNT_NAME_AIRLOCK_WORKSPACE_GLOBAL.format(tre_id)

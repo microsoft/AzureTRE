@@ -35,11 +35,15 @@ class BaseRepository:
         await self.container.upsert_item(body=item.model_dump())
 
     async def update_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
-        await self.container.replace_item(item=item.id, body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified)
+        await self.container.replace_item(
+            item=item.id, body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified
+        )
         return await self.read_item_by_id(item.id)
 
     async def upsert_item_with_etag(self, item: BaseModel, etag: str) -> BaseModel:
-        return await self.container.upsert_item(body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified)
+        return await self.container.upsert_item(
+            body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified
+        )
 
     async def update_item_dict(self, item_dict: dict):
         await self.container.upsert_item(body=item_dict)
@@ -57,7 +61,7 @@ class BaseRepository:
         await self.container.delete_item(item=item_id, partition_key=item_id)
 
     async def rename_field_name(self, old_field_name: str, new_field_name: str):
-        for item in await self.query('SELECT * FROM c'):
+        for item in await self.query("SELECT * FROM c"):
             if old_field_name in item:
                 item[new_field_name] = item[old_field_name]
                 del item[old_field_name]

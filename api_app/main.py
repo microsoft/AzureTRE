@@ -48,7 +48,7 @@ def get_application() -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     application.add_middleware(ServerErrorMiddleware, handler=generic_error_handler)
@@ -60,7 +60,8 @@ def get_application() -> FastAPI:
             allow_origins=["http://localhost:3000"],
             allow_credentials=True,
             allow_methods=["*"],
-            allow_headers=["*"])
+            allow_headers=["*"],
+        )
 
     application.add_exception_handler(HTTPException, http_error_handler)
     application.add_exception_handler(RequestValidationError, http422_error_handler)
@@ -74,4 +75,4 @@ app = get_application()
 FastAPIInstrumentor.instrument_app(app)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")  # nosec B104 - required for container access

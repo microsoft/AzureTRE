@@ -8,17 +8,20 @@ class ResourcePatch(BaseModel):
     isEnabled: Optional[bool] = None
     properties: Optional[dict] = None
     templateVersion: Optional[str] = None
-    model_config = ConfigDict(extra="forbid", json_schema_extra={
-        "example": {
-            "isEnabled": False,
-            "templateVersion": "1.0.1",
-            "properties": {
-                "display_name": "the display name",
-                "description": "a description",
-                "other_fields": "other properties defined by the resource template"
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "isEnabled": False,
+                "templateVersion": "1.0.1",
+                "properties": {
+                    "display_name": "the display name",
+                    "description": "a description",
+                    "other_fields": "other properties defined by the resource template",
+                },
             }
-        }
-    })
+        },
+    )
 
 
 def get_sample_resource_history(resource_id: str) -> dict:
@@ -33,17 +36,19 @@ def get_sample_resource_history(resource_id: str) -> dict:
         "isEnabled": True,
         "resourceVersion": 1,
         "updatedWhen": 0.0,
-        "user": {}
+        "user": {},
     }
 
 
 class ResourceHistoryInList(BaseModel):
     resource_history: List[ResourceHistoryItem] = Field(default_factory=list, title="Resource history")
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "resource_history": [
-                get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
-                get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748")
-            ]
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "resource_history": [
+                    get_sample_resource_history("2fdc9fba-726e-4db6-a1b8-9018a2165748"),
+                    get_sample_resource_history("abcc9fba-726e-4db6-a1b8-9018a2165748"),
+                ]
+            }
         }
-    })
+    )

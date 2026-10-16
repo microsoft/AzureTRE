@@ -121,7 +121,7 @@ def github(ctx, suffix):
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=30) as response:  # nosec B310 - fixed https://api.github.com URL
             return json.load(response)
     except (urllib.error.URLError, ValueError) as error:
         raise RecoveryError("Could not verify workflow activity. No lease will be broken.") from error
@@ -161,7 +161,8 @@ def verify_source(ctx, path, sha, cache):
     key = (path, sha)
     if key not in cache:
         content = (SOURCE / path).read_bytes()
-        expected = hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()
+        # The GitHub contents API reports Git blob object IDs, which require SHA-1.
+        expected = hashlib.sha1(b"blob " + str(len(content)).encode() + b"\0" + content).hexdigest()  # nosec B324
         actual = github(ctx, f"/contents/{path}?ref={sha}")
         require(
             isinstance(actual, dict) and actual.get("type") == "file" and actual.get("sha") == expected,

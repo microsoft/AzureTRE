@@ -15,12 +15,14 @@ pytestmark = pytest.mark.asyncio
 
 @pytest_asyncio.fixture
 async def resource_template_repo():
-    with patch('api.dependencies.database.Database.get_container_proxy', return_value=None):
+    with patch("api.dependencies.database.Database.get_container_proxy", return_value=None):
         resource_template_repo = await ResourceTemplateRepository().create()
         yield resource_template_repo
 
 
-def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_type: ResourceType = ResourceType.Workspace) -> ResourceTemplate:
+def sample_resource_template_as_dict(
+    name: str, version: str = "1.0", resource_type: ResourceType = ResourceType.Workspace
+) -> ResourceTemplate:
     return ResourceTemplate(
         id="a7a7a7bd-7f4e-4a4e-b970-dc86a6b31dfb",
         name=name,
@@ -30,12 +32,12 @@ def sample_resource_template_as_dict(name: str, version: str = "1.0", resource_t
         current=False,
         properties={},
         customActions=[],
-        required=[]
+        required=[],
     ).model_dump()
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
 async def test_create_workspace_template_succeeds_without_required(uuid_mock, save_item_mock, resource_template_repo):
     uuid_mock.return_value = "1234"
     expected_type = ResourceType.Workspace
@@ -68,15 +70,17 @@ async def test_create_workspace_template_succeeds_without_required(uuid_mock, sa
         customActions=input_workspace_template.customActions,
         required=[],
         authorizedRoles=[],
-        current=input_workspace_template.current
+        current=input_workspace_template.current,
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
-async def test_create_workspace_template_preserves_json_schema_metadata(uuid_mock, save_item_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
+async def test_create_workspace_template_preserves_json_schema_metadata(
+    uuid_mock, save_item_mock, resource_template_repo
+):
     uuid_mock.return_value = "1234"
     input_workspace_template = WorkspaceTemplateInCreate(
         name="schema-metadata-template",
@@ -106,50 +110,58 @@ async def test_create_workspace_template_preserves_json_schema_metadata(uuid_moc
     save_item_mock.assert_called_once_with(returned_template)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_by_name_and_version_queries_db(query_mock, resource_template_repo):
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.version = @version"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.Workspace},
-        {'name': '@name', 'value': 'test'},
-        {'name': '@version', 'value': '1.0'}
+        {"name": "@resourceType", "value": ResourceType.Workspace},
+        {"name": "@name", "value": "test"},
+        {"name": "@version", "value": "1.0"},
     ]
     query_mock.return_value = [sample_resource_template_as_dict(name="test", version="1.0")]
 
-    await resource_template_repo.get_template_by_name_and_version(name="test", version="1.0", resource_type=ResourceType.Workspace)
+    await resource_template_repo.get_template_by_name_and_version(
+        name="test", version="1.0", resource_type=ResourceType.Workspace
+    )
 
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_by_name_and_version_returns_matching_template(query_mock, resource_template_repo):
     template_name = "test"
     template_version = "1.0"
     workspace_templates_in_db = [sample_resource_template_as_dict(name=template_name, version=template_version)]
     query_mock.return_value = workspace_templates_in_db
 
-    template = await resource_template_repo.get_template_by_name_and_version(name=template_name, version=template_version, resource_type=ResourceType.Workspace)
+    template = await resource_template_repo.get_template_by_name_and_version(
+        name=template_name, version=template_version, resource_type=ResourceType.Workspace
+    )
 
     assert template.name == template_name
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-async def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_found(query_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
+async def test_get_by_name_and_version_raises_entity_does_not_exist_if_no_template_found(
+    query_mock, resource_template_repo
+):
     template_name = "test"
     template_version = "1.0"
     query_mock.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
-        await resource_template_repo.get_template_by_name_and_version(name=template_name, version=template_version, resource_type=ResourceType.Workspace)
+        await resource_template_repo.get_template_by_name_and_version(
+            name=template_name, version=template_version, resource_type=ResourceType.Workspace
+        )
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_current_by_name_queries_db(query_mock, resource_template_repo):
     template_name = "template1"
-    expected_query = 'SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.current = true'
+    expected_query = "SELECT * FROM c WHERE c.resourceType = @resourceType AND c.name = @name AND c.current = true"
     expected_parameters = [
-        {'name': '@resourceType', 'value': ResourceType.Workspace},
-        {'name': '@name', 'value': 'template1'}
+        {"name": "@resourceType", "value": ResourceType.Workspace},
+        {"name": "@name", "value": "template1"},
     ]
     query_mock.return_value = [sample_resource_template_as_dict(name="test")]
 
@@ -158,41 +170,54 @@ async def test_get_current_by_name_queries_db(query_mock, resource_template_repo
     query_mock.assert_called_once_with(query=expected_query, parameters=expected_parameters)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_current_by_name_returns_matching_template(query_mock, resource_template_repo):
     template_name = "template1"
     query_mock.return_value = [sample_resource_template_as_dict(name=template_name)]
 
-    template = await resource_template_repo.get_current_template(template_name=template_name, resource_type=ResourceType.Workspace)
+    template = await resource_template_repo.get_current_template(
+        template_name=template_name, resource_type=ResourceType.Workspace
+    )
 
     assert template.name == template_name
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-async def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(query_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
+async def test_get_current_by_name_raises_entity_does_not_exist_if_no_template_found(
+    query_mock, resource_template_repo
+):
     query_mock.return_value = []
 
     with pytest.raises(EntityDoesNotExist):
-        await resource_template_repo.get_current_template(template_name="template1", resource_type=ResourceType.Workspace)
+        await resource_template_repo.get_current_template(
+            template_name="template1", resource_type=ResourceType.Workspace
+        )
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
-async def test_get_all_template_versions_for_names_uses_single_query_and_groups_by_name(query_mock, resource_template_repo):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
+async def test_get_all_template_versions_for_names_uses_single_query_and_groups_by_name(
+    query_mock, resource_template_repo
+):
     query_mock.return_value = [
         {"name": "template1", "version": "1.0.0"},
         {"name": "template1", "version": "1.1.0"},
-        {"name": "template2", "version": "2.0.0"}
+        {"name": "template2", "version": "2.0.0"},
     ]
 
-    result = await resource_template_repo.get_all_template_versions_for_names(["template1", "template2", "template1", "template3"])
+    result = await resource_template_repo.get_all_template_versions_for_names(
+        ["template1", "template2", "template1", "template3"]
+    )
 
     query_mock.assert_called_once()
-    assert query_mock.call_args.kwargs["query"] == 'SELECT c.name, c.version FROM c WHERE ARRAY_CONTAINS(@template_names, c.name)'
+    assert (
+        query_mock.call_args.kwargs["query"]
+        == "SELECT c.name, c.version FROM c WHERE ARRAY_CONTAINS(@template_names, c.name)"
+    )
     assert sorted(query_mock.call_args.kwargs["parameters"][0]["value"]) == ["template1", "template2", "template3"]
     assert result == {"template1": ["1.0.0", "1.1.0"], "template2": ["2.0.0"], "template3": []}
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_all_template_versions_for_names_does_not_query_when_no_names(query_mock, resource_template_repo):
     result = await resource_template_repo.get_all_template_versions_for_names([])
 
@@ -200,11 +225,11 @@ async def test_get_all_template_versions_for_names_does_not_query_when_no_names(
     assert result == {}
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_templates_information_returns_unique_template_names(query_mock, resource_template_repo):
     query_mock.return_value = [
         {"name": "template1", "title": "title1", "description": "description1"},
-        {"name": "template2", "title": "title2", "description": "description2"}
+        {"name": "template2", "title": "title2", "description": "description2"},
     ]
 
     result = await resource_template_repo.get_templates_information(ResourceType.Workspace)
@@ -214,7 +239,7 @@ async def test_get_templates_information_returns_unique_template_names(query_moc
     assert result[1].name == "template2"
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.query')
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.query")
 async def test_get_templates_information_returns_only_templates_user_can_access(query_mock, resource_template_repo):
     query_mock.return_value = [
         # Will get filtered out as don't have admin role
@@ -222,7 +247,7 @@ async def test_get_templates_information_returns_only_templates_user_can_access(
         # Will get included as authorizedRoles=[] means any role is accepted
         {"name": "template2", "title": "title2", "description": "description2", "authorizedRoles": []},
         # Will get included as have test role
-        {"name": "template3", "title": "title3", "description": "description3", "authorizedRoles": ["test"]}
+        {"name": "template3", "title": "title3", "description": "description3", "authorizedRoles": ["test"]},
     ]
 
     result = await resource_template_repo.get_templates_information(ResourceType.Workspace, ["test"])
@@ -232,9 +257,11 @@ async def test_get_templates_information_returns_only_templates_user_can_access(
     assert result[1].name == "template3"
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
-async def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
+async def test_create_workspace_template_item_calls_create_item_with_the_correct_parameters(
+    uuid_mock, save_item_mock, resource_template_repo, input_workspace_template
+):
     uuid_mock.return_value = "1234"
 
     returned_template = await resource_template_repo.create_template(input_workspace_template, ResourceType.Workspace)
@@ -252,15 +279,17 @@ async def test_create_workspace_template_item_calls_create_item_with_the_correct
         allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
-        current=input_workspace_template.current
+        current=input_workspace_template.current,
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
-async def test_create_item_created_with_the_expected_type(uuid_mock, save_item_mock, resource_template_repo, input_workspace_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
+async def test_create_item_created_with_the_expected_type(
+    uuid_mock, save_item_mock, resource_template_repo, input_workspace_template
+):
     uuid_mock.return_value = "1234"
     expected_type = ResourceType.WorkspaceService
     returned_template = await resource_template_repo.create_template(input_workspace_template, expected_type)
@@ -277,23 +306,21 @@ async def test_create_item_created_with_the_expected_type(uuid_mock, save_item_m
         allOf=input_workspace_template.json_schema["allOf"],
         customActions=input_workspace_template.customActions,
         required=input_workspace_template.json_schema["required"],
-        current=input_workspace_template.current
+        current=input_workspace_template.current,
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-@patch('uuid.uuid4')
-async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+@patch("uuid.uuid4")
+async def test_create_item_with_pipeline_succeeds(
+    uuid_mock, save_item_mock, resource_template_repo, input_user_resource_template
+):
     uuid_mock.return_value = "1234"
     expected_type = ResourceType.UserResource
     # add the pipeline block
-    pipeline = {
-        "upgrade": [],
-        "install": [],
-        "uninstall": []
-    }
+    pipeline = {"upgrade": [], "install": [], "uninstall": []}
     input_user_resource_template.json_schema["pipeline"] = pipeline
     returned_template = await resource_template_repo.create_template(input_user_resource_template, expected_type)
     expected_resource_template = UserResourceTemplate(
@@ -310,7 +337,7 @@ async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, res
         required=input_user_resource_template.json_schema["required"],
         current=input_user_resource_template.current,
         pipeline=pipeline,
-        parentWorkspaceService=""
+        parentWorkspaceService="",
     )
     save_item_mock.assert_called_once_with(expected_resource_template)
     assert expected_resource_template == returned_template
@@ -333,14 +360,18 @@ async def test_create_item_with_pipeline_succeeds(uuid_mock, save_item_mock, res
         },
     ],
 )
-async def test_create_template_with_pipeline_that_has_duplicated_step_id_fails_with_invalid_input_error(resource_template_repo, input_user_resource_template, pipeline):
+async def test_create_template_with_pipeline_that_has_duplicated_step_id_fails_with_invalid_input_error(
+    resource_template_repo, input_user_resource_template, pipeline
+):
     input_user_resource_template.json_schema["pipeline"] = pipeline
     with pytest.raises(InvalidInput):
         await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds(_, resource_template_repo, input_user_resource_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds(
+    _, resource_template_repo, input_user_resource_template
+):
     input_user_resource_template.json_schema["pipeline"] = {
         "install": [{"stepId": "main"}, {"stepId": "1"}],
         "upgrade": [{"stepId": "main"}, {"stepId": "2"}],
@@ -350,8 +381,10 @@ async def test_create_template_with_pipeline_without_duplicated_step_id_succeeds
     assert created.pipeline
 
 
-@patch('db.repositories.resource_templates.ResourceTemplateRepository.save_item')
-async def test_create_template_with_null_pipeline_creates_template_without_pipeline(_, resource_template_repo, input_user_resource_template):
+@patch("db.repositories.resource_templates.ResourceTemplateRepository.save_item")
+async def test_create_template_with_null_pipeline_creates_template_without_pipeline(
+    _, resource_template_repo, input_user_resource_template
+):
     input_user_resource_template.json_schema["pipeline"] = None
     created = await resource_template_repo.create_template(input_user_resource_template, ResourceType.UserResource)
     assert created.pipeline is None

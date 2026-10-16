@@ -33,32 +33,30 @@ TOKEN_EXCHANGE_AUDIENCE = _token_exchange_audience()  # nosec B105 - token excha
 
 def get_credential() -> TokenCredential:
     if MANAGED_IDENTITY_CLIENT_ID:
-        return ChainedTokenCredential(
-            ManagedIdentityCredential(client_id=MANAGED_IDENTITY_CLIENT_ID)
-        )
+        return ChainedTokenCredential(ManagedIdentityCredential(client_id=MANAGED_IDENTITY_CLIENT_ID))
     else:
-        return DefaultAzureCredential(authority=urlparse(AAD_AUTHORITY_URL).netloc,
-                                      exclude_shared_token_cache_credential=True,
-                                      exclude_workload_identity_credential=True,
-                                      exclude_developer_cli_credential=True,
-                                      exclude_managed_identity_credential=True,
-                                      exclude_powershell_credential=True
-                                      )
+        return DefaultAzureCredential(
+            authority=urlparse(AAD_AUTHORITY_URL).netloc,
+            exclude_shared_token_cache_credential=True,
+            exclude_workload_identity_credential=True,
+            exclude_developer_cli_credential=True,
+            exclude_managed_identity_credential=True,
+            exclude_powershell_credential=True,
+        )
 
 
 async def get_credential_async():
     return (
-        ChainedTokenCredentialASync(
-            ManagedIdentityCredentialASync(client_id=MANAGED_IDENTITY_CLIENT_ID)
-        )
+        ChainedTokenCredentialASync(ManagedIdentityCredentialASync(client_id=MANAGED_IDENTITY_CLIENT_ID))
         if MANAGED_IDENTITY_CLIENT_ID
-        else DefaultAzureCredentialASync(authority=urlparse(AAD_AUTHORITY_URL).netloc,
-                                         exclude_shared_token_cache_credential=True,
-                                         exclude_workload_identity_credential=True,
-                                         exclude_developer_cli_credential=True,
-                                         exclude_managed_identity_credential=True,
-                                         exclude_powershell_credential=True
-                                         )
+        else DefaultAzureCredentialASync(
+            authority=urlparse(AAD_AUTHORITY_URL).netloc,
+            exclude_shared_token_cache_credential=True,
+            exclude_workload_identity_credential=True,
+            exclude_developer_cli_credential=True,
+            exclude_managed_identity_credential=True,
+            exclude_powershell_credential=True,
+        )
     )
 
 

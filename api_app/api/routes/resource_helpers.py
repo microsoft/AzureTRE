@@ -32,12 +32,22 @@ async def delete_validation(resource: Resource, resource_repo: ResourceRepositor
     dependency_list = await resource_repo.get_resource_dependency_list(resource)
     for resource in dependency_list:
         if resource["isEnabled"]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=strings.WORKSPACE_NEEDS_TO_BE_DISABLED_BEFORE_DELETION
+            )
 
     return True
 
 
-async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resource: Resource, user: User, force_version_update: bool, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository, resource_repo: ResourceRepository):
+async def cascaded_update_resource(
+    resource_patch: ResourcePatch,
+    parent_resource: Resource,
+    user: User,
+    force_version_update: bool,
+    resource_template_repo: ResourceTemplateRepository,
+    resource_history_repo: ResourceHistoryRepository,
+    resource_repo: ResourceRepository,
+):
     # Get dependecy list
     dependency_list = await resource_repo.get_resource_dependency_list(parent_resource)
     # Patch all resources
@@ -48,11 +58,28 @@ async def cascaded_update_resource(resource_patch: ResourcePatch, parent_resourc
             child_resource = TypeAdapter(WorkspaceService).validate_python(child_resource)
         elif child_resource["resourceType"] == ResourceType.UserResource:
             child_resource = TypeAdapter(UserResource).validate_python(child_resource)
-            primary_parent_workspace_service = await resource_repo.get_resource_by_id(child_resource.parentWorkspaceServiceId)
+            primary_parent_workspace_service = await resource_repo.get_resource_by_id(
+                child_resource.parentWorkspaceServiceId
+            )
             primary_parent_service_name = primary_parent_workspace_service.templateName
 
-        child_resource_template = await resource_template_repo.get_template_by_name_and_version(child_resource.templateName, child_resource.templateVersion, child_resource.resourceType, parent_service_name=primary_parent_service_name)
-        await resource_repo.patch_resource(child_resource, resource_patch, child_resource_template, child_etag, resource_template_repo, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE, force_version_update)
+        child_resource_template = await resource_template_repo.get_template_by_name_and_version(
+            child_resource.templateName,
+            child_resource.templateVersion,
+            child_resource.resourceType,
+            parent_service_name=primary_parent_service_name,
+        )
+        await resource_repo.patch_resource(
+            child_resource,
+            resource_patch,
+            child_resource_template,
+            child_etag,
+            resource_template_repo,
+            resource_history_repo,
+            user,
+            strings.RESOURCE_ACTION_UPDATE,
+            force_version_update,
+        )
 
 
 async def save_and_deploy_resource(
@@ -70,9 +97,7 @@ async def save_and_deploy_resource(
 
         # Making a copy to save with secrets masked
         masked_resource = deepcopy(resource)
-        masked_resource.properties = mask_sensitive_properties(
-            resource.properties, resource_template
-        )
+        masked_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
         await resource_repo.save_item(masked_resource)
     except Exception:
         logger.exception(f"Failed saving resource item {resource.id}")
@@ -101,9 +126,7 @@ async def save_and_deploy_resource(
         )
 
 
-def mask_sensitive_properties(
-    properties: Dict[str, Any], template: ResourceTemplate
-) -> dict:
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
     updated_resource_parameters = deepcopy(properties)
 
     flattened_template_props = {}
@@ -117,13 +140,8 @@ def mask_sensitive_properties(
             if prop_name == "pipeline":
                 continue
 
-            if (
-                prop_name == "properties"
-                and template_fragment["properties"] is not None
-            ):
-                for inner_prop_name, inner_prop in template_fragment[
-                    "properties"
-                ].items():
+            if prop_name == "properties" and template_fragment["properties"] is not None:
+                for inner_prop_name, inner_prop in template_fragment["properties"].items():
                     flattened_template_props[inner_prop_name] = inner_prop
 
             if isinstance(prop, list) and len(prop) > 0:
@@ -169,7 +187,7 @@ async def send_uninstall_message(
     resource_template_repo: ResourceTemplateRepository,
     resource_history_repo: ResourceHistoryRepository,
     user: User,
-    is_cascade: str = False
+    is_cascade: str = False,
 ) -> Operation:
     try:
         operation = await send_resource_request_message(
@@ -180,7 +198,7 @@ async def send_uninstall_message(
             resource_template_repo=resource_template_repo,
             resource_history_repo=resource_history_repo,
             action=RequestAction.UnInstall,
-            is_cascade=is_cascade
+            is_cascade=is_cascade,
         )
         return operation
     except Exception:
@@ -215,9 +233,7 @@ async def send_custom_action_message(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=strings.CUSTOM_ACTIONS_DO_NOT_EXIST,
         )
-    elif not any(
-        action.name == custom_action for action in resource_template.customActions
-    ):
+    elif not any(action.name == custom_action for action in resource_template.customActions):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=strings.CUSTOM_ACTION_NOT_DEFINED,
@@ -256,9 +272,7 @@ async def get_template(
                 template_name, version, resource_type, parent_service_template_name
             )
             if version
-            else await template_repo.get_current_template(
-                template_name, resource_type, parent_service_template_name
-            )
+            else await template_repo.get_current_template(template_name, resource_type, parent_service_template_name)
         )
 
         return template_repo.enrich_template(template, is_update=is_update)
@@ -285,18 +299,28 @@ def get_timestamp() -> float:
 
 
 async def update_user_resource(
-        user_resource: UserResource,
-        resource_patch: ResourcePatch,
-        force_version_update: bool,
-        user: User,
-        etag: str,
-        workspace_service: WorkspaceService,
-        user_resource_repo: UserResourceRepository,
-        resource_template_repo: ResourceTemplateRepository,
-        operations_repo: OperationRepository,
-        resource_history_repo: ResourceHistoryRepository) -> Operation:
+    user_resource: UserResource,
+    resource_patch: ResourcePatch,
+    force_version_update: bool,
+    user: User,
+    etag: str,
+    workspace_service: WorkspaceService,
+    user_resource_repo: UserResourceRepository,
+    resource_template_repo: ResourceTemplateRepository,
+    operations_repo: OperationRepository,
+    resource_history_repo: ResourceHistoryRepository,
+) -> Operation:
 
-    patched_user_resource, _ = await user_resource_repo.patch_user_resource(user_resource, resource_patch, etag, resource_template_repo, resource_history_repo, workspace_service.templateName, user, force_version_update)
+    patched_user_resource, _ = await user_resource_repo.patch_user_resource(
+        user_resource,
+        resource_patch,
+        etag,
+        resource_template_repo,
+        resource_history_repo,
+        workspace_service.templateName,
+        user,
+        force_version_update,
+    )
     operation = await send_resource_request_message(
         resource=patched_user_resource,
         operations_repo=operations_repo,
@@ -304,20 +328,27 @@ async def update_user_resource(
         user=user,
         resource_template_repo=resource_template_repo,
         resource_history_repo=resource_history_repo,
-        action=RequestAction.Upgrade)
+        action=RequestAction.Upgrade,
+    )
 
     return operation
 
 
-async def enrich_resource_with_available_upgrades(resource: Resource, resource_template_repo: ResourceTemplateRepository):
+async def enrich_resource_with_available_upgrades(
+    resource: Resource, resource_template_repo: ResourceTemplateRepository
+):
     all_versions = await resource_template_repo.get_all_template_versions(resource.templateName)
     set_available_upgrades(resource, all_versions)
 
 
-async def enrich_resources_with_available_upgrades(resources: List[Resource], resource_template_repo: ResourceTemplateRepository):
+async def enrich_resources_with_available_upgrades(
+    resources: List[Resource], resource_template_repo: ResourceTemplateRepository
+):
     if not resources:
         return
-    versions_by_template_name = await resource_template_repo.get_all_template_versions_for_names([resource.templateName for resource in resources])
+    versions_by_template_name = await resource_template_repo.get_all_template_versions_for_names(
+        [resource.templateName for resource in resources]
+    )
     for resource in resources:
         set_available_upgrades(resource, versions_by_template_name.get(resource.templateName, []))
 
@@ -326,9 +357,17 @@ def set_available_upgrades(resource: Resource, all_versions: List[str]):
     available_upgrades = []
     resource_version = semantic_version.Version(resource.templateVersion)
 
-    versions_higher_than_current = [version for version in all_versions if semantic_version.Version(version) > resource_version]
-    major_update_versions = [version for version in versions_higher_than_current if semantic_version.Version(version).major > resource_version.major]
-    non_major_update_versions = [version for version in versions_higher_than_current if version not in major_update_versions]
+    versions_higher_than_current = [
+        version for version in all_versions if semantic_version.Version(version) > resource_version
+    ]
+    major_update_versions = [
+        version
+        for version in versions_higher_than_current
+        if semantic_version.Version(version).major > resource_version.major
+    ]
+    non_major_update_versions = [
+        version for version in versions_higher_than_current if version not in major_update_versions
+    ]
 
     for version in sorted(non_major_update_versions, key=semantic_version.Version):
         available_upgrades.append(AvailableUpgrade(version=version, forceUpdateRequired=False))

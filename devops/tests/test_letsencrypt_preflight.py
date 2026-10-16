@@ -51,22 +51,25 @@ class LetsEncryptPreflightTests(unittest.TestCase):
         (scripts / "storage_enable_public_access.sh").write_text(
             'printf "certificate-azure\\n" >> "$CALL_LOG"\n'
             'printf "Reached mocked certificate operations\\n" >&2\n'
-            'exit 73\n'
+            "exit 73\n"
         )
         self.set_outputs("rg-from-terraform")
 
     def set_outputs(self, resource_group):
         value = "" if resource_group is None else f"RESOURCE_GROUP_NAME={resource_group}\\n"
         (self.root / "core/terraform/outputs.sh").write_text(
-            'printf "outputs\\n" >> "$CALL_LOG"\n'
-            f"printf '{value}' > ../private.env\n"
+            f'printf "outputs\\n" >> "$CALL_LOG"\nprintf \'{value}\' > ../private.env\n'
         )
 
     def run_command(self, command):
         self.log.unlink(missing_ok=True)
         result = subprocess.run(
-            command, cwd=self.root, env=self.env,
-            capture_output=True, text=True, timeout=10,
+            command,
+            cwd=self.root,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         calls = self.log.read_text().splitlines() if self.log.exists() else []
         self.assertNotIn("unexpected command", calls)
