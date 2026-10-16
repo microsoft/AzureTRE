@@ -17,6 +17,14 @@ When running tests locally, use the `prepare-for-e2e` Makefile target:
 make prepare-for-e2e
 ```
 
+## Certificate lifecycle tests
+
+Use a TRE without Nexus for tests that remove and reinstall the certificate shared service.
+Removing its certificate can interrupt Nexus.
+Run only one certificate lifecycle test suite per TRE at a time.
+Do not run it alongside Airlock or shared-service tests that use the same certificate service.
+Use the same hostname and certificate name when testing reuse after reinstallation.
+
 ## Debugging the End-to-End tests
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.

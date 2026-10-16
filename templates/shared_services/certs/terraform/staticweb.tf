@@ -47,7 +47,55 @@ resource "azurerm_storage_account_static_website" "staticweb_site" {
   index_document     = "index.html"
   error_404_document = "404.html"
 
-  depends_on = [azurerm_private_endpoint.blobpe, azurerm_private_endpoint.webpe]
+  depends_on = [terraform_data.staticweb_private_endpoint_ready]
+}
+
+# Endpoint creation can finish before the DNS answers become stable.
+resource "terraform_data" "staticweb_private_endpoint_ready" {
+  triggers_replace = {
+    address = azurerm_private_endpoint.blobpe.private_service_connection[0].private_ip_address
+    helper  = filesha256("${path.module}/../scripts/wait_for_private_storage.py")
+  }
+
+  lifecycle {
+    # Rerun after endpoint updates, even when its ID and private IP are unchanged.
+    replace_triggered_by = [azurerm_private_endpoint.blobpe]
+  }
+
+  depends_on = [azurerm_private_endpoint.webpe]
+
+  provisioner "local-exec" {
+    command = "python3 \"${path.module}/../scripts/wait_for_private_storage.py\""
+    environment = {
+      STORAGE_HOST       = azurerm_storage_account.staticweb.primary_blob_host
+      STORAGE_PRIVATE_IP = azurerm_private_endpoint.blobpe.private_service_connection[0].private_ip_address
+    }
+  }
+}
+
+# The web endpoint serves ACME challenges after the website has been enabled.
+resource "terraform_data" "staticweb_web_endpoint_ready" {
+  triggers_replace = {
+    address = azurerm_private_endpoint.webpe.private_service_connection[0].private_ip_address
+    helper  = filesha256("${path.module}/../scripts/wait_for_private_storage.py")
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      azurerm_private_endpoint.webpe,
+      azurerm_storage_account_static_website.staticweb_site,
+    ]
+  }
+
+  depends_on = [azurerm_storage_account_static_website.staticweb_site]
+
+  provisioner "local-exec" {
+    command = "python3 \"${path.module}/../scripts/wait_for_private_storage.py\""
+    environment = {
+      STORAGE_HOST       = azurerm_storage_account.staticweb.primary_web_host
+      STORAGE_PRIVATE_IP = azurerm_private_endpoint.webpe.private_service_connection[0].private_ip_address
+    }
+  }
 }
 
 resource "azurerm_role_assignment" "stgwriter" {

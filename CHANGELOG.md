@@ -27,6 +27,9 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Fix certificate provisioning retries and reuse valid certificates from the core Key Vault.
+  Check private storage readiness before issuance and request a new certificate when the hostname changes.
+  Stop the validation gateway after success or failure. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
 * Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Wait for Nexus admin authentication before configuring repositories. (`tre-shared-service-sonatype-nexus` 3.11.2) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
 * Correct managed-identity login in bundle runtimes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
 * Preserve failed uninstall results and allow cleanup when Porter confirms the installation is absent. Keep resource and operation status available until uninstall steps and final output writes finish. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
