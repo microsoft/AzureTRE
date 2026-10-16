@@ -27,6 +27,8 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Wait for management storage readiness and retry recognised state-access permission failures. Retry bootstrap state creation only when the state blob is confirmed absent. (`devops` 0.6.15) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
+* Validate Terraform outputs and preserve the previous cache if output generation or validation fails. (`core` 0.18.14) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
