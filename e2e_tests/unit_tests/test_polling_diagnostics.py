@@ -184,12 +184,12 @@ class ResourcePollingDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("token-secret", logs.output[0])
 
     async def test_unknown_paths_and_states_are_redacted_and_bounded(self):
-        secret = "response-secret" * 1000
-        check = AsyncMock(return_value=(False, secret, secret, secret))
+        untrusted_value = "response-secret" * 1000
+        check = AsyncMock(return_value=(False, untrusted_value, untrusted_value, untrusted_value))
         with patch.object(resource.asyncio, "sleep", new=AsyncMock(side_effect=asyncio.CancelledError)):
             with self.assertLogs(resource.LOGGER, level="INFO") as logs:
                 with self.assertRaises(asyncio.CancelledError):
-                    await resource.wait_for(check, None, "/api/operations/" + secret, "token-secret", [])
+                    await resource.wait_for(check, None, "/api/operations/" + untrusted_value, "token-secret", [])
         log = "\n".join(logs.output)
         self.assertIn("<redacted>", log)
         self.assertNotIn("response-secret", log)
