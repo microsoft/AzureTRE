@@ -28,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
 * Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Give E2E cleanup separate deadlines and allow 30 seconds for smoke health requests. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Verify TLS for identity authentication and keep response content and URL parameters out of E2E operation polling logs. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
