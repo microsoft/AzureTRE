@@ -73,7 +73,7 @@ async def lifespan(app: FastAPI):
             shutdown_reported_tasks.add(task)
             logger.warning(
                 f"Background task {task.get_name()} raised exception during shutdown: {exception}",
-                exc_info=(type(exception), exception, exception.__traceback__)
+                exc_info=(type(exception), exception, exception.__traceback__),
             )
 
     def track(task: asyncio.Task[Any]) -> None:
@@ -94,20 +94,14 @@ async def lifespan(app: FastAPI):
             if exception is not None:
                 logger.error(
                     f"Background task {task.get_name()} failed",
-                    exc_info=(type(exception), exception, exception.__traceback__)
+                    exc_info=(type(exception), exception, exception.__traceback__),
                 )
 
         background_tasks.add(task)
         task.add_done_callback(_done_callback)
 
-    track(asyncio.create_task(
-        deploymentStatusUpdater.receive_messages(),
-        name="deployment-status-updater"
-    ))
-    track(asyncio.create_task(
-        airlockStatusUpdater.receive_messages(),
-        name="airlock-status-updater"
-    ))
+    track(asyncio.create_task(deploymentStatusUpdater.receive_messages(), name="deployment-status-updater"))
+    track(asyncio.create_task(airlockStatusUpdater.receive_messages(), name="airlock-status-updater"))
 
     try:
         yield

@@ -29,6 +29,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
+* Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
 * Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Give E2E cleanup separate deadlines and allow 30 seconds for smoke health requests. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Verify TLS for identity authentication and keep response content and URL parameters out of E2E operation polling logs. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
@@ -111,7 +112,6 @@ BUG FIXES:
 * Fix vulnerable GitHub script dependencies with compatible patched versions, add regression tests, and run the helper suite in CI. ([#5064](https://github.com/microsoft/AzureTRE/pull/5064))
 * Configure the default pytest-asyncio fixture loop scope to `function` to remove the deprecation warning. ([#5055](https://github.com/microsoft/AzureTRE/pull/5055))
 * Fix pytest deprecation warnings in API test fixtures. ([#5069](https://github.com/microsoft/AzureTRE/pull/5069))
-* Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
 * Fix Service Bus client lifecycle management in the API and resource processor to prevent connection socket and AMQP channel leaks. Close credentials on errors and handle cancellation and retry delays. ([#4930](https://github.com/microsoft/AzureTRE/pull/4930))
 
 COMPONENTS:

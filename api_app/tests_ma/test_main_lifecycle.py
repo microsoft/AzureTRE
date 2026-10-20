@@ -83,7 +83,11 @@ async def test_lifespan_task_failure_during_runtime(mock_logger, mock_airlock, m
         await asyncio.sleep(0.1)
 
     # Verify that the runtime failure was logged as an error
-    error_logs = [call for call in mock_logger.error.call_args_list if "Background task deployment-status-updater failed" in call[0][0]]
+    error_logs = [
+        call
+        for call in mock_logger.error.call_args_list
+        if "Background task deployment-status-updater failed" in call[0][0]
+    ]
     assert len(error_logs) == 1
 
 
@@ -122,7 +126,9 @@ async def test_lifespan_task_failure_during_shutdown(mock_logger, mock_airlock, 
         assert "Background task deployment-status-updater failed" not in call[0][0]
 
     # Instead, it should be caught during shutdown inspection and logged as warning
-    warning_logs = [call for call in mock_logger.warning.call_args_list if "raised exception during shutdown" in call[0][0]]
+    warning_logs = [
+        call for call in mock_logger.warning.call_args_list if "raised exception during shutdown" in call[0][0]
+    ]
     assert len(warning_logs) == 1
     assert "deployment-status-updater" in warning_logs[0][0][0]
 
@@ -133,7 +139,9 @@ async def test_lifespan_task_failure_during_shutdown(mock_logger, mock_airlock, 
 @patch("main.AirlockStatusUpdater")
 @patch("main.logger")
 @patch("main.SHUTDOWN_TIMEOUT", 0.05)
-async def test_lifespan_timeout_preserves_completed_task_exceptions(mock_logger, mock_airlock, mock_deployment, mock_bootstrap):
+async def test_lifespan_timeout_preserves_completed_task_exceptions(
+    mock_logger, mock_airlock, mock_deployment, mock_bootstrap
+):
     from main import lifespan
 
     mock_deployment_instance = MagicMock()
@@ -171,23 +179,34 @@ async def test_lifespan_timeout_preserves_completed_task_exceptions(mock_logger,
             await asyncio.sleep(0.01)
 
         # 1. Completed task exception is still inspected and logged as warning despite timeout
-        warning_logs = [call for call in mock_logger.warning.call_args_list if "raised exception during shutdown" in call[0][0]]
+        warning_logs = [
+            call for call in mock_logger.warning.call_args_list if "raised exception during shutdown" in call[0][0]
+        ]
         assert len(warning_logs) == 1
         assert "deployment-status-updater" in warning_logs[0][0][0]
 
         # 2. Timeout error is logged
-        error_logs = [call for call in mock_logger.error.call_args_list if "Timeout waiting for background tasks to shutdown" in call[0][0]]
+        error_logs = [
+            call
+            for call in mock_logger.error.call_args_list
+            if "Timeout waiting for background tasks to shutdown" in call[0][0]
+        ]
         assert len(error_logs) == 1
 
         # 3. Pending task is logged with warning
-        pending_logs = [call for call in mock_logger.warning.call_args_list if "did not terminate in time during shutdown" in call[0][0]]
+        pending_logs = [
+            call
+            for call in mock_logger.warning.call_args_list
+            if "did not terminate in time during shutdown" in call[0][0]
+        ]
         assert len(pending_logs) == 1
         assert "airlock-status-updater" in pending_logs[0][0][0]
     finally:
         hang_event.set()
         await asyncio.sleep(0.01)
         late_shutdown_logs = [
-            call for call in mock_logger.warning.call_args_list
+            call
+            for call in mock_logger.warning.call_args_list
             if "Background task airlock-status-updater raised exception during shutdown" in call[0][0]
         ]
         assert len(late_shutdown_logs) == 1
@@ -199,7 +218,9 @@ async def test_lifespan_timeout_preserves_completed_task_exceptions(mock_logger,
 @patch("main.AirlockStatusUpdater")
 @patch("main.logger")
 @patch("main.SHUTDOWN_TIMEOUT", 0.05)
-async def test_lifespan_cancellation_suppression_strictly_bounded(mock_logger, mock_airlock, mock_deployment, mock_bootstrap):
+async def test_lifespan_cancellation_suppression_strictly_bounded(
+    mock_logger, mock_airlock, mock_deployment, mock_bootstrap
+):
     import time
     from main import lifespan
 
@@ -235,7 +256,11 @@ async def test_lifespan_cancellation_suppression_strictly_bounded(mock_logger, m
         assert elapsed < 0.5
 
         # Both tasks should be reported as pending
-        pending_logs = [call for call in mock_logger.warning.call_args_list if "did not terminate in time during shutdown" in call[0][0]]
+        pending_logs = [
+            call
+            for call in mock_logger.warning.call_args_list
+            if "did not terminate in time during shutdown" in call[0][0]
+        ]
         assert len(pending_logs) == 2
     finally:
         hang_event.set()
