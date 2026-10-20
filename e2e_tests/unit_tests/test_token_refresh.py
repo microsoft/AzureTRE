@@ -82,7 +82,7 @@ class TokenFactoryTests(unittest.TestCase):
                 [call.args for call in credential.get_token.call_args_list], [("api://workspace/.default",)] * 2
             )
 
-    def test_password_credentials_keep_user_scope_and_tls_setting(self):
+    def test_password_credentials_keep_user_scope_and_verify_identity_tls(self):
         with (
             patch.multiple(
                 helpers.config,
@@ -103,7 +103,7 @@ class TokenFactoryTests(unittest.TestCase):
                 "app",
                 "user",
                 "dummy-password",
-                connection_verify=False,
+                connection_verify=True,
                 authority="login.example.test",
                 tenant_id="tenant",
             )

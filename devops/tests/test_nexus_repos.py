@@ -54,6 +54,20 @@ if url.endswith("/status"):
 if url.endswith("/system/eula"):
     respond(body='{"accepted":true}')
 if url.endswith("/security/anonymous"):
+    if method == "GET" and "-w" in args:
+        if "-u" not in args or args[args.index("-u") + 1] != "admin:mock-password":
+            respond(401)
+        for option in ("--connect-timeout", "--max-time"):
+            if option not in args or not 0 < int(args[args.index(option) + 1]) <= 60:
+                respond(exit_code=99)
+        state["auth_attempts"] += 1
+        if state["auth_failures"]:
+            failure = state["auth_failures"].pop(0)
+            if failure == "connection":
+                respond(exit_code=7)
+            if failure == "timeout":
+                respond(exit_code=28)
+            respond(failure)
     respond(body='{"enabled":true}')
 if url.endswith("/security/realms/active"):
     respond(204)
@@ -131,7 +145,14 @@ class NexusRepositoryTests(unittest.TestCase):
             "PATH": str(binary) + os.pathsep + os.environ["PATH"],
             "MOCK_NEXUS_ROOT": str(self.root),
         }
-        self.state = {"repos": {}, "list_failures": [], "list_attempts": 0, "calls": []}
+        self.state = {
+            "repos": {},
+            "list_failures": [],
+            "list_attempts": 0,
+            "auth_failures": [],
+            "auth_attempts": 0,
+            "calls": [],
+        }
 
     def add_config(self, name):
         shutil.copy2(NEXUS / "nexus_repos_config" / name, self.configs / name)
@@ -164,6 +185,32 @@ class NexusRepositoryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, self.output)
         self.assert_raw_repo()
         self.assertEqual([method for method, _ in self.mutations()], ["POST"])
+
+    def test_transient_authentication_failures_delay_configuration(self):
+        for failure in (401, 503, 302, "connection", "timeout"):
+            with self.subTest(failure=failure):
+                self.state.update(auth_failures=[failure, failure], auth_attempts=0, calls=[])
+                result = self.run_script()
+                self.assertEqual(result.returncode, 0, self.output)
+                self.assertEqual(self.state["auth_attempts"], 3)
+                calls = self.state["calls"][2:]
+                self.assertEqual(calls[:3], [["GET", "http://localhost/service/rest/v1/security/anonymous"]] * 3)
+                self.assertTrue(calls[3][1].endswith("/system/eula"))
+                self.assert_raw_repo()
+                self.assertNotIn("mock-password", self.output)
+
+    def test_persistent_authentication_failures_stop_without_configuration(self):
+        for failure in (401, 503, 302, "connection", "timeout"):
+            with self.subTest(failure=failure):
+                self.state.update(auth_failures=[failure] * 10, auth_attempts=0, calls=[])
+                result = self.run_script()
+                self.assertNotEqual(result.returncode, 0, self.output)
+                self.assertGreater(self.state["auth_attempts"], 1)
+                self.assertLess(self.state["auth_attempts"], 10)
+                self.assertTrue(all(method == "GET" for method, _ in self.state["calls"]))
+                self.assertFalse(any("/system/eula" in url or "/repositories" in url for _, url in self.state["calls"]))
+                self.assertIn("Timeout while waiting for Nexus admin authentication", self.output)
+                self.assertNotIn("mock-password", self.output)
 
     def test_upgrade_migrates_all_four_apt_repositories(self):
         for config in ("ubuntu_security_proxy_conf.json", "docker_proxy_conf.json", "microsoft_apt_proxy_conf.json"):

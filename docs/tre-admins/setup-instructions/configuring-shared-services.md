@@ -23,12 +23,49 @@ You can use the Certs Shared Service to set one up by following these steps:
 
 3. Select the Certs template, then fill in the required details. *Domain prefix* should be set to `nexus` and *Cert name* should be `nexus-ssl`.
 
-!!! caution
-    If you have KeyVault Purge Protection enabled and are re-deploying your environment using the same `cert_name`, you may encounter this: `Status=409 Code=\"Conflict\" Message=\"Certificate nexus-ssl is currently in a deleted but recoverable state`. You need to either manually recover the certificate or purge it before redeploying.
+The service stores the certificate in the core Key Vault, `kv-{TRE_ID}`.
+It checks for a reusable certificate before requesting one from Let's Encrypt for `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
-Once deployed, the certs service will use Letsencrypt to generate a certificate for the specified domain prefix followed by `-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, so in our case, having entered `nexus`, this will be `nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`, which will be the public domain for our Nexus service.
+After installation completes, check that the vault contains a certificate named `nexus-ssl`, or the name you supplied.
 
-You can verify whether this has been successful by navigating to your core keyvault (`kv-{TRE_ID}`) and looking for a certificate called `nexus-ssl` (or whatever you called it).
+### Certificate reuse and renewal
+
+Certificate bundle `0.9.0` checks the certificate in the core vault before requesting another one.
+To be reused, the certificate must:
+
+- Be enabled and match the exact requested DNS name.
+- Have a trusted certificate chain and a matching private key.
+- Have more than 30 days remaining before expiry.
+
+The service converts certificates stored in PEM format to PFX for Application Gateway.
+This reuses the certificate without another request to Let's Encrypt.
+
+If no issued certificate exists, the service requests one. It also requests a replacement when an otherwise valid certificate expires within 30 days.
+If the requested hostname changes, the service requests a certificate for the new hostname after validating the existing certificate material.
+The bundle's `renew` action uses the same checks. Renewal is not scheduled automatically.
+
+Check the installed bundle version before relying on reuse.
+Registering a new template does not update an installed service, and the bundle's `upgrade` action does not change infrastructure.
+
+#### Removal and reinstallation
+
+Removing the certificate service can interrupt Nexus. Plan the removal with any services that depend on its certificate.
+
+Removal soft-deletes the certificate and password under the core vault's retention policy.
+Reinstallation can recover and reuse the newest issued certificate while the vault retains it.
+Use the same hostname and certificate name when reinstalling. Purged certificates cannot be recovered.
+Run only one certificate installation, renewal or removal at a time in each TRE.
+
+#### Failed certificate operations
+
+If a vault lookup fails, or the certificate is disabled or invalid, the operation stops without requesting another certificate.
+Check the operation details and correct the reported problem before retrying. Do not purge certificates as routine cleanup.
+If Let's Encrypt returns a retry time, wait until that time before retrying.
+
+After each operation, the service attempts to stop the Application Gateway used for certificate validation.
+If that stop fails, the operation reports a failure. Check the gateway status when investigating a failed operation.
+
+### Deploy Nexus
 
 After verifying the certificate has been generated, you can deploy Nexus:
 
