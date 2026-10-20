@@ -28,6 +28,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 
 BUG FIXES:
+* Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
 * Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
 * Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
