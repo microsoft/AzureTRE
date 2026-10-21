@@ -4957,6 +4957,8 @@ Before running tests on a PR, run the same checks on the PR code as for <code>/t
 <h3 id="test-destroy-env"><code>/test-destroy-env</code></h3>
 <p>When running <code>/test</code> multiple times on a PR, the same TRE ID and environment are used by default. The <code>/test-destroy-env</code> command destroys a previously created validation environment, allowing you to re-run <code>/test</code> with a clean starting point.</p>
 <p>The <code>/test-destroy-env</code> command also destroys the environment associated with the PR branch (created by running the <code>deploy_tre_branch</code> workflow).</p>
+<p>The command destroys only groups whose names start with <code>rg-&lt;CI_ENV_PREFIX&gt;</code> and that this repository owns. If a selected group has a <code>ci_repository</code> tag for another repository, the command stops with an error. It deletes no group. Outside <code>microsoft/AzureTRE</code>, the command needs the <code>CI_ENV_PREFIX</code> repository variable. See <a href="../../tre-admins/setup-instructions/workflows/#forks-that-share-a-subscription">Forks that share a subscription</a>.</p>
+<p>The command also destroys an environment that has a <code>ci_keep_until</code> tag. The tag protects an environment only from stop and destruction by the cleanup workflow. See <a href="../../tre-admins/setup-instructions/workflows/#keep-a-ci-environment">Keep a CI environment</a>.</p>
 <h3 id="test-force-approve"><code>/test-force-approve</code></h3>
 <p>This command records a waiver and marks the checks as completed. It does not run tests.
 This is intended to be used in scenarios where running the tests for a PR doesn't add value (for example, changing a workflow file that is always pulled from the default branch).</p>

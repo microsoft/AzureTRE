@@ -3854,6 +3854,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Isolated CI environments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#keep-a-ci-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep a CI environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keep a CI environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#operate-a-kept-environment-from-your-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operate a kept environment from your computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forks-that-share-a-subscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forks that share a subscription
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recover-ci-environments-from-before-the-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover CI environments from before the tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4668,6 +4724,62 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Isolated CI environments">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#keep-a-ci-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep a CI environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keep a CI environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#operate-a-kept-environment-from-your-computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operate a kept environment from your computer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forks-that-share-a-subscription" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forks that share a subscription
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recover-ci-environments-from-before-the-tag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover CI environments from before the tag
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4813,9 +4925,111 @@ This prevents a retained, purge-protected vault in the previous location from bl
 Terraform continues to recover soft-deleted vaults in the same location through its existing provider configuration.</p>
 <p>The first run after adopting these names must include deployment. Use <code>/test COMMIT_SHA</code> without <code>skip_deployment</code>.
 PR comment workflow changes take effect after merge. Before merge, use the branch validation workflow from a trusted upstream branch to test the changed workflow.</p>
-<p><code>/test-destroy-env</code> finds all core and management groups tagged with the PR's Git reference, including previous naming schemes and locations in the selected subscription.
+<p><code>/test-destroy-env</code> finds all core and management groups that start with <code>rg-&lt;CI_ENV_PREFIX&gt;</code> and have the PR's Git reference in the <code>ci_git_ref</code> tag. It includes previous naming schemes and locations in the selected subscription.
+If another repository owns a selected group, the command stops. See <a href="#forks-that-share-a-subscription">Forks that share a subscription</a>.
 For an upstream PR, it also cleans the tagged branch environments. Cleanup refuses conflicting ownership tags and shares deployment concurrency.
-Scheduled cleanup continues to use the <code>ci_git_ref</code> tags. Retained vaults remain subject to their existing soft-delete and purge protection policies.</p>
+Scheduled cleanup continues to use the <code>ci_git_ref</code> tags. It also uses the <code>CI_ENV_PREFIX</code> name prefix and the <code>ci_repository</code> tag. Retained vaults remain subject to their existing soft-delete and purge protection policies.</p>
+<h3 id="keep-a-ci-environment">Keep a CI environment</h3>
+<p>Scheduled cleanup stops a PR or branch environment after 4 hours without activity. It destroys the environment after 48 hours, or when the PR closes or the branch is deleted.
+To keep an environment, for example for a demo, add the <code>ci_keep_until</code> tag to its core group (<code>rg-&lt;TRE_ID&gt;</code>) or its management group (<code>rg-&lt;TRE_ID&gt;-mgmt</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A date, for example <code>2026-11-15</code></td>
+<td>Cleanup does not stop or destroy the environment until the end of that day (UTC). After that day, the normal rules apply again.</td>
+</tr>
+<tr>
+<td><code>forever</code></td>
+<td>Cleanup does not stop or destroy the environment until you remove the tag.</td>
+</tr>
+<tr>
+<td>Any other value</td>
+<td>Cleanup does not stop or destroy the environment, and the run shows a warning about the invalid value.</td>
+</tr>
+</tbody>
+</table>
+<p>The tag claims the environment. You are then responsible for its cost:</p>
+<ul>
+<li>Use a date, not <code>forever</code>, when you can. If you forget the tag, the date ends it.</li>
+<li>Stop the environment when you do not use it. Start it again when you need it.</li>
+<li>Remove the tag when you no longer need the environment. The next scheduled run then applies the normal rules, and destroys an environment whose PR is closed or whose branch is deleted.</li>
+</ul>
+<p>Each cleanup run that keeps an environment shows a <code>CI cleanup keep</code> warning annotation with the group and the tag value.
+A manual run of the cleanup workflow with <code>mode=cleanup</code> also keeps the environment.
+<code>/test-destroy-env</code> ignores the tag, because it is an explicit request to destroy the environment. The tag does not apply to the main workspace cleanup.
+Bootstrap and Terraform keep the tag when CI deploys the environment again.</p>
+<h4 id="operate-a-kept-environment-from-your-computer">Operate a kept environment from your computer</h4>
+<p>You need the Azure CLI, <code>bash</code>, <code>jq</code> and a clone of this repository. You also need Contributor access to <code>rg-&lt;TRE_ID&gt;</code> and its <code>rg-&lt;TRE_ID&gt;-ws-*</code> groups. The examples put the tag on the core group <code>rg-&lt;TRE_ID&gt;</code>, so that this access is sufficient.</p>
+<ol>
+<li>
+<p>Log in to the subscription that CI uses:</p>
+<div class="highlight"><pre><span></span><code>az<span class="w"> </span>login<span class="w"> </span>--tenant<span class="w"> </span>&lt;TENANT_ID&gt;
+az<span class="w"> </span>account<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--subscription<span class="w"> </span>&lt;SUBSCRIPTION_ID&gt;
+</code></pre></div>
+</li>
+<li>
+<p>Find the <code>TRE_ID</code> of the environment. The deployment log shows it:</p>
+<p>* A branch deployment prints <code>using id of: ... (TRE ID &lt;TRE_ID&gt;)</code>.
+  * A <code>/test</code> run prints <code>CI environment &lt;TRE_ID&gt; in &lt;LOCATION&gt;</code> in its <code>Derive CI environment ID</code> step.</p>
+<p>You can also read it from the <code>tre_id</code> tag of the core group. For a PR environment, the Git reference is <code>refs/pull/&lt;PR_NUMBER&gt;/merge</code>:</p>
+<div class="highlight"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>list<span class="w"> </span>-o<span class="w"> </span>tsv<span class="w"> </span>--query<span class="w"> </span><span class="s2">"[?starts_with(name, 'rg-&lt;CI_ENV_PREFIX&gt;') &amp;&amp; tags.ci_git_ref=='refs/heads/&lt;BRANCH&gt;' &amp;&amp; tags.tre_id].tags.tre_id"</span>
+</code></pre></div>
+</li>
+<li>
+<p>Claim the environment, then stop and start it as you need:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">TRE_ID</span><span class="o">=</span>&lt;TRE_ID&gt;
+az<span class="w"> </span>group<span class="w"> </span>update<span class="w"> </span>--name<span class="w"> </span><span class="s2">"rg-</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>--set<span class="w"> </span>tags.ci_keep_until<span class="o">=</span><span class="m">2026</span>-11-15
+devops/scripts/control_tre.sh<span class="w"> </span>stop
+devops/scripts/control_tre.sh<span class="w"> </span>start
+</code></pre></div>
+</li>
+<li>
+<p>Remove the tag when you no longer need the environment:</p>
+<div class="highlight"><pre><span></span><code>az<span class="w"> </span>tag<span class="w"> </span>update<span class="w"> </span>--resource-id<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>az<span class="w"> </span>group<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span><span class="s2">"rg-</span><span class="si">${</span><span class="nv">TRE_ID</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--operation<span class="w"> </span>Delete<span class="w"> </span>--tags<span class="w"> </span>ci_keep_until
+</code></pre></div>
+</li>
+</ol>
+<p><code>control_tre.sh stop</code> stops the firewall, the Application Gateway, MySQL, the resource processor and the core VMs. It also deallocates all workspace VMs. <code>control_tre.sh start</code> starts the same core services, but not the workspace VMs. Start the workspace VMs from the TRE UI, or with <code>az vm start</code>.
+Do not use <code>make tre-start</code> or <code>make tre-stop</code> for a CI environment. These targets load <code>config.yaml</code>, which replaces the <code>TRE_ID</code> that you give.</p>
+<h3 id="forks-that-share-a-subscription">Forks that share a subscription</h3>
+<p>A fork can run CI in the same Azure subscription as another repository. Set the <code>CI_ENV_PREFIX</code> repository variable in the fork to a prefix that no other Azure TRE repository uses.
+The prefix has 3 characters: a lowercase letter, then 2 lowercase letters or digits. This documentation uses <code>frk</code> as an example only. Do not copy it.
+Set it as a repository variable, not an environment variable, so that every job reads the same value.
+The prefix replaces <code>tre</code> at the start of every CI environment name, for example <code>rg-frk1a2b3c4d</code>. The 3 characters and the 8-character hash fill the 11-character <code>TRE_ID</code> limit.</p>
+<p>Only <code>microsoft/AzureTRE</code> has a default prefix. If <code>CI_ENV_PREFIX</code> is not set in another repository, PR deployment, branch deployment and <code>/test-destroy-env</code> stop with an error. Scheduled cleanup skips PR and branch environments and shows a <code>CI cleanup scope</code> warning. The main workspace cleanup continues.
+This is by design. Set <code>CI_ENV_PREFIX</code> before a fork runs PR or branch CI for the first time.
+Use a prefix other than <code>tre</code> in every fork, also in a fork with its own subscription. Storage account, container registry and Key Vault names are unique across all of Azure, so a fork with <code>tre</code> can collide with upstream PR environments in the same location.
+Set <code>tre</code> in a fork only to keep the names of existing environments.</p>
+<p>If 2 repositories use the same prefix, they get the same names for the same PR number or branch, because the name hash does not include the repository.
+The <code>ci_repository</code> tag stops each CI from deleting or taking over the other's groups, so the deployment of the second repository fails. Choose a unique prefix to prevent this, also when the repositories use different subscriptions.</p>
+<p>CI also tags new core and management resource groups with <code>ci_repository</code>, which holds the GitHub repository name. Scheduled cleanup, <code>/test-destroy-env</code> and bootstrap lease recovery:</p>
+<ul>
+<li>Select only groups that start with <code>rg-&lt;prefix&gt;</code>.</li>
+<li>Refuse groups that another repository tagged with <code>ci_repository</code>.</li>
+<li>Treat groups without <code>ci_repository</code> as groups from before the tag existed. A repository that uses the <code>tre</code> prefix owns these groups only if it is <code>microsoft/AzureTRE</code>.</li>
+</ul>
+<p>Bootstrap also stops if the management resource group has a <code>ci_repository</code> tag for another repository. A fork that uses the <code>tre</code> prefix also stops on an untagged PR or branch management group.</p>
+<p>The fork must also use its own main environment values: <code>TRE_ID</code>, <code>ACR_NAME</code>, <code>MGMT_RESOURCE_GROUP_NAME</code>, <code>MGMT_STORAGE_ACCOUNT_NAME</code> and <code>ENCRYPTION_KV_NAME</code>. Main deployments and the main workspace cleanup use these values directly.</p>
+<p>If the fork has CI environments from before this change, destroy them with <code>/test-destroy-env</code> before the change reaches the fork's default branch. PR comment workflows run from the default branch.
+The command from before this change has no repository check. Use it only for a PR number or branch that has no upstream environment. Leave other untagged <code>rg-tre</code> groups to the upstream scheduled cleanup.
+After the change, the fork's cleanup does not select these untagged <code>rg-tre</code> groups. Do not set <code>CI_ENV_PREFIX</code> to <code>tre</code> for a short time to remove them in a shared subscription.</p>
+<p>Merge or rebase the default branch into a fork branch before you dispatch the branch deployment workflow. An older branch creates untagged <code>rg-tre</code> groups, and the upstream cleanup treats them as upstream groups.</p>
+<p>If you rename or transfer the repository, cleanup refuses the groups that have the old name in <code>ci_repository</code>. Delete these groups manually, or change their tag to the new name.</p>
+<p>The <code>validate</code> mode of the cleanup workflow needs a <code>CI_ENV_PREFIX</code> other than <code>tre</code> outside <code>microsoft/AzureTRE</code>.
+A repository that deploys only <code>main</code> keeps the main workspace cleanup without <code>CI_ENV_PREFIX</code>. Cleanup then selects no PR or branch environment, and the run shows a <code>CI cleanup scope</code> warning annotation. If the repository has PR or branch environments, set <code>CI_ENV_PREFIX</code> as a repository variable.</p>
+<h3 id="recover-ci-environments-from-before-the-tag">Recover CI environments from before the tag</h3>
+<p>A repository other than <code>microsoft/AzureTRE</code> that uses the <code>tre</code> prefix cannot manage its untagged CI environments. This applies also to a fork with its own subscription. Cleanup and <code>/test-destroy-env</code> refuse these groups, and bootstrap stops on them.
+To recover an environment that your repository created, tag its core and management groups with your repository name. Then run <code>/test-destroy-env</code>, or wait for the scheduled cleanup:</p>
+<div class="highlight"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>update<span class="w"> </span>--name<span class="w"> </span>rg-tre1a2b3c4d<span class="w"> </span>--set<span class="w"> </span>tags.ci_repository<span class="o">=</span>contoso/AzureTRE
+az<span class="w"> </span>group<span class="w"> </span>update<span class="w"> </span>--name<span class="w"> </span>rg-tre1a2b3c4d-mgmt<span class="w"> </span>--set<span class="w"> </span>tags.ci_repository<span class="o">=</span>contoso/AzureTRE
+</code></pre></div>
+<p>Tag only groups that your repository created. In a shared subscription, the same name can belong to an upstream environment.</p>
 <h2 id="dockerfile-build-checks">Dockerfile build checks</h2>
 <p>The <code>Dockerfile Build Check</code> workflow builds Dockerfiles and Porter bundle images each Monday at 06:00 UTC. It can also run manually. Scheduled runs use the default branch, where the workflow must first be merged.</p>
 <p>Pull requests to <code>main</code> or <code>feature/**</code> select targets when their Dockerfile, Porter manifest or named build context changes. Changes to the shared Porter versions, installer or build helper select all bundles. Changes to the check's workflow or scripts select all targets.</p>
@@ -5092,6 +5306,10 @@ az account set --subscription &lt;subscription ID&gt;
 <tr>
 <td><code>ENABLE_CMK_ENCRYPTION</code></td>
 <td>Optional. Default is <code>false</code>, if set to <code>true</code> customer-managed key encryption will be enabled for all supported resources.</td>
+</tr>
+<tr>
+<td><code>CI_ENV_PREFIX</code></td>
+<td>Required outside <code>microsoft/AzureTRE</code> for PR and branch CI environments. Set it as a repository variable, not an environment variable. The 3-character prefix of PR and branch CI environment names: a lowercase letter, then 2 lowercase letters or digits. Only <code>microsoft/AzureTRE</code> has the default value <code>tre</code>. Every fork uses a prefix that no other Azure TRE repository uses, because some Azure resource names are globally unique. See <a href="#forks-that-share-a-subscription">Forks that share a subscription</a>.</td>
 </tr>
 </tbody>
 </table>
