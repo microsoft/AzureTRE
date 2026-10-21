@@ -104,10 +104,16 @@ resource "azurerm_application_insights" "core" {
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
-  name                = "ampls-app-insights-service"
+  # The name changed from ampls-app-insights-service to replace the link in existing deployments.
+  name                = "ampls-app-insights"
   resource_group_name = var.resource_group_name
   scope_name          = azurerm_monitor_private_link_scope.ampls_core.name
   linked_resource_id  = azurerm_application_insights.core.id
+
+  # App Insights rejects ingestion through a private endpoint created after this link, with HTTP 403.
+  depends_on = [
+    azurerm_private_endpoint.azure_monitor_private_endpoint,
+  ]
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -118,9 +124,6 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
   tags                = var.tre_core_tags
 
   lifecycle { ignore_changes = [tags] }
-  depends_on = [
-    azurerm_monitor_private_link_scoped_service.ampls_app_insights,
-  ]
 
   private_service_connection {
     private_connection_resource_id = azurerm_monitor_private_link_scope.ampls_core.id
