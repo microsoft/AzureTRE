@@ -99,15 +99,8 @@ elif operation == ["group", "list"]:
     if query:
         prefix = re.search(r"starts_with\(name, '([^']+)'\)", query).group(1)
         result = [row for row in result if row["name"].startswith(prefix)]
-        if "ci_git_ref" in query:
-            result = [
-                {
-                    "name": row["name"],
-                    "ci_git_ref": row["tags"].get("ci_git_ref"),
-                    "ci_repository": row["tags"].get("ci_repository"),
-                }
-                for row in result
-            ]
+        if "tags:tags" in query:
+            result = [{"name": row["name"], "tags": row["tags"]} for row in result]
         else:
             print("\n".join(row["name"] for row in result))
             result = None

@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 
-from ci_environment_id import environment_prefix, repository_owns, validate_ref
+from ci_environment_id import ci_tags, environment_prefix, repository_owns, validate_ref
 from ci_cleanup_activity import branch_activity, mutation_allowed
 from recover_bootstrap_lease import RecoveryError, github, require, verify_concurrency
 
@@ -60,7 +60,7 @@ def group_tags():
             "Inconsistent cleanup resource group identity.",
         )
         require(group.get("tags") is None or isinstance(group.get("tags"), dict), "Invalid cleanup ownership tags.")
-        result[name] = group.get("tags") or {}
+        result[name] = ci_tags(group.get("tags"))
     return result
 
 

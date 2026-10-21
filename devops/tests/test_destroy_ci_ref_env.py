@@ -132,6 +132,16 @@ class CleanupTests(unittest.TestCase):
                     cleanup.destroy(REF, SUBSCRIPTION)
                     self.assertEqual(self.run.call_count, 3)
 
+    def test_tag_names_in_another_case_keep_their_owner(self):
+        for row in self.groups:
+            tags = row.get("tags") or {}
+            if tags.get("ci_git_ref") == REF:
+                row["tags"] = {"CI_Git_Ref": tags["ci_git_ref"], "CI_Repository": "contoso/AzureTRE"}
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "microsoft/AzureTRE", "CI_ENV_PREFIX": "tre"}):
+            with self.assertRaisesRegex(ValueError, "Another repository owns"):
+                cleanup.destroy(REF, SUBSCRIPTION)
+        self.run.assert_not_called()
+
     def test_main_or_invalid_ref_has_no_mutations(self):
         for ref in ("refs/heads/main", "refs/pull/5092/head", "refs/heads/x\ny"):
             with self.subTest(ref=ref), self.assertRaises(ValueError):

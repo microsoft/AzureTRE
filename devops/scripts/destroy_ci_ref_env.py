@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 
-from ci_environment_id import environment_prefix, repository_owns, validate_ref
+from ci_environment_id import ci_tags, environment_prefix, repository_owns, validate_ref
 
 
 def azure(subscription, *args):
@@ -35,10 +35,10 @@ def targets(groups, ref, subscription, repository):
             raise ValueError("Azure returned an invalid resource group inventory.")
         if group.get("tags") is not None and not isinstance(group["tags"], dict):
             raise ValueError("Azure returned invalid resource group tags.")
-        inventory[group["name"].lower()] = group
+        inventory[group["name"].lower()] = {**group, "tags": ci_tags(group.get("tags"))}
     selected = set()
     for name, group in inventory.items():
-        if not re.fullmatch(pattern, name) or (group.get("tags") or {}).get("ci_git_ref") != ref:
+        if not re.fullmatch(pattern, name) or group["tags"].get("ci_git_ref") != ref:
             continue
         core = name.removesuffix("-mgmt")
         for sibling in (core, core + "-mgmt"):
@@ -47,9 +47,9 @@ def targets(groups, ref, subscription, repository):
                 expected = f"/subscriptions/{subscription}/resourceGroups/{sibling}"
                 if not isinstance(value.get("id"), str) or value["id"].lower() != expected.lower():
                     raise ValueError("The CI resource group identity does not match.")
-                if (value.get("tags") or {}).get("ci_git_ref") != ref:
+                if value["tags"].get("ci_git_ref") != ref:
                     raise ValueError("Core and management group ownership differs. Cleanup stopped.")
-                if not repository_owns(value.get("tags"), repository):
+                if not repository_owns(value["tags"], repository):
                     raise ValueError("Another repository owns this CI environment. Cleanup stopped.")
         selected.add(core)
     return sorted(selected)

@@ -44,8 +44,8 @@ elif args[:2] in (["group", "create"], ["group", "update"]):
             key, value = item.split("=", 1)
             tags[key.removeprefix("tags.")] = value
     (root / "tags.json").write_text(json.dumps(tags))
-elif args[:2] == ["group", "show"] and args[args.index("--query") + 1] == "tags.ci_repository":
-    print((config.get("tags") or {}).get("ci_repository", ""))
+elif args[:2] == ["group", "show"] and "--query" not in args:
+    print(json.dumps({"name": args[args.index("--name") + 1], "tags": config.get("tags")}))
 elif args[:2] == ["storage", "account"]:
     # Stop before network access, identity lookup or Terraform. The ownership tag
     # must already exist even when storage account creation fails.
@@ -67,9 +67,12 @@ class BootstrapCiTagsTests(unittest.TestCase):
         scripts_dir.mkdir()
         shutil.copy2(BOOTSTRAP, terraform_dir / "bootstrap.sh")
         shutil.copy2(ROOT / "devops/scripts/terraform_init.sh", scripts_dir / "terraform_init.sh")
+        shutil.copy2(ROOT / "devops/scripts/ci_environment_id.py", scripts_dir / "ci_environment_id.py")
         mock = self.root / "az"
         mock.write_text(f"#!{sys.executable}\n" + MOCK_AZ)
         mock.chmod(0o755)
+        # Bootstrap reads the owner tag with the shared Python helper.
+        (self.root / "python3").symlink_to(sys.executable)
         self.env = {
             "PATH": str(self.root),
             "MOCK_ROOT": str(self.root),
@@ -160,6 +163,17 @@ class BootstrapCiTagsTests(unittest.TestCase):
         self.assertFalse(any(call[:2] in (["group", "update"], ["storage", "account"]) for call in self.calls))
         self.assertEqual(self.tags()["ci_repository"], "microsoft/AzureTRE")
 
+    def test_owner_tag_name_in_another_case_is_refused(self):
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        self.config = {"exists": True, "tags": {"CI_Git_Ref": "refs/pull/1/merge", "CI_Repository": "contoso/AzureTRE"}}
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/1/merge"
+        self.env["TF_VAR_ci_repository"] = "microsoft/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("belongs to the CI of contoso/AzureTRE", result.stderr)
+        self.assertFalse(any(call[:2] in (["group", "update"], ["storage", "account"]) for call in self.calls))
+        self.assertEqual(self.tags()["CI_Repository"], "contoso/AzureTRE")
+
     def test_existing_group_of_the_same_repository_is_reused(self):
         self.config = {"exists": True, "tags": {"ci_git_ref": "refs/pull/1/merge", "ci_repository": "Contoso/AzureTRE"}}
         self.env["TF_VAR_ci_git_ref"] = "refs/pull/1/merge"
@@ -225,6 +239,20 @@ class BootstrapCiTagsTests(unittest.TestCase):
         result = self.run_bootstrap()
         self.assertEqual(result.returncode, 39, result.stderr)
         self.assertEqual(self.tags(), {"ci_git_ref": "refs/pull/5033/merge"})
+
+    def test_existing_group_without_tags_records_the_ci_owner(self):
+        # Azure returns "tags": null for a group that never had tags.
+        for ref, repository in (
+            ("refs/pull/1/merge", "microsoft/AzureTRE"),
+            ("refs/heads/main", "microsoft/AzureTRE"),
+            ("refs/heads/main", "contoso/AzureTRE"),
+        ):
+            with self.subTest(ref=ref, repository=repository):
+                self.config = {"exists": True, "tags": None}
+                self.env.update(TF_VAR_ci_git_ref=ref, TF_VAR_ci_repository=repository)
+                result = self.run_bootstrap()
+                self.assertEqual(result.returncode, 39, result.stderr)
+                self.assertEqual(self.tags(), {"ci_git_ref": ref, "ci_repository": repository})
 
     def test_non_ci_lookup_failure_stops_bootstrap(self):
         self.config["exists_error"] = True

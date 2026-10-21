@@ -21,10 +21,7 @@ STORAGE_NAME = "validationnevercreated"
 
 def discovery():
     # Keep this query identical to the cleanup inventory in clean_ci_validation_envs.sh.
-    return (
-        f"[?starts_with(name, 'rg-{environment_prefix()}')]"
-        ".{name:name, ci_git_ref:tags.ci_git_ref, ci_repository:tags.ci_repository}"
-    )
+    return f"[?starts_with(name, 'rg-{environment_prefix()}')].{{name:name, tags:tags}}"
 
 
 class ValidationError(Exception):

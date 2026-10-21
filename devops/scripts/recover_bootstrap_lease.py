@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote
 
-from ci_environment_id import environment_id, environment_prefix, repository_owns
+from ci_environment_id import ci_tags, environment_id, environment_prefix, repository_owns
 
 
 class RecoveryError(RuntimeError):
@@ -104,7 +104,7 @@ def verify_owner(ctx):
         "The management resource group identity does not match.",
     )
     require(
-        isinstance(group.get("tags"), dict) and group["tags"].get("ci_git_ref") == ctx["ref"],
+        isinstance(group.get("tags"), dict) and ci_tags(group["tags"]).get("ci_git_ref") == ctx["ref"],
         "The management resource group is not tagged for this PR.",
     )
     require(
@@ -464,7 +464,7 @@ def main():
             verify_owner(ctx)
         elif args.operation == "recover":
             recover(ctx)
-    except (RecoveryError, OSError, subprocess.TimeoutExpired) as error:
+    except (RecoveryError, ValueError, OSError, subprocess.TimeoutExpired) as error:
         print(f"ERROR: Bootstrap lease recovery refused: {error}", file=sys.stderr)
         return 1
     return 0

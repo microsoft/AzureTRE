@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
-from ci_environment_id import environment_id, environment_prefix, repository_owns  # noqa: E402
+from ci_environment_id import ci_tags, environment_id, environment_prefix, repository_owns  # noqa: E402
 
 
 class EnvironmentTests(unittest.TestCase):
@@ -139,6 +139,17 @@ class RepositoryOwnershipTests(unittest.TestCase):
         self.assertFalse(repository_owns(tags, "microsoft/AzureTRE"))
         self.assertFalse(repository_owns(tags, ""))
         self.assertFalse(repository_owns({"ci_repository": 3}, "contoso/AzureTRE"))
+
+    def test_tag_names_in_another_case_keep_their_owner(self):
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        tags = {"CI_Git_Ref": "refs/pull/1/merge", "CI_Repository": "contoso/AzureTRE"}
+        self.assertTrue(repository_owns(tags, "contoso/AzureTRE", "tre"))
+        self.assertFalse(repository_owns(tags, "microsoft/AzureTRE", "tre"))
+        self.assertEqual(ci_tags(tags), {"ci_git_ref": "refs/pull/1/merge", "ci_repository": "contoso/AzureTRE"})
+
+    def test_tag_names_that_differ_only_in_case_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "differ only in case"):
+            repository_owns({"ci_repository": "microsoft/AzureTRE", "CI_Repository": "contoso/AzureTRE"}, "x/y")
 
 
 if __name__ == "__main__":

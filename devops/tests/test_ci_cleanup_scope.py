@@ -242,6 +242,21 @@ class ScopeTests(unittest.TestCase):
                 {"rg-trea": self.ctx["ref"], "rg-treb": self.ctx["ref"], "rg-trec": scope.FOREIGN_OWNER},
             )
 
+    def test_inventory_reads_tag_names_in_any_case(self):
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        def group(name, owner):
+            tags = {"CI_Git_Ref": self.ctx["ref"], **({"CI_Repository": owner} if owner else {})}
+            return {"name": name, "id": "/subscriptions/sub/resourceGroups/" + name, "tags": tags}
+
+        groups = [group("rg-trea", None), group("rg-treb", "microsoft/AzureTRE"), group("rg-trec", "contoso/AzureTRE")]
+        with patch.object(
+            scope.subprocess, "check_output", side_effect=[json.dumps({"id": "sub"}), json.dumps(groups)]
+        ):
+            self.assertEqual(
+                scope.inventory(),
+                {"rg-trea": self.ctx["ref"], "rg-treb": self.ctx["ref"], "rg-trec": scope.FOREIGN_OWNER},
+            )
+
     def test_plan_rejects_invalid_refs_and_matrix_overflow(self):
         for groups in (
             {"rg-trex": 123},

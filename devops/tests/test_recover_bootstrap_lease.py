@@ -79,6 +79,7 @@ class RecoveryTests(unittest.TestCase):
         self.exists = True
         self.group_tag = self.ctx["ref"]
         self.group_owner = {}
+        self.ref_tag_name = "ci_git_ref"
         self.group_id = "/subscriptions/test-subscription/resourceGroups/rg-trea66984da-mgmt"
         self.account_id = self.group_id + "/providers/Microsoft.Storage/storageAccounts/trea66984damgmt"
         self.status_data = {}
@@ -112,7 +113,7 @@ class RecoveryTests(unittest.TestCase):
             self.group_reads += 1
             if self.group_reads == 2 and self.change_on_second_group_read:
                 self.group_tag = self.change_on_second_group_read
-            return {"id": self.group_id, "tags": {"ci_git_ref": self.group_tag, **self.group_owner}}
+            return {"id": self.group_id, "tags": {self.ref_tag_name: self.group_tag, **self.group_owner}}
         if args[:3] == ("storage", "account", "show"):
             return {"id": self.account_id}
         self.assertEqual(args[:2], ("storage", "blob"))
@@ -224,8 +225,28 @@ class RecoveryTests(unittest.TestCase):
     def test_group_tagged_by_another_repository_is_refused(self):
         self.group_owner = {"ci_repository": "contoso/AzureTRE"}
         self.assert_refused()
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        self.group_owner = {"CI_Repository": "contoso/AzureTRE"}
+        self.assert_refused()
         self.group_owner = {"ci_repository": "microsoft/AzureTRE"}
         recovery.verify_owner(self.ctx)
+
+    def test_tag_names_in_another_case_are_read(self):
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        self.ref_tag_name = "CI_Git_Ref"
+        self.group_owner = {"CI_Repository": "microsoft/AzureTRE"}
+        recovery.verify_owner(self.ctx)
+
+    def test_tag_names_that_differ_only_in_case_are_refused_with_a_message(self):
+        self.group_owner = {"ci_repository": "microsoft/AzureTRE", "CI_Repository": "contoso/AzureTRE"}
+        stderr = io.StringIO()
+        with (
+            patch.object(recovery, "context", return_value=self.ctx),
+            patch.object(sys, "argv", ["recover_bootstrap_lease.py", "verify-owner"]),
+            patch.object(sys, "stderr", stderr),
+        ):
+            self.assertEqual(recovery.main(), 1)
+        self.assertIn("Bootstrap lease recovery refused: Tag names differ only in case.", stderr.getvalue())
 
     def test_fork_with_the_default_prefix_refuses_an_untagged_group(self):
         # An untagged group with the tre prefix can hold an upstream bootstrap lease.

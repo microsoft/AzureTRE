@@ -45,7 +45,10 @@ case "$group_exists" in
     fi
     # Never take over a group that another repository's CI tagged, also outside lease recovery.
     if [[ -n "${TF_VAR_ci_repository:-}" ]] && (( ${#ci_tags[@]} )); then
-      current_owner=$(az group show --name "$TF_VAR_mgmt_resource_group_name" --query "tags.ci_repository" --output tsv)
+      # Azure tag names are not case-sensitive, so read the owner tag with any case. Read the whole
+      # group, because az prints nothing for a query result of null, for example a group without tags.
+      current_owner=$(az group show --name "$TF_VAR_mgmt_resource_group_name" --output json \
+        | python3 -c 'import json, sys; sys.path.insert(0, "../scripts"); from ci_environment_id import ci_tags; print(ci_tags(json.load(sys.stdin).get("tags")).get("ci_repository") or "")')
       if [[ -n "${current_owner}" && "${current_owner,,}" != "${TF_VAR_ci_repository,,}" ]]; then
         echo "ERROR: The management resource group belongs to the CI of ${current_owner}." >&2
         exit 1

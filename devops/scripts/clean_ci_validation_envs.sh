@@ -112,12 +112,17 @@ open_prs=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls?state=open&per_pa
 # core group, even if the core group disappears during this sweep. Untagged groups
 # are never independent cleanup targets, including legacy management orphans.
 resource_groups=$(az group list \
-  --query "[?starts_with(name, 'rg-${ci_env_prefix}')].{name:name, ci_git_ref:tags.ci_git_ref, ci_repository:tags.ci_repository}" \
+  --query "[?starts_with(name, 'rg-${ci_env_prefix}')].{name:name, tags:tags}" \
   -o json)
 cleanup_groups=$(jq -rs --arg prefix "rg-${ci_env_prefix}" --arg repo "${GITHUB_REPOSITORY}" '
   if length != 1 then error("Expected one resource group list") else .[0] end |
-  if type != "array" then error("Invalid resource group list")
-  elif any(.[]; (.name | type) != "string" or (.ci_git_ref != null and (.ci_git_ref | type) != "string")
+  if type != "array" or any(.[]; (.tags | type) != "object" and .tags != null) then error("Invalid resource group list")
+  # Azure tag names are not case-sensitive. Read the CI tags with any case.
+  elif any(.[]; (.tags // {} | keys | length) != (.tags // {} | keys | map(ascii_downcase) | unique | length)) then
+    error("Tag names differ only in case")
+  else map((.tags // {} | with_entries(.key |= ascii_downcase)) as $tags
+      | {name, ci_git_ref: $tags.ci_git_ref, ci_repository: $tags.ci_repository}) end |
+  if any(.[]; (.name | type) != "string" or (.ci_git_ref != null and (.ci_git_ref | type) != "string")
       or (.ci_repository != null and (.ci_repository | type) != "string")) then
     error("Invalid resource group details")
   else . as $groups | .[]

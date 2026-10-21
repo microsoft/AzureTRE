@@ -26,9 +26,17 @@ def environment_prefix(value=None):
     return prefix
 
 
+def ci_tags(tags):
+    """Return the tags with lowercase names, because Azure tag names are not case-sensitive."""
+    result = {name.lower(): value for name, value in (tags or {}).items()}
+    if len(result) != len(tags or {}):
+        raise ValueError("Tag names differ only in case.")
+    return result
+
+
 def repository_owns(tags, repository, prefix=None):
     """Refuse groups that another repository tagged. Groups from before the tag carry no owner."""
-    owner = (tags or {}).get(REPOSITORY_TAG)
+    owner = ci_tags(tags).get(REPOSITORY_TAG)
     if owner is None:
         # Before the tag existed, only the upstream CI created groups with the default prefix.
         prefix = environment_prefix() if prefix is None else prefix

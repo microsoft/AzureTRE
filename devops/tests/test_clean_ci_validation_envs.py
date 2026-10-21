@@ -73,7 +73,7 @@ elif command == "gh":
 elif command == "az":
     if args[:2] == ["group", "list"]:
         query = args[args.index("--query") + 1]
-        if "ci_git_ref" in query:
+        if "tags:tags" in query:
             if config.get("group_list_error"):
                 sys.exit(1)
             if "bad_group_response" in config:
@@ -81,10 +81,10 @@ elif command == "az":
                 sys.exit(0)
             prefix = re.search(r"starts_with\(name, '([^']+)'\)", query).group(1)
             rows = [row.split("\t") for row in config["groups"]]
+            names = config.get("tag_names", {"ci_git_ref": "ci_git_ref", "ci_repository": "ci_repository"})
             print(json.dumps([{
                 "name": row[0],
-                "ci_git_ref": row[1] if len(row) > 1 else None,
-                "ci_repository": row[2] if len(row) > 2 else None,
+                "tags": {names[key]: value for key, value in zip(("ci_git_ref", "ci_repository"), row[1:])} or None,
             } for row in rows if config.get("unfiltered_query") or row[0].startswith(prefix)]))
         elif config.get("real_destroy") and query.endswith(".[name]"):
             if config.get("destroy_list_error"):
@@ -314,6 +314,19 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"]])
 
+    def test_tag_names_in_another_case_keep_their_owner(self):
+        # Azure tag names are not case-sensitive, and Azure returns the case that created the tag.
+        self.config["tag_names"] = {"ci_git_ref": "CI_Git_Ref", "ci_repository": "CI_Repository"}
+        for owner, actions in (
+            ("contoso/AzureTRE", []),
+            ("microsoft/AzureTRE", [["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-tretest"]]),
+        ):
+            with self.subTest(owner=owner):
+                self.config.update(groups=[f"rg-tretest\trefs/pull/5085/merge\t{owner}"], open_prs=[])
+                result = self.run_cleanup()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.environment_actions(), actions)
+
     def test_fork_prefix_selects_only_fork_groups(self):
         self.env.update(GITHUB_REPOSITORY="contoso/AzureTRE", CI_ENV_PREFIX="frk")
         self.config.update(
@@ -324,7 +337,7 @@ class CleanupTests(unittest.TestCase):
         result = self.run_cleanup()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.environment_actions(), [["destroy_env_no_terraform.sh", "--core-tre-rg", "rg-frktest"]])
-        group_lists = [call for call in self.calls if call[:3] == ["az", "group", "list"] and "ci_git_ref" in str(call)]
+        group_lists = [call for call in self.calls if call[:3] == ["az", "group", "list"] and "tags:tags" in str(call)]
         self.assertTrue(group_lists and all("'rg-frk'" in str(call) for call in group_lists))
 
     def test_fork_with_the_default_prefix_cleans_only_its_tagged_groups(self):
@@ -702,8 +715,10 @@ class CleanupTests(unittest.TestCase):
             "null",
             "{}",
             "[{}]",
-            '[{"name": "rg-tretest-mgmt", "ci_git_ref": 42}]',
-            '[{"name": "rg-tretest", "ci_git_ref": "refs/pull/5085/merge", "ci_repository": 42}]',
+            '[{"name": "rg-tretest-mgmt", "tags": {"ci_git_ref": 42}}]',
+            '[{"name": "rg-tretest", "tags": {"ci_git_ref": "refs/pull/5085/merge", "ci_repository": 42}}]',
+            '[{"name": "rg-tretest", "tags": "ci_git_ref"}]',
+            '[{"name": "rg-tretest", "tags": {"ci_repository": "a/b", "CI_Repository": "c/d"}}]',
         ):
             with self.subTest(response=response):
                 self.config["bad_group_response"] = response
