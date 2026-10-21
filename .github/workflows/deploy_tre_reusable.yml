@@ -153,6 +153,7 @@ concurrency:
 
 env:
   CI_ENVIRONMENT_ID: ${{ inputs.ciEnvironmentId }}
+  CI_ENV_PREFIX: ${{ vars.CI_ENV_PREFIX }}
 
 jobs:
   verify_deployment_lock:
@@ -451,7 +452,9 @@ jobs:
       - name: Deploy TRE Core
         uses: ./.github/actions/devcontainer_run_command
         with:
-          COMMAND: "TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_LOG=${{ vars.TF_LOG }} make deploy-core"
+          COMMAND: >-
+            TF_VAR_ci_git_ref=${{ inputs.ciGitRef }} TF_VAR_ci_repository=${{ github.repository }}
+            TF_LOG=${{ vars.TF_LOG }} make deploy-core
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

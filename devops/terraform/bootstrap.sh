@@ -26,6 +26,15 @@ check_role_assignments() {
 
 # Baseline Azure resources
 echo -e "\n\e[34m»»» 🤖 \e[96mCreating resource group and storage account\e[0m..."
+# The repository tag names the CI owner. Cleanup refuses groups that another repository tagged.
+ci_tags=()
+if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+  ci_tags=("ci_git_ref=$TF_VAR_ci_git_ref")
+  if [[ -n "${TF_VAR_ci_repository:-}" ]]; then
+    ci_tags+=("ci_repository=$TF_VAR_ci_repository")
+  fi
+fi
+
 # shellcheck disable=SC2154
 group_exists=$(az group exists --name "$TF_VAR_mgmt_resource_group_name" --output json)
 case "$group_exists" in
@@ -34,17 +43,33 @@ case "$group_exists" in
     if [[ "${CI_BOOTSTRAP_LEASE_RECOVERY:-false}" == true ]]; then
       python3 ../scripts/recover_bootstrap_lease.py verify-owner
     fi
+    # Never take over a group that another repository's CI tagged, also outside lease recovery.
+    if [[ -n "${TF_VAR_ci_repository:-}" ]] && (( ${#ci_tags[@]} )); then
+      current_owner=$(az group show --name "$TF_VAR_mgmt_resource_group_name" --query "tags.ci_repository" --output tsv)
+      if [[ -n "${current_owner}" && "${current_owner,,}" != "${TF_VAR_ci_repository,,}" ]]; then
+        echo "ERROR: The management resource group belongs to the CI of ${current_owner}." >&2
+        exit 1
+      fi
+      # Keep this rule identical to repository_owns() in ci_environment_id.py. Main groups use
+      # configured names, so the rule applies to PR and branch environments only.
+      if [[ -z "${current_owner}" && "${TF_VAR_ci_git_ref}" != refs/heads/main && "${CI_ENV_PREFIX:-tre}" == tre \
+        && "${TF_VAR_ci_repository,,}" != "microsoft/azuretre" ]]; then
+        echo "ERROR: The untagged management resource group can belong to the upstream CI." >&2
+        echo "If this repository created it, tag the core and management groups with ci_repository=${TF_VAR_ci_repository}." >&2
+        exit 1
+      fi
+    fi
     # Creating an existing group without tags clears its tags. Preserve them on reruns.
-    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+    if (( ${#ci_tags[@]} )); then
       az group update --name "$TF_VAR_mgmt_resource_group_name" \
-        --set "tags.ci_git_ref=$TF_VAR_ci_git_ref" -o table
+        --set "${ci_tags[@]/#/tags.}" -o table
     fi
     ;;
   false)
     # Tag new CI groups before any later bootstrap step can fail.
-    if [[ -n "${TF_VAR_ci_git_ref:-}" ]]; then
+    if (( ${#ci_tags[@]} )); then
       az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" \
-        --tags "ci_git_ref=$TF_VAR_ci_git_ref" -o table
+        --tags "${ci_tags[@]}" -o table
     else
       az group create --resource-group "$TF_VAR_mgmt_resource_group_name" --location "$LOCATION" -o table
     fi

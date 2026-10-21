@@ -1,6 +1,7 @@
 """Verify cleanup ownership, pagination and the shared workflow lock contract."""
 
 from copy import deepcopy
+from datetime import date
 from contextlib import redirect_stderr, redirect_stdout
 import importlib.util
 import io
@@ -27,6 +28,7 @@ class ScopeTests(unittest.TestCase):
             {
                 "GITHUB_ACTIONS": "true",
                 "GITHUB_REPOSITORY": "microsoft/AzureTRE",
+                "CI_ENV_PREFIX": "",
                 "GITHUB_RUN_ID": "123",
                 "GITHUB_RUN_ATTEMPT": "2",
                 "CI_CLEANUP_REF": "refs/pull/51/merge",
@@ -182,6 +184,64 @@ class ScopeTests(unittest.TestCase):
         self.assertEqual(scope.references(groups), ["refs/heads/feature/test", "refs/heads/main", "refs/pull/51/merge"])
         self.assertEqual(scope.references({}), ["refs/heads/main"])
 
+    def test_plan_selects_only_the_configured_prefix(self):
+        groups = {"rg-treaaaa1111": "refs/pull/51/merge", "rg-frkbbbb2222": "refs/pull/52/merge"}
+        self.assertEqual(scope.references(groups), ["refs/heads/main", "refs/pull/51/merge"])
+        with patch.dict(os.environ, {"CI_ENV_PREFIX": "frk"}):
+            self.assertEqual(scope.references(groups), ["refs/heads/main", "refs/pull/52/merge"])
+        with patch.dict(os.environ, {"CI_ENV_PREFIX": "frktre"}), self.assertRaises(ValueError):
+            scope.references(groups)
+
+    def test_plan_keeps_the_main_sweep_without_a_prefix(self):
+        with (
+            patch.dict(os.environ, {"GITHUB_REPOSITORY": "contoso/AzureTRE", "CI_ENV_PREFIX": ""}),
+            patch.object(scope, "inventory") as inventory,
+            redirect_stderr(io.StringIO()) as stderr,
+        ):
+            self.assertEqual(scope.plan(), ["refs/heads/main"])
+        inventory.assert_not_called()
+        self.assertTrue(stderr.getvalue().startswith("::warning title=CI cleanup scope::Set the CI_ENV_PREFIX"))
+
+    def test_plan_fails_for_an_invalid_prefix(self):
+        for repository in ("contoso/AzureTRE", "microsoft/AzureTRE"):
+            with (
+                self.subTest(repository=repository),
+                patch.dict(os.environ, {"GITHUB_REPOSITORY": repository, "CI_ENV_PREFIX": "FRK"}),
+                patch.object(scope, "inventory") as inventory,
+                self.assertRaises(ValueError),
+            ):
+                scope.plan()
+            inventory.assert_not_called()
+
+    def test_plan_skips_groups_owned_by_another_repository(self):
+        groups = {"rg-treaaaa1111": scope.FOREIGN_OWNER, "rg-trebbbb2222": "refs/pull/52/merge"}
+        self.assertEqual(scope.references(groups), ["refs/heads/main", "refs/pull/52/merge"])
+
+    def test_target_refuses_a_sibling_owned_by_another_repository(self):
+        ref = self.ctx["ref"]
+        with self.assertRaises(scope.RecoveryError):
+            scope.verify_target(
+                {"rg-treaaaa1111": ref, "rg-treaaaa1111-mgmt": scope.FOREIGN_OWNER}, ref, "rg-treaaaa1111"
+            )
+        with patch.dict(os.environ, {"CI_ENV_PREFIX": "frk"}):
+            scope.verify_target({"rg-frkaaaa1111": ref}, ref, "rg-frkaaaa1111")
+            with self.assertRaises(scope.RecoveryError):
+                scope.verify_target({"rg-treaaaa1111": ref}, ref, "rg-treaaaa1111")
+
+    def test_inventory_marks_groups_tagged_by_another_repository(self):
+        def group(name, owner):
+            tags = {"ci_git_ref": self.ctx["ref"], **({"ci_repository": owner} if owner else {})}
+            return {"name": name, "id": "/subscriptions/sub/resourceGroups/" + name, "tags": tags}
+
+        groups = [group("rg-trea", None), group("rg-treb", "microsoft/AzureTRE"), group("rg-trec", "contoso/AzureTRE")]
+        with patch.object(
+            scope.subprocess, "check_output", side_effect=[json.dumps({"id": "sub"}), json.dumps(groups)]
+        ):
+            self.assertEqual(
+                scope.inventory(),
+                {"rg-trea": self.ctx["ref"], "rg-treb": self.ctx["ref"], "rg-trec": scope.FOREIGN_OWNER},
+            )
+
     def test_plan_rejects_invalid_refs_and_matrix_overflow(self):
         for groups in (
             {"rg-trex": 123},
@@ -231,6 +291,98 @@ class ScopeTests(unittest.TestCase):
             self.assertRaises(scope.RecoveryError),
         ):
             scope.inventory()
+
+
+class KeepTagTests(unittest.TestCase):
+    TODAY = date(2026, 10, 20)
+
+    def setUp(self):
+        self.env = patch.dict(
+            os.environ,
+            {
+                "GITHUB_ACTIONS": "true",
+                "GITHUB_REPOSITORY": "microsoft/AzureTRE",
+                "CI_ENV_PREFIX": "",
+                "GITHUB_RUN_ID": "123",
+                "GITHUB_RUN_ATTEMPT": "2",
+                "CI_CLEANUP_REF": "refs/pull/51/merge",
+                "AZURE_SUBSCRIPTION_ID": "sub",
+            },
+            clear=True,
+        )
+        self.env.start()
+        self.addCleanup(self.env.stop)
+        self.owner = [{"run_id": 123, "job_id": 10, "status": "in_progress"}]
+
+    def test_forever_and_dates_from_today_keep_the_group(self):
+        for value in ("forever", " Forever ", "2026-10-20", "2027-01-01"):
+            with self.subTest(value=value):
+                self.assertIsNotNone(scope.keep_reason({"ci_keep_until": value}, self.TODAY))
+
+    def test_past_date_or_no_tag_allows_destruction(self):
+        for tags in ({}, {"ci_keep_until": "2026-10-19"}, {"other": "forever"}):
+            with self.subTest(tags=tags):
+                self.assertIsNone(scope.keep_reason(tags, self.TODAY))
+
+    def test_tag_name_is_case_insensitive_like_azure(self):
+        self.assertIsNotNone(scope.keep_reason({"CI_Keep_Until": "forever"}, self.TODAY))
+
+    def test_invalid_value_keeps_the_group(self):
+        for value in ("", "true", "2026-13-01", "2026-02-30", "20261101", "2026-10-20T00:00", None, 5):
+            with self.subTest(value=value):
+                self.assertIn("invalid value", scope.keep_reason({"ci_keep_until": value}, self.TODAY))
+
+    def test_keep_tag_on_either_group_of_the_pair_applies(self):
+        for tagged in ("rg-tretest", "rg-tretest-mgmt"):
+            for target in ("rg-tretest", "rg-tretest-mgmt"):
+                with self.subTest(tagged=tagged, target=target):
+                    tags = {"rg-tretest": {}, "rg-tretest-mgmt": {}, tagged: {"ci_keep_until": "forever"}}
+                    with patch.object(scope, "group_tags", return_value=tags):
+                        self.assertTrue(scope.kept(target, self.TODAY).startswith(tagged + ":"))
+
+    def test_keep_tag_on_another_group_does_not_apply(self):
+        tags = {"rg-tretest": {}, "rg-tretestother": {"ci_keep_until": "forever"}}
+        with patch.object(scope, "group_tags", return_value=tags):
+            self.assertIsNone(scope.kept("rg-tretest", self.TODAY))
+
+    def may_clean(self, tags, allowed=True):
+        output, error = io.StringIO(), io.StringIO()
+        with (
+            patch.object(sys, "argv", ["ci_cleanup_scope.py", "may-clean", "--group", "rg-tretest"]),
+            patch.object(scope, "verify_lock", return_value=self.owner),
+            patch.object(scope, "inventory", return_value={"rg-tretest": "refs/pull/51/merge"}),
+            patch.object(scope, "mutation_allowed", return_value=allowed),
+            patch.object(scope, "group_tags", return_value=tags) as read,
+            redirect_stdout(output),
+            redirect_stderr(error),
+        ):
+            code = scope.main()
+        return code, output.getvalue(), error.getvalue(), read.call_count
+
+    def test_kept_group_answers_keep_with_an_annotation(self):
+        code, output, error, _ = self.may_clean({"rg-tretest-mgmt": {"ci_keep_until": "forever"}})
+        self.assertEqual((code, output), (0, "keep\n"))
+        self.assertIn("::warning title=CI cleanup keep::Keeping rg-tretest-mgmt: ci_keep_until is forever", error)
+        self.assertIn("does not stop or destroy it", error)
+
+    def test_deferred_cleanup_stays_deferred_without_reading_tags(self):
+        code, output, _, reads = self.may_clean({"rg-tretest": {"ci_keep_until": "forever"}}, False)
+        self.assertEqual((code, output, reads), (0, "defer\n", 0))
+
+    def test_cleanup_without_a_current_keep_tag_proceeds(self):
+        code, output, error, _ = self.may_clean({"rg-tretest": {"ci_keep_until": "2000-01-01"}})
+        self.assertEqual((code, output, error), (0, "proceed\n", ""))
+
+    def test_tag_text_cannot_start_another_workflow_command(self):
+        value = "x\r\n::error::injected%"
+        code, output, error, _ = self.may_clean({"rg-tretest": {"ci_keep_until": value}})
+        self.assertEqual((code, output), (0, "keep\n"))
+        self.assertEqual(len(error.strip().splitlines()), 1)
+        self.assertNotIn("\n::error", error)
+        self.assertIn("%25", error)
+
+    def test_annotation_escapes_line_breaks_and_percent(self):
+        self.assertEqual(scope.annotation("a%b\r\nc"), "a%25b%0D%0Ac")
 
 
 class WorkflowContractTests(unittest.TestCase):

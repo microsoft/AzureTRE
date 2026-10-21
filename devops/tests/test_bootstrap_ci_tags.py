@@ -33,13 +33,19 @@ elif args[:2] in (["group", "create"], ["group", "update"]):
         sys.exit(38)
     # Azure group create replaces tags, including clearing them when omitted.
     tags = {} if args[:2] == ["group", "create"] else (config.get("tags") or {}).copy()
+    def values(option):
+        start = args.index(option) + 1
+        return args[start : args.index("-o", start)]  # noqa: E203
+
     if "--tags" in args:
-        key, value = args[args.index("--tags") + 1].split("=", 1)
-        tags = {key: value}
+        tags = dict(item.split("=", 1) for item in values("--tags"))
     if "--set" in args:
-        key, value = args[args.index("--set") + 1].split("=", 1)
-        tags[key.removeprefix("tags.")] = value
+        for item in values("--set"):
+            key, value = item.split("=", 1)
+            tags[key.removeprefix("tags.")] = value
     (root / "tags.json").write_text(json.dumps(tags))
+elif args[:2] == ["group", "show"] and args[args.index("--query") + 1] == "tags.ci_repository":
+    print((config.get("tags") or {}).get("ci_repository", ""))
 elif args[:2] == ["storage", "account"]:
     # Stop before network access, identity lookup or Terraform. The ownership tag
     # must already exist even when storage account creation fails.
@@ -121,6 +127,69 @@ class BootstrapCiTagsTests(unittest.TestCase):
         )
         self.assertEqual(self.calls[1][:2], ["group", "update"])
         self.assertFalse(any(call[:2] == ["group", "create"] for call in self.calls))
+
+    def test_new_group_records_the_ci_repository(self):
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/5033/merge"
+        self.env["TF_VAR_ci_repository"] = "contoso/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+        self.assertEqual(self.tags(), {"ci_git_ref": "refs/pull/5033/merge", "ci_repository": "contoso/AzureTRE"})
+
+    def test_existing_group_records_the_ci_repository(self):
+        self.config = {"exists": True, "tags": {"owner": "platform"}}
+        self.env["CI_ENV_PREFIX"] = "frk"
+        self.env["TF_VAR_ci_git_ref"] = "refs/heads/feature/test"
+        self.env["TF_VAR_ci_repository"] = "contoso/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+        self.assertEqual(
+            self.tags(),
+            {"owner": "platform", "ci_git_ref": "refs/heads/feature/test", "ci_repository": "contoso/AzureTRE"},
+        )
+
+    def test_existing_group_of_another_repository_is_refused(self):
+        self.config = {
+            "exists": True,
+            "tags": {"ci_git_ref": "refs/pull/1/merge", "ci_repository": "microsoft/AzureTRE"},
+        }
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/1/merge"
+        self.env["TF_VAR_ci_repository"] = "contoso/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("belongs to the CI of microsoft/AzureTRE", result.stderr)
+        self.assertFalse(any(call[:2] in (["group", "update"], ["storage", "account"]) for call in self.calls))
+        self.assertEqual(self.tags()["ci_repository"], "microsoft/AzureTRE")
+
+    def test_existing_group_of_the_same_repository_is_reused(self):
+        self.config = {"exists": True, "tags": {"ci_git_ref": "refs/pull/1/merge", "ci_repository": "Contoso/AzureTRE"}}
+        self.env["TF_VAR_ci_git_ref"] = "refs/pull/1/merge"
+        self.env["TF_VAR_ci_repository"] = "contoso/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+
+    def test_untagged_group_with_the_default_prefix_is_refused_in_a_fork(self):
+        self.config = {"exists": True, "tags": {"ci_git_ref": "refs/pull/1/merge"}}
+        self.env.update(TF_VAR_ci_git_ref="refs/pull/1/merge", TF_VAR_ci_repository="contoso/AzureTRE")
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("can belong to the upstream CI", result.stderr)
+        self.assertFalse(any(call[:2] == ["group", "update"] for call in self.calls))
+
+    def test_untagged_group_is_adopted_by_upstream_and_by_main_deployments(self):
+        for repository, ref in (("microsoft/AzureTRE", "refs/pull/1/merge"), ("contoso/AzureTRE", "refs/heads/main")):
+            with self.subTest(repository=repository):
+                (self.root / "tags.json").unlink(missing_ok=True)
+                self.config = {"exists": True, "tags": {"ci_git_ref": ref}}
+                self.env.update(TF_VAR_ci_git_ref=ref, TF_VAR_ci_repository=repository)
+                result = self.run_bootstrap()
+                self.assertEqual(result.returncode, 39, result.stderr)
+                self.assertEqual(self.tags()["ci_repository"], repository)
+
+    def test_repository_without_ci_reference_adds_no_tags(self):
+        self.env["TF_VAR_ci_repository"] = "contoso/AzureTRE"
+        result = self.run_bootstrap()
+        self.assertEqual(result.returncode, 39, result.stderr)
+        self.assertNotIn("--tags", self.calls[1])
 
     def test_ci_reference_is_a_single_literal_argument(self):
         self.env["TF_VAR_ci_git_ref"] = 'refs/heads/feature/$(false);"quoted"'

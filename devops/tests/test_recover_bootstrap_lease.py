@@ -78,6 +78,7 @@ class RecoveryTests(unittest.TestCase):
         self.activity = []
         self.exists = True
         self.group_tag = self.ctx["ref"]
+        self.group_owner = {}
         self.group_id = "/subscriptions/test-subscription/resourceGroups/rg-trea66984da-mgmt"
         self.account_id = self.group_id + "/providers/Microsoft.Storage/storageAccounts/trea66984damgmt"
         self.status_data = {}
@@ -111,7 +112,7 @@ class RecoveryTests(unittest.TestCase):
             self.group_reads += 1
             if self.group_reads == 2 and self.change_on_second_group_read:
                 self.group_tag = self.change_on_second_group_read
-            return {"id": self.group_id, "tags": {"ci_git_ref": self.group_tag}}
+            return {"id": self.group_id, "tags": {"ci_git_ref": self.group_tag, **self.group_owner}}
         if args[:3] == ("storage", "account", "show"):
             return {"id": self.account_id}
         self.assertEqual(args[:2], ("storage", "blob"))
@@ -219,6 +220,35 @@ class RecoveryTests(unittest.TestCase):
                 setattr(self, key, value)
                 self.assert_refused()
                 setattr(self, key, original)
+
+    def test_group_tagged_by_another_repository_is_refused(self):
+        self.group_owner = {"ci_repository": "contoso/AzureTRE"}
+        self.assert_refused()
+        self.group_owner = {"ci_repository": "microsoft/AzureTRE"}
+        recovery.verify_owner(self.ctx)
+
+    def test_fork_with_the_default_prefix_refuses_an_untagged_group(self):
+        # An untagged group with the tre prefix can hold an upstream bootstrap lease.
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "contoso/AzureTRE", "CI_ENV_PREFIX": "tre"}):
+            self.ctx = recovery.context()
+        with self.assertRaisesRegex(recovery.RecoveryError, "Another repository owns"):
+            recovery.verify_owner(self.ctx)
+        self.group_owner = {"ci_repository": "contoso/AzureTRE"}
+        recovery.verify_owner(self.ctx)
+
+    def test_fork_prefix_selects_the_fork_backend(self):
+        fork = {
+            "CI_ENV_PREFIX": "frk",
+            "TF_VAR_mgmt_resource_group_name": "rg-frka66984da-mgmt",
+            "TF_VAR_mgmt_storage_account_name": "frka66984damgmt",
+        }
+        with patch.dict(os.environ, fork):
+            self.assertEqual(recovery.context()["group"], "rg-frka66984da-mgmt")
+            self.assertEqual(recovery.context()["account"], "frka66984damgmt")
+        with patch.dict(os.environ, {"CI_ENV_PREFIX": "frk"}), self.assertRaises(recovery.RecoveryError):
+            recovery.context()
+        with patch.dict(os.environ, {"CI_ENV_PREFIX": "frktre"}), self.assertRaises(recovery.RecoveryError):
+            recovery.context()
 
     def test_wrong_storage_account_identity_is_refused(self):
         self.account_id += "other"

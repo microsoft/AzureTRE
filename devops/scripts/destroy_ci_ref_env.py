@@ -2,12 +2,13 @@
 
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
 
-from ci_environment_id import validate_ref
+from ci_environment_id import environment_prefix, repository_owns, validate_ref
 
 
 def azure(subscription, *args):
@@ -24,7 +25,8 @@ def azure(subscription, *args):
     return json.loads(result.stdout)
 
 
-def targets(groups, ref, subscription):
+def targets(groups, ref, subscription, repository):
+    pattern = rf"rg-{environment_prefix()}[0-9a-f]{{8}}(-mgmt)?"
     if not isinstance(groups, list):
         raise ValueError("Azure returned an incomplete resource group inventory.")
     inventory = {}
@@ -36,7 +38,7 @@ def targets(groups, ref, subscription):
         inventory[group["name"].lower()] = group
     selected = set()
     for name, group in inventory.items():
-        if not re.fullmatch(r"rg-tre[0-9a-f]{8}(-mgmt)?", name) or (group.get("tags") or {}).get("ci_git_ref") != ref:
+        if not re.fullmatch(pattern, name) or (group.get("tags") or {}).get("ci_git_ref") != ref:
             continue
         core = name.removesuffix("-mgmt")
         for sibling in (core, core + "-mgmt"):
@@ -47,6 +49,8 @@ def targets(groups, ref, subscription):
                     raise ValueError("The CI resource group identity does not match.")
                 if (value.get("tags") or {}).get("ci_git_ref") != ref:
                     raise ValueError("Core and management group ownership differs. Cleanup stopped.")
+                if not repository_owns(value.get("tags"), repository):
+                    raise ValueError("Another repository owns this CI environment. Cleanup stopped.")
         selected.add(core)
     return sorted(selected)
 
@@ -65,21 +69,25 @@ def destroy(ref, subscription):
     validate_ref(ref)
     if not re.fullmatch(r"[A-Za-z0-9-]+", subscription):
         raise ValueError("The Azure subscription is missing or invalid.")
+    # GitHub Actions sets GITHUB_REPOSITORY. Ownership cannot be checked without it.
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    if not repository:
+        raise ValueError("Set GITHUB_REPOSITORY to the repository that owns the CI environments.")
     verify_account(subscription)
-    groups = targets(azure(subscription, "group", "list"), ref, subscription)
+    groups = targets(azure(subscription, "group", "list"), ref, subscription, repository)
     if not groups:
         print("No CI environments found for the selected reference.")
     for group in groups:
         # The caller holds the deployment concurrency group for this reference.
         # Recheck ownership immediately before invoking the existing destroy helper.
         inventory = azure(subscription, "group", "list")
-        if group not in targets(inventory, ref, subscription):
+        if group not in targets(inventory, ref, subscription, repository):
             raise ValueError("CI resource group ownership changed. Cleanup stopped.")
         names = {row["name"].lower() for row in inventory}
         current = [
             azure(subscription, "group", "show", "--name", name) for name in (group, group + "-mgmt") if name in names
         ]
-        if targets(current, ref, subscription) != [group]:
+        if targets(current, ref, subscription, repository) != [group]:
             raise ValueError("CI resource group ownership changed. Cleanup stopped.")
         verify_account(subscription)
         print("Destroying CI environment " + group, flush=True)
