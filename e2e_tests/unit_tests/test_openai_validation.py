@@ -121,6 +121,12 @@ class ModelPrerequisiteTests(unittest.TestCase):
             {"BUNDLE_TYPE": "workspace_service", "BUNDLE_DIR": "./templates/workspace_services/openai"}, registrations
         )
 
+    def test_private_endpoint_waits_for_the_model_deployment(self):
+        source = (ROOT / "templates/workspace_services/openai/terraform/openai.tf").read_text()
+        endpoint = source.split('resource "azurerm_private_endpoint" "openai_private_endpoint" {', 1)[1]
+        endpoint = endpoint.split("\nresource ", 1)[0]
+        self.assertRegex(endpoint, r"depends_on\s*=\s*\[\s*azurerm_cognitive_deployment\.openai\s*\]")
+
 
 class PaginationTests(unittest.IsolatedAsyncioTestCase):
     async def test_pagination_retains_api_version_and_renews_credentials(self):
