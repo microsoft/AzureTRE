@@ -250,7 +250,7 @@ Use a dedicated AzureCloud environment with one writer and no existing CycleClou
 Publish and register the checkout firewall and CycleCloud bundles. Deploy the firewall before validation.
 Register the repaired CycleCloud bundle, version 0.7.10 or later, with `start` and `stop` actions.
 Accept the CycleCloud server image terms separately before the run. The test reads the agreement and regional image list. It does not accept terms.
-Check `Standard_DS3_v2` capacity and quota in the core region before deployment. Image availability does not prove VM capacity.
+Check `Standard_D4s_v5` capacity and quota in the core region before deployment. Image availability does not prove VM capacity.
 
 The case creates one server and checks its private VM address, DNS configuration, blob private endpoint, managed identity and firewall rules.
 It invokes stop/start through TRE and verifies the VM power states. It changes the overview to exercise a same-version Terraform upgrade and checks that the VM identity remains stable.

@@ -23,6 +23,8 @@ az vm image terms accept --urn almalinux:almalinux-hpc:8_5-hpc:latest
 
 Deploy the CycleCloud server using UI or API.
 
+The CycleCloud server uses the `Standard_D4s_v5` VM size. Before you deploy, make sure that your subscription can use this size in the TRE region. An upgrade from a version before 0.7.10 keeps the size of the existing server.
+
 To connect to the CycleCloud server, the TRE Administrator must connect to the CycleCloud server from the administration jumpbox. Use Azure Bastion to connect to the jumpbox a with the username `admin` and the select the password located in your core KeyVault. Connect to the CycleCloud server at the URL: `https://cyclecloud-{TRE_ID}.{LOCATION}.cloudapp.azure.com/`.
 
 - Provide a name for the cyclecloud server instance.

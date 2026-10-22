@@ -30,3 +30,11 @@ class CycleCloudBundleContractTests(unittest.TestCase):
         )
         vm_source = (BUNDLE / "terraform/cyclecloud.tf").read_text()
         self.assertIsNotNone(re.search(r'resource "azurerm_virtual_machine" "cyclecloud"', vm_source))
+
+    def test_new_servers_use_an_offered_size_and_upgrades_keep_the_size(self):
+        source = (BUNDLE / "terraform/cyclecloud.tf").read_text()
+        vm = source.split('resource "azurerm_virtual_machine" "cyclecloud" {', 1)[1].split("\n}", 1)[0]
+        self.assertRegex(vm, r'\n  vm_size\s*=\s*"Standard_D4s_v5"\n')
+        ignored = re.search(r"lifecycle\s*\{\s*ignore_changes\s*=\s*\[([^\]]*)\]", vm)
+        self.assertIsNotNone(ignored)
+        self.assertIn("vm_size", [name.strip() for name in ignored.group(1).split(",")])

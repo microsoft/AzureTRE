@@ -192,7 +192,7 @@ async def validate_resources(arm, settings, core, ids, identifier):
     vm = records["vm"]
     properties = vm["properties"]
     assert properties["provisioningState"] == "Succeeded"
-    assert properties["hardwareProfile"]["vmSize"] == "Standard_DS3_v2"
+    assert properties["hardwareProfile"]["vmSize"] == "Standard_D4s_v5"
     image = properties["storageProfile"]["imageReference"]
     assert (image["publisher"], image["offer"], image["sku"]) == ("azurecyclecloud", "azure-cyclecloud", "cyclecloud8")
     assert all(

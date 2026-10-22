@@ -29,7 +29,7 @@ resource "azurerm_virtual_machine" "cyclecloud" {
   location                         = data.azurerm_resource_group.rg.location
   resource_group_name              = data.azurerm_resource_group.rg.name
   network_interface_ids            = [azurerm_network_interface.cyclecloud.id]
-  vm_size                          = "Standard_DS3_v2"
+  vm_size                          = "Standard_D4s_v5"
   delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
@@ -70,7 +70,8 @@ resource "azurerm_virtual_machine" "cyclecloud" {
 
   tags = local.tre_shared_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  # Azure does not offer Standard_DS3_v2 to all subscriptions in all regions. Keep the size of servers made before 0.7.11.
+  lifecycle { ignore_changes = [tags, vm_size] }
 }
 
 

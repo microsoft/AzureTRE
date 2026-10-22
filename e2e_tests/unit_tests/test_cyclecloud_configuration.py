@@ -44,7 +44,7 @@ def fixture():
         },
         properties={
             "provisioningState": "Succeeded",
-            "hardwareProfile": {"vmSize": "Standard_DS3_v2"},
+            "hardwareProfile": {"vmSize": "Standard_D4s_v5"},
             "storageProfile": {
                 "imageReference": {
                     "publisher": "azurecyclecloud",
