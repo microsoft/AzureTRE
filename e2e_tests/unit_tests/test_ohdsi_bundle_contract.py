@@ -217,6 +217,16 @@ class BundleContractTests(unittest.TestCase):
         upload = source.split('resource "azurerm_storage_share_file" "config_local" {', 1)[1].split("\n}", 1)[0]
         self.assertRegex(upload, r"provider\s*=\s*azurerm\.shared_key")
 
+    def test_web_apps_join_the_subnet_after_the_postgres_subnet_writes(self):
+        terraform = BUNDLE / "terraform"
+
+        def depends_on(path, address):
+            block = (terraform / path).read_text().split(f'resource "azurerm_linux_web_app" "{address}" {{', 1)[1]
+            return block.split("depends_on = [", 1)[1].split("]", 1)[0]
+
+        self.assertIn("azurerm_postgresql_flexible_server.postgres", depends_on("atlas_ui.tf", "atlas_ui"))
+        self.assertIn("azurerm_linux_web_app.atlas_ui", depends_on("ohdsi_web_api.tf", "ohdsi_webapi"))
+
     def test_bootstrap_version_matches_pinned_image(self):
         source = (BUNDLE / "terraform/atlas_security.tf").read_text()
         self.assertRegex(source, r"WEB_API_VERSION\s*=\s*local.ohdsi_api_docker_image_tag")

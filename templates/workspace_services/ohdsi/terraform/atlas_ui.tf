@@ -70,6 +70,9 @@ resource "azurerm_linux_web_app" "atlas_ui" {
 
   depends_on = [
     azurerm_storage_share_file.config_local,
+    # Azure rejects the web app subnet link while another subnet write runs in the same VNet.
+    # The PostgreSQL server create makes the last write to the PostgreSQL subnet.
+    azurerm_postgresql_flexible_server.postgres,
   ]
 
   tags = local.tre_workspace_service_tags

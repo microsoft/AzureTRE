@@ -111,7 +111,9 @@ resource "azurerm_linux_web_app" "ohdsi_webapi" {
   tags = local.tre_workspace_service_tags
 
   depends_on = [
-    terraform_data.deployment_ohdsi_webapi_init
+    terraform_data.deployment_ohdsi_webapi_init,
+    # Link the two web apps to the web app subnet one after the other.
+    azurerm_linux_web_app.atlas_ui,
   ]
 
   lifecycle { ignore_changes = [tags] }
