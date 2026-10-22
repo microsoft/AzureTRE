@@ -227,6 +227,11 @@ class BundleContractTests(unittest.TestCase):
         self.assertIn("azurerm_postgresql_flexible_server.postgres", depends_on("atlas_ui.tf", "atlas_ui"))
         self.assertIn("azurerm_linux_web_app.atlas_ui", depends_on("ohdsi_web_api.tf", "ohdsi_webapi"))
 
+    def test_postgres_subnet_declares_the_endpoint_that_the_service_adds(self):
+        source = (BUNDLE / "terraform/atlas_database.tf").read_text()
+        subnet = source.split('resource "azurerm_subnet" "postgres" {', 1)[1].split("\n}", 1)[0]
+        self.assertRegex(subnet, r'service_endpoints\s*=\s*\["Microsoft\.Storage"\]')
+
     def test_bootstrap_version_matches_pinned_image(self):
         source = (BUNDLE / "terraform/atlas_security.tf").read_text()
         self.assertRegex(source, r"WEB_API_VERSION\s*=\s*local.ohdsi_api_docker_image_tag")

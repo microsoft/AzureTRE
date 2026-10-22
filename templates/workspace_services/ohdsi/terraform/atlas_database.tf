@@ -105,6 +105,8 @@ resource "azurerm_subnet" "postgres" {
   resource_group_name             = data.azurerm_resource_group.ws.name
   address_prefixes                = [var.address_space]
   default_outbound_access_enabled = false
+  # The PostgreSQL service adds this endpoint during the server create, so declare it to stop upgrades removing it.
+  service_endpoints = ["Microsoft.Storage"]
 
   delegation {
     name = "psql-delegation"
