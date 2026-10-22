@@ -132,22 +132,30 @@ describe('delegated deployment guard', () => {
   });
 });
 
-function prepare(job, location, ref, output) {
+// Pin the repository, so that the result does not depend on the runner that runs the tests.
+function prepare(job, location, ref, output, prefix = '', repository = prefix ? 'contoso/AzureTRE' : 'microsoft/AzureTRE') {
   const step = job.steps.find(value => value.id === 'environment-id' || value.id === 'run-id');
   execFileSync('bash', ['-c', step.run], {
     cwd: root,
     env: { ...process.env, CI_GIT_REF: ref, CI_LOCATION: location, CI_AZURE_ENVIRONMENT: 'AzureCloud',
-      GITHUB_REF: ref, GITHUB_SHA: 'test-commit', GITHUB_OUTPUT: output },
-    encoding: 'utf8'
+      CI_ENV_PREFIX: prefix, GITHUB_REPOSITORY: repository, GITHUB_REF: ref, GITHUB_SHA: 'test-commit', GITHUB_OUTPUT: output },
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe']
   });
-  return fs.readFileSync(output, 'utf8').trim().split('=').at(-1);
+  return Object.fromEntries(fs.readFileSync(output, 'utf8').trim().split('\n').map(line => line.split('=')));
 }
 
-function resolve(value, output) {
-  const match = value.match(/^\$\{\{\s*format\('([^']+)',\s*needs\.[^.]+\.outputs\.refid\)\s*\}\}$/);
+// Resolve the two expression forms the callers use for environment names.
+function resolve(value, outputs) {
+  const plain = value.match(/^\$\{\{\s*needs\.[^.]+\.outputs\.(refid|treid)\s*\}\}$/);
+  if (plain) return outputs[plain[1]];
+  const match = value.match(/^\$\{\{\s*format\('([^']+)',\s*needs\.[^.]+\.outputs\.(refid|treid)\)\s*\}\}$/);
   if (!match) throw new Error(`Unexpected environment name expression: ${value}`);
-  return match[1].replace('{0}', output);
+  return match[1].replace('{0}', outputs[match[2]]);
 }
+
+const NAMES = { TRE_ID: '', ACR_NAME: '', MGMT_RESOURCE_GROUP_NAME: 'rg-', MGMT_STORAGE_ACCOUNT_NAME: '',
+  ENCRYPTION_KV_NAME: '' };
 
 describe('regional CI workflow routing', () => {
   let directory;
@@ -247,16 +255,38 @@ describe('regional CI workflow routing', () => {
     const jobs = workflow(file).jobs;
     const first = prepare(jobs[preparation], 'swedencentral', ref, path.join(directory, 'first'));
     const second = prepare(jobs[preparation], 'switzerlandnorth', ref, path.join(directory, 'second'));
-    expect(second).not.toBe(first);
-    const names = { TRE_ID: 'tre', ACR_NAME: 'tre', MGMT_RESOURCE_GROUP_NAME: 'rg-tre',
-      MGMT_STORAGE_ACCOUNT_NAME: 'tre', ENCRYPTION_KV_NAME: 'tre' };
-    for (const [input, prefix] of Object.entries(names)) {
+    expect(second.refid).not.toBe(first.refid);
+    expect(second.treid).toBe(`tre${second.refid}`);
+    for (const [input, prefix] of Object.entries(NAMES)) {
       const expression = jobs[deployment].secrets[input];
       expect(resolve(expression, first)).not.toBe(resolve(expression, second));
-      expect(resolve(expression, second)).toContain(`${prefix}${second}`);
+      expect(resolve(expression, second)).toContain(`${prefix}tre${second.refid}`);
     }
     expect(jobs[deployment].with.ciEnvironmentId).toContain(`needs.${preparation}.outputs.refid`);
     expect(jobs[deployment].with.DEVCONTAINER_TAG).toContain(`needs.${preparation}.outputs.refid`);
+  });
+
+  test.each([
+    ['pr_comment_bot.yml', 'prepare_pr_env', 'run_test', 'refs/pull/5092/merge'],
+    ['deploy_tre_branch.yml', 'prepare-not-main', 'run-deploy-tre-not-main', 'refs/heads/fix/keyvault']
+  ])('%s gives a fork prefix to every environment resource name', (file, preparation, deployment, ref) => {
+    const jobs = workflow(file).jobs;
+    const step = jobs[preparation].steps.find(value => value.id === 'environment-id' || value.id === 'run-id');
+    expect(step.env.CI_ENV_PREFIX).toBe('${{ vars.CI_ENV_PREFIX }}');
+    const upstream = prepare(jobs[preparation], 'uksouth', ref, path.join(directory, 'upstream'));
+    const fork = prepare(jobs[preparation], 'uksouth', ref, path.join(directory, 'fork'), 'frk');
+    expect(fork.refid).toBe(upstream.refid);
+    expect(fork.treid).toBe(`frk${fork.refid}`);
+    for (const [input, prefix] of Object.entries(NAMES)) {
+      const expression = jobs[deployment].secrets[input];
+      expect(resolve(expression, upstream)).toContain(`${prefix}tre${upstream.refid}`);
+      expect(resolve(expression, fork)).toContain(`${prefix}frk${fork.refid}`);
+    }
+    expect(() => prepare(jobs[preparation], 'uksouth', ref, path.join(directory, 'long'), 'frktre'))
+      .toThrow(/3 lowercase letters or digits/);
+    // A fork without a prefix must stop before it can share upstream names.
+    expect(() => prepare(jobs[preparation], 'uksouth', ref, path.join(directory, 'unset'), '', 'contoso/AzureTRE'))
+      .toThrow(/Set the CI_ENV_PREFIX repository variable/);
   });
 
   test('PR preparation uses the same GitHub environment as deployment', () => {
@@ -278,6 +308,16 @@ describe('regional CI workflow routing', () => {
     expect(reusable.env.CI_ENVIRONMENT_ID).toBe('${{ inputs.ciEnvironmentId }}');
     const action = fs.readFileSync(path.join(root, '.github/actions/devcontainer_run_command/action.yml'), 'utf8');
     expect(action).toContain('-e CI_ENVIRONMENT_ID');
+    // The prefix and repository tag reach bootstrap, Terraform and lease recovery in the container.
+    expect(reusable.env.CI_ENV_PREFIX).toBe('${{ vars.CI_ENV_PREFIX }}');
+    expect(action).toContain('-e CI_ENV_PREFIX');
+    expect(action).toContain('-e TF_VAR_ci_repository');
+    expect(action).toContain("TF_VAR_ci_repository: ${{ inputs.CI_GIT_REF != '' && github.repository || '' }}");
+    // Deploy TRE Core sets the reference in its command, so it must set the repository there too.
+    const core = reusable.jobs.deploy_tre.steps.find(step => step.name === 'Deploy TRE Core');
+    expect(core.with.COMMAND).toContain('TF_VAR_ci_git_ref=${{ inputs.ciGitRef }}');
+    expect(core.with.COMMAND).toContain('TF_VAR_ci_repository=${{ github.repository }}');
+    expect(core.with.COMMAND).toContain('make deploy-core');
     expect(workflow('deploy_tre.yml').jobs).toBeDefined();
   });
 
@@ -289,6 +329,7 @@ describe('regional CI workflow routing', () => {
       const step = job.steps.find(value => value.name === 'Run deployment cleanup');
       expect(step.run).toContain('destroy_ci_ref_env.py --ref "$CI_GIT_REF" --subscription "$AZURE_SUBSCRIPTION_ID"');
       expect(step.env.CI_GIT_REF).toMatch(/outputs\.(ciGitRef|branchCiGitRef)/);
+      expect(step.env.CI_ENV_PREFIX).toBe('${{ vars.CI_ENV_PREFIX }}');
     }
   });
 });

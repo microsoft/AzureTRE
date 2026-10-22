@@ -150,6 +150,10 @@ When running `/test` multiple times on a PR, the same TRE ID and environment are
 
 The `/test-destroy-env` command also destroys the environment associated with the PR branch (created by running the `deploy_tre_branch` workflow).
 
+The command destroys only groups whose names start with `rg-<CI_ENV_PREFIX>` and that this repository owns. If a selected group has a `ci_repository` tag for another repository, the command stops with an error. It deletes no group. Outside `microsoft/AzureTRE`, the command needs the `CI_ENV_PREFIX` repository variable. See [Forks that share a subscription](../tre-admins/setup-instructions/workflows.md#forks-that-share-a-subscription).
+
+The command also destroys an environment that has a `ci_keep_until` tag. The tag protects an environment only from stop and destruction by the cleanup workflow. See [Keep a CI environment](../tre-admins/setup-instructions/workflows.md#keep-a-ci-environment).
+
 ### `/test-force-approve`
 
 This command records a waiver and marks the checks as completed. It does not run tests.
