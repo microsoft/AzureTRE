@@ -166,11 +166,64 @@ resource "azurerm_private_endpoint" "stgdfspe" {
   }
 }
 
+# Azure Backup fails the first storage registration in a new vault with CloudInternalError.
+# This step makes that first attempt, so that the registration below is not the first one.
+resource "terraform_data" "backup_registration_warm_up" {
+  count = var.enable_backup ? 1 : 0
+
+  input = {
+    container_url      = "https://management.azure.com${module.backup[0].vault_id}/backupFabrics/Azure/protectionContainers/StorageContainer;storage;${azurerm_resource_group.ws.name};${azurerm_storage_account.stg.name}?api-version=2023-04-01"
+    storage_account_id = azurerm_storage_account.stg.id
+    subscription_id    = data.azurerm_client_config.current.subscription_id
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+az login --identity --output none
+az account set --subscription "${self.input.subscription_id}"
+url="${self.input.container_url}"
+if az rest --method get --url "$url" --output none 2>/dev/null; then
+  echo "The storage account is already registered with the vault"
+  exit 0
+fi
+body='{"properties":{"backupManagementType":"AzureStorage","containerType":"StorageContainer","sourceResourceId":"${self.input.storage_account_id}"}}'
+operation=$(az rest --method put --url "$url" --body "$body" --debug 2>&1 | sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/p" | head -n 1 || true)
+status=Unknown
+if [ -n "$operation" ]; then
+  for attempt in $(seq 1 60); do
+    status=$(az rest --method get --url "$operation" --query status --output tsv 2>/dev/null || echo Unknown)
+    [ "$status" = "InProgress" ] || break
+    sleep 10
+  done
+else
+  sleep 120
+fi
+echo "The first registration attempt ended with status $status"
+if az rest --method get --url "$url" --output none 2>/dev/null; then
+  # Remove a successful first registration, so that Terraform creates and owns the registration.
+  az rest --method delete --url "$url" --output none
+  for attempt in $(seq 1 60); do
+    az rest --method get --url "$url" --output none 2>/dev/null || exit 0
+    sleep 10
+  done
+  echo "The storage account is still registered with the vault after 10 minutes" >&2
+  exit 1
+fi
+EOT
+  }
+}
+
 resource "azurerm_backup_container_storage_account" "storage_account" {
   count               = var.enable_backup ? 1 : 0
   resource_group_name = azurerm_resource_group.ws.name
   recovery_vault_name = module.backup[0].vault_name
   storage_account_id  = azurerm_storage_account.stg.id
+
+  depends_on = [
+    terraform_data.backup_registration_warm_up
+  ]
 }
 
 resource "terraform_data" "wait_for_backup_cleanup" {
