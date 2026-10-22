@@ -10,6 +10,7 @@ resource "local_file" "config_local" {
 }
 
 resource "azurerm_storage_share_file" "config_local" {
+  provider         = azurerm.shared_key
   name             = "config-local.js"
   storage_share_id = azurerm_storage_share.atlas_ui.id
   source           = local.config_local_file_path

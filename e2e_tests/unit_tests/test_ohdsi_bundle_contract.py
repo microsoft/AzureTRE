@@ -209,6 +209,14 @@ class BundleContractTests(unittest.TestCase):
             self.assertEqual(prop["arrayMatchField"], "name")
         self.assertLess(uninstall.index(cleanup[0]), next(i for i, s in enumerate(uninstall) if s["stepId"] == "main"))
 
+    def test_atlas_config_upload_uses_the_storage_account_key(self):
+        providers = (BUNDLE / "terraform/providers.tf").read_text()
+        alias = providers.split('alias = "shared_key"', 1)[1].split("\n}", 1)[0]
+        self.assertRegex(alias, r"storage_use_azuread\s*=\s*false")
+        source = (BUNDLE / "terraform/atlas_ui.tf").read_text()
+        upload = source.split('resource "azurerm_storage_share_file" "config_local" {', 1)[1].split("\n}", 1)[0]
+        self.assertRegex(upload, r"provider\s*=\s*azurerm\.shared_key")
+
     def test_bootstrap_version_matches_pinned_image(self):
         source = (BUNDLE / "terraform/atlas_security.tf").read_text()
         self.assertRegex(source, r"WEB_API_VERSION\s*=\s*local.ohdsi_api_docker_image_tag")
