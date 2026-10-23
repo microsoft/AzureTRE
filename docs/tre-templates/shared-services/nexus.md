@@ -44,12 +44,12 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
-## Upgrade to Nexus bundle 3.12.0
+## Upgrade to Nexus bundle 4.0.0
 
 !!! warning
-    The upgrade to Nexus bundle `3.12.0` is one-way. You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
+    The upgrade to Nexus bundle `4.0.0` is one-way. You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
 
-Nexus bundle `3.12.0` updates Nexus from 3.94.0 to 3.97.2.
+Nexus bundle `4.0.0` updates Nexus from 3.94.0 to 3.97.2.
 Nexus 3.97.2 stops trusting the eMudhra certificate chains that Sonatype reports as [compromised](https://help.sonatype.com/en/compromised-emudhra-intermediate-ca-certificates.html).
 If you stay on Nexus bundle `3.11.2`, Nexus continues to trust these certificate chains.
 
@@ -60,6 +60,10 @@ Before you upgrade:
 1. Allow `nxrm.telemetry.sonatype.com` in all egress controls outside the TRE firewall. See [Required base telemetry](#required-base-telemetry).
 
 1. If your deployment cannot send telemetry, contact Sonatype Support before you upgrade.
+
+Bundle `4.0.0` is a major version, so the TRE UI does not offer this upgrade.
+After you complete the steps above, upgrade Nexus through the API with `force_version_update=true`.
+See [Force version update](../../tre-admins/upgrading-resources.md#force-version-update).
 
 ## Upgrade apt repositories to raw proxies
 
@@ -134,7 +138,7 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 
 Nexus 3.97.0 and later send [required base telemetry](https://help.sonatype.com/en/nexus-repository-telemetry.html) to Sonatype.
 The telemetry contains usage data, for example the number of requests each day and the total number of components.
-Nexus bundle `3.12.0` and later versions acknowledge this requirement through the Nexus REST API during deployment and upgrade.
+Nexus bundle `4.0.0` and later versions acknowledge this requirement through the Nexus REST API during deployment and upgrade.
 
 Nexus uploads the telemetry to `https://nxrm.telemetry.sonatype.com`. The TRE firewall allows this host for the Nexus VM.
 If Nexus traffic also goes through a proxy or a firewall that you manage, allow this host there.
@@ -154,7 +158,7 @@ After a deployment or an upgrade, the check can show "Last successful upload: ne
 After you restore access, create and run a **Telemetry upload retry** task. This task immediately sends the failed uploads again.
 
 Sonatype gives no option to turn off this telemetry.
-Before you upgrade to Nexus bundle `3.12.0`, read [Upgrade to Nexus bundle 3.12.0](#upgrade-to-nexus-bundle-3120).
+Before you upgrade to Nexus bundle `4.0.0`, read [Upgrade to Nexus bundle 4.0.0](#upgrade-to-nexus-bundle-400).
 
 ## Current Repos
 
