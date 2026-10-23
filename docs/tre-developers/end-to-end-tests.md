@@ -168,6 +168,16 @@ Failed-create recovery and temporary probe cleanup also count towards the lifecy
 The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
 For a local run, the 270-minute lifecycle budget starts when the SQL case begins.
 
+### MySQL selection
+
+Select `tre-workspace-service-mysql` to run `test_mysql.py::test_private_mysql_query_survives_sku_change`.
+The case creates its own workspace, Guacamole service, Linux VM and MySQL service.
+The Linux VM installs the MySQL client through Nexus. Thus the run needs a suitable Nexus instance or `acceptNexusEula=true`.
+The case writes a row through private DNS with the Burstable SKU. It then changes the SKU to General Purpose and reads the row again.
+The VM reads the administrator password from the workspace Key Vault through a temporary role assignment on that secret only.
+The MySQL job uses the SQL time limits above with its own `MYSQL_VALIDATION_DEADLINE`. If the case creates Nexus, it removes Nexus after the VM.
+These checks do not prove previous-version upgrades or researcher access.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.

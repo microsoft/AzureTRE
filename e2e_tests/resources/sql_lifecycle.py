@@ -37,10 +37,10 @@ TERMINAL_STATES = {
 }
 
 
-def lifecycle_deadlines():
+def lifecycle_deadlines(variable="SQL_VALIDATION_DEADLINE"):
     """Use the job's absolute deadline, including time spent starting the container."""
     loop = asyncio.get_running_loop()
-    configured = os.environ.get("SQL_VALIDATION_DEADLINE", "")
+    configured = os.environ.get(variable, "")
     deadline = float(configured) if configured else time.time() + LIFECYCLE_SECONDS
     if not math.isfinite(deadline):
         raise ValueError("SQL validation deadline must be finite")
@@ -59,6 +59,11 @@ class SQLResources:
 
     def own(self, name, callback, *args, **kwargs):
         self.finalisers.append((name, partial(callback, *args, **kwargs)))
+
+    async def enter(self, name, context):
+        """Enter a prerequisite context now and exit it in order with the owned resources."""
+        await context.__aenter__()
+        self.own(name, context.__aexit__, None, None, None)
 
     async def setup(self):
         # Keep these resources inside the SQL budget rather than session fixtures.
@@ -79,15 +84,18 @@ class SQLResources:
             self.own(guacamole_path, clean_up_test_workspace_service, "", guacamole_path, workspace_id, self.verify)
         return workspace_path, workspace_id, guacamole_path, guacamole_id
 
-    async def create(self, payload, endpoint, token):
+    async def create(self, payload, endpoint, token, cleanup_token=None):
         async with asyncio.timeout(60 * 60):
             resource_path, resource_id = await post_resource(
                 payload, endpoint, token, self.verify, cleanup_failed_create=True
             )
-        self.own(resource_path, self.delete, resource_path, token)
+        self.own(resource_path, self.delete, resource_path, cleanup_token or token)
         return resource_path, resource_id
 
     async def delete(self, resource_path, token):
+        # A long case can outlive the create token, so cleanup can ask for a new one.
+        if callable(token):
+            token = await token()
         while True:
             operations = (await get_resource(f"/api{resource_path}/operations", token, self.verify))["operations"]
             if all(op["status"] in TERMINAL_STATES for op in operations):
@@ -113,8 +121,8 @@ class SQLResources:
 
 
 @asynccontextmanager
-async def sql_lifecycle(verify):
-    work_finish, finish = lifecycle_deadlines()
+async def sql_lifecycle(verify, deadline_variable="SQL_VALIDATION_DEADLINE"):
+    work_finish, finish = lifecycle_deadlines(deadline_variable)
     resources = SQLResources(verify, finish)
     original = None
     # Accepted-create recovery inherits the same absolute limit. It cannot add

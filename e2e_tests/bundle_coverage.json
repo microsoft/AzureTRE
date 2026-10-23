@@ -376,18 +376,27 @@
       "manifest": "templates/workspace_services/mysql/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-linuxvm",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [
+        "test_mysql.py::test_private_mysql_query_survives_sku_change"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-mysql]"
       ],
-      "related_tests": [],
       "coverage": [
         "install",
+        "private MySQL write/read",
+        "Burstable-to-General Purpose SKU change with retained data",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "AzureCloud only. Requires a suitable Nexus instance or explicit Nexus EULA consent, permission to run commands on a test-created workspace VM and a temporary secret-scoped role assignment.",
+        "The SKU change uses the current bundle version. Previous-version migration remains separate (#5128). The MySQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
