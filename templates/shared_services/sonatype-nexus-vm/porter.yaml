@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-sonatype-nexus
-version: 3.11.2
+version: 3.12.0
 description: "A Sonatype Nexus shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -11,7 +11,7 @@ custom:
     name: sonatype/nexus3
     import:
       source: docker.io/sonatype/nexus3
-      tag: "3.94.0"
+      tag: "3.97.2"
 
 credentials:
   - name: azure_tenant_id

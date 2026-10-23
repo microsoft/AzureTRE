@@ -53,6 +53,19 @@ if url.endswith("/status"):
     respond()
 if url.endswith("/system/eula"):
     respond(body='{"accepted":true}')
+if url.endswith("/system/mandatory-telemetry-acknowledgement"):
+    for option in ("--connect-timeout", "--max-time"):
+        if option not in args or not 0 < int(args[args.index(option) + 1]) <= 60:
+            respond(exit_code=99)
+    state["ack_attempts"] += 1
+    if state["ack_failures"]:
+        failure = state["ack_failures"].pop(0)
+        if failure == "connection":
+            respond(exit_code=7)
+        respond(failure)
+    if method != "POST" or json.loads(args[args.index("-d") + 1]) != {"acknowledgement": True}:
+        respond(400)
+    respond(204)
 if url.endswith("/security/anonymous"):
     if method == "GET" and "-w" in args:
         if "-u" not in args or args[args.index("-u") + 1] != "admin:mock-password":
@@ -151,6 +164,8 @@ class NexusRepositoryTests(unittest.TestCase):
             "list_attempts": 0,
             "auth_failures": [],
             "auth_attempts": 0,
+            "ack_failures": [],
+            "ack_attempts": 0,
             "calls": [],
         }
 
@@ -210,6 +225,35 @@ class NexusRepositoryTests(unittest.TestCase):
                 self.assertTrue(all(method == "GET" for method, _ in self.state["calls"]))
                 self.assertFalse(any("/system/eula" in url or "/repositories" in url for _, url in self.state["calls"]))
                 self.assertIn("Timeout while waiting for Nexus admin authentication", self.output)
+                self.assertNotIn("mock-password", self.output)
+
+    def test_telemetry_is_acknowledged_before_repository_configuration(self):
+        result = self.run_script()
+        self.assertEqual(result.returncode, 0, self.output)
+        self.assertEqual(self.state["ack_attempts"], 1)
+        urls = [url for _, url in self.state["calls"]]
+        ack = next(i for i, url in enumerate(urls) if url.endswith("/mandatory-telemetry-acknowledgement"))
+        self.assertLess(next(i for i, url in enumerate(urls) if url.endswith("/system/eula")), ack)
+        self.assertLess(ack, next(i for i, url in enumerate(urls) if "/repositories" in url))
+
+    def test_transient_acknowledgement_failures_are_retried(self):
+        for failure in (503, 404, "connection"):
+            with self.subTest(failure=failure):
+                self.state.update(ack_failures=[failure, failure], ack_attempts=0, repos={}, calls=[])
+                result = self.run_script()
+                self.assertEqual(result.returncode, 0, self.output)
+                self.assertEqual(self.state["ack_attempts"], 3)
+                self.assert_raw_repo()
+
+    def test_persistent_acknowledgement_failures_stop_before_repository_configuration(self):
+        for failure in (503, 404, "connection"):
+            with self.subTest(failure=failure):
+                self.state.update(ack_failures=[failure] * 5, ack_attempts=0, repos={}, calls=[])
+                result = self.run_script()
+                self.assertNotEqual(result.returncode, 0, self.output)
+                self.assertEqual(self.state["ack_attempts"], 5)
+                self.assertFalse(any("/repositories" in url for _, url in self.state["calls"]))
+                self.assertIn("Timeout while trying to acknowledge required base telemetry", self.output)
                 self.assertNotIn("mock-password", self.output)
 
     def test_upgrade_migrates_all_four_apt_repositories(self):
