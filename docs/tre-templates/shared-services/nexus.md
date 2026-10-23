@@ -44,6 +44,23 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
+## Upgrade to Nexus bundle 3.12.0
+
+!!! warning
+    The upgrade to Nexus bundle `3.12.0` is one-way. You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
+
+Nexus bundle `3.12.0` updates Nexus from 3.94.0 to 3.97.2.
+Nexus 3.97.2 stops trusting the eMudhra certificate chains that Sonatype reports as [compromised](https://help.sonatype.com/en/compromised-emudhra-intermediate-ca-certificates.html).
+If you stay on Nexus bundle `3.11.2`, Nexus continues to trust these certificate chains.
+
+Before you upgrade:
+
+1. Make a snapshot of the OS disk of the Nexus VM. The Nexus data is on this disk.
+
+1. Allow `nxrm.telemetry.sonatype.com` in all egress controls outside the TRE firewall. See [Required base telemetry](#required-base-telemetry).
+
+1. If your deployment cannot send telemetry, contact Sonatype Support before you upgrade.
+
 ## Upgrade apt repositories to raw proxies
 
 Nexus bundle `3.11.0` replaces the `ubuntu`, `ubuntu-security`, `docker` and `microsoft-apt` apt repositories with raw proxies.
@@ -136,12 +153,8 @@ Nexus uploads the telemetry every 24 hours and when Nexus stops.
 After a deployment or an upgrade, the check can show "Last successful upload: never" for up to 24 hours. This is normal.
 After you restore access, create and run a **Telemetry upload retry** task. This task immediately sends the failed uploads again.
 
-You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
-Before you upgrade, make a snapshot of the OS disk of the Nexus VM. The Nexus data is on this disk.
-If you stay on Nexus bundle `3.11.2`, Nexus continues to trust the compromised eMudhra certificate chains.
-
 Sonatype gives no option to turn off this telemetry.
-If your deployment cannot send telemetry, contact Sonatype Support before you upgrade to Nexus bundle `3.12.0`.
+Before you upgrade to Nexus bundle `3.12.0`, read [Upgrade to Nexus bundle 3.12.0](#upgrade-to-nexus-bundle-3120).
 
 ## Current Repos
 
