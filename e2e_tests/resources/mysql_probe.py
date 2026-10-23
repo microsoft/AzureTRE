@@ -29,7 +29,8 @@ def probe_script(**values):
         if not re.fullmatch(PATTERNS[name], value):
             raise ValueError(f"Invalid MySQL probe value for {name}")
     header = "".join(f"{name}='{value}'\n" for name, value in values.items())
-    return "#!/usr/bin/env bash\n" + header + SCRIPT.read_text()
+    shebang, body = SCRIPT.read_text().split("\n", 1)
+    return f"{shebang}\n{header}{body}"
 
 
 def probe_result(resource, phase, probe_id):

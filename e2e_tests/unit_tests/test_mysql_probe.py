@@ -49,6 +49,7 @@ class ProbeScriptTests(unittest.TestCase):
     def test_script_sets_only_validated_values(self):
         script = probe.probe_script(**VALUES)
         self.assertTrue(script.startswith("#!/usr/bin/env bash\n"))
+        self.assertEqual(script.count("#!"), 1)
         for name, value in VALUES.items():
             self.assertIn(f"{name}='{value}'\n", script)
         self.assertNotIn("password=", script.split("set -euo pipefail")[0])

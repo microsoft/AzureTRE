@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # The test validates SERVER, VAULT_NAME, SECRET_NAME, DATABASE, PROBE_ID and PHASE and sets them above this line.
 set -euo pipefail
 stage=input
