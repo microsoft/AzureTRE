@@ -132,7 +132,9 @@ Package installation in workspaces then fails for all other packages.
 
 To see the result of each upload, sign in to Nexus as an administrator from the admin jumpbox.
 In the Nexus settings, open **Status**. Find the **Baseline Telemetry** check.
-After you restore access, create and run a **Telemetry upload retry** task. This task uploads the telemetry immediately.
+Nexus uploads the telemetry every 24 hours and when Nexus stops.
+After a deployment or an upgrade, the check can show "Last successful upload: never" for up to 24 hours. This is normal.
+After you restore access, create and run a **Telemetry upload retry** task. This task immediately sends the failed uploads again.
 
 You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
 Before you upgrade, make a snapshot of the OS disk of the Nexus VM. The Nexus data is on this disk.
