@@ -65,22 +65,27 @@ class SQLResources:
         await context.__aenter__()
         self.own(name, context.__aexit__, None, None, None)
 
-    async def setup(self):
+    async def setup(self, groups=False):
         # Keep these resources inside the SQL budget rather than session fixtures.
+        # Only an Automatic workspace gets Entra ID groups, so a case that needs
+        # them creates its own workspace and does not use the configured ones.
+        manual = bool(config.TEST_WORKSPACE_APP_ID) and not groups
+        existing_workspace = "" if groups else config.TEST_WORKSPACE_ID
+        existing_service = "" if groups else config.TEST_WORKSPACE_SERVICE_ID
         workspace_path, workspace_id = await create_or_get_test_workspace(
-            auth_type="Manual" if config.TEST_WORKSPACE_APP_ID else "Automatic",
+            auth_type="Manual" if manual else "Automatic",
             verify=self.verify,
-            pre_created_workspace_id=config.TEST_WORKSPACE_ID,
-            client_id=config.TEST_WORKSPACE_APP_ID,
-            client_secret=config.TEST_WORKSPACE_APP_SECRET,
+            pre_created_workspace_id=existing_workspace,
+            client_id=config.TEST_WORKSPACE_APP_ID if manual else "",
+            client_secret=config.TEST_WORKSPACE_APP_SECRET if manual else "",
         )
-        if not config.TEST_WORKSPACE_ID:
+        if not existing_workspace:
             self.own(workspace_path, clean_up_test_workspace, "", workspace_path, self.verify)
         token = await get_workspace_owner_token(workspace_id, self.verify)
         guacamole_path, guacamole_id = await create_or_get_test_workpace_service(
-            workspace_path, token, config.TEST_WORKSPACE_SERVICE_ID, self.verify
+            workspace_path, token, existing_service, self.verify
         )
-        if not config.TEST_WORKSPACE_SERVICE_ID:
+        if not existing_service:
             self.own(guacamole_path, clean_up_test_workspace_service, "", guacamole_path, workspace_id, self.verify)
         return workspace_path, workspace_id, guacamole_path, guacamole_id
 

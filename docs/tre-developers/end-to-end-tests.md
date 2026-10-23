@@ -208,6 +208,8 @@ The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
 
 Select `tre-workspace-service-health` to run `test_health.py::test_private_fhir_access_and_dicom_update`.
 The case creates its own workspace, Guacamole service, Windows VM and Health service with FHIR R4.
+The Health bundle needs the workspace owners group, and only an Automatic workspace gets Entra ID groups.
+So the case always creates an Automatic workspace. It does not use `TEST_WORKSPACE_ID`, `TEST_WORKSPACE_SERVICE_ID` or `TEST_WORKSPACE_APP_ID`.
 From the VM, the case makes sure that the FHIR host resolves to a private address and that the FHIR metadata is available.
 It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
 The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.

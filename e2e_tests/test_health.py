@@ -52,8 +52,11 @@ async def test_private_fhir_access_and_dicom_update(verify):
     if os.environ.get("AZURE_ENVIRONMENT", "AzureCloud") != "AzureCloud":
         raise ValueError("The health probe currently supports AzureCloud only")
     async with sql_lifecycle(verify, deadline_variable="HEALTH_VALIDATION_DEADLINE") as resources:
-        workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup()
+        # The bundle refuses to install without the workspace owners group.
+        workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup(groups=True)
         new_token = partial(get_workspace_owner_token, workspace_id, verify)
+        workspace = (await get_resource(f"/api{workspace_path}", await new_token(), verify))["workspace"]
+        assert workspace["properties"].get("workspace_owners_group_id"), "The workspace has no owners group"
         health_path, health_id = await resources.create(
             HEALTH_PAYLOAD, f"/api{workspace_path}/workspace-services", await new_token(), cleanup_token=new_token
         )
