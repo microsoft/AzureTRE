@@ -379,9 +379,7 @@
       "tests": [
         "test_health.py::test_private_fhir_access_and_dicom_update"
       ],
-      "related_tests": [
-        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-health]"
-      ],
+      "related_tests": [],
       "coverage": [
         "install with FHIR R4",
         "private FHIR metadata",
