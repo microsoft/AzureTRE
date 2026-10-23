@@ -18,6 +18,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")))
         self.enterContext(patch.object(nexus, "get_admin_token", new=AsyncMock(return_value="admin-token")))
+        self.actions = self.enterContext(patch.object(linuxvm, "check_vm_actions", new=AsyncMock()))
         self.fixture = ("/workspaces/ws", "ws", "/workspaces/ws/workspace-services/service", "service")
         self.resource_path = self.fixture[2] + "/user-resources/linux"
         self.requests = []
@@ -112,6 +113,14 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         payload = json.loads(self.requests[0].content)
         self.assertEqual(payload["properties"]["admin_username"], "researcher")
+        self.actions.assert_awaited_once_with(self.resource_path, "ws", True)
+        self.assert_deleted()
+
+    async def test_failed_action_still_cleans_up_vm(self):
+        self.mock_api(strings.RESOURCE_STATUS_DEPLOYED)
+        self.actions.side_effect = AssertionError("stop failed")
+        with self.assertRaisesRegex(AssertionError, "stop failed"):
+            await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assert_deleted()
 
     async def test_failed_bootstrap_cleans_up_after_failed_disable(self):
@@ -121,6 +130,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assert_deleted(failed_disable=True, failed_create=True)
+        self.actions.assert_not_awaited()
 
     async def test_failed_disable_does_not_delete_an_enabled_resource(self):
         self.mock_api(

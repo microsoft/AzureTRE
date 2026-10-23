@@ -325,10 +325,13 @@
       "coverage": [
         "install",
         "bootstrap-completion",
+        "stop action with deallocated power state",
+        "start action with running power state",
+        "reset_password action with a new Key Vault secret version",
         "uninstall"
       ],
       "limitations": [
-        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites. VM availability and interactive access need separate validation."
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites. Interactive access, sign-in with the new password and other VM sizes need separate validation."
       ],
       "unavailable_reason": ""
     },

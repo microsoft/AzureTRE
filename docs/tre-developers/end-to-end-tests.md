@@ -143,6 +143,14 @@ Select `e2eBundle=tre-shared-service-certs` in `deploy_tre_branch.yml` and leave
 PR slash commands use workflow definitions from `main`. `/test` runs smoke tests and `/test-shared-services` excludes this certificate-only case.
 A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.
 
+### Linux VM selection
+
+Select `tre-service-guacamole-linuxvm` to run `test_guacamole_linuxvm.py::test_create_guacamole_linux_vm`.
+The case creates a Linux VM and waits for its Nexus-backed bootstrap. Thus the run needs a suitable Nexus instance or `acceptNexusEula=true`.
+The case then runs the `stop`, `start` and `reset_password` actions.
+After `stop` and `start`, the case reads the VM power state from Azure. After `reset_password`, it makes sure that the Key Vault secret has a new version.
+The case does not sign in to the VM, so it does not prove interactive access or the new password.
+
 ### Base workspace lifecycle
 
 Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.
