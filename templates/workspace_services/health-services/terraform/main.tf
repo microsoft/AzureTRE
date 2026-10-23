@@ -43,6 +43,16 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   lifecycle { ignore_changes = [tags] }
 }
 
+# Azure writes the private DNS records when it creates the endpoint. It does not
+# always add a record for a service that joins the workspace later, so the
+# endpoint is replaced when the set of services changes.
+resource "terraform_data" "private_endpoint_services" {
+  input = {
+    fhir  = var.deploy_fhir
+    dicom = var.deploy_dicom
+  }
+}
+
 resource "azurerm_private_endpoint" "health_services_private_endpoint" {
   name                = "pe-${azurerm_healthcare_workspace.healthcare_workspace.name}"
   location            = data.azurerm_resource_group.ws.location
@@ -67,5 +77,8 @@ resource "azurerm_private_endpoint" "health_services_private_endpoint" {
     azurerm_healthcare_dicom_service.dicom
   ]
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes       = [tags]
+    replace_triggered_by = [terraform_data.private_endpoint_services]
+  }
 }
