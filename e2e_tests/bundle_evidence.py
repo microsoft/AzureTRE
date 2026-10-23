@@ -26,6 +26,21 @@ def record_resource(payload, operation, method):
     _ACTIVE_REPORT.write()
 
 
+def record_deployed_resource(resource, resource_path):
+    """Record the observed bundle version without copying resource properties."""
+    if _ACTIVE_REPORT is None:
+        return
+    record = {
+        "method": "GET",
+        "resourceId": resource["id"],
+        "resourcePath": resource_path,
+        "bundle": resource["templateName"],
+        "deployed_template_version": resource["templateVersion"],
+    }
+    _ACTIVE_REPORT.data["resources"].append(record)
+    _ACTIVE_REPORT.write()
+
+
 def record_reused_resource(resource):
     """Record only the selected prerequisite's identity and deployed version."""
     if _ACTIVE_REPORT is None:

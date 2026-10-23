@@ -13,6 +13,7 @@ ENHANCEMENTS:
 * Run the `stop`, `start` and `reset_password` actions in the Guacamole Linux VM check, and make sure of the VM power state and the new Key Vault secret version through Azure. ([#5145](https://github.com/microsoft/AzureTRE/issues/5145))
 * Add a private Gitea lifecycle check. A workspace VM uses the Gitea API through private DNS, gets HTTP 401 without credentials and with a wrong password, and commits a file to a private repository.
   The VM reads the file again after an update, a change of the OIDC client ID, a stop and a start of the app. The check also makes sure that the OIDC change stops Gitea one time and that the console log of the web app shows no secret. ([#5141](https://github.com/microsoft/AzureTRE/issues/5141))
+* Record the deployed template version of each resource that a bundle test reads in the bundle evidence, without the resource properties.
 * Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
