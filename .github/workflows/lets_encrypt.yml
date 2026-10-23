@@ -37,14 +37,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install specific Azure CLI version
-        run: |
-          AZ_DIST=$(lsb_release -cs)
-          AZ_VER=2.81.0
-
-          apt-cache policy azure-cli
-          sudo apt-get install azure-cli="${AZ_VER}-1~${AZ_DIST}" --allow-downgrades
-          az version
+      - name: Check Azure CLI
+        run: az version
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
@@ -74,6 +68,7 @@ jobs:
           CUSTOM_DOMAIN: ${{ secrets.CUSTOM_DOMAIN }}
           PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}
         run: |
+          sudo apt-get update
           sudo apt-get install -y python3 python3-venv libaugeas0 \
             && python3 -m venv /opt/certbot/ \
             && /opt/certbot/bin/pip install --upgrade pip \
