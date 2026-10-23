@@ -44,6 +44,27 @@ After verifying the certificate has been generated, you can deploy Nexus:
 
 This will deploy the infrastructure required for Nexus, then start the service and configure it with the repository configurations located in the `./templates/shared_services/sonatype-nexus-vm/scripts/nexus_repos_config` folder. It will also set up HTTPS using the certificate you generated in the previous section, so proxies can be served at `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com`.
 
+## Upgrade to Nexus bundle 4.0.0
+
+!!! warning
+    The upgrade to Nexus bundle `4.0.0` is one-way. You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
+
+Nexus bundle `4.0.0` updates Nexus from 3.94.0 to 3.97.2.
+Nexus 3.97.2 stops trusting the eMudhra certificate chains that Sonatype reports as [compromised](https://help.sonatype.com/en/compromised-emudhra-intermediate-ca-certificates.html).
+If you stay on Nexus bundle `3.11.2`, Nexus continues to trust these certificate chains.
+
+Before you upgrade:
+
+1. Make a snapshot of the OS disk of the Nexus VM. The Nexus data is on this disk.
+
+1. Allow `nxrm.telemetry.sonatype.com` in all egress controls outside the TRE firewall. See [Required base telemetry](#required-base-telemetry).
+
+1. If your deployment cannot send telemetry, contact Sonatype Support before you upgrade.
+
+Bundle `4.0.0` is a major version, so the TRE UI does not offer this upgrade.
+After you complete the steps above, upgrade Nexus through the API with `force_version_update=true`.
+See [Force version update](../../tre-admins/upgrading-resources.md#force-version-update).
+
 ## Upgrade apt repositories to raw proxies
 
 Nexus bundle `3.11.0` replaces the `ubuntu`, `ubuntu-security`, `docker` and `microsoft-apt` apt repositories with raw proxies.
@@ -111,6 +132,33 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | github.com, objects.githubusercontent.com, release-assets.githubusercontent.com | Enables Nexus to "proxy" Miniforge installers (hosted on GitHub Releases) for Windows VMs. |
 | cran.r-project.org | Enables Nexus to "proxy" CRAN R Windows installers for Windows VMs. |
 | download1.rstudio.org | Enables Nexus to "proxy" RStudio Windows installers for Windows VMs. |
+| nxrm.telemetry.sonatype.com | Lets Nexus upload the required base telemetry. If uploads fail for 10 days, Nexus becomes read-only. See [Required base telemetry](#required-base-telemetry). |
+
+## Required base telemetry
+
+Nexus 3.97.0 and later send [required base telemetry](https://help.sonatype.com/en/nexus-repository-telemetry.html) to Sonatype.
+The telemetry contains usage data, for example the number of requests each day and the total number of components.
+Nexus bundle `4.0.0` and later versions acknowledge this requirement through the Nexus REST API during deployment and upgrade.
+
+Nexus uploads the telemetry to `https://nxrm.telemetry.sonatype.com`. The TRE firewall allows this host for the Nexus VM.
+If Nexus traffic also goes through a proxy or a firewall that you manage, allow this host there.
+An example is a [forced tunnelling](../../tre-admins/configure-firewall-force-tunneling.md) firewall.
+If your firewall or proxy inspects TLS, exclude this host from TLS inspection. A TLS certificate error counts as a failed upload.
+
+If uploads continue to fail, Nexus shows a "Baseline Telemetry Upload Issue" warning to administrators.
+Nexus does not show this warning after the first failed upload.
+If uploads fail for 10 days, Nexus Community Edition becomes read-only until an upload succeeds.
+In read-only mode, Nexus serves only the packages that are already in its cache.
+Package installation in workspaces then fails for all other packages.
+
+To see the result of each upload, sign in to Nexus as an administrator from the admin jumpbox.
+In the Nexus settings, open **Status**. Find the **Baseline Telemetry** check.
+Nexus uploads the telemetry every 24 hours and when Nexus stops.
+After a deployment or an upgrade, the check can show "Last successful upload: never" for up to 24 hours. This is normal.
+After you restore access, create and run a **Telemetry upload retry** task. This task immediately sends the failed uploads again.
+
+Sonatype gives no option to turn off this telemetry.
+Before you upgrade to Nexus bundle `4.0.0`, read [Upgrade to Nexus bundle 4.0.0](#upgrade-to-nexus-bundle-400).
 
 ## Current Repos
 
