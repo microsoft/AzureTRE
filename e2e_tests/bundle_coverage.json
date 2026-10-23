@@ -372,19 +372,28 @@
       "manifest": "templates/workspace_services/health-services/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-windowsvm"
       ],
       "tests": [
+        "test_health.py::test_private_fhir_access_and_dicom_update"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-health]"
       ],
-      "related_tests": [],
       "coverage": [
-        "install",
+        "install with FHIR R4",
+        "private FHIR metadata",
+        "anonymous and unassigned FHIR requests denied",
+        "private FHIR write/read with a temporary data role",
+        "update that adds DICOM with retained FHIR data",
+        "public network access disabled",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately.",
-        "Default inputs do not enable FHIR or DICOM. Endpoint validation requires an explicit configuration."
+        "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary service-scoped role assignment.",
+        "The case does not use DICOM data, FHIR STU3 or researcher identities. The update uses the current bundle version. Previous-version migration remains separate (#5128)."
       ],
       "unavailable_reason": ""
     },

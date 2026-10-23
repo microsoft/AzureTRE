@@ -204,6 +204,16 @@ The last start has the same OIDC settings, so the log must show only one stop fo
 The query returns counts only. The CI identity needs read access to the Log Analytics workspace.
 At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
 The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
+### Health selection
+
+Select `tre-workspace-service-health` to run `test_health.py::test_private_fhir_access_and_dicom_update`.
+The case creates its own workspace, Guacamole service, Windows VM and Health service with FHIR R4.
+From the VM, the case makes sure that the FHIR host resolves to a private address and that the FHIR metadata is available.
+It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
+The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.
+An update adds DICOM. The case reads the Patient again and makes sure that the DICOM host is private and needs a token.
+At the end, the case makes sure that the Health workspace, FHIR and DICOM have public network access disabled.
+The Health job uses the SQL time limits with its own `HEALTH_VALIDATION_DEADLINE`.
 
 ### Run the branch workflow before merge
 
