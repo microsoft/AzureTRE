@@ -1087,6 +1087,39 @@ async def test_get_porter_outputs(mock_run_porter, mock_build_porter_command_for
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "output_result, expected_status",
+    [
+        pytest.param(
+            (1, None, "ERROR: Could not connect to the registry login server 'tre.azurecr.io'."),
+            "updating_failed",
+            id="output-command-fails",
+        ),
+        pytest.param((0, "not json", None), "updated", id="invalid-json"),
+    ],
+)
+async def test_invoke_porter_action_sends_outputs_as_a_list(output_result, expected_status):
+    # The API model reads outputs as a list. A dict fails validation, so the
+    # API never records the status and the operation stays in progress.
+    sender = AsyncMock()
+    client = Mock()
+    client.get_queue_sender.return_value = sender
+    config = {"deployment_status_queue": "test_queue"}
+    msg_body = {"id": "test_id", "action": "upgrade", "stepId": "test_step_id", "operationId": "test_operation_id"}
+
+    with (
+        patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "upgrade"]], None, "params", None)),
+        patch("vmss_porter.runner.build_porter_command_for_outputs", return_value=[["porter", "output", "list"]]),
+        patch("vmss_porter.runner.run_porter", side_effect=[(0, "", None), output_result]),
+    ):
+        await invoke_porter_action(msg_body, client, config)
+
+    final_status = json.loads(str(sender.send_messages.call_args.args[0]))
+    assert final_status["status"] == expected_status
+    assert final_status["outputs"] == []
+
+
+@pytest.mark.asyncio
 @patch("asyncio.sleep", new_callable=AsyncMock)
 async def test_check_runners(_):
     """Test checking runners."""

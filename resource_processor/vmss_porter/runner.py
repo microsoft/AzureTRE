@@ -480,9 +480,10 @@ async def get_porter_outputs(msg_body: dict, config: dict):
         error_message = "Error context message = " + " ".join(err.split("\n"))
         installation_id = msg_body["id"]
         logger.info(f"{installation_id}: Failed to get outputs with error = {error_message}")
-        return False, {}
+        # The API reads outputs as a list. It rejects a dict, so the operation never gets the failed status.
+        return False, []
     else:
-        outputs_json = {}
+        outputs_json = []
         try:
             outputs_json = json.loads(stdout)
 
