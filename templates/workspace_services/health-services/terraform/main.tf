@@ -36,6 +36,9 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   location     = data.azurerm_resource_group.ws.location
   tags         = local.workspace_service_tags
 
+  # The provider default turns on public network access.
+  public_network_access_enabled = false
+
   identity {
     type = "SystemAssigned"
   }

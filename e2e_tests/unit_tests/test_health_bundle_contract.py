@@ -1,4 +1,4 @@
-"""Check that the Health private endpoint has a DNS record for each service."""
+"""Check the private network settings of the Health bundle."""
 
 from pathlib import Path
 import unittest
@@ -20,3 +20,9 @@ class HealthBundleContractTests(unittest.TestCase):
         self.assertRegex(services, r"\n    dicom\s*=\s*var\.deploy_dicom\n")
         endpoint = block(source, 'resource "azurerm_private_endpoint" "health_services_private_endpoint"')
         self.assertRegex(endpoint, r"replace_triggered_by\s*=\s*\[terraform_data\.private_endpoint_services\]")
+
+    def test_dicom_public_network_access_is_off(self):
+        # The provider turns it on unless the bundle sets it.
+        source = (BUNDLE / "main.tf").read_text()
+        dicom = block(source, 'resource "azurerm_healthcare_dicom_service" "dicom"')
+        self.assertRegex(dicom, r"\n  public_network_access_enabled\s*=\s*false\n")
