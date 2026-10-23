@@ -211,6 +211,7 @@ The case creates its own workspace, Guacamole service, Windows VM and Health ser
 The Health bundle needs the workspace owners group, and only an Automatic workspace gets Entra ID groups.
 So the case always creates an Automatic workspace. It does not use `TEST_WORKSPACE_ID`, `TEST_WORKSPACE_SERVICE_ID` or `TEST_WORKSPACE_APP_ID`.
 From the VM, the case makes sure that the FHIR host resolves to a private address and that the FHIR metadata is available.
+If the FHIR name lookup fails, the case runs that probe again after 60 seconds, 3 attempts in total. Before this lookup, the probe changes no data.
 It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
 The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.
 An update adds DICOM. The case reads the Patient again and makes sure that the DICOM host is private and needs a token.

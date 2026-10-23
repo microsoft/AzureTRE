@@ -3,6 +3,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 import json
+import logging
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,6 +13,15 @@ SCRIPT = Path(__file__).with_name("health_probe.ps1")
 RESULT = "HEALTH_PROBE_RESULT="
 FAILED = "HEALTH_PROBE_FAILED="
 FHIR_DATA_CONTRIBUTOR = "5a1fc7df-4bf1-4951-a576-89034ee01acd"
+DNS_ATTEMPTS = 3
+DNS_RETRY_SECONDS = 60
+LOGGER = logging.getLogger(__name__)
+
+
+class ProbeFailure(AssertionError):
+    def __init__(self, message, stages):
+        super().__init__(message)
+        self.stages = stages
 
 
 def expected_result(phase, probe_id, dicom):
@@ -31,8 +41,9 @@ def probe_result(resource, phase, probe_id, dicom=False):
     lines = view.get("output", "").splitlines()
     if properties.get("provisioningState") in ("Failed", "Canceled") or state in ("Failed", "Canceled", "TimedOut"):
         stages = [line[len(FAILED) :] for line in lines if line.startswith(FAILED)]
-        raise AssertionError(
-            f"Health probe failed: state={state}, exitCode={view.get('exitCode')}, stage={','.join(stages) or 'unknown'}"
+        raise ProbeFailure(
+            f"Health probe failed: state={state}, exitCode={view.get('exitCode')}, stage={','.join(stages) or 'unknown'}",
+            stages,
         )
     if state != "Succeeded":
         return False
@@ -65,6 +76,20 @@ async def role_access(arm, scope, role, principal_id, subscription_id):
 
 
 async def run_probe(arm, vm_id, location, *, fhir_url, probe_id, phase, dicom_url=""):
+    # A lookup of the FHIR name failed once on a new VM. The probe changes no data before this stage.
+    for attempt in range(1, DNS_ATTEMPTS + 1):
+        try:
+            return await run_probe_once(
+                arm, vm_id, location, fhir_url=fhir_url, probe_id=probe_id, phase=phase, dicom_url=dicom_url
+            )
+        except ProbeFailure as error:
+            if error.stages != ["private-dns"] or attempt == DNS_ATTEMPTS:
+                raise
+            LOGGER.warning("Health probe %s failed at private-dns, attempt %d. Trying again.", phase, attempt)
+            await asyncio.sleep(DNS_RETRY_SECONDS)
+
+
+async def run_probe_once(arm, vm_id, location, *, fhir_url, probe_id, phase, dicom_url=""):
     parameters = {"FhirUrl": fhir_url, "ProbeId": probe_id, "Phase": phase}
     if dicom_url:
         parameters["DicomUrl"] = dicom_url

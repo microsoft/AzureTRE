@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from jsonschema import validate
 import yaml
@@ -119,3 +119,28 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
             arm.delete.assert_awaited_once_with(command, probe.COMPUTE_API)
             names = [p["name"] for p in arm.request.call_args_list[0].kwargs["body"]["properties"]["parameters"]]
             self.assertEqual(names, ["FhirUrl", "ProbeId", "Phase"] + (["DicomUrl"] if dicom_url else []))
+
+    async def test_only_a_dns_failure_is_tried_again(self):
+        def failed(stage):
+            return result({}, state="Failed", code=1, output=f"HEALTH_PROBE_FAILED={stage}\n")
+
+        passed = result(probe.expected_result("access", PROBE_ID, False))
+        cases = (
+            ([failed("private-dns"), passed], None),
+            ([failed("private-dns")] * probe.DNS_ATTEMPTS, "stage=private-dns"),
+            ([failed("fhir-metadata")], "stage=fhir-metadata"),
+        )
+        for results, error in cases:
+            # Each attempt creates a command, reads its result and then removes the command.
+            responses = [response for r in results for response in ({}, r)]
+            arm = SimpleNamespace(request=AsyncMock(side_effect=responses), delete=AsyncMock())
+            with self.subTest(error=error), patch.object(probe, "DNS_RETRY_SECONDS", 0):
+                run = probe.run_probe(
+                    arm, VM_ID, "switzerlandnorth", fhir_url=FHIR_URL, probe_id=PROBE_ID, phase="access"
+                )
+                if error:
+                    with self.assertRaisesRegex(AssertionError, error):
+                        await run
+                else:
+                    await run
+                self.assertEqual(arm.delete.await_count, len(results))
