@@ -40,6 +40,7 @@ BUG FIXES:
   (`tre-workspace-base` 2.12.4, `tre-workspace-unrestricted` 0.15.3, `tre-workspace-airlock-import-review` 0.18.3) ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Create the OpenAI private endpoint after the model deployment, so that Azure does not reject it while the deployment updates the account. (`tre-workspace-service-openai` 1.1.0) ([#5249](https://github.com/microsoft/AzureTRE/issues/5249))
+* Disable public network access on the MySQL flexible server, so that clients can connect only through the private endpoint. Move the MySQL bundle to azurerm 4.27.0, which has this setting. An upgrade changes the setting in place. (`tre-workspace-service-mysql` 1.0.16) ([#5148](https://github.com/microsoft/AzureTRE/issues/5148))
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
