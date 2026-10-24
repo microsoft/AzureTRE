@@ -18,6 +18,7 @@ from e2e_tests.resources.backup import (
     FILE_DATA_PRIVILEGED_CONTRIBUTOR,
     GROUP_API,
     SHARE,
+    STORAGE_API,
     back_up_now,
     names,
     protected_share,
@@ -32,7 +33,6 @@ from e2e_tests.resources.sql_lifecycle import sql_lifecycle
 from e2e_tests.resources.sql_probe import arm_client, COMPUTE_API, validate_vm
 
 LOGGER = logging.getLogger(__name__)
-STORAGE_API = "2023-05-01"
 VM_PAYLOAD = {
     "templateName": strings.GUACAMOLE_WINDOWS_USER_RESOURCE,
     "properties": {
@@ -76,7 +76,9 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
         vault_id = f"{group_id}/providers/Microsoft.RecoveryServices/vaults/{resource_names['vault']}"
         account_id = f"{group_id}/providers/Microsoft.Storage/storageAccounts/{resource_names['account']}"
         # This runs after the workspace delete, also when the case fails before it.
-        resources.own_last("retained backup", remove_kept_backup, workspace_path, group_id, vault_id, verify)
+        resources.own_last(
+            "retained backup", remove_kept_backup, workspace_path, group_id, vault_id, account_id, verify
+        )
         vm_path, vm_id = await resources.create(
             VM_PAYLOAD, f"/api{guacamole_path}/user-resources", await new_token(), cleanup_token=new_token
         )
@@ -132,7 +134,7 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
             LOGGER.info("The retained recovery point restored after the workspace delete")
 
 
-async def remove_kept_backup(workspace_path, group_id, vault_id, verify):
+async def remove_kept_backup(workspace_path, group_id, vault_id, account_id, verify):
     """Remove the vault and the resource group that a delete with retained backups keeps."""
     # A workspace that the API did not delete stays as it is, so that its failure can be examined.
     async with AsyncClient(verify=verify, timeout=60) as client:
@@ -143,4 +145,4 @@ async def remove_kept_backup(workspace_path, group_id, vault_id, verify):
         LOGGER.warning("The workspace is not deleted (HTTP %s), so its backup resources stay", response.status_code)
         return
     async with arm_client() as arm:
-        await remove_retained_backup(arm, group_id, vault_id)
+        await remove_retained_backup(arm, group_id, vault_id, account_id)

@@ -253,6 +253,10 @@ After the `delete` case, the workspace resource group must be gone.
 After the `retain` case, the vault must keep the stopped item with its recovery point, and the storage account must keep its share and deny public network access.
 A second restore from the recovery point must pass.
 The last clean-up step turns off soft delete, deletes the item and the vault, and deletes the retained resource group.
+Azure does not let a request turn off soft delete in some vaults, for example in a vault with enhanced security.
+If Azure keeps soft delete on, the deleted backup data stays for 14 days, and Azure does not delete the vault before that.
+The step then deletes the backup data and the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
+Delete the resource group by hand after that date.
 This step runs after the workspace delete, also when the case fails earlier. It runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
 
 ### Run the branch workflow before merge

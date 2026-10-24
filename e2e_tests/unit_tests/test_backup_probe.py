@@ -17,6 +17,7 @@ from e2e_tests.resources import sql_lifecycle
 
 ROOT = Path(__file__).resolve().parents[2]
 VAULT = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd/providers/Microsoft.RecoveryServices/vaults/arsv-tre-ws-abcd"
+ACCOUNT = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd/providers/Microsoft.Storage/storageAccounts/stgwsabcd"
 ITEM = f"{VAULT}/backupFabrics/Azure/protectionContainers/StorageContainer;storage;rg;stgwsabcd/protectedItems/AzureFileShare;x"
 PROBE_ID = "0123456789abcdef0123456789abcdef"
 
@@ -163,14 +164,17 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body["properties"]["restoreFilePaths"], [{"path": "e2e.txt", "fileSpecType": "File"}])
         wait.assert_awaited_once_with(unittest.mock.ANY, VAULT, "job-2")
 
-    async def test_the_retained_vault_is_removed_with_soft_delete_off_first(self):
-        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+    def retained_backup_requests(self, group, soft_delete):
         calls = []
 
         async def request(method, resource_id, api_version, **kwargs):
             calls.append((method, resource_id))
+            if method == "PATCH" and resource_id.endswith("/vaultconfig") and soft_delete == "Enabled":
+                raise RuntimeError("ARM PATCH failed with HTTP 400")
             if method != "GET":
                 return {}
+            if resource_id.endswith("/vaultconfig"):
+                return {"properties": {"softDeleteFeatureState": soft_delete}}
             if resource_id.endswith("/locks"):
                 return {"value": [{"id": f"{group}/providers/Microsoft.Authorization/locks/backup"}]}
             if resource_id.endswith("/backupProtectedItems"):
@@ -179,7 +183,13 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
             deleted = {resource for verb, resource in calls if verb == "DELETE"}
             return None if resource_id in deleted else {}
 
-        await backup.remove_retained_backup(fake_arm(request=request), group, VAULT)
+        return calls, request
+
+    async def test_the_retained_vault_is_removed_with_soft_delete_off_first(self):
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        calls, request = self.retained_backup_requests(group, "Disabled")
+
+        await backup.remove_retained_backup(fake_arm(request=request), group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
         self.assertEqual(calls[2], ("PATCH", f"{VAULT}/backupconfig/vaultconfig"))
         self.assertEqual(
@@ -193,9 +203,22 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
+    async def test_a_vault_that_keeps_soft_delete_stays_with_a_delete_date(self):
+        # Azure keeps deleted backup data for 14 days, and a vault with that data cannot be deleted.
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        calls, request = self.retained_backup_requests(group, "Enabled")
+        arm = fake_arm(request=request)
+
+        await backup.remove_retained_backup(arm, group, VAULT, ACCOUNT)
+        deletes = [resource for method, resource in calls if method == "DELETE"]
+        self.assertEqual(deletes, [ITEM, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT])
+        self.assertEqual(calls[-1], ("PATCH", f"{group}/providers/Microsoft.Resources/tags/default"))
+        tags = arm.request.await_args.kwargs["body"]["properties"]["tags"]
+        self.assertRegex(tags["e2e_delete_after"], r"^\d{4}-\d{2}-\d{2}$")
+
     async def test_nothing_is_removed_when_the_resource_group_is_gone(self):
         arm = fake_arm(request=[None])
-        await backup.remove_retained_backup(arm, "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd", VAULT)
+        await backup.remove_retained_backup(arm, "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd", VAULT, ACCOUNT)
         self.assertEqual(arm.request.await_count, 1)
 
 
@@ -215,9 +238,9 @@ class KeptBackupCleanupTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(case, "arm_client", return_value=arm),
                 patch.object(case, "remove_retained_backup", AsyncMock()) as remove,
             ):
-                await case.remove_kept_backup("/workspaces/w", "/group", VAULT, True)
+                await case.remove_kept_backup("/workspaces/w", "/group", VAULT, ACCOUNT, True)
             if removed:
-                remove.assert_awaited_once_with("arm", "/group", VAULT)
+                remove.assert_awaited_once_with("arm", "/group", VAULT, ACCOUNT)
             else:
                 remove.assert_not_awaited()
 
