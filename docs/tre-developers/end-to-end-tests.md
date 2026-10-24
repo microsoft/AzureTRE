@@ -245,7 +245,8 @@ Run one case in each workflow run, because each case can take 2 hours. The marke
 Each case creates its own workspace with `enable_backup` on, a Guacamole service and a Windows VM.
 The `retain` case sets `delete_backups_on_uninstall` to `false`, and the `delete` case sets it to `true`.
 From the VM, the case makes sure that the host of the workspace file share is private and that the VM identity without a role gets HTTP 403.
-The case then gives the VM identity a temporary Storage File Data Privileged Contributor role on the share. The VM writes a file through the Azure Files REST API.
+The case then gives the VM identity a temporary Storage File Data Privileged Contributor role on the workspace resource group. The VM writes a file through the Azure Files REST API.
+The role is not on the share, because the Azure Backup delete lock on the storage account also blocks the delete of a role assignment on the share.
 An on-demand Azure Backup job makes a recovery point. The VM changes the file, a restore of that file from the recovery point follows, and the VM reads the original content again.
 The case then deletes the VM, the Guacamole service and the workspace. Each delete must pass.
 After the `delete` case, the workspace resource group must be gone.

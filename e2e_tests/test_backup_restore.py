@@ -96,10 +96,11 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
                 probe_id=probe_id,
             )
             await probe(phase="access")
-            share_id = f"{account_id}/fileServices/default/fileshares/{SHARE}"
             item_id = (await protected_share(arm, vault_id))["id"]
+            # Azure Backup puts a delete lock on the storage account. The lock also blocks the delete of a
+            # role assignment on the account or the share, so the temporary role is on the resource group.
             async with role_access(
-                arm, share_id, FILE_DATA_PRIVILEGED_CONTRIBUTOR, vm["identity"]["principalId"], subscription_id
+                arm, group_id, FILE_DATA_PRIVILEGED_CONTRIBUTOR, vm["identity"]["principalId"], subscription_id
             ):
                 await probe(phase="write")
                 await back_up_now(arm, vault_id, item_id)
@@ -125,7 +126,6 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
             assert await recovery_points(arm, item_id), "The retained item has no recovery point"
             account = await arm.request("GET", account_id, STORAGE_API)
             assert account["properties"]["networkAcls"]["defaultAction"] == "Deny"
-            # The role assignment scope uses fileshares, but the Resource Manager path uses shares.
             await arm.request("GET", f"{account_id}/fileServices/default/shares/{SHARE}", STORAGE_API)
             # The recovery point must still work after the workspace is gone.
             await restore_file(arm, vault_id, item_id, point["name"], account_id, f"e2e-{probe_id}.txt")
