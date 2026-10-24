@@ -1,7 +1,7 @@
 """Check the Gitea probe's evidence, payloads and cleanup boundaries."""
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 from types import SimpleNamespace
 import unittest
@@ -113,6 +113,13 @@ class ProbeEvidenceTests(unittest.TestCase):
         webapp = (ROOT / "templates/workspace_services/gitea/terraform/gitea-webapp.tf").read_text()
         version = re.search(r'minimum_tls_version\s*=\s*"1\.(\d)"', webapp).group(1)
         self.assertIn(f"[Net.SecurityProtocolType]::Tls1{version}", probe.SCRIPT.read_text())
+
+    def test_repositories_are_on_the_file_share(self):
+        # The read phase runs after a restart, and a restart deletes the data outside the share.
+        webapp = (ROOT / "templates/workspace_services/gitea/terraform/gitea-webapp.tf").read_text()
+        mount = re.search(r'mount_path\s*=\s*"([^"]+)"', webapp).group(1)
+        repositories = re.search(r'GITEA__repository__ROOT\s*=\s*"([^"]+)"', webapp).group(1)
+        self.assertIn(PurePosixPath(mount), PurePosixPath(repositories).parents)
 
 
 class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
