@@ -28,10 +28,15 @@ When `enable_backup` is set (the default) the base workspace deploys a Recovery 
 
 | `delete_backups_on_uninstall` | Behaviour on workspace deletion |
 | ----------------------------- | ------------------------------- |
-| `false` (default) | **Retain the backups.** Protection is stopped but the recovery points are kept. The vault, its backup resources and the workspace resource group are removed from the Terraform state, so the **resource group is retained and continues to hold the Recovery Services Vault and its recovery points** after the workspace is deleted. |
+| `false` (default) | **Retain the backups.** Protection is stopped but the recovery points are kept. The vault, its backup resources and the workspace resource group are removed from the Terraform state, so the **resource group is retained and continues to hold the Recovery Services Vault and its recovery points** after the workspace is deleted. A file share recovery point is a snapshot in the workspace storage account, so the storage account, its share, its container and its network rules are also retained. With customer-managed keys, the encryption key, its identity and the role of that identity on the key store are retained too. |
 | `true` | **Delete the backups.** Protection is stopped with data deletion, the backup containers are unregistered and the Recovery Services Vault (with its recovery points) is deleted. Terraform then destroys the rest of the workspace, including its resource group, leaving nothing behind. |
 
 Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.
+
+Before version 2.12.3, the retained path deleted the storage account and its share. The share delete failed with `DeleteShareWhenSnapshotLeased`, so the workspace stayed in `deleting_failed`.
+To delete such a workspace, upgrade it to 2.12.3 or later, then delete it again.
+The failed delete removed the resource group and the vault from the Terraform state, so the upgrade can end in `updating_failed` with an error that the resource group already exists.
+The API keeps the new template version after a failed upgrade, so the next delete uses the corrected script.
 
 > **Note:** If [vault immutability](https://learn.microsoft.com/azure/backup/backup-azure-immutable-vault-concept) is enabled on the Recovery Services Vault (for example, enforced by an Azure Policy in your environment), backups cannot be deleted before they expire. In this case `delete_backups_on_uninstall = true` will not be able to remove the backups or vault, and workspace deletion may fail.
 

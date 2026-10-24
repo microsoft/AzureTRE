@@ -13,8 +13,8 @@ set -o nounset
 #       the backup containers and delete the vault, then let Terraform destroy the
 #       workspace (including its resource group).
 #   delete_backups_on_uninstall=false - stop protection but keep the recovery points,
-#       then remove the vault, its resource group and the backup resources from the
-#       Terraform state so they are retained.
+#       then remove the vault, its resource group, the backup resources and the storage
+#       that the recovery points need from the Terraform state so they are retained.
 
 MGMT_RESOURCE_GROUP_NAME=$1
 MGMT_STORAGE_ACCOUNT_NAME=$2
@@ -143,6 +143,21 @@ terraform init -input=false -backend=true -reconfigure \
   -backend-config="container_name=${TF_STATE_CONTAINER_NAME}" \
   -backend-config="key=${TRE_ID}-ws-${WORKSPACE_ID}"
 
+# A file share recovery point is a snapshot of the share. Azure Backup leases the snapshot,
+# so a delete of the share fails with DeleteShareWhenSnapshotLeased. A destroy of the
+# network rules opens the account to all networks. With customer-managed keys the account
+# also needs its key, the identity and the role of that identity on the key store.
+retained_storage=(
+  "azurerm_storage_account.stg"
+  "azapi_resource.shared_storage"
+  "azurerm_storage_container.stgcontainer"
+  "azurerm_storage_account_network_rules.stgrules"
+  "terraform_data.wait_for_backup_cleanup[0]"
+  "azurerm_user_assigned_identity.encryption_identity[0]"
+  "azurerm_role_assignment.kv_encryption_key_user[0]"
+  "azurerm_key_vault_key.encryption_key[0]"
+)
+
 backup_resources=(
   "azurerm_backup_protected_file_share.file_share[0]"
   "azurerm_backup_container_storage_account.storage_account[0]"
@@ -191,7 +206,7 @@ if [ "${DELETE_BACKUPS}" == "true" ]; then
   popd > /dev/null
   echo "Vault deleted. Terraform will destroy the remaining workspace resources, including the resource group."
 else
-  remove_from_state "${backup_resources[@]}" "azurerm_resource_group.ws"
+  remove_from_state "${backup_resources[@]}" "azurerm_resource_group.ws" "${retained_storage[@]}"
   popd > /dev/null
-  echo "Backup resources retained. Terraform will delete the other workspace resources and leave the vault and its resource group in place."
+  echo "Backup resources retained. Terraform will delete the other workspace resources and leave the vault, the storage account and their resource group in place."
 fi
