@@ -1045,3 +1045,183 @@ async def test_uninstall_redelivery_repairs_root_after_dispatch_failure(persiste
     assert stored["operation"].steps[0].statusUpdateComplete is True
     updater.resource_repo.update_item_dict.assert_not_awaited()
     send.assert_awaited_once()
+
+
+STEP_STATUSES = {
+    RequestAction.Install: (Status.Deploying, Status.Deployed, Status.DeploymentFailed),
+    RequestAction.Upgrade: (Status.Updating, Status.Updated, Status.UpdatingFailed),
+    "restart": (Status.InvokingAction, Status.ActionSucceeded, Status.ActionFailed),
+    RequestAction.UnInstall: (Status.Deleting, Status.Deleted, Status.DeletingFailed),
+}
+
+
+@pytest.fixture(params=list(STEP_STATUSES), ids=str)
+def persisted_pipeline(request):
+    """A main step followed by a firewall step, with operation and resource writes kept in memory."""
+    action = request.param
+    primary = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
+    firewall = create_sample_workspace_object("7af8f146-d751-4587-a22e-eb44c1c6fbe2")
+    operation = create_sample_operation(primary.id, action)
+    operation.steps[0].status = Status.AwaitingAction
+    operation.steps.append(
+        OperationStep(
+            id="firewall-step",
+            templateStepId="firewall",
+            resourceId=firewall.id,
+            resourceAction=RequestAction.Upgrade,
+            sourceTemplateResourceId=primary.id,
+            status=Status.AwaitingUpdate,
+        )
+    )
+    stored = {"operation": operation, "resources": {primary.id: primary, firewall.id: firewall}}
+    updater = DeploymentStatusUpdater()
+    updater.operations_repo = AsyncMock()
+    updater.resource_repo = AsyncMock()
+    updater.resource_template_repo = AsyncMock()
+    updater.resource_history_repo = AsyncMock()
+    updater.operations_repo.get_operation_by_id.side_effect = lambda _: stored["operation"].model_copy(deep=True)
+    updater.operations_repo.update_item.side_effect = lambda item: stored.update(operation=item.model_copy(deep=True))
+    updater.resource_repo.get_resource_by_id.side_effect = lambda item_id: stored["resources"][str(item_id)].model_copy(
+        deep=True
+    )
+    updater.resource_repo.get_resource_dict_by_id.side_effect = lambda item_id: stored["resources"][
+        str(item_id)
+    ].model_dump()
+
+    def save_resource(item):
+        stored["resources"][item.id] = item.model_copy(deep=True)
+
+    def save_resource_dict(item):
+        stored["resources"][item["id"]] = stored["resources"][item["id"]].model_copy(update=item, deep=True)
+
+    updater.resource_repo.update_item.side_effect = save_resource
+    updater.resource_repo.update_item_dict.side_effect = save_resource_dict
+
+    def message(status, execution_id="run-a", step_index=0):
+        step = stored["operation"].steps[step_index]
+        return DeploymentStatusUpdateMessage(
+            operationId=operation.id,
+            stepId=step.id,
+            id=step.resourceId,
+            status=status,
+            message=f"{status} from {execution_id}",
+            executionId=execution_id,
+        )
+
+    with (
+        patch("service_bus.deployment_status_updater.update_resource_for_step", return_value=firewall),
+        patch("service_bus.deployment_status_updater.send_deployment_message", new_callable=AsyncMock) as send,
+    ):
+        yield updater, stored, message, send, STEP_STATUSES[action]
+
+
+@pytest.mark.parametrize("final_index", [1, 2])
+async def test_a_status_from_another_run_does_not_replace_the_final_status(persisted_pipeline, final_index):
+    updater, stored, message, send, step_statuses = persisted_pipeline
+    assert await updater.update_status_in_database(message(step_statuses[0])) is True
+    assert await updater.update_status_in_database(message(step_statuses[final_index])) is True
+    assert stored["operation"].steps[0].executionId == "run-a"
+    before = copy.deepcopy(stored)
+
+    for status in step_statuses:
+        assert await updater.update_status_in_database(message(status, execution_id="run-b")) is True
+
+    assert stored == before
+    assert send.await_count == (1 if final_index == 1 else 0)
+
+
+async def test_a_later_status_from_the_finished_run_is_ignored(persisted_pipeline):
+    updater, stored, message, send, (in_progress, success, failure) = persisted_pipeline
+    assert await updater.update_status_in_database(message(success)) is True
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(message(in_progress)) is True
+    assert await updater.update_status_in_database(message(failure)) is True
+
+    assert stored == before
+    send.assert_awaited_once()
+
+
+async def test_a_repeated_final_status_does_not_dispatch_the_next_step_twice(persisted_pipeline):
+    updater, stored, message, send, (_, success, _) = persisted_pipeline
+    assert await updater.update_status_in_database(message(success)) is True
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    before = copy.deepcopy(stored)
+
+    assert await updater.update_status_in_database(message(success)) is True
+
+    assert stored == before
+    send.assert_awaited_once()
+
+
+async def test_a_repeated_final_status_finishes_the_writes_of_the_first_copy(persisted_pipeline):
+    updater, stored, message, send, (_, success, _) = persisted_pipeline
+    save = updater.resource_repo.update_item.side_effect
+    writes = []
+
+    def fail_first_write(item):
+        writes.append(item.id)
+        if len(writes) == 1:
+            raise RuntimeError("Cosmos DB is not available")
+        save(item)
+
+    updater.resource_repo.update_item.side_effect = fail_first_write
+    assert await updater.update_status_in_database(message(success)) is False
+    assert stored["operation"].steps[0].status == success
+    assert stored["operation"].steps[0].statusUpdateComplete is False
+    send.assert_not_awaited()
+
+    assert await updater.update_status_in_database(message(success)) is True
+
+    assert stored["operation"].steps[0].statusUpdateComplete is True
+    send.assert_awaited_once()
+
+
+async def test_a_new_run_before_the_final_status_takes_over_the_step(persisted_pipeline):
+    updater, stored, message, send, (in_progress, success, _) = persisted_pipeline
+    assert await updater.update_status_in_database(message(in_progress, execution_id="run-a")) is True
+    assert await updater.update_status_in_database(message(in_progress, execution_id="run-b")) is True
+    assert stored["operation"].steps[0].executionId == "run-b"
+
+    assert await updater.update_status_in_database(message(success, execution_id="run-b")) is True
+    assert await updater.update_status_in_database(message(success, execution_id="run-a")) is True
+
+    assert stored["operation"].steps[0].executionId == "run-b"
+    assert stored["operation"].steps[0].message == f"{success} from run-b"
+    send.assert_awaited_once()
+
+
+async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
+    workspace = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
+    operation = create_sample_operation(workspace.id, RequestAction.Install)
+    operation.steps[0].status = Status.Deployed
+    updater = DeploymentStatusUpdater()
+    updater.operations_repo = AsyncMock()
+    updater.operations_repo.get_operation_by_id.return_value = operation
+    updater.resource_repo = AsyncMock()
+    updater.resource_repo.get_resource_by_id.return_value = workspace
+    message = DeploymentStatusUpdateMessage(
+        operationId=operation.id,
+        stepId=operation.steps[0].id,
+        id=workspace.id,
+        status=Status.DeploymentFailed,
+        message="failed",
+    )
+
+    assert await updater.update_status_in_database(message) is True
+
+    assert operation.steps[0].status == Status.DeploymentFailed
+    assert operation.steps[0].executionId is None
+
+
+@patch("service_bus.deployment_status_updater.logger")
+async def test_an_ignored_status_is_not_logged_as_a_database_update(logger, persisted_pipeline):
+    updater, _, message, _, (_, success, failure) = persisted_pipeline
+    assert await updater.update_status_in_database(message(success)) is True
+    logger.reset_mock()
+
+    assert await updater.update_status_in_database(message(failure, execution_id="run-b")) is True
+
+    logged = " ".join(str(call.args[0]) for call in logger.info.call_args_list)
+    assert "Ignoring a status from another run" in logged
+    assert "Update status in DB" not in logged

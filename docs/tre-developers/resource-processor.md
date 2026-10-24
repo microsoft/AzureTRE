@@ -119,6 +119,22 @@ CNAB spec defines actions that Porter [implements](https://porter.sh/author-bund
 Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - analogous to the concrete actions in GitHub workflows and tasks in Azure DevOps pipelines - which simplify and reduce the development cost when implementing deployment logic. For example, Terraform mixin installs the required tools and provides a clean step in the pipeline to execute Terraform deployments. [Exec mixin](https://porter.sh/mixins/exec/) allows running any command or script; especially useful, if no suitable mixin for a specific technology is available. Implementing custom mixins is possible too.
 <!-- markdownlint-enable MD013 -->
 
+### Repeated messages
+
+Service Bus can give the same message to more than one worker. The resource processor runs each step once:
+
+1. The `workspacequeue` queue keeps a session lock for 5 minutes. While a worker runs a step, it renews the lock every minute. If a renewal fails, the worker tries again until the lock expires, and logs each failure.
+1. Before Porter starts, the worker gets a 60-second lease on the blob `rp-executions/<resource ID>` in the management storage account. It renews the lease every 15 seconds. If another worker holds the lease, the worker keeps its session and tries again every 30 seconds.
+1. The blob holds a record of the last step for the resource. If the record shows that the same step finished, the worker does not run Porter. It reads the outputs again and sends the recorded status.
+1. Each status message has an `executionId`. After a step has a final status, the API ignores a status from another run, a later status from the same run and a final status that it already saved.
+1. An upgrade does not install a resource that has no Porter installation. The resource processor sends `updating_failed`.
+
+For local debugging, your identity needs the Storage Blob Data Contributor role on the management storage account.
+
+To test a lost session lock, set the `RP_BUNDLE_VALUES` variable to `{"test_skip_session_lock_renewal": "true"}` and deploy the core.
+While Porter runs, the resource processor then does not renew the session lock, so Service Bus gives a step that takes more than 5 minutes to another worker.
+Do not use this setting in production.
+
 ### Porter Azure plugin
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to access secrets in Azure Key Vault.

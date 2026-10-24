@@ -116,7 +116,6 @@ class DeploymentStatusUpdater:
 
                 logger.info(f"Received and parsed JSON for: {msg.correlation_id}")
                 complete_message = await self.update_status_in_database(message)
-                logger.info(f"Update status in DB for {message.operationId} - {message.status}")
             except (json.JSONDecodeError, ValidationError):
                 logger.exception(f"{strings.DEPLOYMENT_STATUS_MESSAGE_FORMAT_INCORRECT}: {msg.correlation_id}")
             except Exception:
@@ -151,6 +150,9 @@ class DeploymentStatusUpdater:
             if step_to_update is None:
                 raise f"Error finding step {message.stepId} in operation {message.operationId}"
 
+            if self.ignore_repeated_status(operation, step_to_update, message):
+                return True
+
             uninstall_operation = operation.action == RequestAction.UnInstall
             uninstall_pending_status = Status.PipelineRunning if len(operation.steps) > 1 else Status.Deleting
             if uninstall_operation and self.ignore_uninstall_callback(operation, current_step_index, message):
@@ -173,6 +175,10 @@ class DeploymentStatusUpdater:
             step_to_update.status = message.status
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
+            if message.executionId is not None:
+                step_to_update.executionId = message.executionId
+            # Repeated runs make the final status complete only after its writes and dispatch.
+            track_completion = uninstall_operation or message.executionId is not None
 
             # update the overall headline operation status
             await self.update_overall_operation_status(operation, step_to_update, is_last_step)
@@ -184,6 +190,7 @@ class DeploymentStatusUpdater:
 
             # save the operation
             await self.operations_repo.update_item(operation)
+            logger.info(f"Update status in DB for {message.operationId} - {message.status}")
 
             # copy the step status to the resource item, for convenience
             resource_id = uuid.UUID(step_to_update.resourceId)
@@ -203,7 +210,7 @@ class DeploymentStatusUpdater:
 
             # if the step failed, or this queue message is an intermediary ("now deploying..."), return here.
             if not step_to_update.is_success():
-                if uninstall_operation and step_to_update.is_failure():
+                if track_completion and step_to_update.is_failure():
                     step_to_update.statusUpdateComplete = True
                     await self.operations_repo.update_item(operation)
                 return True
@@ -265,7 +272,7 @@ class DeploymentStatusUpdater:
                     if uninstall_operation:
                         await self.update_primary_uninstall_status(operation)
 
-            if uninstall_operation:
+            if track_completion:
                 # Save only after the resource writes and dispatch. A retry must
                 # resume those effects if an earlier database write succeeded.
                 step_to_update.statusUpdateComplete = True
@@ -281,6 +288,27 @@ class DeploymentStatusUpdater:
             logger.exception("Failed to update status")
 
         return result
+
+    def ignore_repeated_status(
+        self, operation: Operation, step: OperationStep, message: DeploymentStatusUpdateMessage
+    ) -> bool:
+        """
+        Service Bus can give a step to a second resource processor worker. Keep the first final status of the step.
+        A message without an execution ID comes from an older resource processor, so the earlier rules apply to it.
+        """
+        if message.executionId is None or not (step.is_success() or step.is_failure()):
+            return False
+        if step.executionId != message.executionId:
+            logger.info(f"Ignoring a status from another run of step {operation.id}/{step.id}")
+            return True
+        if message.status != step.status:
+            logger.info(f"Ignoring a later status from the run that finished step {operation.id}/{step.id}")
+            return True
+        if step.statusUpdateComplete:
+            logger.info(f"Ignoring a repeated final status for step {operation.id}/{step.id}")
+            return True
+        # The earlier copy stopped before all of its writes. Process this copy to finish them.
+        return False
 
     def ignore_uninstall_callback(self, operation: Operation, step_index: int, message: DeploymentStatusUpdateMessage):
         step = operation.steps[step_index]

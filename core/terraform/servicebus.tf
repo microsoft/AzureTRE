@@ -56,6 +56,8 @@ resource "azurerm_servicebus_queue" "workspacequeue" {
 
   partitioning_enabled = false
   requires_session     = true # use sessions here to make sure updates to each resource happen in serial, in order
+  # The longest lock that Service Bus permits. The resource processor renews it every minute while Porter runs.
+  lock_duration = "PT5M"
 }
 
 resource "azurerm_servicebus_queue" "service_bus_deployment_status_update_queue" {

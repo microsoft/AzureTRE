@@ -1,4 +1,5 @@
 from azure.servicebus import ServiceBusSessionFilter
+from azure.servicebus.exceptions import SessionLockLostError
 from azure.servicebus.aio import ServiceBusClient
 from vmss_porter.runner import (
     set_up_config,
@@ -13,7 +14,8 @@ from vmss_porter.runner import (
 )
 import json
 import asyncio
-from unittest.mock import patch, AsyncMock, Mock
+from contextlib import asynccontextmanager
+from unittest.mock import ANY, patch, AsyncMock, Mock
 import pytest
 import sys
 from pathlib import Path
@@ -29,6 +31,15 @@ def mock_service_bus_client():
         yield mock
 
 
+@pytest.fixture(autouse=True)
+def mock_container_client():
+    with patch("vmss_porter.runner.ContainerClient") as mock:
+        instance = mock.return_value
+        instance.__aenter__ = AsyncMock(return_value=instance)
+        instance.__aexit__ = AsyncMock(return_value=False)
+        yield mock
+
+
 @pytest.fixture
 def mock_default_credential():
     with patch("vmss_porter.runner.default_credentials") as mock:
@@ -36,8 +47,25 @@ def mock_default_credential():
 
 
 @pytest.fixture
-def mock_auto_lock_renewer():
-    with patch("vmss_porter.runner.AutoLockRenewer") as mock:
+def mock_execution_lease():
+    execution = AsyncMock()
+    execution.read.return_value = {}
+
+    @asynccontextmanager
+    async def lease(container, resource_id, describe):
+        yield execution
+
+    with patch("vmss_porter.runner.execution_lease", side_effect=lease) as mock:
+        mock.execution = execution
+        yield mock
+
+
+@pytest.fixture
+def mock_keep_renewed():
+    async def renew_until_cancelled(*args, **kwargs):
+        await asyncio.Event().wait()
+
+    with patch("vmss_porter.runner.keep_renewed", side_effect=renew_until_cancelled) as mock:
         yield mock
 
 
@@ -90,13 +118,14 @@ async def test_runner(mock_receive_message, mock_service_bus_client, mock_defaul
         "vmss_msi_id": "test_msi_id",
         "service_bus_namespace": "test_namespace",
         "porter_env": {"HOME": "/root"},
+        "mgmt_blob_url": "https://mgmt",
     }
 
     await runner(0, config)
 
     mock_default_credential.assert_called_once_with("test_msi_id")
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config))
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config), ANY)
 
     # Verify context manager entered and exited cleanly
     mock_default_credential.return_value.__aenter__.assert_awaited_once()
@@ -117,13 +146,14 @@ async def test_runner_no_msi_id(mock_receive_message, mock_service_bus_client, m
         "vmss_msi_id": None,
         "service_bus_namespace": "test_namespace",
         "porter_env": {"HOME": "/root"},
+        "mgmt_blob_url": "https://mgmt",
     }
 
     await runner(0, config)
 
     mock_default_credential.assert_called_once_with(None)
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config))
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config), ANY)
 
     # Verify context manager entered and exited cleanly
     mock_default_credential.return_value.__aenter__.assert_awaited_once()
@@ -145,6 +175,7 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
         "vmss_msi_id": "test_msi_id",
         "service_bus_namespace": "test_namespace",
         "porter_env": {"HOME": "/root"},
+        "mgmt_blob_url": "https://mgmt",
     }
 
     with pytest.raises(Exception, match="Test Exception"):
@@ -152,7 +183,7 @@ async def test_runner_exception(mock_receive_message, mock_service_bus_client, m
 
     mock_default_credential.assert_called_once_with("test_msi_id")
     mock_service_bus_client.assert_called_once_with("test_namespace", mock_credential)
-    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config))
+    mock_receive_message.assert_called_once_with(mock_service_bus_client_instance, worker_config(0, config), ANY)
 
     # Verify context manager entered and exited cleanly, even on exception
     mock_default_credential.return_value.__aenter__.assert_awaited_once()
@@ -187,6 +218,7 @@ async def test_default_credentials_closes_real_credential_on_exception(mock_serv
             "vmss_msi_id": "test_msi_id",
             "service_bus_namespace": "test_namespace",
             "porter_env": {"HOME": "/root"},
+            "mgmt_blob_url": "https://mgmt",
         }
 
         with pytest.raises(Exception, match="Test Exception"):
@@ -196,14 +228,11 @@ async def test_default_credentials_closes_real_credential_on_exception(mock_serv
 
 
 @pytest.mark.asyncio
-@patch("vmss_porter.runner.invoke_porter_action", return_value=True)
-async def test_receive_message(mock_invoke_porter_action, mock_service_bus_client, mock_auto_lock_renewer, mock_logger):
+@patch("vmss_porter.runner.run_step", return_value=True)
+async def test_receive_message(
+    mock_run_step, mock_service_bus_client, mock_execution_lease, mock_keep_renewed, mock_logger
+):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
-
-    # Set up the lock renewer mock correctly
-    mock_renewer = AsyncMock()
-    mock_renewer.register = Mock()  # Make this a sync method to avoid await warning
-    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
 
     mock_receiver = AsyncMock()
     mock_receiver.__aenter__.return_value = mock_receiver
@@ -228,7 +257,7 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
 
     config = {"resource_request_queue": "test_queue"}
 
-    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    await receive_message(mock_service_bus_client_instance, config, AsyncMock(), keep_running=run_once)
     mock_receiver.complete_message.assert_awaited_once()
     assert "synthetic-password-not-for-logs" not in str(mock_logger.mock_calls)
     mock_service_bus_client_instance.get_queue_receiver.assert_called_once_with(
@@ -237,13 +266,8 @@ async def test_receive_message(mock_invoke_porter_action, mock_service_bus_clien
 
 
 @pytest.mark.asyncio
-async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_renewer):
+async def test_receive_message_bad_json(mock_service_bus_client, mock_execution_lease, mock_keep_renewed):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
-
-    # Set up the lock renewer mock correctly
-    mock_renewer = AsyncMock()
-    mock_renewer.register = Mock()
-    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
 
     mock_receiver = AsyncMock()
     mock_receiver.__aenter__.return_value = mock_receiver
@@ -257,7 +281,7 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
 
     config = {"resource_request_queue": "test_queue"}
 
-    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    await receive_message(mock_service_bus_client_instance, config, AsyncMock(), keep_running=run_once)
     mock_receiver.dead_letter_message.assert_awaited_once()
     dead_letter_args, dead_letter_kwargs = mock_receiver.dead_letter_message.await_args
     assert dead_letter_args == ("invalid_json_string",)
@@ -275,13 +299,9 @@ async def test_receive_message_bad_json(mock_service_bus_client, mock_auto_lock_
     ],
 )
 async def test_receive_message_dead_letter_failure_is_logged(
-    message, expected_log, mock_service_bus_client, mock_auto_lock_renewer, mock_logger
+    message, expected_log, mock_service_bus_client, mock_execution_lease, mock_keep_renewed, mock_logger
 ):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
-
-    mock_renewer = AsyncMock()
-    mock_renewer.register = Mock()
-    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
 
     mock_receiver = AsyncMock()
     mock_receiver.__aenter__.return_value = mock_receiver
@@ -296,7 +316,7 @@ async def test_receive_message_dead_letter_failure_is_logged(
     config = {"resource_request_queue": "test_queue"}
 
     with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-        await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+        await receive_message(mock_service_bus_client_instance, config, AsyncMock(), keep_running=run_once)
 
     mock_sleep.assert_awaited_once_with(10)
 
@@ -333,13 +353,9 @@ async def test_receive_message_dead_letter_failure_is_logged(
     ],
 )
 async def test_receive_message_invalid_json_structure(
-    message, error_description, mock_service_bus_client, mock_auto_lock_renewer
+    message, error_description, mock_service_bus_client, mock_execution_lease, mock_keep_renewed
 ):
     mock_service_bus_client_instance = mock_service_bus_client.return_value
-
-    mock_renewer = AsyncMock()
-    mock_renewer.register = Mock()
-    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
 
     mock_receiver = AsyncMock()
     mock_receiver.__aenter__.return_value = mock_receiver
@@ -352,7 +368,7 @@ async def test_receive_message_invalid_json_structure(
     run_once = Mock(side_effect=[True, False])
     config = {"resource_request_queue": "test_queue"}
 
-    await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+    await receive_message(mock_service_bus_client_instance, config, AsyncMock(), keep_running=run_once)
 
     mock_receiver.dead_letter_message.assert_awaited_once_with(
         message,
@@ -363,14 +379,11 @@ async def test_receive_message_invalid_json_structure(
 
 
 @pytest.mark.asyncio
-async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_service_bus_client, mock_logger):
+async def test_receive_message_unknown_exception(
+    mock_execution_lease, mock_keep_renewed, mock_service_bus_client, mock_logger
+):
     """Test receiving a message with an unknown exception."""
     mock_service_bus_client_instance = mock_service_bus_client.return_value
-
-    # Set up the lock renewer mock correctly
-    mock_renewer = AsyncMock()
-    mock_renewer.register = Mock()  # Make this a sync method to avoid await warning
-    mock_auto_lock_renewer.return_value.__aenter__.return_value = mock_renewer
 
     mock_receiver = AsyncMock()
     mock_receiver.__aenter__.return_value = mock_receiver
@@ -399,7 +412,7 @@ async def test_receive_message_unknown_exception(mock_auto_lock_renewer, mock_se
         patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
         patch("vmss_porter.runner.receive_message", side_effect=Exception("Test Exception")),
     ):
-        await receive_message(mock_service_bus_client_instance, config, keep_running=run_once)
+        await receive_message(mock_service_bus_client_instance, config, AsyncMock(), keep_running=run_once)
         mock_logger.exception.assert_any_call("Unknown exception. Will retry...")
         mock_sleep.assert_awaited_once_with(10)
 
@@ -1162,3 +1175,86 @@ async def test_check_runners(_):
 
     await check_runners(processes, mock_httpserver, keep_running=run_once)
     assert mock_httpserver.kill.call_count == 1
+
+
+def session_receiver(mock_service_bus_client, body):
+    mock_service_bus_client_instance = mock_service_bus_client.return_value
+    mock_receiver = AsyncMock()
+    mock_receiver.__aenter__.return_value = mock_receiver
+    mock_receiver.__aexit__.return_value = None
+    mock_receiver.session.session_id = "test_id"
+    mock_receiver.__aiter__.return_value = [json.dumps(body)]
+    mock_service_bus_client_instance.get_queue_receiver.return_value.__aenter__.return_value = mock_receiver
+    return mock_service_bus_client_instance, mock_receiver
+
+
+VALID_REQUEST = {
+    "id": "test_id",
+    "action": "install",
+    "stepId": "test_step_id",
+    "operationId": "test_operation_id",
+    "name": "test_bundle",
+    "version": "1.0.0",
+    "parameters": {},
+}
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.run_step", return_value=True)
+async def test_each_step_runs_with_the_lease_for_its_resource(
+    mock_run_step, mock_service_bus_client, mock_execution_lease, mock_keep_renewed
+):
+    client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    executions = AsyncMock()
+
+    await receive_message(
+        client, {"resource_request_queue": "q"}, executions, keep_running=Mock(side_effect=[True, False])
+    )
+
+    container, resource_id, describe = mock_execution_lease.call_args.args
+    assert (container, resource_id) == (executions, "test_id")
+    assert describe() == "resource_id=test_id, operation_id=test_operation_id, step_id=test_step_id"
+    assert mock_run_step.await_args.args[1] is mock_execution_lease.execution
+    receiver.complete_message.assert_awaited_once()
+    assert mock_keep_renewed.call_args.args[0] == "Session lock"
+
+
+@pytest.mark.asyncio
+@patch("vmss_porter.runner.run_step", return_value=True)
+async def test_a_lost_session_lock_at_completion_is_a_warning(
+    mock_run_step, mock_service_bus_client, mock_execution_lease, mock_keep_renewed, mock_logger
+):
+    client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    receiver.complete_message.side_effect = SessionLockLostError()
+
+    with patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        await receive_message(
+            client, {"resource_request_queue": "q"}, AsyncMock(), keep_running=Mock(side_effect=[True, False])
+        )
+
+    assert "The session lock expired before the message was completed" in mock_logger.warning.call_args.args[0]
+    mock_logger.exception.assert_not_called()
+    mock_sleep.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "test_setting, running, paused", [(False, True, False), (True, False, False), (True, True, True)]
+)
+async def test_the_test_setting_pauses_the_session_lock_only_while_porter_runs(
+    mock_service_bus_client, mock_execution_lease, mock_keep_renewed, test_setting, running, paused
+):
+    client, _ = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    seen = []
+
+    async def run_step(*args):
+        seen.append(mock_keep_renewed.call_args.kwargs["paused"]())
+        return True
+
+    config = {"resource_request_queue": "q", "test_skip_session_lock_renewal": test_setting}
+    with patch("vmss_porter.runner.run_step", side_effect=run_step):
+        await receive_message(client, config, AsyncMock(), keep_running=Mock(side_effect=[True, False]))
+
+    if running:
+        assert seen == [paused]
+    assert mock_keep_renewed.call_args.kwargs["paused"]() is False
