@@ -214,6 +214,10 @@ From the VM, the case makes sure that the FHIR host resolves to a private addres
 If the FHIR name lookup fails, the case runs that probe again after 60 seconds, 3 attempts in total. Before this lookup, the probe changes no data.
 It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
 The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.
+The role can take some minutes to apply, so the probe waits up to 10 minutes for a first HTTP 200.
+Until the end of this wait, the probe sends the create again after HTTP 403 or 429.
+It sends the search again after HTTP 403, 429, 500, 502, 503 or 504.
+If a probe fails, the test error gives the stage and the HTTP status of the failed request.
 An update adds DICOM. The case reads the Patient again and makes sure that the DICOM host is private and needs a token.
 At the end, the case sends FHIR and DICOM requests without a token from the test runner, outside the workspace network.
 Azure must reject each request with HTTP 403. The case tries again for up to 5 minutes, because Azure can take this time to block public traffic.

@@ -40,8 +40,22 @@ function Get-FhirHeaders {
     return @{Authorization = "Bearer $($identity.access_token)"}
 }
 
-function Get-ProbeCount([hashtable]$Headers) {
-    $search = Invoke-RestMethod -Headers $Headers -Uri "$FhirUrl/Patient?identifier=urn:tre:e2e|$ProbeId" -TimeoutSec 30
+function Invoke-Fhir([hashtable]$Request, [int[]]$RetryStatus) {
+    # A 200 in the role wait does not prove that each later request gets the new role.
+    while ($true) {
+        try {
+            return Invoke-RestMethod @Request -Headers (Get-FhirHeaders) -TimeoutSec 30
+        } catch {
+            $response = $_.Exception.Response
+            if ($null -eq $response -or [int]$response.StatusCode -notin $RetryStatus -or [DateTime]::UtcNow -ge $deadline) { throw }
+            Start-Sleep -Seconds 20
+        }
+    }
+}
+
+function Get-ProbeCount {
+    # A search changes no data, so throttling and server errors are also tried again.
+    $search = Invoke-Fhir -Request @{Uri = "$FhirUrl/Patient?identifier=urn:tre:e2e|$ProbeId"} -RetryStatus 403, 429, 500, 502, 503, 504
     if ($search.resourceType -ne 'Bundle') { throw 'Unexpected search result' }
     return @($search.entry).Where({ $null -ne $_ }).Count
 }
@@ -66,15 +80,16 @@ try {
             if ([DateTime]::UtcNow -ge $deadline) { throw 'Role did not apply' }
             Start-Sleep -Seconds 20
         }
-        $headers = Get-FhirHeaders
         if ($Phase -eq 'write') {
             $stage = 'fhir-write'
             $patient = @{resourceType = 'Patient'; identifier = @(@{system = 'urn:tre:e2e'; value = $ProbeId})} | ConvertTo-Json -Depth 4
-            $created = Invoke-RestMethod -Method Post -Headers $headers -ContentType 'application/fhir+json' -Uri "$FhirUrl/Patient" -Body $patient -TimeoutSec 30
+            # FHIR writes nothing for a refused (403) or throttled (429) create, so only these are tried again.
+            $create = @{Method = 'Post'; ContentType = 'application/fhir+json'; Uri = "$FhirUrl/Patient"; Body = $patient}
+            $created = Invoke-Fhir -Request $create -RetryStatus 403, 429
             if ($created.resourceType -ne 'Patient') { throw 'Unexpected create result' }
         }
         $stage = 'fhir-read'
-        $result.count = Get-ProbeCount $headers
+        $result.count = Get-ProbeCount
         if ($DicomUrl) {
             $stage = 'dicom-access'
             Assert-PrivateDns $DicomUrl
@@ -83,10 +98,11 @@ try {
     }
     Write-Output ('HEALTH_PROBE_RESULT=' + ($result | ConvertTo-Json -Compress))
 } catch {
-    # Do not emit exception details or tokens.
+    # Do not emit exception details or tokens. The HTTP status of a failed request is safe to emit.
+    $response = $_.Exception.Response
     Write-Output "HEALTH_PROBE_FAILED=$stage"
+    if ($null -ne $response) { Write-Output "HEALTH_PROBE_STATUS=$([int]$response.StatusCode)" }
     exit 1
 } finally {
     $identity = $null
-    $headers = $null
 }

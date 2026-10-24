@@ -12,6 +12,7 @@ from e2e_tests.resources.sql_probe import COMPUTE_API, ROLE_API, delete_after
 SCRIPT = Path(__file__).with_name("health_probe.ps1")
 RESULT = "HEALTH_PROBE_RESULT="
 FAILED = "HEALTH_PROBE_FAILED="
+STATUS = "HEALTH_PROBE_STATUS="
 FHIR_DATA_CONTRIBUTOR = "5a1fc7df-4bf1-4951-a576-89034ee01acd"
 DNS_ATTEMPTS = 3
 DNS_RETRY_SECONDS = 60
@@ -45,8 +46,10 @@ def probe_result(resource, phase, probe_id, dicom=False):
     lines = view.get("output", "").splitlines()
     if properties.get("provisioningState") in ("Failed", "Canceled") or state in ("Failed", "Canceled", "TimedOut"):
         stages = [line[len(FAILED) :] for line in lines if line.startswith(FAILED)]
+        statuses = [line[len(STATUS) :] for line in lines if line.startswith(STATUS)]
         raise ProbeFailure(
-            f"Health probe failed: state={state}, exitCode={view.get('exitCode')}, stage={','.join(stages) or 'unknown'}",
+            f"Health probe failed: state={state}, exitCode={view.get('exitCode')}, "
+            f"stage={','.join(stages) or 'unknown'}, http_status={','.join(statuses) or 'none'}",
             stages,
         )
     if state != "Succeeded":

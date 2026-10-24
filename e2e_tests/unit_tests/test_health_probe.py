@@ -62,7 +62,10 @@ class ProbeEvidenceTests(unittest.TestCase):
         running["properties"]["instanceView"] = {}
         self.assertFalse(probe.probe_result(running, "access", PROBE_ID))
         failed = result({}, state="Failed", code=1, output="HEALTH_PROBE_FAILED=fhir-role\n")
-        with self.assertRaisesRegex(AssertionError, "stage=fhir-role"):
+        with self.assertRaisesRegex(AssertionError, "stage=fhir-role, http_status=none"):
+            probe.probe_result(failed, "write", PROBE_ID)
+        failed = result({}, state="Failed", code=1, output="HEALTH_PROBE_FAILED=fhir-read\nHEALTH_PROBE_STATUS=403\n")
+        with self.assertRaisesRegex(AssertionError, "stage=fhir-read, http_status=403"):
             probe.probe_result(failed, "write", PROBE_ID)
 
     def test_payloads_match_enriched_api_schemas(self):
