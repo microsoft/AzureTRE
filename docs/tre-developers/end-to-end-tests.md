@@ -259,6 +259,19 @@ The step then deletes the backup data and the storage account, and it adds the t
 Delete the resource group by hand after that date.
 This step runs after the workspace delete, also when the case fails earlier. It runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
 
+### Airlock v1 to v2 move
+
+Set `e2eTestsCustomSelector` to `airlock_migration_validation` to run `test_airlock_migration.py::test_legacy_airlock_workspace_moves_to_v2`.
+The core must have `enable_legacy_airlock` set to `true`, and the test identity must have `WorkspaceOwner` and `AirlockManager` on the manual test workspace application.
+The case follows the steps in [Legacy Airlock Architecture](../azure-tre-overview/airlock-legacy.md#upgrading-to-current-architecture):
+
+1. It creates a Manual workspace with `airlock_version` set to `1`. An import uses the legacy external account and is approved.
+1. It calls `POST /migrations` two times. The workspace keeps `airlock_version` `1`.
+1. With an import draft in progress, a change to `airlock_version` `2` must get HTTP 400. The case then cancels the draft.
+1. The change to `2` must pass. A new import draft must use the consolidated core account and a `-draft` container.
+1. The legacy request keeps its record, its `approved` status and `airlock_version` `1`. Its stored files are deleted, as the docs say.
+1. A change back to `1` must get HTTP 400.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.
