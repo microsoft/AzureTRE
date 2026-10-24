@@ -16,3 +16,12 @@ variable "tre_resource_id" {
 variable "enable_cmk_encryption" {
   type = bool
 }
+# The workspace owns the identity and the key. A module cannot refer to resources outside it.
+variable "encryption_identity_id" {
+  type    = string
+  default = null
+}
+variable "encryption_key_id" {
+  type    = string
+  default = null
+}
