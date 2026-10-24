@@ -12,6 +12,7 @@ from e2e_tests import config
 from e2e_tests.conftest import get_workspace_owner_token
 from e2e_tests.resources import strings
 from e2e_tests.resources.gitea_probe import run_probe
+from e2e_tests.resources.gitea_secrets import console_log_counts, key_vault_references
 from e2e_tests.resources.resource import get_resource, post_resource
 from e2e_tests.resources.sql_lifecycle import sql_lifecycle
 from e2e_tests.resources.sql_probe import arm_client, COMPUTE_API, secret_access, validate_vm
@@ -109,6 +110,16 @@ async def test_private_gitea_repository_survives_update(verify):
                 await arm.request("POST", f"{site_id}/restart", WEB_API)
                 await probe(phase="read")
                 LOGGER.info("The Gitea repository survived the update and the restart")
+            # The web app sends its console log to Log Analytics, so the log must not show a secret.
+            references = await key_vault_references(arm, site_id)
+            assert set(references.values()) == {"Resolved"}, f"Gitea Key Vault references: {references}"
+            log_workspace = (
+                f"/subscriptions/{os.environ['ARM_SUBSCRIPTION_ID']}/resourceGroups/rg-{config.TRE_ID}"
+                f"/providers/Microsoft.OperationalInsights/workspaces/log-{config.TRE_ID}"
+            )
+            counts = await console_log_counts(arm, log_workspace, site_id)
+            LOGGER.info("Gitea console log lines: %s", counts)
+            assert counts["leaks"] == 0, f"The Gitea console log has {counts['leaks']} lines with a secret"
             # Check the network settings last, so that a failure here keeps the functional evidence above.
             app = await arm.request("GET", site_id, WEB_API)
             server = await arm.request(

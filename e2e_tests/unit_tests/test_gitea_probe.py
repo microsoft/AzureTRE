@@ -5,7 +5,7 @@ from pathlib import Path, PurePosixPath
 import re
 from types import SimpleNamespace
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 from jsonschema import validate
@@ -14,6 +14,7 @@ import yaml
 from api_app.services.schema_service import enrich_user_resource_template, enrich_workspace_service_template
 from e2e_tests import test_gitea as gitea
 from e2e_tests.resources import gitea_probe as probe
+from e2e_tests.resources import gitea_secrets as secrets
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -142,3 +143,45 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 "Phase": "write",
             },
         )
+
+
+class SecretLogTests(unittest.IsolatedAsyncioTestCase):
+    SITE = f"{GROUP.replace('/sub/', '/00000000-0000-0000-0000-000000000000/')}/providers/Microsoft.Web/sites/gitea-tretest-ws-abcd-svc-1234"
+    WORKSPACE = (
+        "/subscriptions/sub/resourceGroups/rg-tretest/providers/Microsoft.OperationalInsights/workspaces/log-tretest"
+    )
+
+    @staticmethod
+    def arm(*rows):
+        responses = [
+            SimpleNamespace(
+                status_code=200,
+                json=Mock(
+                    return_value={"tables": [{"columns": [{"name": "started"}, {"name": "leaks"}], "rows": [row]}]}
+                ),
+            )
+            for row in rows
+        ]
+        return SimpleNamespace(
+            request=AsyncMock(return_value={"properties": {"customerId": "customer", "status": "Resolved"}}),
+            credential=Mock(get_token=Mock(return_value=SimpleNamespace(token="token"))),
+            client=SimpleNamespace(post=AsyncMock(side_effect=responses)),
+        )
+
+    async def test_counts_wait_until_the_start_lines_arrive(self):
+        arm = self.arm([0, 0], [2, 0])
+        with patch("e2e_tests.resources.gitea_secrets.asyncio.sleep", AsyncMock()) as sleep:
+            counts = await secrets.console_log_counts(arm, self.WORKSPACE, self.SITE)
+        self.assertEqual(counts, {"started": 2, "leaks": 0})
+        sleep.assert_awaited_once()
+        self.assertIn(self.SITE.lower(), arm.client.post.call_args.kwargs["json"]["query"])
+
+    async def test_counts_reject_a_site_id_that_changes_the_query(self):
+        arm = self.arm()
+        with self.assertRaises(ValueError):
+            await secrets.console_log_counts(arm, self.WORKSPACE, f"{self.SITE}' or true or '")
+        arm.client.post.assert_not_awaited()
+
+    async def test_references_report_the_status_of_each_secret_setting(self):
+        statuses = await secrets.key_vault_references(self.arm(), self.SITE)
+        self.assertEqual(statuses, {"GITEA_PASSWD": "Resolved", "GITEA_OPENID_CLIENT_SECRET": "Resolved"})
