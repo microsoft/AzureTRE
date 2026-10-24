@@ -499,7 +499,16 @@ async def get_porter_outputs(msg_body: dict, config: dict):
         return True, outputs_json
 
 
+def worker_config(process_number: int, config: dict) -> dict:
+    # Each worker signs in with the Azure CLI before each Porter action. Workers that share one CLI folder
+    # read and write the same profile file at the same time, so each worker gets its own folder.
+    porter_env = config["porter_env"]
+    folder = os.path.join(porter_env["HOME"], f".azure-worker-{process_number}")
+    return {**config, "porter_env": {**porter_env, "AZURE_CONFIG_DIR": folder}}
+
+
 async def runner(process_number: int, config: dict):
+    config = worker_config(process_number, config)
     with tracer.start_as_current_span(process_number):
         async with default_credentials(config["vmss_msi_id"]) as credential:
             async with ServiceBusClient(config["service_bus_namespace"], credential) as service_bus_client:
