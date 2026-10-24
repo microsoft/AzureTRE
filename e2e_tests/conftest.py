@@ -106,6 +106,7 @@ async def create_or_get_test_workspace(
     pre_created_workspace_id: str = "",
     client_id: str = "",
     client_secret: str = "",
+    properties: dict | None = None,
 ) -> Tuple[str, str]:
     if pre_created_workspace_id != "":
         return f"/workspaces/{pre_created_workspace_id}", pre_created_workspace_id
@@ -131,6 +132,8 @@ async def create_or_get_test_workspace(
         template_properties = response.json().get("properties", {})
         if "enable_backup" in template_properties:
             payload["properties"]["enable_backup"] = False
+    # A case that needs other settings, for example backups, sets them here.
+    payload["properties"].update(properties or {})
 
     if config.TEST_WORKSPACE_APP_PLAN != "":
         payload["properties"]["app_service_plan_sku"] = config.TEST_WORKSPACE_APP_PLAN

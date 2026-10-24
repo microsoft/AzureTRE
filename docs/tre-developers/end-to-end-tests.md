@@ -238,6 +238,22 @@ The case does not read this value on FHIR, because the bundle does not set it.
 FHIR from Health 1.0.0 reports `Disabled`, but FHIR from Health 0.3.8 reports `Enabled`, also after a request sets `Disabled`.
 The Health job uses the SQL time limits with its own `HEALTH_VALIDATION_DEADLINE`.
 
+### Backup restore and delete
+
+Set `e2eTestsCustomSelector` to `backup_retention` or `backup_deletion` to run one case of `test_backup_restore.py::test_file_share_restore_and_workspace_delete`.
+Run one case in each workflow run, because each case can take 2 hours. The marker `backup_validation` selects both cases.
+Each case creates its own workspace with `enable_backup` on, a Guacamole service and a Windows VM.
+The `retain` case sets `delete_backups_on_uninstall` to `false`, and the `delete` case sets it to `true`.
+From the VM, the case makes sure that the host of the workspace file share is private and that the VM identity without a role gets HTTP 403.
+The case then gives the VM identity a temporary Storage File Data Privileged Contributor role on the share. The VM writes a file through the Azure Files REST API.
+An on-demand Azure Backup job makes a recovery point. The VM changes the file, a restore of that file from the recovery point follows, and the VM reads the original content again.
+The case then deletes the VM, the Guacamole service and the workspace. Each delete must pass.
+After the `delete` case, the workspace resource group must be gone.
+After the `retain` case, the vault must keep the stopped item with its recovery point, and the storage account must keep its share and deny public network access.
+A second restore from the recovery point must pass.
+The last clean-up step turns off soft delete, deletes the item and the vault, and deletes the retained resource group.
+This step runs after the workspace delete, also when the case fails earlier. It runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.

@@ -139,7 +139,12 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual([name for name, _ in owned.finalisers], ["/workspaces/ws", "/service"])
                 owned.finalisers.clear()
         create_workspace.assert_awaited_once_with(
-            auth_type="Automatic", verify=True, pre_created_workspace_id="", client_id="", client_secret=""
+            auth_type="Automatic",
+            verify=True,
+            pre_created_workspace_id="",
+            client_id="",
+            client_secret="",
+            properties=None,
         )
         create_service.assert_awaited_once_with("/workspaces/ws", "token", "", True)
 
