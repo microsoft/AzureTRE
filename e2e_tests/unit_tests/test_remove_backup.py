@@ -40,12 +40,18 @@ args=sys.argv[1:]
 with open(os.environ['CALLS'],'a') as f:f.write(json.dumps(args)+'\\n')
 state=json.load(open(os.environ['AZ_STATE']))
 command=' '.join(args[:3])
-if command.startswith('backup vault show'):sys.exit(0 if state['vault'] else 1)
+if command.startswith('backup vault show'):
+    if state['vault']:sys.exit(0)
+    print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
 if command.startswith('backup item list'):
     if 'AzureStorage' in args:print('StorageContainer;storage;rg;stgws1234\\tAzureFileShare;share\\tProtected')
     sys.exit(0)
 if command.startswith('account show'):print('sub');sys.exit(0)
-if args[:2]==['rest','--method'] and args[2]=='delete':
+if command.startswith('resource show'):
+    if state['account']:sys.exit(0)
+    print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
+if args[:3]==['rest','--method','get'] and '/fileServices/default/shares' in args[4]:print('vm-shared-storage');sys.exit(0)
+if args[:3]==['rest','--method','delete'] and 'Microsoft.RecoveryServices/vaults' in args[4]:
     state['vault']=False;json.dump(state,open(os.environ['AZ_STATE'],'w'))
 sys.exit(0)
 """
@@ -78,8 +84,8 @@ class RemoveBackupTests(unittest.TestCase):
             "TF_STATE": str(self.folder / "state.txt"),
         }
 
-    def run_script(self, delete_backups):
-        (self.folder / "az.json").write_text(json.dumps({"vault": True}))
+    def run_script(self, delete_backups, vault=True, account=True):
+        (self.folder / "az.json").write_text(json.dumps({"vault": vault, "account": account}))
         (self.folder / "state.txt").write_text("\n".join(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
         arguments = ["rg-mgmt", "stmgmt", "tfstate", "tre", "workspace-1234", "true", delete_backups, ""]
         result = subprocess.run(
@@ -92,6 +98,12 @@ class RemoveBackupTests(unittest.TestCase):
         )
         calls = [json.loads(line) for line in (self.folder / "calls.jsonl").read_text().splitlines()]
         return result, set((self.folder / "state.txt").read_text().split()), calls
+
+    @staticmethod
+    def deletes(calls, part):
+        return [
+            index for index, call in enumerate(calls) if call[:3] == ["rest", "--method", "delete"] and part in call[4]
+        ]
 
     def test_retained_backups_keep_the_storage_that_the_recovery_points_need(self):
         result, state, calls = self.run_script("false")
@@ -107,3 +119,32 @@ class RemoveBackupTests(unittest.TestCase):
         self.assertEqual(state, set(STORAGE + OTHER + ["azurerm_resource_group.ws"]))
         disable = [call for call in calls if call[:3] == ["backup", "protection", "disable"]]
         self.assertTrue(all(call[call.index("--delete-backup-data") + 1] == "true" for call in disable))
+
+    def test_deleted_backups_delete_the_shares_with_their_leased_snapshots(self):
+        # Azure Backup keeps its lease on the share snapshots after the vault delete.
+        result, _, calls = self.run_script("true")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        [vault] = self.deletes(calls, "Microsoft.RecoveryServices/vaults")
+        [share] = self.deletes(calls, "/fileServices/default/shares/")
+        self.assertTrue(
+            calls[share][4].endswith("/shares/vm-shared-storage?api-version=2023-05-01&$include=leased-snapshots")
+        )
+        self.assertGreater(share, vault)
+
+    def test_retained_backups_keep_the_shares(self):
+        result, _, calls = self.run_script("false")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deletes(calls, "/fileServices/default/shares/"), [])
+
+    def test_a_repeated_delete_without_a_vault_still_deletes_the_shares(self):
+        # An earlier delete can have deleted the vault and then failed on a leased share snapshot.
+        result, _, calls = self.run_script("true", vault=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.deletes(calls, "/fileServices/default/shares/")), 1)
+        self.assertIn(["lock", "list"], [call[:2] for call in calls])
+
+    def test_a_repeated_delete_without_the_storage_account_does_nothing(self):
+        result, _, calls = self.run_script("true", vault=False, account=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deletes(calls, "/fileServices/default/shares/"), [])
+        self.assertNotIn(["lock", "list"], [call[:2] for call in calls])
