@@ -135,7 +135,7 @@
           "type": "string"
         },
         "resource_processor_vmss_sku": {
-          "description": "VMSS SKU for the Resource Processor scale set (e.g., Standard_B2s).",
+          "description": "VMSS SKU for the Resource Processor scale set (e.g., Standard_B2ls_v2).",
           "type": "string"
         },
         "user_management_enabled": {

@@ -34,7 +34,7 @@ tre:
   tre_address_space: 10.0.0.0/12
 
   core_app_service_plan_sku: P1v2
-  resource_processor_vmss_sku: Standard_B2s
+  resource_processor_vmss_sku: Standard_B2ls_v2
   enable_swagger: true
   enable_airlock_malware_scanning: true
   # WARNING: Disabling legacy airlock deletes all v1 storage accounts and their data on core redeployment.
