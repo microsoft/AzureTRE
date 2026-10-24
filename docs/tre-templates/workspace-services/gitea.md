@@ -28,3 +28,12 @@ The Gitea worskpace service opens outbound access to:
 ## Upgrading to version 1.0.0
 
 Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.
+
+## Repairing a service that cannot reach its file share
+
+Before version 1.3.8, Terraform used the file endpoint of the Gitea storage account to manage the `gitea-data` share. If a delete removed the private endpoint of the account and then failed, each later update or delete of the service fails with `executing request: Get "https://stgsvc<id>.file.core.windows.net/gitea-data?restype=share": EOF`.
+
+If you want to delete such a service:
+
+1. Delete the storage account `stgsvc<id>` in the workspace resource group. This deletes the Gitea repositories.
+2. Delete the workspace service again. Terraform removes the share from its state, because the account does not exist.
