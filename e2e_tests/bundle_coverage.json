@@ -229,18 +229,28 @@
       "manifest": "templates/workspace_services/gitea/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-windowsvm"
       ],
       "tests": [
+        "test_gitea.py::test_private_gitea_repository_survives_update"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-gitea]"
       ],
-      "related_tests": [],
       "coverage": [
         "install",
+        "private Gitea API through private DNS",
+        "anonymous and wrong-password requests denied",
+        "private repository write/read with the admin account",
+        "update and app restart with retained repository data",
+        "public network access disabled",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary secret-scoped role assignment.",
+        "The case uses the admin account, not OpenID sign-in or researcher identities. The update uses the current bundle version. Previous-version migration remains separate (#5128)."
       ],
       "unavailable_reason": ""
     },

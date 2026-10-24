@@ -186,6 +186,18 @@ The VM reads the administrator password from the workspace Key Vault through a t
 The MySQL job uses the SQL time limits above with its own `MYSQL_VALIDATION_DEADLINE`. If the case creates Nexus, it removes Nexus after the VM.
 These checks do not prove previous-version upgrades or researcher access.
 
+### Gitea selection
+
+Select `tre-workspace-service-gitea` to run `test_gitea.py::test_private_gitea_repository_survives_update`.
+The case creates its own workspace, Guacamole service, Windows VM and Gitea service.
+It gives the VM identity a temporary Key Vault Secrets User role on the secret that holds the Gitea admin password.
+From the VM, the case makes sure that the Gitea host resolves to a private address and that the Gitea API is available.
+It also makes sure that Gitea rejects a repository create without credentials (HTTP 401) and a request with a wrong password (HTTP 401).
+The VM then creates a private repository with the admin account and commits a file. An anonymous read of the repository gets HTTP 404.
+An update changes the display name, and the case restarts the web app. The VM then reads the file again and deletes the repository.
+At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
+The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.

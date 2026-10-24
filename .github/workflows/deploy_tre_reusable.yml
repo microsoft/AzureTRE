@@ -1077,6 +1077,10 @@ jobs:
         if: inputs.e2eBundle == 'tre-workspace-service-mysql'
         run: echo "MYSQL_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
 
+      - name: Reserve Gitea cleanup and reporting time
+        if: inputs.e2eBundle == 'tre-workspace-service-gitea'
+        run: echo "GITEA_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -1105,6 +1109,7 @@ jobs:
             TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=${{ inputs.runCertificateTestsOnWeekends }}
             SQL_VALIDATION_DEADLINE=${{ env.SQL_VALIDATION_DEADLINE }}
             MYSQL_VALIDATION_DEADLINE=${{ env.MYSQL_VALIDATION_DEADLINE }}
+            GITEA_VALIDATION_DEADLINE=${{ env.GITEA_VALIDATION_DEADLINE }}
             TEST_BUNDLE_REQUEST_FILE=e2e_tests/bundle-validation-request.json make test-e2e-bundle
           DEVCONTAINER_TAG: ${{ inputs.DEVCONTAINER_TAG }}
           CI_CACHE_ACR_NAME: ${{ secrets.CI_CACHE_ACR_NAME}}
