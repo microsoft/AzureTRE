@@ -4,17 +4,21 @@ import base64
 import json
 import os
 import unittest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from e2e_tests import test_airlock_migration as migration
+from e2e_tests.token_provider import TokenProvider
 
 WORKSPACE = "11111111-1111-4111-8111-111111111111"
 PATH = f"/workspaces/{WORKSPACE}"
 
 
 def token(roles):
+    # get_workspace_owner_token returns a TokenProvider, not the token text.
     payload = base64.urlsafe_b64encode(json.dumps({"roles": roles}).encode()).decode().rstrip("=")
-    return "header." + payload + ".signature"
+    credential = Mock()
+    credential.get_token.return_value.token = "header." + payload + ".signature"
+    return TokenProvider(credential, "api://workspace/.default")
 
 
 class MigrationFlowTests(unittest.IsolatedAsyncioTestCase):

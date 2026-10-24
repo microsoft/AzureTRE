@@ -17,6 +17,7 @@ from e2e_tests.conftest import clean_up_test_workspace, create_or_get_test_works
 from e2e_tests.helpers import get_admin_token, get_auth_header, get_full_endpoint
 from e2e_tests.resources.resource import get_resource, post_resource
 from e2e_tests.resources.sql_lifecycle import sql_lifecycle
+from e2e_tests.token_provider import TokenProvider
 from e2e_tests.test_airlock import create_draft_import_request_with_file, submit_airlock_import_request
 
 LOGGER = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ LOGGER = logging.getLogger(__name__)
 
 def require_review_roles(token):
     # This is a prerequisite diagnostic. The API validates the token and roles.
+    if isinstance(token, TokenProvider):
+        token = token.get_token()
     try:
         encoded = token.split(".")[1]
         claims = json.loads(base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4)))
