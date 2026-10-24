@@ -63,11 +63,6 @@ data "azurerm_key_vault_secret" "client_id" {
   key_vault_id = data.azurerm_key_vault.ws.id
 }
 
-data "azurerm_key_vault_secret" "client_secret" {
-  name         = "workspace-client-secret"
-  key_vault_id = data.azurerm_key_vault.ws.id
-}
-
 data "azurerm_monitor_diagnostic_categories" "gitea" {
   resource_id = azurerm_linux_web_app.gitea.id
   depends_on = [

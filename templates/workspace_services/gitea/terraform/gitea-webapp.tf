@@ -42,7 +42,7 @@ resource "azurerm_linux_web_app" "gitea" {
     GITEA_PASSWD                                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.gitea_password.id})"
     GITEA_EMAIL                                      = "giteaadmin@azuretre.com"
     GITEA_OPENID_CLIENT_ID                           = data.azurerm_key_vault_secret.client_id.value
-    GITEA_OPENID_CLIENT_SECRET                       = data.azurerm_key_vault_secret.client_secret.value
+    GITEA_OPENID_CLIENT_SECRET                       = "@Microsoft.KeyVault(SecretUri=${data.azurerm_key_vault.ws.vault_uri}secrets/workspace-client-secret)"
     GITEA_OPENID_AUTHORITY                           = local.gitea_openid_auth
     GITEA__server__ROOT_URL                          = "https://${local.webapp_name}.azurewebsites.net/"
     GITEA__server__LFS_START_SERVER                  = "true"

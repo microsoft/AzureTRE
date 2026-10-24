@@ -5,4 +5,5 @@ FROM gitea/gitea:${GITEA_TAG}
 # need to pass args to stage
 ARG CERTIFICATE_URL
 RUN wget -nv -O /usr/local/share/ca-certificates/mysql.crt.pem ${CERTIFICATE_URL} && update-ca-certificates
-ENTRYPOINT ["/bin/bash", "-c", "sleep 120 && gitea admin user create --admin --access-token --username=${GITEA_USERNAME} --password=${GITEA_PASSWD} --email=${GITEA_EMAIL} --must-change-password=false & /usr/bin/entrypoint"]
+# Do not add --access-token. Gitea prints the new token to the console log.
+ENTRYPOINT ["/bin/bash", "-c", "sleep 120 && gitea admin user create --admin --username=\"${GITEA_USERNAME}\" --password=\"${GITEA_PASSWD}\" --email=\"${GITEA_EMAIL}\" --must-change-password=false & /usr/bin/entrypoint"]

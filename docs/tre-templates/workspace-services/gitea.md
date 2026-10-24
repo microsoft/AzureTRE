@@ -41,6 +41,21 @@ To keep the repositories, do these steps from a workspace VM:
 4. Create each repository again in Gitea.
 5. Push each mirror into its new repository with `git push --mirror <repository URL>`.
 
+## Upgrading to version 1.3.10
+
+Before version 1.3.10, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:
+
+- The client secret of the workspace application.
+- The password of the Gitea admin user.
+- An access token of the Gitea admin user.
+
+If a Gitea workspace service ran an earlier version, do these steps after the upgrade:
+
+1. Rotate the client secret of the workspace application. Make sure that the workspace Key Vault secret `workspace-client-secret` has the new value.
+2. Restart the Gitea web app. At each start, Gitea gives its OIDC source the client secret from the Key Vault.
+3. Sign in to Gitea as the admin user. In the user settings, open Applications and delete the access tokens.
+4. If the people who can read Log Analytics must not get admin access to Gitea, change the password of the admin user in Gitea.
+
 ## Repairing a service that cannot reach its file share
 
 Before version 1.3.8, Terraform used the file endpoint of the Gitea storage account to manage the `gitea-data` share. If a delete removed the private endpoint of the account and then failed, each later update or delete of the service fails with `executing request: Get "https://stgsvc<id>.file.core.windows.net/gitea-data?restype=share": EOF`.
