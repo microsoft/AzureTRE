@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
 
+import httpx
 from jsonschema import validate
 import yaml
 
@@ -144,3 +145,18 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 else:
                     await run
                 self.assertEqual(arm.delete.await_count, len(results))
+
+    async def test_public_requests_are_sent_again_until_azure_blocks_them(self):
+        urls = {"fhir": FHIR_URL + "/metadata", "dicom": "https://dicom.example/health/check"}
+        cases = (
+            ([200, 403, 403, 403], {}, {"fhir": 403, "dicom": 403}),
+            # If the wait ends first, the caller gets the last statuses and reports them.
+            ([200, 401], {"PUBLIC_WAIT_SECONDS": 0}, {"fhir": 200, "dicom": 401}),
+        )
+        for codes, settings, expected in cases:
+            responses = iter(codes)
+            transport = httpx.MockTransport(lambda request: httpx.Response(next(responses)))
+            with self.subTest(codes=codes), patch.multiple(probe, PUBLIC_RETRY_SECONDS=0, **settings):
+                async with httpx.AsyncClient(transport=transport) as client:
+                    statuses = await probe.public_statuses(client, urls)
+                self.assertEqual(statuses, expected)

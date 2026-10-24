@@ -6,12 +6,19 @@ import logging
 import os
 from uuid import uuid4
 
+from httpx import AsyncClient
 import pytest
 
 from e2e_tests import config
 from e2e_tests.conftest import get_workspace_owner_token
 from e2e_tests.resources import strings
-from e2e_tests.resources.health_probe import FHIR_DATA_CONTRIBUTOR, role_access, run_probe
+from e2e_tests.resources.health_probe import (
+    FHIR_DATA_CONTRIBUTOR,
+    PUBLIC_BLOCKED,
+    public_statuses,
+    role_access,
+    run_probe,
+)
 from e2e_tests.resources.resource import get_resource, post_resource
 from e2e_tests.resources.sql_lifecycle import sql_lifecycle
 from e2e_tests.resources.sql_probe import arm_client, COMPUTE_API, validate_vm
@@ -99,16 +106,23 @@ async def test_private_fhir_access_and_dicom_update(verify):
                     )
                 health = (await get_resource(f"/api{health_path}", await new_token(), verify))["workspaceService"]
                 assert health["properties"]["dicom_url"] == dicom_url
-                dicom = await arm.request("GET", f"{workspace_arm_id}/dicomservices/dicom{suffix}", HEALTH_API)
+                dicom_id = f"{workspace_arm_id}/dicomservices/dicom{suffix}"
+                dicom = await arm.request("GET", dicom_id, HEALTH_API)
                 assert dicom["properties"]["provisioningState"] == "Succeeded"
                 await probe(phase="read", dicom_url=dicom_url)
                 LOGGER.info("FHIR data survived the update that added DICOM")
             # Check the network settings last, so that a failure here keeps the functional evidence above.
-            workspace_record = await arm.request("GET", workspace_arm_id, HEALTH_API)
-            network = {
-                "workspace": workspace_record["properties"].get("publicNetworkAccess"),
-                "fhir": fhir["properties"].get("publicNetworkAccess"),
-                "dicom": dicom["properties"].get("publicNetworkAccess"),
-            }
-            LOGGER.info("Health public network access: %s", network)
+            async with AsyncClient(timeout=30) as client:
+                public = await public_statuses(
+                    client, {"fhir": f"{fhir_url}/metadata", "dicom": f"{dicom_url}/health/check"}
+                )
+            # Read the resources again, because the update replaced the private endpoint.
+            # FHIR is not in this list: Azure keeps publicNetworkAccess Enabled on FHIR, also after a request
+            # sets Disabled. The private endpoint on the workspace blocks public traffic to FHIR (checked above).
+            network = {}
+            for name, resource_id in (("workspace", workspace_arm_id), ("dicom", dicom_id)):
+                record = await arm.request("GET", resource_id, HEALTH_API)
+                network[name] = record["properties"].get("publicNetworkAccess")
+            LOGGER.info("Health public responses: %s, public network access: %s", public, network)
+            assert public == dict.fromkeys(public, PUBLIC_BLOCKED), f"Health services answer public requests: {public}"
             assert network == dict.fromkeys(network, "Disabled"), f"Health services allow public access: {network}"

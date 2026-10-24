@@ -15,6 +15,10 @@ FAILED = "HEALTH_PROBE_FAILED="
 FHIR_DATA_CONTRIBUTOR = "5a1fc7df-4bf1-4951-a576-89034ee01acd"
 DNS_ATTEMPTS = 3
 DNS_RETRY_SECONDS = 60
+PUBLIC_BLOCKED = 403
+# Azure can take up to 5 minutes to block public traffic after a change.
+PUBLIC_WAIT_SECONDS = 5 * 60
+PUBLIC_RETRY_SECONDS = 30
 LOGGER = logging.getLogger(__name__)
 
 
@@ -73,6 +77,16 @@ async def role_access(arm, scope, role, principal_id, subscription_id):
     async with delete_after(arm, assignment, ROLE_API):
         await arm.request("PUT", assignment, ROLE_API, body=body)
         yield
+
+
+async def public_statuses(client, urls):
+    """Send requests from outside the workspace network until Azure blocks each one, or the wait ends."""
+    deadline = asyncio.get_running_loop().time() + PUBLIC_WAIT_SECONDS
+    while True:
+        statuses = {name: (await client.get(url)).status_code for name, url in urls.items()}
+        if set(statuses.values()) == {PUBLIC_BLOCKED} or asyncio.get_running_loop().time() >= deadline:
+            return statuses
+        await asyncio.sleep(PUBLIC_RETRY_SECONDS)
 
 
 async def run_probe(arm, vm_id, location, *, fhir_url, probe_id, phase, dicom_url=""):

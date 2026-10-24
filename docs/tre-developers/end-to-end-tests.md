@@ -215,7 +215,10 @@ If the FHIR name lookup fails, the case runs that probe again after 60 seconds, 
 It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
 The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.
 An update adds DICOM. The case reads the Patient again and makes sure that the DICOM host is private and needs a token.
-At the end, the case makes sure that the Health workspace, FHIR and DICOM have public network access disabled.
+At the end, the case sends FHIR and DICOM requests without a token from the test runner, outside the workspace network.
+Azure must reject each request with HTTP 403. The case tries again for up to 5 minutes, because Azure can take this time to block public traffic.
+The case then reads the Health workspace and DICOM again, and makes sure that each has public network access disabled.
+The case does not read this value on FHIR. Azure keeps `publicNetworkAccess` `Enabled` on FHIR, also after a request sets `Disabled`.
 The Health job uses the SQL time limits with its own `HEALTH_VALIDATION_DEADLINE`.
 
 ### Run the branch workflow before merge
