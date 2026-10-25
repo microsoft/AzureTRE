@@ -166,8 +166,9 @@ resource "azurerm_private_endpoint" "stgdfspe" {
   }
 }
 
-# Azure Backup fails the first storage registration in a new vault with CloudInternalError.
-# This step makes that first attempt, so that the registration below is not the first one.
+# Azure Backup can fail the first storage registrations in a new vault with CloudInternalError.
+# This step tries up to five times and removes the first registration that succeeds. Then the
+# registration below is not the first one, and Terraform creates and owns the registration.
 resource "terraform_data" "backup_registration_warm_up" {
   count = var.enable_backup ? 1 : 0
 
@@ -189,28 +190,33 @@ if az rest --method get --url "$url" --output none 2>/dev/null; then
   exit 0
 fi
 body='{"properties":{"backupManagementType":"AzureStorage","containerType":"StorageContainer","sourceResourceId":"${self.input.storage_account_id}"}}'
-operation=$(az rest --method put --url "$url" --body "$body" --debug 2>&1 | sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/p" | head -n 1 || true)
-status=Unknown
-if [ -n "$operation" ]; then
-  for attempt in $(seq 1 60); do
-    status=$(az rest --method get --url "$operation" --query status --output tsv 2>/dev/null || echo Unknown)
-    [ "$status" = "InProgress" ] || break
-    sleep 10
-  done
-else
-  sleep 120
-fi
-echo "The first registration attempt ended with status $status"
-if az rest --method get --url "$url" --output none 2>/dev/null; then
-  # Remove a successful first registration, so that Terraform creates and owns the registration.
-  az rest --method delete --url "$url" --output none
-  for attempt in $(seq 1 60); do
-    az rest --method get --url "$url" --output none 2>/dev/null || exit 0
-    sleep 10
-  done
-  echo "The storage account is still registered with the vault after 10 minutes" >&2
-  exit 1
-fi
+for try in 1 2 3 4 5; do
+  if [ "$try" -gt 1 ]; then
+    sleep 60
+  fi
+  operation=$(az rest --method put --url "$url" --body "$body" --debug 2>&1 | sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/p" | head -n 1 || true)
+  status=Unknown
+  if [ -n "$operation" ]; then
+    for attempt in $(seq 1 60); do
+      status=$(az rest --method get --url "$operation" --query status --output tsv 2>/dev/null || echo Unknown)
+      [ "$status" = "InProgress" ] || break
+      sleep 10
+    done
+  else
+    sleep 120
+  fi
+  echo "Registration attempt $try ended with status $status"
+  if az rest --method get --url "$url" --output none 2>/dev/null; then
+    # Remove the registration, so that Terraform creates and owns the registration.
+    az rest --method delete --url "$url" --output none
+    for attempt in $(seq 1 60); do
+      az rest --method get --url "$url" --output none 2>/dev/null || exit 0
+      sleep 10
+    done
+    echo "The storage account is still registered with the vault after 10 minutes" >&2
+    exit 1
+  fi
+done
 EOT
   }
 }

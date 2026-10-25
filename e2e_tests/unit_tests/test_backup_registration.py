@@ -23,8 +23,9 @@ def save():json.dump(state,open(os.environ['STATE'],'w'))
 if args[0]!='rest':sys.exit(0)
 method=args[args.index('--method')+1];url=args[args.index('--url')+1]
 if url==os.environ['OPERATION']:
-    print(state['outcome'])
-    state['registered']=state['outcome']=='Succeeded';save();sys.exit(0)
+    outcome=state['outcomes'].pop(0) if len(state['outcomes'])>1 else state['outcomes'][0]
+    print(outcome)
+    state['registered']=outcome=='Succeeded';save();sys.exit(0)
 if method=='get':sys.exit(0 if state['registered'] else 1)
 if method=='put':
     if state['header']:print("INFO: cli.azure.cli.core.util:     'Azure-AsyncOperation': '"+os.environ['OPERATION']+"'",file=sys.stderr)
@@ -54,9 +55,9 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
             path.write_text("#!" + sys.executable + "\n" + body)
             path.chmod(0o755)
 
-    def run_warm_up(self, *, registered=False, outcome="Failed", header=True):
+    def run_warm_up(self, *, registered=False, outcomes=("Failed",), header=True):
         state = self.folder / "state.json"
-        state.write_text(json.dumps({"registered": registered, "outcome": outcome, "header": header}))
+        state.write_text(json.dumps({"registered": registered, "outcomes": list(outcomes), "header": header}))
         env = os.environ | {
             "PATH": str(self.folder) + os.pathsep + os.environ["PATH"],
             "CALLS": str(self.folder / "calls.jsonl"),
@@ -75,24 +76,31 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         self.assertEqual(methods, ["get"])
         self.assertTrue(state["registered"])
 
-    def test_failed_first_attempt_leaves_registration_to_terraform(self):
-        result, methods, state = self.run_warm_up(outcome="Failed")
+    def test_five_failed_attempts_leave_registration_to_terraform(self):
+        result, methods, state = self.run_warm_up(outcomes=["Failed"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get"])
+        self.assertEqual(methods, ["get"] + ["put", "get"] * 5)
         self.assertFalse(state["registered"])
-        self.assertIn("ended with status Failed", result.stdout)
+        self.assertIn("Registration attempt 5 ended with status Failed", result.stdout)
+
+    def test_attempts_continue_until_one_succeeds(self):
+        result, methods, state = self.run_warm_up(outcomes=["Failed", "Failed", "Succeeded"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get"] + ["put", "get"] * 3 + ["delete", "get"])
+        self.assertFalse(state["registered"])
+        self.assertIn("Registration attempt 3 ended with status Succeeded", result.stdout)
 
     def test_successful_first_attempt_is_removed_for_terraform(self):
-        result, methods, state = self.run_warm_up(outcome="Succeeded")
+        result, methods, state = self.run_warm_up(outcomes=["Succeeded"])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
-    def test_missing_operation_header_waits_before_terraform(self):
+    def test_missing_operation_header_waits_before_each_check(self):
         result, methods, _ = self.run_warm_up(header=False)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get"])
-        self.assertIn("ended with status Unknown", result.stdout)
+        self.assertEqual(methods, ["get"] + ["put", "get"] * 5)
+        self.assertIn("Registration attempt 1 ended with status Unknown", result.stdout)
 
     def test_terraform_registration_waits_for_the_warm_up(self):
         block = STORAGE.read_text().split('resource "azurerm_backup_container_storage_account" "storage_account" {', 1)[
