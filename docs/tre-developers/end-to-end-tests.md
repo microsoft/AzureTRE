@@ -274,6 +274,17 @@ The case follows the steps in [Legacy Airlock Architecture](../azure-tre-overvie
 1. The five legacy storage accounts of the workspace must not exist. So the stored files of the legacy request are deleted, as the docs say.
 1. A change back to `1` must get HTTP 400.
 
+### Airlock upgrade from an earlier release
+
+The two cases in `test_airlock_upgrade.py` follow the procedure in [Legacy Airlock Architecture](../azure-tre-overview/airlock-legacy.md#upgrading-to-current-architecture) with a workspace that an earlier release created. Both cases need the manual test workspace application with `WorkspaceOwner` and `AirlockManager`.
+
+1. Deploy the earlier release, for example `v0.29.1`, and set `e2eTestsCustomSelector` to `airlock_upgrade_seed`. The case creates the workspace `E2E Airlock upgrade seed` with an approved legacy import, and keeps it.
+1. Deploy the current code to the same environment with `enable_legacy_airlock` set to `true`. The deployment runs `POST /migrations`.
+1. Set `e2eTestsCustomSelector` to `airlock_upgrade_verify`. The case makes sure that the core legacy accounts still exist and that the workspace has `airlock_version` `1`.
+1. The case upgrades the workspace to the current `tre-workspace-base` version. The legacy workspace accounts must still exist with the default network action `Deny`, and a new legacy import must pass.
+1. The case changes `airlock_version` to `2`. The legacy workspace accounts must not exist, the legacy requests keep their records, and a new import draft must use the v2 core account.
+1. The case deletes the workspace.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.
