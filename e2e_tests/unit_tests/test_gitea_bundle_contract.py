@@ -82,3 +82,16 @@ class GiteaBundleContractTests(unittest.TestCase):
         value = re.search(r"\n    GITEA_OPENID_CLIENT_SECRET\s*=\s*(.+)\n", webapp).group(1)
         self.assertRegex(value, r'^"@Microsoft\.KeyVault\(SecretUri=.+secrets/workspace-client-secret\)"$')
         self.assertNotIn('data "azurerm_key_vault_secret" "client_secret"', (BUNDLE / "data.tf").read_text())
+
+    def test_identity_reads_only_its_key_vault_references(self):
+        # The workspace Key Vault also has the secrets of the other workspace services.
+        webapp = (BUNDLE / "gitea-webapp.tf").read_text()
+        for name in re.findall(r'resource "azurerm_role_assignment" "(\w+)"', webapp):
+            assignment = block(webapp, f'resource "azurerm_role_assignment" "{name}"')
+            with self.subTest(role=name):
+                self.assertNotRegex(assignment, r"\n  scope\s*=\s*data\.azurerm_key_vault\.ws\.id\n")
+        roles = block(webapp, 'resource "azurerm_role_assignment" "keyvault_gitea_secret_role"')
+        scopes = re.findall(r"\n    \w+\s*=\s*(.+)", roles.split("for_each = {", 1)[1].split("\n  }", 1)[0])
+        references = re.findall(r"@Microsoft\.KeyVault\(SecretUri=(.+?)\)", webapp)
+        self.assertEqual(len(scopes), len(references))
+        self.assertIn('"${data.azurerm_key_vault.ws.id}/secrets/workspace-client-secret"', scopes)

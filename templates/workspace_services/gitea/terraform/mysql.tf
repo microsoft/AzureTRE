@@ -66,9 +66,5 @@ resource "azurerm_key_vault_secret" "db_password" {
   key_vault_id = data.azurerm_key_vault.ws.id
   tags         = local.workspace_service_tags
 
-  depends_on = [
-    azurerm_role_assignment.keyvault_gitea_ws_role
-  ]
-
   lifecycle { ignore_changes = [tags] }
 }
