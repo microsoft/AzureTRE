@@ -58,6 +58,13 @@ This VM bundle requests the `$RELEASE-security` suite and waits for cloud-init t
 For existing Linux VMs, set the security source suite to the VM's release plus `-security`, for example `jammy-security`.
 Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-failed VMs need a separate repair or replacement.
 
+## Ubuntu archive key and HTTPS
+
+Nexus bundle `3.11.3` gets the `ubuntu` and `ubuntu-security` packages over HTTPS, the same as the other proxies. An upgrade updates the remote URL of the two repositories in place.
+
+Guacamole Linux VM bundle `1.4.10` gives the three Ubuntu lines the option `signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg`, so apt uses the Ubuntu archive key for these sources.
+Bundle upgrades do not change the apt sources of an existing VM. For an existing Linux VM, set the options of the three Ubuntu lines in `/etc/apt/sources.list` to `[signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg]`.
+
 ## Validate Linux VM provisioning
 
 Run the `linux_vm` E2E test explicitly to check Ubuntu 22.04 bootstrap through Nexus.
@@ -122,8 +129,8 @@ Nexus Shared Service requires access to resources outside of the Azure TRE VNET.
 | Docker | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker/` | Install Docker via apt on Linux systems. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
 | Docker GPG | raw | [https://download.docker.com/linux/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-public-key/` | Provide public key to sign apt source for above Docker apt. |
 | Docker Hub | docker | [https://registry-1.docker.io] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/docker-hub/` | Provide docker access to public images repo. |
-| Ubuntu Packages | raw | [http://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Ubuntu apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
-| Ubuntu Security | raw | [http://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Ubuntu security apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
+| Ubuntu Packages | raw | [https://archive.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu/` | Ubuntu apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
+| Ubuntu Security | raw | [https://security.ubuntu.com/ubuntu/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/ubuntu-security/` | Ubuntu security apt packages. A raw proxy passes through any Ubuntu release, so one repo serves all supported distributions. |
 | Almalinux | yum | [https://repo.almalinux.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/almalinux` | Install Almalinux packages |
 | R-Proxy | r | [https://cran.r-project.org/] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-proxy` | Provide access to CRAN packages for R |
 | R-Studio Download | raw | [https://download1.rstudio.org] | `https://nexus-{TRE_ID}.{LOCATION}.cloudapp.azure.com/repository/r-studio-download` | Provide access to download R Studio |
