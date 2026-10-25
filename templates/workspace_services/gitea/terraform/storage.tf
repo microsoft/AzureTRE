@@ -12,6 +12,11 @@ resource "azurerm_storage_account" "gitea" {
   # changing this value is destructive, hence attribute is in lifecycle.ignore_changes block below
   infrastructure_encryption_enabled = true
 
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   dynamic "identity" {
     for_each = var.enable_cmk_encryption ? [1] : []
     content {
@@ -31,11 +36,14 @@ resource "azurerm_storage_account" "gitea" {
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-resource "azurerm_storage_account_network_rules" "stgrules" {
-  storage_account_id = azurerm_storage_account.gitea.id
+# Before version 1.3.8, a separate resource managed the network rules. A destroy of that resource
+# changes the rules of the account, so Terraform only removes it from the state.
+removed {
+  from = azurerm_storage_account_network_rules.stgrules
 
-  default_action = "Deny"
-  bypass         = ["AzureServices"]
+  lifecycle {
+    destroy = false
+  }
 }
 
 resource "azurerm_private_endpoint" "stgfilepe" {
