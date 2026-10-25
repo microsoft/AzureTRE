@@ -74,3 +74,10 @@ class HealthBundleContractTests(unittest.TestCase):
         roles = (BUNDLE / "roles.tf").read_text()
         self.assertNotIn("role_definition_id", roles)
         self.assertEqual(roles.count("role_definition_name"), 4)
+
+    def test_dicom_roles_wait_for_the_endpoint_link(self):
+        # Azure accepts the zone group write only after it links a new DICOM service to the endpoint.
+        roles = (BUNDLE / "roles.tf").read_text()
+        for name in ("researchers_dicom_data_owner", "owners_dicom_data_owner"):
+            role = block(roles, f'resource "azurerm_role_assignment" "{name}"')
+            self.assertIn("depends_on = [azapi_resource.health_services_dns_zone_group]", role)

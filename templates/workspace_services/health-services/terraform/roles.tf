@@ -14,6 +14,9 @@ resource "azurerm_role_assignment" "researchers_dicom_data_owner" {
   scope                = azurerm_healthcare_dicom_service.dicom[0].id
   role_definition_name = "DICOM Data Owner"
   principal_id         = var.workspace_researchers_group_id
+
+  # The zone group write succeeds only after Azure links a new DICOM service to the endpoint.
+  depends_on = [azapi_resource.health_services_dns_zone_group]
 }
 
 # Role assignments for workspace owners group
@@ -29,4 +32,7 @@ resource "azurerm_role_assignment" "owners_dicom_data_owner" {
   scope                = azurerm_healthcare_dicom_service.dicom[0].id
   role_definition_name = "DICOM Data Owner"
   principal_id         = var.workspace_owners_group_id
+
+  # The zone group write succeeds only after Azure links a new DICOM service to the endpoint.
+  depends_on = [azapi_resource.health_services_dns_zone_group]
 }
