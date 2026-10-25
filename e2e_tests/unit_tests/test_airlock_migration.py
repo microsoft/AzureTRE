@@ -97,6 +97,12 @@ class MigrationFlowTests(unittest.IsolatedAsyncioTestCase):
 
         self.enterContext(patch.object(migration, "post_resource", move))
 
+        async def accounts(workspace_id):
+            self.events.append(f"accounts-v{self.version}")
+            return dict.fromkeys(migration.LEGACY_ACCOUNTS, "Deny" if self.version == 1 else None)
+
+        self.enterContext(patch.object(migration, "legacy_accounts", accounts))
+
     async def test_the_move_follows_the_documented_steps(self):
         await migration.test_legacy_airlock_workspace_moves_to_v2(True)
         self.assertEqual(
@@ -110,9 +116,11 @@ class MigrationFlowTests(unittest.IsolatedAsyncioTestCase):
                 "draft-v1",
                 "patch-v2",
                 "cancel",
+                "accounts-v1",
                 "move-to-v2",
                 "draft-v2",
                 "cancel",
+                "accounts-v2",
                 "patch-v1",
                 "delete-workspace",
             ],
@@ -137,3 +145,36 @@ class MigrationFlowTests(unittest.IsolatedAsyncioTestCase):
 
     def test_the_storage_account_comes_from_the_host(self):
         self.assertEqual(migration.storage_account("https://stalimextre.blob.core.windows.net/x?sig=y"), "stalimextre")
+
+    async def test_legacy_accounts_that_stay_after_the_move_fail_the_case(self):
+        async def accounts(workspace_id):
+            self.events.append(f"accounts-v{self.version}")
+            return dict.fromkeys(migration.LEGACY_ACCOUNTS, "Deny")
+
+        self.enterContext(patch.object(migration, "legacy_accounts", accounts))
+        with self.assertRaises(AssertionError):
+            await migration.test_legacy_airlock_workspace_moves_to_v2(True)
+        self.assertEqual(self.events[-1], "delete-workspace")
+
+
+class LegacyAccountTests(unittest.IsolatedAsyncioTestCase):
+    async def test_accounts_report_their_default_action_or_absence(self):
+        arm = Mock()
+
+        async def request(method, resource_id, api_version, missing_ok=False):
+            self.assertTrue(missing_ok)
+            if "/stalexip" in resource_id:
+                return None
+            return {"properties": {"networkAcls": {"defaultAction": "Deny"}}}
+
+        arm.request = request
+        client = Mock()
+        client.__aenter__ = AsyncMock(return_value=arm)
+        client.__aexit__ = AsyncMock(return_value=False)
+        self.enterContext(patch.dict(os.environ, ARM_SUBSCRIPTION_ID="sub"))
+        self.enterContext(patch.object(migration.config, "TRE_ID", "tre-test"))
+        self.enterContext(patch.object(migration, "arm_client", Mock(return_value=client)))
+        found = await migration.legacy_accounts(WORKSPACE)
+        self.assertEqual(found["stalexip"], None)
+        self.assertEqual(found["stalimapp"], "Deny")
+        self.assertEqual(len(found), 5)

@@ -268,8 +268,10 @@ The case follows the steps in [Legacy Airlock Architecture](../azure-tre-overvie
 1. It creates a Manual workspace with `airlock_version` set to `1`. An import uses the legacy external account and is approved.
 1. It calls `POST /migrations` two times. The workspace keeps `airlock_version` `1`.
 1. With an import draft in progress, a change to `airlock_version` `2` must get HTTP 400. The case then cancels the draft.
+1. The five legacy storage accounts of the workspace must exist with the default network action `Deny`.
 1. The change to `2` must pass. A new import draft must use the consolidated core account and a `-draft` container.
-1. The legacy request keeps its record, its `approved` status and `airlock_version` `1`. Its stored files are deleted, as the docs say.
+1. The legacy request keeps its record, its `approved` status and `airlock_version` `1`.
+1. The five legacy storage accounts of the workspace must not exist. So the stored files of the legacy request are deleted, as the docs say.
 1. A change back to `1` must get HTTP 400.
 
 ### Run the branch workflow before merge

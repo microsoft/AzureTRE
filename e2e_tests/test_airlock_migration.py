@@ -17,10 +17,14 @@ from e2e_tests.conftest import clean_up_test_workspace, create_or_get_test_works
 from e2e_tests.helpers import get_admin_token, get_auth_header, get_full_endpoint
 from e2e_tests.resources.resource import get_resource, post_resource
 from e2e_tests.resources.sql_lifecycle import sql_lifecycle
+from e2e_tests.resources.sql_probe import arm_client
 from e2e_tests.token_provider import TokenProvider
 from e2e_tests.test_airlock import create_draft_import_request_with_file, submit_airlock_import_request
 
 LOGGER = logging.getLogger(__name__)
+STORAGE_API = "2023-05-01"
+# The storage accounts of the legacy Airlock module in a workspace.
+LEGACY_ACCOUNTS = ("stalimapp", "stalexint", "stalexip", "stalexrej", "stalexblocked")
 
 
 def require_review_roles(token):
@@ -41,6 +45,19 @@ def require_review_roles(token):
 
 def storage_account(container_url):
     return urlsplit(container_url).hostname.split(".", 1)[0]
+
+
+async def legacy_accounts(workspace_id):
+    """Return the default network action of each legacy workspace account, or None if it does not exist."""
+    short_id = workspace_id[-4:]
+    group = f"/subscriptions/{os.environ['ARM_SUBSCRIPTION_ID']}/resourceGroups/rg-{config.TRE_ID}-ws-{short_id}"
+    found = {}
+    async with arm_client() as arm:
+        for prefix in LEGACY_ACCOUNTS:
+            account_id = f"{group}/providers/Microsoft.Storage/storageAccounts/{prefix}ws{short_id}"
+            account = await arm.request("GET", account_id, STORAGE_API, missing_ok=True)
+            found[prefix] = None if account is None else account["properties"]["networkAcls"]["defaultAction"]
+    return found
 
 
 async def patch_status(workspace_path, properties, token, verify):
@@ -104,6 +121,11 @@ async def test_legacy_airlock_workspace_moves_to_v2(verify):
         assert await patch_status(workspace_path, {"airlock_version": 2}, admin_token, verify) == 400
         await post_request(None, f"/api{workspace_path}/requests/{draft_id}/cancel", token, verify, 200)
 
+        # The legacy workspace accounts exist and accept only private and trusted service traffic.
+        before = await legacy_accounts(workspace_id)
+        LOGGER.info("Legacy workspace accounts before the move: %s", before)
+        assert before == dict.fromkeys(LEGACY_ACCOUNTS, "Deny")
+
         workspace = (await get_resource(f"/api{workspace_path}", token, verify))["workspace"]
         async with asyncio.timeout(60 * 60):
             await post_resource(
@@ -132,6 +154,9 @@ async def test_legacy_airlock_workspace_moves_to_v2(verify):
         legacy = (await get_request(f"/api{workspace_path}/requests/{legacy_id}", token, verify, 200))["airlockRequest"]
         assert legacy["status"] == airlock_strings.APPROVED_STATUS
         assert legacy["airlock_version"] == 1
+        after = await legacy_accounts(workspace_id)
+        LOGGER.info("Legacy workspace accounts after the move: %s", after)
+        assert after == dict.fromkeys(LEGACY_ACCOUNTS)
 
         # A downgrade would remove access to data that v2 keeps.
         assert await patch_status(workspace_path, {"airlock_version": 1}, admin_token, verify) == 400
