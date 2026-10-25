@@ -32,6 +32,14 @@ class HealthBundleContractTests(unittest.TestCase):
         self.assertIn('error_message_regex = ["AnotherOperationInProgress"]', group)
         self.assertIn("azurerm_healthcare_dicom_service.dicom", group.split("depends_on", 1)[1])
 
+    def test_services_are_created_after_the_private_endpoint(self):
+        source = (BUNDLE / "main.tf").read_text()
+        endpoint = block(source, 'resource "azurerm_private_endpoint" "health_services_private_endpoint"')
+        self.assertNotIn("depends_on", endpoint)
+        for header in ('resource "azurerm_healthcare_fhir_service" "fhir"', 'resource "azurerm_healthcare_dicom_service" "dicom"'):
+            service = block(source, header)
+            self.assertIn("depends_on = [azurerm_private_endpoint.health_services_private_endpoint]", service)
+
     def test_upgrade_removes_the_zone_group_of_the_endpoint_resource(self):
         source = (BUNDLE / "main.tf").read_text()
         group = block(source, 'resource "azapi_resource" "health_services_dns_zone_group"')
