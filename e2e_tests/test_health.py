@@ -25,6 +25,7 @@ from e2e_tests.resources.sql_probe import arm_client, COMPUTE_API, validate_vm
 
 LOGGER = logging.getLogger(__name__)
 HEALTH_API = "2024-03-31"
+NETWORK_API = "2024-05-01"
 HEALTH_PAYLOAD = {
     "templateName": strings.HEALTH_SERVICE,
     "properties": {
@@ -87,6 +88,8 @@ async def test_private_fhir_access_and_dicom_update(verify):
             fhir_id = f"{workspace_arm_id}/fhirservices/fhir{suffix}"
             fhir = await arm.request("GET", fhir_id, HEALTH_API)
             assert fhir["properties"]["provisioningState"] == "Succeeded"
+            endpoint_id = f"{group}/providers/Microsoft.Network/privateEndpoints/pe-hs{suffix}"
+            endpoint = await arm.request("GET", endpoint_id, NETWORK_API)
             probe_id = uuid4().hex
             probe = partial(run_probe, arm, azure_vm_id, vm["location"], fhir_url=fhir_url, probe_id=probe_id)
             await probe(phase="access")
@@ -109,6 +112,11 @@ async def test_private_fhir_access_and_dicom_update(verify):
                 dicom_id = f"{workspace_arm_id}/dicomservices/dicom{suffix}"
                 dicom = await arm.request("GET", dicom_id, HEALTH_API)
                 assert dicom["properties"]["provisioningState"] == "Succeeded"
+                # A new endpoint stops private access to FHIR for some minutes.
+                updated_endpoint = await arm.request("GET", endpoint_id, NETWORK_API)
+                assert updated_endpoint["properties"]["resourceGuid"] == endpoint["properties"]["resourceGuid"], (
+                    "The update replaced the Health private endpoint"
+                )
                 await probe(phase="read", dicom_url=dicom_url)
                 LOGGER.info("FHIR data survived the update that added DICOM")
             # Check the network settings last, so that a failure here keeps the functional evidence above.
@@ -116,7 +124,7 @@ async def test_private_fhir_access_and_dicom_update(verify):
                 public = await public_statuses(
                     client, {"fhir": f"{fhir_url}/metadata", "dicom": f"{dicom_url}/health/check"}
                 )
-            # Read the resources again, because the update replaced the private endpoint.
+            # Read the resources again after the update.
             # FHIR is not in this list: Azure keeps publicNetworkAccess Enabled on FHIR, also after a request
             # sets Disabled. The private endpoint on the workspace blocks public traffic to FHIR (checked above).
             network = {}

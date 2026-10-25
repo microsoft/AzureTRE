@@ -23,17 +23,21 @@ To repair the service, delete its FHIR service in the Azure portal, and then del
 ## Private network access
 
 The service connects the healthcare workspace to the workspace network through one private endpoint.
-Azure writes the private DNS records for FHIR and DICOM when it creates this endpoint.
-If an update adds or removes FHIR or DICOM, Terraform replaces the endpoint, so that each service gets a private DNS record.
-During this replacement, private access to the services stops for some minutes.
+Azure writes the private DNS records of a zone when the DNS zone group of this endpoint gets that zone.
+The DNS zone group always has the zone for the workspace and FHIR. It has the DICOM zone only when the service has DICOM.
+If an update adds DICOM, Terraform adds the DICOM zone to the group, and Azure writes the DICOM record. The endpoint stays.
+Azure links a new service to the endpoint some minutes after Terraform creates the service.
+During this time, Azure refuses a change to the DNS zone group with HTTP 409, and Terraform tries again.
 
-Before version 0.3.9, an update did not replace the endpoint.
-If you added FHIR or DICOM to an existing service before this version, the new host can resolve to a public address.
-To repair the service, delete its private endpoint `pe-hs<suffix>` in Azure, then upgrade the service. Terraform then creates the endpoint again.
+Before version 0.3.10, the endpoint resource created the DNS zone group, and the group did not change when an update added a service.
+If you added DICOM to an existing service before this version, the DICOM host can resolve to a public address.
+An upgrade to version 0.3.10 deletes the old DNS zone group and creates a new one, so Azure writes the missing record.
+Until the upgrade creates the new group, the private DNS records do not exist, and private access to the services stops.
+Do not delete the private endpoint to repair the service.
 
 The DICOM service has public network access turned off.
-Before version 0.3.9, Terraform created the DICOM service with public network access on.
-An upgrade to version 0.3.9 turns it off.
+Before version 0.3.10, Terraform created the DICOM service with public network access on.
+An upgrade to version 0.3.10 turns it off.
 
 The private endpoint on the healthcare workspace blocks public traffic to FHIR and DICOM.
 A request from outside the workspace network gets HTTP 403.
