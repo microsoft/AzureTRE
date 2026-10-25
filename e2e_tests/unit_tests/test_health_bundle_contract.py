@@ -64,3 +64,10 @@ class HealthBundleContractTests(unittest.TestCase):
         source = (BUNDLE / "main.tf").read_text()
         dicom = block(source, 'resource "azurerm_healthcare_dicom_service" "dicom"')
         self.assertRegex(dicom, r"\n  public_network_access_enabled\s*=\s*false\n")
+
+    def test_role_assignments_use_the_role_names(self):
+        # Azure returns the role definition ID with the subscription. The role definition data
+        # source gives the ID without it, so the plan replaced each role assignment.
+        roles = (BUNDLE / "roles.tf").read_text()
+        self.assertNotIn("role_definition_id", roles)
+        self.assertEqual(roles.count("role_definition_name"), 4)
