@@ -32,6 +32,12 @@ resource "azurerm_storage_account" "stg" {
 
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 
+  # When deploying from a local machine we need to "allow"
+  network_rules {
+    default_action = var.enable_local_debugging ? "Allow" : "Deny"
+    bypass         = ["AzureServices"]
+  }
+
   blob_properties {
     delete_retention_policy {
       days = 7
@@ -62,8 +68,7 @@ resource "azapi_resource" "shared_storage" {
   }
 
   depends_on = [
-    azurerm_private_endpoint.stgfilepe,
-    azurerm_storage_account_network_rules.stgrules
+    azurerm_private_endpoint.stgfilepe
   ]
 }
 
@@ -73,17 +78,18 @@ resource "azurerm_storage_container" "stgcontainer" {
   container_access_type = "private"
 
   depends_on = [
-    azurerm_private_endpoint.stgblobpe,
-    azurerm_storage_account_network_rules.stgrules
+    azurerm_private_endpoint.stgblobpe
   ]
 }
 
-resource "azurerm_storage_account_network_rules" "stgrules" {
-  storage_account_id = azurerm_storage_account.stg.id
+# Before version 2.12.3, a separate resource managed the network rules. A destroy of that resource
+# changes the rules of the account, so Terraform only removes it from the state.
+removed {
+  from = azurerm_storage_account_network_rules.stgrules
 
-  # When deploying from a local machine we need to "allow"
-  default_action = var.enable_local_debugging ? "Allow" : "Deny"
-  bypass         = ["AzureServices"]
+  lifecycle {
+    destroy = false
+  }
 }
 
 resource "azurerm_private_endpoint" "stgfilepe" {
