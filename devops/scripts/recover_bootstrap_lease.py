@@ -12,7 +12,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote
 
-from ci_environment_id import environment_id
+from ci_environment_id import ci_tags, environment_id, environment_prefix, repository_owns
 
 
 class RecoveryError(RuntimeError):
@@ -56,8 +56,12 @@ def context():
         except ValueError as error:
             raise RecoveryError(str(error)) from error
         require(regional_id == ref_id, "The regional CI environment identity does not match.")
-    group = "rg-tre" + ref_id + "-mgmt"
-    account = "tre" + ref_id + "mgmt"
+    try:
+        prefix = environment_prefix()
+    except ValueError as error:
+        raise RecoveryError(str(error)) from error
+    group = "rg-" + prefix + ref_id + "-mgmt"
+    account = prefix + ref_id + "mgmt"
     require(
         env.get("TF_VAR_mgmt_resource_group_name") == group and env.get("TF_VAR_mgmt_storage_account_name") == account,
         "The management account is not the expected isolated PR backend.",
@@ -100,8 +104,12 @@ def verify_owner(ctx):
         "The management resource group identity does not match.",
     )
     require(
-        isinstance(group.get("tags"), dict) and group["tags"].get("ci_git_ref") == ctx["ref"],
+        isinstance(group.get("tags"), dict) and ci_tags(group["tags"]).get("ci_git_ref") == ctx["ref"],
         "The management resource group is not tagged for this PR.",
+    )
+    require(
+        repository_owns(group["tags"], ctx["repository"]),
+        "Another repository owns the management resource group.",
     )
 
 
@@ -226,6 +234,7 @@ def verify_concurrency(ctx, job_id=None):
             and job.get("name") == "Deploy PR / Deploy Management",
             f"The concurrency job is not this recovery attempt's management deployment; target={target}.",
         )
+    return members
 
 
 def verify_workflows(ctx, cache=None):
@@ -455,7 +464,7 @@ def main():
             verify_owner(ctx)
         elif args.operation == "recover":
             recover(ctx)
-    except (RecoveryError, OSError, subprocess.TimeoutExpired) as error:
+    except (RecoveryError, ValueError, OSError, subprocess.TimeoutExpired) as error:
         print(f"ERROR: Bootstrap lease recovery refused: {error}", file=sys.stderr)
         return 1
     return 0

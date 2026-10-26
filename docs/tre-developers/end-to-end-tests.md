@@ -17,6 +17,14 @@ When running tests locally, use the `prepare-for-e2e` Makefile target:
 make prepare-for-e2e
 ```
 
+## Certificate lifecycle tests
+
+Use a TRE without Nexus for tests that remove and reinstall the certificate shared service.
+Removing its certificate can interrupt Nexus.
+Run only one certificate lifecycle test suite per TRE at a time.
+Do not run it alongside Airlock or shared-service tests that use the same certificate service.
+Use the same hostname and certificate name when testing reuse after reinstallation.
+
 ## Debugging the End-to-End tests
 
 Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", "E2E Smoke" or "E2E Performance" in the drop down box and click play.
@@ -24,3 +32,152 @@ Use the "Run and Debug" panel within Visual Studio Code, select "E2E Extended", 
 - This will copy `config.yaml` settings to `/workspaces/AzureTRE/e2e_tests/.env` for you which supplies your authentication details
 
 - This will also use `/workspaces/AzureTRE/core/private.env` file for other values.
+
+If an E2E test fails while waiting for an operation, check its test log.
+Use the timestamp and operation ID to find the matching API logs.
+
+## Airlock draft deletion
+
+The draft-deletion case requires AzureCloud, `ARM_SUBSCRIPTION_ID`, `TRE_ID` and the existing CI Azure login.
+The CI identity must have ARM read access to blob containers in the TRE Airlock storage account.
+Local runs use the Azure CLI login. CI uses its existing federated identity. The test does not add permissions.
+
+After submission, the test checks that the old draft SAS cannot write a new blob.
+A `ContainerNotFound` or `AuthorizationPermissionMismatch` response must also have independent ARM evidence:
+the draft is absent, and the submitted container exists with matching workspace and import-stage metadata.
+A permission error alone cannot pass the test. Other storage errors and ARM lookup failures remain test failures.
+These checks share a 60-second deadline. They do not compare submitted file contents. The review-VM lifecycle test also does not verify file contents.
+
+## Validate one bundle
+
+The [bundle coverage map](https://github.com/microsoft/AzureTRE/blob/main/e2e_tests/bundle_coverage.json) lists every Porter bundle, its prerequisite bundles, exact pytest cases and remaining coverage gaps.
+Selecting a bundle runs only its declared cases. Fixtures may deploy prerequisite resources.
+A passing case does not prove the bundle's full functional, upgrade or custom-action lifecycle.
+
+### Check selection without deploying
+
+Use the E2E Python environment from the repository root:
+
+```bash
+python3 e2e_tests/run_bundle.py --bundle tre-workspace-service-azuresql --collect-only
+```
+
+This collects `test_azuresql.py::test_sql_query_survives_sku_upgrade` without creating resources.
+The case checks a private SQL query and data persistence after an S1-to-S2 SKU change.
+
+The report records `not_run`, even when collection succeeds.
+Unknown names, unavailable cases, missing tests and unexpected collected cases fail explicitly.
+
+### Run against a configured environment
+
+After configuring the prerequisites above, run:
+
+```bash
+TEST_BUNDLE=tre-workspace-service-azuresql make test-e2e-bundle
+```
+
+Use one test process. Per-bundle runs reject a marker expression or multiple workers.
+If the selection includes the Guacamole AAD case, clear `TEST_AAD_WORKSPACE_ID`.
+That case requires an owned workspace so cascade cleanup removes its new service.
+Some shared-service cases replace existing services, so use an isolated validation environment.
+Check the selected entry's prerequisites and limitations before running it.
+
+### Certificate and Nexus selection
+
+Select `tre-shared-service-certs` to install, uninstall and reinstall the certificate shared service with the same hostname and certificate name.
+The case requires certificate bundle version `0.9.0` or later and pins both installations to the selected template version.
+It checks the deployed API record, the gateway's public certificate SAN and validity, and the gateway's stopped state.
+Reinstallation must preserve the SHA-256 certificate fingerprint and produce a matching resource processor reuse log without issuance evidence.
+After each uninstall, the case requires API HTTP 404 and ARM confirmation that the gateway, public IP and challenge storage are absent.
+The bundle report records public metadata, reuse and cleanup results. It does not require Nexus EULA consent.
+
+The evidence helper currently supports `AzureCloud`. It uses the existing deployment identity for ARM and Log Analytics access.
+If the gateway omits public certificate data, the helper reads the exact referenced certificate version through the resource-processor VM.
+This uses a temporary managed Run Command and the VM's existing identity and private network access.
+The deployment identity must be able to create, read and delete that command on the resource-processor VM.
+The helper removes the command after success, failure or cancellation. It reads public certificate data only, without changing vault access or permissions.
+Log evidence is limited to the installation's message spans, so other installations in the same trace cannot affect the result.
+Only aggregate log counts enter the test process. Missing, partial or delayed evidence beyond the deadline fails the case.
+See [Key Vault public certificate retrieval](https://learn.microsoft.com/en-us/rest/api/keyvault/certificates/get-certificate/get-certificate)
+and [Azure Monitor query authentication](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/api/access-api).
+
+Each installation has a 45-minute provisioning deadline. Cleanup has its own 60-minute deadline.
+The complete case has a 285-minute limit, leaving 15 minutes within the five-hour bundle job for setup and reporting.
+It refuses to change resources when Nexus is present. Existing certificate resources must belong to earlier E2E tests before recovery can remove them.
+Cleanup has a separate deadline and retains the certificate service if Nexus appears before deletion.
+Use an isolated environment and run mutating suites sequentially. These guards do not provide a distributed lock.
+
+Select `tre-shared-service-sonatype-nexus` to run the existing certificate/Nexus lifecycle case.
+The report identifies certificates and the deployed firewall as prerequisites. Dependency creation does not complete their separate evidence records.
+Nexus selection still requires explicit EULA consent. Both selections retain the weekend certificate rate-limit precaution.
+After checking rate limits, use `runCertificateTestsOnWeekends=true` in the branch workflow or `TEST_RUN_CERTIFICATE_TESTS_ON_WEEKENDS=true` locally.
+A skipped case remains unproven coverage.
+
+The certificate-only case is opt-in through bundle selection or the `certificate_validation` marker.
+It is excluded from the ordinary `shared_services` selection to avoid an additional certificate request in that suite.
+The existing combined case remains in that suite. It deletes Nexus before its certificate dependency.
+Certificate chain validation, actual renewal, retained Key Vault artefacts, Nexus package/proxy use, upgrades and other Azure resource removal need separate evidence.
+The case does not purge certificates. A first installation can reuse a certificate retained by an earlier run.
+
+Before merging the certificate fix, run this case from a trusted upstream branch that contains both the certificate implementation and these tests.
+Select `e2eBundle=tre-shared-service-certs` in `deploy_tre_branch.yml` and leave the marker selector empty.
+PR slash commands use workflow definitions from `main`. `/test` runs smoke tests and `/test-shared-services` excludes this certificate-only case.
+A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.
+
+### Base workspace lifecycle
+
+Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.
+The case always creates its own workspace with Automatic authentication and backups disabled. It does not reuse `TEST_WORKSPACE_ID`.
+It checks the deployed record and uses the configured workspace identity to list the new workspace's services.
+It then disables and deletes the workspace, waits for the delete operation and confirms that an API lookup returns HTTP 404.
+Body failures still trigger cleanup. If cleanup also fails, the original failure is preserved with an additional diagnostic note.
+
+Setup uses the existing one-hour deployment limit and failed-create recovery. The API checks have a five-minute limit.
+Cleanup has a separate one-hour budget. The case is opt-in through bundle selection or the `workspace_validation` marker.
+It does not add another workspace to the extended suite.
+
+These checks do not prove network isolation, storage access, upgrades, custom actions or backup restore and retention.
+Verify Azure resource removal separately when recording release evidence.
+
+### SQL time limits
+
+The SQL bundle job has a 300-minute limit. Its first step sets an absolute lifecycle deadline at 270 minutes.
+Setup and queries stop with 120 minutes remaining for cleanup. Container startup uses the same budget.
+The SQL case manages its own workspace and Guacamole service so that setup and cleanup share this deadline.
+It preserves pre-created resources and divides the remaining cleanup time between the resources it created.
+Failed-create recovery and temporary probe cleanup also count towards the lifecycle deadline.
+The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
+For a local run, the 270-minute lifecycle budget starts when the SQL case begins.
+
+### Run the branch workflow before merge
+
+1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.
+2. Select that branch in **Deploy Azure TRE (branch)**.
+3. Set `e2eBundle` to the exact Porter bundle name.
+4. Leave `e2eTestsCustomSelector` empty and set `e2eProcesses` to `1`.
+5. Keep `skipDeployment` false for a new branch environment.
+
+The workflow validates selection before deployment. It passes the bundle name as data in a JSON request, rather than embedding it in shell code.
+Prepared requests require every generated metadata field, a full checkout SHA and non-empty TRE, location and cloud identifiers.
+The test runner rejects incomplete requests and mismatches with the current checkout or configured TRE, location and cloud.
+Unknown fields are ignored. Workflow metadata may be empty outside GitHub Actions.
+Branch and PR-comment references derive different environment IDs. A completed test run does not remove its core environment.
+
+Bundle tests run in a separate job. Marker selections use the existing sequential test groups.
+Both paths publish their results to the workflow summary.
+
+Existing slash commands retain their marker-based behaviour. They load workflow definitions from `main`; new branch-workflow inputs do not require merging first.
+
+### Read the evidence
+
+The **E2E Test Results (Bundle)** artefact contains:
+
+- `pytest_e2e_bundle.xml`: test, failure, skip and teardown results.
+- `bundle-validation.json`: requested bundle, source version, declared prerequisite versions, requested and collected cases, coverage limitations, commit/workflow provenance, environment identity and observed resource/operation IDs.
+
+The JSON report copies only selected identifiers and operation states. It excludes resource properties, tokens and failure tracebacks.
+Source versions describe the checked-out manifests; verify deployed versions separately when reusing an environment.
+`passed_selected_cases` means the selected assertions and their teardown passed. The report always leaves `full_lifecycle_proven` false for a separate evidence review.
+An entirely skipped selection exits unsuccessfully. Individual skipped cases retain their reasons, and a mixed pass/skip result is marked `partial`.
+
+Unavailable bundles fail with the gap recorded in the map. Adding a selector does not implement missing tests or fix bundle publication and registration gaps.

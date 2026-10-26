@@ -11,11 +11,17 @@ import subprocess
 import sys
 import uuid
 
+from ci_environment_id import DEFAULT_PREFIX, DEFAULT_PREFIX_REPOSITORY, environment_prefix
+
 
 SOURCE = Path(__file__).resolve().parents[2]
 OWNER_TAG = "cleanup_validation_run"
-DISCOVERY = "[?starts_with(name, 'rg-tre')].{name:name, ci_git_ref:tags.ci_git_ref}"
 STORAGE_NAME = "validationnevercreated"
+
+
+def discovery():
+    # Keep this query identical to the cleanup inventory in clean_ci_validation_envs.sh.
+    return f"[?starts_with(name, 'rg-{environment_prefix()}')].{{name:name, tags:tags}}"
 
 
 class ValidationError(Exception):
@@ -115,6 +121,16 @@ class Validation:
             "Invalid workflow run identifier.",
         )
         require(re.fullmatch(r"[a-z0-9]+", location), "Use an Azure location name, such as westeurope.")
+        try:
+            prefix = environment_prefix()
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
+        # The fixtures carry no ci_repository tag. Cleanup treats such groups as upstream groups
+        # when the prefix is tre, so a fork can validate only with its own prefix.
+        require(
+            prefix != DEFAULT_PREFIX or os.environ["GITHUB_REPOSITORY"].lower() == DEFAULT_PREFIX_REPOSITORY.lower(),
+            "Validation needs CI_ENV_PREFIX other than tre outside the upstream repository.",
+        )
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SOURCE, text=True).strip()
         require(commit == os.environ["GITHUB_SHA"], "The checkout does not match the workflow commit.")
         require(
@@ -125,7 +141,7 @@ class Validation:
             "Validation requires an unchanged checkout.",
         )
         token = f"{run_id}-{attempt}-{uuid.uuid4().hex[:8]}"
-        core = "rg-trevalidate-" + token
+        core = f"rg-{prefix}validate-" + token
         branch = f"ci-cleanup-validation/{run_id}-{attempt}"
         require(
             subprocess.run(
@@ -202,6 +218,8 @@ class Validation:
             LOCATION=self.state["location"],
             TF_VAR_enable_cmk_encryption="false",
         )
+        # The guard allows the reference tag only. Repository tags are tested with mocks.
+        env.pop("TF_VAR_ci_repository", None)
         env.pop("TF_VAR_ci_git_ref", None)
         if ref is not None:
             env["TF_VAR_ci_git_ref"] = ref
@@ -400,7 +418,7 @@ class Validation:
             ]:
                 self.audit("main_workspace_sweep_excluded")
                 return 0
-            if args == ["group", "list", "--query", DISCOVERY, "-o", "json"]:
+            if args == ["group", "list", "--query", discovery(), "-o", "json"]:
                 rows = json.loads(self.azure(args).stdout)
                 print(json.dumps([row for row in rows if row["name"] in self.state["groups"]]))
                 return 0

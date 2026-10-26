@@ -1,14 +1,24 @@
 """Plan CI cleanup references and verify their GitHub concurrency ownership."""
 
 import argparse
+from datetime import date, datetime, timezone
 import json
 import os
 import re
 import subprocess
 import sys
 
-from ci_environment_id import validate_ref
+from ci_environment_id import ci_tags, environment_prefix, repository_owns, validate_ref
+from ci_cleanup_activity import branch_activity, mutation_allowed
 from recover_bootstrap_lease import RecoveryError, github, require, verify_concurrency
+
+
+# Inventory value for a group that another repository tagged. It never equals a Git reference.
+FOREIGN_OWNER = "foreign-repository"
+# A person sets this tag on a core or management group to keep the environment.
+# Scheduled cleanup then does not stop or destroy it. Explicit destruction ignores the tag.
+KEEP_TAG = "ci_keep_until"
+KEEP_FOREVER = "forever"
 
 
 def validate_cleanup_ref(ref):
@@ -30,7 +40,8 @@ def verify_account():
     return subscription
 
 
-def inventory():
+def group_tags():
+    """Read the tags of every resource group in the cleanup subscription."""
     subscription = verify_account()
     groups = json.loads(
         subprocess.check_output(
@@ -49,14 +60,23 @@ def inventory():
             "Inconsistent cleanup resource group identity.",
         )
         require(group.get("tags") is None or isinstance(group.get("tags"), dict), "Invalid cleanup ownership tags.")
-        result[name] = (group.get("tags") or {}).get("ci_git_ref")
+        result[name] = ci_tags(group.get("tags"))
     return result
+
+
+def inventory():
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    return {
+        name: tags.get("ci_git_ref") if repository_owns(tags, repository) else FOREIGN_OWNER
+        for name, tags in group_tags().items()
+    }
 
 
 def references(groups):
     refs = {"refs/heads/main"}
+    prefix = "rg-" + environment_prefix()
     for name, ref in groups.items():
-        if not name.startswith("rg-tre") or ref is None:
+        if not name.startswith(prefix) or ref in (None, FOREIGN_OWNER):
             continue
         require(isinstance(ref, str), "Invalid CI ownership reference.")
         if not ref.startswith(("refs/heads/", "refs/pull/")):
@@ -65,6 +85,22 @@ def references(groups):
         refs.add(ref)
     require(len(refs) <= 256, "Too many cleanup references for one matrix. No cleanup was scheduled.")
     return sorted(refs)
+
+
+def plan():
+    try:
+        environment_prefix()
+    except ValueError as error:
+        # The main workspace sweep uses MAIN_TRE_ID, not the prefix. Keep it for repositories
+        # that deploy only main. An invalid prefix that is set is a mistake, so it still fails.
+        if os.environ.get("CI_ENV_PREFIX"):
+            raise
+        # Annotate the run, so that a fork with PR or branch environments sees the skipped cleanup.
+        print(
+            f"::warning title=CI cleanup scope::{error} Only the main workspace cleanup is scheduled.", file=sys.stderr
+        )
+        return ["refs/heads/main"]
+    return references(inventory())
 
 
 def context():
@@ -124,12 +160,12 @@ def verify_lock(ctx):
         raise RecoveryError("Could not verify all cleanup jobs.")
     owners = [job for job in jobs.values() if job["name"] == expected_name and job.get("status") == "in_progress"]
     require(len(owners) == 1, "The current cleanup job is missing or ambiguous.")
-    verify_concurrency(ctx, job_id=owners[0]["id"])
+    return verify_concurrency(ctx, job_id=owners[0]["id"])
 
 
 def verify_target(groups, ref, group):
     require(
-        ref != "refs/heads/main" and re.fullmatch(r"rg-tre[a-z0-9-]+(?:-mgmt)?", group),
+        ref != "refs/heads/main" and re.fullmatch(rf"rg-{environment_prefix()}[a-z0-9-]+(?:-mgmt)?", group),
         "Invalid isolated cleanup target.",
     )
     core = group.removesuffix("-mgmt")
@@ -140,21 +176,75 @@ def verify_target(groups, ref, group):
     )
 
 
+def annotation(text):
+    # Escape tag text, so that a value cannot end the annotation or start another workflow command.
+    return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def keep_reason(tags, today):
+    """Return why a group's tags keep it, or None. A value that is not valid keeps the group."""
+    values = [value for name, value in tags.items() if name.lower() == KEEP_TAG]
+    if not values:
+        return None
+    value = values[0]
+    if isinstance(value, str):
+        text = value.strip()
+        if text.lower() == KEEP_FOREVER:
+            return f"{KEEP_TAG} is {KEEP_FOREVER}"
+        try:
+            until = date.fromisoformat(text) if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", text) else None
+        except ValueError:
+            until = None
+        if until is not None:
+            # The date is the last day that the cleanup keeps the group.
+            return f"{KEEP_TAG} is {text}" if today <= until else None
+    return f"{KEEP_TAG} has the invalid value {json.dumps(value)}. Use YYYY-MM-DD or {KEEP_FOREVER}"
+
+
+def kept(group, today=None):
+    """Return why the core or management group of a cleanup target has a keep tag, or None."""
+    today = datetime.now(timezone.utc).date() if today is None else today
+    tags = group_tags()
+    core = group.removesuffix("-mgmt")
+    for name in (core, core + "-mgmt"):
+        reason = keep_reason(tags.get(name, {}), today)
+        if reason:
+            return f"{name}: {reason}"
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("operation", choices=("plan", "verify-lock", "verify-target"))
+    parser.add_argument("operation", choices=("plan", "verify-lock", "verify-target", "may-clean", "activity-time"))
     parser.add_argument("--group")
+    parser.add_argument("--commit-time", type=int)
+    parser.add_argument("--inactive-hours", type=int)
     args = parser.parse_args()
     try:
         if args.operation == "plan":
-            print(json.dumps(references(inventory()), separators=(",", ":")))
+            print(json.dumps(plan(), separators=(",", ":")))
         else:
             ctx = context()
-            verify_lock(ctx)
-            if args.operation == "verify-target":
+            members = verify_lock(ctx)
+            if args.operation in ("verify-target", "may-clean"):
                 verify_target(inventory(), ctx["ref"], args.group or "")
+                if args.operation == "may-clean":
+                    allowed = mutation_allowed(ctx, members, args.commit_time, args.inactive_hours)
+                    # Recheck ownership and queued work after reading history.
+                    if allowed:
+                        allowed = mutation_allowed(ctx, verify_lock(ctx))
+                    # Read the keep tag last, so that a tag added during the checks still applies.
+                    reason = kept(args.group.lower()) if allowed else None
+                    if reason:
+                        print(
+                            f"::warning title=CI cleanup keep::Keeping {annotation(reason)}. Cleanup does not stop or destroy it.",
+                            file=sys.stderr,
+                        )
+                    print("keep" if reason else "proceed" if allowed else "defer")
             else:
                 verify_account()
+                if args.operation == "activity-time":
+                    print(int(branch_activity(ctx, args.commit_time)))
     except (RecoveryError, ValueError, OSError, subprocess.SubprocessError) as error:
         print(f"ERROR: CI cleanup refused: {error}", file=sys.stderr)
         return 1

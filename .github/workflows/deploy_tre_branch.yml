@@ -14,6 +14,11 @@ on: # yamllint disable-line rule:truthy
         type: string
         default: ""
         required: false
+      e2eBundle:
+        description: Exact Porter bundle name from the coverage map; leave the marker selector empty
+        type: string
+        default: ""
+        required: false
       environment:
         description: The environment to run this workflow in
         type: environment
@@ -34,9 +39,19 @@ on: # yamllint disable-line rule:truthy
         type: boolean
         default: false
         required: false
+      runCertificateTestsOnWeekends:
+        description: Run certificate lifecycle tests on weekends despite the rate-limit precaution
+        type: boolean
+        default: false
+        required: false
 
-# The reusable deployment workflow holds the shared reference queue.
-# Separate caller queues can discard deployments before they reach that group.
+# Register branch validation before Preparation can start. The reusable workflow
+# delegates this reference lock to the caller. Older workflow reruns keep their
+# original locking behaviour; dispatch this workflow to use the early lock.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: read
@@ -50,6 +65,7 @@ jobs:
       github.ref != 'refs/heads/main'
     outputs:
       refid: ${{ steps.run-id.outputs.refid }}
+      treid: ${{ steps.run-id.outputs.treid }}
     permissions:
       contents: read
     steps:
@@ -57,12 +73,29 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           persist-credentials: false
+      - name: Validate bundle selection
+        if: inputs.e2eBundle != ''
+        env:
+          TEST_BUNDLE: ${{ inputs.e2eBundle }}
+          TEST_BUNDLE_MARKER: ${{ inputs.e2eTestsCustomSelector }}
+          E2E_TESTS_NUMBER_PROCESSES: ${{ inputs.e2eProcesses }}
+        run: python3 e2e_tests/run_bundle.py --validate-only
+
+      - name: Upload bundle selection preflight
+        if: always() && inputs.e2eBundle != ''
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: Bundle Selection Preflight
+          path: ./e2e_tests/bundle-validation.json
+
       - id: run-id
         name: Get run id
         env:
           CI_GIT_REF: ${{ github.ref }}
           CI_LOCATION: ${{ vars.LOCATION }}
           CI_AZURE_ENVIRONMENT: ${{ vars.AZURE_ENVIRONMENT || 'AzureCloud' }}
+          # A fork sets this repository variable so its environments never match upstream names.
+          CI_ENV_PREFIX: ${{ vars.CI_ENV_PREFIX }}
         run: |
           set -o errexit
           set -o pipefail
@@ -74,8 +107,11 @@ jobs:
           echo "github ref: ${GITHUB_REF}"
           REFID=$(python3 devops/scripts/ci_environment_id.py \
             --ref "$CI_GIT_REF" --location "$CI_LOCATION" --cloud "$CI_AZURE_ENVIRONMENT")
-          echo "using id of: ${REFID} for GitHub Ref: ${GITHUB_REF}"
+          TREID=$(python3 devops/scripts/ci_environment_id.py --with-prefix \
+            --ref "$CI_GIT_REF" --location "$CI_LOCATION" --cloud "$CI_AZURE_ENVIRONMENT")
+          echo "using id of: ${REFID} (TRE ID ${TREID}) for GitHub Ref: ${GITHUB_REF}"
           echo "refid=${REFID}" >> "$GITHUB_OUTPUT"
+          echo "treid=${TREID}" >> "$GITHUB_OUTPUT"
 
   run-deploy-tre-not-main:
     name: "Deploy PR"
@@ -90,10 +126,13 @@ jobs:
       actions: read # Required by the reusable management job
     with:
       ciGitRef: ${{ github.ref }}
+      callerOwnsDeploymentLock: true
       ciEnvironmentId: ${{ needs.prepare-not-main.outputs.refid }}
       prHeadSha: ${{ github.sha }}
       e2eTestsCustomSelector: ${{ github.event.inputs.e2eTestsCustomSelector }}
+      e2eBundle: ${{ inputs.e2eBundle }}
       acceptNexusEula: ${{ inputs.acceptNexusEula }}
+      runCertificateTestsOnWeekends: ${{ inputs.runCertificateTestsOnWeekends }}
       skipDeployment: ${{ inputs.skipDeployment }}
       environmentName: ${{ github.event.inputs.environment }}
       E2E_TESTS_NUMBER_PROCESSES: ${{ fromJSON(github.event.inputs.e2eProcesses) }}
@@ -103,21 +142,21 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AAD_TENANT_ID: ${{ secrets.AAD_TENANT_ID }}
-      ACR_NAME: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
+      ACR_NAME: ${{ needs.prepare-not-main.outputs.treid }}
       API_CLIENT_ID: ${{ secrets.API_CLIENT_ID }}
       API_CLIENT_SECRET: ${{ secrets.API_CLIENT_SECRET }}
       APPLICATION_ADMIN_CLIENT_ID: ${{ secrets.APPLICATION_ADMIN_CLIENT_ID }}
       APPLICATION_ADMIN_CLIENT_SECRET: ${{ secrets.APPLICATION_ADMIN_CLIENT_SECRET }}
-      MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-tre{0}-mgmt', needs.prepare-not-main.outputs.refid) }}
-      MGMT_STORAGE_ACCOUNT_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
+      MGMT_RESOURCE_GROUP_NAME: ${{ format('rg-{0}-mgmt', needs.prepare-not-main.outputs.treid) }}
+      MGMT_STORAGE_ACCOUNT_NAME: ${{ format('{0}mgmt', needs.prepare-not-main.outputs.treid) }}
       SWAGGER_UI_CLIENT_ID: ${{ secrets.SWAGGER_UI_CLIENT_ID }}
       TEST_APP_ID: ${{ secrets.TEST_APP_ID }}
       TEST_WORKSPACE_APP_ID: ${{ secrets.TEST_WORKSPACE_APP_ID }}
       TEST_WORKSPACE_APP_SECRET: ${{ secrets.TEST_WORKSPACE_APP_SECRET }}
       TEST_ACCOUNT_CLIENT_ID: "${{ secrets.TEST_ACCOUNT_CLIENT_ID }}"
       TEST_ACCOUNT_CLIENT_SECRET: "${{ secrets.TEST_ACCOUNT_CLIENT_SECRET }}"
-      TRE_ID: ${{ format('tre{0}', needs.prepare-not-main.outputs.refid) }}
+      TRE_ID: ${{ needs.prepare-not-main.outputs.treid }}
       CI_CACHE_ACR_NAME: ${{ secrets.ACR_NAME }}
-      ENCRYPTION_KV_NAME: ${{ format('tre{0}mgmt', needs.prepare-not-main.outputs.refid) }}
+      ENCRYPTION_KV_NAME: ${{ format('{0}mgmt', needs.prepare-not-main.outputs.treid) }}
       EXTERNAL_KEY_STORE_ID: ${{ secrets.EXTERNAL_KEY_STORE_ID }}
       PRIVATE_AGENT_SUBNET_ID: ${{ secrets.PRIVATE_AGENT_SUBNET_ID }}

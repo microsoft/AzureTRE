@@ -14,6 +14,12 @@ variable "ci_git_ref" {
   default     = ""
 }
 
+variable "ci_repository" {
+  type        = string
+  description = "GitHub repository (owner/name) owning the CI validation environment. Empty outside CI."
+  default     = ""
+}
+
 variable "location" {
   type        = string
   description = "Location used for all resources"

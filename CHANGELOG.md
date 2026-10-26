@@ -6,6 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
 * Allow numeric CIDR masks in `address_space_size` (e.g. "23") when requesting auto-assigned address spaces; accepts numeric strings and validates the mask range. (`API` 0.28.0, `tre-workspace-base` 2.12.0, `tre-workspace-unrestricted` 0.15.0, `tre-workspace-airlock-import-review` 0.18.0) ([#4733](https://github.com/microsoft/AzureTRE/issues/4733))
@@ -25,8 +26,24 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Add E2E airlock coverage for the draft container seal, file count validation, rejected/cancelled lifecycles and cross-workspace access, runnable via `make test-e2e-airlock` or the `/test-airlock` PR comment ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * Update template schemas to Draft 2020-12, preserve legacy input restrictions, and support local schema definitions in resource forms. (`API` 0.27.0, `ui` 0.9.0) ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
+* Let a fork run CI in a shared subscription with the `CI_ENV_PREFIX` variable and a `ci_repository` tag, which scope cleanup and destruction. Keep a CI environment, for example for a demo, with a `ci_keep_until` tag. (`core` 0.18.15, `devops` 0.7.0, `build-scripts` 1.1.5) ([#5272](https://github.com/microsoft/AzureTRE/pull/5272))
 
 BUG FIXES:
+* Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
+* Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
+* Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
+* Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
+* Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Give E2E cleanup separate deadlines and allow 30 seconds for smoke health requests. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Verify TLS for identity authentication and keep response content and URL parameters out of E2E operation polling logs. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
+* Fix certificate provisioning retries and reuse valid certificates from the core Key Vault.
+  Check private storage readiness before issuance and request a new certificate when the hostname changes.
+  Stop the validation gateway after success or failure. (`devops` 0.6.19, `tre-shared-service-certs` 0.9.0) ([#5254](https://github.com/microsoft/AzureTRE/pull/5254))
+* Use Dsv6 sizes for Guacamole Linux and Airlock review VMs. Wait for Nexus admin authentication before configuring repositories. (`tre-shared-service-sonatype-nexus` 3.11.2) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Correct managed-identity login in bundle runtimes. ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Preserve failed uninstall results and allow cleanup when Porter confirms the installation is absent. Keep resource and operation status available until uninstall steps and final output writes finish. (`API` 0.28.6) ([#5253](https://github.com/microsoft/AzureTRE/pull/5253))
+* Wait for management storage readiness and retry recognised state-access permission failures. Retry bootstrap state creation only when the state blob is confirmed absent. (`devops` 0.6.15) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
+* Validate Terraform outputs and preserve the previous cache if output generation or validation fails. (`core` 0.18.14) ([#5252](https://github.com/microsoft/AzureTRE/pull/5252))
 * Restrict Airlock submission, cancellation and draft file links to the request creator or a workspace owner, and align the advertised actions with these permissions. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Validate Airlock sort fields against the supported options and avoid returning database error details to callers. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))
 * Bind operation retrieval to the authorised resource and return not found for unrelated operations. (`API` 0.28.3) ([#5251](https://github.com/microsoft/AzureTRE/pull/5251))

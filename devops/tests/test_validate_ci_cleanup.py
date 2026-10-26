@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/validate_ci_cleanup.py"
+sys.path.insert(0, str(SCRIPT.parent))
 SPEC = importlib.util.spec_from_file_location("validate_ci_cleanup", SCRIPT)
 validation = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validation)
@@ -98,8 +99,8 @@ elif operation == ["group", "list"]:
     if query:
         prefix = re.search(r"starts_with\(name, '([^']+)'\)", query).group(1)
         result = [row for row in result if row["name"].startswith(prefix)]
-        if "ci_git_ref" in query:
-            result = [{"name": row["name"], "ci_git_ref": row["tags"].get("ci_git_ref")} for row in result]
+        if "tags:tags" in query:
+            result = [{"name": row["name"], "tags": row["tags"]} for row in result]
         else:
             print("\n".join(row["name"] for row in result))
             result = None
@@ -123,12 +124,13 @@ if Path(sys.argv[1]).name != "ci_cleanup_scope.py":
     os.execv(sys.executable, [sys.executable, *sys.argv[1:]])
 sys.path.insert(0, str(Path(sys.argv[1]).resolve().parent))
 import ci_cleanup_scope as scope
+import ci_cleanup_activity as activity
 import recover_bootstrap_lease as recovery
 
 def github(ctx, suffix):
     if suffix == "/actions/runs/123":
         return {"id": 123, "run_attempt": 1, "status": "in_progress", "path": ".github/workflows/clean_validation_envs.yml",
-                "repository": {"full_name": "example/test"}}
+                "repository": {"full_name": os.environ["GITHUB_REPOSITORY"]}}
     if "/jobs?" in suffix:
         return {"total_count": 1, "jobs": [{"id": 99, "name": "Validate cleanup with disposable groups", "status": "in_progress"}]}
     if "/concurrency_groups/" in suffix:
@@ -137,6 +139,7 @@ def github(ctx, suffix):
     raise AssertionError("Unexpected GitHub request: " + suffix)
 
 scope.github = github
+activity.github = github
 recovery.github = github
 sys.argv = sys.argv[1:]
 sys.exit(scope.main())
@@ -145,6 +148,10 @@ sys.exit(scope.main())
 
 class ValidationTests(unittest.TestCase):
     def setUp(self):
+        # Keep the upstream defaults when a fork's CI runs these tests with its own values.
+        env = patch.dict(os.environ, {"GITHUB_REPOSITORY": "microsoft/AzureTRE", "CI_ENV_PREFIX": ""})
+        env.start()
+        self.addCleanup(env.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
@@ -299,7 +306,7 @@ class ValidationTests(unittest.TestCase):
                 for private in ("test-subscription", "test-tenant", "test-user", str(self.root)):
                     self.assertNotIn(private, evidence)
 
-    def fake_services(self):
+    def fake_services(self, prefix="", repository="microsoft/AzureTRE"):
         path = self.root / "azure.json"
         account = {"id": "test-subscription", "tenantId": "test-tenant", "user": {"name": "test-user", "type": "user"}}
         path.write_text(json.dumps({"groups": {}, "account": account}))
@@ -316,7 +323,8 @@ class ValidationTests(unittest.TestCase):
             os.environ,
             FAKE_AZURE_STATE=str(path),
             PATH=str(self.root) + os.pathsep + os.environ["PATH"],
-            GITHUB_REPOSITORY="example/test",
+            GITHUB_REPOSITORY=repository,
+            CI_ENV_PREFIX=prefix,
             GITHUB_RUN_ID="123",
             GITHUB_RUN_ATTEMPT="1",
             GITHUB_ACTIONS="true",
@@ -328,7 +336,18 @@ class ValidationTests(unittest.TestCase):
         return path
 
     def test_real_scripts_complete_guarded_lifecycle_without_creating_storage(self):
-        path = self.fake_services()
+        self.assert_guarded_lifecycle(self.fake_services())
+
+    def test_real_scripts_complete_guarded_lifecycle_with_a_fork_prefix(self):
+        # The fork's own groups must not count as foreign or out of scope.
+        self.runner.state.update(
+            core="rg-frkvalidate-test", groups=["rg-frkvalidate-test-mgmt", "rg-frkvalidate-testother-mgmt"]
+        )
+        self.runner.save()
+        self.target, self.neighbour = self.runner.state["groups"]
+        self.assert_guarded_lifecycle(self.fake_services("frk", "contoso/AzureTRE"))
+
+    def assert_guarded_lifecycle(self, path):
         self.runner.scenarios()
         self.assertEqual(len(self.runner.state["checks"]), 9)
         self.assertEqual(
@@ -355,6 +374,51 @@ class ValidationTests(unittest.TestCase):
         self.runner.cleanup_fixtures()
         self.assertEqual(json.loads(path.read_text())["groups"], {})
         self.assertEqual(self.runner.summary(), 1)
+
+
+class InitialiseTests(unittest.TestCase):
+    def initialise(self, repository, prefix):
+        env = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_RUN_ID": "1",
+            "GITHUB_RUN_ATTEMPT": "1",
+            "GITHUB_REPOSITORY": repository,
+            "CI_ENV_PREFIX": prefix,
+            "GITHUB_SHA": "a" * 40,
+        }
+        # Stop at the first command after the prefix check. No test reaches git or Azure.
+        command = subprocess.CalledProcessError(1, "blocked")
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.dict(os.environ, env),
+            patch.object(validation.subprocess, "check_output", side_effect=command) as check_output,
+            patch.object(validation.subprocess, "run", side_effect=command),
+        ):
+            try:
+                validation.Validation(Path(directory) / "validation").initialise("westeurope")
+            finally:
+                self.reached_commands = check_output.called
+
+    def test_fork_with_the_default_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "other than tre"):
+            self.initialise("contoso/AzureTRE", "tre")
+        self.assertFalse(self.reached_commands)
+
+    def test_fork_without_a_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "Set the CI_ENV_PREFIX"):
+            self.initialise("contoso/AzureTRE", "")
+        self.assertFalse(self.reached_commands)
+
+    def test_invalid_prefix_cannot_validate(self):
+        with self.assertRaisesRegex(validation.ValidationError, "3 lowercase letters or digits"):
+            self.initialise("contoso/AzureTRE", "FRK")
+        self.assertFalse(self.reached_commands)
+
+    def test_fork_prefix_and_upstream_pass_the_prefix_check(self):
+        for repository, prefix in (("contoso/AzureTRE", "frk"), ("microsoft/AzureTRE", "")):
+            with self.subTest(repository=repository), self.assertRaises(subprocess.CalledProcessError):
+                self.initialise(repository, prefix)
+            self.assertTrue(self.reached_commands)
 
 
 if __name__ == "__main__":

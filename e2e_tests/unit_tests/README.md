@@ -7,14 +7,11 @@ python -m pip install -r e2e_tests/unit_tests/requirements.txt
 PYTHONPATH=.:e2e_tests python -m unittest discover -s e2e_tests/unit_tests -v
 ```
 
-The tests use an in-memory HTTP transport and simulated token expiry. They need
-no Azure credentials and do not create resources or wait for real token expiry.
-They exercise deployment, update and teardown polling, separate Airlock polling
-credentials, and authentication failures without replaying resource mutations.
+These unit tests check the code used by the E2E test suite.
+They cover authentication, operation polling, cleanup, timeouts, test selection and result reporting.
 
-The E2E helpers retain the Azure Identity credential and scope. Each request
-asks that credential for a token so the SDK can use its cache or renew an expiring
-token. Literal token strings remain supported but cannot be renewed.
+They run without Azure credentials or deployed resources.
+Cases named after SQL, Nexus or certificates check the E2E setup, validation and cleanup for those cases.
 
-These tests check the request and renewal behaviour locally. A live extended
-test run is still needed to validate the fix against Azure.
+The tests stay beside the E2E helpers they exercise.
+Live E2E tests are still required to validate deployment behaviour against Azure.

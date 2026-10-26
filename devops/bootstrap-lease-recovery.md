@@ -37,7 +37,10 @@ Narrowing only the deployment key to an account or regional ID would leave those
 cross-region deletions outside the same exclusion mechanism.
 
 Recovery binds the reference to the expected legacy or regional account name,
-subscription, container and management resource group tag. GitHub's concurrency
+subscription, container and management resource group tag. The expected account
+name starts with `CI_ENV_PREFIX`. The expected group name starts with
+`rg-<CI_ENV_PREFIX>`. Recovery also refuses a group that another repository owns.
+The rules for the `ci_repository` tag are the same as for cleanup. GitHub's concurrency
 API must positively identify this run as the sole active group owner. When it
 reports a reusable-workflow job, recovery also verifies the management job and
 run attempt. Missing, duplicate, incomplete or inconsistent responses refuse
@@ -73,9 +76,9 @@ code no new capability. The dedicated variable name prevents tools that read
 | PR comment deployment | Validated PR reference and regional environment ID | Reusable workflow holds `deploy-${{ inputs.ciGitRef }}` throughout deployment |
 | Branch deployment | Branch reference and regional environment ID | Same reusable workflow group |
 | Main deployment | Configured main environment | Same reusable workflow, normally `deploy-refs/heads/main` |
-| Explicit PR destruction | Current resource groups tagged with the selected PR reference | `destroy_pr_env` holds the matching reference group and waits for deletion |
-| Explicit branch destruction | Current resource groups tagged with the selected branch reference | `destroy_branch_env` holds the matching reference group and waits for deletion |
-| Scheduled or dispatched cleanup | Read-only Azure tag discovery, then fresh selection inside each matrix job | Each job holds its reference group, verifies the actual job owner and rechecks core/management tags before mutation |
+| Explicit PR destruction | Current resource groups with this repository's prefix, tagged with the selected PR reference. A group that another repository owns stops destruction | `destroy_pr_env` holds the matching reference group and waits for deletion |
+| Explicit branch destruction | Current resource groups with this repository's prefix, tagged with the selected branch reference. A group that another repository owns stops destruction | `destroy_branch_env` holds the matching reference group and waits for deletion |
+| Scheduled or dispatched cleanup | Read-only Azure tag discovery of groups with this repository's prefix and ownership, then fresh selection inside each matrix job | Each job holds its reference group, verifies the actual job owner and rechecks core/management tags before mutation |
 | Main workspace cleanup | Configured main TRE workspace prefix | Separate matrix entry holding `deploy-refs/heads/main` and waiting for all parallel deletions |
 | Disposable cleanup validation | Synthetic reference containing run ID and attempt | Dedicated reference group, with the existing fixture ownership and empty-resource allow-list |
 
