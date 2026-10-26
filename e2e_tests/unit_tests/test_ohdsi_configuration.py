@@ -24,6 +24,7 @@ SETTINGS = h.Settings(SUB, TENANT, "testtre")
 IDS = h.resource_ids(SETTINGS, WS, SERVICE)
 TAGS = {"tre_id": "testtre", "tre_workspace_id": WS, "tre_workspace_service_id": SERVICE}
 CORE_LINK = IDS["pg_zone"] + "/virtualNetworkLinks/core"
+REFERENCES = IDS["apps"]["webapi"] + "/config/configreferences/appsettings"
 
 
 def core_link():
@@ -118,6 +119,11 @@ def arm_records():
         records[zone_group] = resource(
             zone_group, {"privateDnsZoneConfigs": [{"properties": {"privateDnsZoneId": IDS["web_zone"]}}]}
         )
+    records[REFERENCES] = {
+        "value": [
+            {"properties": {"secretName": secret.rsplit("/", 1)[1], "status": "Resolved"}} for secret in IDS["secrets"]
+        ]
+    }
     return records
 
 
@@ -138,7 +144,32 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await h.validate_resources(self.arm, SETTINGS, IDS, TAGS), PRINCIPAL)
         for call in self.arm.request.await_args_list:
             self.assertNotIn("/secrets/", call.args[1])
-            self.assertNotIn("/appsettings", call.args[1])
+            # Azure returns the status of a Key Vault reference, not the value of the app setting.
+            self.assertNotIn("/appsettings", call.args[1].removesuffix("/config/configreferences/appsettings"))
+        self.assertIn(REFERENCES, [call.args[1] for call in self.arm.request.await_args_list])
+
+    async def test_key_vault_references_wait_for_the_web_app_start(self):
+        resolved = self.records[REFERENCES]
+        self.records[REFERENCES] = deepcopy(resolved)
+        self.records[REFERENCES]["value"][0]["properties"]["status"] = "Initialized"
+        with patch.object(
+            h.asyncio, "sleep", AsyncMock(side_effect=lambda _: self.records.update({REFERENCES: resolved}))
+        ):
+            self.assertEqual(await h.validate_resources(self.arm, SETTINGS, IDS, TAGS), PRINCIPAL)
+
+    async def test_unresolved_or_missing_key_vault_reference_is_rejected(self):
+        self.records[REFERENCES]["value"][0]["properties"]["status"] = "AccessToKeyVaultDenied"
+        with patch.object(h.asyncio, "sleep", AsyncMock()) as sleep:
+            with self.assertRaisesRegex(AssertionError, "AccessToKeyVaultDenied"):
+                await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
+        self.assertEqual(sleep.await_count, 9)
+        self.records = arm_records()
+        self.records[REFERENCES]["value"].pop()
+        with self.assertRaisesRegex(AssertionError, "Unexpected OHDSI Key Vault references"):
+            await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
+        self.records[REFERENCES]["nextLink"] = "next-page"
+        with self.assertRaisesRegex(AssertionError, "Incomplete OHDSI Key Vault references"):
+            await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
 
     async def test_roles_are_read_for_the_identity_also_below_the_vault(self):
         await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)

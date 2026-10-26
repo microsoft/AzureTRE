@@ -1,4 +1,4 @@
-"""Read OHDSI infrastructure without requesting application settings or secrets."""
+"""Read OHDSI infrastructure without requesting the values of application settings or secrets."""
 
 import asyncio
 from copy import deepcopy
@@ -229,7 +229,25 @@ async def validate_resources(arm, settings, ids, tags):
         scopes = sorted(r.get("scope", "").lower() for r in roles)
         assert scopes == sorted(s.lower() for s in ids["secrets"]), "Unexpected OHDSI secret role scopes"
         assert all(r.get("roleDefinitionId", "").rsplit("/", 1)[-1].lower() == SECRETS_USER for r in roles)
+        # The roles on the secrets must let the Web API resolve each of its Key Vault references.
+        references = await key_vault_references(arm, ids["apps"]["webapi"])
+        names = {r.get("secretName", "").lower() for r in references}
+        assert names == {s.rsplit("/", 1)[1].lower() for s in ids["secrets"]}, "Unexpected OHDSI Key Vault references"
+        statuses = sorted({str(r.get("status")) for r in references})
+        assert statuses == ["Resolved"], f"OHDSI Key Vault references are not resolved: {statuses}"
         return principal
+
+
+async def key_vault_references(arm, site_id, attempts=10):
+    """Read the Key Vault references of a web app. Azure returns the status of each reference, not the value."""
+    for attempt in range(attempts):
+        page = await arm.request("GET", site_id + "/config/configreferences/appsettings", WEB_API)
+        assert isinstance(page.get("value"), list) and not page.get("nextLink"), "Incomplete OHDSI Key Vault references"
+        references = [r.get("properties", {}) for r in page["value"]]
+        # The web app resolves its references when it starts, so a new web app can show an earlier status.
+        if (references and all(r.get("status") == "Resolved" for r in references)) or attempt == attempts - 1:
+            return references
+        await asyncio.sleep(30)
 
 
 # Other services add and remove their own collections while this case runs.
