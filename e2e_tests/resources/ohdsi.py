@@ -218,14 +218,24 @@ async def validate_resources(arm, settings, ids, tags):
         return principal
 
 
-def firewall_rules(resource):
+# Other services add and remove their own collections while this case runs.
+SERVICE_COLLECTION = re.compile(r"(?:nrc|arc)_svc_([0-9a-f-]{36})")
+
+
+def other_service(collection, service_id):
+    match = SERVICE_COLLECTION.match(collection.get("name", ""))
+    return match is not None and match.group(1) != service_id
+
+
+def firewall_rules(resource, service_id=None):
     return {
-        key: deepcopy(resource["properties"].get(key, [])) for key in ("network_rule_collections", "rule_collections")
+        key: [deepcopy(c) for c in resource["properties"].get(key, []) if not other_service(c, service_id)]
+        for key in ("network_rule_collections", "rule_collections")
     }
 
 
 def validate_firewall(resource, baseline, service_id, prefixes):
-    rules = firewall_rules(resource)
+    rules = firewall_rules(resource, service_id)
     for key, prefix in (("network_rule_collections", "nrc"), ("rule_collections", "arc")):
         name = f"{prefix}_svc_{service_id}"
         matches = [c for c in rules[key] if c.get("name") == name]

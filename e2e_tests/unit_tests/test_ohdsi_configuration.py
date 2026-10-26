@@ -207,6 +207,23 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(AssertionError, "Unrelated"):
             h.validate_firewall(actual, baseline, SERVICE, ["10.0.1.0/24"])
 
+    def test_firewall_ignores_the_collections_of_other_services(self):
+        other = "55555555-5555-4555-8555-555555555555"
+        first = {
+            "properties": {
+                "network_rule_collections": [{"name": "core"}, {"name": f"nrc_svc_{other}_health_services"}],
+                "rule_collections": [],
+            }
+        }
+        baseline = h.firewall_rules(first)
+        self.assertEqual(baseline, {"network_rule_collections": [{"name": "core"}], "rule_collections": []})
+        later = deepcopy(first)
+        later["properties"]["network_rule_collections"].pop()
+        later["properties"]["rule_collections"].append({"name": f"arc_svc_{other}_azureml_client"})
+        self.assertEqual(h.firewall_rules(later, SERVICE), baseline)
+        later["properties"]["rule_collections"].append({"name": f"arc_svc_{SERVICE}"})
+        self.assertNotEqual(h.firewall_rules(later, SERVICE), baseline)
+
     def test_deadline_starts_before_container_setup_and_is_forwarded(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/deploy_tre_reusable.yml").read_text())
         jobs = [

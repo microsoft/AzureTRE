@@ -156,7 +156,9 @@ async def validate_lifecycle(verify):
                 await check_core_link()
                 if principal:
                     await assert_roles_removed(arm, ids["vault"], principal)
-                assert firewall_rules(await current_firewall()) == baseline, "OHDSI firewall rules were not restored"
+                assert firewall_rules(await current_firewall(), identifier) == baseline, (
+                    "OHDSI firewall rules were not restored"
+                )
                 assert (await workspace_record())["properties"].get("aad_redirect_uris", []) == callbacks, (
                     "OHDSI callback was not removed"
                 )
