@@ -13,6 +13,13 @@ In addition, when creating this workspace service you can choose to deploy [FHIR
 
 ![Healthcare Service](images/hs_details.png)
 
+## Install failures before version 0.3.9
+
+Before version 0.3.9, an install can fail after Azure creates the FHIR service.
+If Azure reports the FHIR service as `Accepted` after the create, the azurerm provider stops its wait, and Terraform does not save the FHIR service.
+After this failure, each update and each delete of the Health service fails.
+To repair the service, delete its FHIR service in the Azure portal, and then delete the Health service again.
+
 ## Authentication
 
 Learn more about authentication and application roles in [this doc](https://learn.microsoft.com/en-us/azure/healthcare-apis/authentication-authorization). Make sure to assign your users/apps with the required role and follow the guidelines to retrieve a token.

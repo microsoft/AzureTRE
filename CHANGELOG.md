@@ -103,6 +103,7 @@ BUG FIXES:
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 * Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
+* Keep a new Health FHIR service in the Terraform state when Azure reports it as `Accepted` after the create. Before version 5.3.0, the azurerm provider waited for `Succeeded` after the create and saved the service only after this wait. So the install failed, and each later update and delete of the service failed. The Health bundle now uses azurerm 5.11.0. (`tre-workspace-service-health` 0.3.9) ([#5147](https://github.com/microsoft/AzureTRE/issues/5147))
 
 ## (0.29.1)
 **BREAKING CHANGES**
