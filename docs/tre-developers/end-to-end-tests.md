@@ -284,6 +284,10 @@ The two cases in `test_airlock_upgrade.py` follow the procedure in [Legacy Airlo
 1. The case upgrades the workspace to the current `tre-workspace-base` version. The legacy workspace accounts must still exist with the default network action `Deny`, and a new legacy import must pass.
 1. The case changes `airlock_version` to `2`. The legacy workspace accounts must not exist, the legacy requests keep their records, and a new import draft must use the v2 core account.
 1. The case deletes the workspace.
+1. If no other workspace uses Airlock v1, set the variable `ENABLE_LEGACY_AIRLOCK` of the GitHub environment `CICD` to `false`. Deploy the current code again with `e2eTestsCustomSelector` set to `airlock and not airlock_validation`. Terraform deletes the five legacy core accounts, and the Airlock cases must pass on v2.
+1. Delete the variable `ENABLE_LEGACY_AIRLOCK`. The next deployments then use the default value `true`.
+
+The `v0.29.1` OHDSI image does not build, because `deb.debian.org` no longer has the Debian 11 security packages. Before you deploy `v0.29.1`, add the fix from [#5090](https://github.com/microsoft/AzureTRE/pull/5090) to the branch of the earlier release.
 
 ### Run the branch workflow before merge
 
