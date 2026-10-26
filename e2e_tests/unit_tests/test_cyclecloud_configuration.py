@@ -207,6 +207,16 @@ class FirewallTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "Unrelated"):
             cc.validate_firewall({"properties": properties}, baseline, SERVICE, ["10.0.1.0/24"])
 
+    def test_other_services_can_change_their_own_rules(self):
+        other = "55555555-5555-4555-8555-555555555555"
+        first = {"rule_collections": [{"name": "keep"}, {"name": f"arc_svc_{other}_health_services"}]}
+        baseline = cc.firewall_rules({"properties": first})
+        self.assertEqual(baseline, {"rule_collections": {"keep": {"name": "keep"}}, "network_rule_collections": {}})
+        later = {"rule_collections": [{"name": "keep"}], "network_rule_collections": [{"name": f"nrc_svc_{other}"}]}
+        self.assertEqual(cc.firewall_rules({"properties": later}, SERVICE), baseline)
+        later["rule_collections"].append({"name": f"arc_svc_{SERVICE}_cyclecloud"})
+        self.assertNotEqual(cc.firewall_rules({"properties": later}, SERVICE), baseline)
+
     def test_deadline_precedes_container_and_smoke_is_a_dependency(self):
         jobs = yaml.safe_load((ROOT / ".github/workflows/deploy_tre_reusable.yml").read_text())["jobs"]
         job = jobs["e2e_tests_bundle"]

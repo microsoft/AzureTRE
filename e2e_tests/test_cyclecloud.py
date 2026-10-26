@@ -87,7 +87,9 @@ async def validate_lifecycle(verify):
 
         async def after_remove(identifier):
             await assert_removed(arm, resource_ids(settings, core, identifier), settings.subscription, principal)
-            assert firewall_rules(await current_firewall()) == baseline, "CycleCloud firewall rules were not restored"
+            assert firewall_rules(await current_firewall(), identifier) == baseline, (
+                "CycleCloud firewall rules were not restored"
+            )
 
         async with cyclecloud_lifecycle(verify, payload, before_remove, after_remove) as service:
             firewall = await prerequisites(verify)

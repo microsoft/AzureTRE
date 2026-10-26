@@ -266,17 +266,27 @@ async def assert_removed(arm, ids, subscription, principal=None):
             await asyncio.sleep(10)
 
 
-def firewall_rules(resource):
+# Other services add and remove their own collections while this case runs.
+SERVICE_COLLECTION = re.compile(r"(?:nrc|arc)_svc_([0-9a-f-]{36})")
+
+
+def other_service(name, identifier):
+    match = SERVICE_COLLECTION.match(name)
+    return match is not None and match.group(1) != identifier
+
+
+def firewall_rules(resource, identifier=None):
     result = {}
     for key in ("rule_collections", "network_rule_collections"):
         values = resource["properties"].get(key, [])
         result[key] = {v["name"]: deepcopy(v) for v in values}
         assert len(result[key]) == len(values), "Duplicate firewall collection names"
+        result[key] = {name: v for name, v in result[key].items() if not other_service(name, identifier)}
     return result
 
 
 def validate_firewall(resource, baseline, identifier, prefixes):
-    rules = firewall_rules(resource)
+    rules = firewall_rules(resource, identifier)
     for key, prefix in (("rule_collections", "arc"), ("network_rule_collections", "nrc")):
         name = f"{prefix}_svc_{identifier}_cyclecloud"
         collection = rules[key].pop(name)
