@@ -36,7 +36,10 @@ class HealthBundleContractTests(unittest.TestCase):
         source = (BUNDLE / "main.tf").read_text()
         endpoint = block(source, 'resource "azurerm_private_endpoint" "health_services_private_endpoint"')
         self.assertNotIn("depends_on", endpoint)
-        for header in ('resource "azurerm_healthcare_fhir_service" "fhir"', 'resource "azurerm_healthcare_dicom_service" "dicom"'):
+        for header in (
+            'resource "azurerm_healthcare_fhir_service" "fhir"',
+            'resource "azurerm_healthcare_dicom_service" "dicom"',
+        ):
             service = block(source, header)
             self.assertIn("depends_on = [azurerm_private_endpoint.health_services_private_endpoint]", service)
 
