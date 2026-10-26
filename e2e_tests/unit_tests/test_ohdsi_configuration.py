@@ -4,6 +4,7 @@ from copy import deepcopy
 from contextlib import asynccontextmanager
 import json
 from pathlib import Path
+import re
 from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -69,10 +70,11 @@ def arm_records():
                 {
                     "properties": {
                         "principalId": PRINCIPAL,
-                        "scope": IDS["vault"],
+                        "scope": secret,
                         "roleDefinitionId": "/roles/" + h.SECRETS_USER,
                     }
                 }
+                for secret in IDS["secrets"]
             ]
         },
     }
@@ -138,6 +140,28 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("/secrets/", call.args[1])
             self.assertNotIn("/appsettings", call.args[1])
 
+    async def test_roles_are_read_for_the_identity_also_below_the_vault(self):
+        await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
+        call = next(c for c in self.arm.request.await_args_list if c.args[1].endswith("/roleAssignments"))
+        self.assertEqual(call.kwargs["query"], {"$filter": f"principalId eq '{PRINCIPAL}'"})
+        self.assertTrue(all(secret.startswith(IDS["vault"] + "/secrets/") for secret in IDS["secrets"]))
+
+    def test_secrets_match_the_secret_roles_of_the_bundle(self):
+        terraform = ROOT / "templates/workspace_services/ohdsi/terraform"
+        source = "".join(path.read_text() for path in sorted(terraform.glob("*.tf")))
+        roles = source.split('resource "azurerm_role_assignment" "keyvault_ohdsi_secret_role" {', 1)[1]
+        roles = roles.split("\n}", 1)[0]
+        names = set()
+        for data, resource in re.findall(
+            r"=\s*(data\.)?azurerm_key_vault_secret\.(\w+)\.resource_versionless_id", roles
+        ):
+            header = f'{"data" if data else "resource"} "azurerm_key_vault_secret" "{resource}" {{'
+            block = source.split(header, 1)[1].split("\n}", 1)[0]
+            name = re.search(r'\n  name\s*=\s*"([^"]+)"', block).group(1)
+            names.add(name.replace("${local.short_service_id}", SERVICE[-4:]))
+        self.assertEqual(len(names), 5)
+        self.assertEqual({secret.rsplit("/", 1)[1] for secret in IDS["secrets"]}, names)
+
     async def test_role_cleanup_waits_for_rbac_convergence(self):
         self.arm.request.side_effect = [
             {"value": [{"properties": {"principalId": PRINCIPAL}}]},
@@ -146,6 +170,7 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(h.asyncio, "sleep", AsyncMock()) as sleep:
             await h.assert_roles_removed(self.arm, IDS["vault"], PRINCIPAL)
         self.assertEqual(self.arm.request.await_count, 2)
+        self.assertEqual(self.arm.request.await_args.kwargs["query"], {"$filter": f"principalId eq '{PRINCIPAL}'"})
         sleep.assert_awaited_once_with(10)
 
     async def test_public_web_app_fails_configuration(self):
@@ -162,11 +187,24 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
         self.records[IDS["identity"]]["properties"]["tenantId"] = SUB
         with self.assertRaises(AssertionError):
             await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
+        for scope in (SETTINGS.group, IDS["vault"]):
+            with self.subTest(scope=scope):
+                self.records = arm_records()
+                self.records[IDS["vault"] + "/providers/Microsoft.Authorization/roleAssignments"]["value"][0][
+                    "properties"
+                ]["scope"] = scope
+                with self.assertRaisesRegex(AssertionError, "secret role scopes"):
+                    await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
+
+    async def test_missing_or_extra_secret_role_is_rejected(self):
+        roles = self.records[IDS["vault"] + "/providers/Microsoft.Authorization/roleAssignments"]["value"]
+        extra = deepcopy(roles[0])
+        roles.pop()
+        with self.assertRaisesRegex(AssertionError, "secret role scopes"):
+            await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
         self.records = arm_records()
-        self.records[IDS["vault"] + "/providers/Microsoft.Authorization/roleAssignments"]["value"][0]["properties"][
-            "scope"
-        ] = SETTINGS.group
-        with self.assertRaises(AssertionError):
+        self.records[IDS["vault"] + "/providers/Microsoft.Authorization/roleAssignments"]["value"].append(extra)
+        with self.assertRaisesRegex(AssertionError, "secret role scopes"):
             await h.validate_resources(self.arm, SETTINGS, IDS, TAGS)
 
     async def test_paginated_roles_are_not_treated_as_complete(self):

@@ -62,6 +62,15 @@ def resource_ids(settings, workspace_id, service_id):
         for key, app in apps.items()
     }
     storage = f"{group}/providers/Microsoft.Storage/storageAccounts/{('stg' + ws[-8:]).replace('-', '').lower()}"
+    vault = f"{group}/providers/Microsoft.KeyVault/vaults/kv-{ws[-20:].lower()}"
+    # The Web API reads these secrets through its Key Vault references.
+    secrets = (
+        f"jdbc-connectionstring-{service_id[-4:]}",
+        f"ohdsi-admin-password-{service_id[-4:]}",
+        f"ohdsi-app-password-{service_id[-4:]}",
+        "workspace-client-id",
+        "workspace-client-secret",
+    )
     ids = {
         "group": group,
         "vnet": vnet,
@@ -72,7 +81,8 @@ def resource_ids(settings, workspace_id, service_id):
         "nsg": f"{group}/providers/Microsoft.Network/networkSecurityGroups/nsg-psql-{suffix}",
         "identity": f"{group}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/id-ohdsi-webapi-{suffix}",
         "share": f"{storage}/fileServices/default/shares/atlas-{suffix}",
-        "vault": f"{group}/providers/Microsoft.KeyVault/vaults/kv-{ws[-20:].lower()}",
+        "vault": vault,
+        "secrets": [f"{vault}/secrets/{name}" for name in secrets],
         "web_zone": f"{settings.group}/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net",
         "pg_zone": f"{settings.group}/providers/Microsoft.Network/privateDnsZones/privatelink.postgres.database.azure.com",
     }
@@ -204,7 +214,10 @@ async def validate_resources(arm, settings, ids, tags):
         assert require_uuid(identity["properties"].get("tenantId")) == settings.tenant
         principal = require_uuid(identity["properties"].get("principalId"))
         assignments = await arm.request(
-            "GET", ids["vault"] + "/providers/Microsoft.Authorization/roleAssignments", ROLE_API
+            "GET",
+            ids["vault"] + "/providers/Microsoft.Authorization/roleAssignments",
+            ROLE_API,
+            query=principal_filter(principal),
         )
         assert isinstance(assignments.get("value"), list) and not assignments.get("nextLink"), (
             "Incomplete OHDSI role inventory"
@@ -212,9 +225,10 @@ async def validate_resources(arm, settings, ids, tags):
         roles = [
             r["properties"] for r in assignments["value"] if r["properties"].get("principalId", "").lower() == principal
         ]
-        assert len(roles) == 1, "Unexpected OHDSI vault role count"
-        same_id(roles[0].get("scope"), ids["vault"])
-        assert roles[0].get("roleDefinitionId", "").rsplit("/", 1)[-1].lower() == SECRETS_USER
+        # One role on each secret, and no role on the vault or above it.
+        scopes = sorted(r.get("scope", "").lower() for r in roles)
+        assert scopes == sorted(s.lower() for s in ids["secrets"]), "Unexpected OHDSI secret role scopes"
+        assert all(r.get("roleDefinitionId", "").rsplit("/", 1)[-1].lower() == SECRETS_USER for r in roles)
         return principal
 
 
@@ -270,10 +284,20 @@ async def assert_removed(arm, identifiers):
                 await asyncio.sleep(10)
 
 
+def principal_filter(principal):
+    # With this filter, Azure returns the roles of the principal at, above and below the scope.
+    return {"$filter": f"principalId eq '{principal}'"}
+
+
 async def assert_roles_removed(arm, vault, principal):
     async with asyncio.timeout(5 * 60):
         while True:
-            roles = await arm.request("GET", vault + "/providers/Microsoft.Authorization/roleAssignments", ROLE_API)
+            roles = await arm.request(
+                "GET",
+                vault + "/providers/Microsoft.Authorization/roleAssignments",
+                ROLE_API,
+                query=principal_filter(principal),
+            )
             assert isinstance(roles.get("value"), list) and not roles.get("nextLink"), (
                 "Incomplete OHDSI cleanup role inventory"
             )
