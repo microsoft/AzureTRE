@@ -35,6 +35,14 @@ resource "azurerm_role_assignment" "servicebus_logic_app" {
   principal_id         = azurerm_logic_app_standard.logic_app.identity[0].principal_id
 }
 
+# The core storage account accepts traffic only through its private endpoints, so the platform
+# cannot create the content share of the Logic App. Terraform creates it through the endpoint.
+resource "azurerm_storage_share" "logic_app_content" {
+  name                 = lower("airlock-notifier-content-${var.tre_id}")
+  storage_account_name = data.azurerm_storage_account.storage.name
+  quota                = 50
+}
+
 resource "azurerm_logic_app_standard" "logic_app" {
   name                       = "airlock-notifier-app-${var.tre_id}"
   location                   = data.azurerm_resource_group.core.location
@@ -42,10 +50,13 @@ resource "azurerm_logic_app_standard" "logic_app" {
   app_service_plan_id        = azurerm_service_plan.notifier_plan.id
   storage_account_name       = data.azurerm_storage_account.storage.name
   storage_account_access_key = data.azurerm_storage_account.storage.primary_access_key
+  storage_account_share_name = azurerm_storage_share.logic_app_content.name
   virtual_network_subnet_id  = data.azurerm_subnet.airlock_notification.id
   version                    = "~4"
   bundle_version             = "[1.*, 2.0.0)"
   app_settings = {
+    # The runtime reaches its content share through the virtual network.
+    "WEBSITE_CONTENTOVERVNET"               = "1"
     "FUNCTIONS_WORKER_RUNTIME"              = "node"
     "WEBSITE_NODE_DEFAULT_VERSION"          = "~20"
     "serviceBus_connectionString"           = data.azurerm_servicebus_namespace.core.default_primary_connection_string

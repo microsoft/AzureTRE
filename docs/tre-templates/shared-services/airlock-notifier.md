@@ -15,3 +15,11 @@ In the future, the SMTP connection should transition into a ['Built-in connector
 
 As an alternative to the SMTP connector, you can modify the Logic app to use other email and messaging platforms as connectors, like [Office 365](https://docs.microsoft.com/en-us/azure/connectors/connectors-create-api-office365-outlook),
 [Outlook.com](https://docs.microsoft.com/en-us/azure/connectors/connectors-create-api-outlook), [MailChimp](https://docs.microsoft.com/en-us/connectors/mailchimp/), [Mandrill](https://docs.microsoft.com/en-us/connectors/mandrill/).
+
+## Storage and network
+
+The Logic App keeps its runtime state and its files in the core storage account `stg<tre_id>`. This account accepts traffic only through its private endpoints and from trusted Azure services. The Logic App uses virtual network integration and the app setting `WEBSITE_CONTENTOVERVNET` to reach the blob, file, queue and table endpoints of the account.
+
+Terraform creates the content share `airlock-notifier-content-<tre_id>` before the Logic App. Before version 1.0.15, the platform created the content share `airlock-notifier-app-<tre_id>-content` outside Terraform. The upgrade to 1.0.15 deploys the workflow to the new share. After the upgrade, you can delete the earlier share.
+
+If you upgrade the core to version 0.18.16 or later, upgrade the notifier to 1.0.15 directly after the core. Earlier versions of the notifier cannot reach the storage account, and they stop sending notifications until the upgrade.
