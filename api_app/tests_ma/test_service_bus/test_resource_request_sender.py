@@ -227,3 +227,80 @@ async def test_multi_step_document_retries(
     # check it tried to patch and re-get the item the first time + all the retries
     assert len(resource_repo.patch_resource.mock_calls) == (num_retries + 1)
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
+
+
+async def send_first_step(resource_repo, operations_repo, resource_template_repo, resource_history_repo, template):
+    resource = create_test_resource()
+    operation = create_sample_operation(resource.id, RequestAction.Install)
+    operations_repo.create_operation_item.return_value = operation
+    resource_repo.get_resource_by_id.return_value = resource
+    resource_template_repo.get_template_by_name_and_version.return_value = template
+    resource_repo.patch_resource.return_value = (resource, template)
+    await send_resource_request_message(
+        resource=resource,
+        operations_repo=operations_repo,
+        resource_repo=resource_repo,
+        user=create_test_user(),
+        resource_template_repo=resource_template_repo,
+        resource_history_repo=resource_history_repo,
+        action=RequestAction.Install,
+    )
+    return operation
+
+
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
+@patch("service_bus.resource_request_sender.OperationRepository.create")
+@patch("service_bus.helpers.ServiceBusClient")
+@patch("service_bus.resource_request_sender.ResourceRepository.create")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+async def test_a_failed_send_removes_the_pending_dispatch(
+    resource_template_repo,
+    resource_repo,
+    service_bus_client_mock,
+    operations_repo_mock,
+    resource_history_repo_mock,
+    multi_step_resource_template,
+):
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock(side_effect=Exception("unavailable"))
+
+    with pytest.raises(Exception, match="unavailable"):
+        await send_first_step(
+            resource_repo,
+            operations_repo_mock,
+            resource_template_repo,
+            resource_history_repo_mock,
+            multi_step_resource_template,
+        )
+
+    # The caller reports the error, so the deployment status updater must not send the message later.
+    operation_id = operations_repo_mock.create_operation_item.return_value.id
+    operations_repo_mock.clear_pending_dispatch.assert_awaited_once_with(operation_id, f"{operation_id}:random-uuid")
+
+
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
+@patch("service_bus.resource_request_sender.OperationRepository.create")
+@patch("service_bus.helpers.ServiceBusClient")
+@patch("service_bus.resource_request_sender.ResourceRepository.create")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+async def test_a_failed_clear_after_the_send_returns_the_operation(
+    resource_template_repo,
+    resource_repo,
+    service_bus_client_mock,
+    operations_repo_mock,
+    resource_history_repo_mock,
+    multi_step_resource_template,
+):
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
+    operations_repo_mock.clear_pending_dispatch.side_effect = Exception("Cosmos DB is not available")
+
+    operation = await send_first_step(
+        resource_repo,
+        operations_repo_mock,
+        resource_template_repo,
+        resource_history_repo_mock,
+        multi_step_resource_template,
+    )
+
+    # The entry stays, and the deployment status updater sends the message again. A second send is safe.
+    sent_message = service_bus_client_mock().get_queue_sender().send_messages.call_args.args[0]
+    assert sent_message.message_id == f"{operation.id}:random-uuid"

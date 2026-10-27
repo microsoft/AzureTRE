@@ -102,6 +102,7 @@ async def lifespan(app: FastAPI):
         task.add_done_callback(_done_callback)
 
     track(asyncio.create_task(deploymentStatusUpdater.receive_messages(), name="deployment-status-updater"))
+    track(asyncio.create_task(deploymentStatusUpdater.resend_pending_dispatches(), name="pending-dispatch-resender"))
     track(asyncio.create_task(airlockStatusUpdater.receive_messages(), name="airlock-status-updater"))
 
     try:

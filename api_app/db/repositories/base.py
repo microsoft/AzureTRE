@@ -45,6 +45,9 @@ class BaseRepository:
             body=item.model_dump(), etag=etag, match_condition=MatchConditions.IfNotModified
         )
 
+    async def save_item_dict(self, item_dict: dict):
+        await self.container.create_item(body=item_dict)
+
     async def update_item_dict(self, item_dict: dict):
         await self.container.upsert_item(body=item_dict)
 

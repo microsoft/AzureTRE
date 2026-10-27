@@ -1,7 +1,10 @@
 from datetime import datetime, UTC
+import re
 import uuid
 from typing import List
 
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from pydantic import TypeAdapter
 from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
@@ -14,6 +17,12 @@ from db.repositories.base import BaseRepository
 
 from db.errors import EntityDoesNotExist
 from models.domain.operation import Operation, OperationStep, Status
+
+# The operation document keeps this entry until the API sends the message of the first step.
+# The Operation model leaves it out, so API responses do not show it.
+PENDING_DISPATCH = "pendingDispatch"
+# Operation and step IDs are UUIDs. The filter predicate below accepts only these characters.
+MESSAGE_ID = re.compile(r"^[\w-]+:[\w-]+$")
 
 
 class OperationRepository(BaseRepository):
@@ -34,6 +43,52 @@ class OperationRepository(BaseRepository):
     @staticmethod
     def create_operation_id() -> str:
         return str(uuid.uuid4())
+
+    @staticmethod
+    def dispatch_message_id(operation_id: str, step_id: str) -> str:
+        message_id = f"{operation_id}:{step_id}"
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        return message_id
+
+    async def get_operations_with_pending_dispatch(self, sent_before: float) -> List[dict]:
+        query = (
+            f"SELECT * FROM c WHERE IS_DEFINED(c.{PENDING_DISPATCH}) AND c.{PENDING_DISPATCH}.createdWhen < @sentBefore"
+        )
+        return await self.query(query=query, parameters=[{"name": "@sentBefore", "value": sent_before}])
+
+    async def claim_pending_dispatch(self, operation: dict) -> bool:
+        """Move the send time of the entry forward. Only one API instance can claim the document that it read."""
+        try:
+            await self.container.patch_item(
+                item=operation["id"],
+                partition_key=operation["id"],
+                patch_operations=[
+                    {"op": "set", "path": f"/{PENDING_DISPATCH}/createdWhen", "value": self.get_timestamp()}
+                ],
+                etag=operation["_etag"],
+                match_condition=MatchConditions.IfNotModified,
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
+            return False
+        return True
+
+    async def clear_pending_dispatch(self, operation_id: str, message_id: str):
+        """Remove the entry if it still names this message. A full write of the operation also removes it."""
+        if not MESSAGE_ID.match(message_id):
+            raise ValueError(f"Unexpected message ID {message_id}")
+        try:
+            await self.container.patch_item(
+                item=operation_id,
+                partition_key=operation_id,
+                patch_operations=[{"op": "remove", "path": f"/{PENDING_DISPATCH}"}],
+                filter_predicate=f"FROM c WHERE c.{PENDING_DISPATCH}.messageId = '{message_id}'",
+            )
+        except CosmosHttpResponseError as error:
+            if error.status_code != 412:
+                raise
 
     def create_main_step(
         self, resource_template: dict, action: str, resource_id: str, status: Status, message: str
@@ -122,7 +177,15 @@ class OperationRepository(BaseRepository):
             steps=all_steps,
         )
 
-        await self.save_item(operation)
+        # The message of the first step goes out after this write. Write the entry in the same document,
+        # so that the deployment status updater can send the message if the API stops before the send.
+        document = operation.model_dump()
+        document[PENDING_DISPATCH] = {
+            "stepId": all_steps[0].id,
+            "messageId": self.dispatch_message_id(operation_id, all_steps[0].id),
+            "createdWhen": timestamp,
+        }
+        await self.save_item_dict(document)
         return operation
 
     async def build_step_list(

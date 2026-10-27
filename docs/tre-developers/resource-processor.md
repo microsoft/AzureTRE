@@ -135,6 +135,21 @@ To test a lost session lock, set the `RP_BUNDLE_VALUES` variable to `{"test_skip
 While Porter runs, the resource processor then does not renew the session lock, so Service Bus gives a step that takes more than 5 minutes to another worker.
 Do not use this setting in production.
 
+### Messages that the API did not send
+
+The API sends the message of the first step of each request immediately after it writes the operation to Cosmos DB. The same write adds a `pendingDispatch` entry to the operation document, and the API removes the entry after the send. The API does not show this entry in its responses.
+
+If the API stops between the write and the send, the entry stays. When the API starts and every 5 minutes, the deployment status updater reads the entries that are older than 5 minutes:
+
+1. One API instance claims each entry with the etag of the operation document. The other instances leave the entry.
+1. If the step has a status from the resource processor, the resource processor has the message. The updater removes the entry.
+1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
+1. Cosmos DB keeps a sensitive value as `REDACTED`, so the updater cannot build a message that needs one. It sets the step and the operation to the failed status, with a message that asks the user to send the request again.
+
+A second copy of a message is safe, because the resource processor runs each step once.
+
+The status message of a step stays on the `deploymentstatus` queue until the API has sent the message of the next step. So a stop of the API during a pipeline does not need this entry.
+
 ### Porter Azure plugin
 
 Resource Processor uses [Porter Azure plugin](https://github.com/getporter/azure-plugins) to access secrets in Azure Key Vault.

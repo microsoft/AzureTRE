@@ -35,8 +35,10 @@ async def _send_message(message: ServiceBusMessage, queue: str):
                 await sender.send_messages(message)
 
 
-async def send_deployment_message(content, correlation_id, session_id, action):
-    resource_request_message = ServiceBusMessage(body=content, correlation_id=correlation_id, session_id=session_id)
+async def send_deployment_message(content, correlation_id, session_id, action, message_id=None):
+    resource_request_message = ServiceBusMessage(
+        body=content, correlation_id=correlation_id, session_id=session_id, message_id=message_id
+    )
     logger.info(
         f"Sending resource request message with correlation ID {resource_request_message.correlation_id}, action: {action}"
     )

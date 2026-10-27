@@ -340,6 +340,7 @@ class TestResourceHelpers:
             correlation_id=operation_id,
             session_id=resource.id,
             action="install",
+            message_id=f"{operation_id}:{step_id}",
         )
 
         # Checking that the item saved had a secret redacted

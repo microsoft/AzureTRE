@@ -14,13 +14,30 @@ from service_bus.helpers import send_deployment_message, update_resource_for_ste
 from azure.servicebus import NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
-from db.repositories.operations import OperationRepository
+from db.repositories.operations import PENDING_DISPATCH, OperationRepository
 from core import config, credentials
 from db.errors import EntityDoesNotExist
 from db.repositories.resources import ResourceRepository
 from models.domain.operation import DeploymentStatusUpdateMessage, Operation, OperationStep, Status
 from resources import strings
 from services.logging import logger, tracer
+
+# The API sends the first step message immediately after it writes the operation. An older entry shows that
+# the API stopped between the write and the send.
+PENDING_DISPATCH_SECONDS = 5 * 60
+AWAITING_STATUSES = (Status.AwaitingDeployment, Status.AwaitingUpdate, Status.AwaitingDeletion, Status.AwaitingAction)
+NOT_SENT_WITH_SENSITIVE_VALUES = (
+    "The API stopped before it sent this request. The request has sensitive values, which the API does not store. "
+    "Send the request again."
+)
+
+
+def contains_redacted_value(value) -> bool:
+    if isinstance(value, dict):
+        return any(contains_redacted_value(item) for item in value.values())
+    if isinstance(value, list):
+        return any(contains_redacted_value(item) for item in value)
+    return value == strings.REDACTED_SENSITIVE_VALUE
 
 
 class DeploymentStatusUpdater:
@@ -101,6 +118,85 @@ class DeploymentStatusUpdater:
                 except Exception as e:
                     logger.exception(f"Unknown exception. Will retry - {e}")
                     await asyncio.sleep(10)
+
+    async def resend_pending_dispatches(self):
+        """At start and every 5 minutes, send the first step messages that the API wrote but did not send."""
+        while True:
+            try:
+                sent_before = get_timestamp() - PENDING_DISPATCH_SECONDS
+                documents = await self.operations_repo.get_operations_with_pending_dispatch(sent_before)
+            except Exception:
+                logger.exception("Unable to read the pending first step messages")
+                documents = []
+            for document in documents:
+                try:
+                    await self.resend_pending_dispatch(document)
+                except Exception:
+                    # The entry stays, so the next pass tries again.
+                    logger.exception(f"Unable to send the pending message of operation {document.get('id')}")
+            await asyncio.sleep(PENDING_DISPATCH_SECONDS)
+
+    async def resend_pending_dispatch(self, document: dict):
+        pending = document[PENDING_DISPATCH]
+        # Each API instance runs this task. The claim lets one instance send the message.
+        if not await self.operations_repo.claim_pending_dispatch(document):
+            return
+        operation = TypeAdapter(Operation).validate_python(document)
+        step = next((item for item in operation.steps if item.id == pending["stepId"]), None)
+        if step is None or step.status not in AWAITING_STATUSES:
+            # The resource processor sent a status for the step, so it has the message.
+            await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
+            return
+
+        try:
+            resource_to_send = await update_resource_for_step(
+                operation_step=step,
+                resource_repo=self.resource_repo,
+                resource_template_repo=self.resource_template_repo,
+                resource_history_repo=self.resource_history_repo,
+                root_resource=None,
+                step_resource=None,
+                resource_to_update_id=step.resourceId,
+                primary_action=operation.action,
+                user=operation.user,
+            )
+            payload = resource_to_send.get_resource_request_message_payload(
+                operation_id=operation.id, step_id=step.id, action=step.resourceAction
+            )
+        except Exception as e:
+            logger.exception(f"Unable to build the pending message of operation {operation.id}")
+            await self.fail_pending_step(operation, step, repr(e))
+            return
+
+        # Cosmos DB keeps a sensitive value as a placeholder. The resource processor needs the real value.
+        if contains_redacted_value(payload["parameters"]):
+            logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
+            await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)
+            return
+
+        logger.info(f"Sending the pending first step message of operation {operation.id}, step {step.id}")
+        await send_deployment_message(
+            content=json.dumps(payload),
+            correlation_id=operation.id,
+            session_id=resource_to_send.id,
+            action=step.resourceAction,
+            message_id=pending["messageId"],
+        )
+        await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
+
+    async def fail_pending_step(self, operation: Operation, step: OperationStep, message: str):
+        step.status = self.get_failure_status_for_action(step.resourceAction)
+        step.message = message
+        step.updatedWhen = get_timestamp()
+        await self.update_overall_operation_status(operation, step, is_last_step=len(operation.steps) == 1)
+        # The Operation model has no pending dispatch, so this write also removes the entry.
+        await self.operations_repo.update_item(operation)
+        resource = await self.resource_repo.get_resource_by_id(uuid.UUID(step.resourceId))
+        resource.deploymentStatus = step.status
+        await self.resource_repo.update_item(resource)
+        if step.resourceId != operation.resourceId:
+            # The root resource shows the status of the operation.
+            await self.update_primary_uninstall_status(operation)
 
     async def process_message(self, msg):
         complete_message = False
