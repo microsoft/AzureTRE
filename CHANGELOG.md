@@ -7,6 +7,8 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 * `tre-workspace-service-gitea` 2.0.0 keeps the Git repositories on its file share. The upgrade restarts the web app, so the repositories on the container disk are lost.
   Mirror the repositories before the upgrade, and rotate the workspace client secret after it. See the [Gitea upgrade steps](docs/tre-templates/workspace-services/gitea.md#upgrading-to-version-200). The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.18.16. Earlier notifier versions cannot reach the core storage account, so they stop sending notifications until the upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
+* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.18.16. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
+  A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
