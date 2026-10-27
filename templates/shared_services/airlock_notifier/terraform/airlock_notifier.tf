@@ -36,11 +36,11 @@ resource "azurerm_role_assignment" "servicebus_logic_app" {
 }
 
 # The core storage account accepts traffic only through its private endpoints, so the platform
-# cannot create the content share of the Logic App. Terraform creates it through the endpoint.
+# cannot create the content share of the Logic App. Terraform creates it through Azure Resource Manager.
 resource "azurerm_storage_share" "logic_app_content" {
-  name                 = lower("airlock-notifier-content-${var.tre_id}")
-  storage_account_name = data.azurerm_storage_account.storage.name
-  quota                = 50
+  name               = lower("airlock-notifier-content-${var.tre_id}")
+  storage_account_id = data.azurerm_storage_account.storage.id
+  quota              = 50
 }
 
 resource "azurerm_logic_app_standard" "logic_app" {

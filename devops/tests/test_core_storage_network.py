@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 CORE_STORAGE = ROOT / "core/terraform/storage.tf"
 NOTIFIER = ROOT / "templates/shared_services/airlock_notifier/terraform/airlock_notifier.tf"
+NOTIFIER_PROVIDERS = ROOT / "templates/shared_services/airlock_notifier/terraform/providers.tf"
 NEXUS_VM = ROOT / "templates/shared_services/sonatype-nexus-vm/terraform/vm.tf"
 
 
@@ -36,6 +37,12 @@ class CoreStorageNetworkTests(unittest.TestCase):
         self.assertIn("storage_account_share_name = azurerm_storage_share.logic_app_content.name", logic_app)
         self.assertRegex(logic_app, r'"WEBSITE_CONTENTOVERVNET"\s*=\s*"1"')
         self.assertRegex(logic_app, r"vnet_route_all_enabled\s*=\s*true")
+
+    def test_notifier_updates_the_logic_app_in_one_request(self):
+        # AzureRM 3.x first sends a Logic App update with only the basic app settings, without WEBSITE_CONTENTOVERVNET.
+        # The platform then tries to reach the content share over the public network, and the core account denies it.
+        major = re.search(r'version\s*=\s*"=\s*(\d+)\.', NOTIFIER_PROVIDERS.read_text()).group(1)
+        self.assertGreaterEqual(int(major), 4)
 
     def test_nexus_boot_diagnostics_use_managed_storage(self):
         vm = NEXUS_VM.read_text()
