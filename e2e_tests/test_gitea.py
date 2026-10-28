@@ -54,14 +54,9 @@ async def test_private_gitea_repository_survives_update(verify):
         raise ValueError("The Gitea probe currently supports AzureCloud only")
     async with sql_lifecycle(verify, deadline_variable="GITEA_VALIDATION_DEADLINE") as resources:
         workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup()
-        new_token = partial(get_workspace_owner_token, workspace_id, verify)
-        gitea_path, gitea_id = await resources.create(
-            GITEA_PAYLOAD, f"/api{workspace_path}/workspace-services", await new_token(), cleanup_token=new_token
-        )
-        vm_path, vm_id = await resources.create(
-            VM_PAYLOAD, f"/api{guacamole_path}/user-resources", await new_token(), cleanup_token=new_token
-        )
-        token = await new_token()
+        token = await get_workspace_owner_token(workspace_id, verify)
+        gitea_path, gitea_id = await resources.create(GITEA_PAYLOAD, f"/api{workspace_path}/workspace-services", token)
+        vm_path, vm_id = await resources.create(VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token)
         gitea = (await get_resource(f"/api{gitea_path}", token, verify))["workspaceService"]
         vm_properties = (await get_resource(f"/api{vm_path}", token, verify))["userResource"]["properties"]
         subscription_id = vm_properties.get("workspace_subscription_id") or os.environ["ARM_SUBSCRIPTION_ID"]
@@ -95,7 +90,6 @@ async def test_private_gitea_repository_survives_update(verify):
                 )
                 await probe(phase="write")
                 LOGGER.info("Gitea is private, rejects anonymous and wrong-password requests, and stores a commit")
-                token = await new_token()
                 gitea = (await get_resource(f"/api{gitea_path}", token, verify))["workspaceService"]
                 async with asyncio.timeout(60 * 60):
                     await post_resource(
