@@ -108,6 +108,27 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
   resource_group_name = var.resource_group_name
   scope_name          = azapi_resource.ampls_workspace.name
   linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
+
+  depends_on = [
+    terraform_data.ampls_endpoint_update_wait,
+  ]
+}
+
+# A link or unlink in the scope makes Azure update the private endpoint. For the two unlinks, Azure runs one update
+# of up to 132 seconds, or one update of up to 90 seconds for each unlink, one after the other.
+# In the measured deletes, the endpoint stayed busy for less than 3 minutes.
+# During the update, Azure rejects changes to the endpoint DNS zone group with 409 AnotherOperationInProgress.
+# The scoped services depend on this resource, so they change only after the endpoint exists,
+# and on destroy Terraform waits here before it deletes the endpoint.
+resource "terraform_data" "ampls_endpoint_update_wait" {
+  provisioner "local-exec" {
+    when    = destroy
+    command = "sleep 300"
+  }
+
+  depends_on = [
+    azurerm_private_endpoint.azure_monitor_private_endpoint,
+  ]
 }
 
 
@@ -166,7 +187,7 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
 
   # App Insights rejects ingestion through a private endpoint created after this link, with HTTP 403.
   depends_on = [
-    azurerm_private_endpoint.azure_monitor_private_endpoint,
+    terraform_data.ampls_endpoint_update_wait,
   ]
 }
 
