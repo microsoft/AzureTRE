@@ -47,11 +47,11 @@ This will deploy the infrastructure required for Nexus, then start the service a
 ## Upgrade to Nexus bundle 4.0.0
 
 !!! warning
-    The upgrade to Nexus bundle `4.0.0` is one-way. You cannot go back to Nexus bundle `3.11.2` after the upgrade. Nexus 3.94.0 does not start on a database that Nexus 3.97.2 upgraded.
+    The upgrade to Nexus bundle `4.0.0` is one-way. You cannot go back to Nexus bundle `3.11.3` or earlier after the upgrade. Nexus 3.94.3 does not start on a database that Nexus 3.97.2 upgraded.
 
-Nexus bundle `4.0.0` updates Nexus from 3.94.0 to 3.97.2.
-Nexus 3.97.2 stops trusting the eMudhra certificate chains that Sonatype reports as [compromised](https://help.sonatype.com/en/compromised-emudhra-intermediate-ca-certificates.html).
-If you stay on Nexus bundle `3.11.2`, Nexus continues to trust these certificate chains.
+Nexus bundle `4.0.0` updates Nexus from 3.94.3 to 3.97.2.
+Nexus 3.94.3 in bundle `3.11.3` and Nexus 3.97.2 both stop trusting the eMudhra certificate chains that Sonatype reports as [compromised](https://help.sonatype.com/en/compromised-emudhra-intermediate-ca-certificates.html).
+Bundle versions before `3.11.3` continue to trust these certificate chains.
 
 Before you upgrade:
 
