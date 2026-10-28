@@ -51,3 +51,15 @@ Gitea needs to be able to access the following resource outside the Azure TRE VN
 ## Upgrading to version 1.0.0
 
 Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.
+
+## Upgrading to version 1.2.6
+
+Before version 1.2.6, the Gitea shared service wrote secrets to the console log of its web app. The web app sends this log to the Log Analytics workspace of the TRE core, so all people who can read it can read these secrets:
+
+- An access token of the `giteaadmin` user, with the name `gitea-admin`. Gitea printed it at the first start.
+- The password of the `giteaadmin` user. Gitea printed it at each later start, because the user create failed.
+
+If a Gitea shared service ran an earlier version, do these steps after the upgrade:
+
+1. Sign in to Gitea as `giteaadmin`. In the user settings, open Applications and delete the access token `gitea-admin`. Keep the token with the name `giteaadmin`, because `gitea_migrate_repo.sh` uses it.
+2. If the people who can read Log Analytics must not get admin access to Gitea, change the password of `giteaadmin` in Gitea. Keep the new password in a safe location. The Key Vault secret `gitea-<TRE_ID>-administrator-password` keeps the old value, because the start script does not change the password of an existing admin user.

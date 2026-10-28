@@ -34,14 +34,18 @@ Migrating existing Gitea services to the major version 1.0.0 is not currently su
 ### Repositories on the file share
 
 Before version 1.3.8, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 1.3.8, the repositories are on the `gitea-data` file share. The upgrade restarts the app, so the repositories on the container disk are lost.
+The issues, pull requests and releases stay in MySQL, and the LFS files stay on the file share.
 
 To keep the repositories, do these steps from a workspace VM:
 
 1. Clone each repository that you want to keep with `git clone --mirror <repository URL>`.
-2. Upgrade the workspace service.
-3. In Gitea, open Site Administration, then Dashboard. Run "Delete all repositories missing their Git files".
-4. Create each repository again in Gitea.
-5. Push each mirror into its new repository with `git push --mirror <repository URL>`.
+2. If a repository has a wiki, also clone its wiki with `git clone --mirror <wiki URL>`. The wiki URL ends in `.wiki.git` in place of `.git`.
+3. Upgrade the workspace service.
+4. In Gitea, open Site Administration, then Dashboard. Run "Reinitialize all missing Git repositories for which records exist".
+5. Push each mirror into the same repository with `git push --mirror <repository URL>`.
+6. For each wiki, create one page in Gitea. Then push the wiki mirror with `git push --mirror <wiki URL>`.
+
+Do not run "Delete all repositories missing their Git files". This task also deletes the records of the repositories, for example their issues and pull requests.
 
 ### Secrets in the console log
 
@@ -49,14 +53,20 @@ Before version 1.3.8, the Gitea workspace service wrote secrets to the console l
 
 - The client secret of the workspace application.
 - The password of the Gitea admin user.
-- An access token of the Gitea admin user.
+- An access token of the Gitea admin user, with the name `gitea-admin`.
 
 If a Gitea workspace service ran an earlier version, do these steps after the upgrade:
 
-1. Rotate the client secret of the workspace application. Make sure that the workspace Key Vault secret `workspace-client-secret` has the new value.
-2. Restart the Gitea web app. At each start, Gitea gives its OIDC source the client secret from the Key Vault.
-3. Sign in to Gitea as the admin user. In the user settings, open Applications and delete the access tokens.
-4. If the people who can read Log Analytics must not get admin access to Gitea, change the password of the admin user in Gitea.
+1. Make a new client secret for the workspace application:
+    - If Terraform registered the workspace application (`register_aad_application` is `true`), delete its client secret in Microsoft Entra ID. Then update the workspace. Terraform makes a new client secret and writes it to the workspace Key Vault secret `workspace-client-secret`.
+    - If you registered the workspace application, add a new client secret in Microsoft Entra ID. Update the workspace property `client_secret` with the new value. Then delete the old client secret.
+2. Update each Guacamole and OHDSI workspace service in the workspace. These services use the version of the secret that was current when they deployed.
+3. Make the Gitea web app read the new client secret from the Key Vault. Send a POST request to `https://management.azure.com/<web app resource ID>/config/configreferences/appsettings/refresh?api-version=2022-03-01`, for example with `az rest`.
+4. Restart the Gitea web app. At the start, the start script gives the OIDC source the new client secret. Then it stops Gitea one time, and App Service starts it again with the new secret.
+5. Sign in to Gitea as the admin user. In the user settings, open Applications and delete the access token `gitea-admin`.
+6. If the people who can read Log Analytics must not get admin access to Gitea, change the password of the admin user in Gitea. Keep the new password in a safe location. The Key Vault secret `<web app name>-administrator-password` keeps the old value, because the start script does not change the password of an existing admin user.
+
+From version 1.3.8, the start script keeps a hash of the OIDC settings on the file share. If the settings change, the script stops Gitea one time, because Gitea reads them only at its start. The first start after the upgrade also does this, because the hash does not exist yet.
 
 ## Repairing a service that cannot reach its file share
 

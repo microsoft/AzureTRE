@@ -13,3 +13,9 @@ fi
 
 # The admin commands contain secrets. The script hides them in the Gitea output.
 su gitea -s /bin/bash -c "bash /configure_gitea_admin.sh"
+# Exit status 10 means that the OIDC settings changed. Gitea reads them only at its start.
+# When Gitea stops, the image stops the container, and App Service starts it again.
+if [ $? -eq 10 ]; then
+    echo "Stopping Gitea, so that it starts again with the new OIDC settings"
+    s6-svc -d /etc/s6/gitea
+fi

@@ -12,11 +12,38 @@ BUNDLE = ROOT / "templates/workspace_services/gitea/terraform"
 START_SCRIPT = ROOT / "templates/workspace_services/gitea/docker/configure_gitea.sh"
 ADMIN_SCRIPT = ROOT / "templates/workspace_services/gitea/docker/configure_gitea_admin.sh"
 SHARED_DOCKERFILE = ROOT / "templates/shared_services/gitea/docker/Dockerfile"
+SHARED_ADMIN_SCRIPT = ROOT / "templates/shared_services/gitea/docker/configure_gitea_admin.sh"
 SECRETS = ("GITEA_PASSWD", "GITEA_OPENID_CLIENT_SECRET")
 
 
 def block(source, header):
     return source.split(header + " {", 1)[1].split("\n}", 1)[0]
+
+
+def run_script(script, folder, stubs, environment):
+    """Run a start script with stub commands in front of PATH."""
+    for name, body in stubs.items():
+        stub = Path(folder) / name
+        stub.write_text("#!/bin/bash\n" + body)
+        stub.chmod(0o755)
+    environment = {**environment, "PATH": f"{folder}{os.pathsep}{os.environ['PATH']}"}
+    return subprocess.run(["bash", str(script)], env=environment, capture_output=True, text=True, check=False)
+
+
+# Gitea prints a table with a header line for each list command.
+GITEA_STUB = """case "$*" in
+  "admin user list --admin") printf 'ID Username Email\\n1 giteaadmin giteaadmin@example.com\\n' ;;
+  "admin auth list") printf 'ID Name Type Enabled\\n%s' "${STUB_SOURCES:-}" ;;
+esac
+"""
+OIDC_ENVIRONMENT = {
+    "GITEA_USERNAME": "giteaadmin",
+    "GITEA_PASSWD": "password",
+    "GITEA_EMAIL": "giteaadmin@example.com",
+    "GITEA_OPENID_CLIENT_ID": "client-id",
+    "GITEA_OPENID_CLIENT_SECRET": "first-secret",
+    "GITEA_OPENID_AUTHORITY": "https://login.example.com/tenant/v2.0",
+}
 
 
 class GiteaBundleContractTests(unittest.TestCase):
@@ -33,12 +60,13 @@ class GiteaBundleContractTests(unittest.TestCase):
 
     def test_start_script_prints_no_secret(self):
         # The web app sends the console output to Log Analytics.
-        for script in (START_SCRIPT, ADMIN_SCRIPT):
+        for script in (START_SCRIPT, ADMIN_SCRIPT, SHARED_ADMIN_SCRIPT):
             for line in script.read_text().splitlines():
                 if line.lstrip().startswith(("echo", "printf")) or "set -x" in line:
                     for secret in SECRETS:
                         with self.subTest(script=script.name, line=line, secret=secret):
-                            self.assertNotIn(secret, line)
+                            # A line can name a setting, but it must not expand its value.
+                            self.assertNotRegex(line, r"\$\{?" + secret)
 
     def test_admin_script_hides_secrets_in_gitea_output(self):
         # Gitea prints its full command line when a command fails.
@@ -58,6 +86,7 @@ class GiteaBundleContractTests(unittest.TestCase):
                 "GITEA_EMAIL": "giteaadmin@example.com",
                 "GITEA_OPENID_CLIENT_ID": "client-id",
                 "GITEA_OPENID_AUTHORITY": "https://login.example.com/tenant/v2.0",
+                "GITEA_CUSTOM": folder,
             }
             result = subprocess.run(
                 ["bash", str(ADMIN_SCRIPT)], env=environment, capture_output=True, text=True, check=False
@@ -69,9 +98,99 @@ class GiteaBundleContractTests(unittest.TestCase):
         self.assertIn("user create --admin --username=giteaadmin --password=***", output)
         self.assertIn("add-oauth --name oidc --provider openidConnect --key client-id --secret ***", output)
 
+    def test_shared_admin_script_hides_secrets_in_gitea_output(self):
+        # Before the fix, the shared image printed the admin password at each restart.
+        secrets = {"GITEA_PASSWD": "pass$word[1]", "GITEA__database__PASSWD": "db.secret"}
+        with tempfile.TemporaryDirectory() as folder:
+            result = run_script(
+                SHARED_ADMIN_SCRIPT,
+                folder,
+                {"curl": "echo 200\n", "gitea": 'echo "[F] Failed to run app with [gitea $*]"\nexit 1\n'},
+                {**secrets, "GITEA_USERNAME": "giteaadmin", "GITEA_EMAIL": "giteaadmin@example.com"},
+            )
+        output = result.stdout + result.stderr
+        for name, value in secrets.items():
+            with self.subTest(secret=name):
+                self.assertNotIn(value, output)
+        self.assertIn("user create --admin --username=giteaadmin --password=***", output)
+
+    def test_admin_scripts_skip_an_unresolved_key_vault_reference(self):
+        # If App Service cannot read a reference, the value is the reference text.
+        reference = "@Microsoft.KeyVault(SecretUri=https://kv.vault.azure.net/secrets/name)"
+        for script, name in (
+            (ADMIN_SCRIPT, "GITEA_PASSWD"),
+            (ADMIN_SCRIPT, "GITEA_OPENID_CLIENT_SECRET"),
+            (SHARED_ADMIN_SCRIPT, "GITEA_PASSWD"),
+        ):
+            with (
+                self.subTest(script=script.parent.parent.parent.name, setting=name),
+                tempfile.TemporaryDirectory() as folder,
+            ):
+                calls = Path(folder) / "calls"
+                result = run_script(
+                    script,
+                    folder,
+                    {"curl": "echo 200\n", "gitea": f'echo "$*" >> "{calls}"\n'},
+                    {**OIDC_ENVIRONMENT, name: reference},
+                )
+                self.assertEqual(result.returncode, 1)
+                self.assertFalse(calls.exists())
+                self.assertIn(
+                    f"The value of {name} is missing or its Key Vault reference is not resolved", result.stdout
+                )
+
+    def test_admin_script_requests_a_restart_when_the_oidc_settings_change(self):
+        # Gitea reads the settings of an existing OIDC source only at its start.
+        cases = (
+            ("new source", "", "first-secret", 0),
+            ("same settings", "1 oidc OAuth2 true\n", "first-secret", 0),
+            ("new client secret", "1 oidc OAuth2 true\n", "second-secret", 10),
+            ("same new secret", "1 oidc OAuth2 true\n", "second-secret", 0),
+        )
+        with tempfile.TemporaryDirectory() as folder, tempfile.TemporaryDirectory() as custom:
+            for label, sources, secret, status in cases:
+                with self.subTest(case=label):
+                    result = run_script(
+                        ADMIN_SCRIPT,
+                        folder,
+                        {"gitea": GITEA_STUB},
+                        {
+                            **OIDC_ENVIRONMENT,
+                            "GITEA_OPENID_CLIENT_SECRET": secret,
+                            "GITEA_CUSTOM": custom,
+                            "STUB_SOURCES": sources,
+                        },
+                    )
+                    self.assertEqual(result.returncode, status, result.stdout + result.stderr)
+            self.assertNotIn("second-secret", (Path(custom) / "oidc-settings.sha256").read_text())
+
+    def test_admin_script_requests_a_restart_after_an_upgrade(self):
+        # Earlier versions did not store the hash, so the first start after the upgrade restarts Gitea.
+        with tempfile.TemporaryDirectory() as folder, tempfile.TemporaryDirectory() as custom:
+            result = run_script(
+                ADMIN_SCRIPT,
+                folder,
+                {"gitea": GITEA_STUB},
+                {**OIDC_ENVIRONMENT, "GITEA_CUSTOM": custom, "STUB_SOURCES": "1 oidc OAuth2 true\n"},
+            )
+        self.assertEqual(result.returncode, 10)
+
+    def test_start_script_stops_gitea_only_after_an_oidc_change(self):
+        # The Gitea image stops the container when Gitea stops, and App Service starts it again.
+        for status, stops in ((0, False), (1, False), (10, True)):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as folder:
+                calls = Path(folder) / "calls"
+                run_script(
+                    START_SCRIPT,
+                    folder,
+                    {"curl": "echo 200\n", "su": f"exit {status}\n", "s6-svc": f'echo "$*" >> "{calls}"\n'},
+                    {"GITEA_USERNAME": "giteaadmin"},
+                )
+                self.assertEqual(calls.read_text() if calls.exists() else "", "-d /etc/s6/gitea\n" if stops else "")
+
     def test_admin_create_makes_no_access_token(self):
         # Gitea prints a new access token to the console output.
-        for source in (START_SCRIPT, SHARED_DOCKERFILE):
+        for source in (START_SCRIPT, ADMIN_SCRIPT, SHARED_ADMIN_SCRIPT, SHARED_DOCKERFILE):
             commands = [line for line in source.read_text().splitlines() if not line.lstrip().startswith("#")]
             with self.subTest(source=source.name):
                 self.assertNotIn("--access-token", "\n".join(commands))
