@@ -182,7 +182,13 @@ resource "terraform_data" "backup_registration_warm_up" {
     interpreter = ["/bin/bash", "-c"]
     command     = <<EOT
 set -euo pipefail
-az login --identity --output none
+# Use the cloud and the credentials of the bundle, as the resource processor does.
+az cloud set --name "$${AZURE_ENVIRONMENT:-AzureCloud}"
+if [ "$${ARM_USE_MSI:-true}" = "true" ]; then
+  az login --identity --output none
+else
+  az login --service-principal --username "$ARM_CLIENT_ID" --password "$ARM_CLIENT_SECRET" --tenant "$ARM_TENANT_ID" --output none
+fi
 az account set --subscription "${self.input.subscription_id}"
 # A URL without a host uses the Resource Manager endpoint of the current cloud.
 url="${self.input.container_url}"
@@ -221,11 +227,21 @@ for try in 1 2 3 4 5; do
   operation=$(az rest --method put --url "$url" --body "$body" --debug 2>&1 | sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/p" | head -n 1 || true)
   status=Unknown
   if [ -n "$operation" ]; then
+    # A failed status read gives Unknown, and the step reads again. Another PUT must not overlap a running attempt.
     for attempt in $(seq 1 60); do
       status=$(az rest --method get --url "$operation" --query status --output tsv 2>/dev/null || echo Unknown)
-      [ "$status" = "InProgress" ] || break
+      case "$status" in
+        Succeeded | Failed | Canceled | Cancelled) break ;;
+      esac
       sleep 10
     done
+    case "$status" in
+      Succeeded | Failed | Canceled | Cancelled) ;;
+      *)
+        echo "Registration attempt $try did not end within 10 minutes. The last status was $status." >&2
+        exit 1
+        ;;
+    esac
   else
     sleep 120
   fi

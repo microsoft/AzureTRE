@@ -22,6 +22,7 @@ if args[0]!='rest':sys.exit(0)
 method=args[args.index('--method')+1];url=args[args.index('--url')+1]
 if url==os.environ['OPERATION']:
     outcome=state['outcomes'].pop(0) if len(state['outcomes'])>1 else state['outcomes'][0]
+    if outcome=='ERROR':save();sys.exit(1)
     print(outcome)
     state['registered']=outcome=='Succeeded';save();sys.exit(0)
 if method=='get':
@@ -44,7 +45,9 @@ def warm_up_command():
     block = source.split('resource "terraform_data" "backup_registration_warm_up" {', 1)[1]
     command = block.split("<<EOT\n", 1)[1].split("\nEOT", 1)[0]
     return (
-        command.replace("${self.input.subscription_id}", "subscription")
+        # Terraform renders $${ as ${ in the command.
+        command.replace("$${", "${")
+        .replace("${self.input.subscription_id}", "subscription")
         .replace("${self.input.container_url}", CONTAINER)
         .replace("${self.input.storage_account_id}", "/storage/account")
     )
@@ -60,7 +63,16 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
             path.write_text("#!" + sys.executable + "\n" + body)
             path.chmod(0o755)
 
-    def run_warm_up(self, *, registered=False, outcomes=("Failed",), header=True, get_errors=0, delete_failures=0):
+    def run_warm_up(
+        self,
+        *,
+        registered=False,
+        outcomes=("Failed",),
+        header=True,
+        get_errors=0,
+        delete_failures=0,
+        environment=None,
+    ):
         state = self.folder / "state.json"
         state.write_text(
             json.dumps(
@@ -73,16 +85,21 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
                 }
             )
         )
-        env = os.environ | {
-            "PATH": str(self.folder) + os.pathsep + os.environ["PATH"],
-            "CALLS": str(self.folder / "calls.jsonl"),
-            "STATE": str(state),
-            "OPERATION": OPERATION,
-        }
+        env = (
+            os.environ
+            | {
+                "PATH": str(self.folder) + os.pathsep + os.environ["PATH"],
+                "CALLS": str(self.folder / "calls.jsonl"),
+                "STATE": str(state),
+                "OPERATION": OPERATION,
+            }
+            | (environment or {})
+        )
         result = subprocess.run(["bash", "-c", warm_up_command()], env=env, capture_output=True, text=True, timeout=20)
         calls_file = self.folder / "calls.jsonl"
         calls = [json.loads(line) for line in calls_file.read_text().splitlines()] if calls_file.exists() else []
         methods = [call[call.index("--method") + 1] for call in calls if call[0] == "rest" and CONTAINER in call]
+        self.calls = calls
         return result, methods, json.loads(state.read_text())
 
     def test_existing_registration_is_not_changed(self):
@@ -129,6 +146,50 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(methods, ["get"] * 3)
         self.assertIn("Could not read the backup registration", result.stderr)
+
+    def test_attempt_without_a_final_status_stops_the_step(self):
+        result, methods, _ = self.run_warm_up(outcomes=["InProgress"])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods, ["get", "put"])
+        self.assertIn("did not end within 10 minutes", result.stderr)
+
+    def test_failed_status_read_is_read_again(self):
+        result, methods, state = self.run_warm_up(outcomes=["ERROR", "InProgress", "Succeeded"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
+        self.assertFalse(state["registered"])
+
+    def test_login_uses_the_cloud_and_the_managed_identity_by_default(self):
+        result, _, _ = self.run_warm_up(registered=True, environment={"AZURE_ENVIRONMENT": "AzureUSGovernment"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls[0], ["cloud", "set", "--name", "AzureUSGovernment"])
+        self.assertEqual(self.calls[1][:2], ["login", "--identity"])
+
+    def test_login_uses_the_service_principal_without_a_managed_identity(self):
+        environment = {
+            "ARM_USE_MSI": "false",
+            "ARM_CLIENT_ID": "client",
+            "ARM_CLIENT_SECRET": "secret",
+            "ARM_TENANT_ID": "tenant",
+        }
+        result, _, _ = self.run_warm_up(registered=True, environment=environment)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls[0], ["cloud", "set", "--name", "AzureCloud"])
+        self.assertEqual(
+            self.calls[1],
+            [
+                "login",
+                "--service-principal",
+                "--username",
+                "client",
+                "--password",
+                "secret",
+                "--tenant",
+                "tenant",
+                "--output",
+                "none",
+            ],
+        )
 
     def test_missing_operation_header_waits_before_each_check(self):
         result, methods, _ = self.run_warm_up(header=False)
