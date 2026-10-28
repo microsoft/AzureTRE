@@ -1,6 +1,7 @@
 """Exercise a private Gitea repository across an update, a stop and a start of the app."""
 
 import asyncio
+from datetime import datetime, timezone
 from functools import partial
 import logging
 import os
@@ -102,6 +103,7 @@ async def test_private_gitea_repository_survives_update(verify):
                     )
                 # A stop and a start make a new container read the repository from the file share and MySQL.
                 # A restart call returns before the restart, so the old container can serve the read.
+                restarted_at = datetime.now(timezone.utc)
                 await arm.request("POST", f"{site_id}/stop", WEB_API)
                 await arm.request("POST", f"{site_id}/start", WEB_API)
                 await probe(phase="read")
@@ -113,7 +115,7 @@ async def test_private_gitea_repository_survives_update(verify):
                 f"/subscriptions/{os.environ['ARM_SUBSCRIPTION_ID']}/resourceGroups/rg-{config.TRE_ID}"
                 f"/providers/Microsoft.OperationalInsights/workspaces/log-{config.TRE_ID}"
             )
-            counts = await console_log_counts(arm, log_workspace, site_id)
+            counts = await console_log_counts(arm, log_workspace, site_id, restarted_at)
             LOGGER.info("Gitea console log lines: %s", counts)
             assert counts["leaks"] == 0, f"The Gitea console log has {counts['leaks']} lines with a secret"
             # Check the network settings last, so that a failure here keeps the functional evidence above.

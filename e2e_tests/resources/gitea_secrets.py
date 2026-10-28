@@ -1,6 +1,7 @@
 """Make sure that the Gitea web app keeps its secrets out of its console log."""
 
 import asyncio
+from datetime import timezone
 import re
 
 LOGS = "https://api.loganalytics.io"
@@ -12,6 +13,7 @@ SITE_ID = re.compile(r"^/subscriptions/[0-9a-f-]+/resourceGroups/[\w.-]+/provide
 LEAK_QUERY = """AppServiceConsoleLogs
 | where _ResourceId =~ '{site_id}'
 | summarize started = countif(ResultDescription contains 'Adding admin user'),
+    restarted = countif(TimeGenerated >= datetime({since}) and ResultDescription contains 'Configuring OIDC'),
     leaks = countif((ResultDescription contains '--password=' and ResultDescription !contains '--password=***')
         or (ResultDescription contains '--secret ' and ResultDescription !contains '--secret ***')
         or ResultDescription contains 'Access token was successfully created')"""
@@ -26,25 +28,33 @@ async def key_vault_references(arm, site_id):
     return statuses
 
 
-async def console_log_counts(arm, workspace_id, site_id, minutes=15):
-    """Count the start lines and the secret lines in the console log. The query returns counts only."""
+async def console_log_counts(arm, workspace_id, site_id, since, minutes=15, settle=120):
+    """Count the start lines and the secret lines in the console log. The query returns counts only.
+
+    Wait for the OIDC line of a start after `since`. Then wait `settle` seconds more, because the lines
+    of one start can arrive in Log Analytics at different times.
+    """
     if not SITE_ID.match(site_id):
         raise ValueError("Expected a web app resource ID")
     customer_id = (await arm.request("GET", workspace_id, LOG_API))["properties"]["customerId"]
-    query = LEAK_QUERY.format(site_id=site_id.lower())
+    start = since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    query = LEAK_QUERY.format(site_id=site_id.lower(), since=start)
+
+    async def counts():
+        token = await asyncio.to_thread(arm.credential.get_token, f"{LOGS}/.default")
+        response = await arm.client.post(
+            f"{LOGS}/v1/workspaces/{customer_id}/query",
+            headers={"Authorization": f"Bearer {token.token}"},
+            json={"query": query, "timespan": "P1D"},
+        )
+        if response.status_code != 200:
+            raise RuntimeError(f"Log Analytics query failed with HTTP {response.status_code}")
+        table = response.json()["tables"][0]
+        return dict(zip([column["name"] for column in table["columns"]], table["rows"][0]))
+
     async with asyncio.timeout(minutes * 60):
-        while True:
-            token = await asyncio.to_thread(arm.credential.get_token, f"{LOGS}/.default")
-            response = await arm.client.post(
-                f"{LOGS}/v1/workspaces/{customer_id}/query",
-                headers={"Authorization": f"Bearer {token.token}"},
-                json={"query": query, "timespan": "P1D"},
-            )
-            if response.status_code != 200:
-                raise RuntimeError(f"Log Analytics query failed with HTTP {response.status_code}")
-            table = response.json()["tables"][0]
-            counts = dict(zip([column["name"] for column in table["columns"]], table["rows"][0]))
-            # Log Analytics can show a line some minutes after the app writes it.
-            if counts["started"]:
-                return counts
+        # Log Analytics can show a line some minutes after the app writes it.
+        while not (await counts())["restarted"]:
             await asyncio.sleep(60)
+    await asyncio.sleep(settle)
+    return await counts()

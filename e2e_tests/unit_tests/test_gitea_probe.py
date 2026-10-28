@@ -3,6 +3,7 @@
 import json
 from pathlib import Path, PurePosixPath
 import re
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
@@ -150,6 +151,7 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
     WORKSPACE = (
         "/subscriptions/sub/resourceGroups/rg-tretest/providers/Microsoft.OperationalInsights/workspaces/log-tretest"
     )
+    SINCE = datetime(2026, 10, 28, 23, 30, 5, tzinfo=timezone(timedelta(hours=1)))
 
     @staticmethod
     def arm(*rows):
@@ -157,7 +159,11 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
             SimpleNamespace(
                 status_code=200,
                 json=Mock(
-                    return_value={"tables": [{"columns": [{"name": "started"}, {"name": "leaks"}], "rows": [row]}]}
+                    return_value={
+                        "tables": [
+                            {"columns": [{"name": "started"}, {"name": "restarted"}, {"name": "leaks"}], "rows": [row]}
+                        ]
+                    }
                 ),
             )
             for row in rows
@@ -168,18 +174,21 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
             client=SimpleNamespace(post=AsyncMock(side_effect=responses)),
         )
 
-    async def test_counts_wait_until_the_start_lines_arrive(self):
-        arm = self.arm([0, 0], [2, 0])
+    async def test_counts_wait_for_the_start_after_the_restart(self):
+        # The install lines arrive first. The lines of the later start can arrive some minutes after them.
+        arm = self.arm([1, 0, 0], [2, 1, 0], [2, 1, 1])
         with patch("e2e_tests.resources.gitea_secrets.asyncio.sleep", AsyncMock()) as sleep:
-            counts = await secrets.console_log_counts(arm, self.WORKSPACE, self.SITE)
-        self.assertEqual(counts, {"started": 2, "leaks": 0})
-        sleep.assert_awaited_once()
-        self.assertIn(self.SITE.lower(), arm.client.post.call_args.kwargs["json"]["query"])
+            counts = await secrets.console_log_counts(arm, self.WORKSPACE, self.SITE, self.SINCE)
+        self.assertEqual(counts, {"started": 2, "restarted": 1, "leaks": 1})
+        self.assertEqual([call.args[0] for call in sleep.await_args_list], [60, 120])
+        query = arm.client.post.call_args.kwargs["json"]["query"]
+        self.assertIn(self.SITE.lower(), query)
+        self.assertIn("TimeGenerated >= datetime(2026-10-28T22:30:05Z)", query)
 
     async def test_counts_reject_a_site_id_that_changes_the_query(self):
         arm = self.arm()
         with self.assertRaises(ValueError):
-            await secrets.console_log_counts(arm, self.WORKSPACE, f"{self.SITE}' or true or '")
+            await secrets.console_log_counts(arm, self.WORKSPACE, f"{self.SITE}' or true or '", self.SINCE)
         arm.client.post.assert_not_awaited()
 
     async def test_references_report_the_status_of_each_secret_setting(self):
