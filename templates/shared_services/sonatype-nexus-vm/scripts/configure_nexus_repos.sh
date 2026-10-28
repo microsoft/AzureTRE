@@ -110,6 +110,28 @@ else
   echo "EULA endpoint not available (older Nexus version or Pro edition). Skipping."
 fi
 
+# Acknowledge required base telemetry (required for Nexus 3.97+).
+# Nexus uploads telemetry to nxrm.telemetry.sonatype.com. If uploads fail for the
+# grace period, Nexus becomes read-only. Repeating the acknowledgement is safe.
+acknowledge_telemetry() {
+  local status_code
+  status_code=$(curl --silent --show-error -u admin:"$NEXUS_ADMIN_PASSWORD" -X POST \
+    'http://localhost/service/rest/v1/system/mandatory-telemetry-acknowledgement' \
+    --connect-timeout 10 --max-time 30 \
+    -H 'Content-Type: application/json' \
+    -d '{"acknowledgement":true}' \
+    -w '%{http_code}' -o /dev/null)
+  echo "Response received from Nexus when acknowledging telemetry: $status_code"
+  [ "$status_code" = "204" ]
+}
+
+echo "Acknowledging required base telemetry..."
+if ! retry_with_backoff acknowledge_telemetry; then
+  echo 'ERROR - Timeout while trying to acknowledge required base telemetry'
+  exit 1
+fi
+echo "Required base telemetry acknowledged."
+
 echo "Getting current anonymous settings in Nexus..."
 current_anon_json=$(curl -iu admin:"$NEXUS_ADMIN_PASSWORD" -X GET \
   'http://localhost/service/rest/v1/security/anonymous' \
