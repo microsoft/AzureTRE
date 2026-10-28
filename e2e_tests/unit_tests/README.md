@@ -11,6 +11,7 @@ These unit tests check the code used by the E2E test suite.
 They cover authentication, operation polling, cleanup, timeouts, test selection and result reporting.
 
 They run without Azure credentials or deployed resources.
+`test_azure_monitor_contract.py` reads the Azure Monitor Terraform of the core and the base workspace. It makes sure of the order of the private link scope changes and the private endpoint.
 Cases named after SQL, Nexus or certificates check the E2E setup, validation and cleanup for those cases.
 
 The tests stay beside the E2E helpers they exercise.
