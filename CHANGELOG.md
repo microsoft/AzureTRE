@@ -33,6 +33,7 @@ BUG FIXES:
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
+* Prevent silent garbage collection of background API task workers by implementing app-scoped lifecycle management. ([#4923](https://github.com/microsoft/AzureTRE/issues/4923))
 * Protect active validation environments and require successful smoke tests before custom tests. Validate shared-service command arguments and forward explicit Nexus EULA consent. (`devops` 0.6.20, `build-scripts` 1.1.4) ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Give E2E cleanup separate deadlines and allow 30 seconds for smoke health requests. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Verify TLS for identity authentication and keep response content and URL parameters out of E2E operation polling logs. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
@@ -75,6 +76,7 @@ BUG FIXES:
 * Fix OHDSI bundle builds by moving to Debian Bookworm and installing a checksum-verified Go `sqlcmd` release. (`tre-workspace-service-ohdsi` 0.3.10) ([#5083](https://github.com/microsoft/AzureTRE/issues/5083))
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
+* Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
 
 ## (0.29.1)
 **BREAKING CHANGES**
