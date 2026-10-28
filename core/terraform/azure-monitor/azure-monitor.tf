@@ -84,6 +84,11 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
   resource_group_name = var.resource_group_name
   scope_name          = azurerm_monitor_private_link_scope.ampls_core.name
   linked_resource_id  = azurerm_log_analytics_workspace.core.id
+
+  # A link makes Azure update the private endpoint. During the update, Azure rejects a create of the DNS zone group.
+  depends_on = [
+    azurerm_private_endpoint.azure_monitor_private_endpoint,
+  ]
 }
 
 

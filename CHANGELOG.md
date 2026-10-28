@@ -30,8 +30,9 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 
 BUG FIXES:
 * Update Nexus from 3.94.0 to 3.94.3. The Nexus 3.94.3 image stops trusting the eMudhra certificate chains that Sonatype reports as compromised. (`tre-shared-service-sonatype-nexus` 3.11.3) ([#5276](https://github.com/microsoft/AzureTRE/issues/5276))
-* Change the workspace Azure Monitor private link scope only after its private endpoint exists, and wait 5 minutes after the scope changes before Terraform deletes the endpoint. A scope change makes Azure update the endpoint, and during the update Azure rejects DNS zone group changes with 409 AnotherOperationInProgress, so some workspaces failed to deploy or delete.
-  (`tre-workspace-base` 2.12.3, `tre-workspace-unrestricted` 0.15.2, `tre-workspace-airlock-import-review` 0.18.2) ([#3193](https://github.com/microsoft/AzureTRE/issues/3193))
+* Change the Azure Monitor private link scope of the core and of each workspace only after its private endpoint exists. In workspaces, also wait 5 minutes after the scope changes before Terraform deletes the endpoint.
+  A scope change makes Azure update the endpoint, and during the update Azure rejects DNS zone group changes with 409 AnotherOperationInProgress, so some workspaces failed to deploy or delete.
+  (`core` 0.18.16, `tre-workspace-base` 2.12.3, `tre-workspace-unrestricted` 0.15.2, `tre-workspace-airlock-import-review` 0.18.2) ([#3193](https://github.com/microsoft/AzureTRE/issues/3193))
 * Link App Insights to the Azure Monitor private link scope after the private endpoint exists. Before this fix, App Insights rejected all private ingestion with HTTP 403, so the core and workspace App Insights received no telemetry.
   Rename the scoped service, so that existing deployments replace the link on upgrade. (`core` 0.18.16, `tre-workspace-base` 2.12.3, `tre-workspace-unrestricted` 0.15.2, `tre-workspace-airlock-import-review` 0.18.2) ([#5280](https://github.com/microsoft/AzureTRE/issues/5280))
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
