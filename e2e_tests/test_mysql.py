@@ -97,5 +97,9 @@ async def test_private_mysql_query_survives_sku_change(verify):
                     )
                 server_record = await arm.request("GET", server_id, MYSQL_API)
                 assert server_record["sku"]["name"] == SKUS["GP | 8GB 2vCores"]
+                # The SKU change must keep the network and TLS settings.
+                assert server_record["properties"]["network"]["publicNetworkAccess"] == "Disabled"
+                secure = await arm.request("GET", f"{server_id}/configurations/require_secure_transport", MYSQL_API)
+                assert secure["properties"]["value"].upper() == "ON"
                 await run_probe(arm, azure_vm_id, vm["location"], **probe, phase="read")
                 LOGGER.info("MySQL data survived the change to the General Purpose SKU")

@@ -1,5 +1,8 @@
 """Check that a Guacamole Linux VM finishes its Nexus-backed bootstrap and runs its actions."""
 
+import logging
+import os
+
 import pytest
 
 from e2e_tests import config
@@ -12,6 +15,7 @@ from e2e_tests.resources.vm_actions import invoke_action, power_state, secret_ve
 
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.linux_vm
@@ -40,6 +44,12 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
 
 async def check_vm_actions(vm_path, workspace_id, verify):
     """Run the VM actions and read their effect from Azure."""
+    if os.environ.get("AZURE_ENVIRONMENT", "AzureCloud") != "AzureCloud":
+        # The Resource Manager client of these checks supports AzureCloud only. Run the actions without the reads.
+        LOGGER.warning("Not reading the VM power state and secret version outside AzureCloud")
+        for action in ("stop", "start", "reset_password"):
+            await invoke_action(vm_path, action, await get_workspace_owner_token(workspace_id, verify), verify)
+        return
     token = await get_workspace_owner_token(workspace_id, verify)
     vm_id = (await get_resource(f"/api{vm_path}", token, verify))["userResource"]["properties"]["azure_resource_id"]
     group = vm_id.split("/providers/", 1)[0]

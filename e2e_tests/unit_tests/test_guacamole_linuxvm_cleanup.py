@@ -1,9 +1,10 @@
 """Exercise Linux VM cleanup through the real polling and deletion helpers."""
 
 import json
+import os
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from httpx import AsyncClient, MockTransport, Response
 from jsonschema import validate
@@ -185,6 +186,21 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertEqual([request.method for request in self.requests], ["POST", "GET", "PATCH", "GET"])
+
+
+class LinuxVmCloudTests(unittest.IsolatedAsyncioTestCase):
+    async def test_other_clouds_run_the_actions_without_azure_reads(self):
+        invoke = AsyncMock()
+        arm = Mock(side_effect=AssertionError("The public-cloud client must not run outside AzureCloud"))
+        with (
+            patch.dict(os.environ, {"AZURE_ENVIRONMENT": "AzureUSGovernment"}),
+            patch.object(linuxvm, "invoke_action", invoke),
+            patch.object(linuxvm, "arm_client", arm),
+            patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")),
+        ):
+            await linuxvm.check_vm_actions("/workspaces/ws/vm", "ws", True)
+        self.assertEqual([call.args[1] for call in invoke.await_args_list], ["stop", "start", "reset_password"])
+        arm.assert_not_called()
 
 
 if __name__ == "__main__":
