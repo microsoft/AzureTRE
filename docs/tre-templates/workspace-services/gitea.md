@@ -29,9 +29,11 @@ The Gitea worskpace service opens outbound access to:
 
 Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.
 
-## Upgrading to version 1.3.9
+## Upgrading to version 1.3.8
 
-Before version 1.3.9, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 1.3.9, the repositories are on the `gitea-data` file share. The upgrade restarts the app, so the repositories on the container disk are lost.
+### Repositories on the file share
+
+Before version 1.3.8, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 1.3.8, the repositories are on the `gitea-data` file share. The upgrade restarts the app, so the repositories on the container disk are lost.
 
 To keep the repositories, do these steps from a workspace VM:
 
@@ -41,9 +43,9 @@ To keep the repositories, do these steps from a workspace VM:
 4. Create each repository again in Gitea.
 5. Push each mirror into its new repository with `git push --mirror <repository URL>`.
 
-## Upgrading to version 1.3.10
+### Secrets in the console log
 
-Before version 1.3.10, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:
+Before version 1.3.8, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:
 
 - The client secret of the workspace application.
 - The password of the Gitea admin user.
