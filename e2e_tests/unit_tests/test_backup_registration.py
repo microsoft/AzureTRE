@@ -10,9 +10,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 STORAGE = ROOT / "templates/workspaces/base/terraform/storage.tf"
-CONTAINER = (
-    "https://management.azure.com/vault/backupFabrics/Azure/protectionContainers/container?api-version=2023-04-01"
-)
+CONTAINER = "/vault/backupFabrics/Azure/protectionContainers/container?api-version=2023-04-01"
 OPERATION = "https://management.azure.com/vault/operations/1"
 
 FAKE_AZ = """import json,os,sys
@@ -26,11 +24,18 @@ if url==os.environ['OPERATION']:
     outcome=state['outcomes'].pop(0) if len(state['outcomes'])>1 else state['outcomes'][0]
     print(outcome)
     state['registered']=outcome=='Succeeded';save();sys.exit(0)
-if method=='get':sys.exit(0 if state['registered'] else 1)
+if method=='get':
+    if state['get_errors']:
+        state['get_errors']-=1;save();print('ERROR: (TooManyRequests) The request was throttled.',file=sys.stderr);sys.exit(1)
+    if state['registered']:sys.exit(0)
+    print('ERROR: Not Found({"error":{"code":"BMSUserErrorContainerObjectNotFound"}})',file=sys.stderr);sys.exit(1)
 if method=='put':
     if state['header']:print("INFO: cli.azure.cli.core.util:     'Azure-AsyncOperation': '"+os.environ['OPERATION']+"'",file=sys.stderr)
     sys.exit(0)
-if method=='delete':state['registered']=False;save();sys.exit(0)
+if method=='delete':
+    if state['delete_failures']:
+        state['delete_failures']-=1;save();print('ERROR: (CloudInternalError) Microsoft Azure Backup encountered an internal error.',file=sys.stderr);sys.exit(1)
+    state['registered']=False;save();sys.exit(0)
 """
 
 
@@ -55,9 +60,19 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
             path.write_text("#!" + sys.executable + "\n" + body)
             path.chmod(0o755)
 
-    def run_warm_up(self, *, registered=False, outcomes=("Failed",), header=True):
+    def run_warm_up(self, *, registered=False, outcomes=("Failed",), header=True, get_errors=0, delete_failures=0):
         state = self.folder / "state.json"
-        state.write_text(json.dumps({"registered": registered, "outcomes": list(outcomes), "header": header}))
+        state.write_text(
+            json.dumps(
+                {
+                    "registered": registered,
+                    "outcomes": list(outcomes),
+                    "header": header,
+                    "get_errors": get_errors,
+                    "delete_failures": delete_failures,
+                }
+            )
+        )
         env = os.environ | {
             "PATH": str(self.folder) + os.pathsep + os.environ["PATH"],
             "CALLS": str(self.folder / "calls.jsonl"),
@@ -95,6 +110,25 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
         self.assertFalse(state["registered"])
+
+    def test_failed_unregister_is_sent_again(self):
+        # Azure can answer the unregister with a short CloudInternalError.
+        result, methods, state = self.run_warm_up(outcomes=["Succeeded"], delete_failures=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "delete"] + ["get"] * 6 + ["delete", "get"])
+        self.assertFalse(state["registered"])
+
+    def test_read_error_does_not_change_an_existing_registration(self):
+        result, methods, state = self.run_warm_up(registered=True, get_errors=1)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "get"])
+        self.assertTrue(state["registered"])
+
+    def test_lasting_read_error_stops_the_step(self):
+        result, methods, state = self.run_warm_up(get_errors=3)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods, ["get"] * 3)
+        self.assertIn("Could not read the backup registration", result.stderr)
 
     def test_missing_operation_header_waits_before_each_check(self):
         result, methods, _ = self.run_warm_up(header=False)

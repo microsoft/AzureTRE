@@ -173,7 +173,7 @@ resource "terraform_data" "backup_registration_warm_up" {
   count = var.enable_backup ? 1 : 0
 
   input = {
-    container_url      = "https://management.azure.com${module.backup[0].vault_id}/backupFabrics/Azure/protectionContainers/StorageContainer;storage;${azurerm_resource_group.ws.name};${azurerm_storage_account.stg.name}?api-version=2023-04-01"
+    container_url      = "${module.backup[0].vault_id}/backupFabrics/Azure/protectionContainers/StorageContainer;storage;${azurerm_resource_group.ws.name};${azurerm_storage_account.stg.name}?api-version=2023-04-01"
     storage_account_id = azurerm_storage_account.stg.id
     subscription_id    = data.azurerm_client_config.current.subscription_id
   }
@@ -184,8 +184,32 @@ resource "terraform_data" "backup_registration_warm_up" {
 set -euo pipefail
 az login --identity --output none
 az account set --subscription "${self.input.subscription_id}"
+# A URL without a host uses the Resource Manager endpoint of the current cloud.
 url="${self.input.container_url}"
-if az rest --method get --url "$url" --output none 2>/dev/null; then
+
+# Print "registered" or "missing". Only a not-found answer means "missing".
+# Other errors, for example throttling, get two more reads. Then the step fails.
+container_state() {
+  local output
+  for read in 1 2 3; do
+    if output=$(az rest --method get --url "$url" --output none 2>&1); then
+      echo registered
+      return 0
+    fi
+    if grep -qiE 'NotFound|Not Found|was not found|does not exist' <<< "$output"; then
+      echo missing
+      return 0
+    fi
+    if [ "$read" -lt 3 ]; then
+      sleep 10
+    fi
+  done
+  echo "Could not read the backup registration of the storage account: $output" >&2
+  return 1
+}
+
+state=$(container_state)
+if [ "$state" = registered ]; then
   echo "The storage account is already registered with the vault"
   exit 0
 fi
@@ -206,12 +230,19 @@ for try in 1 2 3 4 5; do
     sleep 120
   fi
   echo "Registration attempt $try ended with status $status"
-  if az rest --method get --url "$url" --output none 2>/dev/null; then
+  state=$(container_state)
+  if [ "$state" = registered ]; then
     # Remove the registration, so that Terraform creates and owns the registration.
-    az rest --method delete --url "$url" --output none
+    # Azure can answer the unregister with a short CloudInternalError, so send it again each minute.
     for attempt in $(seq 1 60); do
-      az rest --method get --url "$url" --output none 2>/dev/null || exit 0
+      if [ $((attempt % 6)) -eq 1 ]; then
+        az rest --method delete --url "$url" --output none 2>/dev/null || true
+      fi
       sleep 10
+      state=$(container_state)
+      if [ "$state" = missing ]; then
+        exit 0
+      fi
     done
     echo "The storage account is still registered with the vault after 10 minutes" >&2
     exit 1
