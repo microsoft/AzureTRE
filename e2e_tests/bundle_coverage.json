@@ -437,7 +437,7 @@
         "active-account-removal"
       ],
       "limitations": [
-        "Requires AzureCloud, a registered 1.1.0 template, regional Standard model availability and subscription quota read access. Preflight does not reserve Azure capacity.",
+        "Requires AzureCloud, a registered 1.1.0 or later template, regional Standard model availability and subscription quota read access. Preflight does not reserve Azure capacity.",
         "Uses the workspace subscription and actual resource-group region. A workspace in a different subscription from ARM_SUBSCRIPTION_ID is unsupported by this bundle.",
         "Does not prove private inference, researcher access, model upgrades, private endpoint connectivity, secret removal or soft-deleted account purge."
       ],

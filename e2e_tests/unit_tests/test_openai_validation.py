@@ -114,7 +114,8 @@ class ModelPrerequisiteTests(unittest.TestCase):
         validate({"openai_model": openai.MODEL, "is_exposed_externally": False}, schema)
         self.assertEqual(schema["properties"]["openai_model"]["default"], openai.MODEL)
         manifest = yaml.safe_load((folder / "porter.yaml").read_text())
-        self.assertEqual(manifest["version"], "1.1.0")
+        # 1.1.0 is the first version with this default model. Later versions keep it.
+        self.assertGreaterEqual(tuple(int(part) for part in manifest["version"].split(".")), (1, 1, 0))
         workflow = yaml.safe_load((ROOT / ".github/workflows/deploy_tre_reusable.yml").read_text())
         registrations = workflow["jobs"]["register_bundles"]["strategy"]["matrix"]["include"]
         self.assertIn(

@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -216,7 +217,9 @@ class BundleSelectionTests(unittest.TestCase):
         self.assertEqual(report["collected_tests"], ["test_openai.py::test_private_openai_lifecycle"])
         self.assertEqual(report["status"], "not_run")
         self.assertFalse(report["full_lifecycle_proven"])
-        self.assertEqual(report["source_bundle_version"], "1.1.0")
+        manifest = (ROOT / "templates/workspace_services/openai/porter.yaml").read_text()
+        version = re.search(r"^version: (\S+)$", manifest, re.MULTILINE).group(1)
+        self.assertEqual(report["source_bundle_version"], version)
         self.assertIn("tre-workspace-base", report["declared_prerequisites"])
 
     def test_marker_and_parallel_worker_inputs_are_rejected(self):
