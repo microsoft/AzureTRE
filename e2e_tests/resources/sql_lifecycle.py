@@ -84,18 +84,15 @@ class SQLResources:
             self.own(guacamole_path, clean_up_test_workspace_service, "", guacamole_path, workspace_id, self.verify)
         return workspace_path, workspace_id, guacamole_path, guacamole_id
 
-    async def create(self, payload, endpoint, token, cleanup_token=None):
+    async def create(self, payload, endpoint, token):
         async with asyncio.timeout(60 * 60):
             resource_path, resource_id = await post_resource(
                 payload, endpoint, token, self.verify, cleanup_failed_create=True
             )
-        self.own(resource_path, self.delete, resource_path, cleanup_token or token)
+        self.own(resource_path, self.delete, resource_path, token)
         return resource_path, resource_id
 
     async def delete(self, resource_path, token):
-        # A long case can outlive the create token, so cleanup can ask for a new one.
-        if callable(token):
-            token = await token()
         while True:
             operations = (await get_resource(f"/api{resource_path}/operations", token, self.verify))["operations"]
             if all(op["status"] in TERMINAL_STATES for op in operations):

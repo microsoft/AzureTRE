@@ -1,7 +1,6 @@
 """Exercise MySQL data access and a supported SKU change privately."""
 
 import asyncio
-from functools import partial
 import logging
 import os
 from uuid import uuid4
@@ -54,15 +53,9 @@ async def test_private_mysql_query_survives_sku_change(verify):
         # The Linux VM installs its packages through Nexus.
         async with asyncio.timeout(60 * 60):
             await resources.enter("Nexus prerequisites", nexus_prerequisites(verify))
-        new_token = partial(get_workspace_owner_token, workspace_id, verify)
-        token = await new_token()
-        mysql_path, mysql_id = await resources.create(
-            MYSQL_PAYLOAD, f"/api{workspace_path}/workspace-services", token, cleanup_token=new_token
-        )
-        token = await new_token()
-        vm_path, vm_id = await resources.create(
-            VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token, cleanup_token=new_token
-        )
+        token = await get_workspace_owner_token(workspace_id, verify)
+        mysql_path, mysql_id = await resources.create(MYSQL_PAYLOAD, f"/api{workspace_path}/workspace-services", token)
+        vm_path, vm_id = await resources.create(VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token)
         mysql = (await get_resource(f"/api{mysql_path}", token, verify))["workspaceService"]
         vm_properties = (await get_resource(f"/api{vm_path}", token, verify))["userResource"]["properties"]
         subscription_id = vm_properties.get("workspace_subscription_id") or os.environ["ARM_SUBSCRIPTION_ID"]
@@ -92,7 +85,6 @@ async def test_private_mysql_query_survives_sku_change(verify):
                 )
                 await run_probe(arm, azure_vm_id, vm["location"], **probe, phase="write")
                 LOGGER.info("MySQL query passed through private DNS on the Burstable SKU")
-                token = await new_token()
                 mysql = (await get_resource(f"/api{mysql_path}", token, verify))["workspaceService"]
                 async with asyncio.timeout(60 * 60):
                     await post_resource(

@@ -31,7 +31,6 @@ async def test_create_guacamole_linux_vm(setup_test_workspace_and_guacamole_serv
     }
 
     async with nexus_prerequisites(verify):
-        # Nexus can take a long time. The VM delete uses this token, so request it after Nexus.
         workspace_owner_token = await get_workspace_owner_token(workspace_id, verify)
         async with temporary_resource(
             payload, f"/api{workspace_service_path}/{strings.API_USER_RESOURCES}", workspace_owner_token, verify

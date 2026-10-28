@@ -175,20 +175,6 @@ class ProbeRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 await owned.create({}, "/services", "token")
         self.assertEqual(events, ["enter", "delete", ("exit", (None, None, None))])
 
-    async def test_cleanup_can_request_a_new_token(self):
-        tokens = AsyncMock(return_value="new-token")
-        delete = AsyncMock()
-        with (
-            patch.dict(os.environ, MYSQL_VALIDATION_DEADLINE=""),
-            patch.object(lifecycle, "post_resource", AsyncMock(return_value=("/mysql", "id"))),
-            patch.object(lifecycle, "get_resource", AsyncMock(return_value={"operations": []})),
-            patch.object(lifecycle, "disable_and_delete_resource", delete),
-        ):
-            async with lifecycle.sql_lifecycle(True, deadline_variable="MYSQL_VALIDATION_DEADLINE") as owned:
-                await owned.create({}, "/services", "old-token", cleanup_token=tokens)
-        tokens.assert_awaited_once()
-        self.assertEqual(delete.await_args.args[1], "new-token")
-
     async def test_mysql_deadline_variable_is_read(self):
         with patch.dict(os.environ, MYSQL_VALIDATION_DEADLINE="nan"), self.assertRaisesRegex(ValueError, "finite"):
             lifecycle.lifecycle_deadlines("MYSQL_VALIDATION_DEADLINE")
