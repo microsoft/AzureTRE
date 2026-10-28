@@ -29,11 +29,13 @@ The Gitea worskpace service opens outbound access to:
 
 Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.
 
-## Upgrading to version 1.3.8
+## Upgrading to version 2.0.0
+
+Version 2.0.0 is a major version, because the upgrade needs the steps below. The TRE blocks the upgrade until you use a [force version update](../../tre-admins/upgrading-resources.md#force-version-update).
 
 ### Repositories on the file share
 
-Before version 1.3.8, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 1.3.8, the repositories are on the `gitea-data` file share. The upgrade restarts the app, so the repositories on the container disk are lost.
+Before version 2.0.0, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 2.0.0, the repositories are on the `gitea-data` file share. The upgrade restarts the app, so the repositories on the container disk are lost.
 The issues, pull requests and releases stay in MySQL, and the LFS files stay on the file share.
 
 To keep the repositories, do these steps from a workspace VM:
@@ -49,7 +51,7 @@ Do not run "Delete all repositories missing their Git files". This task also del
 
 ### Secrets in the console log
 
-Before version 1.3.8, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:
+Before version 2.0.0, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:
 
 - The client secret of the workspace application.
 - The password of the Gitea admin user.
@@ -66,11 +68,11 @@ If a Gitea workspace service ran an earlier version, do these steps after the up
 5. Sign in to Gitea as the admin user. In the user settings, open Applications and delete the access token `gitea-admin`.
 6. If the people who can read Log Analytics must not get admin access to Gitea, change the password of the admin user in Gitea. Keep the new password in a safe location. The Key Vault secret `<web app name>-administrator-password` keeps the old value, because the start script does not change the password of an existing admin user.
 
-From version 1.3.8, the start script keeps a hash of the OIDC settings on the file share. If the settings change, the script stops Gitea one time, because Gitea reads them only at its start. The first start after the upgrade also does this, because the hash does not exist yet.
+From version 2.0.0, the start script keeps a hash of the OIDC settings on the file share. If the settings change, the script stops Gitea one time, because Gitea reads them only at its start. The first start after the upgrade also does this, because the hash does not exist yet.
 
 ## Repairing a service that cannot reach its file share
 
-Before version 1.3.8, Terraform used the file endpoint of the Gitea storage account to manage the `gitea-data` share. If a delete removed the private endpoint of the account and then failed, each later update or delete of the service fails with `executing request: Get "https://stgsvc<id>.file.core.windows.net/gitea-data?restype=share": EOF`.
+Before version 2.0.0, Terraform used the file endpoint of the Gitea storage account to manage the `gitea-data` share. If a delete removed the private endpoint of the account and then failed, each later update or delete of the service fails with `executing request: Get "https://stgsvc<id>.file.core.windows.net/gitea-data?restype=share": EOF`.
 
 If you want to delete such a service:
 
