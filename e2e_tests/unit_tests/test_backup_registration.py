@@ -31,7 +31,10 @@ if method=='get':
     if state['registered']:sys.exit(0)
     print('ERROR: Not Found({"error":{"code":"BMSUserErrorContainerObjectNotFound"}})',file=sys.stderr);sys.exit(1)
 if method=='put':
-    if state['header']:print("INFO: cli.azure.cli.core.util:     'Azure-AsyncOperation': '"+os.environ['OPERATION']+"'",file=sys.stderr)
+    if state['put_failures']:
+        state['put_failures']-=1;save();print('ERROR: (CloudInternalError) Microsoft Azure Backup encountered an internal error.',file=sys.stderr);sys.exit(1)
+    if state['put_registers']:state['registered']=True;save()
+    if state['header']:print("INFO: cli.azure.cli.core.util:     '"+state['header_name']+"': '"+os.environ['OPERATION']+"'",file=sys.stderr)
     sys.exit(0)
 if method=='delete':
     if state['delete_failures']:
@@ -72,6 +75,9 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         get_errors=0,
         delete_failures=0,
         environment=None,
+        put_failures=0,
+        put_registers=False,
+        header_name="Azure-AsyncOperation",
     ):
         state = self.folder / "state.json"
         state.write_text(
@@ -82,6 +88,9 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
                     "header": header,
                     "get_errors": get_errors,
                     "delete_failures": delete_failures,
+                    "put_failures": put_failures,
+                    "put_registers": put_registers,
+                    "header_name": header_name,
                 }
             )
         )
@@ -191,11 +200,30 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
             ],
         )
 
-    def test_missing_operation_header_waits_before_each_check(self):
+    def test_accepted_put_without_an_operation_stops_the_step(self):
         result, methods, _ = self.run_warm_up(header=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods, ["get", "put", "get"])
+        self.assertIn("has no operation to follow", result.stderr)
+
+    def test_accepted_put_without_an_operation_continues_when_registered(self):
+        result, methods, state = self.run_warm_up(header=False, put_registers=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "get", "delete", "get"])
+        self.assertFalse(state["registered"])
+
+    def test_rejected_puts_wait_and_leave_registration_to_terraform(self):
+        result, methods, state = self.run_warm_up(put_failures=5)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(methods, ["get"] + ["put", "get"] * 5)
-        self.assertIn("Registration attempt 1 ended with status Unknown", result.stdout)
+        self.assertFalse(state["registered"])
+        self.assertIn("Registration attempt 5 ended with status Rejected", result.stdout)
+
+    def test_operation_header_is_read_in_any_case(self):
+        result, methods, state = self.run_warm_up(outcomes=["Succeeded"], header_name="azure-asyncoperation")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
+        self.assertFalse(state["registered"])
 
     def test_terraform_registration_waits_for_the_warm_up(self):
         block = STORAGE.read_text().split('resource "azurerm_backup_container_storage_account" "storage_account" {', 1)[

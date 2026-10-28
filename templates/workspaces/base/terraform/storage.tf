@@ -224,7 +224,13 @@ for try in 1 2 3 4 5; do
   if [ "$try" -gt 1 ]; then
     sleep 60
   fi
-  operation=$(az rest --method put --url "$url" --body "$body" --debug 2>&1 | sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/p" | head -n 1 || true)
+  # Keep the result of the PUT. A rejected PUT starts no registration, but an accepted PUT can.
+  if put_output=$(az rest --method put --url "$url" --body "$body" --debug 2>&1); then
+    put_accepted=true
+  else
+    put_accepted=false
+  fi
+  operation=$(sed -n "s/.*'Azure-AsyncOperation': '\([^']*\)'.*/\1/Ip" <<< "$put_output" | head -n 1 || true)
   status=Unknown
   if [ -n "$operation" ]; then
     # A failed status read gives Unknown, and the step reads again. Another PUT must not overlap a running attempt.
@@ -242,7 +248,16 @@ for try in 1 2 3 4 5; do
         exit 1
         ;;
     esac
+  elif [ "$put_accepted" = true ]; then
+    # Azure accepted the PUT, but the step has no operation to follow. Continue only if the registration exists.
+    state=$(container_state)
+    if [ "$state" != registered ]; then
+      echo "Registration attempt $try has no operation to follow, so the step cannot make sure that it ended." >&2
+      exit 1
+    fi
+    status=Succeeded
   else
+    status=Rejected
     sleep 120
   fi
   echo "Registration attempt $try ended with status $status"
