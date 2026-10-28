@@ -115,8 +115,8 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
 }
 
 # A link or unlink in the scope makes Azure update the private endpoint. For the two unlinks, Azure runs one update
-# of up to 132 seconds, or one update of up to 90 seconds for each unlink, one after the other.
-# In the measured deletes, the endpoint stayed busy for less than 3 minutes.
+# of up to 132 seconds, or one update of up to about 100 seconds for each unlink, one after the other.
+# In the measured deletes, the endpoint stayed busy for up to 3 minutes and 23 seconds.
 # During the update, Azure rejects changes to the endpoint DNS zone group with 409 AnotherOperationInProgress.
 # The scoped services depend on this resource, so they change only after the endpoint exists,
 # and on destroy Terraform waits here before it deletes the endpoint.

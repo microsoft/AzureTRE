@@ -61,7 +61,7 @@ class WorkspaceEndpointUpdateTests(unittest.TestCase):
         source = read(WORKSPACE)
         wait = block(source, WAIT)
         self.assertRegex(wait, r"when\s*=\s*destroy")
-        # Azure runs one endpoint update of up to 132 seconds for both unlinks, or one update of up to
-        # 90 seconds for each unlink, one after the other. The measured total stayed below 3 minutes.
+        # Azure runs one endpoint update of up to 132 seconds for both unlinks, or one update of up to about
+        # 100 seconds for each unlink, one after the other. The longest measured total was 203 seconds.
         unlinks = source.count('resource "azurerm_monitor_private_link_scoped_service"')
-        self.assertGreater(int(re.search(r'command\s*=\s*"sleep (\d+)"', wait).group(1)), unlinks * 90)
+        self.assertGreater(int(re.search(r'command\s*=\s*"sleep (\d+)"', wait).group(1)), unlinks * 100)
