@@ -184,4 +184,11 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_references_report_the_status_of_each_secret_setting(self):
         statuses = await secrets.key_vault_references(self.arm(), self.SITE)
-        self.assertEqual(statuses, {"GITEA_PASSWD": "Resolved", "GITEA_OPENID_CLIENT_SECRET": "Resolved"})
+        self.assertEqual(
+            statuses,
+            {
+                "GITEA_PASSWD": "Resolved",
+                "GITEA_OPENID_CLIENT_SECRET": "Resolved",
+                "GITEA__database__PASSWD": "Resolved",
+            },
+        )

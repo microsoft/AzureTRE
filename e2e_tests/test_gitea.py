@@ -1,4 +1,4 @@
-"""Exercise a private Gitea repository across an update and an app restart."""
+"""Exercise a private Gitea repository across an update, a stop and a start of the app."""
 
 import asyncio
 from functools import partial
@@ -100,10 +100,12 @@ async def test_private_gitea_repository_survives_update(verify):
                         method="PATCH",
                         etag=gitea["_etag"],
                     )
-                # A restart makes the app read the repository from the file share and MySQL again.
-                await arm.request("POST", f"{site_id}/restart", WEB_API)
+                # A stop and a start make a new container read the repository from the file share and MySQL.
+                # A restart call returns before the restart, so the old container can serve the read.
+                await arm.request("POST", f"{site_id}/stop", WEB_API)
+                await arm.request("POST", f"{site_id}/start", WEB_API)
                 await probe(phase="read")
-                LOGGER.info("The Gitea repository survived the update and the restart")
+                LOGGER.info("The Gitea repository survived the update, the stop and the start")
             # The web app sends its console log to Log Analytics, so the log must not show a secret.
             references = await key_vault_references(arm, site_id)
             assert set(references.values()) == {"Resolved"}, f"Gitea Key Vault references: {references}"

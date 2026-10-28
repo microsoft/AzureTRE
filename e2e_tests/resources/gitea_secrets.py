@@ -6,7 +6,7 @@ import re
 LOGS = "https://api.loganalytics.io"
 LOG_API = "2022-10-01"
 WEB_API = "2022-09-01"
-SECRET_SETTINGS = ("GITEA_PASSWD", "GITEA_OPENID_CLIENT_SECRET")
+SECRET_SETTINGS = ("GITEA_PASSWD", "GITEA_OPENID_CLIENT_SECRET", "GITEA__database__PASSWD")
 SITE_ID = re.compile(r"^/subscriptions/[0-9a-f-]+/resourceGroups/[\w.-]+/providers/Microsoft\.Web/sites/[\w-]+$")
 # The start script hides the secret values as ***. A line that shows a value, or a new access token, is a leak.
 LEAK_QUERY = """AppServiceConsoleLogs
