@@ -325,10 +325,13 @@
       "coverage": [
         "install",
         "bootstrap-completion",
+        "stop action with deallocated power state",
+        "start action with running power state",
+        "reset_password action with a new Key Vault secret version",
         "uninstall"
       ],
       "limitations": [
-        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites. VM availability and interactive access need separate validation."
+        "Requires a suitable Nexus instance or explicit Nexus EULA consent to create prerequisites. Interactive access, sign-in with the new password and other VM sizes need separate validation."
       ],
       "unavailable_reason": ""
     },
@@ -376,18 +379,27 @@
       "manifest": "templates/workspace_services/mysql/porter.yaml",
       "family": "workspace_service",
       "prerequisites": [
-        "tre-workspace-base"
+        "tre-workspace-base",
+        "tre-service-guacamole",
+        "tre-service-guacamole-linuxvm",
+        "tre-shared-service-certs",
+        "tre-shared-service-sonatype-nexus"
       ],
       "tests": [
+        "test_mysql.py::test_private_mysql_query_survives_sku_change"
+      ],
+      "related_tests": [
         "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-mysql]"
       ],
-      "related_tests": [],
       "coverage": [
         "install",
+        "private MySQL write/read",
+        "Burstable-to-General Purpose SKU change with retained data",
         "uninstall"
       ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "AzureCloud only. Requires a suitable Nexus instance or explicit Nexus EULA consent, permission to run commands on a test-created workspace VM and a temporary secret-scoped role assignment.",
+        "The SKU change uses the current bundle version. Previous-version migration remains separate (#5128). The MySQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
@@ -411,15 +423,25 @@
       "prerequisites": [
         "tre-workspace-base"
       ],
-      "tests": [],
-      "related_tests": [
-        "test_workspace_services.py::test_install_workspace_service[tre-workspace-service-openai]"
+      "tests": [
+        "test_openai.py::test_private_openai_lifecycle"
       ],
-      "coverage": [],
+      "related_tests": [],
+      "coverage": [
+        "model-prerequisites",
+        "install",
+        "deployment-status",
+        "private-network-setting",
+        "uninstall",
+        "api-removal",
+        "active-account-removal"
+      ],
       "limitations": [
-        "Functional, upgrade and custom-action coverage must be assessed separately."
+        "Requires AzureCloud, a registered 1.1.0 or later template, regional Standard model availability and subscription quota read access. Preflight does not reserve Azure capacity.",
+        "Uses the workspace subscription and actual resource-group region. A workspace in a different subscription from ARM_SUBSCRIPTION_ID is unsupported by this bundle.",
+        "Does not prove private inference, researcher access, model upgrades, private endpoint connectivity, secret removal or soft-deleted account purge."
       ],
-      "unavailable_reason": "The branch deployment does not register this bundle (#5150)."
+      "unavailable_reason": ""
     },
     "tre-workspace-airlock-import-review": {
       "manifest": "templates/workspaces/airlock-import-review/porter.yaml",

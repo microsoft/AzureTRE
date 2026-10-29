@@ -1,9 +1,10 @@
 """Exercise Linux VM cleanup through the real polling and deletion helpers."""
 
 import json
+import os
 import unittest
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from httpx import AsyncClient, MockTransport, Response
 from jsonschema import validate
@@ -18,6 +19,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         self.enterContext(patch.object(helpers.config, "TRE_URL", "https://tre.example.test"))
         self.enterContext(patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")))
         self.enterContext(patch.object(nexus, "get_admin_token", new=AsyncMock(return_value="admin-token")))
+        self.actions = self.enterContext(patch.object(linuxvm, "check_vm_actions", new=AsyncMock()))
         self.fixture = ("/workspaces/ws", "ws", "/workspaces/ws/workspace-services/service", "service")
         self.resource_path = self.fixture[2] + "/user-resources/linux"
         self.requests = []
@@ -112,6 +114,14 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         payload = json.loads(self.requests[0].content)
         self.assertEqual(payload["properties"]["admin_username"], "researcher")
+        self.actions.assert_awaited_once_with(self.resource_path, "ws", True)
+        self.assert_deleted()
+
+    async def test_failed_action_still_cleans_up_vm(self):
+        self.mock_api(strings.RESOURCE_STATUS_DEPLOYED)
+        self.actions.side_effect = AssertionError("stop failed")
+        with self.assertRaisesRegex(AssertionError, "stop failed"):
+            await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assert_deleted()
 
     async def test_failed_bootstrap_cleans_up_after_failed_disable(self):
@@ -121,6 +131,7 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assert_deleted(failed_disable=True, failed_create=True)
+        self.actions.assert_not_awaited()
 
     async def test_failed_disable_does_not_delete_an_enabled_resource(self):
         self.mock_api(
@@ -175,6 +186,21 @@ class LinuxVmCleanupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AssertionError):
             await linuxvm.test_create_guacamole_linux_vm(self.fixture, True)
         self.assertEqual([request.method for request in self.requests], ["POST", "GET", "PATCH", "GET"])
+
+
+class LinuxVmCloudTests(unittest.IsolatedAsyncioTestCase):
+    async def test_other_clouds_run_the_actions_without_azure_reads(self):
+        invoke = AsyncMock()
+        arm = Mock(side_effect=AssertionError("The public-cloud client must not run outside AzureCloud"))
+        with (
+            patch.dict(os.environ, {"AZURE_ENVIRONMENT": "AzureUSGovernment"}),
+            patch.object(linuxvm, "invoke_action", invoke),
+            patch.object(linuxvm, "arm_client", arm),
+            patch.object(linuxvm, "get_workspace_owner_token", new=AsyncMock(return_value="token")),
+        ):
+            await linuxvm.check_vm_actions("/workspaces/ws/vm", "ws", True)
+        self.assertEqual([call.args[1] for call in invoke.await_args_list], ["stop", "start", "reset_password"])
+        arm.assert_not_called()
 
 
 if __name__ == "__main__":

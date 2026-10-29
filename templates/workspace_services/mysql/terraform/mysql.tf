@@ -16,7 +16,9 @@ resource "azurerm_mysql_flexible_server" "mysql" {
   version                      = "8.0.21"
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
-  tags                         = local.workspace_service_tags
+  # Clients connect through the private endpoint only.
+  public_network_access = "Disabled"
+  tags                  = local.workspace_service_tags
 
   storage {
     size_gb = local.max_storage_gb

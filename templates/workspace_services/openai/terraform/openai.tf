@@ -24,7 +24,8 @@ resource "azurerm_cognitive_deployment" "openai" {
   }
 
   scale {
-    type = "Standard"
+    type     = "Standard"
+    capacity = 1
   }
 }
 
@@ -46,6 +47,9 @@ resource "azurerm_private_endpoint" "openai_private_endpoint" {
     name                 = module.terraform_azurerm_environment_configuration.private_links["privatelink.openai.azure.com"]
     private_dns_zone_ids = [data.azurerm_private_dns_zone.openai.id]
   }
+
+  # Azure rejects the endpoint with AccountProvisioningStateInvalid while a model deployment updates the account.
+  depends_on = [azurerm_cognitive_deployment.openai]
 
   lifecycle { ignore_changes = [tags] }
 }

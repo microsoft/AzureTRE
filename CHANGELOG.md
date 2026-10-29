@@ -6,6 +6,9 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 
 ENHANCEMENTS:
+* Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
+* Add a private MySQL lifecycle check. A Nexus-backed Linux VM writes a row through private DNS, the SKU changes from Burstable to General Purpose, and the VM reads the row again. ([#5148](https://github.com/microsoft/AzureTRE/issues/5148))
+* Run the `stop`, `start` and `reset_password` actions in the Guacamole Linux VM check, and make sure of the VM power state and the new Key Vault secret version through Azure. ([#5145](https://github.com/microsoft/AzureTRE/issues/5145))
 * Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
@@ -35,6 +38,11 @@ BUG FIXES:
   (`core` 0.18.16, `tre-workspace-base` 2.12.3, `tre-workspace-unrestricted` 0.15.2, `tre-workspace-airlock-import-review` 0.18.2) ([#3193](https://github.com/microsoft/AzureTRE/issues/3193))
 * Link App Insights to the Azure Monitor private link scope after the private endpoint exists. Before this fix, App Insights rejected all private ingestion with HTTP 403, so the core and workspace App Insights received no telemetry.
   Rename the scoped service, so that existing deployments replace the link on upgrade. (`core` 0.18.16, `tre-workspace-base` 2.12.3, `tre-workspace-unrestricted` 0.15.2, `tre-workspace-airlock-import-review` 0.18.2) ([#5280](https://github.com/microsoft/AzureTRE/issues/5280))
+* Try the storage registration up to five times before Terraform registers the workspace storage account with Azure Backup. Azure Backup usually fails the first registration in a new vault with an internal error, so most backup-enabled workspaces failed to deploy. Terraform registers after an attempt succeeds, or after five failed attempts.
+  (`tre-workspace-base` 2.12.4, `tre-workspace-unrestricted` 0.15.3, `tre-workspace-airlock-import-review` 0.18.3) ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
+* Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
+* Create the OpenAI private endpoint after the model deployment, so that Azure does not reject it while the deployment updates the account. (`tre-workspace-service-openai` 1.1.0) ([#5249](https://github.com/microsoft/AzureTRE/issues/5249))
+* Disable public network access on the MySQL flexible server, so that clients can connect only through the private endpoint. Move the MySQL bundle to azurerm 4.27.0, which has this setting. An upgrade changes the setting in place. (`tre-workspace-service-mysql` 1.0.16) ([#5148](https://github.com/microsoft/AzureTRE/issues/5148))
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))

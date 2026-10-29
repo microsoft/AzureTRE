@@ -82,6 +82,25 @@ That case requires an owned workspace so cascade cleanup removes its new service
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.
 
+### OpenAI selection
+
+Select `tre-workspace-service-openai` to run `test_openai.py::test_private_openai_lifecycle`.
+The branch workflow registers the OpenAI bundle. The test also replaces its generic case in the `workspace_services` group.
+The test requests `gpt-5.1 | 2025-11-13`, private access and one regional `Standard` capacity unit.
+It does not switch models or deployment types when Azure cannot satisfy those inputs.
+
+The prerequisite check uses the workspace resource group's actual region and the current subscription model and usage APIs.
+It requires a generally available chat model, a current Standard tier and at least one free capacity unit.
+It rejects retired model/tier dates, fine-tuning quotas and incomplete or blocked quota data.
+The CI identity needs permission to read model and quota data at subscription scope.
+The check does not grant roles or reserve capacity. Azure deployment can still fail after it passes.
+
+Prerequisite failures fail the selected test before service creation. They do not count as skipped or passing coverage.
+Service creation has a 45-minute deadline. Verification has a separate five-minute deadline.
+Failed creation and teardown use the existing helper's separate cleanup deadline.
+A configured workspace is retained. A fixture-created workspace uses the fixture's cleanup.
+Private inference, access control, upgrades and complete physical cleanup remain separate checks.
+
 ### Certificate and Nexus selection
 
 Select `tre-shared-service-certs` to install, uninstall and reinstall the certificate shared service with the same hostname and certificate name.
@@ -124,6 +143,14 @@ Select `e2eBundle=tre-shared-service-certs` in `deploy_tre_branch.yml` and leave
 PR slash commands use workflow definitions from `main`. `/test` runs smoke tests and `/test-shared-services` excludes this certificate-only case.
 A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.
 
+### Linux VM selection
+
+Select `tre-service-guacamole-linuxvm` to run `test_guacamole_linuxvm.py::test_create_guacamole_linux_vm`.
+The case creates a Linux VM and waits for its Nexus-backed bootstrap. Thus the run needs a suitable Nexus instance or `acceptNexusEula=true`.
+The case then runs the `stop`, `start` and `reset_password` actions.
+After `stop` and `start`, the case reads the VM power state from Azure. After `reset_password`, it makes sure that the Key Vault secret has a new version.
+The case does not sign in to the VM, so it does not prove interactive access or the new password.
+
 ### Base workspace lifecycle
 
 Select `tre-workspace-base` to run `test_workspace_base.py::test_base_workspace_lifecycle` independently.
@@ -148,6 +175,16 @@ It preserves pre-created resources and divides the remaining cleanup time betwee
 Failed-create recovery and temporary probe cleanup also count towards the lifecycle deadline.
 The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
 For a local run, the 270-minute lifecycle budget starts when the SQL case begins.
+
+### MySQL selection
+
+Select `tre-workspace-service-mysql` to run `test_mysql.py::test_private_mysql_query_survives_sku_change`.
+The case creates its own workspace, Guacamole service, Linux VM and MySQL service.
+The Linux VM installs the MySQL client through Nexus. Thus the run needs a suitable Nexus instance or `acceptNexusEula=true`.
+The case writes a row through private DNS with the Burstable SKU. It then changes the SKU to General Purpose and reads the row again.
+The VM reads the administrator password from the workspace Key Vault through a temporary role assignment on that secret only.
+The MySQL job uses the SQL time limits above with its own `MYSQL_VALIDATION_DEADLINE`. If the case creates Nexus, it removes Nexus after the VM.
+These checks do not prove previous-version upgrades or researcher access.
 
 ### Run the branch workflow before merge
 
