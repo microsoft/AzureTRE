@@ -1,4 +1,6 @@
+import re
 import time
+from datetime import datetime
 from typing import Awaitable, Callable, Optional
 from multiprocessing import Process
 import json
@@ -26,6 +28,7 @@ from shared.logging import initialize_logging, logger, tracer
 from shared.config import VERSION
 from helpers import statuses
 from contextlib import asynccontextmanager
+from azure.core.exceptions import HttpResponseError
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError, SessionLockLostError
 from azure.servicebus.aio import ServiceBusClient
@@ -172,30 +175,44 @@ async def receive_message(service_bus_client, config: dict, executions: Containe
 
                             # Service Bus can give the same message to a second worker. The lease lets
                             # one worker at a time run Porter for the resource.
-                            async with execution_lease(executions, message["id"], lambda: step["text"]) as execution:
-                                step["running"] = True
-                                try:
-                                    result = await run_step(message, execution, service_bus_client, config)
-                                finally:
-                                    step["running"] = False
+                            try:
+                                async with execution_lease(
+                                    executions, message["id"], lambda: step["text"]
+                                ) as execution:
+                                    step["running"] = True
+                                    try:
+                                        result = await run_step(message, execution, service_bus_client, config)
+                                    finally:
+                                        step["running"] = False
 
-                                if result:
-                                    logger.info(f"Resource request for {message['id']} is complete")
-                                else:
-                                    logger.error("Message processing failed!")
+                                    if result:
+                                        logger.info(f"Resource request for {message['id']} is complete")
+                                    else:
+                                        logger.error("Message processing failed!")
 
-                                try:
-                                    await receiver.complete_message(msg)
-                                except SessionLockLostError:
-                                    # Another worker has the session now. It reads the execution record
-                                    # and sends the recorded status again.
-                                    logger.warning(
-                                        f"The session lock expired before the message was completed for {step['text']}"
+                                    try:
+                                        await receiver.complete_message(msg)
+                                    except SessionLockLostError:
+                                        # Another worker has the session now. It reads the execution record
+                                        # and sends the recorded status again.
+                                        logger.warning(
+                                            f"The session lock expired before the message was completed for {step['text']}"
+                                        )
+                                        break
+                                    logger.info(
+                                        f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete."
                                     )
-                                    break
-                                logger.info(
-                                    f"Message for resource_id={message['id']}, operation_id={message['operationId']} processed as {result} and marked complete."
-                                )
+                            except HttpResponseError as error:
+                                # The lease and the record are in the management storage account. Without access, a
+                                # retry does not help. Fail the step, as the Terraform backend of the bundle did before.
+                                if error.status_code not in (401, 403):
+                                    logger.error(
+                                        f"The execution record store failed for {step['text']} with HTTP {error.status_code}. "
+                                        "Service Bus delivers the message again."
+                                    )
+                                    raise
+                                await send_execution_store_failure(message, error, service_bus_client, config)
+                                await receiver.complete_message(msg)
 
                     logger.info(f"Closing session: {session.session_id}")
                 finally:
@@ -309,13 +326,14 @@ async def run_porter(
         if error:
             return (1, None, error)
 
-    # `porter installations apply` installs a missing installation. An upgrade must not create the resource again.
-    if required_installation is not None and await _confirm_porter_installation_absent(required_installation, config):
+    # `porter installations apply` installs a missing or uninstalled installation. An upgrade must not create the
+    # resource again.
+    if required_installation is not None and await _confirm_porter_installation_removed(required_installation, config):
         return (
             1,
             None,
-            f"Cannot upgrade resource '{required_installation}': Porter has no installation for it. "
-            "An upgrade does not install a missing resource.",
+            f"Cannot upgrade resource '{required_installation}': Porter has no installation for it, "
+            "or its last successful action was an uninstall. An upgrade does not install a missing resource.",
         )
 
     last_returncode = None
@@ -379,8 +397,8 @@ async def _cleanup_param_set(param_set_name: str, param_set_file: str, installat
                     logger.debug(f"Best-effort cleanup: could not delete temp file '{path}': {e}")
 
 
-async def _confirm_porter_installation_absent(installation_id: str, config: dict) -> bool:
-    """Confirm absence with a fresh storage query, without logging installation data."""
+async def _list_porter_installations(installation_id: str, config: dict) -> Optional[list]:
+    """Read the installations with this name from a fresh storage query, without logging installation data."""
     try:
         code, output, _ = await asyncio.wait_for(
             run_command_helper(
@@ -401,10 +419,43 @@ async def _confirm_porter_installation_absent(installation_id: str, config: dict
             ),
             timeout=30,
         )
-        return code == 0 and json.loads(output) == []
+        return json.loads(output) if code == 0 else None
     except Exception:
-        # An unreadable store, invalid response or timeout does not prove absence.
+        # An unreadable store, invalid response or timeout proves nothing.
+        return None
+
+
+async def _confirm_porter_installation_absent(installation_id: str, config: dict) -> bool:
+    """Confirm absence with a fresh storage query, without logging installation data."""
+    return await _list_porter_installations(installation_id, config) == []
+
+
+def _porter_time(value) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        # Porter writes nanoseconds, and Python reads up to microseconds.
+        return datetime.fromisoformat(re.sub(r"(\.\d{6})\d+", r"\1", value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+async def _confirm_porter_installation_removed(installation_id: str, config: dict) -> bool:
+    """
+    Confirm that Porter has no installation, or that its last successful action was an uninstall.
+    Porter keeps the record of an uninstalled installation. A failed install has neither time, so an upgrade can repair it.
+    """
+    installations = await _list_porter_installations(installation_id, config)
+    if installations == []:
+        return True
+    matches = [item for item in installations or [] if item.get("name") == installation_id]
+    if not matches:
+        # An unreadable store, or a list with other installations only, proves nothing.
         return False
+    status = matches[0].get("status") or {}
+    uninstalled = _porter_time(status.get("uninstalled"))
+    installed = _porter_time(status.get("installed"))
+    return uninstalled is not None and (installed is None or installed <= uninstalled)
 
 
 async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, config: dict) -> bool:
@@ -435,6 +486,25 @@ async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, confi
         )
 
     return await invoke_porter_action(msg_body, sb_client, config, execution_id=execution_id, finish=finish)
+
+
+async def send_execution_store_failure(
+    msg_body: dict, error: HttpResponseError, sb_client: ServiceBusClient, config: dict
+):
+    """The resource processor cannot use the execution record, and a retry does not change that. Fail the step."""
+    status = statuses.failed_status_string_for[msg_body["action"]]
+    message = (
+        f"Cannot use the execution record in the management storage account: HTTP {error.status_code} {error.reason}"
+    )
+    sb_sender = sb_client.get_queue_sender(queue_name=config["deployment_status_queue"])
+    await sb_sender.send_messages(
+        ServiceBusMessage(
+            body=service_bus_message_generator(msg_body, status, message),
+            correlation_id=msg_body["id"],
+            session_id=msg_body["operationId"],
+        )
+    )
+    logger.error(f"Sent {status} for {msg_body['id']}, because the execution record store returned {error.status_code}")
 
 
 async def send_recorded_status(msg_body: dict, record: dict, sb_client: ServiceBusClient, config: dict) -> bool:

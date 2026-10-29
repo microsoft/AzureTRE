@@ -158,7 +158,7 @@ async def test_only_an_upgrade_requires_the_installation(action, required):
     with (
         patch.object(runner, "build_porter_command", AsyncMock(return_value=([["porter", action]], None, "p", None))),
         patch.object(runner, "run_porter", AsyncMock(return_value=(1, "", "failed"))) as run_porter,
-        patch.object(runner, "_confirm_porter_installation_absent", AsyncMock(return_value=False)),
+        patch.object(runner, "_confirm_porter_installation_removed", AsyncMock(return_value=False)),
     ):
         await runner.invoke_porter_action({**MESSAGE, "action": action}, client, CONFIG)
     assert run_porter.await_args.kwargs["required_installation"] == required
@@ -178,7 +178,7 @@ async def test_an_upgrade_does_not_install_a_missing_resource(absent, porter_run
         patch.object(runner, "azure_login_command", return_value=[]),
         patch.object(runner, "azure_acr_login_command", return_value=[]),
         patch.object(runner, "apply_porter_credentials_sets_command", return_value=[]),
-        patch.object(runner, "_confirm_porter_installation_absent", AsyncMock(return_value=absent)),
+        patch.object(runner, "_confirm_porter_installation_removed", AsyncMock(return_value=absent)),
     ):
         code, _, error = await runner.run_porter(
             [["porter", "installations", "apply"]], {}, required_installation="resource-1"
@@ -189,6 +189,32 @@ async def test_an_upgrade_does_not_install_a_missing_resource(absent, porter_run
         assert "An upgrade does not install a missing resource" in error
     else:
         assert code == 0
+
+
+def installation(installed=None, uninstalled=None, name="resource-1"):
+    return {"name": name, "status": {"installed": installed, "uninstalled": uninstalled}}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "output, removed",
+    [
+        ([], True),
+        # Porter keeps the record after an uninstall, and `installations apply` then runs the install action.
+        ([installation("2026-10-29T10:00:00.123456789Z", "2026-10-29T11:00:00.5Z")], True),
+        ([installation(None, "2026-10-29T11:00:00Z")], True),
+        ([installation("2026-10-29T12:00:00Z", "2026-10-29T11:00:00Z")], False),
+        ([installation("2026-10-29T10:00:00Z")], False),
+        # A failed install has neither time. An upgrade can repair it.
+        ([installation()], False),
+        ([installation(name="other-resource")], False),
+        (None, False),
+    ],
+)
+async def test_an_upgrade_finds_a_removed_installation(output, removed):
+    result = (0, json.dumps(output), "") if output is not None else (1, "", "store not available")
+    with patch.object(runner, "run_command_helper", AsyncMock(return_value=result)):
+        assert await runner._confirm_porter_installation_removed("resource-1", {}) is removed
 
 
 @pytest.mark.asyncio

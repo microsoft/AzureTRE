@@ -97,3 +97,29 @@ async def test_a_record_is_written_with_the_lease():
     lease = MagicMock()
     await leases.ExecutionLease(blob, lease).write({"state": "running"})
     blob.upload_blob.assert_awaited_once_with(json.dumps({"state": "running"}), overwrite=True, lease=lease)
+
+
+def precondition_failed():
+    error = HttpResponseError(message="lease lost")
+    error.status_code = 412
+    return error
+
+
+@pytest.mark.asyncio
+async def test_an_expired_lease_is_taken_again_for_the_record():
+    blob = MagicMock(upload_blob=AsyncMock(side_effect=[precondition_failed(), None]))
+    lease = MagicMock(acquire=AsyncMock())
+    await leases.ExecutionLease(blob, lease).write({"state": "finished"})
+    lease.acquire.assert_awaited_once_with(lease_duration=leases.LEASE_SECONDS)
+    assert blob.upload_blob.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_a_lease_that_another_worker_took_stops_the_record_write():
+    taken = HttpResponseError(message="lease already present")
+    taken.status_code = 409
+    blob = MagicMock(upload_blob=AsyncMock(side_effect=[precondition_failed(), None]))
+    lease = MagicMock(acquire=AsyncMock(side_effect=taken))
+    with pytest.raises(HttpResponseError):
+        await leases.ExecutionLease(blob, lease).write({"state": "finished"})
+    assert blob.upload_blob.await_count == 1

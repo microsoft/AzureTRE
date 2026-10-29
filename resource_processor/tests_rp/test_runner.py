@@ -1,3 +1,4 @@
+from azure.core.exceptions import HttpResponseError
 from azure.servicebus import ServiceBusSessionFilter
 from azure.servicebus.exceptions import SessionLockLostError
 from azure.servicebus.aio import ServiceBusClient
@@ -1258,3 +1259,55 @@ async def test_the_test_setting_pauses_the_session_lock_only_while_porter_runs(
     if running:
         assert seen == [paused]
     assert mock_keep_renewed.call_args.kwargs["paused"]() is False
+
+
+def failing_lease(status_code, reason):
+    error = HttpResponseError(message="storage error")
+    error.status_code, error.reason = status_code, reason
+
+    @asynccontextmanager
+    async def lease(container, resource_id, describe):
+        raise error
+        yield
+
+    return patch("vmss_porter.runner.execution_lease", side_effect=lease)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code, reason", [(403, "Forbidden"), (401, "Unauthorized")])
+async def test_no_access_to_the_execution_record_fails_the_step(
+    mock_service_bus_client, mock_keep_renewed, status_code, reason
+):
+    client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    client.get_queue_sender.return_value.send_messages = AsyncMock()
+    config = {"resource_request_queue": "q", "deployment_status_queue": "status"}
+
+    with failing_lease(status_code, reason), patch("vmss_porter.runner.run_step") as run_step:
+        await receive_message(client, config, AsyncMock(), keep_running=Mock(side_effect=[True, False]))
+
+    run_step.assert_not_called()
+    sent = json.loads(str(client.get_queue_sender.return_value.send_messages.await_args.args[0]))
+    assert sent["status"] == "deployment_failed"
+    assert f"HTTP {status_code} {reason}" in sent["message"]
+    assert "executionId" not in sent
+    receiver.complete_message.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_a_short_storage_failure_leaves_the_message_for_a_redelivery(
+    mock_service_bus_client, mock_keep_renewed, mock_logger
+):
+    client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    client.get_queue_sender.return_value.send_messages = AsyncMock()
+
+    with (
+        failing_lease(503, "Server Busy"),
+        patch("vmss_porter.runner.asyncio.sleep", new_callable=AsyncMock),
+    ):
+        await receive_message(
+            client, {"resource_request_queue": "q"}, AsyncMock(), keep_running=Mock(side_effect=[True, False])
+        )
+
+    client.get_queue_sender.return_value.send_messages.assert_not_awaited()
+    receiver.complete_message.assert_not_awaited()
+    assert "with HTTP 503" in mock_logger.error.call_args.args[0]

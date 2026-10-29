@@ -47,7 +47,16 @@ class ExecutionLease:
         return record if isinstance(record, dict) else {}
 
     async def write(self, record: dict):
-        await self.blob.upload_blob(json.dumps(record), overwrite=True, lease=self.lease)
+        try:
+            await self.blob.upload_blob(json.dumps(record), overwrite=True, lease=self.lease)
+        except HttpResponseError as error:
+            if error.status_code != 412:
+                raise
+            # The lease expired, for example after a storage outage that was longer than the renewal retries.
+            # Azure gives the same lease ID again if no other worker took the lease. If one did, this raises 409.
+            await self.lease.acquire(lease_duration=LEASE_SECONDS)
+            self.expires = time.monotonic() + LEASE_SECONDS
+            await self.blob.upload_blob(json.dumps(record), overwrite=True, lease=self.lease)
 
 
 async def create_blob(container: ContainerClient, blob):
