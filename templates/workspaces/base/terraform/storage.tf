@@ -216,6 +216,8 @@ container_state() {
 
 state=$(container_state)
 if [ "$state" = registered ]; then
+  # Terraform owns a registration that exists, for example when a workspace upgrades to this version.
+  # The step cannot tell it from a registration of an earlier warm-up, so it does not remove it.
   echo "The storage account is already registered with the vault"
   exit 0
 fi
@@ -249,10 +251,18 @@ for try in 1 2 3 4 5; do
         ;;
     esac
   elif [ "$put_accepted" = true ]; then
-    # Azure accepted the PUT, but the step has no operation to follow. Continue only if the registration exists.
-    state=$(container_state)
-    if [ "$state" != registered ]; then
-      echo "Registration attempt $try has no operation to follow, so the step cannot make sure that it ended." >&2
+    # Azure accepted the PUT, but the step has no operation to follow. The container can exist before
+    # the registration ends, so continue only when the container shows the status Registered.
+    registration=Unknown
+    for attempt in $(seq 1 60); do
+      registration=$(az rest --method get --url "$url" --query properties.registrationStatus --output tsv 2>/dev/null || echo Unknown)
+      if [ "$registration" = Registered ]; then
+        break
+      fi
+      sleep 10
+    done
+    if [ "$registration" != Registered ]; then
+      echo "Registration attempt $try has no operation to follow, and the container did not show the status Registered within 10 minutes. The last status was $registration." >&2
       exit 1
     fi
     status=Succeeded
@@ -275,7 +285,8 @@ for try in 1 2 3 4 5; do
         exit 0
       fi
     done
-    echo "The storage account is still registered with the vault after 10 minutes" >&2
+    echo "The storage account is still registered with the vault after 10 minutes." >&2
+    echo "Terraform cannot create a registration that exists. Unregister the storage account in the vault, then update the workspace again." >&2
     exit 1
   fi
 done

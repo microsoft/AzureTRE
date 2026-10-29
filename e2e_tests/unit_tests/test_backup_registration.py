@@ -28,6 +28,8 @@ if url==os.environ['OPERATION']:
 if method=='get':
     if state['get_errors']:
         state['get_errors']-=1;save();print('ERROR: (TooManyRequests) The request was throttled.',file=sys.stderr);sys.exit(1)
+    if state['registered'] and '--query' in args:
+        statuses=state['registration_statuses'];status=statuses.pop(0) if len(statuses)>1 else statuses[0];save();print(status);sys.exit(0)
     if state['registered']:sys.exit(0)
     print('ERROR: Not Found({"error":{"code":"BMSUserErrorContainerObjectNotFound"}})',file=sys.stderr);sys.exit(1)
 if method=='put':
@@ -78,6 +80,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         put_failures=0,
         put_registers=False,
         header_name="Azure-AsyncOperation",
+        registration_statuses=("Registered",),
     ):
         state = self.folder / "state.json"
         state.write_text(
@@ -91,6 +94,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
                     "put_failures": put_failures,
                     "put_registers": put_registers,
                     "header_name": header_name,
+                    "registration_statuses": list(registration_statuses),
                 }
             )
         )
@@ -143,6 +147,13 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(methods, ["get", "put", "get", "delete"] + ["get"] * 6 + ["delete", "get"])
         self.assertFalse(state["registered"])
+
+    def test_lasting_unregister_failure_names_the_recovery(self):
+        result, methods, state = self.run_warm_up(outcomes=["Succeeded"], delete_failures=100)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods.count("delete"), 10)
+        self.assertTrue(state["registered"])
+        self.assertIn("Unregister the storage account in the vault, then update the workspace again", result.stderr)
 
     def test_read_error_does_not_change_an_existing_registration(self):
         result, methods, state = self.run_warm_up(registered=True, get_errors=1)
@@ -203,8 +214,27 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
     def test_accepted_put_without_an_operation_stops_the_step(self):
         result, methods, _ = self.run_warm_up(header=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(methods, ["get", "put", "get"])
+        self.assertEqual(methods, ["get", "put"] + ["get"] * 60)
         self.assertIn("has no operation to follow", result.stderr)
+        self.assertIn("The last status was Unknown", result.stderr)
+
+    def test_accepted_put_without_an_operation_waits_for_the_registration(self):
+        # The container can exist before its registration ends. The step must not unregister it then.
+        result, methods, state = self.run_warm_up(
+            header=False, put_registers=True, registration_statuses=["Registering", "Registering", "Registered"]
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "get", "get", "get", "delete", "get"])
+        self.assertFalse(state["registered"])
+
+    def test_accepted_put_without_an_operation_stops_while_the_registration_runs(self):
+        result, methods, state = self.run_warm_up(
+            header=False, put_registers=True, registration_statuses=["Registering"]
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("delete", methods)
+        self.assertTrue(state["registered"])
+        self.assertIn("The last status was Registering", result.stderr)
 
     def test_accepted_put_without_an_operation_continues_when_registered(self):
         result, methods, state = self.run_warm_up(header=False, put_registers=True)
