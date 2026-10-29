@@ -214,6 +214,20 @@ container_state() {
   return 1
 }
 
+# Print the registration status of the container. Read it for up to 10 minutes, until it is Registered.
+# The container can exist before its registration ends, and the step must not unregister it then.
+registration_status() {
+  local registration=Unknown
+  for _ in $(seq 1 60); do
+    registration=$(az rest --method get --url "$url" --query properties.registrationStatus --output tsv 2>/dev/null || echo Unknown)
+    if [ "$registration" = Registered ]; then
+      break
+    fi
+    sleep 10
+  done
+  echo "$registration"
+}
+
 state=$(container_state)
 if [ "$state" = registered ]; then
   # Terraform owns a registration that exists, for example when a workspace upgrades to this version.
@@ -227,6 +241,7 @@ for try in 1 2 3 4 5; do
     sleep 60
   fi
   # Keep the result of the PUT. A rejected PUT starts no registration, but an accepted PUT can.
+  # An error can also hide an accepted PUT, for example when the response is lost.
   if put_output=$(az rest --method put --url "$url" --body "$body" --debug 2>&1); then
     put_accepted=true
   else
@@ -251,16 +266,9 @@ for try in 1 2 3 4 5; do
         ;;
     esac
   elif [ "$put_accepted" = true ]; then
-    # Azure accepted the PUT, but the step has no operation to follow. The container can exist before
-    # the registration ends, so continue only when the container shows the status Registered.
-    registration=Unknown
-    for attempt in $(seq 1 60); do
-      registration=$(az rest --method get --url "$url" --query properties.registrationStatus --output tsv 2>/dev/null || echo Unknown)
-      if [ "$registration" = Registered ]; then
-        break
-      fi
-      sleep 10
-    done
+    # Azure accepted the PUT, but the step has no operation to follow. Continue only when the container
+    # shows the status Registered.
+    registration=$(registration_status)
     if [ "$registration" != Registered ]; then
       echo "Registration attempt $try has no operation to follow, and the container did not show the status Registered within 10 minutes. The last status was $registration." >&2
       exit 1
@@ -273,6 +281,13 @@ for try in 1 2 3 4 5; do
   echo "Registration attempt $try ended with status $status"
   state=$(container_state)
   if [ "$state" = registered ]; then
+    # Unregister only a registration that ended. After any attempt, for example one with a lost
+    # response, the registration can still run.
+    registration=$(registration_status)
+    if [ "$registration" != Registered ]; then
+      echo "After registration attempt $try, the container did not show the status Registered within 10 minutes. The last status was $registration. The step does not unregister a registration that has not ended." >&2
+      exit 1
+    fi
     # Remove the registration, so that Terraform creates and owns the registration.
     # Azure can answer the unregister with a short CloudInternalError, so send it again each minute.
     for attempt in $(seq 1 60); do

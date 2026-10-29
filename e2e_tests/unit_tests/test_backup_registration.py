@@ -33,6 +33,8 @@ if method=='get':
     if state['registered']:sys.exit(0)
     print('ERROR: Not Found({"error":{"code":"BMSUserErrorContainerObjectNotFound"}})',file=sys.stderr);sys.exit(1)
 if method=='put':
+    if state['put_lost']:
+        state['registered']=True;save();print('ERROR: (ConnectionResetError) Connection aborted.',file=sys.stderr);sys.exit(1)
     if state['put_failures']:
         state['put_failures']-=1;save();print('ERROR: (CloudInternalError) Microsoft Azure Backup encountered an internal error.',file=sys.stderr);sys.exit(1)
     if state['put_registers']:state['registered']=True;save()
@@ -81,6 +83,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         put_registers=False,
         header_name="Azure-AsyncOperation",
         registration_statuses=("Registered",),
+        put_lost=False,
     ):
         state = self.folder / "state.json"
         state.write_text(
@@ -95,6 +98,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
                     "put_registers": put_registers,
                     "header_name": header_name,
                     "registration_statuses": list(registration_statuses),
+                    "put_lost": put_lost,
                 }
             )
         )
@@ -131,22 +135,37 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
     def test_attempts_continue_until_one_succeeds(self):
         result, methods, state = self.run_warm_up(outcomes=["Failed", "Failed", "Succeeded"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get"] + ["put", "get"] * 3 + ["delete", "get"])
+        self.assertEqual(methods, ["get"] + ["put", "get"] * 3 + ["get", "delete", "get"])
         self.assertFalse(state["registered"])
         self.assertIn("Registration attempt 3 ended with status Succeeded", result.stdout)
 
     def test_successful_first_attempt_is_removed_for_terraform(self):
         result, methods, state = self.run_warm_up(outcomes=["Succeeded"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
     def test_failed_unregister_is_sent_again(self):
         # Azure can answer the unregister with a short CloudInternalError.
         result, methods, state = self.run_warm_up(outcomes=["Succeeded"], delete_failures=1)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "delete"] + ["get"] * 6 + ["delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "delete"] + ["get"] * 6 + ["delete", "get"])
         self.assertFalse(state["registered"])
+
+    def test_lost_put_response_waits_for_the_registration_before_the_unregister(self):
+        # Azure accepted the PUT, but the response was lost, so the step sees an error.
+        result, methods, state = self.run_warm_up(put_lost=True, registration_statuses=["Registering", "Registered"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(methods, ["get", "put", "get", "get", "get", "delete", "get"])
+        self.assertFalse(state["registered"])
+        self.assertIn("Registration attempt 1 ended with status Rejected", result.stdout)
+
+    def test_lost_put_response_stops_the_step_while_the_registration_runs(self):
+        result, methods, state = self.run_warm_up(put_lost=True, registration_statuses=["Registering"])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("delete", methods)
+        self.assertTrue(state["registered"])
+        self.assertIn("does not unregister a registration that has not ended", result.stderr)
 
     def test_lasting_unregister_failure_names_the_recovery(self):
         result, methods, state = self.run_warm_up(outcomes=["Succeeded"], delete_failures=100)
@@ -176,7 +195,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
     def test_failed_status_read_is_read_again(self):
         result, methods, state = self.run_warm_up(outcomes=["ERROR", "InProgress", "Succeeded"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
     def test_login_uses_the_cloud_and_the_managed_identity_by_default(self):
@@ -224,7 +243,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
             header=False, put_registers=True, registration_statuses=["Registering", "Registering", "Registered"]
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "get", "get", "get", "delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "get", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
     def test_accepted_put_without_an_operation_stops_while_the_registration_runs(self):
@@ -239,7 +258,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
     def test_accepted_put_without_an_operation_continues_when_registered(self):
         result, methods, state = self.run_warm_up(header=False, put_registers=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "get", "delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
     def test_rejected_puts_wait_and_leave_registration_to_terraform(self):
@@ -252,7 +271,7 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
     def test_operation_header_is_read_in_any_case(self):
         result, methods, state = self.run_warm_up(outcomes=["Succeeded"], header_name="azure-asyncoperation")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(methods, ["get", "put", "get", "delete", "get"])
+        self.assertEqual(methods, ["get", "put", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
 
     def test_terraform_registration_waits_for_the_warm_up(self):
