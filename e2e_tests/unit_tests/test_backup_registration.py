@@ -34,9 +34,10 @@ if method=='get':
     print('ERROR: Not Found({"error":{"code":"BMSUserErrorContainerObjectNotFound"}})',file=sys.stderr);sys.exit(1)
 if method=='put':
     if state['put_lost']:
-        state['registered']=True;save();print('ERROR: (ConnectionResetError) Connection aborted.',file=sys.stderr);sys.exit(1)
+        if state['put_registers']:state['registered']=True
+        save();print('ERROR: (ConnectionResetError) Connection aborted.',file=sys.stderr);sys.exit(1)
     if state['put_failures']:
-        state['put_failures']-=1;save();print('ERROR: (CloudInternalError) Microsoft Azure Backup encountered an internal error.',file=sys.stderr);sys.exit(1)
+        state['put_failures']-=1;save();print('INFO: cli.azure.cli.core.util: Response status: 500',file=sys.stderr);print('ERROR: (CloudInternalError) Microsoft Azure Backup encountered an internal error.',file=sys.stderr);sys.exit(1)
     if state['put_registers']:state['registered']=True;save()
     if state['header']:print("INFO: cli.azure.cli.core.util:     '"+state['header_name']+"': '"+os.environ['OPERATION']+"'",file=sys.stderr)
     sys.exit(0)
@@ -152,16 +153,32 @@ class BackupRegistrationWarmUpTests(unittest.TestCase):
         self.assertEqual(methods, ["get", "put", "get", "get", "delete"] + ["get"] * 6 + ["delete", "get"])
         self.assertFalse(state["registered"])
 
-    def test_lost_put_response_waits_for_the_registration_before_the_unregister(self):
-        # Azure accepted the PUT, but the response was lost, so the step sees an error.
-        result, methods, state = self.run_warm_up(put_lost=True, registration_statuses=["Registering", "Registered"])
+    def test_put_without_an_answer_stops_the_step(self):
+        # Azure accepted the PUT, but the response was lost. The registration can still run.
+        result, methods, state = self.run_warm_up(put_lost=True, put_registers=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods, ["get", "put"])
+        self.assertTrue(state["registered"])
+        self.assertIn("got no answer from Azure", result.stderr)
+
+    def test_put_without_an_answer_stops_the_step_before_the_container_shows(self):
+        # The container of an accepted PUT can show some minutes later. Another PUT must not overlap it.
+        result, methods, state = self.run_warm_up(put_lost=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(methods, ["get", "put"])
+        self.assertFalse(state["registered"])
+        self.assertIn("got no answer from Azure", result.stderr)
+
+    def test_unregister_waits_until_the_registration_ended(self):
+        result, methods, state = self.run_warm_up(
+            outcomes=["Succeeded"], registration_statuses=["Registering", "Registered"]
+        )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(methods, ["get", "put", "get", "get", "get", "delete", "get"])
         self.assertFalse(state["registered"])
-        self.assertIn("Registration attempt 1 ended with status Rejected", result.stdout)
 
-    def test_lost_put_response_stops_the_step_while_the_registration_runs(self):
-        result, methods, state = self.run_warm_up(put_lost=True, registration_statuses=["Registering"])
+    def test_registration_that_does_not_end_is_not_unregistered(self):
+        result, methods, state = self.run_warm_up(outcomes=["Succeeded"], registration_statuses=["Registering"])
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn("delete", methods)
         self.assertTrue(state["registered"])

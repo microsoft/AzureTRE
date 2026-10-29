@@ -275,6 +275,12 @@ for try in 1 2 3 4 5; do
     fi
     status=Succeeded
   else
+    # Only an error answer from Azure proves a rejection. Without an answer, Azure can still run the
+    # registration, so the step stops, and no other registration overlaps it.
+    if ! grep -qE 'Response status: [45][0-9]{2}' <<< "$put_output"; then
+      echo "Registration attempt $try got no answer from Azure, so its result is unknown. The step stops, so that no other registration overlaps it." >&2
+      exit 1
+    fi
     status=Rejected
     sleep 120
   fi
