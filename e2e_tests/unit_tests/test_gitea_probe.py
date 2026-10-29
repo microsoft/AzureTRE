@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from jsonschema import validate
 import yaml
@@ -154,17 +154,11 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
     SINCE = datetime(2026, 10, 28, 23, 30, 5, tzinfo=timezone(timedelta(hours=1)))
 
     @staticmethod
-    def arm(*rows):
+    def arm(*rows, columns=("started", "restarted", "leaks")):
         responses = [
             SimpleNamespace(
                 status_code=200,
-                json=Mock(
-                    return_value={
-                        "tables": [
-                            {"columns": [{"name": "started"}, {"name": "restarted"}, {"name": "leaks"}], "rows": [row]}
-                        ]
-                    }
-                ),
+                json=Mock(return_value={"tables": [{"columns": [{"name": name} for name in columns], "rows": [row]}]}),
             )
             for row in rows
         ]
@@ -201,3 +195,43 @@ class SecretLogTests(unittest.IsolatedAsyncioTestCase):
                 "GITEA__database__PASSWD": "Resolved",
             },
         )
+
+    async def test_oidc_counts_wait_for_a_start_after_the_stop(self):
+        # The stop line arrives first. The lines of the start after the stop can arrive some minutes after it.
+        arm = self.arm([0, 0], [1, 0], [1, 1], [1, 1], columns=("stops", "started_after_stop"))
+        with patch("e2e_tests.resources.gitea_secrets.asyncio.sleep", AsyncMock()) as sleep:
+            counts = await secrets.oidc_stop_counts(arm, self.WORKSPACE, self.SITE, self.SINCE)
+        self.assertEqual(counts, {"stops": 1, "started_after_stop": 1})
+        self.assertEqual([call.args[0] for call in sleep.await_args_list], [60, 60, 120])
+        query = arm.client.post.call_args.kwargs["json"]["query"]
+        self.assertIn(self.SITE.lower(), query)
+        self.assertIn("TimeGenerated >= datetime(2026-10-28T22:30:05Z)", query)
+        self.assertIn("contains 'Stopping Gitea, so that it starts again with the new OIDC settings'", query)
+
+    async def test_oidc_stop_line_is_the_line_of_the_start_script(self):
+        script = (ROOT / "templates/workspace_services/gitea/docker/configure_gitea.sh").read_text()
+        self.assertIn(f'echo "{secrets.OIDC_STOP}"', script)
+
+    async def test_oidc_counts_reject_a_site_id_that_changes_the_query(self):
+        arm = self.arm()
+        with self.assertRaises(ValueError):
+            await secrets.oidc_stop_counts(arm, self.WORKSPACE, f"{self.SITE}' or true or '", self.SINCE)
+        arm.client.post.assert_not_awaited()
+
+    async def test_oidc_change_keeps_the_other_app_settings(self):
+        settings = {"GITEA_OPENID_CLIENT_ID": "old", "GITEA_PASSWD": "@Microsoft.KeyVault(SecretUri=x)"}
+        arm = SimpleNamespace(request=AsyncMock(side_effect=[{"properties": dict(settings)}, {}]))
+        await secrets.change_oidc_client_id(arm, self.SITE)
+        listed, put = arm.request.await_args_list
+        self.assertEqual(listed.args[:2], ("POST", f"{self.SITE}/config/appsettings/list"))
+        self.assertEqual(put.args[:2], ("PUT", f"{self.SITE}/config/appsettings"))
+        changed = put.kwargs["body"]["properties"]
+        self.assertEqual(changed["GITEA_PASSWD"], settings["GITEA_PASSWD"])
+        self.assertNotEqual(changed["GITEA_OPENID_CLIENT_ID"], "old")
+        self.assertEqual(str(UUID(changed["GITEA_OPENID_CLIENT_ID"])), changed["GITEA_OPENID_CLIENT_ID"])
+
+    async def test_oidc_change_rejects_a_site_id_that_is_not_a_web_app(self):
+        arm = SimpleNamespace(request=AsyncMock())
+        with self.assertRaises(ValueError):
+            await secrets.change_oidc_client_id(arm, VM_ID)
+        arm.request.assert_not_awaited()

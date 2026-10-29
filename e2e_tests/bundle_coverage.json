@@ -245,6 +245,7 @@
         "anonymous and wrong-password requests denied",
         "private repository write/read with the admin account",
         "update, app stop and app start with retained repository data",
+        "one Gitea stop after an OIDC setting change",
         "Key Vault references resolved for the admin, OIDC client and database secrets",
         "no secret or new access token in the web app console log",
         "public network access disabled",

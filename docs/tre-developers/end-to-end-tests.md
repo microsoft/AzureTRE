@@ -194,10 +194,13 @@ It gives the VM identity a temporary Key Vault Secrets User role on the secret t
 From the VM, the case makes sure that the Gitea host resolves to a private address and that the Gitea API is available.
 It also makes sure that Gitea rejects a repository create without credentials (HTTP 401) and a request with a wrong password (HTTP 401).
 The VM then creates a private repository with the admin account and commits a file. An anonymous read of the repository gets HTTP 404.
-An update changes the display name, and the case stops and starts the web app. The VM then reads the file again and deletes the repository.
+An update changes the display name. Then the case gives the web app a new OIDC client ID.
+The start script must stop Gitea one time for the new OIDC settings, and App Service must start it again.
+Then the case stops and starts the web app. The VM reads the file again and deletes the repository.
 Then the case makes sure that the web app resolves its three Key Vault references, for the admin password, the OIDC client secret and the database password.
 It also counts lines in the web app console log in the TRE Log Analytics workspace. No line can show a password, a client secret or a new access token.
 The count waits for the start script lines of the start after the stop, and then for two more minutes, because the lines of one start can arrive at different times.
+The last start has the same OIDC settings, so the log must show only one stop for the new OIDC settings.
 The query returns counts only. The CI identity needs read access to the Log Analytics workspace.
 At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
 The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
