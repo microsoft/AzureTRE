@@ -27,8 +27,12 @@ from services.logging import logger, tracer
 PENDING_DISPATCH_SECONDS = 5 * 60
 AWAITING_STATUSES = (Status.AwaitingDeployment, Status.AwaitingUpdate, Status.AwaitingDeletion, Status.AwaitingAction)
 NOT_SENT_WITH_SENSITIVE_VALUES = (
-    "The API stopped before it sent this request. The request has sensitive values, which the API does not store. "
-    "Send the request again."
+    "The API stopped before it recorded the send of this request. The request has sensitive values, which the API "
+    "does not store, so the API cannot send it again. If the status does not change, send the request again."
+)
+NOT_SENT_BEFORE_A_LATER_REQUEST = (
+    "The API stopped before it recorded the send of this request, and a later request changed the resource. "
+    "The API does not send this request again."
 )
 
 
@@ -148,6 +152,17 @@ class DeploymentStatusUpdater:
             await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
             return
 
+        later_requests = [
+            item
+            for item in await self.operations_repo.get_operations_by_resource_id(operation.resourceId)
+            if item.createdWhen > operation.createdWhen
+        ]
+        if later_requests:
+            # For example, a delete of a resource whose install was not sent. The install must not come after it.
+            logger.warning(f"Operation {operation.id} was not sent before a later request. Failing step {step.id}")
+            await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST)
+            return
+
         try:
             resource_to_send = await update_resource_for_step(
                 operation_step=step,
@@ -168,8 +183,10 @@ class DeploymentStatusUpdater:
             await self.fail_pending_step(operation, step, repr(e))
             return
 
-        # Cosmos DB keeps a sensitive value as a placeholder. The resource processor needs the real value.
-        if contains_redacted_value(payload["parameters"]):
+        # The first message of an install has the real sensitive values, but Cosmos DB keeps a placeholder. Other
+        # requests are built from Cosmos DB, so they send the same values as the first send.
+        first_install = operation.action == RequestAction.Install and step.resourceId == operation.resourceId
+        if first_install and contains_redacted_value(payload["parameters"]):
             logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
             await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)
             return
@@ -393,6 +410,10 @@ class DeploymentStatusUpdater:
         A message without an execution ID comes from an older resource processor, so the earlier rules apply to it.
         """
         if message.executionId is None or not (step.is_success() or step.is_failure()):
+            return False
+        if step.executionId is None:
+            # The API or an older resource processor wrote this final status. The first run of the step replaces it,
+            # for example after the API failed a step whose message the resource processor still got.
             return False
         if step.executionId != message.executionId:
             logger.info(f"Ignoring a status from another run of step {operation.id}/{step.id}")

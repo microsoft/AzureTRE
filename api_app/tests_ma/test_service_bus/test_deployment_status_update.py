@@ -1191,6 +1191,23 @@ async def test_a_new_run_before_the_final_status_takes_over_the_step(persisted_p
     send.assert_awaited_once()
 
 
+# An uninstall keeps the earlier rule for a final step from #5253.
+@pytest.mark.parametrize("persisted_pipeline", [RequestAction.Install, RequestAction.Upgrade, "restart"], indirect=True)
+async def test_the_first_run_replaces_a_failure_that_the_api_wrote(persisted_pipeline):
+    updater, stored, message, send, (in_progress, success, failure) = persisted_pipeline
+    # For example, the API failed a step that it could not resend, but the resource processor got the first message.
+    stored["operation"].steps[0].status = failure
+    stored["operation"].steps[0].message = "written by the API"
+
+    assert await updater.update_status_in_database(message(in_progress)) is True
+    assert stored["operation"].steps[0].status == in_progress
+    assert await updater.update_status_in_database(message(success)) is True
+
+    assert stored["operation"].steps[0].status == success
+    assert stored["operation"].steps[0].executionId == "run-a"
+    send.assert_awaited_once()
+
+
 async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
     workspace = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
     operation = create_sample_operation(workspace.id, RequestAction.Install)

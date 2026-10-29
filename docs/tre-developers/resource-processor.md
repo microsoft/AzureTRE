@@ -127,11 +127,16 @@ Service Bus can give the same message to more than one worker. The resource proc
 1. Before Porter starts, the worker gets a 60-second lease on the blob `rp-executions/<resource ID>` in the management storage account. It renews the lease every 15 seconds. If another worker holds the lease, the worker keeps its session and tries again every 30 seconds.
 1. The blob holds a record of the last step for the resource. If the record shows that the same step finished, the worker does not run Porter. It reads the outputs again and sends the recorded status.
 1. Each status message has an `executionId`. After a step has a final status, the API ignores a status from another run, a later status from the same run and a final status that it already saved.
-1. An upgrade does not install a resource that has no Porter installation. The resource processor sends `updating_failed`.
+1. If the API wrote the final status itself, for example after a failed send of the next step, the first run of the step replaces it. An uninstall keeps its earlier rule for a final step.
+1. An upgrade does not install a resource that Porter does not have. The resource processor sends `updating_failed` if Porter has no installation for the resource, or if the last successful action of the installation was an uninstall. Porter runs the install action in both cases. An upgrade can still repair a failed install.
+
+A status message without `executionId` comes from a resource processor before version 0.13.16, and the API keeps the earlier rules for it. An API before version 0.28.10 ignores the field. So you can deploy the API and the resource processor in any order.
+
+The resource processor now needs the management storage account for each step. If the account refuses access (HTTP 401 or 403), the resource processor sends the failed status for the step. A Terraform backend in the same account failed in the same way before this change. For other storage errors, Service Bus delivers the message again.
 
 For local debugging, your identity needs the Storage Blob Data Contributor role on the management storage account.
 
-To test a lost session lock, set the `RP_BUNDLE_VALUES` variable to `{"test_skip_session_lock_renewal": "true"}` and deploy the core.
+To test a lost session lock, add the key `"test_skip_session_lock_renewal": "true"` to the `RP_BUNDLE_VALUES` JSON object and deploy the core. Remove the key after the test.
 While Porter runs, the resource processor then does not renew the session lock, so Service Bus gives a step that takes more than 5 minutes to another worker.
 Do not use this setting in production.
 
@@ -143,10 +148,14 @@ If the API stops between the write and the send, the entry stays. When the API s
 
 1. One API instance claims each entry with the etag of the operation document. The other instances leave the entry.
 1. If the step has a status from the resource processor, the resource processor has the message. The updater removes the entry.
+1. If a later request for the same resource exists, for example a delete, the updater does not send the message. It sets the step and the operation to the failed status.
 1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
-1. Cosmos DB keeps a sensitive value as `REDACTED`, so the updater cannot build a message that needs one. It sets the step and the operation to the failed status, with a message that asks the user to send the request again.
+1. The first message of an install has the real values of sensitive properties, but Cosmos DB keeps them as `REDACTED`. The updater cannot build such a message again.
+   It sets the step and the operation to the failed status, with a message that asks the user to send the request again if the status does not change.
+   Other requests come from Cosmos DB, so the updater sends them with the same values as the first send.
+1. If the updater cannot build the message, it sets the step and the operation to the failed status with the error text.
 
-A second copy of a message is safe, because the resource processor runs each step once.
+A second copy of a message is safe, because the resource processor runs each step once. The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status.
 
 The status message of a step stays on the `deploymentstatus` queue until the API has sent the message of the next step. So a stop of the API during a pipeline does not need this entry.
 

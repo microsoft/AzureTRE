@@ -133,5 +133,5 @@ class DeploymentStatusUpdateMessage(AzureTREModel):
     status: Status = Field(title="", description="")
     message: str = Field(title="", description="")
     outputs: List[Output] = Field(title="", description="", default_factory=list)
-    # A resource processor before 0.13.17 does not send this field.
+    # A resource processor before 0.13.16 does not send this field.
     executionId: Optional[str] = Field(default=None, title="", description="The resource processor run")

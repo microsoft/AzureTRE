@@ -52,9 +52,7 @@ class OperationRepository(BaseRepository):
         return message_id
 
     async def get_operations_with_pending_dispatch(self, sent_before: float) -> List[dict]:
-        query = (
-            f"SELECT * FROM c WHERE IS_DEFINED(c.{PENDING_DISPATCH}) AND c.{PENDING_DISPATCH}.createdWhen < @sentBefore"
-        )
+        query = "SELECT * FROM c WHERE IS_DEFINED(c.pendingDispatch) AND c.pendingDispatch.createdWhen < @sentBefore"
         return await self.query(query=query, parameters=[{"name": "@sentBefore", "value": sent_before}])
 
     async def claim_pending_dispatch(self, operation: dict) -> bool:
