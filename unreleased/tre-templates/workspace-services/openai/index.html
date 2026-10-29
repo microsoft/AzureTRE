@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -33,10 +33,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -2074,6 +2074,28 @@
     <span class="md-ellipsis">
       
         Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#independent-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Independent validation
       
     </span>
   </a>
@@ -4596,6 +4618,28 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#model-prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#independent-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Independent validation
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4633,10 +4677,25 @@
 <h2 id="properties">Properties</h2>
 <ul>
 <li><code>is_exposed_externally</code> - If <code>True</code>, the OpenAI workspace is accessible from outside of the workspace virtual network.</li>
-<li><code>openai_model</code> - The model to use for the OpenAI deployment <code>&lt;model name&gt; | &lt;model version&gt;</code>. The default is <code>gpt-35-turbo | 0301</code>.</li>
+<li><code>openai_model</code> - The model to use for the OpenAI deployment <code>&lt;model name&gt; | &lt;model version&gt;</code>. The default is <code>gpt-5.1 | 2025-11-13</code>.</li>
 <li>Important note: Models are subject to different quota and region availability and the deployment may fail if you don't have the correct quota.
 Please review this link on current limits and how to request increases: <a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/quotas-limits">Open AI Quotas</a></li>
 </ul>
+<h2 id="model-prerequisites">Model prerequisites</h2>
+<p>The bundle uses the regional <code>Standard</code> deployment type with one capacity unit.
+Check availability and quota for the exact model version in the workspace region before deployment.
+The older model values remain in the schema for existing resource records. Their presence does not mean Azure can deploy them.
+Changing the template default does not change the model value stored on an existing service.
+An explicit model change can replace the deployment and needs separate upgrade validation.</p>
+<p>The OpenAI bundle currently requires the workspace and core in the same subscription.
+Private network access remains the default. The bundle does not add researcher RBAC roles or change key authentication.</p>
+<p>See <a href="https://learn.microsoft.com/en-us/rest/api/aiservices/accountmanagement/models/list?view=rest-aiservices-accountmanagement-2024-10-01">model availability</a>
+and <a href="https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/quota">subscription quota</a>.</p>
+<h2 id="independent-validation">Independent validation</h2>
+<p>Select <code>tre-workspace-service-openai</code> through the <a href="../../../tre-developers/end-to-end-tests/#validate-one-bundle">bundle validation procedure</a>.
+The test checks current model and quota prerequisites, deploys a private service, checks its model and network settings, and uninstalls it.
+It confirms removal of the API record and active Azure account.
+Private inference, researcher access, model upgrades, secret removal and soft-deleted account purge require separate evidence.</p>
 
 
 
@@ -4686,10 +4745,10 @@ Please review this link on current limits and how to request increases: <a href=
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>

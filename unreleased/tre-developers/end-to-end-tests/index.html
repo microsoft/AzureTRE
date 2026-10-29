@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/ms_icon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -33,10 +33,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -3851,10 +3851,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#openai-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#certificate-and-nexus-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
         Certificate and Nexus selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-vm-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux VM selection
       
     </span>
   </a>
@@ -3877,6 +3899,17 @@
     <span class="md-ellipsis">
       
         SQL time limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mysql-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL selection
       
     </span>
   </a>
@@ -4771,10 +4804,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#openai-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#certificate-and-nexus-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
         Certificate and Nexus selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linux-vm-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linux VM selection
       
     </span>
   </a>
@@ -4797,6 +4852,17 @@
     <span class="md-ellipsis">
       
         SQL time limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mysql-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MySQL selection
       
     </span>
   </a>
@@ -4905,6 +4971,21 @@ If the selection includes the Guacamole AAD case, clear <code>TEST_AAD_WORKSPACE
 That case requires an owned workspace so cascade cleanup removes its new service.
 Some shared-service cases replace existing services, so use an isolated validation environment.
 Check the selected entry's prerequisites and limitations before running it.</p>
+<h3 id="openai-selection">OpenAI selection</h3>
+<p>Select <code>tre-workspace-service-openai</code> to run <code>test_openai.py::test_private_openai_lifecycle</code>.
+The branch workflow registers the OpenAI bundle. The test also replaces its generic case in the <code>workspace_services</code> group.
+The test requests <code>gpt-5.1 | 2025-11-13</code>, private access and one regional <code>Standard</code> capacity unit.
+It does not switch models or deployment types when Azure cannot satisfy those inputs.</p>
+<p>The prerequisite check uses the workspace resource group's actual region and the current subscription model and usage APIs.
+It requires a generally available chat model, a current Standard tier and at least one free capacity unit.
+It rejects retired model/tier dates, fine-tuning quotas and incomplete or blocked quota data.
+The CI identity needs permission to read model and quota data at subscription scope.
+The check does not grant roles or reserve capacity. Azure deployment can still fail after it passes.</p>
+<p>Prerequisite failures fail the selected test before service creation. They do not count as skipped or passing coverage.
+Service creation has a 45-minute deadline. Verification has a separate five-minute deadline.
+Failed creation and teardown use the existing helper's separate cleanup deadline.
+A configured workspace is retained. A fixture-created workspace uses the fixture's cleanup.
+Private inference, access control, upgrades and complete physical cleanup remain separate checks.</p>
 <h3 id="certificate-and-nexus-selection">Certificate and Nexus selection</h3>
 <p>Select <code>tre-shared-service-certs</code> to install, uninstall and reinstall the certificate shared service with the same hostname and certificate name.
 The case requires certificate bundle version <code>0.9.0</code> or later and pins both installations to the selected template version.
@@ -4940,6 +5021,12 @@ The case does not purge certificates. A first installation can reuse a certifica
 Select <code>e2eBundle=tre-shared-service-certs</code> in <code>deploy_tre_branch.yml</code> and leave the marker selector empty.
 PR slash commands use workflow definitions from <code>main</code>. <code>/test</code> runs smoke tests and <code>/test-shared-services</code> excludes this certificate-only case.
 A test-only PR without the new certificate bundle cannot validate reuse. Run Nexus and Airlock only after this case and its cleanup pass.</p>
+<h3 id="linux-vm-selection">Linux VM selection</h3>
+<p>Select <code>tre-service-guacamole-linuxvm</code> to run <code>test_guacamole_linuxvm.py::test_create_guacamole_linux_vm</code>.
+The case creates a Linux VM and waits for its Nexus-backed bootstrap. Thus the run needs a suitable Nexus instance or <code>acceptNexusEula=true</code>.
+The case then runs the <code>stop</code>, <code>start</code> and <code>reset_password</code> actions.
+After <code>stop</code> and <code>start</code>, the case reads the VM power state from Azure. After <code>reset_password</code>, it makes sure that the Key Vault secret has a new version.
+The case does not sign in to the VM, so it does not prove interactive access or the new password.</p>
 <h3 id="base-workspace-lifecycle">Base workspace lifecycle</h3>
 <p>Select <code>tre-workspace-base</code> to run <code>test_workspace_base.py::test_base_workspace_lifecycle</code> independently.
 The case always creates its own workspace with Automatic authentication and backups disabled. It does not reuse <code>TEST_WORKSPACE_ID</code>.
@@ -4959,6 +5046,14 @@ It preserves pre-created resources and divides the remaining cleanup time betwee
 Failed-create recovery and temporary probe cleanup also count towards the lifecycle deadline.
 The final 30 minutes are reserved for results and job overhead. Cleanup failures still fail the test.
 For a local run, the 270-minute lifecycle budget starts when the SQL case begins.</p>
+<h3 id="mysql-selection">MySQL selection</h3>
+<p>Select <code>tre-workspace-service-mysql</code> to run <code>test_mysql.py::test_private_mysql_query_survives_sku_change</code>.
+The case creates its own workspace, Guacamole service, Linux VM and MySQL service.
+The Linux VM installs the MySQL client through Nexus. Thus the run needs a suitable Nexus instance or <code>acceptNexusEula=true</code>.
+The case writes a row through private DNS with the Burstable SKU. It then changes the SKU to General Purpose and reads the row again.
+The VM reads the administrator password from the workspace Key Vault through a temporary role assignment on that secret only.
+The MySQL job uses the SQL time limits above with its own <code>MYSQL_VALIDATION_DEADLINE</code>. If the case creates Nexus, it removes Nexus after the VM.
+These checks do not prove previous-version upgrades or researcher access.</p>
 <h3 id="run-the-branch-workflow-before-merge">Run the branch workflow before merge</h3>
 <ol>
 <li>Push the reviewed changes to a branch in <code>microsoft/AzureTRE</code>.</li>
@@ -5035,10 +5130,10 @@ An entirely skipped selection exits unsuccessfully. Individual skipped cases ret
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
