@@ -108,6 +108,27 @@ resource "azurerm_monitor_private_link_scoped_service" "ampls_log_anaytics" {
   resource_group_name = var.resource_group_name
   scope_name          = azapi_resource.ampls_workspace.name
   linked_resource_id  = azurerm_log_analytics_workspace.workspace.id
+
+  depends_on = [
+    terraform_data.ampls_endpoint_update_wait,
+  ]
+}
+
+# A link or unlink in the scope makes Azure update the private endpoint. For the two unlinks, Azure runs one update
+# of up to 132 seconds, or one update of up to about 100 seconds for each unlink, one after the other.
+# In the measured deletes, the endpoint stayed busy for up to 3 minutes and 23 seconds.
+# During the update, Azure rejects changes to the endpoint DNS zone group with 409 AnotherOperationInProgress.
+# The scoped services depend on this resource, so they change only after the endpoint exists,
+# and on destroy Terraform waits here before it deletes the endpoint.
+resource "terraform_data" "ampls_endpoint_update_wait" {
+  provisioner "local-exec" {
+    when    = destroy
+    command = "sleep 300"
+  }
+
+  depends_on = [
+    azurerm_private_endpoint.azure_monitor_private_endpoint,
+  ]
 }
 
 
@@ -157,11 +178,17 @@ resource "azapi_resource" "appinsights" {
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "ampls_app_insights" {
-  name                = "ampls-app-insights-service"
+  # The name changed from ampls-app-insights-service to replace the link in existing deployments.
+  name                = "ampls-app-insights"
   resource_group_name = var.resource_group_name
   scope_name          = azapi_resource.ampls_workspace.name
 
   linked_resource_id = azapi_resource.appinsights.id
+
+  # App Insights rejects ingestion through a private endpoint created after this link, with HTTP 403.
+  depends_on = [
+    terraform_data.ampls_endpoint_update_wait,
+  ]
 }
 
 resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
@@ -191,10 +218,6 @@ resource "azurerm_private_endpoint" "azure_monitor_private_endpoint" {
       var.blob_core_dns_zone_id,
     ]
   }
-
-  depends_on = [
-    azurerm_monitor_private_link_scoped_service.ampls_app_insights,
-  ]
 }
 
 # We don't really need this, but if not present the RG will not be empty and won't be destroyed

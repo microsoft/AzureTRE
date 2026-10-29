@@ -9,6 +9,9 @@ on:  # yamllint disable-line rule:truthy
     paths:
       - 'e2e_tests/**'
       - 'templates/**/porter.yaml'
+      # test_azure_monitor_contract.py reads these Terraform files.
+      - 'core/terraform/azure-monitor/**'
+      - 'templates/workspaces/base/terraform/azure-monitor/**'
       - '.github/workflows/e2e_helper_tests.yml'
 
 permissions:
