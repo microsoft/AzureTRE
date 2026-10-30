@@ -65,7 +65,7 @@ If a Gitea workspace service ran an earlier version, do these steps after the up
         2. Find the password whose `hint` is the same as the first three characters of the workspace Key Vault secret `workspace-client-secret`.
         3. Remove it with `az rest --method POST --url "https://graph.microsoft.com/v1.0/servicePrincipals(appId='<client ID>')/removePassword" --body '{"keyId": "<key ID>"}'`.
         4. Update the workspace. Terraform makes a new password and writes it to `workspace-client-secret`.
-    - If you registered the workspace application, add a new client secret in Microsoft Entra ID. Update the workspace property `client_secret` with the new value. Then delete the old client secret.
+    - If you registered the workspace application, add a new client secret in Microsoft Entra ID. Write the new value to the workspace Key Vault secret `workspace-client-secret`. You need a role that can set secrets and network access to the Key Vault. Then delete the old client secret.
 2. Update each Guacamole and OHDSI workspace service in the workspace. These services use the version of the secret that was current when they deployed.
 3. Make the Gitea web app read the new client secret from the Key Vault. Send a POST request to `https://management.azure.com/<web app resource ID>/config/configreferences/appsettings/refresh?api-version=2022-03-01`, for example with `az rest`.
 4. Restart the Gitea web app. At the start, the start script gives the OIDC source the new client secret. Then it stops Gitea one time, and App Service starts it again with the new secret.
