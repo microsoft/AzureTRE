@@ -78,7 +78,7 @@ jobs:
   destroy_pr_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: read
@@ -124,7 +124,7 @@ jobs:
   destroy_branch_env:
     needs: [pr_comment]
     if: ${{ needs.pr_comment.outputs.command == 'test-destroy-env' && needs.pr_comment.outputs.branchCiGitRef != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       contents: read
@@ -171,7 +171,7 @@ jobs:
     name: Prepare PR environment
     needs: [pr_comment]
     if: ${{ startsWith(needs.pr_comment.outputs.command, 'run-tests') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: CICD
     outputs:
       refid: ${{ steps.environment-id.outputs.refid }}

@@ -36,7 +36,7 @@ permissions:
 jobs:
   discover:
     name: Discover Targets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       pull-requests: read  # For path filter
@@ -81,7 +81,7 @@ jobs:
     name: Build ${{ matrix.target.name }}
     needs: discover
     if: needs.discover.outputs.matrix != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 45
     permissions:
       contents: read
@@ -132,7 +132,7 @@ jobs:
       - discover
       - build
     if: always() && needs.discover.result == 'success' && needs.discover.outputs.matrix != '[]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:

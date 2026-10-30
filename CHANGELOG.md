@@ -36,6 +36,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Let a fork run CI in a shared subscription with the `CI_ENV_PREFIX` variable and a `ci_repository` tag, which scope cleanup and destruction. Keep a CI environment, for example for a demo, with a `ci_keep_until` tag. (`core` 0.18.15, `devops` 0.7.0, `build-scripts` 1.1.5) ([#5272](https://github.com/microsoft/AzureTRE/pull/5272))
 
 BUG FIXES:
+* Pin GitHub-hosted workflow jobs to `ubuntu-26.04`, allow the label in actionlint, and use the runner's preinstalled Azure CLI in the Let's Encrypt workflow. Refresh the apt package index before installing certificate renewal dependencies. ([#5273](https://github.com/microsoft/AzureTRE/issues/5273))
 * Update Nexus from 3.94.0 to 3.94.3. The Nexus 3.94.3 image stops trusting the eMudhra certificate chains that Sonatype reports as compromised. (`tre-shared-service-sonatype-nexus` 3.11.3) ([#5276](https://github.com/microsoft/AzureTRE/issues/5276))
 * Change the Azure Monitor private link scope of the core and of each workspace only after its private endpoint exists. In workspaces, also wait 5 minutes after the scope changes before Terraform deletes the endpoint.
   A scope change makes Azure update the endpoint, and during the update Azure rejects DNS zone group changes with 409 AnotherOperationInProgress, so some workspaces failed to deploy or delete.
