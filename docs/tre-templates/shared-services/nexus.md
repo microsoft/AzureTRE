@@ -60,7 +60,7 @@ Bundle upgrades do not change existing apt sources or rerun cloud-init. Already-
 
 ## Ubuntu archive key and HTTPS
 
-Nexus bundle `3.11.3` gets the `ubuntu` and `ubuntu-security` packages over HTTPS, the same as the other proxies. An upgrade updates the remote URL of the two repositories in place.
+Nexus bundle `3.11.5` gets the `ubuntu` and `ubuntu-security` packages over HTTPS, the same as the other proxies. An upgrade updates the remote URL of the two repositories in place.
 
 Guacamole Linux VM bundle `1.4.10` gives the three Ubuntu lines the option `signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg`, so apt uses the Ubuntu archive key for these sources.
 Bundle upgrades do not change the apt sources of an existing VM. For an existing Linux VM, set the options of the three Ubuntu lines in `/etc/apt/sources.list` to `[signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg]`.

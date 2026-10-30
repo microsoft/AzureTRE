@@ -22,4 +22,4 @@ The Logic App keeps its runtime state and its files in the core storage account 
 
 Terraform creates the content share `airlock-notifier-content-<tre_id>` before the Logic App. Before version 1.0.15, the platform created the content share `airlock-notifier-app-<tre_id>-content` outside Terraform. The upgrade to 1.0.15 deploys the workflow to the new share. After the upgrade, you can delete the earlier share.
 
-If you upgrade the core to version 0.18.16 or later, upgrade the notifier to 1.0.15 directly after the core. Azure mounts the content share of earlier notifier versions over the public network, and the storage account no longer accepts this traffic. A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade.
+If you upgrade the core to version 0.18.17 or later, upgrade the notifier to 1.0.15 directly after the core. Azure mounts the content share of earlier notifier versions over the public network, and the storage account no longer accepts this traffic. A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade.

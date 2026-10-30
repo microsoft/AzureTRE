@@ -36,7 +36,7 @@ resource "azurerm_storage_account" "gitea" {
   lifecycle { ignore_changes = [infrastructure_encryption_enabled, tags] }
 }
 
-# Before version 1.3.8, a separate resource managed the network rules. A destroy of that resource
+# Before version 2.0.1, a separate resource managed the network rules. A destroy of that resource
 # changes the rules of the account, so Terraform only removes it from the state.
 removed {
   from = azurerm_storage_account_network_rules.stgrules
