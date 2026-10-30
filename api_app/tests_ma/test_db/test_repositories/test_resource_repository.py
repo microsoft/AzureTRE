@@ -12,7 +12,7 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from tests_ma.test_api.conftest import create_test_user
 
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, masked_property_paths, set_masked_values
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.resource import Resource
 from models.domain.resource_template import ResourceTemplate
@@ -367,7 +367,9 @@ async def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resour
 @patch("db.repositories.resources_history.ResourceHistoryRepository.save_item", return_value=AsyncMock())
 @patch("db.repositories.resources.ResourceRepository.validate_patch")
 @patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-async def test_patch_resource_preserves_property_history(_, __, ___, resource_repo, resource_history_repo):
+async def test_patch_resource_preserves_property_history(
+    _, __, ___, resource_repo, resource_history_repo, basic_resource_template
+):
     """
     Tests that properties are copied into a history array and only certain values in the root are updated
     """
@@ -386,7 +388,14 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
     await resource_repo.patch_resource(
-        resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE
+        resource,
+        resource_patch,
+        basic_resource_template,
+        etag,
+        None,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE,
     )
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
@@ -399,9 +408,134 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.user = user.model_dump()
 
     await resource_repo.patch_resource(
-        new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE
+        new_resource,
+        new_patch,
+        basic_resource_template,
+        etag,
+        None,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE,
     )
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
+
+
+def template_with_secret(template: ResourceTemplate) -> ResourceTemplate:
+    template = template.model_copy(deep=True)
+    template.properties["client_secret"] = {"type": "string", "sensitive": True, "updateable": True}
+    return template
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_stores_a_placeholder_for_sensitive_values(_, __, resource_repo, basic_resource_template):
+    resource_repo.update_item_with_etag = AsyncMock()
+    history_repo = AsyncMock()
+    resource = sample_resource()
+    # A document that an update wrote before the update path masked sensitive values.
+    resource.properties["client_secret"] = "earlier value"
+    resource_patch = ResourcePatch(properties={"client_secret": "new value"})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        template_with_secret(basic_resource_template),
+        "etag",
+        None,
+        history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    stored = resource_repo.update_item_with_etag.await_args.args[0]
+    assert stored.properties["client_secret"] == strings.REDACTED_SENSITIVE_VALUE
+    assert stored.properties["display_name"] == "initial display name"
+    # The caller builds the request message from the returned resource.
+    assert returned.properties["client_secret"] == "new value"
+    history_item = history_repo.create_resource_history_item.await_args.args[0]
+    assert history_item.properties["client_secret"] == strings.REDACTED_SENSITIVE_VALUE
+
+
+def stored_resource(resource_id, template_name, resource_type, properties, **fields):
+    return {
+        "id": resource_id,
+        "templateName": template_name,
+        "templateVersion": "1.0.0",
+        "resourceType": resource_type,
+        "properties": properties,
+        **fields,
+    }
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_repo, basic_resource_template):
+    template = template_with_secret(basic_resource_template)
+    resource_repo._container = AsyncMock()
+    resource_repo.query = AsyncMock(
+        return_value=[
+            stored_resource("ws", "workspace-template", "workspace", {"client_secret": "real", "display_name": "n"}),
+            stored_resource("ws-2", "workspace-template", "workspace", {"client_secret": "REDACTED"}),
+            stored_resource("svc", "service-template", "workspace-service", {}),
+            stored_resource(
+                "ur", "user-template", "user-resource", {"client_secret": "real"}, parentWorkspaceServiceId="svc"
+            ),
+            stored_resource("old", "removed-template", "workspace", {"client_secret": "real"}),
+        ]
+    )
+
+    async def get_template(name, version, resource_type, parent_service_name=None):
+        if name == "removed-template":
+            raise EntityDoesNotExist
+        return template
+
+    template_repo = AsyncMock()
+    template_repo.get_template_by_name_and_version.side_effect = get_template
+    history_repo = MagicMock()
+    history_repo.container = AsyncMock()
+    history_repo.query = AsyncMock(
+        return_value=[
+            {"id": "h-1", "resourceId": "ws", "templateVersion": "0.9.0", "properties": {"client_secret": "older"}},
+            {"id": "h-2", "resourceId": "ws", "properties": {"client_secret": "REDACTED"}},
+            {"id": "h-3", "resourceId": "deleted-from-resources", "properties": {"client_secret": "older"}},
+        ]
+    )
+
+    result = await resource_repo.mask_stored_sensitive_values(template_repo, history_repo)
+
+    assert result == (2, 1)
+    set_secret = [{"op": "set", "path": "/properties/client_secret", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    assert [call.kwargs for call in resource_repo.container.patch_item.await_args_list] == [
+        {"item": "ws", "partition_key": "ws", "patch_operations": set_secret},
+        {"item": "ur", "partition_key": "ur", "patch_operations": set_secret},
+    ]
+    # The history container uses the resource ID as its partition key.
+    history_repo.container.patch_item.assert_awaited_once_with(
+        item="h-1", partition_key="ws", patch_operations=set_secret
+    )
+    template_repo.get_template_by_name_and_version.assert_any_await(
+        "user-template", "1.0.0", ResourceType.UserResource, "service-template"
+    )
+    template_repo.get_template_by_name_and_version.assert_any_await(
+        "workspace-template", "0.9.0", ResourceType.Workspace, None
+    )
+
+
+def test_masked_property_paths_escape_nested_names():
+    properties = {"settings": {"a/b": "real", "c~d": "real", "plain": "x"}}
+    masked = {"settings": {"a/b": "REDACTED", "c~d": "REDACTED", "plain": "x"}}
+
+    assert masked_property_paths(properties, masked) == ["/properties/settings/a~1b", "/properties/settings/c~0d"]
+
+
+@pytest.mark.asyncio
+async def test_set_masked_values_sends_at_most_ten_operations_in_each_request():
+    container = AsyncMock()
+    paths = [f"/properties/secret_{index}" for index in range(11)]
+
+    await set_masked_values(container, "item", "partition", paths)
+
+    assert [len(call.kwargs["patch_operations"]) for call in container.patch_item.await_args_list] == [10, 1]
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.enrich_template")

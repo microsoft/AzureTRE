@@ -743,7 +743,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_patches_workspace(
         self, _, __, update_item_mock, ___, ____, _____, _______, app, client
@@ -778,7 +781,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_upgrade_major_version_returns_bad_request(
         self, _, __, update_item_mock, ___, ____, _____, ______, app, client
@@ -852,7 +858,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_downgrade_version_returns_bad_request(
         self, _, __, update_item_mock, ___, ____, _____, ______, app, client
@@ -924,7 +933,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch(
         "api.routes.workspaces.WorkspaceRepository.update_item_with_etag", side_effect=CosmosAccessConditionFailedError
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspace_returns_409_if_bad_etag(
         self, _, __, update_item_mock, ___, ____, _____, app, client
@@ -1637,7 +1649,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         "api.routes.resource_helpers.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
@@ -2081,7 +2096,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         "api.routes.workspaces.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
         return_value=sample_workspace_service(),
@@ -2824,7 +2842,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         "api.routes.resource_helpers.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",

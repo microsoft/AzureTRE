@@ -19,15 +19,25 @@ pytestmark = pytest.mark.asyncio
 
 RESOURCE_ID = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 MESSAGE_ID = f"{OPERATION_ID}:random-uuid"
-AWAITING = {"upgrade": Status.AwaitingUpdate, "uninstall": Status.AwaitingDeletion, "start": Status.AwaitingAction}
+AWAITING = {
+    "install": Status.AwaitingDeployment,
+    "upgrade": Status.AwaitingUpdate,
+    "uninstall": Status.AwaitingDeletion,
+    "start": Status.AwaitingAction,
+}
 
 
-def pending_document(action="install", status=Status.AwaitingDeployment):
+def pending_document(action="install", status=Status.AwaitingDeployment, sensitive_values=False):
     operation = create_sample_operation(RESOURCE_ID, action)
     operation.steps[0].status = status
     document = operation.model_dump()
     document["_etag"] = "etag"
-    document[PENDING_DISPATCH] = {"stepId": "random-uuid", "messageId": MESSAGE_ID, "createdWhen": 1.0}
+    document[PENDING_DISPATCH] = {
+        "stepId": "random-uuid",
+        "messageId": MESSAGE_ID,
+        "createdWhen": 1.0,
+        "sensitiveValues": sensitive_values,
+    }
     return document
 
 
@@ -95,26 +105,49 @@ async def test_a_step_with_a_status_only_clears_the_entry(update_mock, send_mock
     updater.operations_repo.clear_pending_dispatch.assert_awaited_once_with(OPERATION_ID, MESSAGE_ID)
 
 
+@pytest.mark.parametrize(
+    "action, status, failed",
+    [
+        ("install", Status.AwaitingDeployment, Status.DeploymentFailed),
+        ("upgrade", Status.AwaitingUpdate, Status.UpdatingFailed),
+    ],
+)
 @patch("service_bus.deployment_status_updater.send_deployment_message")
 @patch("service_bus.deployment_status_updater.update_resource_for_step")
-async def test_sensitive_values_of_an_install_fail_the_step(update_mock, send_mock, updater):
-    update_mock.return_value = workspace({"settings": {"secret": strings.REDACTED_SENSITIVE_VALUE}})
+async def test_a_first_message_with_sensitive_values_fails_the_step(
+    update_mock, send_mock, updater, action, status, failed
+):
+    # The API built that message from the resource in memory. Cosmos DB has only the placeholder.
+    await updater.resend_pending_dispatch(pending_document(action=action, status=status, sensitive_values=True))
 
-    await updater.resend_pending_dispatch(pending_document())
-
+    update_mock.assert_not_awaited()
     send_mock.assert_not_awaited()
     operation = updater.operations_repo.update_item.await_args.args[0]
-    assert operation.steps[0].status == Status.DeploymentFailed
+    assert operation.steps[0].status == failed
     assert operation.steps[0].message == NOT_SENT_WITH_SENSITIVE_VALUES
-    assert operation.status == Status.DeploymentFailed
-    assert updater.resource_repo.update_item.await_args.args[0].deploymentStatus == Status.DeploymentFailed
+    assert operation.status == failed
+    assert updater.resource_repo.update_item.await_args.args[0].deploymentStatus == failed
 
 
-@pytest.mark.parametrize("action", ["upgrade", "uninstall", "start"])
 @patch("service_bus.deployment_status_updater.send_deployment_message")
 @patch("service_bus.deployment_status_updater.update_resource_for_step")
-async def test_other_requests_send_the_placeholder_as_the_first_send_did(update_mock, send_mock, updater, action):
-    # The API builds these requests from Cosmos DB, so the first send also had the placeholder.
+async def test_sensitive_values_of_another_resource_do_not_stop_the_send(update_mock, send_mock, updater):
+    # The API builds the message of a step for another resource from Cosmos DB, so a resend has the same values.
+    document = pending_document(sensitive_values=True)
+    document["steps"][0]["resourceId"] = "another-resource"
+    update_mock.return_value = workspace({"display_name": "name"})
+
+    await updater.resend_pending_dispatch(document)
+
+    send_mock.assert_awaited_once()
+    updater.operations_repo.update_item.assert_not_awaited()
+
+
+@pytest.mark.parametrize("action", ["install", "upgrade", "uninstall", "start"])
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_resend_without_sensitive_values_sends_the_placeholder(update_mock, send_mock, updater, action):
+    # The first message had no real sensitive values, so it had the same placeholder as Cosmos DB.
     update_mock.return_value = workspace({"settings": {"secret": strings.REDACTED_SENSITIVE_VALUE}})
 
     await updater.resend_pending_dispatch(pending_document(action=action, status=AWAITING[action]))

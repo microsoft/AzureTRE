@@ -63,6 +63,9 @@ BUG FIXES:
   (`core` 0.18.17, `resource_processor` 0.13.16, `api` 0.28.10) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes. An install with sensitive values fails with a clear message, because the API does not store these values.
   (`api` 0.28.10) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+* Store a placeholder for each sensitive property when the API saves an update of a resource, as it already does at the install. The new value goes to the resource processor only in the request message.
+  Before this change, an update stored the new value of a sensitive property, for example the `client_secret` of a workspace, in Cosmos DB and in the resource history. API responses with the resource properties then included this value.
+  A database migration replaces the values that earlier updates stored. (`api` 0.28.10)
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))

@@ -1,10 +1,10 @@
 import copy
 import semantic_version
 from datetime import datetime, UTC
-from typing import Optional, Tuple, List
+from typing import Any, Dict, Optional, Tuple, List
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from resources.strings import RESOURCE_ACTION_INSTALL
+from resources.strings import RESOURCE_ACTION_INSTALL, REDACTED_SENSITIVE_VALUE
 from core import config
 from db.errors import (
     VersionDowngradeDenied,
@@ -28,12 +28,82 @@ from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
 from pydantic import UUID4, TypeAdapter
+from services.logging import logger
 
 
 # Keep Draft 7 keyword semantics while enforcing TRE's restriction on extra fields.
 Draft7TREValidator = extend(
     Draft7Validator, {"unevaluatedProperties": Draft202012Validator.VALIDATORS["unevaluatedProperties"]}
 )
+
+
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
+    updated_resource_parameters = copy.deepcopy(properties)
+
+    flattened_template_props = {}
+
+    # recusrse the template and flatten all properties into a list
+    def flatten_template_props(template_fragment: dict):
+        if template_fragment is None:
+            return
+
+        for prop_name, prop in template_fragment.items():
+            if prop_name == "pipeline":
+                continue
+
+            if prop_name == "properties" and template_fragment["properties"] is not None:
+                for inner_prop_name, inner_prop in template_fragment["properties"].items():
+                    flattened_template_props[inner_prop_name] = inner_prop
+
+            if isinstance(prop, list) and len(prop) > 0:
+                for p in prop:
+                    if isinstance(p, dict):
+                        flatten_template_props(p)
+
+            if isinstance(prop, dict) and prop_name != "if":
+                flatten_template_props(prop)
+
+    flatten_template_props(template.model_dump())
+
+    def recurse_input_props(prop_dict: dict):
+        for prop_name, prop in prop_dict.items():
+            if (
+                prop_name in flattened_template_props
+                and "sensitive" in flattened_template_props[prop_name]
+                and flattened_template_props[prop_name]["sensitive"] is True
+            ):
+                prop_dict[prop_name] = REDACTED_SENSITIVE_VALUE
+            if isinstance(prop, dict):
+                recurse_input_props(prop)
+
+    recurse_input_props(updated_resource_parameters)
+
+    return updated_resource_parameters
+
+
+def masked_property_paths(properties: dict, masked: dict, path: Optional[List[str]] = None) -> List[str]:
+    """Return a JSON pointer for each value that mask_sensitive_properties changed."""
+    path = path or ["properties"]
+    paths = []
+    for key, value in masked.items():
+        original = properties.get(key)
+        if isinstance(value, dict) and isinstance(original, dict):
+            paths += masked_property_paths(original, value, path + [key])
+        elif value != original:
+            paths.append("".join("/" + part.replace("~", "~0").replace("/", "~1") for part in path + [key]))
+    return paths
+
+
+async def set_masked_values(container, item_id: str, partition_key: str, paths: List[str]):
+    # Cosmos DB accepts at most 10 operations in one patch request.
+    for start in range(0, len(paths), 10):
+        await container.patch_item(
+            item=item_id,
+            partition_key=partition_key,
+            patch_operations=[
+                {"op": "set", "path": path, "value": REDACTED_SENSITIVE_VALUE} for path in paths[start : start + 10]
+            ],
+        )
 
 
 class ResourceRepository(BaseRepository):
@@ -198,7 +268,10 @@ class ResourceRepository(BaseRepository):
         resource_action: str,
         force_version_update: bool = False,
     ) -> Tuple[Resource, ResourceTemplate]:
-        await resource_history_repo.create_resource_history_item(resource)
+        # A document from before the masking of updates can still have real sensitive values.
+        history_resource = copy.deepcopy(resource)
+        history_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
+        await resource_history_repo.create_resource_history_item(history_resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
         resource.user = user.model_dump() if hasattr(user, "model_dump") else user
@@ -219,8 +292,66 @@ class ResourceRepository(BaseRepository):
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
 
-        await self.update_item_with_etag(resource, etag)
+        # Cosmos DB keeps sensitive values as a placeholder, as at the install. The returned resource keeps the
+        # real values, because the caller builds the request message from it.
+        masked_resource = copy.deepcopy(resource)
+        masked_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
+        await self.update_item_with_etag(masked_resource, etag)
         return resource, resource_template
+
+    async def mask_stored_sensitive_values(
+        self, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository
+    ) -> Tuple[int, int]:
+        """Replace each real sensitive value that an earlier update stored with the placeholder.
+
+        Returns the number of resource documents and history items that changed. A second run changes nothing.
+        """
+        resources = {resource["id"]: resource for resource in await self.query(query="SELECT * FROM c")}
+        templates = {}
+
+        async def template_for(resource: dict, version: str) -> Optional[ResourceTemplate]:
+            resource_type = ResourceType(resource["resourceType"])
+            parent_service_name = None
+            if resource_type == ResourceType.UserResource:
+                parent = resources.get(resource.get("parentWorkspaceServiceId"))
+                if parent is None:
+                    logger.warning(f"No parent workspace service for user resource {resource['id']}")
+                    return None
+                parent_service_name = parent["templateName"]
+            key = (resource["templateName"], version, resource_type, parent_service_name)
+            if key not in templates:
+                try:
+                    templates[key] = await resource_template_repo.get_template_by_name_and_version(*key)
+                except EntityDoesNotExist:
+                    logger.warning(
+                        f"No template {resource['templateName']} {version} to mask resource {resource['id']}"
+                    )
+                    templates[key] = None
+            return templates[key]
+
+        async def mask(item: dict, template: Optional[ResourceTemplate], container, partition_key: str) -> bool:
+            if template is None:
+                return False
+            properties = item.get("properties") or {}
+            paths = masked_property_paths(properties, mask_sensitive_properties(properties, template))
+            if paths:
+                await set_masked_values(container, item["id"], partition_key, paths)
+            return bool(paths)
+
+        changed_resources = 0
+        for resource in resources.values():
+            template = await template_for(resource, resource["templateVersion"])
+            changed_resources += await mask(resource, template, self.container, resource["id"])
+
+        changed_history_items = 0
+        for item in await resource_history_repo.query(query="SELECT * FROM c"):
+            resource = resources.get(item.get("resourceId"))
+            if resource is None:
+                continue
+            template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
+            changed_history_items += await mask(item, template, resource_history_repo.container, item["resourceId"])
+
+        return changed_resources, changed_history_items
 
     async def get_resource_dependency_list(self, resource: Resource) -> List:
         # Get the parent resource path and id

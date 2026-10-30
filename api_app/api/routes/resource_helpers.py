@@ -1,14 +1,14 @@
 from datetime import datetime, UTC
 import semantic_version
 from copy import deepcopy
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, mask_sensitive_properties
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
@@ -124,50 +124,6 @@ async def save_and_deploy_resource(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
         )
-
-
-def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
-    updated_resource_parameters = deepcopy(properties)
-
-    flattened_template_props = {}
-
-    # recusrse the template and flatten all properties into a list
-    def flatten_template_props(template_fragment: dict):
-        if template_fragment is None:
-            return
-
-        for prop_name, prop in template_fragment.items():
-            if prop_name == "pipeline":
-                continue
-
-            if prop_name == "properties" and template_fragment["properties"] is not None:
-                for inner_prop_name, inner_prop in template_fragment["properties"].items():
-                    flattened_template_props[inner_prop_name] = inner_prop
-
-            if isinstance(prop, list) and len(prop) > 0:
-                for p in prop:
-                    if isinstance(p, dict):
-                        flatten_template_props(p)
-
-            if isinstance(prop, dict) and prop_name != "if":
-                flatten_template_props(prop)
-
-    flatten_template_props(template.model_dump())
-
-    def recurse_input_props(prop_dict: dict):
-        for prop_name, prop in prop_dict.items():
-            if (
-                prop_name in flattened_template_props
-                and "sensitive" in flattened_template_props[prop_name]
-                and flattened_template_props[prop_name]["sensitive"] is True
-            ):
-                prop_dict[prop_name] = strings.REDACTED_SENSITIVE_VALUE
-            if isinstance(prop, dict):
-                recurse_input_props(prop)
-
-    recurse_input_props(updated_resource_parameters)
-
-    return updated_resource_parameters
 
 
 def construct_location_header(operation: Operation) -> str:

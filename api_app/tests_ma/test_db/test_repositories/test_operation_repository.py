@@ -9,6 +9,7 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.operation import Status
 from db.repositories.resources import ResourceRepository
 from db.repositories.operations import OperationRepository
+from resources import strings
 from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIMESTAMP
 
 RESOURCE_ID = str(uuid.uuid4())
@@ -85,8 +86,42 @@ async def test_create_operation_steps_from_multi_step_template(
             "stepId": "random-uuid-1",
             "messageId": f"{OPERATION_ID}:random-uuid-1",
             "createdWhen": FAKE_CREATE_TIMESTAMP,
+            "sensitiveValues": False,
         },
     }
+
+
+@pytest.mark.parametrize("value, expected", [("real value", True), (strings.REDACTED_SENSITIVE_VALUE, False)])
+@patch("db.repositories.operations.OperationRepository.get_timestamp", return_value=FAKE_CREATE_TIMESTAMP)
+@patch("db.repositories.operations.OperationRepository.create_operation_id", return_value=OPERATION_ID)
+async def test_pending_entry_records_sensitive_values_of_the_first_message(
+    _, __, value, expected, operations_repo, resource_repo, resource_template_repo, test_user, basic_resource_template
+):
+    template = basic_resource_template.model_copy(deep=True)
+    template.properties["client_secret"] = {"type": "string", "sensitive": True, "updateable": True}
+    operations_repo.save_item_dict = AsyncMock()
+    resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=template)
+    resource = {
+        "id": RESOURCE_ID,
+        "templateName": template.name,
+        "templateVersion": template.version,
+        "resourceType": "workspace",
+        "properties": {"display_name": "name", "client_secret": value},
+    }
+
+    await operations_repo.create_operation_item(
+        resource_id=RESOURCE_ID,
+        resource_list=[resource],
+        action="upgrade",
+        resource_path=f"/workspaces/{RESOURCE_ID}",
+        resource_version=1,
+        user=test_user,
+        resource_repo=resource_repo,
+        resource_template_repo=resource_template_repo,
+    )
+
+    document = operations_repo.save_item_dict.await_args.args[0]
+    assert document["pendingDispatch"]["sensitiveValues"] is expected
 
 
 @pytest_asyncio.fixture

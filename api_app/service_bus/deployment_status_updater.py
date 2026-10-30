@@ -36,14 +36,6 @@ NOT_SENT_BEFORE_A_LATER_REQUEST = (
 )
 
 
-def contains_redacted_value(value) -> bool:
-    if isinstance(value, dict):
-        return any(contains_redacted_value(item) for item in value.values())
-    if isinstance(value, list):
-        return any(contains_redacted_value(item) for item in value)
-    return value == strings.REDACTED_SENSITIVE_VALUE
-
-
 class DeploymentStatusUpdater:
     def __init__(self):
         pass
@@ -163,6 +155,14 @@ class DeploymentStatusUpdater:
             await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST)
             return
 
+        # The API built the first message of the request from the resource in memory, with the real sensitive
+        # values. Cosmos DB keeps a placeholder for each, so the updater cannot build that message again. The API
+        # builds all other messages from Cosmos DB, so a resend has the same values as the first send.
+        if pending.get("sensitiveValues") and step.resourceId == operation.resourceId:
+            logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
+            await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)
+            return
+
         try:
             resource_to_send = await update_resource_for_step(
                 operation_step=step,
@@ -181,14 +181,6 @@ class DeploymentStatusUpdater:
         except Exception as e:
             logger.exception(f"Unable to build the pending message of operation {operation.id}")
             await self.fail_pending_step(operation, step, repr(e))
-            return
-
-        # The first message of an install has the real sensitive values, but Cosmos DB keeps a placeholder. Other
-        # requests are built from Cosmos DB, so they send the same values as the first send.
-        first_install = operation.action == RequestAction.Install and step.resourceId == operation.resourceId
-        if first_install and contains_redacted_value(payload["parameters"]):
-            logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
-            await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)
             return
 
         logger.info(f"Sending the pending first step message of operation {operation.id}, step {step.id}")

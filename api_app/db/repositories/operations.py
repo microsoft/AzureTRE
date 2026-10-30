@@ -10,7 +10,7 @@ from db.repositories.resource_templates import ResourceTemplateRepository
 from resources import strings
 from models.domain.request_action import RequestAction
 from models.domain.resource import ResourceType
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, mask_sensitive_properties
 from models.domain.authentication import User
 from core import config
 from db.repositories.base import BaseRepository
@@ -121,6 +121,7 @@ class OperationRepository(BaseRepository):
         # get the right "awaiting" message based on the action
         status, message = self.get_initial_status(action)
         all_steps = []
+        sensitive_values = False
         for resource in resource_list:
             name = resource["templateName"]
             version = resource["templateVersion"]
@@ -134,6 +135,11 @@ class OperationRepository(BaseRepository):
             resource_template = await resource_template_repo.get_template_by_name_and_version(
                 name, version, resource_type, primary_parent_service_name
             )
+            if resource["id"] == resource_id:
+                # The API builds the first message from this resource, which can have real sensitive values.
+                # Cosmos DB keeps a placeholder for each of them.
+                properties = resource.get("properties") or {}
+                sensitive_values = mask_sensitive_properties(properties, resource_template) != properties
             resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document
             steps = await self.build_step_list(
@@ -182,6 +188,7 @@ class OperationRepository(BaseRepository):
             "stepId": all_steps[0].id,
             "messageId": self.dispatch_message_id(operation_id, all_steps[0].id),
             "createdWhen": timestamp,
+            "sensitiveValues": sensitive_values,
         }
         await self.save_item_dict(document)
         return operation

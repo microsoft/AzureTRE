@@ -243,7 +243,10 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         "api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id",
         return_value=sample_shared_service(SHARED_SERVICE_ID),
     )
-    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_shared_service(),
+    )
     @patch(
         "api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service()
     )
@@ -357,7 +360,10 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         "api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id",
         return_value=sample_shared_service(SHARED_SERVICE_ID),
     )
-    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_shared_service(),
+    )
     @patch(
         "api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service()
     )
@@ -392,7 +398,10 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         "api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id",
         return_value=sample_shared_service(SHARED_SERVICE_ID),
     )
-    @patch("api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.shared_services.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_shared_service(),
+    )
     @patch(
         "api.routes.shared_services.SharedServiceRepository.update_item_with_etag", return_value=sample_shared_service()
     )
