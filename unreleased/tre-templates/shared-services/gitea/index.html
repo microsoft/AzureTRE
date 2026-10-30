@@ -2234,6 +2234,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#upgrading-to-version-126" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading to version 1.2.6
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4718,6 +4729,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#upgrading-to-version-126" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading to version 1.2.6
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4789,6 +4811,24 @@
 </table>
 <h2 id="upgrading-to-version-100">Upgrading to version 1.0.0</h2>
 <p>Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.</p>
+<h2 id="upgrading-to-version-126">Upgrading to version 1.2.6</h2>
+<p>Before version 1.2.6, the Gitea shared service wrote secrets to the console log of its web app. The web app sends this log to the Log Analytics workspace of the TRE core, so all people who can read it can read these secrets:</p>
+<ul>
+<li>An access token of the <code>giteaadmin</code> user, with the name <code>gitea-admin</code>. Gitea printed it at the first start.</li>
+<li>The password of the <code>giteaadmin</code> user. Gitea printed it at each later start, because the user create failed.</li>
+</ul>
+<p>If a Gitea shared service ran an earlier version, do these steps after the upgrade:</p>
+<ol>
+<li>Sign in to Gitea as <code>giteaadmin</code>. In the user settings, open Applications and delete the access token <code>gitea-admin</code>. Keep the token with the name <code>giteaadmin</code>, because <code>gitea_migrate_repo.sh</code> uses it.</li>
+<li>If the people who can read Log Analytics must not get admin access to Gitea, change the password of <code>giteaadmin</code> in Gitea. Keep the new password in a safe location. The Key Vault secret <code>gitea-&lt;TRE_ID&gt;-administrator-password</code> keeps the old value, because the start script does not change the password of an existing admin user.</li>
+<li>If you changed the password, <code>gitea_migrate_repo.sh</code> cannot make a new access token, because it signs in with the old password from the Key Vault:
+    - Do not set the Key Vault secret <code>gitea-&lt;TRE_ID&gt;-admin-token</code> to <code>null</code>.
+    - Do not write the new password to <code>gitea-&lt;TRE_ID&gt;-administrator-password</code>. The next update of the service writes the old value back.
+    - To replace the token, make it with the new password on the jumpbox, and store it in the Key Vault. <code>curl</code> asks for the password:<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span>-u<span class="w"> </span>giteaadmin<span class="w"> </span>-d<span class="w"> </span><span class="s1">'{"name": "giteaadmin-&lt;date&gt;"}'</span><span class="w"> </span>https://gitea-&lt;TRE_ID&gt;.azurewebsites.net/api/v1/users/giteaadmin/tokens
+az<span class="w"> </span>keyvault<span class="w"> </span>secret<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--name<span class="w"> </span>gitea-&lt;TRE_ID&gt;-admin-token<span class="w"> </span>--vault-name<span class="w"> </span>kv-&lt;TRE_ID&gt;<span class="w"> </span>--value<span class="w"> </span>&lt;sha1<span class="w"> </span>value<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>response&gt;
+</code></pre></div>
+</li>
+</ol>
 
 
 

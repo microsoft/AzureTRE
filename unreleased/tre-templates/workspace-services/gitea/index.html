@@ -1895,6 +1895,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#upgrading-to-version-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading to version 2.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrading to version 2.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repositories-on-the-file-share" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repositories on the file share
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets-in-the-console-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets in the console log
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repairing-a-service-that-cannot-reach-its-file-share" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repairing a service that cannot reach its file share
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4618,6 +4668,56 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#upgrading-to-version-200" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading to version 2.0.0
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrading to version 2.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repositories-on-the-file-share" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repositories on the file share
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets-in-the-console-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets in the console log
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repairing-a-service-that-cannot-reach-its-file-share" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repairing a service that cannot reach its file share
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4663,6 +4763,51 @@
 </ol>
 <h2 id="upgrading-to-version-100">Upgrading to version 1.0.0</h2>
 <p>Migrating existing Gitea services to the major version 1.0.0 is not currently supported. This is due to the breaking change in the Terraform to migrate from the deprecated mysql_server to the new mysql_flexible_server.</p>
+<h2 id="upgrading-to-version-200">Upgrading to version 2.0.0</h2>
+<p>Version 2.0.0 is a major version, because the upgrade needs the steps below. The TRE blocks the upgrade until you use a <a href="../../../tre-admins/upgrading-resources/#force-version-update">force version update</a>.</p>
+<h3 id="repositories-on-the-file-share">Repositories on the file share</h3>
+<p>Before version 2.0.0, Gitea kept the Git repositories on the container disk of the web app. Each restart of the app deleted them, but MySQL kept their records. From version 2.0.0, the repositories are on the <code>gitea-data</code> file share. The upgrade restarts the app, so the repositories on the container disk are lost.
+The issues, pull requests and releases stay in MySQL, and the LFS files stay on the file share.</p>
+<p>To keep the repositories, do these steps from a workspace VM:</p>
+<ol>
+<li>Clone each repository that you want to keep with <code>git clone --mirror &lt;repository URL&gt;</code>.</li>
+<li>If a repository has a wiki, also clone its wiki with <code>git clone --mirror &lt;wiki URL&gt;</code>. The wiki URL ends in <code>.wiki.git</code> in place of <code>.git</code>.</li>
+<li>Upgrade the workspace service.</li>
+<li>In Gitea, open Site Administration, then Dashboard. Run "Reinitialize all missing Git repositories for which records exist".</li>
+<li>Push each mirror into the same repository with <code>git push --mirror &lt;repository URL&gt;</code>.</li>
+<li>For each wiki, create one page in Gitea. Then push the wiki mirror with <code>git push --mirror &lt;wiki URL&gt;</code>.</li>
+</ol>
+<p>Do not run "Delete all repositories missing their Git files". This task also deletes the records of the repositories, for example their issues and pull requests.</p>
+<h3 id="secrets-in-the-console-log">Secrets in the console log</h3>
+<p>Before version 2.0.0, the Gitea workspace service wrote secrets to the console log of its web app. The web app sends this log to Log Analytics, so all people who can read the Log Analytics workspace of the TRE can read these secrets:</p>
+<ul>
+<li>The client secret of the workspace application.</li>
+<li>The password of the Gitea admin user.</li>
+<li>An access token of the Gitea admin user, with the name <code>gitea-admin</code>.</li>
+</ul>
+<p>If a Gitea workspace service ran an earlier version, do these steps after the upgrade:</p>
+<ol>
+<li>Make a new client secret for the workspace application:
+    - If Terraform registered the workspace application (<code>register_aad_application</code> is <code>true</code>), the client secret is a password of its service principal, not of the app registration. The Microsoft Entra admin center does not show it. Do these steps:
+        1. List the passwords of the service principal with <code>az rest --method GET --url "https://graph.microsoft.com/v1.0/servicePrincipals(appId='&lt;client ID&gt;')" --query "passwordCredentials[].{keyId:keyId,hint:hint}"</code>.
+        2. Find the password whose <code>hint</code> is the same as the first three characters of the workspace Key Vault secret <code>workspace-client-secret</code>.
+        3. Remove it with <code>az rest --method POST --url "https://graph.microsoft.com/v1.0/servicePrincipals(appId='&lt;client ID&gt;')/removePassword" --body '{"keyId": "&lt;key ID&gt;"}'</code>.
+        4. Update the workspace. Terraform makes a new password and writes it to <code>workspace-client-secret</code>.
+    - If you registered the workspace application, add a new client secret in Microsoft Entra ID. Write the new value to the workspace Key Vault secret <code>workspace-client-secret</code>. You need a role that can set secrets and network access to the Key Vault. Then delete the old client secret.</li>
+<li>Update each Guacamole and OHDSI workspace service in the workspace. These services use the version of the secret that was current when they deployed.</li>
+<li>Make the Gitea web app read the new client secret from the Key Vault. Send a POST request to <code>https://management.azure.com/&lt;web app resource ID&gt;/config/configreferences/appsettings/refresh?api-version=2022-03-01</code>, for example with <code>az rest</code>.</li>
+<li>Restart the Gitea web app. At the start, the start script gives the OIDC source the new client secret. Then it stops Gitea one time, and App Service starts it again with the new secret.</li>
+<li>Sign in to Gitea as the admin user. In the user settings, open Applications and delete the access token <code>gitea-admin</code>.</li>
+<li>If the people who can read Log Analytics must not get admin access to Gitea, change the password of the admin user in Gitea. Keep the new password in a safe location. The Key Vault secret <code>&lt;web app name&gt;-administrator-password</code> keeps the old value, because the start script does not change the password of an existing admin user.</li>
+</ol>
+<p>From version 2.0.0, the start script keeps a hash of the OIDC settings on the file share. If the settings change, the script stops Gitea one time, because Gitea reads them only at its start. The first start after the upgrade also does this, because the hash does not exist yet.</p>
+<h2 id="repairing-a-service-that-cannot-reach-its-file-share">Repairing a service that cannot reach its file share</h2>
+<p>Before version 2.0.0, Terraform used the file endpoint of the Gitea storage account to manage the <code>gitea-data</code> share. If a delete removed the private endpoint of the account and then failed, each later update or delete of the service fails with <code>executing request: Get "https://stgsvc&lt;id&gt;.file.core.windows.net/gitea-data?restype=share": EOF</code>.</p>
+<p>If you want to delete such a service:</p>
+<ol>
+<li>Delete the storage account <code>stgsvc&lt;id&gt;</code> in the workspace resource group. This deletes the Gitea data on the share.</li>
+<li>Delete the workspace service again. Terraform removes the share from its state, because the account does not exist.</li>
+</ol>
 
 
 

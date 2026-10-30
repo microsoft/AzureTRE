@@ -3917,6 +3917,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gitea-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gitea selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#run-the-branch-workflow-before-merge" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4870,6 +4881,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gitea-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gitea selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#run-the-branch-workflow-before-merge" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5054,6 +5076,23 @@ The case writes a row through private DNS with the Burstable SKU. It then change
 The VM reads the administrator password from the workspace Key Vault through a temporary role assignment on that secret only.
 The MySQL job uses the SQL time limits above with its own <code>MYSQL_VALIDATION_DEADLINE</code>. If the case creates Nexus, it removes Nexus after the VM.
 These checks do not prove previous-version upgrades or researcher access.</p>
+<h3 id="gitea-selection">Gitea selection</h3>
+<p>Select <code>tre-workspace-service-gitea</code> to run <code>test_gitea.py::test_private_gitea_repository_survives_update</code>.
+The case creates its own workspace, Guacamole service, Windows VM and Gitea service.
+It gives the VM identity a temporary Key Vault Secrets User role on the secret that holds the Gitea admin password.
+From the VM, the case makes sure that the Gitea host resolves to a private address and that the Gitea API is available.
+It also makes sure that Gitea rejects a repository create without credentials (HTTP 401) and a request with a wrong password (HTTP 401).
+The VM then creates a private repository with the admin account and commits a file. An anonymous read of the repository gets HTTP 404.
+An update changes the display name. Then the case gives the web app a new OIDC client ID.
+The start script must stop Gitea one time for the new OIDC settings, and App Service must start it again.
+Then the case stops and starts the web app. The VM reads the file again and deletes the repository.
+Then the case makes sure that the web app resolves its three Key Vault references, for the admin password, the OIDC client secret and the database password.
+It also counts lines in the web app console log in the TRE Log Analytics workspace. No line can show a password, a client secret or a new access token.
+The count waits for the start script lines of the start after the stop, and then for two more minutes, because the lines of one start can arrive at different times.
+The last start has the same OIDC settings, so the log must show only one stop for the new OIDC settings.
+The query returns counts only. The CI identity needs read access to the Log Analytics workspace.
+At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
+The Gitea job uses the SQL time limits with its own <code>GITEA_VALIDATION_DEADLINE</code>.</p>
 <h3 id="run-the-branch-workflow-before-merge">Run the branch workflow before merge</h3>
 <ol>
 <li>Push the reviewed changes to a branch in <code>microsoft/AzureTRE</code>.</li>
