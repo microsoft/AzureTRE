@@ -1239,6 +1239,25 @@ async def test_a_lost_session_lock_at_completion_is_a_warning(
 
 
 @pytest.mark.asyncio
+@patch("vmss_porter.runner.run_step", return_value=True)
+async def test_a_session_lost_during_the_lease_wait_runs_no_porter(
+    mock_run_step, mock_service_bus_client, mock_execution_lease, mock_keep_renewed, mock_logger
+):
+    # Another worker can have the message now, and a later step for the resource can have finished.
+    client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
+    receiver.session.renew_lock.side_effect = SessionLockLostError()
+
+    await receive_message(
+        client, {"resource_request_queue": "q"}, AsyncMock(), keep_running=Mock(side_effect=[True, False])
+    )
+
+    mock_run_step.assert_not_awaited()
+    receiver.complete_message.assert_not_awaited()
+    assert "lost its session while it waited for the lease" in mock_logger.warning.call_args.args[0]
+    mock_logger.exception.assert_not_called()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "test_setting, running, paused", [(False, True, False), (True, False, False), (True, True, True)]
 )

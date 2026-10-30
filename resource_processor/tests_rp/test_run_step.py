@@ -166,7 +166,7 @@ async def test_only_an_upgrade_requires_the_installation(action, required):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("absent, porter_runs", [(True, False), (False, True)])
-async def test_an_upgrade_does_not_install_a_missing_resource(absent, porter_runs):
+async def test_an_upgrade_does_not_install_a_deleted_resource(absent, porter_runs):
     commands = []
 
     async def helper(command, config, *args, **kwargs):
@@ -186,7 +186,7 @@ async def test_an_upgrade_does_not_install_a_missing_resource(absent, porter_run
     assert (["porter", "installations", "apply"] in commands) is porter_runs
     if absent:
         assert code == 1
-        assert "An upgrade does not install a missing resource" in error
+        assert "An upgrade does not install a deleted resource" in error
     else:
         assert code == 0
 
@@ -199,7 +199,8 @@ def installation(installed=None, uninstalled=None, name="resource-1"):
 @pytest.mark.parametrize(
     "output, removed",
     [
-        ([], True),
+        # An install can fail before Porter writes a record. An upgrade can repair it.
+        ([], False),
         # Porter keeps the record after an uninstall, and `installations apply` then runs the install action.
         ([installation("2026-10-29T10:00:00.123456789Z", "2026-10-29T11:00:00.5Z")], True),
         ([installation(None, "2026-10-29T11:00:00Z")], True),

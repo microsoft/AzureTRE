@@ -30,7 +30,12 @@ from helpers import statuses
 from contextlib import asynccontextmanager
 from azure.core.exceptions import HttpResponseError
 from azure.servicebus import ServiceBusMessage, NEXT_AVAILABLE_SESSION
-from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError, SessionLockLostError
+from azure.servicebus.exceptions import (
+    OperationTimeoutError,
+    ServiceBusConnectionError,
+    ServiceBusError,
+    SessionLockLostError,
+)
 from azure.servicebus.aio import ServiceBusClient
 from azure.identity.aio import DefaultAzureCredential
 from azure.storage.blob.aio import ContainerClient
@@ -179,6 +184,16 @@ async def receive_message(service_bus_client, config: dict, executions: Containe
                                 async with execution_lease(
                                     executions, message["id"], lambda: step["text"]
                                 ) as execution:
+                                    # The session can end while the worker waits for the lease. Then Service Bus
+                                    # gives this message to another worker, and a later step for the resource can
+                                    # finish before this worker gets the lease. So run Porter only with the session.
+                                    try:
+                                        await session.renew_lock()
+                                    except ServiceBusError:
+                                        logger.warning(
+                                            f"The worker lost its session while it waited for the lease. Porter does not run for {step['text']}"
+                                        )
+                                        break
                                     step["running"] = True
                                     try:
                                         result = await run_step(message, execution, service_bus_client, config)
@@ -326,14 +341,14 @@ async def run_porter(
         if error:
             return (1, None, error)
 
-    # `porter installations apply` installs a missing or uninstalled installation. An upgrade must not create the
+    # `porter installations apply` installs an uninstalled installation. An upgrade must not create a deleted
     # resource again.
     if required_installation is not None and await _confirm_porter_installation_removed(required_installation, config):
         return (
             1,
             None,
-            f"Cannot upgrade resource '{required_installation}': Porter has no installation for it, "
-            "or its last successful action was an uninstall. An upgrade does not install a missing resource.",
+            f"Cannot upgrade resource '{required_installation}': the last successful action of its Porter "
+            "installation was an uninstall. An upgrade does not install a deleted resource.",
         )
 
     last_returncode = None
@@ -442,15 +457,15 @@ def _porter_time(value) -> Optional[datetime]:
 
 async def _confirm_porter_installation_removed(installation_id: str, config: dict) -> bool:
     """
-    Confirm that Porter has no installation, or that its last successful action was an uninstall.
+    Confirm that the last successful action of the Porter installation was an uninstall.
     Porter keeps the record of an uninstalled installation. A failed install has neither time, so an upgrade can repair it.
+    An install can also fail before Porter writes a record, for example at the sign-in or in an earlier pipeline step.
+    So no record proves nothing, and an upgrade can repair that install too.
     """
     installations = await _list_porter_installations(installation_id, config)
-    if installations == []:
-        return True
     matches = [item for item in installations or [] if item.get("name") == installation_id]
     if not matches:
-        # An unreadable store, or a list with other installations only, proves nothing.
+        # No record, an unreadable store, or a list with other installations only, proves nothing.
         return False
     status = matches[0].get("status") or {}
     uninstalled = _porter_time(status.get("uninstalled"))
