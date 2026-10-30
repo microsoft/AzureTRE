@@ -4,6 +4,8 @@ from unittest.mock import AsyncMock
 import uuid
 from pydantic import Field
 import pytest
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 from mock import patch
 
 from fastapi import status
@@ -677,6 +679,26 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Storage name availability check failed. Please try again." in response.text
+
+    @patch("api.routes.workspaces.logger")
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_400_without_the_submitted_values(
+        self, _, mock_create_workspace_item, logger_mock, app, client, workspace_input
+    ):
+        submitted = {"client_secret": "secret-value", "display_name": 5}
+        try:
+            validate(instance=submitted, schema={"properties": {"display_name": {"type": "string"}}})
+        except ValidationError as error:
+            mock_create_workspace_item.side_effect = error
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "display_name" in response.text
+        assert "secret-value" not in response.text
+        assert "secret-value" not in str(logger_mock.mock_calls)
+        logger_mock.exception.assert_not_called()
 
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")

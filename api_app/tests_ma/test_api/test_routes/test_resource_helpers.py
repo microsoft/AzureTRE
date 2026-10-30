@@ -14,7 +14,10 @@ from api.routes.resource_helpers import (
     mask_sensitive_properties,
     enrich_resource_with_available_upgrades,
     enrich_resources_with_available_upgrades,
+    validation_error_detail,
 )
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -405,3 +408,47 @@ class TestResourceHelpers:
         assert masked_resource["client_id"] == "12345"
         assert masked_resource["secret"] == strings.REDACTED_SENSITIVE_VALUE
         assert masked_resource["prop_with_nested_secret"]["nested_secret"] == strings.REDACTED_SENSITIVE_VALUE
+
+
+def schema_error(instance, schema):
+    try:
+        validate(instance=instance, schema=schema)
+    except ValidationError as error:
+        return error
+    raise AssertionError("The instance matches the schema")
+
+
+@pytest.mark.parametrize(
+    "instance, schema, expected",
+    [
+        (
+            {"client_secret": ["secret-value"]},
+            {"properties": {"client_secret": {"type": "string"}}},
+            "'client_secret' does not match the 'type' rule of the template: 'string'",
+        ),
+        (
+            {"client_secret": "secret-value"},
+            {"properties": {"client_secret": {"pattern": "^a"}}},
+            "'client_secret' does not match the 'pattern' rule of the template: '^a'",
+        ),
+        (
+            {"client_secret": "secret-value"},
+            {"properties": {"client_secret": {"anyOf": [{"type": "integer"}, {"type": "boolean"}]}}},
+            "'client_secret' does not match the 'anyOf' rule of the template",
+        ),
+        ({"client_secret": "secret-value"}, {"required": ["client_id"]}, "'client_id' is a required property"),
+    ],
+)
+def test_validation_error_detail_has_no_submitted_value(instance, schema, expected):
+    error = schema_error(instance, schema)
+    # This is the reason for the helper: the jsonschema text has the submitted values.
+    assert "secret-value" in str(error)
+
+    detail = validation_error_detail(error)
+
+    assert detail == expected
+    assert "secret-value" not in detail
+
+
+def test_validation_error_detail_keeps_the_message_of_an_api_error():
+    assert validation_error_detail(ValidationError("Version 2.0.0 is not valid")) == "Version 2.0.0 is not valid"

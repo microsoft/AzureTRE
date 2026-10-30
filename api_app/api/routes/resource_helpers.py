@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import List, Optional
 
 from fastapi import HTTPException, status
+from jsonschema.exceptions import ValidationError
 from db.repositories.user_resources import UserResourceRepository
 from models.domain.user_resource import UserResource
 from models.domain.workspace_service import WorkspaceService
@@ -124,6 +125,29 @@ async def save_and_deploy_resource(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=strings.SERVICE_BUS_GENERAL_ERROR_MESSAGE,
         )
+
+
+# The messages of these validators name properties only, not the submitted values.
+NAME_ONLY_VALIDATORS = {"required", "additionalProperties", "unevaluatedProperties", "dependentRequired"}
+# The rule of these validators is a list of schemas, which is too long for a message.
+SCHEMA_LIST_VALIDATORS = {"allOf", "anyOf", "oneOf", "not", "if", "then", "else"}
+
+
+def validation_error_detail(error: ValidationError) -> str:
+    """Describe a schema error without the submitted values, because a value can be a secret.
+
+    str(error) contains the whole input, and error.message can contain the value that failed.
+    """
+    if not isinstance(error.validator, str) or error.validator in NAME_ONLY_VALIDATORS:
+        # An error that the API raises itself has no validator and a message without input values.
+        return error.message
+    location = "/".join(str(part) for part in error.absolute_path) or "properties"
+    if error.validator in SCHEMA_LIST_VALIDATORS:
+        return f"'{location}' does not match the '{error.validator}' rule of the template"
+    rule = repr(error.validator_value)
+    if len(rule) > 200:
+        rule = rule[:200] + "..."
+    return f"'{location}' does not match the '{error.validator}' rule of the template: {rule}"
 
 
 def construct_location_header(operation: Operation) -> str:

@@ -64,6 +64,7 @@ from services.azure_resource_status import get_azure_resource_status
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 from .resource_helpers import (
+    validation_error_detail,
     cascaded_update_resource,
     delete_validation,
     enrich_resource_with_available_upgrades,
@@ -186,7 +187,11 @@ async def create_workspace(
         )
         # Validate the resolved (template-derived) airlock version rather than the raw request.
         ensure_workspace_airlock_version_supported(workspace.properties, default_version=1)
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
+        # Do not log or return str(e). It contains the submitted properties, which can be secrets.
+        logger.warning(f"Workspace input does not match the template: {validation_error_detail(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
+    except ValueError as e:
         logger.exception("Failed to create workspace model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except StorageAccountNameGenerationTimeout:
@@ -327,7 +332,7 @@ async def patch_workspace(
         if isinstance(error, CosmosAccessConditionFailedError):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
         if isinstance(error, ValidationError):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.message)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(error))
         if isinstance(
             error, (ValueError, MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied)
         ):
@@ -534,7 +539,11 @@ async def create_workspace_service(
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(
             workspace_service_input, workspace.id, user.roles
         )
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
+        # Do not log or return str(e). It contains the submitted properties, which can be secrets.
+        logger.warning(f"Workspace service input does not match the template: {validation_error_detail(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
+    except ValueError as e:
         logger.exception("Failed create workspace service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
@@ -641,7 +650,7 @@ async def patch_workspace_service(
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(v))
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -853,7 +862,11 @@ async def create_user_resource(
             user.roles,
             owner_id,
         )
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
+        # Do not log or return str(e). It contains the submitted properties, which can be secrets.
+        logger.warning(f"User resource input does not match the template: {validation_error_detail(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
+    except ValueError as e:
         logger.exception("Failed create user resource model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except UserNotAuthorizedToUseTemplate as e:
@@ -955,7 +968,7 @@ async def patch_user_resource(
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(v))
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
