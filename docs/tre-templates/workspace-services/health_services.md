@@ -30,15 +30,15 @@ If an update adds DICOM, Terraform adds the DICOM zone to the group, and Azure w
 Azure links a new service to the endpoint some minutes after Terraform creates the service.
 During this time, Azure refuses a change to the DNS zone group with HTTP 409, and Terraform tries again.
 
-Before version 0.3.10, the endpoint resource created the DNS zone group, and the group did not change when an update added a service.
+Before version 0.3.9, the endpoint resource created the DNS zone group, and the group did not change when an update added a service.
 If you added DICOM to an existing service before this version, the DICOM host can resolve to a public address.
-An upgrade to version 0.3.10 deletes the old DNS zone group and creates a new one, so Azure writes the missing record.
+An upgrade to version 0.3.9 deletes the old DNS zone group and creates a new one, so Azure writes the missing record.
 Until the upgrade creates the new group, the private DNS records do not exist, and private access to the services stops.
 Do not delete the private endpoint to repair the service.
 
 The DICOM service has public network access turned off.
-Before version 0.3.10, Terraform created the DICOM service with public network access on.
-An upgrade to version 0.3.10 turns it off.
+Before version 0.3.9, Terraform created the DICOM service with public network access on.
+An upgrade to version 0.3.9 turns it off.
 
 The private endpoint on the healthcare workspace blocks public traffic to FHIR and DICOM.
 A request from outside the workspace network gets HTTP 403.

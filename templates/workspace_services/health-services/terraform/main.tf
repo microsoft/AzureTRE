@@ -70,7 +70,7 @@ resource "azurerm_private_endpoint" "health_services_private_endpoint" {
   lifecycle { ignore_changes = [tags, private_dns_zone_group] }
 }
 
-# Before version 0.3.10, the endpoint resource created the DNS zone group. This removes
+# Before version 0.3.9, the endpoint resource created the DNS zone group. This removes
 # that group once, so that the resource below can create a group with the same name.
 resource "azapi_resource_action" "remove_endpoint_dns_zone_group" {
   type        = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01"
