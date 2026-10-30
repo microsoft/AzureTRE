@@ -150,10 +150,10 @@ If the API stops between the write and the send, the entry stays. When the API s
 1. If the step has a status from the resource processor, the resource processor has the message. The updater removes the entry.
 1. If a later request for the same resource exists, for example a delete, the updater does not send the message. It sets the step and the operation to the failed status.
 1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
-1. The API builds the first message of a request from the resource in memory. After an install, or after an update that changes a sensitive property, that message has real values that Cosmos DB keeps as `REDACTED`.
+1. If an install or an update sets a sensitive property, the first message has the real value, and Cosmos DB keeps `REDACTED`.
    The operation write records this in the entry, and the updater cannot build such a message again.
    It sets the step and the operation to the failed status, with a message that asks the user to send the request again if the status does not change.
-   The API builds all other messages from Cosmos DB, so the updater sends them with the same values as the first send.
+   Other first messages have the same values as Cosmos DB, so the updater sends them with the same values as the first send.
 1. If the updater cannot build the message, it sets the step and the operation to the failed status with the error text.
 
 A second copy of a message is safe, because the resource processor runs each step once. The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status.

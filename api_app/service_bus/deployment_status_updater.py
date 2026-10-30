@@ -155,9 +155,9 @@ class DeploymentStatusUpdater:
             await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST)
             return
 
-        # The API built the first message of the request from the resource in memory, with the real sensitive
-        # values. Cosmos DB keeps a placeholder for each, so the updater cannot build that message again. The API
-        # builds all other messages from Cosmos DB, so a resend has the same values as the first send.
+        # If an install or an update set a sensitive property, the first message has the real value, and Cosmos DB
+        # keeps a placeholder. The updater cannot build that message again. Other first messages have the same
+        # values as Cosmos DB, so a resend has the same values as the first send.
         if pending.get("sensitiveValues") and step.resourceId == operation.resourceId:
             logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
             await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)

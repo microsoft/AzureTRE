@@ -37,12 +37,11 @@ Draft7TREValidator = extend(
 )
 
 
-def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
-    updated_resource_parameters = copy.deepcopy(properties)
-
+def template_properties(template: dict) -> dict:
+    """Return each property schema of a template by name, also from allOf, then and else branches."""
     flattened_template_props = {}
 
-    # recusrse the template and flatten all properties into a list
+    # Recurse through the template and collect all properties in one dict.
     def flatten_template_props(template_fragment: dict):
         if template_fragment is None:
             return
@@ -63,15 +62,25 @@ def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemp
             if isinstance(prop, dict) and prop_name != "if":
                 flatten_template_props(prop)
 
-    flatten_template_props(template.model_dump())
+    flatten_template_props(template)
+    return flattened_template_props
+
+
+def sensitive_property_names(template: dict) -> set:
+    return {
+        name
+        for name, prop in template_properties(template).items()
+        if isinstance(prop, dict) and prop.get("sensitive") is True
+    }
+
+
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
+    updated_resource_parameters = copy.deepcopy(properties)
+    sensitive_names = sensitive_property_names(template.model_dump())
 
     def recurse_input_props(prop_dict: dict):
         for prop_name, prop in prop_dict.items():
-            if (
-                prop_name in flattened_template_props
-                and "sensitive" in flattened_template_props[prop_name]
-                and flattened_template_props[prop_name]["sensitive"] is True
-            ):
+            if prop_name in sensitive_names:
                 prop_dict[prop_name] = REDACTED_SENSITIVE_VALUE
             if isinstance(prop, dict):
                 recurse_input_props(prop)
@@ -79,6 +88,18 @@ def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemp
     recurse_input_props(updated_resource_parameters)
 
     return updated_resource_parameters
+
+
+def restore_sensitive_values(properties: dict, source: dict) -> dict:
+    """Return a copy of properties with the real value from source in place of each placeholder."""
+    restored = copy.deepcopy(properties)
+    for key, value in restored.items():
+        original = source.get(key)
+        if isinstance(value, dict) and isinstance(original, dict):
+            restored[key] = restore_sensitive_values(value, original)
+        elif value == REDACTED_SENSITIVE_VALUE and original is not None and original != REDACTED_SENSITIVE_VALUE:
+            restored[key] = copy.deepcopy(original)
+    return restored
 
 
 def masked_property_paths(properties: dict, masked: dict, path: Optional[List[str]] = None) -> List[str]:
@@ -306,6 +327,12 @@ class ResourceRepository(BaseRepository):
 
         Returns the number of resource documents and history items that changed. A second run changes nothing.
         """
+        # Only resources of a template with a sensitive property, in any of its versions, can have such a value.
+        names_with_sensitive_values = {
+            template["name"]
+            for template in await resource_template_repo.query(query="SELECT * FROM c")
+            if sensitive_property_names(template)
+        }
         resources = {resource["id"]: resource for resource in await self.query(query="SELECT * FROM c")}
         templates = {}
 
@@ -339,17 +366,20 @@ class ResourceRepository(BaseRepository):
             return bool(paths)
 
         changed_resources = 0
+        changed_history_items = 0
         for resource in resources.values():
+            if resource["templateName"] not in names_with_sensitive_values:
+                continue
             template = await template_for(resource, resource["templateVersion"])
             changed_resources += await mask(resource, template, self.container, resource["id"])
 
-        changed_history_items = 0
-        for item in await resource_history_repo.query(query="SELECT * FROM c"):
-            resource = resources.get(item.get("resourceId"))
-            if resource is None:
-                continue
-            template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
-            changed_history_items += await mask(item, template, resource_history_repo.container, item["resourceId"])
+            history_items = await resource_history_repo.query(
+                query="SELECT * FROM c WHERE c.resourceId = @resourceId",
+                parameters=[{"name": "@resourceId", "value": resource["id"]}],
+            )
+            for item in history_items:
+                template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
+                changed_history_items += await mask(item, template, resource_history_repo.container, item["resourceId"])
 
         return changed_resources, changed_history_items
 

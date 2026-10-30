@@ -52,6 +52,7 @@ async def send_resource_request_message(
             user=user,
             resource_repo=resource_repo,
             resource_template_repo=resource_template_repo,
+            resource_properties=resource.properties,
         )
         current_span.set_attribute("operation_id", operation.id)
 

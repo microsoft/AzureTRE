@@ -16,6 +16,7 @@ from tests_ma.test_service_bus.test_deployment_status_update import (
 )
 from models.domain.workspace_service import WorkspaceService
 from models.domain.resource import Resource, ResourceType
+from models.domain.resource_template import PipelineStep
 from service_bus.resource_request_sender import (
     send_resource_request_message,
     RequestAction,
@@ -227,6 +228,41 @@ async def test_multi_step_document_retries(
     # check it tried to patch and re-get the item the first time + all the retries
     assert len(resource_repo.patch_resource.mock_calls) == (num_retries + 1)
     assert len(resource_repo.get_resource_by_id.mock_calls) == (num_retries + 1)
+
+
+@pytest.mark.parametrize("same_resource, expected", [(True, "real value"), (False, strings.REDACTED_SENSITIVE_VALUE)])
+async def test_a_pipeline_step_of_the_primary_resource_gets_the_real_sensitive_values(
+    same_resource, expected, test_user
+):
+    # A template with a pipeline builds the main step message from the document in Cosmos DB, which keeps a
+    # placeholder. The primary resource of a new request is the resource in memory, with the real value.
+    primary = create_test_resource()
+    primary.properties = {"display_name": "name", "client_secret": "real value"}
+    stored = primary.model_copy(deep=True)
+    stored.properties = {"display_name": "changed later", "client_secret": strings.REDACTED_SENSITIVE_VALUE}
+    if not same_resource:
+        stored.id = str(uuid.uuid4())
+    resource_repo = AsyncMock()
+    resource_repo.get_resource_by_id.return_value = stored
+    resource_repo.patch_resource.side_effect = lambda **kwargs: (kwargs["resource"], None)
+
+    sent = await try_update_with_retries(
+        num_retries=0,
+        attempt_count=0,
+        resource_repo=resource_repo,
+        resource_template_repo=AsyncMock(),
+        resource_history_repo=AsyncMock(),
+        user=test_user,
+        resource_to_update_id=stored.id,
+        template_step=PipelineStep(stepId="main", resourceAction="upgrade", properties=[]),
+        primary_resource=primary,
+        primary_parent_workspace=None,
+        primary_parent_workspace_svc=None,
+    )
+
+    assert sent.properties["client_secret"] == expected
+    # The stored document gives the other values, so a change by another request stays.
+    assert sent.properties["display_name"] == "changed later"
 
 
 async def send_first_step(resource_repo, operations_repo, resource_template_repo, resource_history_repo, template):

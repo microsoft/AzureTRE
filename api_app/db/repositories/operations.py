@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 import re
 import uuid
-from typing import List
+from typing import List, Optional
 
 from azure.core import MatchConditions
 from azure.cosmos.exceptions import CosmosHttpResponseError
@@ -115,7 +115,11 @@ class OperationRepository(BaseRepository):
         user: User,
         resource_repo: ResourceRepository,
         resource_template_repo: ResourceTemplateRepository,
+        resource_properties: Optional[dict] = None,
     ) -> Operation:
+        """resource_properties are the properties of the resource in memory, from which the API builds the first
+        message. A cascade reads resource_list from Cosmos DB, which keeps a placeholder for each sensitive value.
+        """
         operation_id = self.create_operation_id()
 
         # get the right "awaiting" message based on the action
@@ -138,7 +142,8 @@ class OperationRepository(BaseRepository):
             if resource["id"] == resource_id:
                 # The API builds the first message from this resource, which can have real sensitive values.
                 # Cosmos DB keeps a placeholder for each of them.
-                properties = resource.get("properties") or {}
+                properties = resource_properties if resource_properties is not None else resource.get("properties")
+                properties = properties or {}
                 sensitive_values = mask_sensitive_properties(properties, resource_template) != properties
             resource_template_dict = resource_template.model_dump(exclude_none=True)
             # if the template has a pipeline defined for this action, copy over all the steps to the ops document

@@ -124,6 +124,40 @@ async def test_pending_entry_records_sensitive_values_of_the_first_message(
     assert document["pendingDispatch"]["sensitiveValues"] is expected
 
 
+@patch("db.repositories.operations.OperationRepository.get_timestamp", return_value=FAKE_CREATE_TIMESTAMP)
+@patch("db.repositories.operations.OperationRepository.create_operation_id", return_value=OPERATION_ID)
+async def test_pending_entry_uses_the_resource_in_memory_for_a_cascade(
+    _, __, operations_repo, resource_repo, resource_template_repo, test_user, basic_resource_template
+):
+    # A cascade reads the resource list from Cosmos DB, which keeps a placeholder for each sensitive value.
+    template = basic_resource_template.model_copy(deep=True)
+    template.properties["client_secret"] = {"type": "string", "sensitive": True, "updateable": True}
+    operations_repo.save_item_dict = AsyncMock()
+    resource_template_repo.get_template_by_name_and_version = AsyncMock(return_value=template)
+    stored = {
+        "id": RESOURCE_ID,
+        "templateName": template.name,
+        "templateVersion": template.version,
+        "resourceType": "workspace",
+        "properties": {"client_secret": strings.REDACTED_SENSITIVE_VALUE},
+    }
+
+    await operations_repo.create_operation_item(
+        resource_id=RESOURCE_ID,
+        resource_list=[stored],
+        action="upgrade",
+        resource_path=f"/workspaces/{RESOURCE_ID}",
+        resource_version=1,
+        user=test_user,
+        resource_repo=resource_repo,
+        resource_template_repo=resource_template_repo,
+        resource_properties={"client_secret": "real value"},
+    )
+
+    document = operations_repo.save_item_dict.await_args.args[0]
+    assert document["pendingDispatch"]["sensitiveValues"] is True
+
+
 @pytest_asyncio.fixture
 async def operations_container():
     container = AsyncMock()

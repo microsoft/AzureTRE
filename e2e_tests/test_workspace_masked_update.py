@@ -2,7 +2,8 @@
 
 The case creates a workspace with the manual test application. A TRE admin then updates the client secret two
 times with the same value, and the workspace token reads the workspace and its history back. The case logs only
-true or false values and counts. It never logs a property value or a response text.
+true or false values, counts and the role names of the token. Its own code does not log a property value or a
+response text.
 """
 
 import base64
@@ -97,6 +98,11 @@ async def test_a_sensitive_property_stays_masked_after_an_update(verify):
         assert results["after_install"]["masked"], "The workspace response does not mask the property after an install"
         updates = [results[name]["masked"] for name in ("after_update_1", "after_update_2", "after_operations")]
         assert all(updates), "The workspace response does not mask the property after an update"
-        assert results["history"]["equal_to_update"] == 0, "The workspace history does not mask the property"
+        history = results["history"]
+        # Two updates of a workspace without a pipeline write two history items, each with the property.
+        assert history["items"] >= 2 and history["masked"] == history["items"], (
+            "The workspace history does not mask the property"
+        )
+        assert history["equal_to_update"] == 0, "The workspace history has the updated value"
     finally:
         await clean_up_test_workspace(pre_created_workspace_id="", workspace_path=workspace_path, verify=verify)

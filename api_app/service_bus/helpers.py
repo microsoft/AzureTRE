@@ -10,7 +10,7 @@ from models.domain.resource import Resource, ResourceType
 from db.repositories.resource_templates import ResourceTemplateRepository
 from models.domain.authentication import User
 from models.schemas.resource import ResourcePatch
-from db.repositories.resources import ResourceRepository
+from db.repositories.resources import ResourceRepository, restore_sensitive_values
 from core import config, credentials
 from services.logging import logger
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
@@ -196,6 +196,12 @@ async def try_patch(
     primary_parent_workspace_svc: Resource,
 ) -> Resource:
     resource_to_update = await resource_repo.get_resource_by_id(resource_to_update_id)
+    if resource_to_update.id == primary_resource.id:
+        # Cosmos DB keeps a placeholder for each sensitive value. For a new request, the primary resource is the
+        # resource in memory, which has the real values for the message.
+        resource_to_update.properties = restore_sensitive_values(
+            resource_to_update.properties, primary_resource.properties
+        )
 
     # substitute values into new property bag for update
     properties = substitute_properties(

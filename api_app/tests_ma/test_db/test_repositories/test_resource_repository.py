@@ -489,17 +489,28 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
             raise EntityDoesNotExist
         return template
 
+    secret = {"properties": {"client_secret": {"type": "string", "sensitive": True}}}
     template_repo = AsyncMock()
     template_repo.get_template_by_name_and_version.side_effect = get_template
-    history_repo = MagicMock()
-    history_repo.container = AsyncMock()
-    history_repo.query = AsyncMock(
-        return_value=[
+    template_repo.query.return_value = [
+        {"name": "workspace-template", **secret},
+        {"name": "user-template", **secret},
+        {"name": "removed-template", **secret},
+        {"name": "service-template", "properties": {"display_name": {"type": "string"}}},
+    ]
+    history = {
+        "ws": [
             {"id": "h-1", "resourceId": "ws", "templateVersion": "0.9.0", "properties": {"client_secret": "older"}},
             {"id": "h-2", "resourceId": "ws", "properties": {"client_secret": "REDACTED"}},
-            {"id": "h-3", "resourceId": "deleted-from-resources", "properties": {"client_secret": "older"}},
-        ]
-    )
+        ],
+    }
+
+    async def history_query(query, parameters):
+        return history.get(parameters[0]["value"], [])
+
+    history_repo = MagicMock()
+    history_repo.container = AsyncMock()
+    history_repo.query = AsyncMock(side_effect=history_query)
 
     result = await resource_repo.mask_stored_sensitive_values(template_repo, history_repo)
 
@@ -513,6 +524,9 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
     history_repo.container.patch_item.assert_awaited_once_with(
         item="h-1", partition_key="ws", patch_operations=set_secret
     )
+    # A resource of a template without a sensitive property needs no history read.
+    read_ids = [call.kwargs["parameters"][0]["value"] for call in history_repo.query.await_args_list]
+    assert read_ids == ["ws", "ws-2", "ur", "old"]
     template_repo.get_template_by_name_and_version.assert_any_await(
         "user-template", "1.0.0", ResourceType.UserResource, "service-template"
     )
