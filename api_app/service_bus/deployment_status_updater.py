@@ -144,15 +144,11 @@ class DeploymentStatusUpdater:
             await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
             return
 
-        later_requests = [
-            item
-            for item in await self.operations_repo.get_operations_by_resource_id(operation.resourceId)
-            if item.createdWhen > operation.createdWhen
-        ]
-        if later_requests:
-            # For example, a delete of a resource whose install was not sent. The install must not come after it.
+        # A later request on the resource, or a cascade from a parent with a step for it, for example a delete of a
+        # resource whose install was not sent. The install must not come after it.
+        if await self.operations_repo.get_later_operations_for_resource(operation.resourceId, operation.createdWhen):
             logger.warning(f"Operation {operation.id} was not sent before a later request. Failing step {step.id}")
-            await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST)
+            await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST, write_resource=False)
             return
 
         # If an install or an update set a sensitive property, the first message has the real value, and Cosmos DB
@@ -193,19 +189,30 @@ class DeploymentStatusUpdater:
         )
         await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
 
-    async def fail_pending_step(self, operation: Operation, step: OperationStep, message: str):
+    async def fail_pending_step(
+        self, operation: Operation, step: OperationStep, message: str, write_resource: bool = True
+    ):
+        """Fail a step that the API did not send. The step did not run, so only its request fails."""
         step.status = self.get_failure_status_for_action(step.resourceAction)
         step.message = message
         step.updatedWhen = get_timestamp()
-        await self.update_overall_operation_status(operation, step, is_last_step=len(operation.steps) == 1)
+        operation.status = self.get_failure_status_for_action(operation.action)
+        operation.message = message
+        operation.updatedWhen = step.updatedWhen
         # The Operation model has no pending dispatch, so this write also removes the entry.
         await self.operations_repo.update_item(operation)
-        resource = await self.resource_repo.get_resource_by_id(uuid.UUID(step.resourceId))
-        resource.deploymentStatus = step.status
+        if not write_resource:
+            # A later request changes the resource, so it owns the status of the resource.
+            return
+        # Only the resource of the request shows the failure. A first step on another resource, for example the
+        # firewall or the parent workspace, did not run, so that resource keeps its status.
+        try:
+            resource = await self.resource_repo.get_resource_by_id(uuid.UUID(operation.resourceId))
+        except EntityDoesNotExist:
+            logger.warning(f"Resource {operation.resourceId} of operation {operation.id} does not exist")
+            return
+        resource.deploymentStatus = operation.status
         await self.resource_repo.update_item(resource)
-        if step.resourceId != operation.resourceId:
-            # The root resource shows the status of the operation.
-            await self.update_primary_uninstall_status(operation)
 
     async def process_message(self, msg):
         complete_message = False

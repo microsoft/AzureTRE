@@ -13,7 +13,7 @@ ENHANCEMENTS:
 * Run the `stop`, `start` and `reset_password` actions in the Guacamole Linux VM check, and make sure of the VM power state and the new Key Vault secret version through Azure. ([#5145](https://github.com/microsoft/AzureTRE/issues/5145))
 * Add a private Gitea lifecycle check. A workspace VM uses the Gitea API through private DNS, gets HTTP 401 without credentials and with a wrong password, and commits a file to a private repository.
   The VM reads the file again after an update, a change of the OIDC client ID, a stop and a start of the app. The check also makes sure that the OIDC change stops Gitea one time and that the console log of the web app shows no secret. ([#5141](https://github.com/microsoft/AzureTRE/issues/5141))
-* Add a `Request-Id` header with the trace ID to each API response, also to an HTTP 500. The E2E operation poll already logs this header, so a failed poll can be found in App Insights. (`api` 0.28.10) ([#5202](https://github.com/microsoft/AzureTRE/issues/5202))
+* Add a `Request-Id` header with the trace ID to each API response, also to an HTTP 500. The E2E operation poll already logs this header, so a failed poll can be found in App Insights. (`api` 0.29.0) ([#5202](https://github.com/microsoft/AzureTRE/issues/5202))
 * Select individual bundle tests and record lifecycle evidence for base workspaces, private Azure SQL, Airlock, Linux VMs and certificate reuse across reinstallation. ([#5255](https://github.com/microsoft/AzureTRE/pull/5255))
 * Enable `user_management_enabled`, `auto_workspace_group_creation`, and `auto_grant_workspace_consent` by default in `config.sample.yaml` for a better out-of-the-box experience ([#5050](https://github.com/microsoft/AzureTRE/issues/5050))
 * Add shared repository instructions and TRE-prefixed component skills for agent-assisted development, security review, validation and troubleshooting. ([#5111](https://github.com/microsoft/AzureTRE/issues/5111))
@@ -59,17 +59,22 @@ BUG FIXES:
 * Give the Nexus VM identity the Key Vault role only on the Nexus admin password and the Nexus TLS certificate. It had the role on the whole core Key Vault. (`tre-shared-service-sonatype-nexus` 3.11.4) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * Send an empty outputs list when the resource processor cannot read the Porter outputs. The API rejected the empty dict, so a pipeline step that failed to read its outputs, for example after a transient container registry login failure, stayed in progress until the caller stopped waiting. (`resource_processor` 0.13.16)
 * Give each resource processor worker its own Azure CLI folder. Each worker signs in before each Porter action. When two workers did this at the same time, one worker read the shared profile file while the other wrote it, and the next `az acr login` failed with `Please run 'az login'`. The action then failed after 3 seconds. (`resource_processor` 0.13.16)
-* Run each resource processor step once when Service Bus gives its message to a second worker. The resource processor renews the session lock with retries, and a blob lease stops a second Porter run. The API ignores a status from another run of a finished step. An upgrade no longer installs a resource that Porter does not have or that it uninstalled.
-  (`core` 0.18.17, `resource_processor` 0.13.16, `api` 0.28.10) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+* Run each resource processor step once when Service Bus gives its message to a second worker. The resource processor renews the session lock with retries, and a blob lease stops a second Porter run. The API ignores a status from another run of a finished step.
+  An upgrade no longer installs a resource that Porter uninstalled. A worker that lost its session while it waited for the lease does not run Porter.
+  (`core` 0.18.17, `resource_processor` 0.13.16, `api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes.
   If that message has sensitive values from an install or an update, the request fails with a clear message, because the API does not store these values.
-  (`api` 0.28.10) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+  The resend does not change a resource that a later request changed, and it does not change the resource of a first step on another resource.
+  (`api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Store a placeholder for each sensitive property when the API saves an update of a resource, as it already does at the install. The new value goes to the resource processor only in the request message.
-  Before this change, an update stored the new value of a sensitive property in Cosmos DB and in the resource history. An example is the `client_secret` of a workspace. API responses with the resource properties then included this value.
+  Before this change, an update stored the new value of a sensitive property in Cosmos DB and in the resource history. An example is the `client_secret` of a workspace.
+  API responses with the resource properties then included this value.
   A database migration replaces the values that earlier updates stored. If an update set the client secret of a workspace before this version, you can create a new secret for the workspace application.
-  The first message of a template with a pipeline, for example the unrestricted workspace, now also gets the real sensitive values at an install. (`api` 0.28.10)
+  Then update the workspace with the new secret, and delete the old secret.
+  For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0)
 * Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.
-  That text contains the submitted properties, for example a client secret. The response now names the property and the template rule. (`api` 0.28.10)
+  The create route of an Airlock review VM did the same in its HTTP 500 response.
+  That text contains the submitted properties, for example a client secret. The response now names the property and the template rule. (`api` 0.29.0)
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))

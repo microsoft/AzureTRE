@@ -340,3 +340,30 @@ async def test_a_failed_clear_after_the_send_returns_the_operation(
     # The entry stays, and the deployment status updater sends the message again. A second send is safe.
     sent_message = service_bus_client_mock().get_queue_sender().send_messages.call_args.args[0]
     assert sent_message.message_id == f"{operation.id}:random-uuid"
+
+
+@patch("service_bus.resource_request_sender.ResourceHistoryRepository.create")
+@patch("service_bus.resource_request_sender.OperationRepository.create")
+@patch("service_bus.helpers.ServiceBusClient")
+@patch("service_bus.resource_request_sender.ResourceRepository.create")
+@patch("service_bus.resource_request_sender.ResourceTemplateRepository.create")
+async def test_the_operation_gets_the_properties_of_the_resource_in_memory(
+    resource_template_repo,
+    resource_repo,
+    service_bus_client_mock,
+    operations_repo_mock,
+    resource_history_repo_mock,
+    multi_step_resource_template,
+):
+    # A cascade reads the resource list from Cosmos DB, which keeps a placeholder for each sensitive value.
+    service_bus_client_mock().get_queue_sender().send_messages = AsyncMock()
+    await send_first_step(
+        resource_repo,
+        operations_repo_mock,
+        resource_template_repo,
+        resource_history_repo_mock,
+        multi_step_resource_template,
+    )
+
+    kwargs = operations_repo_mock.create_operation_item.await_args.kwargs
+    assert kwargs["resource_properties"] == {"testParameter": "testValue"}

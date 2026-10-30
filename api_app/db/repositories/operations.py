@@ -334,6 +334,19 @@ class OperationRepository(BaseRepository):
         operations = await self.query(query=query)
         return TypeAdapter(List[Operation]).validate_python(operations)
 
+    async def get_later_operations_for_resource(self, resource_id: str, created_after: float) -> List[Operation]:
+        """Return the operations after a time on the resource, or with a step for it, for example a cascade."""
+        query = (
+            "SELECT * FROM c WHERE c.createdWhen > @createdAfter AND (c.resourceId = @resourceId"
+            " OR EXISTS(SELECT VALUE s FROM s IN c.steps WHERE s.resourceId = @resourceId))"
+        )
+        parameters = [
+            {"name": "@createdAfter", "value": created_after},
+            {"name": "@resourceId", "value": resource_id},
+        ]
+        operations = await self.query(query=query, parameters=parameters)
+        return TypeAdapter(List[Operation]).validate_python(operations)
+
     async def resource_has_deployed_operation(self, resource_id: str) -> bool:
         query = (
             self.operations_query()

@@ -686,16 +686,18 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     async def test_post_workspaces_returns_400_without_the_submitted_values(
         self, _, mock_create_workspace_item, logger_mock, app, client, workspace_input
     ):
-        submitted = {"client_secret": "secret-value", "display_name": 5}
+        submitted = {"client_secret": "secret-value", "display_name": "name"}
         try:
-            validate(instance=submitted, schema={"properties": {"display_name": {"type": "string"}}})
+            validate(instance=submitted, schema={"required": ["client_id"]})
         except ValidationError as error:
+            # The text of a root error has the whole input, so the old route returned and logged the secret.
+            assert "secret-value" in str(error)
             mock_create_workspace_item.side_effect = error
 
         response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "display_name" in response.text
+        assert "client_id" in response.text
         assert "secret-value" not in response.text
         assert "secret-value" not in str(logger_mock.mock_calls)
         logger_mock.exception.assert_not_called()

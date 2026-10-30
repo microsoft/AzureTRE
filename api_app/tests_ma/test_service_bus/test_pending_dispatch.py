@@ -1,9 +1,11 @@
 import asyncio
 import json
+import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from db.errors import EntityDoesNotExist
 from db.repositories.operations import PENDING_DISPATCH
 from models.domain.operation import Status
 from models.domain.workspace import Workspace
@@ -18,6 +20,7 @@ from tests_ma.test_service_bus.test_deployment_status_update import OPERATION_ID
 pytestmark = pytest.mark.asyncio
 
 RESOURCE_ID = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
+FIREWALL_ID = "a8b2c3d4-1111-4222-8333-944455556666"
 MESSAGE_ID = f"{OPERATION_ID}:random-uuid"
 AWAITING = {
     "install": Status.AwaitingDeployment,
@@ -61,7 +64,7 @@ def updater():
     updater.resource_history_repo = AsyncMock()
     updater.operations_repo.claim_pending_dispatch.return_value = True
     updater.resource_repo.get_resource_by_id.return_value = workspace({})
-    updater.operations_repo.get_operations_by_resource_id.return_value = []
+    updater.operations_repo.get_later_operations_for_resource.return_value = []
     return updater
 
 
@@ -163,15 +166,50 @@ async def test_a_later_request_for_the_resource_fails_the_step(update_mock, send
     document = pending_document()
     later = create_sample_operation(RESOURCE_ID, "uninstall")
     later.createdWhen = document["createdWhen"] + 60
-    updater.operations_repo.get_operations_by_resource_id.return_value = [later]
+    updater.operations_repo.get_later_operations_for_resource.return_value = [later]
 
     await updater.resend_pending_dispatch(document)
 
+    updater.operations_repo.get_later_operations_for_resource.assert_awaited_once_with(
+        RESOURCE_ID, document["createdWhen"]
+    )
     update_mock.assert_not_awaited()
     send_mock.assert_not_awaited()
     operation = updater.operations_repo.update_item.await_args.args[0]
     assert operation.steps[0].status == Status.DeploymentFailed
     assert operation.steps[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
+    assert operation.status == Status.DeploymentFailed
+    # The later request owns the status of the resource, for example a resource that it deleted.
+    updater.resource_repo.update_item.assert_not_awaited()
+
+
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_failed_first_step_on_another_resource_changes_only_the_resource_of_the_request(
+    update_mock, send_mock, updater
+):
+    # For example, the first step of an uninstall pipeline changes the firewall. That step did not run.
+    document = pending_document()
+    document["steps"][0]["resourceId"] = FIREWALL_ID
+    update_mock.side_effect = Exception("template not found")
+
+    await updater.resend_pending_dispatch(document)
+
+    updater.resource_repo.get_resource_by_id.assert_awaited_once_with(uuid.UUID(RESOURCE_ID))
+    assert updater.resource_repo.update_item.await_args.args[0].deploymentStatus == Status.DeploymentFailed
+
+
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_missing_resource_still_removes_the_entry(update_mock, send_mock, updater):
+    update_mock.side_effect = Exception("template not found")
+    updater.resource_repo.get_resource_by_id.side_effect = EntityDoesNotExist
+
+    await updater.resend_pending_dispatch(pending_document())
+
+    # The operation write removes the entry, so the next pass does not claim it again.
+    assert updater.operations_repo.update_item.await_args.args[0].status == Status.DeploymentFailed
+    updater.resource_repo.update_item.assert_not_awaited()
 
 
 @patch("service_bus.deployment_status_updater.send_deployment_message")

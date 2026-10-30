@@ -437,6 +437,11 @@ def schema_error(instance, schema):
             "'client_secret' does not match the 'anyOf' rule of the template",
         ),
         ({"client_secret": "secret-value"}, {"required": ["client_id"]}, "'client_id' is a required property"),
+        (
+            {"client_secret": "secret-value"},
+            {"properties": {"client_secret": False}},
+            "The template does not allow a value at 'properties'",
+        ),
     ],
 )
 def test_validation_error_detail_has_no_submitted_value(instance, schema, expected):

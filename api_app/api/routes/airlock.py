@@ -32,7 +32,7 @@ from auth.rbac import (
     require_airlock_manager,
 )
 
-from .resource_helpers import construct_location_header
+from .resource_helpers import construct_location_header, validation_error_detail
 
 from services.airlock import (
     create_review_vm,
@@ -276,7 +276,15 @@ async def create_review_user_resource(
             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}",
         )
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
+        # Do not log or return str(e). It contains the input of the review VM, with the SAS URL of the request.
+        logger.warning(f"The review VM input does not match the template: {validation_error_detail(e)}")
+        raise HTTPException(
+            status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Invalid configuration for creating user resource. Please contact your TRE administrator. "
+            f"Details: {validation_error_detail(e)}",
+        )
+    except ValueError as e:
         logger.exception("Failed create user resource model instance due to validation error")
         raise HTTPException(
             status_code=status_code.HTTP_500_INTERNAL_SERVER_ERROR,

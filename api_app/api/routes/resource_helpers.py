@@ -136,12 +136,15 @@ SCHEMA_LIST_VALIDATORS = {"allOf", "anyOf", "oneOf", "not", "if", "then", "else"
 def validation_error_detail(error: ValidationError) -> str:
     """Describe a schema error without the submitted values, because a value can be a secret.
 
-    str(error) contains the whole input, and error.message can contain the value that failed.
+    str(error) can contain the whole input, and error.message can contain the value that failed.
     """
+    location = "/".join(str(part) for part in error.absolute_path) or "properties"
+    if error.validator is None:
+        # A false subschema allows no value. Its message repeats the submitted value.
+        return f"The template does not allow a value at '{location}'"
     if not isinstance(error.validator, str) or error.validator in NAME_ONLY_VALIDATORS:
         # An error that the API raises itself has no validator and a message without input values.
         return error.message
-    location = "/".join(str(part) for part in error.absolute_path) or "properties"
     if error.validator in SCHEMA_LIST_VALIDATORS:
         return f"'{location}' does not match the '{error.validator}' rule of the template"
     rule = repr(error.validator_value)

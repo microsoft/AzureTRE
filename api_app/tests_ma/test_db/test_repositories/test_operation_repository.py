@@ -158,6 +158,21 @@ async def test_pending_entry_uses_the_resource_in_memory_for_a_cascade(
     assert document["pendingDispatch"]["sensitiveValues"] is True
 
 
+async def test_later_operations_include_a_cascade_with_a_step_for_the_resource(operations_repo):
+    operations_repo.query = AsyncMock(return_value=[])
+
+    await operations_repo.get_later_operations_for_resource(RESOURCE_ID, 10.0)
+
+    kwargs = operations_repo.query.await_args.kwargs
+    assert "c.createdWhen > @createdAfter" in kwargs["query"]
+    assert "c.resourceId = @resourceId" in kwargs["query"]
+    assert "EXISTS(SELECT VALUE s FROM s IN c.steps WHERE s.resourceId = @resourceId)" in kwargs["query"]
+    assert kwargs["parameters"] == [
+        {"name": "@createdAfter", "value": 10.0},
+        {"name": "@resourceId", "value": RESOURCE_ID},
+    ]
+
+
 @pytest_asyncio.fixture
 async def operations_container():
     container = AsyncMock()
