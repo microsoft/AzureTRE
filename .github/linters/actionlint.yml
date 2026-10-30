@@ -1,5 +1,6 @@
 ---
-# actionlint v1.7.12 does not yet recognise this GitHub-hosted runner label. See https://github.com/rhysd/actionlint/issues/682
+# actionlint v1.7.12 does not yet recognise this GitHub-hosted runner label.
+# https://github.com/rhysd/actionlint/issues/682
 self-hosted-runner:
   labels:
     - ubuntu-26.04
