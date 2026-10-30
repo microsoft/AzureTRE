@@ -248,4 +248,4 @@ class BundleContractTests(unittest.TestCase):
         source = (BUNDLE / "terraform/atlas_security.tf").read_text()
         self.assertRegex(source, r"WEB_API_VERSION\s*=\s*local.ohdsi_api_docker_image_tag")
         manifest = yaml.safe_load((BUNDLE / "porter.yaml").read_text())
-        self.assertEqual(manifest["version"], "0.3.15")
+        self.assertEqual(manifest["version"], "0.3.14")
