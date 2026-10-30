@@ -59,7 +59,7 @@ permissions:
 jobs:
   prepare-not-main:
     name: Preparation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: ${{ inputs.environment }}
     if: |
       github.ref != 'refs/heads/main'
