@@ -1069,6 +1069,9 @@ jobs:
       [deploy_shared_services, register_bundles, register_user_resource_bundles, e2e_tests_smoke]
     timeout-minutes: 300
     steps:
+      # The job timeout is 300 minutes. Each step below sets an absolute deadline 270 minutes
+      # (270 * 60 seconds) after the job start. The lifecycle helper keeps the last 120 minutes
+      # before the deadline for the clean-up. The 30 minutes after the deadline are for the report.
       - name: Reserve SQL cleanup and reporting time
         if: inputs.e2eBundle == 'tre-workspace-service-azuresql'
         run: echo "SQL_VALIDATION_DEADLINE=$(( $(date +%s) + 270 * 60 ))" >> "$GITHUB_ENV"
