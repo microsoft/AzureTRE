@@ -62,7 +62,9 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled] }
+  # The size is not updateable, so only a new default can change it. Azure does not resize a Windows VM
+  # between a size with a temporary disk and a size without one, so an upgrade keeps the installed size.
+  lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, size] }
 }
 
 resource "azurerm_disk_encryption_set" "jumpbox_disk_encryption" {
