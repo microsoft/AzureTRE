@@ -76,7 +76,8 @@ BUG FIXES:
   For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0)
 * Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.
   The create route of an Airlock review VM did the same in its HTTP 500 response.
-  That text contains the submitted properties, for example a client secret. The response now names the property and the template rule. (`api` 0.29.0)
+  That text contains the submitted properties, for example a client secret. The response now names the property and the template rule.
+  The API also wrote this text to its console log, which the core Log Analytics workspace keeps for 30 days by default. If a create request with a client secret got a schema error before this version, create a new secret for the workspace application. (`api` 0.29.0)
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
