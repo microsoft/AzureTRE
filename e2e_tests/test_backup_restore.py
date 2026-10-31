@@ -68,8 +68,9 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
         workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup(
             workspace_properties=properties
         )
-        new_token = partial(get_workspace_owner_token, workspace_id, verify)
-        workspace = (await get_resource(f"/api{workspace_path}", await new_token(), verify))["workspace"]
+        # The owner token gets a current token for each request, so one token lasts the case and its clean-up.
+        token = await get_workspace_owner_token(workspace_id, verify)
+        workspace = (await get_resource(f"/api{workspace_path}", token, verify))["workspace"]
         subscription_id = workspace["properties"].get("workspace_subscription_id") or os.environ["ARM_SUBSCRIPTION_ID"]
         resource_names = names(workspace_id, config.TRE_ID)
         group_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_names['group']}"
@@ -79,10 +80,8 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
         resources.own_last(
             "retained backup", remove_kept_backup, workspace_path, group_id, vault_id, account_id, verify
         )
-        vm_path, vm_id = await resources.create(
-            VM_PAYLOAD, f"/api{guacamole_path}/user-resources", await new_token(), cleanup_token=new_token
-        )
-        vm_properties = (await get_resource(f"/api{vm_path}", await new_token(), verify))["userResource"]["properties"]
+        vm_path, vm_id = await resources.create(VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token)
+        vm_properties = (await get_resource(f"/api{vm_path}", token, verify))["userResource"]["properties"]
         azure_vm_id = vm_properties["azure_resource_id"]
         probe_id = uuid4().hex
         async with arm_client() as arm:
