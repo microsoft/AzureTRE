@@ -32,6 +32,14 @@ class HealthBundleContractTests(unittest.TestCase):
         self.assertIn('error_message_regex = ["AnotherOperationInProgress"]', group)
         self.assertIn("azurerm_healthcare_dicom_service.dicom", group.split("depends_on", 1)[1])
 
+    def test_an_update_that_adds_fhir_creates_the_zone_group_again(self):
+        # The FHIR record is in the zone of the workspace record, so the group body stays the same.
+        source = (BUNDLE / "main.tf").read_text()
+        trigger = block(source, 'resource "terraform_data" "fhir_deployed"')
+        self.assertIn("input = var.deploy_fhir", trigger)
+        group = block(source, 'resource "azapi_resource" "health_services_dns_zone_group"')
+        self.assertIn("replace_triggered_by = [terraform_data.fhir_deployed]", group)
+
     def test_services_are_created_after_the_private_endpoint(self):
         source = (BUNDLE / "main.tf").read_text()
         endpoint = block(source, 'resource "azurerm_private_endpoint" "health_services_private_endpoint"')

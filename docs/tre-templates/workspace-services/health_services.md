@@ -27,6 +27,8 @@ Terraform creates the endpoint before FHIR and DICOM, and deletes FHIR and DICOM
 Azure writes the private DNS records of a zone when the DNS zone group of this endpoint gets that zone.
 The DNS zone group always has the zone for the workspace and FHIR. It has the DICOM zone only when the service has DICOM.
 If an update adds DICOM, Terraform adds the DICOM zone to the group, and Azure writes the DICOM record. The endpoint stays.
+The FHIR record is in the same zone as the workspace record. So if an update adds or removes FHIR, Terraform deletes the group and creates it again, and Azure writes the records again.
+Private access to the services stops until the new group exists.
 Azure links a new service to the endpoint some minutes after Terraform creates the service.
 During this time, Azure refuses a change to the DNS zone group with HTTP 409, and Terraform tries again.
 

@@ -82,6 +82,12 @@ resource "azapi_resource_action" "remove_endpoint_dns_zone_group" {
   }
 }
 
+# The workspace and FHIR records are in the same zone, so an update that adds FHIR does not
+# change the group. A new group makes Azure write the records of all services of the endpoint.
+resource "terraform_data" "fhir_deployed" {
+  input = var.deploy_fhir
+}
+
 # Azure writes the private DNS records of a zone when the group gets that zone. Azure
 # links a new service to the endpoint after the service create returns. A change to the
 # group during this time gets HTTP 409, so the provider tries again.
@@ -108,4 +114,6 @@ resource "azapi_resource" "health_services_dns_zone_group" {
     azurerm_healthcare_fhir_service.fhir,
     azurerm_healthcare_dicom_service.dicom
   ]
+
+  lifecycle { replace_triggered_by = [terraform_data.fhir_deployed] }
 }
