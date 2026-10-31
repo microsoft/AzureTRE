@@ -1,7 +1,7 @@
 # Azure Provider source and version being used
 terraform {
   required_providers {
-    # Before 5.3.0, a FHIR create that Azure reports as Accepted fails, and the state does not get the service.
+    # Before 4.75.0, a FHIR create that Azure reports as Accepted fails, and the state does not get the service.
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "= 5.11.0"
