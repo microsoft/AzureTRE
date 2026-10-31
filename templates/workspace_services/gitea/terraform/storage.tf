@@ -37,7 +37,7 @@ resource "azurerm_storage_account" "gitea" {
 }
 
 # Before version 2.0.1, a separate resource managed the network rules. A destroy of that resource
-# changes the rules of the account, so Terraform only removes it from the state.
+# changes the rules of the account, so an upgrade only removes it from the state.
 removed {
   from = azurerm_storage_account_network_rules.stgrules
 

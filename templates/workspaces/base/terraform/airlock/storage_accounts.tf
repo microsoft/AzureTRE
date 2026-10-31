@@ -206,7 +206,7 @@ resource "azurerm_storage_account" "sa_export_inprogress" {
 }
 
 # Before version 2.12.5, a separate resource managed the network rules. A destroy of that resource
-# changes the rules of the account, so Terraform only removes it from the state.
+# changes the rules of the account, so an upgrade only removes it from the state.
 removed {
   from = azurerm_storage_account_network_rules.sa_export_inprogress_rules
 

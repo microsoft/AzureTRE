@@ -8,6 +8,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
   Mirror the repositories before the upgrade, and rotate the workspace client secret after it. See the [Gitea upgrade steps](docs/tre-templates/workspace-services/gitea.md#upgrading-to-version-200). The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.19.0. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
   A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
+  Also upgrade the Sonatype Nexus shared service to 3.11.5. Earlier versions keep the boot diagnostics of the Nexus VM in the core storage account. Until the upgrade, the boot diagnostics view of that VM does not load from outside the virtual network.
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
@@ -65,9 +66,9 @@ BUG FIXES:
   (`core` 0.19.0, `tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.5, `tre-user-resource-aml-compute-instance` 0.5.16)
 * Make apt on the Guacamole Linux VM use the Ubuntu archive key for the Ubuntu sources from Nexus, and make Nexus get the Ubuntu packages over HTTPS, the same as its other proxies. An upgrade does not change the apt sources of an existing VM. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-shared-service-sonatype-nexus` 3.11.5)
 * Create the network rules of the Gitea storage account together with the account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
-  An uninstall uses the installed bundle version, so upgrade the service first to keep the rules during the uninstall. (`tre-workspace-service-gitea` 2.0.1)
+  An uninstall uses the installed bundle version, so complete an upgrade of the service first to keep the rules during the uninstall. (`tre-workspace-service-gitea` 2.0.1)
 * Create the network rules of the workspace storage account and the Airlock export in-progress storage account together with each account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
-  An uninstall uses the installed bundle version, so upgrade a workspace and its Gitea services first to keep the rules during the delete.
+  An uninstall uses the installed bundle version, so complete an upgrade of a workspace and its Gitea services first to keep the rules during the delete.
   (`tre-workspace-base` 2.12.5, `tre-workspace-unrestricted` 0.15.4, `tre-workspace-airlock-import-review` 0.18.4)
 * Turn off the shell command trace in the Guacamole Linux VM setup script and around the oauth2-proxy start of the Guacamole server. The comment in the setup script says that the trace is for debugging only. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-service-guacamole` 0.14.8)
 * Accept traffic to the core storage account only through its private endpoints and from trusted Azure services. Add private endpoints for the queue and table services, which the Airlock notifier Logic App uses. The Logic App reaches its content share through the virtual network, and Nexus keeps its boot diagnostics in managed storage.
