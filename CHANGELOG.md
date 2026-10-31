@@ -71,6 +71,8 @@ BUG FIXES:
   API responses with the resource properties then included this value.
   A database migration replaces the values that earlier updates stored. If an update set the client secret of a workspace before this version, you can create a new secret for the workspace application.
   Then update the workspace with the new secret, and delete the old secret.
+  If that update fails, send it again with the new secret. The update form shows `REDACTED`, and an update with `REDACTED` keeps the earlier secret.
+  Delete the old secret only after an update with the new secret succeeds.
   For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0)
 * Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.
   The create route of an Airlock review VM did the same in its HTTP 500 response.

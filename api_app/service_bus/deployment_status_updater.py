@@ -28,7 +28,8 @@ PENDING_DISPATCH_SECONDS = 5 * 60
 AWAITING_STATUSES = (Status.AwaitingDeployment, Status.AwaitingUpdate, Status.AwaitingDeletion, Status.AwaitingAction)
 NOT_SENT_WITH_SENSITIVE_VALUES = (
     "The API stopped before it recorded the send of this request. The request has sensitive values, which the API "
-    "does not store, so the API cannot send it again. If the status does not change, send the request again."
+    "does not store, so the API cannot send it again. If the status does not change, send the request again with "
+    "the sensitive values."
 )
 NOT_SENT_BEFORE_A_LATER_REQUEST = (
     "The API stopped before it recorded the send of this request, and a later request changed the resource. "

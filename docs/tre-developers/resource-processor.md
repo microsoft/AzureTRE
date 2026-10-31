@@ -156,7 +156,8 @@ If the API stops between the write and the send, the entry stays. When the API s
 1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
 1. If an install or an update sets a sensitive property, the first message has the real value, and Cosmos DB keeps `REDACTED`.
    The operation write records this in the entry, and the updater cannot build such a message again.
-   It sets the step and the operation to the failed status, with a message that asks the user to send the request again if the status does not change.
+   It sets the step and the operation to the failed status, with a message that asks the user to send the request again with the sensitive values if the status does not change.
+   The API does not keep the new value of a sensitive property, and an update that sends `REDACTED` keeps the earlier value.
    Other first messages have the same values as Cosmos DB, so the updater sends them with the same values as the first send.
 1. If the updater cannot build the message, it sets the step and the operation to the failed status with the error text.
 
