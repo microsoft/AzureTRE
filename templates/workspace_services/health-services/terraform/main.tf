@@ -80,6 +80,13 @@ resource "azapi_resource_action" "remove_endpoint_dns_zone_group" {
   retry = {
     error_message_regex = ["AnotherOperationInProgress"]
   }
+
+  # The delete waits for the changes to FHIR and DICOM, so that the records are absent only
+  # until the new group exists. If a change to a service fails, the old group stays.
+  depends_on = [
+    azurerm_healthcare_fhir_service.fhir,
+    azurerm_healthcare_dicom_service.dicom
+  ]
 }
 
 # The workspace and FHIR records are in the same zone, so an update that adds FHIR does not

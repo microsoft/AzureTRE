@@ -59,6 +59,10 @@ class HealthBundleContractTests(unittest.TestCase):
         self.assertIn('/privateDnsZoneGroups/private-dns-zone-group"', remove)
         self.assertIn('name      = "private-dns-zone-group"', group)
         self.assertIn("azapi_resource_action.remove_endpoint_dns_zone_group", group)
+        # The old group stays until FHIR and DICOM have their changes.
+        depends_on = remove.split("depends_on", 1)[1]
+        self.assertIn("azurerm_healthcare_fhir_service.fhir", depends_on)
+        self.assertIn("azurerm_healthcare_dicom_service.dicom", depends_on)
 
     def test_azapi_can_update_resources_with_the_terraform_of_the_bundle(self):
         # Before 2.9.0, azapi returns no resource identity after an update. Terraform 1.12 and
