@@ -344,7 +344,7 @@ class UbuntuSourceTests(unittest.TestCase):
 
     def test_linux_vm_apt_sources_name_their_key(self):
         sources = re.findall(
-            r"^\s*deb (\[[^\]]*\]) (\S+)", (LINUXVM / "apt_sources_config.yml").read_text(), re.MULTILINE
+            r"^\s*deb\s+(?:(\[[^\]]*\])\s+)?(\S+)", (LINUXVM / "apt_sources_config.yml").read_text(), re.MULTILINE
         )
         self.assertLessEqual({"$PRIMARY", "$SECURITY"}, {source for _, source in sources})
         for options, source in sources:
