@@ -103,6 +103,4 @@ try {
     Write-Output "HEALTH_PROBE_FAILED=$stage"
     if ($null -ne $response) { Write-Output "HEALTH_PROBE_STATUS=$([int]$response.StatusCode)" }
     exit 1
-} finally {
-    $identity = $null
 }

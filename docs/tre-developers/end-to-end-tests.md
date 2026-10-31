@@ -204,6 +204,7 @@ The last start has the same OIDC settings, so the log must show only one stop fo
 The query returns counts only. The CI identity needs read access to the Log Analytics workspace.
 At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
 The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
+
 ### Health selection
 
 Select `tre-workspace-service-health` to run `test_health.py::test_private_fhir_access_and_dicom_update`.
