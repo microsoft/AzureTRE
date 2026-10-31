@@ -21,6 +21,7 @@ pytestmark = pytest.mark.asyncio
 
 RESOURCE_ID = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 FIREWALL_ID = "a8b2c3d4-1111-4222-8333-944455556666"
+CHILD_ID = "c3d4e5f6-2222-4333-8444-a55566667777"
 MESSAGE_ID = f"{OPERATION_ID}:random-uuid"
 AWAITING = {
     "install": Status.AwaitingDeployment,
@@ -180,6 +181,49 @@ async def test_a_later_request_for_the_resource_fails_the_step(update_mock, send
     assert operation.steps[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
     assert operation.status == Status.DeploymentFailed
     # The later request owns the status of the resource, for example a resource that it deleted.
+    updater.resource_repo.update_item.assert_not_awaited()
+
+
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_later_request_for_the_first_child_of_a_cascade_fails_the_step(update_mock, send_mock, updater):
+    # A disable of a workspace service starts with the main step of its user resource. A user can delete the user
+    # resource at once, because the cascade already disabled it.
+    document = pending_document(action="upgrade", status=Status.AwaitingUpdate)
+    document["steps"][0]["resourceId"] = CHILD_ID
+    document["steps"][0]["sourceTemplateResourceId"] = CHILD_ID
+    later = create_sample_operation(CHILD_ID, "uninstall")
+    later.createdWhen = document["createdWhen"] + 60
+    updater.operations_repo.get_later_operations_for_resource.side_effect = lambda resource_id, _: (
+        [later] if resource_id == CHILD_ID else []
+    )
+    update_mock.return_value = workspace({})
+
+    await updater.resend_pending_dispatch(document)
+
+    queried = [call.args for call in updater.operations_repo.get_later_operations_for_resource.await_args_list]
+    assert queried == [(RESOURCE_ID, document["createdWhen"]), (CHILD_ID, document["createdWhen"])]
+    update_mock.assert_not_awaited()
+    send_mock.assert_not_awaited()
+    operation = updater.operations_repo.update_item.await_args.args[0]
+    assert operation.steps[0].status == Status.UpdatingFailed
+    assert operation.steps[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
+    updater.resource_repo.update_item.assert_not_awaited()
+
+
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_later_request_comes_before_the_sensitive_values(update_mock, send_mock, updater):
+    # A later delete owns the status of the resource, so the sensitive value rule must not set it to failed again.
+    document = pending_document(sensitive_values=True)
+    later = create_sample_operation(RESOURCE_ID, "uninstall")
+    later.createdWhen = document["createdWhen"] + 60
+    updater.operations_repo.get_later_operations_for_resource.return_value = [later]
+
+    await updater.resend_pending_dispatch(document)
+
+    send_mock.assert_not_awaited()
+    assert updater.operations_repo.update_item.await_args.args[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
     updater.resource_repo.update_item.assert_not_awaited()
 
 

@@ -146,7 +146,15 @@ class DeploymentStatusUpdater:
 
         # A later request on the resource, or a cascade from a parent with a step for it, for example a delete of a
         # resource whose install was not sent. The install must not come after it.
-        if await self.operations_repo.get_later_operations_for_resource(operation.resourceId, operation.createdWhen):
+        later_operations = await self.operations_repo.get_later_operations_for_resource(
+            operation.resourceId, operation.createdWhen
+        )
+        # The first step of a cascade belongs to a child, so a later request on that child also counts.
+        if not later_operations and step.sourceTemplateResourceId not in (None, operation.resourceId):
+            later_operations = await self.operations_repo.get_later_operations_for_resource(
+                step.sourceTemplateResourceId, operation.createdWhen
+            )
+        if later_operations:
             logger.warning(f"Operation {operation.id} was not sent before a later request. Failing step {step.id}")
             await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST, write_resource=False)
             return

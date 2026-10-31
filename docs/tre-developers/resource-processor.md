@@ -151,6 +151,7 @@ If the API stops between the write and the send, the entry stays. When the API s
 1. One API instance claims each entry with the etag of the operation document. The other instances leave the entry.
 1. If the step has a status from the resource processor, the resource processor has the message. The updater removes the entry.
 1. If a later request for the same resource exists, for example a delete, the updater does not send the message. A cascade request of a parent with a step for the resource also counts.
+   The first step of a cascade is for a child resource, so a later request for that child also counts.
    The updater sets the step and the operation to the failed status. It does not change the resource, because the later request owns its status.
 1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
 1. If an install or an update sets a sensitive property, the first message has the real value, and Cosmos DB keeps `REDACTED`.
