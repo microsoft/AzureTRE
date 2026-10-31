@@ -1177,6 +1177,27 @@ async def test_a_repeated_final_status_finishes_the_writes_of_the_first_copy(per
     send.assert_awaited_once()
 
 
+async def test_a_failure_from_the_run_after_an_unfinished_success_keeps_the_success(persisted_pipeline):
+    updater, stored, message, send, (_, success, failure) = persisted_pipeline
+    save = updater.resource_repo.update_item.side_effect
+    writes = []
+
+    def fail_first_write(item):
+        writes.append(item.id)
+        if len(writes) == 1:
+            raise RuntimeError("Cosmos DB is not available")
+        save(item)
+
+    updater.resource_repo.update_item.side_effect = fail_first_write
+    assert await updater.update_status_in_database(message(success)) is False
+    assert stored["operation"].steps[0].statusUpdateComplete is False
+
+    # For example, the resource processor could not read the outputs of the run and sent a failure.
+    assert await updater.update_status_in_database(message(failure)) is True
+
+    assert stored["operation"].steps[0].status == success
+
+
 async def test_a_new_run_before_the_final_status_takes_over_the_step(persisted_pipeline):
     updater, stored, message, send, (in_progress, success, _) = persisted_pipeline
     assert await updater.update_status_in_database(message(in_progress, execution_id="run-a")) is True
@@ -1212,6 +1233,8 @@ async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
     workspace = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
     operation = create_sample_operation(workspace.id, RequestAction.Install)
     operation.steps[0].status = Status.Deployed
+    # A newer resource processor finished the step. A message from an older resource processor has no execution ID.
+    operation.steps[0].executionId = "run-a"
     updater = DeploymentStatusUpdater()
     updater.operations_repo = AsyncMock()
     updater.operations_repo.get_operation_by_id.return_value = operation
@@ -1228,7 +1251,7 @@ async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
     assert await updater.update_status_in_database(message) is True
 
     assert operation.steps[0].status == Status.DeploymentFailed
-    assert operation.steps[0].executionId is None
+    assert operation.steps[0].executionId == "run-a"
 
 
 @patch("service_bus.deployment_status_updater.logger")

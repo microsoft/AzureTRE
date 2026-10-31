@@ -87,6 +87,23 @@ def disabled_workspace() -> Workspace:
     return workspace
 
 
+def schema_error_with_a_secret() -> ValidationError:
+    """A schema error of a submitted value. Its message and its text have the value, so the old routes returned it."""
+    try:
+        validate(instance={"vm_size": "secret-value"}, schema={"properties": {"vm_size": {"enum": ["small"]}}})
+    except ValidationError as error:
+        assert "secret-value" in error.message
+        return error
+
+
+def assert_no_submitted_value(response, logger_mock):
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "vm_size" in response.text
+    assert "secret-value" not in response.text
+    assert "secret-value" not in str(logger_mock.mock_calls)
+    logger_mock.exception.assert_not_called()
+
+
 def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
     workspace = Workspace(
         id=workspace_id,
@@ -983,6 +1000,23 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
 
+    # [PATCH] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.WorkspaceRepository.patch_workspace")
+    async def test_patch_workspace_returns_400_without_the_submitted_values(
+        self, patch_workspace_mock, _, logger_mock, app, client
+    ):
+        patch_workspace_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"isEnabled": True},
+            headers={"etag": "some-etag-value"},
+        )
+
+        assert_no_submitted_value(response, logger_mock)
+
     # [DELETE] /workspaces/{workspace_id}
     @patch(
         "api.routes.resource_helpers.ResourceRepository.get_resource_dependency_list",
@@ -1283,6 +1317,26 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_returns_400_without_the_submitted_values(
+        self, create_mock, _, get_workspace_mock, logger_mock, app, client, workspace_service_input
+    ):
+        get_workspace_mock.return_value = sample_workspace(
+            auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
+        )
+        create_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.post(
+            app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID),
+            json=workspace_service_input,
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
     @patch(
@@ -2036,6 +2090,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
             headers={"etag": etag},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "INVALID-DATA" not in response.text
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -2084,6 +2139,27 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         )
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @patch("api.routes.workspaces.logger")
+    @patch(
+        "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
+        return_value=sample_workspace_service(),
+    )
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service")
+    async def test_patch_workspace_service_returns_400_without_the_submitted_values(
+        self, patch_mock, _, __, logger_mock, app, client
+    ):
+        patch_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID),
+            json={"isEnabled": True},
+            headers={"etag": "some-etag-value"},
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @pytest.mark.parametrize(
@@ -2543,6 +2619,26 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
+    @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
+    async def test_post_user_resources_returns_400_without_the_submitted_values(
+        self, create_mock, _, get_workspace_mock, logger_mock, app, client, sample_user_resource_input_data
+    ):
+        get_workspace_mock.return_value = sample_workspace(
+            auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
+        )
+        create_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.post(
+            app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID),
+            json=sample_user_resource_input_data,
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")

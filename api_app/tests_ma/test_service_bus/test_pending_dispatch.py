@@ -232,13 +232,22 @@ async def test_a_later_request_comes_before_the_sensitive_values(update_mock, se
 async def test_a_failed_first_step_on_another_resource_changes_only_the_resource_of_the_request(
     update_mock, send_mock, updater
 ):
-    # For example, the first step of an uninstall pipeline changes the firewall. That step did not run.
+    # For example, the first step of an install pipeline is an upgrade of the firewall. That step did not run.
     document = pending_document()
     document["steps"][0]["resourceId"] = FIREWALL_ID
+    document["steps"][0]["resourceAction"] = "upgrade"
+    document["steps"][0]["status"] = Status.AwaitingUpdate
     update_mock.side_effect = Exception("template not found")
 
     await updater.resend_pending_dispatch(document)
 
+    # The firewall has many requests, so only later requests on the resource of the request count.
+    updater.operations_repo.get_later_operations_for_resource.assert_awaited_once_with(
+        RESOURCE_ID, document["createdWhen"]
+    )
+    operation = updater.operations_repo.update_item.await_args.args[0]
+    assert operation.steps[0].status == Status.UpdatingFailed
+    assert operation.status == Status.DeploymentFailed
     updater.resource_repo.get_resource_by_id.assert_awaited_once_with(uuid.UUID(RESOURCE_ID))
     assert updater.resource_repo.update_item.await_args.args[0].deploymentStatus == Status.DeploymentFailed
 

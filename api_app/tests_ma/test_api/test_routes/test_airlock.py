@@ -809,6 +809,7 @@ class TestAirlockRoutesThatRequireAirlockManagerRights:
         assert "os_image" in response.text
         assert "sas-value" not in response.text
         assert "sas-value" not in str(logger_mock.mock_calls)
+        logger_mock.exception.assert_not_called()
 
     @patch(
         "services.airlock.AirlockRequestRepository.read_item_by_id",

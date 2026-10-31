@@ -1245,7 +1245,20 @@ async def test_a_session_lost_during_the_lease_wait_runs_no_porter(
 ):
     # Another worker can have the message now, and a later step for the resource can have finished.
     client, receiver = session_receiver(mock_service_bus_client, VALID_REQUEST)
-    receiver.session.renew_lock.side_effect = SessionLockLostError()
+    leased = []
+
+    @asynccontextmanager
+    async def lease(container, resource_id, describe):
+        leased.append(resource_id)
+        yield mock_execution_lease.execution
+
+    async def renew_lock():
+        # The session ends during the wait, so only a renew after the wait finds the loss.
+        if leased:
+            raise SessionLockLostError()
+
+    mock_execution_lease.side_effect = lease
+    receiver.session.renew_lock.side_effect = renew_lock
 
     await receive_message(
         client, {"resource_request_queue": "q"}, AsyncMock(), keep_running=Mock(side_effect=[True, False])

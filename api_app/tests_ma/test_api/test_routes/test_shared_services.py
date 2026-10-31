@@ -10,7 +10,14 @@ from fastapi import status
 from models.domain.resource import ResourceHistoryItem
 
 from tests_ma.test_api.conftest import create_admin_user, create_test_user
-from .test_workspaces import FAKE_CREATE_TIMESTAMP, FAKE_UPDATE_TIMESTAMP, OPERATION_ID, sample_resource_operation
+from .test_workspaces import (
+    FAKE_CREATE_TIMESTAMP,
+    FAKE_UPDATE_TIMESTAMP,
+    OPERATION_ID,
+    assert_no_submitted_value,
+    sample_resource_operation,
+    schema_error_with_a_secret,
+)
 
 from db.errors import EntityDoesNotExist
 from models.domain.shared_service import SharedService
@@ -220,6 +227,38 @@ class TestSharedServiceRoutesThatRequireAdminRights:
         )
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
+
+    # [POST] /shared-services
+    @patch("api.routes.shared_services.logger")
+    @patch("api.routes.shared_services.SharedServiceRepository.create_shared_service_item")
+    async def test_post_shared_services_returns_400_without_the_submitted_values(
+        self, create_mock, logger_mock, app, client, shared_service_input
+    ):
+        create_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE), json=shared_service_input)
+
+        assert_no_submitted_value(response, logger_mock)
+
+    # [PATCH] /shared-services/{shared_service_id}
+    @patch("api.routes.shared_services.logger")
+    @patch(
+        "api.dependencies.shared_services.SharedServiceRepository.get_shared_service_by_id",
+        return_value=sample_shared_service(),
+    )
+    @patch("api.dependencies.shared_services.SharedServiceRepository.patch_shared_service")
+    async def test_patch_shared_service_returns_400_without_the_submitted_values(
+        self, patch_mock, _, logger_mock, app, client
+    ):
+        patch_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_SHARED_SERVICE, shared_service_id=SHARED_SERVICE_ID),
+            json={"isEnabled": True},
+            headers={"etag": ETAG},
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [PATCH] /shared-services/{shared_service_id}
     @patch(
