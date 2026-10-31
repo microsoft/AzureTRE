@@ -39,10 +39,11 @@ class CoreStorageNetworkTests(unittest.TestCase):
         self.assertRegex(logic_app, r"vnet_route_all_enabled\s*=\s*true")
 
     def test_notifier_updates_the_logic_app_in_one_request(self):
-        # AzureRM 3.x first sends a Logic App update with only the basic app settings, without WEBSITE_CONTENTOVERVNET.
-        # The platform then tries to reach the content share over the public network, and the core account denies it.
-        major = re.search(r'version\s*=\s*"=\s*(\d+)\.', NOTIFIER_PROVIDERS.read_text()).group(1)
-        self.assertGreaterEqual(int(major), 4)
+        # AzureRM before 4.40.0 first sends a Logic App update with only the basic app settings, without
+        # WEBSITE_CONTENTOVERVNET. The platform then tries to reach the content share over the public network, and the
+        # core account denies it.
+        version = re.search(r'version\s*=\s*"=\s*(\d+)\.(\d+)\.(\d+)"', NOTIFIER_PROVIDERS.read_text()).groups()
+        self.assertGreaterEqual(tuple(map(int, version)), (4, 40, 0))
 
     def test_nexus_boot_diagnostics_use_managed_storage(self):
         vm = NEXUS_VM.read_text()
