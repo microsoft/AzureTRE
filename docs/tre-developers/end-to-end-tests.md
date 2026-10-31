@@ -279,7 +279,8 @@ The case follows the steps in [Legacy Airlock Architecture](../azure-tre-overvie
 
 The two cases in `test_airlock_upgrade.py` follow the procedure in [Legacy Airlock Architecture](../azure-tre-overview/airlock-legacy.md#upgrading-to-current-architecture) with a workspace that an earlier release created. Both cases need the manual test workspace application with `WorkspaceOwner` and `AirlockManager`.
 
-1. Make a branch from the tag of the earlier release, for example `v0.29.1`. Add the current CI workflow files and the `e2e_tests` folder of the current code to it, because the earlier release does not have the seed case. Deploy this branch, and set `e2eTestsCustomSelector` to `airlock_upgrade_seed`. The case creates the workspace `E2E Airlock upgrade seed` with an approved legacy import, and keeps it.
+1. Make a branch from the tag of the earlier release, for example `v0.29.1`. Add the current CI workflow files and the `e2e_tests` folder of the current code to it, because the earlier release does not have the seed case.
+   Deploy this branch, and set `e2eTestsCustomSelector` to `airlock_upgrade_seed`. The case creates the workspace `E2E Airlock upgrade seed` with an approved legacy import, and keeps it.
 1. Deploy the current code to the same environment with `enable_legacy_airlock` set to `true`. The deployment runs `POST /migrations`.
 1. Set `e2eTestsCustomSelector` to `airlock_upgrade_verify`. The case makes sure that the core legacy accounts still exist and that the workspace has `airlock_version` `1`.
 1. The case upgrades the workspace to the current `tre-workspace-base` version. The legacy workspace accounts must still exist with the default network action `Deny`, and a new legacy import must pass.
