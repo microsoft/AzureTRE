@@ -277,7 +277,8 @@ Publish and register the checkout base-workspace, firewall and OHDSI bundles. De
 Check PostgreSQL 14 capacity for `B_Standard_B1ms`, 32 GiB storage and availability zone 1 in the selected region.
 The case creates a fresh Automatic workspace. It disables backups and sets `configure_data_source=false` without data-source properties.
 
-The case checks both private web apps, their pinned images, PostgreSQL networking and the WebAPI identity's vault role.
+The case checks both private web apps, their pinned images and PostgreSQL networking.
+It also checks that the WebAPI identity has a role on each of its five Key Vault secrets and no role on the vault, and that each Key Vault reference resolves.
 Successful installation includes the bundle's private WebAPI readiness check and local administrator setup.
 A metadata update exercises a same-version upgrade. The test checks the callback and firewall collections after each operation.
 It waits for terminal operations before updates or deletion. It owns accepted resources before evidence writes or client closure.

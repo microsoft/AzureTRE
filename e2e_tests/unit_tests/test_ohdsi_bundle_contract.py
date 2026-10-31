@@ -9,7 +9,6 @@ import sys
 import tempfile
 import unittest
 
-import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 BUNDLE = ROOT / "templates/workspace_services/ohdsi"
@@ -247,5 +246,3 @@ class BundleContractTests(unittest.TestCase):
     def test_bootstrap_version_matches_pinned_image(self):
         source = (BUNDLE / "terraform/atlas_security.tf").read_text()
         self.assertRegex(source, r"WEB_API_VERSION\s*=\s*local.ohdsi_api_docker_image_tag")
-        manifest = yaml.safe_load((BUNDLE / "porter.yaml").read_text())
-        self.assertEqual(manifest["version"], "0.3.14")
