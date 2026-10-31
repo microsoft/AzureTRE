@@ -6,7 +6,7 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * `tre-workspace-service-gitea` 2.0.0 keeps the Git repositories on its file share. The upgrade restarts the web app, so the repositories on the container disk are lost.
   Mirror the repositories before the upgrade, and rotate the workspace client secret after it. See the [Gitea upgrade steps](docs/tre-templates/workspace-services/gitea.md#upgrading-to-version-200). The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
-* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.18.17. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
+* If the Airlock notifier shared service is installed, upgrade it to 1.0.15 directly after the upgrade to `core` 0.19.0. Azure mounts the content share of earlier notifier versions over the public network, which the core storage account no longer accepts.
   A running notifier can continue to work, but a restart or a configuration change of its Logic App can fail until the upgrade. See [Airlock notifier](docs/tre-templates/shared-services/airlock-notifier.md#storage-and-network).
 
 ENHANCEMENTS:
@@ -62,7 +62,7 @@ BUG FIXES:
   Each new size has the same vCPU count and memory as the old size. If a deployment does not set `resource_processor_vmss_sku`, the next core deployment resizes the resource processor. If that resize fails, set `resource_processor_vmss_sku` to `Standard_B2s` and deploy the core again.
   An upgrade keeps the size of an existing admin VM. If a Nexus service has no stored `vm_size`, for example a Nexus from before bundle 3.2.3, the upgrade resizes its VM to `Standard_B2s_v2` and restarts it.
   The AML compute instance bundle default is now `Standard_D2_v3`, the same as its schema, because `Standard_DS2_v3` does not exist.
-  (`core` 0.18.17, `tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.5, `tre-user-resource-aml-compute-instance` 0.5.16)
+  (`core` 0.19.0, `tre-shared-service-admin-vm` 0.5.8, `tre-shared-service-sonatype-nexus` 3.11.5, `tre-user-resource-aml-compute-instance` 0.5.16)
 * Make apt on the Guacamole Linux VM use the Ubuntu archive key for the Ubuntu sources from Nexus, and make Nexus get the Ubuntu packages over HTTPS, the same as its other proxies. An upgrade does not change the apt sources of an existing VM. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-shared-service-sonatype-nexus` 3.11.5)
 * Create the network rules of the Gitea storage account together with the account. A separate resource set them after the create and changed them again before the delete. An upgrade removes the separate resource from the Terraform state and keeps the rules.
   An uninstall uses the installed bundle version, so upgrade the service first to keep the rules during the uninstall. (`tre-workspace-service-gitea` 2.0.1)
@@ -72,7 +72,7 @@ BUG FIXES:
 * Turn off the shell command trace in the Guacamole Linux VM setup script and around the oauth2-proxy start of the Guacamole server. The comment in the setup script says that the trace is for debugging only. (`tre-service-guacamole-linuxvm` 1.4.10, `tre-service-guacamole` 0.14.8)
 * Accept traffic to the core storage account only through its private endpoints and from trusted Azure services. Add private endpoints for the queue and table services, which the Airlock notifier Logic App uses. The Logic App reaches its content share through the virtual network, and Nexus keeps its boot diagnostics in managed storage.
   The notifier uses the AzureRM provider 4.57.0, which updates the Logic App in one request with all its app settings.
-  (`core` 0.18.17, `tre-shared-service-airlock-notifier` 1.0.15, `tre-shared-service-sonatype-nexus` 3.11.5)
+  (`core` 0.19.0, `tre-shared-service-airlock-notifier` 1.0.15, `tre-shared-service-sonatype-nexus` 3.11.5)
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
