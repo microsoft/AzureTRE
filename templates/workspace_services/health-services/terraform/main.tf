@@ -4,7 +4,15 @@ resource "azurerm_healthcare_workspace" "healthcare_workspace" {
   location            = data.azurerm_resource_group.ws.location
   tags                = local.workspace_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes = [tags]
+
+    # Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
+    precondition {
+      condition     = var.deploy_fhir || var.deploy_dicom
+      error_message = "Deploy FHIR, DICOM or both. Azure creates no private endpoint to a healthcare workspace without a FHIR or DICOM service."
+    }
+  }
 }
 
 resource "azurerm_healthcare_fhir_service" "fhir" {

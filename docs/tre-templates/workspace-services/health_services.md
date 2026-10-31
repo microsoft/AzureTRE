@@ -24,6 +24,9 @@ To repair the service, delete its FHIR service in the Azure portal, and then del
 
 The service connects the healthcare workspace to the workspace network through one private endpoint.
 Azure fails an endpoint to a healthcare workspace without a FHIR or DICOM service. So Terraform creates the endpoint after FHIR and DICOM, and each Health service must deploy FHIR, DICOM or both.
+If an install or an update has neither FHIR nor DICOM, Terraform stops before it changes a resource, with the message "Deploy FHIR, DICOM or both".
+This also applies to an upgrade of an earlier Health service without FHIR and DICOM. Turn on FHIR or DICOM in the same request, or delete the service.
+The form of the TRE UI turns on FHIR by default. A request through the API without `deploy_fhir` keeps the bundle default `false`.
 Azure writes the private DNS records of a zone when the DNS zone group of this endpoint gets that zone.
 The DNS zone group always has the zone for the workspace and FHIR. It has the DICOM zone only when the service has DICOM.
 If an update adds DICOM, Terraform adds the DICOM zone to the group, and Azure writes the DICOM record. The endpoint stays.

@@ -1,5 +1,6 @@
 """Check the private network settings of the Health bundle."""
 
+import json
 from pathlib import Path
 import re
 import unittest
@@ -52,6 +53,17 @@ class HealthBundleContractTests(unittest.TestCase):
             'resource "azurerm_healthcare_dicom_service" "dicom"',
         ):
             self.assertNotIn("depends_on", block(source, header))
+
+    def test_a_service_without_fhir_and_dicom_stops_before_a_change(self):
+        source = (BUNDLE / "main.tf").read_text()
+        workspace = block(source, 'resource "azurerm_healthcare_workspace" "healthcare_workspace"')
+        precondition = workspace.split("precondition {", 1)[1]
+        self.assertIn("condition     = var.deploy_fhir || var.deploy_dicom", precondition)
+        self.assertIn('error_message = "Deploy FHIR, DICOM or both.', precondition)
+
+    def test_the_form_turns_on_fhir_by_default(self):
+        schema = json.loads((BUNDLE.parent / "template_schema.json").read_text())
+        self.assertIs(schema["properties"]["deploy_fhir"]["default"], True)
 
     def test_upgrade_removes_the_zone_group_of_the_endpoint_resource(self):
         source = (BUNDLE / "main.tf").read_text()
