@@ -61,9 +61,18 @@ class HealthBundleContractTests(unittest.TestCase):
         self.assertIn("condition     = var.deploy_fhir || var.deploy_dicom", precondition)
         self.assertIn('error_message = "Deploy FHIR, DICOM or both.', precondition)
 
-    def test_the_form_turns_on_fhir_by_default(self):
+    def test_the_form_and_the_bundle_use_the_same_defaults(self):
+        # The API stores a request without schema defaults, so the bundle default applies to an absent property.
         schema = json.loads((BUNDLE.parent / "template_schema.json").read_text())
-        self.assertIs(schema["properties"]["deploy_fhir"]["default"], True)
+        porter = (BUNDLE.parent / "porter.yaml").read_text()
+        for name in ("deploy_fhir", "deploy_dicom"):
+            with self.subTest(name=name):
+                self.assertIs(schema["properties"][name]["default"], False)
+                self.assertRegex(porter, rf"- name: {name}\n    type: boolean\n    default: false\n")
+        # The update form removes fhir_kind, which cannot change, so a request that turns on FHIR can lack it.
+        fhir_kind = schema["allOf"][0]["then"]["properties"]["fhir_kind"]["default"]
+        self.assertEqual(fhir_kind, "R4")
+        self.assertIn(f'- name: fhir_kind\n    type: string\n    default: "{fhir_kind}"\n', porter)
 
     def test_upgrade_removes_the_zone_group_of_the_endpoint_resource(self):
         source = (BUNDLE / "main.tf").read_text()

@@ -65,7 +65,7 @@ parameters:
     default: false
   - name: fhir_kind
     type: string
-    default: ""
+    default: "R4"
 
 outputs:
   - name: fhir_url

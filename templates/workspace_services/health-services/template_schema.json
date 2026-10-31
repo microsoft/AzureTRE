@@ -32,7 +32,7 @@
       "title": "Deploy FHIR",
       "description": "Deploy FHIR instance",
       "updateable": true,
-      "default": true
+      "default": false
     },
     "workspace_owners_group_id": {
       "type": "string",

@@ -10,7 +10,7 @@ resource "azurerm_healthcare_workspace" "healthcare_workspace" {
     # Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
     precondition {
       condition     = var.deploy_fhir || var.deploy_dicom
-      error_message = "Deploy FHIR, DICOM or both. Azure creates no private endpoint to a healthcare workspace without a FHIR or DICOM service."
+      error_message = "Deploy FHIR, DICOM or both. Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service."
     }
   }
 }
