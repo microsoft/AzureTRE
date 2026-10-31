@@ -140,7 +140,7 @@ module "backup" {
   resource_group_name   = azurerm_resource_group.ws.name
   tre_workspace_tags    = local.tre_workspace_tags
   enable_cmk_encryption = var.enable_cmk_encryption
-  # Before this, the module referred to these workspace resources directly, so a plan with CMK failed.
+  # The backup module cannot refer to workspace resources, so the workspace passes the CMK identity and key.
   encryption_identity_id = var.enable_cmk_encryption ? azurerm_user_assigned_identity.encryption_identity[0].id : null
   encryption_key_id      = var.enable_cmk_encryption ? azurerm_key_vault_key.encryption_key[0].versionless_id : null
 }

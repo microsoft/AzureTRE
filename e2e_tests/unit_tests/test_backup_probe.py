@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from jsonschema import validate
+import yaml
 
 from api_app.services.schema_service import enrich_user_resource_template
 from e2e_tests import test_backup_restore as case
@@ -36,6 +37,22 @@ def result(evidence, state="Succeeded", code=0, output=None):
 
 
 class ProbeTests(unittest.TestCase):
+    def test_the_custom_job_gives_the_lifecycle_cases_one_deadline_from_the_job_start(self):
+        # One selection can run more than one lifecycle case in the same 300-minute job.
+        jobs = yaml.safe_load((ROOT / ".github/workflows/deploy_tre_reusable.yml").read_text())["jobs"]
+        steps = jobs["e2e_tests_custom"]["steps"]
+        reserve = next(s for s in steps if "LIFECYCLE_VALIDATION_DEADLINE" in s.get("run", ""))
+        run = next(s for s in steps if s["name"] == "Run E2E Tests")
+        self.assertEqual(steps.index(reserve), 0)
+        self.assertIn("270 * 60", reserve["run"])
+        for variable in (
+            "BACKUP_VALIDATION_DEADLINE",
+            "AIRLOCK_MIGRATION_VALIDATION_DEADLINE",
+            "AIRLOCK_UPGRADE_VALIDATION_DEADLINE",
+            "PORTER_UPGRADE_VALIDATION_DEADLINE",
+        ):
+            self.assertIn(f"{variable}=${{{{ env.LIFECYCLE_VALIDATION_DEADLINE }}}}", run["with"]["COMMAND"])
+
     def test_access_needs_a_denied_request_and_data_phases_need_the_expected_file(self):
         access = probe.expected_result("access", PROBE_ID)
         self.assertEqual(access["unassigned"], 403)

@@ -35,10 +35,11 @@ Both flags are updateable, so the choice can be changed on an existing workspace
 
 Before version 2.12.5, the retained path deleted the storage account and its share. The share delete failed with `DeleteShareWhenSnapshotLeased`, so the workspace stayed in `deleting_failed`.
 To delete such a workspace, upgrade it to 2.12.5 or later, then delete it again.
+The templates that build on the base workspace have the same fix in `tre-workspace-unrestricted` 0.15.4 and `tre-workspace-airlock-import-review` 0.18.4.
 The failed delete removed the resource group and the vault from the Terraform state, so the upgrade can end in `updating_failed` with an error that the resource group already exists.
 The API keeps the new template version after a failed upgrade, so the next delete uses the corrected script.
 
-Before version 2.12.5, the delete with `delete_backups_on_uninstall = true` failed with `DeleteShareWhenSnapshotLeased` after the vault delete, so the workspace stayed in `deleting_failed`.
+Before version 2.12.5 (`tre-workspace-unrestricted` 0.15.4, `tre-workspace-airlock-import-review` 0.18.4), the delete with `delete_backups_on_uninstall = true` failed with `DeleteShareWhenSnapshotLeased` after the vault delete, so the workspace stayed in `deleting_failed`.
 To delete such a workspace, do these steps:
 
 1. Delete the file share with its leased snapshots: `az rest --method delete --url "https://management.azure.com/subscriptions/<subscription ID>/resourceGroups/rg-<TRE ID>-ws-<short workspace ID>/providers/Microsoft.Storage/storageAccounts/stgws<short workspace ID>/fileServices/default/shares/vm-shared-storage?api-version=2023-05-01&\$include=leased-snapshots"`.
