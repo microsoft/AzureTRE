@@ -25,9 +25,6 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
     type = "SystemAssigned"
   }
 
-  # Terraform creates the services after the private endpoint and deletes them before it.
-  depends_on = [azurerm_private_endpoint.health_services_private_endpoint]
-
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -45,9 +42,6 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
     type = "SystemAssigned"
   }
 
-  # Terraform creates the services after the private endpoint and deletes them before it.
-  depends_on = [azurerm_private_endpoint.health_services_private_endpoint]
-
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -64,6 +58,12 @@ resource "azurerm_private_endpoint" "health_services_private_endpoint" {
     subresource_names              = ["healthcareworkspace"]
     is_manual_connection           = false
   }
+
+  # Azure fails an endpoint to a healthcare workspace without a FHIR or DICOM service.
+  depends_on = [
+    azurerm_healthcare_fhir_service.fhir,
+    azurerm_healthcare_dicom_service.dicom
+  ]
 
   # The DNS zone group is a separate resource. The provider changes a zone group in this
   # resource only together with the whole endpoint.

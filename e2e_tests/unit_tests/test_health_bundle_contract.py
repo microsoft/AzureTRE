@@ -40,16 +40,18 @@ class HealthBundleContractTests(unittest.TestCase):
         group = block(source, 'resource "azapi_resource" "health_services_dns_zone_group"')
         self.assertIn("replace_triggered_by = [terraform_data.fhir_deployed]", group)
 
-    def test_services_are_created_after_the_private_endpoint(self):
+    def test_private_endpoint_is_created_after_the_services(self):
+        # Azure fails an endpoint to a healthcare workspace without a FHIR or DICOM service.
         source = (BUNDLE / "main.tf").read_text()
         endpoint = block(source, 'resource "azurerm_private_endpoint" "health_services_private_endpoint"')
-        self.assertNotIn("depends_on", endpoint)
+        depends_on = endpoint.split("depends_on", 1)[1]
+        self.assertIn("azurerm_healthcare_fhir_service.fhir", depends_on)
+        self.assertIn("azurerm_healthcare_dicom_service.dicom", depends_on)
         for header in (
             'resource "azurerm_healthcare_fhir_service" "fhir"',
             'resource "azurerm_healthcare_dicom_service" "dicom"',
         ):
-            service = block(source, header)
-            self.assertIn("depends_on = [azurerm_private_endpoint.health_services_private_endpoint]", service)
+            self.assertNotIn("depends_on", block(source, header))
 
     def test_upgrade_removes_the_zone_group_of_the_endpoint_resource(self):
         source = (BUNDLE / "main.tf").read_text()
