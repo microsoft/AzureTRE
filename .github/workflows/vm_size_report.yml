@@ -62,9 +62,10 @@ on: # yamllint disable-line rule:truthy
       - "devops/scripts/vm_size_catalogue.txt"
       - ".github/workflows/vm_size_report.yml"
 
-# A new push stops the older run on the same branch.
+# A new push stops the older push run on the same branch.
+# Each manual run has its own group, so another run does not stop it.
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
+  group: "${{ github.workflow }}-${{ github.event_name == 'push' && github.ref || github.run_id }}"
   cancel-in-progress: true
 
 permissions:
@@ -73,6 +74,8 @@ permissions:
 jobs:
   report:
     name: Report VM size availability
+    # Dependabot runs get no environment secrets, so they cannot log in to Azure.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     # The federated credential of the CI identity trusts this environment.
     environment: CICD
@@ -82,19 +85,39 @@ jobs:
       # Log in to Azure with OIDC.
       id-token: write
     steps:
+      # A fork without the CICD secrets cannot log in to Azure. A push run then skips the report.
+      - name: Check the Azure credentials
+        id: credentials
+        env:
+          CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ -n "$CLIENT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          elif [ "$EVENT_NAME" = "push" ]; then
+            echo "::notice::The CICD environment has no AZURE_CLIENT_ID secret, so the push run skips the report."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::The CICD environment has no AZURE_CLIENT_ID secret. Add the secret, then run the workflow again."
+            exit 1
+          fi
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        if: steps.credentials.outputs.ready == 'true'
         with:
           persist-credentials: false
 
       - name: Azure Login
+        if: steps.credentials.outputs.ready == 'true'
         uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+          environment: ${{ vars.AZURE_ENVIRONMENT || secrets.AZURE_ENVIRONMENT || 'AzureCloud' }}
 
       - name: Report VM size availability
+        if: steps.credentials.outputs.ready == 'true'
         env:
           # A push has no inputs, so it uses ci-location.
           REGION: ${{ inputs.region || 'ci-location' }}
@@ -123,6 +146,7 @@ jobs:
           cat vm-size-report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the report
+        if: steps.credentials.outputs.ready == 'true'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: vm-size-report

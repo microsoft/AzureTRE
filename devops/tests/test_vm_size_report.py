@@ -329,6 +329,20 @@ class ReportTests(unittest.TestCase):
                 vm_size_report.main([*args, "--repo", str(repo), "--catalogue", str(repo / "catalogue.txt")])
         return output.getvalue(), az
 
+    def test_report_skips_the_files_of_this_tool(self):
+        files = {**self.files, "own.md": "For example `Standard_F2s_v2`.\n"}
+        with tempfile.TemporaryDirectory() as directory:
+            repo = git_repo(directory, files)
+            with (
+                patch.object(vm_size_report, "OWN_FILES", {(repo / "own.md").resolve()}),
+                patch("sys.stdout", new_callable=io.StringIO) as output,
+            ):
+                vm_size_report.main(["--repo", str(repo), "--catalogue", str(repo / "catalogue.txt")])
+        report = output.getvalue()
+        self.assertIn("`Standard_D4s_v5`", report)
+        self.assertNotIn("Standard_F2s_v2", report)
+        self.assertNotIn("own.md", report)
+
     def test_region_report_shows_problems_first_and_code_before_docs(self):
         skus = [
             sku("Standard_B2s", "switzerlandnorth", {"type": "Location"}),

@@ -19,8 +19,14 @@ from urllib.parse import quote
 
 SCRIPT = Path(__file__).resolve()
 CATALOGUE = SCRIPT.with_name("vm_size_catalogue.txt")
-# The scan skips the files of this tool. The catalogue lists all sizes and the tests use example sizes.
-OWN_FILES = {SCRIPT, CATALOGUE, SCRIPT.parents[1] / "tests" / "test_vm_size_report.py"}
+# The scan skips the files of this tool. The catalogue lists all sizes, and the tests and the docs page use
+# example sizes.
+OWN_FILES = {
+    SCRIPT,
+    CATALOGUE,
+    SCRIPT.parents[1] / "tests" / "test_vm_size_report.py",
+    SCRIPT.parents[2] / "docs" / "tre-admins" / "vm-size-availability.md",
+}
 # After the prefix, a VM size has a family that starts with a capital letter, and a vCPU count.
 # This keeps out Standard_LRS, Standard_v2 and identifiers such as basic_workspace_request.
 # The word boundary keeps out database SKUs such as GP_Standard_D2ds_v4, which are not VM SKUs.
@@ -49,7 +55,7 @@ CATEGORIES = {
         "The name is not in the Azure catalogue. The size is retired or the name is wrong.",
     ),
     "blocked": ("⛔", "Blocked", "The region has the size, but the subscription cannot use it."),
-    "not offered": ("❌", "Not offered", "The region does not have the size."),
+    "not offered": ("❌", "Not offered", "The region does not have the size for this service."),
     "zones blocked": ("⚠️", "Some zones blocked", "The subscription can use the size, but not in the zones shown."),
     "not checked": ("➖", "Not checked", "The script could not get the Azure ML sizes of the region."),
     "available": ("✅", "Available", "The subscription can use the size in the region."),
