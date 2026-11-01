@@ -49,7 +49,6 @@ start_oauth() {
   cookiesecret=$(dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d '\n' | tr '+/' '-_')
 
   log "starting oauth2-proxy"
-  set -x
   "${OAUTH2_PROXY_HOME}/oauth2-proxy" \
     --provider oidc \
     --skip-provider-button \
@@ -74,7 +73,6 @@ start_oauth() {
     --oidc-email-claim "preferred_username" \
     --scope "openid offline_access ${AUDIENCE}/user_impersonation profile" &
   oauth_pid=$!
-  set +x
 }
 
 start_tomcat

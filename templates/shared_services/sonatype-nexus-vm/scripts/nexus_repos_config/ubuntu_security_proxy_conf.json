@@ -6,7 +6,7 @@
         "strictContentTypeValidation": false
     },
     "proxy": {
-        "remoteUrl": "http://security.ubuntu.com/ubuntu/",
+        "remoteUrl": "https://security.ubuntu.com/ubuntu/",
         "contentMaxAge": 1440,
         "metadataMaxAge": 1440
     },

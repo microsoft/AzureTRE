@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-admin-vm
-version: 0.5.7
+version: 0.5.8
 description: "An admin vm shared service"
 dockerfile: Dockerfile.tmpl
 registry: azuretre
@@ -60,7 +60,7 @@ parameters:
   - name: admin_jumpbox_vm_sku
     env: ADMIN_JUMPBOX_VM_SKU
     type: string
-    default: Standard_B2s
+    default: Standard_B2ls_v2
   - name: enable_cmk_encryption
     type: boolean
     default: false

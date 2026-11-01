@@ -5,7 +5,6 @@ locals {
   nexus_allowed_fqdns_list        = distinct(compact(split(",", replace(local.nexus_allowed_fqdns, " ", ""))))
   workspace_vm_allowed_fqdns      = "*.o.lencr.org,*.c.lencr.org,*.i.lencr.org"
   workspace_vm_allowed_fqdns_list = distinct(compact(split(",", replace(local.workspace_vm_allowed_fqdns, " ", ""))))
-  storage_account_name            = lower(replace("stg-${var.tre_id}", "-", ""))
   tre_shared_service_tags = {
     tre_id                = var.tre_id
     tre_shared_service_id = var.tre_resource_id

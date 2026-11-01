@@ -18,12 +18,13 @@
     "admin_jumpbox_vm_sku": {
       "type": "string",
       "enum": [
+        "Standard_B2ls_v2",
         "Standard_B2s",
         "Standard_D2s_v3",
         "Standard_D2s_v4",
         "Standard_D2s_v5"
       ],
-      "default": "Standard_B2s",
+      "default": "Standard_B2ls_v2",
       "title": "VM SKU",
       "description": "The SKU of the VM that will be deployed."
     }

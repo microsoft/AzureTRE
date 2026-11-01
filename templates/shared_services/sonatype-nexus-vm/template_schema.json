@@ -52,8 +52,10 @@
       "type": "string",
       "title": "VM Size",
       "description": "The size of the VM to be deployed",
-      "default": "Standard_B2ms",
+      "default": "Standard_B2s_v2",
       "enum": [
+        "Standard_B2s_v2",
+        "Standard_B4s_v2",
         "Standard_B2ms",
         "Standard_B4ms",
         "Standard_D2s_v3",

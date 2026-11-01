@@ -86,6 +86,8 @@ jobs:
               - 'devops/scripts/destroy_ci_ref_env.py'
               - 'devops/scripts/destroy_env_no_terraform.sh'
               - 'devops/scripts/validate_ci_cleanup.py'
+              - 'devops/scripts/vm_size_report.py'
+              - 'devops/scripts/vm_size_catalogue.txt'
               - 'devops/scripts/kv_add_network_exception.sh'
               - 'core/terraform/deploy.sh'
               - 'core/terraform/mgmt_storage_private_endpoint.sh'
@@ -100,6 +102,13 @@ jobs:
               - 'templates/workspace_services/guacamole/user_resources/guacamole-azure-linuxvm/terraform/**'
               - '.github/workflows/build_validation_develop.yml'
               - '.github/workflows/clean_validation_envs.yml'
+
+            # test_core_storage_network.py, test_storage_network_rules.py
+            # and test_template_scripts.py read these files.
+            template_files:
+              - 'core/terraform/storage.tf'
+              - 'templates/**/*.tf'
+              - 'templates/**/*.sh'
 
             terraform_core:
               - core/**/terraform/**/*.tf
@@ -140,6 +149,12 @@ jobs:
       - name: Test deployment scripts
         if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}
         run: python3 -m unittest discover -s devops/tests -v
+
+      - name: Test template files
+        if: ${{ steps.filter.outputs.template_files == 'true' && steps.filter.outputs.ci_cleanup != 'true' }}
+        run: |
+          python3 -m unittest -v devops/tests/test_core_storage_network.py \
+            devops/tests/test_storage_network_rules.py devops/tests/test_template_scripts.py
 
       - name: Test core outputs in the development-container base
         if: ${{ steps.filter.outputs.ci_cleanup == 'true' }}

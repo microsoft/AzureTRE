@@ -149,9 +149,8 @@ resource "azurerm_linux_virtual_machine" "nexus" {
     identity_ids = [azurerm_user_assigned_identity.nexus_msi.id]
   }
 
-  boot_diagnostics {
-    storage_account_uri = data.azurerm_storage_account.nexus.primary_blob_endpoint
-  }
+  # Azure keeps the boot diagnostics in a managed storage account.
+  boot_diagnostics {}
 
   depends_on = [
     azurerm_role_assignment.keyvault_nexus_secret_role

@@ -1,4 +1,10 @@
 ---
+# actionlint v1.7.12 does not yet recognise this GitHub-hosted runner label.
+# https://github.com/rhysd/actionlint/issues/682
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+
 # GitHub supports queue: max, but actionlint v1.7.12 does not recognise it.
 # https://github.com/rhysd/actionlint/issues/687
 # Remove these exact parser exceptions when actionlint supports queue.
