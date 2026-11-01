@@ -79,17 +79,45 @@ async def test_a_recorded_failure_is_sent_again_without_outputs():
     assert "outputs" not in body
 
 
+def step_result(operation_id, step_id, execution_id):
+    return {
+        "operationId": operation_id,
+        "stepId": step_id,
+        "action": "install",
+        "executionId": execution_id,
+        "status": statuses.pass_status_string_for["install"],
+        "message": "install action completed successfully.",
+        "outputs": True,
+    }
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "record",
+    "record, earlier",
     [
-        {},
-        {"operationId": "operation-1", "stepId": "step-1", "state": "running", "executionId": "crashed-run"},
-        {"operationId": "operation-1", "stepId": "step-0", "state": "finished", "executionId": "earlier-step"},
-        {"operationId": "operation-0", "stepId": "step-1", "state": "finished", "executionId": "other-operation"},
+        ({}, []),
+        ({"operationId": "operation-1", "stepId": "step-1", "state": "running", "executionId": "crashed-run"}, []),
+        (
+            {**step_result("operation-1", "step-0", "earlier-step"), "state": "finished"},
+            [step_result("operation-1", "step-0", "earlier-step")],
+        ),
+        (
+            {**step_result("operation-0", "step-1", "other-operation"), "state": "finished"},
+            [step_result("operation-0", "step-1", "other-operation")],
+        ),
+        (
+            {
+                "operationId": "operation-1",
+                "stepId": "step-1",
+                "state": "running",
+                "executionId": "crashed-run",
+                "earlierSteps": [step_result("operation-0", "step-1", "other-operation")],
+            },
+            [step_result("operation-0", "step-1", "other-operation")],
+        ),
     ],
 )
-async def test_porter_runs_when_the_record_has_no_result_for_this_step(record):
+async def test_porter_runs_when_the_record_has_no_result_for_this_step(record, earlier):
     execution = MagicMock(read=AsyncMock(return_value=record), write=AsyncMock())
     with patch.object(runner, "invoke_porter_action", AsyncMock(return_value=True)) as invoke:
         assert await runner.run_step(MESSAGE, execution, MagicMock(), CONFIG) is True
@@ -102,6 +130,7 @@ async def test_porter_runs_when_the_record_has_no_result_for_this_step(record):
         "action": "install",
         "executionId": execution_id,
         "state": "running",
+        "earlierSteps": earlier,
     }
     await invoke.await_args.kwargs["finish"]("deployed", "done", True)
     assert execution.write.await_args.args[0] == {
@@ -111,6 +140,74 @@ async def test_porter_runs_when_the_record_has_no_result_for_this_step(record):
         "message": "done",
         "outputs": True,
     }
+
+
+class RecordInMemory:
+    """Keep the execution record as JSON text, as the blob does."""
+
+    def __init__(self):
+        self.content = "{}"
+
+    async def read(self):
+        return json.loads(self.content)
+
+    async def write(self, record):
+        self.content = json.dumps(record)
+
+
+def recording_porter(runs, message="upgrade action completed successfully."):
+    async def invoke(msg_body, sb_client, config, *, execution_id, finish):
+        runs.append((msg_body["operationId"], msg_body["stepId"], execution_id))
+        await finish(statuses.pass_status_string_for[msg_body["action"]], message, False)
+        return True
+
+    return patch.object(runner, "invoke_porter_action", AsyncMock(side_effect=invoke))
+
+
+@pytest.mark.asyncio
+async def test_a_copy_of_a_step_that_arrives_after_another_step_does_not_run_porter_again():
+    # The API can send a step again after a step of another operation for the same resource, for example the firewall.
+    step_a = {**MESSAGE, "action": "upgrade", "operationId": "operation-a"}
+    step_b = {**MESSAGE, "action": "upgrade", "operationId": "operation-b"}
+    execution = RecordInMemory()
+    client, sender = service_bus()
+    runs = []
+
+    with recording_porter(runs):
+        for message in (step_a, step_b, step_a):
+            assert await runner.run_step(message, execution, client, CONFIG) is True
+
+    assert [operation for operation, _, _ in runs] == ["operation-a", "operation-b"]
+    [resent] = bodies(sender)
+    assert resent["operationId"] == "operation-a"
+    assert resent["executionId"] == runs[0][2]
+    assert resent["status"] == statuses.pass_status_string_for["upgrade"]
+    assert resent["message"] == "resource-1: upgrade action completed successfully."
+
+
+@pytest.mark.asyncio
+async def test_the_record_keeps_a_short_result_of_the_last_steps_only():
+    steps = [{**MESSAGE, "action": "upgrade", "stepId": f"step-{number}"} for number in range(runner.EARLIER_STEPS + 2)]
+    long_message = "x" * (runner.EARLIER_MESSAGE_LENGTH + 100)
+    execution = RecordInMemory()
+    client, _ = service_bus()
+    runs = []
+
+    with recording_porter(runs, long_message):
+        for message in steps:
+            await runner.run_step(message, execution, client, CONFIG)
+        record = await execution.read()
+        # A copy of an earlier step in the record does not run Porter. The result of the oldest step went away.
+        await runner.run_step(steps[1], execution, client, CONFIG)
+        await runner.run_step(steps[0], execution, client, CONFIG)
+
+    assert record["stepId"] == steps[-1]["stepId"]
+    assert record["message"] == long_message
+    assert [result["stepId"] for result in record["earlierSteps"]] == [step["stepId"] for step in steps[1:-1]]
+    for result in record["earlierSteps"]:
+        assert set(result) == {"operationId", "stepId", "action", "executionId", "status", "message", "outputs"}
+        assert result["message"] == long_message[: runner.EARLIER_MESSAGE_LENGTH]
+    assert [step for _, step, _ in runs] == [step["stepId"] for step in steps] + ["step-0"]
 
 
 @pytest.mark.asyncio

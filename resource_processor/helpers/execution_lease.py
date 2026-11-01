@@ -19,8 +19,8 @@ WAIT_SECONDS = 30
 class ExecutionLease:
     """One worker at a time holds this lease and runs Porter for a resource.
 
-    The blob keeps a small record of the last step that a worker ran for the resource,
-    so that a worker that gets the same message again can find the result.
+    The blob keeps a small record of the last step that a worker ran for the resource and the results of
+    earlier steps, so that a worker that gets the same message again can find the result.
     """
 
     def __init__(self, blob, lease):

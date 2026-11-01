@@ -486,19 +486,45 @@ async def _confirm_porter_installation_removed(installation_id: str, config: dic
     return uninstalled is not None and (installed is None or installed <= uninstalled)
 
 
+# A copy of a message can arrive after a later step for the same resource, for example when the API sends a step again.
+# So the execution record also keeps the results of the earlier steps. A status message can be up to 2 MB, so each
+# earlier result keeps the start of its message only.
+EARLIER_STEPS = 20
+EARLIER_MESSAGE_LENGTH = 4000
+RESULT_FIELDS = ("operationId", "stepId", "action", "executionId", "status", "message", "outputs")
+
+
+def recorded_results(record: dict) -> list:
+    """Return the results of the finished steps in the execution record, oldest first."""
+    earlier = record.get("earlierSteps")
+    results = [result for result in earlier if isinstance(result, dict)] if isinstance(earlier, list) else []
+    if record.get("state") == "finished":
+        results.append(record)
+    return [{field: result[field] for field in RESULT_FIELDS if field in result} for result in results]
+
+
 async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, config: dict) -> bool:
     """
     Run the step once. If the execution record shows that a worker already finished this step, send its status again.
     """
+
+    def same_step(entry: dict) -> bool:
+        return entry.get("operationId") == msg_body["operationId"] and entry.get("stepId") == msg_body["stepId"]
+
     record = await execution.read()
-    same_step = record.get("operationId") == msg_body["operationId"] and record.get("stepId") == msg_body["stepId"]
-    if same_step and record.get("state") == "finished":
+    results = recorded_results(record)
+    finished = next((result for result in reversed(results) if same_step(result)), None)
+    if finished is not None:
         logger.info(f"Step {msg_body['stepId']} for {msg_body['id']} is already finished. Sending its status again.")
-        return await send_recorded_status(msg_body, record, sb_client, config)
-    if same_step:
+        return await send_recorded_status(msg_body, finished, sb_client, config)
+    if same_step(record):
         # Porter did not finish. Run it again, as a Service Bus redelivery does.
         logger.warning(f"An earlier worker stopped during step {msg_body['stepId']} for {msg_body['id']}.")
 
+    earlier = [
+        {**result, "message": str(result.get("message", ""))[:EARLIER_MESSAGE_LENGTH]}
+        for result in results[-EARLIER_STEPS:]
+    ]
     execution_id = str(uuid4())
     record = {
         "operationId": msg_body["operationId"],
@@ -506,11 +532,18 @@ async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, confi
         "action": msg_body["action"],
         "executionId": execution_id,
     }
-    await execution.write({**record, "state": "running"})
+    await execution.write({**record, "state": "running", "earlierSteps": earlier})
 
     async def finish(status: str, message: str, with_outputs: bool):
         await execution.write(
-            {**record, "state": "finished", "status": status, "message": message, "outputs": with_outputs}
+            {
+                **record,
+                "state": "finished",
+                "status": status,
+                "message": message,
+                "outputs": with_outputs,
+                "earlierSteps": earlier,
+            }
         )
 
     return await invoke_porter_action(msg_body, sb_client, config, execution_id=execution_id, finish=finish)
