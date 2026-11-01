@@ -343,6 +343,21 @@ class ReportTests(unittest.TestCase):
         self.assertNotIn("Standard_F2s_v2", report)
         self.assertNotIn("own.md", report)
 
+    def test_report_skips_the_tool_files_of_another_repository(self):
+        files = {
+            **self.files,
+            "devops/scripts/vm_size_catalogue.txt": "# Refreshed on 2026-10-23\nStandard_F2s_v2\n",
+            "docs/tre-admins/vm-size-availability.md": "For example `Standard_F4s_v2`.\n",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            repo = git_repo(directory, files)
+            with patch("sys.stdout", new_callable=io.StringIO) as output:
+                vm_size_report.main(["--repo", str(repo), "--catalogue", str(repo / "catalogue.txt")])
+        report = output.getvalue()
+        self.assertIn("`Standard_D4s_v5`", report)
+        self.assertNotIn("Standard_F2s_v2", report)
+        self.assertNotIn("Standard_F4s_v2", report)
+
     def test_region_report_shows_problems_first_and_code_before_docs(self):
         skus = [
             sku("Standard_B2s", "switzerlandnorth", {"type": "Location"}),

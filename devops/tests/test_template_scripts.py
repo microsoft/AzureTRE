@@ -7,7 +7,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 # The arguments of each set command, also after a separator or a keyword, up to a comment or the next command.
-SET = re.compile(r"(?:^|[;&|]|\bthen\b|\bdo\b|\belse\b)[ \t]*set[ \t]+([^\n#;&|]*)", re.MULTILINE)
+SET = re.compile(
+    r"(?:^|[;&|]|\bthen\b|\bdo\b|\belse\b|\bif\b|\bwhile\b|\buntil\b)[ \t]*set[ \t]+([^\n#;&|]*)", re.MULTILINE
+)
 # A shebang line with a flag group that contains x.
 SHEBANG = re.compile(r"\A#![^\n]*[ \t]-[a-zA-Z]*x")
 
@@ -40,6 +42,9 @@ class TemplateScriptTests(unittest.TestCase):
             "set -o pipefail; set -x",
             "if true; then set -x; fi",
             "true && set -x",
+            "if set -x; then :; fi",
+            "while set -x; do break; done",
+            "until set -x; do :; done",
             "#!/bin/bash -x\necho done",
         ):
             with self.subTest(line=line):

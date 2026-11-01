@@ -354,7 +354,13 @@ def main(argv=None):
             print(f"Wrote {count} VM sizes to {args.catalogue}", file=sys.stderr)
             return
         catalogue_date, catalogue = read_catalogue(args.catalogue)
-        references = find_references(args.repo, OWN_FILES | {args.catalogue.resolve()})
+        # With --repo, the scan also skips the tool files at the same paths in that repository.
+        own_files = OWN_FILES | {
+            (args.repo / path.relative_to(SCRIPT.parents[2])).resolve()
+            for path in OWN_FILES
+            if path.is_relative_to(SCRIPT.parents[2])
+        }
+        references = find_references(args.repo, own_files | {args.catalogue.resolve()})
         if regions:
             skus = region_skus(regions, args.subscription)
             empty = [region for region in regions if not skus[region]]
