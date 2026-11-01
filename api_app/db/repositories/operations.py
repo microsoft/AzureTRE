@@ -55,10 +55,12 @@ class OperationRepository(BaseRepository):
         query = "SELECT * FROM c WHERE IS_DEFINED(c.pendingDispatch) AND c.pendingDispatch.createdWhen < @sentBefore"
         return await self.query(query=query, parameters=[{"name": "@sentBefore", "value": sent_before}])
 
-    async def claim_pending_dispatch(self, operation: dict) -> bool:
-        """Move the send time of the entry forward. Only one API instance can claim the document that it read."""
+    async def claim_pending_dispatch(self, operation: dict) -> Optional[str]:
+        """Move the send time of the entry forward. Only one API instance can claim the document that it read.
+        Return the etag after the claim, or None if another writer changed the document first.
+        """
         try:
-            await self.container.patch_item(
+            claimed = await self.container.patch_item(
                 item=operation["id"],
                 partition_key=operation["id"],
                 patch_operations=[
@@ -70,8 +72,8 @@ class OperationRepository(BaseRepository):
         except CosmosHttpResponseError as error:
             if error.status_code != 412:
                 raise
-            return False
-        return True
+            return None
+        return claimed["_etag"]
 
     async def clear_pending_dispatch(self, operation_id: str, message_id: str):
         """Remove the entry if it still names this message. A full write of the operation also removes it."""

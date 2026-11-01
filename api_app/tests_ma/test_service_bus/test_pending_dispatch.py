@@ -4,6 +4,7 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 from db.errors import EntityDoesNotExist
 from db.repositories.operations import PENDING_DISPATCH
@@ -23,6 +24,7 @@ RESOURCE_ID = "59b5c8e7-5c42-4fcb-a7fd-294cfc27aa76"
 FIREWALL_ID = "a8b2c3d4-1111-4222-8333-944455556666"
 CHILD_ID = "c3d4e5f6-2222-4333-8444-a55566667777"
 MESSAGE_ID = f"{OPERATION_ID}:random-uuid"
+CLAIM_ETAG = "claim-etag"
 AWAITING = {
     "install": Status.AwaitingDeployment,
     "upgrade": Status.AwaitingUpdate,
@@ -63,10 +65,17 @@ def updater():
     updater.resource_repo = AsyncMock()
     updater.resource_template_repo = AsyncMock()
     updater.resource_history_repo = AsyncMock()
-    updater.operations_repo.claim_pending_dispatch.return_value = True
+    updater.operations_repo.claim_pending_dispatch.return_value = CLAIM_ETAG
     updater.resource_repo.get_resource_by_id.return_value = workspace({})
     updater.operations_repo.get_later_operations_for_resource.return_value = []
     return updater
+
+
+def failed_operation(updater):
+    """Return the operation that the task wrote. The write uses the etag of the claim."""
+    operation, etag = updater.operations_repo.upsert_item_with_etag.await_args.args
+    assert etag == CLAIM_ETAG
+    return operation
 
 
 @patch("service_bus.deployment_status_updater.send_deployment_message")
@@ -91,7 +100,7 @@ async def test_sends_the_pending_message_then_clears_the_entry(update_mock, send
 @patch("service_bus.deployment_status_updater.send_deployment_message")
 @patch("service_bus.deployment_status_updater.update_resource_for_step")
 async def test_an_entry_that_another_instance_claimed_is_left(update_mock, send_mock, updater):
-    updater.operations_repo.claim_pending_dispatch.return_value = False
+    updater.operations_repo.claim_pending_dispatch.return_value = None
 
     await updater.resend_pending_dispatch(pending_document())
 
@@ -126,7 +135,7 @@ async def test_a_first_message_with_sensitive_values_fails_the_step(
 
     update_mock.assert_not_awaited()
     send_mock.assert_not_awaited()
-    operation = updater.operations_repo.update_item.await_args.args[0]
+    operation = failed_operation(updater)
     assert operation.steps[0].status == failed
     assert operation.steps[0].message == NOT_SENT_WITH_SENSITIVE_VALUES
     assert operation.status == failed
@@ -144,7 +153,7 @@ async def test_sensitive_values_of_another_resource_do_not_stop_the_send(update_
     await updater.resend_pending_dispatch(document)
 
     send_mock.assert_awaited_once()
-    updater.operations_repo.update_item.assert_not_awaited()
+    updater.operations_repo.upsert_item_with_etag.assert_not_awaited()
 
 
 @pytest.mark.parametrize("action", ["install", "upgrade", "uninstall", "start"])
@@ -157,7 +166,7 @@ async def test_a_resend_without_sensitive_values_sends_the_placeholder(update_mo
     await updater.resend_pending_dispatch(pending_document(action=action, status=AWAITING[action]))
 
     send_mock.assert_awaited_once()
-    updater.operations_repo.update_item.assert_not_awaited()
+    updater.operations_repo.upsert_item_with_etag.assert_not_awaited()
     updater.operations_repo.clear_pending_dispatch.assert_awaited_once_with(OPERATION_ID, MESSAGE_ID)
 
 
@@ -176,7 +185,7 @@ async def test_a_later_request_for_the_resource_fails_the_step(update_mock, send
     )
     update_mock.assert_not_awaited()
     send_mock.assert_not_awaited()
-    operation = updater.operations_repo.update_item.await_args.args[0]
+    operation = failed_operation(updater)
     assert operation.steps[0].status == Status.DeploymentFailed
     assert operation.steps[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
     assert operation.status == Status.DeploymentFailed
@@ -205,7 +214,7 @@ async def test_a_later_request_for_the_first_child_of_a_cascade_fails_the_step(u
     assert queried == [(RESOURCE_ID, document["createdWhen"]), (CHILD_ID, document["createdWhen"])]
     update_mock.assert_not_awaited()
     send_mock.assert_not_awaited()
-    operation = updater.operations_repo.update_item.await_args.args[0]
+    operation = failed_operation(updater)
     assert operation.steps[0].status == Status.UpdatingFailed
     assert operation.steps[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
     updater.resource_repo.update_item.assert_not_awaited()
@@ -223,7 +232,7 @@ async def test_a_later_request_comes_before_the_sensitive_values(update_mock, se
     await updater.resend_pending_dispatch(document)
 
     send_mock.assert_not_awaited()
-    assert updater.operations_repo.update_item.await_args.args[0].message == NOT_SENT_BEFORE_A_LATER_REQUEST
+    assert failed_operation(updater).message == NOT_SENT_BEFORE_A_LATER_REQUEST
     updater.resource_repo.update_item.assert_not_awaited()
 
 
@@ -245,7 +254,7 @@ async def test_a_failed_first_step_on_another_resource_changes_only_the_resource
     updater.operations_repo.get_later_operations_for_resource.assert_awaited_once_with(
         RESOURCE_ID, document["createdWhen"]
     )
-    operation = updater.operations_repo.update_item.await_args.args[0]
+    operation = failed_operation(updater)
     assert operation.steps[0].status == Status.UpdatingFailed
     assert operation.status == Status.DeploymentFailed
     updater.resource_repo.get_resource_by_id.assert_awaited_once_with(uuid.UUID(RESOURCE_ID))
@@ -261,7 +270,7 @@ async def test_a_missing_resource_still_removes_the_entry(update_mock, send_mock
     await updater.resend_pending_dispatch(pending_document())
 
     # The operation write removes the entry, so the next pass does not claim it again.
-    assert updater.operations_repo.update_item.await_args.args[0].status == Status.DeploymentFailed
+    assert failed_operation(updater).status == Status.DeploymentFailed
     updater.resource_repo.update_item.assert_not_awaited()
 
 
@@ -273,9 +282,33 @@ async def test_a_message_that_cannot_be_built_fails_the_step(update_mock, send_m
     await updater.resend_pending_dispatch(pending_document())
 
     send_mock.assert_not_awaited()
-    operation = updater.operations_repo.update_item.await_args.args[0]
+    operation = failed_operation(updater)
     assert operation.steps[0].status == Status.DeploymentFailed
     assert "template not found" in operation.steps[0].message
+
+
+@pytest.mark.parametrize("reason", ["later_request", "sensitive_values", "build_error"])
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.deployment_status_updater.update_resource_for_step")
+async def test_a_status_after_the_claim_is_not_replaced(update_mock, send_mock, updater, reason):
+    document = pending_document(sensitive_values=reason == "sensitive_values")
+    if reason == "later_request":
+        later = create_sample_operation(RESOURCE_ID, "uninstall")
+        later.createdWhen = document["createdWhen"] + 60
+        updater.operations_repo.get_later_operations_for_resource.return_value = [later]
+    update_mock.side_effect = Exception("template not found")
+    # The API sent the message but stopped before it removed the entry. A status from the resource processor changed
+    # the operation after the claim, so the write with the etag of the claim fails.
+    updater.operations_repo.upsert_item_with_etag.side_effect = CosmosAccessConditionFailedError(status_code=412)
+
+    await updater.resend_pending_dispatch(document)
+
+    # The task changes neither the operation nor the resource.
+    updater.operations_repo.update_item.assert_not_awaited()
+    updater.resource_repo.get_resource_by_id.assert_not_awaited()
+    updater.resource_repo.update_item.assert_not_awaited()
+    send_mock.assert_not_awaited()
+    failed_operation(updater)
 
 
 @patch("service_bus.deployment_status_updater.asyncio.sleep", AsyncMock(side_effect=asyncio.CancelledError))

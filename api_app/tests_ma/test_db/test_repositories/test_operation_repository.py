@@ -183,8 +183,10 @@ async def operations_container():
 
 async def test_claim_pending_dispatch_uses_the_etag_of_the_read_document(operations_container):
     operations_repo, container = operations_container
+    container.patch_item.return_value = {"id": OPERATION_ID, "_etag": "claimed"}
 
-    assert await operations_repo.claim_pending_dispatch({"id": OPERATION_ID, "_etag": "etag"})
+    # The task writes a failed step only with the etag after the claim.
+    assert await operations_repo.claim_pending_dispatch({"id": OPERATION_ID, "_etag": "etag"}) == "claimed"
 
     kwargs = container.patch_item.await_args.kwargs
     assert kwargs["item"] == OPERATION_ID
@@ -193,11 +195,11 @@ async def test_claim_pending_dispatch_uses_the_etag_of_the_read_document(operati
     assert kwargs["patch_operations"][0]["path"] == "/pendingDispatch/createdWhen"
 
 
-async def test_claim_pending_dispatch_returns_false_after_another_write(operations_container):
+async def test_claim_pending_dispatch_returns_none_after_another_write(operations_container):
     operations_repo, container = operations_container
     container.patch_item.side_effect = CosmosHttpResponseError(status_code=412)
 
-    assert not await operations_repo.claim_pending_dispatch({"id": OPERATION_ID, "_etag": "etag"})
+    assert await operations_repo.claim_pending_dispatch({"id": OPERATION_ID, "_etag": "etag"}) is None
 
 
 async def test_claim_pending_dispatch_raises_other_errors(operations_container):

@@ -11,6 +11,7 @@ from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.request_action import RequestAction
 from db.repositories.resource_templates import ResourceTemplateRepository
 from service_bus.helpers import send_deployment_message, update_resource_for_step
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from azure.servicebus import NEXT_AVAILABLE_SESSION
 from azure.servicebus.exceptions import OperationTimeoutError, ServiceBusConnectionError
 from azure.servicebus.aio import ServiceBusClient, AutoLockRenewer
@@ -136,7 +137,8 @@ class DeploymentStatusUpdater:
     async def resend_pending_dispatch(self, document: dict):
         pending = document[PENDING_DISPATCH]
         # Each API instance runs this task. The claim lets one instance send the message.
-        if not await self.operations_repo.claim_pending_dispatch(document):
+        etag = await self.operations_repo.claim_pending_dispatch(document)
+        if etag is None:
             return
         operation = TypeAdapter(Operation).validate_python(document)
         step = next((item for item in operation.steps if item.id == pending["stepId"]), None)
@@ -157,7 +159,7 @@ class DeploymentStatusUpdater:
             )
         if later_operations:
             logger.warning(f"Operation {operation.id} was not sent before a later request. Failing step {step.id}")
-            await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST, write_resource=False)
+            await self.fail_pending_step(operation, step, NOT_SENT_BEFORE_A_LATER_REQUEST, etag, write_resource=False)
             return
 
         # If an install or an update set a sensitive property, the first message has the real value, and Cosmos DB
@@ -165,7 +167,7 @@ class DeploymentStatusUpdater:
         # values as Cosmos DB, so a resend has the same values as the first send.
         if pending.get("sensitiveValues") and step.resourceId == operation.resourceId:
             logger.warning(f"Operation {operation.id} was not sent and has sensitive values. Failing step {step.id}")
-            await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES)
+            await self.fail_pending_step(operation, step, NOT_SENT_WITH_SENSITIVE_VALUES, etag)
             return
 
         try:
@@ -185,7 +187,7 @@ class DeploymentStatusUpdater:
             )
         except Exception as e:
             logger.exception(f"Unable to build the pending message of operation {operation.id}")
-            await self.fail_pending_step(operation, step, repr(e))
+            await self.fail_pending_step(operation, step, repr(e), etag)
             return
 
         logger.info(f"Sending the pending first step message of operation {operation.id}, step {step.id}")
@@ -199,7 +201,7 @@ class DeploymentStatusUpdater:
         await self.operations_repo.clear_pending_dispatch(operation.id, pending["messageId"])
 
     async def fail_pending_step(
-        self, operation: Operation, step: OperationStep, message: str, write_resource: bool = True
+        self, operation: Operation, step: OperationStep, message: str, etag: str, write_resource: bool = True
     ):
         """Fail a step that the API did not send. The step did not run, so only its request fails."""
         step.status = self.get_failure_status_for_action(step.resourceAction)
@@ -208,8 +210,15 @@ class DeploymentStatusUpdater:
         operation.status = self.get_failure_status_for_action(operation.action)
         operation.message = message
         operation.updatedWhen = step.updatedWhen
-        # The Operation model has no pending dispatch, so this write also removes the entry.
-        await self.operations_repo.update_item(operation)
+        # The Operation model has no pending dispatch, so this write also removes the entry. It uses the etag of the
+        # claim and comes before the resource write, so a change after the claim stops both writes.
+        try:
+            await self.operations_repo.upsert_item_with_etag(operation, etag)
+        except CosmosAccessConditionFailedError:
+            # A status from the resource processor, the removal of the entry after a send or a claim of another
+            # instance changed the operation. That writer owns the step. If the entry stays, the next pass reads it.
+            logger.info(f"Operation {operation.id} changed after the claim. Step {step.id} keeps its status")
+            return
         if not write_resource:
             # A later request changes the resource, so it owns the status of the resource.
             return

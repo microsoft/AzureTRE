@@ -173,6 +173,9 @@ If the API stops between the write and the send, the entry stays. When the API s
 
 In the last two cases, the updater also sets the resource of the request to the failed status. A first step on another resource, for example the firewall, did not run, so that resource keeps its status.
 
+The updater writes the failed status with the etag of its claim. If the operation changed after the claim, for example because the resource processor sent a status, this write fails.
+Then the updater changes neither the operation nor the resource.
+
 A second copy of a message is safe. The resource processor finds the result of the step in the execution record and sends the recorded status.
 If the record does not have the result of the first run, Porter runs again, and the API ignores the status of the second run.
 The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status. An uninstall keeps its earlier rule for a final step.
