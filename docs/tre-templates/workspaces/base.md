@@ -33,6 +33,9 @@ When `enable_backup` is set (the default) the base workspace deploys a Recovery 
 
 Both flags are updateable, so the choice can be changed on an existing workspace before it is deleted.
 
+If the protection of an item is already stopped with its data kept, a delete with `true` also deletes that data. For example, an operator stopped the backups in the portal, or a delete with `false` failed.
+After a failed delete with `false`, the resource group and the storage account are not in the Terraform state, so a delete with `true` keeps them. Delete them by hand.
+
 Before version 2.12.5, the retained path deleted the storage account and its share. The share delete failed with `DeleteShareWhenSnapshotLeased`, so the workspace stayed in `deleting_failed`.
 To delete such a workspace, upgrade it to 2.12.5 or later, then delete it again.
 The templates that build on the base workspace have the same fix in `tre-workspace-unrestricted` 0.15.4 and `tre-workspace-airlock-import-review` 0.18.4.

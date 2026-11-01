@@ -144,15 +144,19 @@ backup_management_types=(AzureStorage AzureIaasVM)
 stop_protection() {
   local bmt=$1 items attempt
   if ! items=$(az backup item list --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \
-    --backup-management-type "${bmt}" --query "[].[properties.containerName, name, properties.protectionState]" --output tsv); then
+    --backup-management-type "${bmt}" \
+    --query "[].[properties.containerName, name, properties.protectionState, properties.isScheduledForDeferredDelete]" --output tsv); then
     echo "Error: failed to list ${bmt} backup items in vault ${vault_name}. Aborting so the uninstall can be retried." >&2
     exit 1
   fi
   [ -z "${items}" ] && return 0
-  while IFS=$'\t' read -r container_name item_name protection_state; do
+  while IFS=$'\t' read -r container_name item_name protection_state deferred_delete; do
     [ -z "${item_name}" ] && continue
-    # Already stopped - keep the script idempotent across the second pass and re-runs.
-    [ "${protection_state}" == "ProtectionStopped" ] && continue
+    # A deleted item waits in soft delete. Skip it, so that the second pass and re-runs stay idempotent.
+    [ "${deferred_delete,,}" == "true" ] && continue
+    # A stopped item keeps its data. Skip it only when the data stays, because an earlier delete
+    # with retained backups or an operator can have stopped it.
+    [ "${protection_state}" == "ProtectionStopped" ] && [ "${delete_backup_data}" != "true" ] && continue
     for attempt in $(seq 1 5); do
       echo "Disabling protection for '${item_name}' (delete-backup-data=${delete_backup_data}, attempt ${attempt})..."
       if az backup protection disable --vault-name "${vault_name}" --resource-group "${vault_resource_group}" \

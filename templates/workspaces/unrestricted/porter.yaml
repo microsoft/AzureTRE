@@ -143,7 +143,7 @@ parameters:
   - name: delete_backups_on_uninstall
     type: boolean
     default: false
-    description: "When deleting the workspace, also delete the backups (Recovery Services Vault and its recovery points). When false the vault and its resource group are retained so the backed up data is kept."
+    description: "When deleting the workspace, also delete the backups (Recovery Services Vault and its recovery points). When false, the vault and the workspace storage account with its data stay in the workspace resource group, so the backed up data is kept. With customer-managed keys, the encryption key and its identity also stay."
   - name: enable_dns_policy
     type: boolean
     default: false

@@ -44,8 +44,13 @@ if command.startswith('backup vault show'):
     if state['vault']:sys.exit(0)
     print('(ResourceNotFound) The Resource was not found.',file=sys.stderr);sys.exit(1)
 if command.startswith('backup item list'):
-    if 'AzureStorage' in args:print('StorageContainer;storage;rg;stgws1234\\tAzureFileShare;share\\tProtected')
+    if 'AzureStorage' in args:
+        print('StorageContainer;storage;rg;stgws1234\\tAzureFileShare;share\\t'+state['item']+'\\t'+str(state['deferred']))
     sys.exit(0)
+if command.startswith('backup protection disable'):
+    if args[args.index('--delete-backup-data')+1]=='true':state['deferred']=True
+    else:state['item']='ProtectionStopped'
+    json.dump(state,open(os.environ['AZ_STATE'],'w'));sys.exit(0)
 if command.startswith('account show'):print('sub');sys.exit(0)
 if command.startswith('resource show'):
     if state['account']:sys.exit(0)
@@ -84,8 +89,11 @@ class RemoveBackupTests(unittest.TestCase):
             "TF_STATE": str(self.folder / "state.txt"),
         }
 
-    def run_script(self, delete_backups, vault=True, account=True):
-        (self.folder / "az.json").write_text(json.dumps({"vault": vault, "account": account}))
+    def run_script(self, delete_backups, vault=True, account=True, item="Protected", deferred=False):
+        (self.folder / "az.json").write_text(
+            json.dumps({"vault": vault, "account": account, "item": item, "deferred": deferred})
+        )
+        (self.folder / "calls.jsonl").unlink(missing_ok=True)
         (self.folder / "state.txt").write_text("\n".join(BACKUP + STORAGE + OTHER + ["azurerm_resource_group.ws"]))
         arguments = ["rg-mgmt", "stmgmt", "tfstate", "tre", "workspace-1234", "true", delete_backups, ""]
         result = subprocess.run(
@@ -130,6 +138,37 @@ class RemoveBackupTests(unittest.TestCase):
             calls[share][4].endswith("/shares/vm-shared-storage?api-version=2023-05-01&$include=leased-snapshots")
         )
         self.assertGreater(share, vault)
+
+    @staticmethod
+    def disables(calls):
+        return [
+            call[call.index("--delete-backup-data") + 1]
+            for call in calls
+            if call[:3] == ["backup", "protection", "disable"]
+        ]
+
+    def test_each_item_is_stopped_one_time(self):
+        for delete_backups in ("false", "true"):
+            with self.subTest(delete_backups=delete_backups):
+                result, _, calls = self.run_script(delete_backups)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.disables(calls), [delete_backups])
+
+    def test_deleted_backups_delete_the_data_of_an_item_that_an_earlier_retain_stopped(self):
+        # An earlier delete with retained backups, or an operator, can have stopped the item and kept its data.
+        result, _, calls = self.run_script("true", item="ProtectionStopped")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.disables(calls), ["true"])
+
+    def test_retained_backups_do_not_change_a_stopped_item(self):
+        result, _, calls = self.run_script("false", item="ProtectionStopped")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.disables(calls), [])
+
+    def test_an_item_in_soft_delete_is_not_changed(self):
+        result, _, calls = self.run_script("true", item="ProtectionStopped", deferred=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.disables(calls), [])
 
     def test_retained_backups_keep_the_shares(self):
         result, _, calls = self.run_script("false")
