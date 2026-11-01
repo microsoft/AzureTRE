@@ -1,0 +1,108 @@
+---
+name: VM Size Availability
+
+on: # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    inputs:
+      region:
+        description: >-
+          Region: the Azure region to check. ci-location is the LOCATION variable of the CICD environment.
+          Select none to check only the regions in More regions.
+        type: choice
+        default: ci-location
+        options:
+          - ci-location
+          - switzerlandnorth
+          - switzerlandwest
+          - uksouth
+          - ukwest
+          - westeurope
+          - northeurope
+          - swedencentral
+          - norwayeast
+          - germanywestcentral
+          - francecentral
+          - italynorth
+          - polandcentral
+          - spaincentral
+          - eastus
+          - eastus2
+          - centralus
+          - westus2
+          - westus3
+          - canadacentral
+          - australiaeast
+          - japaneast
+          - southeastasia
+          - centralindia
+          - southafricanorth
+          - brazilsouth
+          - uaenorth
+          - none
+      more_regions:
+        description: "More regions: other Azure regions to check, separated by commas. For example uksouth,eastus2"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Report VM size availability
+    runs-on: ubuntu-latest
+    # The federated credential of the CI identity trusts this environment.
+    environment: CICD
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Log in to Azure with OIDC.
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Azure Login
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          environment: ${{ (secrets.AZURE_ENVIRONMENT != '' && secrets.AZURE_ENVIRONMENT) || 'AzureCloud' }}
+
+      - name: Report VM size availability
+        env:
+          REGION: ${{ inputs.region }}
+          MORE_REGIONS: ${{ inputs.more_regions }}
+          CI_LOCATION: ${{ vars.LOCATION }}
+          LINK_BASE: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}
+        run: |
+          case "$REGION" in
+            none) regions="$MORE_REGIONS" ;;
+            ci-location)
+              if [ -z "$CI_LOCATION" ]; then
+                echo "::error::The CICD environment has no LOCATION variable. Select a region."
+                exit 1
+              fi
+              regions="$CI_LOCATION,$MORE_REGIONS"
+              ;;
+            *) regions="$REGION,$MORE_REGIONS" ;;
+          esac
+          if [ -z "${regions//[, ]/}" ]; then
+            echo "::error::Select a region, or type one or more regions in More regions."
+            exit 1
+          fi
+          # The artifact is public on a public repository, so keep subscription data out of the report.
+          python3 devops/scripts/vm_size_report.py --region "$regions" --hide-subscription \
+            --link-base "$LINK_BASE" --output vm-size-report.md
+          cat vm-size-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: vm-size-report
+          path: vm-size-report.md
+          if-no-files-found: error
+          retention-days: 7

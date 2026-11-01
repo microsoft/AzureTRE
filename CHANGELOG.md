@@ -37,6 +37,7 @@ See [Legacy Airlock & migration](docs/azure-tre-overview/airlock.md#legacy-airlo
 * Update template schemas to Draft 2020-12, preserve legacy input restrictions, and support local schema definitions in resource forms. (`API` 0.27.0, `ui` 0.9.0) ([#5005](https://github.com/microsoft/AzureTRE/pull/5005))
 * Add weekly and manual builds for Dockerfiles and Porter bundles, with selected pull request builds. Retry a failed target once and report final results. ([#5088](https://github.com/microsoft/AzureTRE/issues/5088))
 * Let a fork run CI in a shared subscription with the `CI_ENV_PREFIX` variable and a `ci_repository` tag, which scope cleanup and destruction. Keep a CI environment, for example for a demo, with a `ci_keep_until` tag. (`core` 0.18.15, `devops` 0.7.0, `build-scripts` 1.1.5) ([#5272](https://github.com/microsoft/AzureTRE/pull/5272))
+* Report the VM sizes that the repository uses and their availability in one or more Azure regions, for VMs and Azure ML compute, with `devops/scripts/vm_size_report.py` or the **VM Size Availability** workflow. See [VM size availability](docs/tre-admins/vm-size-availability.md). (`devops` 0.8.0)
 
 BUG FIXES:
 * Update Nexus from 3.94.0 to 3.94.3. The Nexus 3.94.3 image stops trusting the eMudhra certificate chains that Sonatype reports as compromised. (`tre-shared-service-sonatype-nexus` 3.11.3) ([#5276](https://github.com/microsoft/AzureTRE/issues/5276))
