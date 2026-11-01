@@ -314,8 +314,9 @@ class ResourceRepository(BaseRepository):
         if resource_patch.isEnabled is not None:
             resource.isEnabled = resource_patch.isEnabled
 
+        target_template = resource_template
         if resource_patch.templateVersion is not None:
-            await self.validate_template_version_patch(
+            target_template = await self.validate_template_version_patch(
                 resource, resource_patch, resource_template_repo, resource_template, force_version_update
             )
             resource.templateVersion = resource_patch.templateVersion
@@ -327,9 +328,10 @@ class ResourceRepository(BaseRepository):
             resource.properties.update(resource_patch.properties)
 
         # Cosmos DB keeps sensitive values as a placeholder, as at the install. The returned resource keeps the
-        # real values, because the caller builds the request message from it.
+        # real values, because the caller builds the request message from it. The stored document has the target
+        # version, so the template of that version decides which values are sensitive.
         masked_resource = copy.deepcopy(resource)
-        masked_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
+        masked_resource.properties = mask_sensitive_properties(resource.properties, target_template)
         await self.update_item_with_etag(masked_resource, etag)
         return resource, resource_template
 
@@ -424,7 +426,8 @@ class ResourceRepository(BaseRepository):
         resource_template_repo: ResourceTemplateRepository,
         resource_template: ResourceTemplate,
         force_version_update: bool = False,
-    ):
+    ) -> ResourceTemplate:
+        """Return the template of the target version."""
         parent_service_template_name = None
         if resource.resourceType == ResourceType.UserResource:
             try:
@@ -455,7 +458,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            await resource_template_repo.get_template_by_name_and_version(
+            return await resource_template_repo.get_template_by_name_and_version(
                 resource.templateName,
                 resource_patch.templateVersion,
                 resource_template.resourceType,

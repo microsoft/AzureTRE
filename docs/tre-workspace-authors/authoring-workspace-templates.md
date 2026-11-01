@@ -107,7 +107,7 @@ Keep Azure TRE annotations such as `updateable`, `sensitive` and `readOnly` on t
 
 The API stores `REDACTED` in place of each sensitive value, at the install and at an update. Only the first message of a request has the real value. The API finds a sensitive value by its property name, also in a nested object or in an array item. If one declaration of a name has `sensitive: true`, for example in an `allOf` branch, the name is sensitive.
 
-If a later action does not give a new value for a sensitive property, the bundle gets `REDACTED`. The bundle must then use the earlier value. For example, the base workspace reads its client secret from the workspace Key Vault.
+At an update that changes the template version, the new version decides which values are sensitive. If a later action does not give a new value for a sensitive property, the bundle gets `REDACTED`. The bundle must then use the earlier value. For example, the base workspace reads its client secret from the workspace Key Vault.
 
 An API upgrade does not rewrite stored templates or add missing metadata. To adopt Draft 2020-12, review the custom template's keywords, increment its bundle version and register the updated bundle. Changing only `$schema` can change validation semantics. Test creation and updates before upgrading existing resources.
 

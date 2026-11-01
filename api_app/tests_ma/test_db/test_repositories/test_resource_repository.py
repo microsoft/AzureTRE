@@ -551,11 +551,11 @@ ACCOUNTS = {
 }
 
 
-def masking_template(properties, all_of=None) -> ResourceTemplate:
+def masking_template(properties, all_of=None, version="1.0.0") -> ResourceTemplate:
     return ResourceTemplate(
         id="masking-template-id",
         name="masking-template",
-        version="1.0.0",
+        version=version,
         resourceType=ResourceType.Workspace,
         current=True,
         required=[],
@@ -724,6 +724,42 @@ def test_restore_sensitive_values_restores_values_in_array_items():
     assert restored["accounts"] == source["accounts"]
     # The items of two lists with different lengths can be different items, so the placeholder stays.
     assert restored["groups"] == [placeholder]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sensitive_in_target, expected", [(True, strings.REDACTED_SENSITIVE_VALUE), (False, "new value")]
+)
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_masks_with_the_template_of_the_target_version(
+    _, __, resource_repo, sensitive_in_target, expected
+):
+    client_secret = {"type": "string", "updateable": True}
+    source = masking_template({"client_secret": {**client_secret, "sensitive": not sensitive_in_target}})
+    target = masking_template({"client_secret": {**client_secret, "sensitive": sensitive_in_target}}, version="1.1.0")
+    template_repo = AsyncMock()
+    template_repo.get_template_by_name_and_version.return_value = target
+    resource_repo.update_item_with_etag = AsyncMock()
+    resource = sample_resource()
+    resource.templateVersion = "1.0.0"
+    resource_patch = ResourcePatch(templateVersion="1.1.0", properties={"client_secret": "new value"})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        source,
+        "etag",
+        template_repo,
+        AsyncMock(),
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    stored = resource_repo.update_item_with_etag.await_args.args[0]
+    assert stored.templateVersion == "1.1.0"
+    assert stored.properties["client_secret"] == expected
+    assert returned.properties["client_secret"] == "new value"
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.enrich_template")
