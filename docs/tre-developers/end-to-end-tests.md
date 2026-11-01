@@ -251,14 +251,15 @@ The role is not on the share, because the Azure Backup delete lock on the storag
 An on-demand Azure Backup job makes a recovery point. The VM changes the file, a restore of that file from the recovery point follows, and the VM reads the original content again.
 The case then deletes the VM, the Guacamole service and the workspace. Each delete must pass.
 After the `delete` case, the workspace resource group must be gone.
-After the `retain` case, the vault must keep the stopped item with its recovery point, and the storage account must keep its share, with the default network action `Deny`.
+After the `retain` case, the vault must keep the stopped item and its recovery point. The storage account must keep its share with the default network action `Deny`.
 A second restore from the recovery point must pass.
-The last clean-up step turns off soft delete, deletes the item and the vault, and deletes the retained resource group.
+The last clean-up step turns off soft delete, deletes the item, the backup container and the vault, and deletes the retained resource group.
 Azure does not let a request turn off soft delete in some vaults, for example in a vault with enhanced security.
-If Azure keeps soft delete on, the deleted backup data stays for 14 days, and Azure does not delete the vault before that.
-The step then deletes the backup data and the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
-Delete the resource group by hand after that date.
-This step runs after the workspace delete, also when the case fails earlier. It runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
+In such a vault, the step deletes the item, unregisters the backup container and then tries the vault delete. The workspace delete uses the same order.
+If Azure keeps the vault, the deleted backup data stays for 14 days. The step then deletes the storage account, and it adds the tag `e2e_delete_after` with a date to the resource group.
+Delete the resource group by hand after that date. Until then, the destroy of the CI environment stops at this resource group.
+This step runs after the workspace delete, also when the case fails after the workspace install. If the workspace install fails, the retained resource group can stay.
+The step runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
 
 ### Airlock v1 to v2 move
 
@@ -279,9 +280,15 @@ The case follows the steps in [Legacy Airlock Architecture](../azure-tre-overvie
 
 The two cases in `test_airlock_upgrade.py` follow the procedure in [Legacy Airlock Architecture](../azure-tre-overview/airlock-legacy.md#upgrading-to-current-architecture) with a workspace that an earlier release created. Both cases need the manual test workspace application with `WorkspaceOwner` and `AirlockManager`.
 
-1. Make a branch from the tag of the earlier release, for example `v0.29.1`. Add the current CI workflow files and the `e2e_tests` folder of the current code to it, because the earlier release does not have the seed case.
+1. Make a branch from the tag of the earlier release, for example `v0.29.1`. The current CI and the seed case need files that the earlier release does not have. Copy these parts of the current code to the branch:
+   - `.github`, `.devcontainer`, `devops`, `Makefile` and `requirements.txt`
+   - the deployment scripts in `core/terraform`
+   - `e2e_tests`
+
+   Also add the fix from [#5090](https://github.com/microsoft/AzureTRE/pull/5090), as the note below this list says.
    Deploy this branch, and set `e2eTestsCustomSelector` to `airlock_upgrade_seed`. The case creates the workspace `E2E Airlock upgrade seed` with an approved legacy import, and keeps it.
-1. Deploy the current code to the same environment with `enable_legacy_airlock` set to `true`. The deployment runs `POST /migrations`.
+1. On the same branch, push a commit that changes all files to the current code. The branch workflow then uses the same environment.
+   Deploy this commit with `enable_legacy_airlock` set to `true`. The deployment runs `POST /migrations`.
 1. Set `e2eTestsCustomSelector` to `airlock_upgrade_verify`. The case makes sure that the core legacy accounts still exist and that the workspace has `airlock_version` `1`.
 1. The case upgrades the workspace to the current `tre-workspace-base` version. The legacy workspace accounts must still exist with the default network action `Deny`, and a new legacy import must pass.
 1. The case changes `airlock_version` to `2`. The legacy workspace accounts must not exist, the legacy requests keep their records, and a new import draft must use the v2 core account.
@@ -295,8 +302,8 @@ The `v0.29.1` OHDSI image does not build, because `deb.debian.org` no longer has
 
 Resource Processor versions before 0.13.10 keep the parameters of each resource as Porter overrides. The two cases in `test_porter_upgrade.py` follow the procedure in [Upgrading Resources Version](../tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters) with resources that an earlier release created. Both cases need the manual test workspace application.
 
-1. Make a branch from the tag of the earlier release, for example `v0.29.1`, as for the Airlock upgrade cases. Deploy this branch, and set `e2eTestsCustomSelector` to `porter_upgrade_seed`. The case creates the workspace `E2E Porter upgrade seed` with a Guacamole service and two Windows VMs. It disables the second VM and keeps all the resources.
-1. Deploy the current code to the same environment, and set `e2eTestsCustomSelector` to `porter_upgrade_verify`.
+1. Make a branch from the tag of the earlier release, for example `v0.29.1`, with the same parts of the current code as for the Airlock upgrade cases. Deploy this branch, and set `e2eTestsCustomSelector` to `porter_upgrade_seed`. The case creates the workspace `E2E Porter upgrade seed` with a Guacamole service and two Windows VMs. It disables the second VM and keeps all the resources.
+1. On the same branch, push a commit that changes all files to the current code. Deploy this commit, and set `e2eTestsCustomSelector` to `porter_upgrade_verify`.
 1. The `stop` action on the first VM must fail with the upgrade-required message. The delete of the second VM must fail with the same message, and the VM must still exist in Azure.
 1. The case upgrades each VM with a `PATCH` of its current template version.
 1. The `stop` and `start` actions must pass. The delete of the second VM must pass, and the VM must not exist in Azure.

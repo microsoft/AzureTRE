@@ -65,21 +65,38 @@ async def test_file_share_restore_and_workspace_delete(verify, delete_backups):
         raise ValueError("The backup probe currently supports AzureCloud only")
     properties = {"enable_backup": True, "delete_backups_on_uninstall": delete_backups}
     async with sql_lifecycle(verify, deadline_variable="BACKUP_VALIDATION_DEADLINE") as resources:
+        found = {}
+
+        async def own_kept_backup(workspace_path, workspace_id):
+            # The owner token gets a current token for each request, so one token lasts the case and its clean-up.
+            found["token"] = await get_workspace_owner_token(workspace_id, verify)
+            workspace = (await get_resource(f"/api{workspace_path}", found["token"], verify))["workspace"]
+            subscription = workspace["properties"].get("workspace_subscription_id") or os.environ["ARM_SUBSCRIPTION_ID"]
+            resource_names = names(workspace_id, config.TRE_ID)
+            group = f"/subscriptions/{subscription}/resourceGroups/{resource_names['group']}"
+            found.update(
+                subscription_id=subscription,
+                group_id=group,
+                vault_id=f"{group}/providers/Microsoft.RecoveryServices/vaults/{resource_names['vault']}",
+                account_id=f"{group}/providers/Microsoft.Storage/storageAccounts/{resource_names['account']}",
+            )
+            # This runs after the workspace delete, also when the case fails after the workspace install.
+            resources.own_last(
+                "retained backup",
+                remove_kept_backup,
+                workspace_path,
+                group,
+                found["vault_id"],
+                found["account_id"],
+                verify,
+            )
+
         workspace_path, workspace_id, guacamole_path, guacamole_id = await resources.setup(
-            workspace_properties=properties
+            workspace_properties=properties, after_workspace=own_kept_backup
         )
-        # The owner token gets a current token for each request, so one token lasts the case and its clean-up.
-        token = await get_workspace_owner_token(workspace_id, verify)
-        workspace = (await get_resource(f"/api{workspace_path}", token, verify))["workspace"]
-        subscription_id = workspace["properties"].get("workspace_subscription_id") or os.environ["ARM_SUBSCRIPTION_ID"]
+        token, subscription_id = found["token"], found["subscription_id"]
+        group_id, vault_id, account_id = found["group_id"], found["vault_id"], found["account_id"]
         resource_names = names(workspace_id, config.TRE_ID)
-        group_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_names['group']}"
-        vault_id = f"{group_id}/providers/Microsoft.RecoveryServices/vaults/{resource_names['vault']}"
-        account_id = f"{group_id}/providers/Microsoft.Storage/storageAccounts/{resource_names['account']}"
-        # This runs after the workspace delete, also when the case fails before it.
-        resources.own_last(
-            "retained backup", remove_kept_backup, workspace_path, group_id, vault_id, account_id, verify
-        )
         vm_path, vm_id = await resources.create(VM_PAYLOAD, f"/api{guacamole_path}/user-resources", token)
         vm_properties = (await get_resource(f"/api{vm_path}", token, verify))["userResource"]["properties"]
         azure_vm_id = vm_properties["azure_resource_id"]

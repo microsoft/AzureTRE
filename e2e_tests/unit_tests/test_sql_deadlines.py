@@ -148,6 +148,29 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
         )
         create_service.assert_awaited_once_with("/workspaces/ws", "token", "", True)
 
+    async def test_setup_calls_the_workspace_callback_before_the_service_create(self):
+        # A case can own a clean-up for its workspace before the service create can fail.
+        order = []
+
+        async def create_service(*args):
+            order.append("service")
+            raise RuntimeError("the service install failed")
+
+        async def after_workspace(path, workspace_id):
+            order.append(("callback", path, workspace_id))
+
+        with (
+            self.budgets(),
+            patch.object(lifecycle, "create_or_get_test_workspace", AsyncMock(return_value=("/workspaces/ws", "ws"))),
+            patch.object(lifecycle, "get_workspace_owner_token", AsyncMock(return_value="token")),
+            patch.object(lifecycle, "create_or_get_test_workpace_service", create_service),
+        ):
+            async with lifecycle.sql_lifecycle(True) as owned:
+                with self.assertRaises(RuntimeError):
+                    await owned.setup(workspace_properties={}, after_workspace=after_workspace)
+                owned.finalisers.clear()
+        self.assertEqual(order, [("callback", "/workspaces/ws", "ws"), "service"])
+
     async def test_job_start_deadline_reduces_work_time(self):
         with patch.dict(os.environ, SQL_VALIDATION_DEADLINE=str(time.time() + 125 * 60)):
             work, finish = lifecycle.lifecycle_deadlines()

@@ -130,22 +130,38 @@ async def soft_delete_turned_off(arm, vault_id):
     return config["properties"]["softDeleteFeatureState"] == "Disabled"
 
 
+async def delete_if_azure_allows(arm, resource_id, minutes):
+    """Delete a backup resource. Return False if Azure refuses the delete or keeps the resource."""
+    try:
+        await arm.request("DELETE", resource_id, BACKUP_API, missing_ok=True)
+        await wait_until_gone(arm, resource_id, BACKUP_API, minutes)
+    except (RuntimeError, TimeoutError) as error:
+        LOGGER.warning("Azure kept %s: %s", resource_id, error)
+        return False
+    return True
+
+
 async def remove_retained_backup(arm, group_id, vault_id, account_id):
     """Delete the vault and the resource group that a retained-backup uninstall keeps on purpose."""
     if await arm.request("GET", group_id, GROUP_API, missing_ok=True) is None:
         return
     vault_kept = False
     if await arm.request("GET", vault_id, BACKUP_API, missing_ok=True) is not None:
-        # With soft delete on, Azure keeps the deleted data for 14 days, and the vault cannot be deleted.
-        vault_kept = not await soft_delete_turned_off(arm, vault_id)
+        # With soft delete on, Azure keeps the deleted data for 14 days and can refuse the vault delete.
+        soft_delete = not await soft_delete_turned_off(arm, vault_id)
         for item in await file_share_items(arm, vault_id):
             container = item["id"].split("/protectedItems/")[0]
             await arm.request("DELETE", item["id"], BACKUP_API, missing_ok=True)
-            if not vault_kept:
-                await wait_until_gone(arm, item["id"], BACKUP_API, 15)
-                await arm.request("DELETE", container, BACKUP_API, missing_ok=True)
-                await wait_until_gone(arm, container, BACKUP_API, 15)
-        if not vault_kept:
+            if soft_delete:
+                # The workspace delete unregisters the container before the vault delete, also with soft delete on.
+                await delete_if_azure_allows(arm, container, 10)
+                continue
+            await wait_until_gone(arm, item["id"], BACKUP_API, 15)
+            await arm.request("DELETE", container, BACKUP_API, missing_ok=True)
+            await wait_until_gone(arm, container, BACKUP_API, 15)
+        if soft_delete:
+            vault_kept = not await delete_if_azure_allows(arm, vault_id, 10)
+        else:
             await arm.request("DELETE", vault_id, BACKUP_API, missing_ok=True)
             await wait_until_gone(arm, vault_id, BACKUP_API, 15)
     # Azure Backup can leave its delete lock on the retained storage account.

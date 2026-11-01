@@ -50,6 +50,10 @@ class ProbeTests(unittest.TestCase):
             "AIRLOCK_MIGRATION_VALIDATION_DEADLINE",
             "AIRLOCK_UPGRADE_VALIDATION_DEADLINE",
             "PORTER_UPGRADE_VALIDATION_DEADLINE",
+            "SQL_VALIDATION_DEADLINE",
+            "MYSQL_VALIDATION_DEADLINE",
+            "GITEA_VALIDATION_DEADLINE",
+            "HEALTH_VALIDATION_DEADLINE",
         ):
             self.assertIn(f"{variable}=${{{{ env.LIFECYCLE_VALIDATION_DEADLINE }}}}", run["with"]["COMMAND"])
 
@@ -181,13 +185,15 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body["properties"]["restoreFilePaths"], [{"path": "e2e.txt", "fileSpecType": "File"}])
         wait.assert_awaited_once_with(unittest.mock.ANY, VAULT, "job-2")
 
-    def retained_backup_requests(self, group, soft_delete):
+    def retained_backup_requests(self, group, soft_delete, refused=()):
         calls = []
 
         async def request(method, resource_id, api_version, **kwargs):
             calls.append((method, resource_id))
             if method == "PATCH" and resource_id.endswith("/vaultconfig") and soft_delete == "Enabled":
                 raise RuntimeError("ARM PATCH failed with HTTP 400")
+            if method == "DELETE" and resource_id in refused:
+                raise RuntimeError("ARM DELETE failed with HTTP 400")
             if method != "GET":
                 return {}
             if resource_id.endswith("/vaultconfig"):
@@ -220,15 +226,36 @@ class AzureBackupTests(unittest.IsolatedAsyncioTestCase):
             ],
         )
 
-    async def test_a_vault_that_keeps_soft_delete_stays_with_a_delete_date(self):
-        # Azure keeps deleted backup data for 14 days, and a vault with that data cannot be deleted.
+    async def test_a_vault_with_soft_delete_is_removed_when_azure_allows_it(self):
+        # The workspace delete removed such a vault after it unregistered the container.
         group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
         calls, request = self.retained_backup_requests(group, "Enabled")
+
+        await backup.remove_retained_backup(fake_arm(request=request), group, VAULT, ACCOUNT)
+        deletes = [resource for method, resource in calls if method == "DELETE"]
+        self.assertEqual(
+            deletes,
+            [
+                ITEM,
+                ITEM.split("/protectedItems/")[0],
+                VAULT,
+                f"{group}/providers/Microsoft.Authorization/locks/backup",
+                group,
+            ],
+        )
+
+    async def test_a_vault_that_keeps_soft_delete_stays_with_a_delete_date(self):
+        # Azure keeps deleted backup data for 14 days and can refuse the delete of a vault with that data.
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        container = ITEM.split("/protectedItems/")[0]
+        calls, request = self.retained_backup_requests(group, "Enabled", refused=(container, VAULT))
         arm = fake_arm(request=request)
 
         await backup.remove_retained_backup(arm, group, VAULT, ACCOUNT)
         deletes = [resource for method, resource in calls if method == "DELETE"]
-        self.assertEqual(deletes, [ITEM, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT])
+        self.assertEqual(
+            deletes, [ITEM, container, VAULT, f"{group}/providers/Microsoft.Authorization/locks/backup", ACCOUNT]
+        )
         self.assertEqual(calls[-1], ("PATCH", f"{group}/providers/Microsoft.Resources/tags/default"))
         tags = arm.request.await_args.kwargs["body"]["properties"]["tags"]
         self.assertRegex(tags["e2e_delete_after"], r"^\d{4}-\d{2}-\d{2}$")
