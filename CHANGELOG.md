@@ -6,6 +6,9 @@
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
 * `tre-workspace-service-gitea` 2.0.0 keeps the Git repositories on its file share. The upgrade restarts the web app, so the repositories on the container disk are lost.
   Mirror the repositories before the upgrade, and rotate the workspace client secret after it. See the [Gitea upgrade steps](docs/tre-templates/workspace-services/gitea.md#upgrading-to-version-200). The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
+* A bundle gets `REDACTED` for a sensitive property in a later action that does not give a new value for it. This now also applies after an update that set the property.
+  It also applies to a sensitive property in an array item. It also applies to a property with more than one declaration in the template, if one declaration has `sensitive`.
+  If a custom bundle needs such a value in a later action, make the bundle keep it, for example in Key Vault. The base workspace does this for its client secret. (`api` 0.29.0)
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
@@ -57,10 +60,12 @@ BUG FIXES:
   The workspace start script gives the OIDC source the current client secret at each start, and it stops Gitea one time when the OIDC settings change. The web app reads the client secret through a Key Vault reference. (`tre-workspace-service-gitea` 2.0.0, `tre-shared-service-gitea` 1.2.6) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * Give the Gitea shared service identity the Key Vault role only on the two secrets that its web app reads. It had the role on the whole core Key Vault. (`tre-shared-service-gitea` 1.2.6) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * Give the Nexus VM identity the Key Vault role only on the Nexus admin password and the Nexus TLS certificate. It had the role on the whole core Key Vault. (`tre-shared-service-sonatype-nexus` 3.11.4) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
-* Send an empty outputs list when the resource processor cannot read the Porter outputs. The API rejected the empty dict, so a pipeline step that failed to read its outputs, for example after a transient container registry login failure, stayed in progress until the caller stopped waiting. (`resource_processor` 0.13.16)
+* Send an empty outputs list when the resource processor cannot read the Porter outputs. The API rejected the empty dict, so a pipeline step that failed to read its outputs, for example after a transient container registry login failure, stayed in progress until the caller stopped waiting.
+  The resource processor also sends the failed status for the step if the output text of Porter is not a JSON list. (`resource_processor` 0.13.16)
 * Give each resource processor worker its own Azure CLI folder. Each worker signs in before each Porter action. When two workers did this at the same time, one worker read the shared profile file while the other wrote it, and the next `az acr login` failed with `Please run 'az login'`. The action then failed after 3 seconds. (`resource_processor` 0.13.16)
 * Prevent a second run of a resource processor step when Service Bus gives its message to a second worker. The resource processor renews the session lock with retries, and a blob lease lets one worker at a time run Porter for a resource. The API ignores a status from another run of a finished step.
-  An upgrade no longer installs a resource that Porter uninstalled. A worker that lost its session while it waited for the lease does not run Porter.
+  An upgrade no longer installs a resource that Porter uninstalled. An upgrade also fails with `updating_failed` if the resource processor cannot read the Porter installation in 30 seconds.
+  A worker that lost its session while it waited for the lease does not run Porter.
   Two runs can still overlap if a worker loses the lease and its session during one Porter run. They can also overlap if a worker stops and its Porter action continues. The resource processor document gives the [known limits](docs/tre-developers/resource-processor.md#known-limits).
   (`core` 0.18.17, `resource_processor` 0.13.16, `api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes.
