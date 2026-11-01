@@ -76,7 +76,7 @@ jobs:
     name: Report VM size availability
     # Dependabot runs get no environment secrets, so they cannot log in to Azure.
     if: github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # The federated credential of the CI identity trusts this environment.
     environment: CICD
     timeout-minutes: 15
