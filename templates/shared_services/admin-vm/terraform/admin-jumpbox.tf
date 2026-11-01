@@ -62,8 +62,10 @@ resource "azurerm_windows_virtual_machine" "jumpbox" {
   # ignore changes to secure_boot_enabled and vtpm_enabled as these are destructive
   # (may be allowed once https://github.com/hashicorp/terraform-provider-azurerm/issues/25808 is fixed)
   #
-  # The size is not updateable, so only a new default can change it. Azure does not resize a Windows VM
-  # between a size with a temporary disk and a size without one, so an upgrade keeps the installed size.
+  # The size applies only at install. The template schema does not mark admin_jumpbox_vm_sku as updateable,
+  # and Terraform ignores a later change of the default. Azure cannot resize a VM between a size with a
+  # temporary disk (Standard_B2s) and a size without one (Standard_B2ls_v2), so an upgrade of an earlier
+  # admin VM keeps its installed size. To change the size, install the admin VM again.
   lifecycle { ignore_changes = [tags, secure_boot_enabled, vtpm_enabled, size] }
 }
 
