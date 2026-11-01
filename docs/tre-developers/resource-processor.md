@@ -121,20 +121,21 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 ### Repeated messages
 
-Service Bus can give the same message to more than one worker. The resource processor runs each step once:
+Service Bus can give the same message to more than one worker. The resource processor uses these rules to run each step once:
 
 1. The `workspacequeue` queue keeps a session lock for 5 minutes. While a worker runs a step, it renews the lock every minute. If a renewal fails, the worker tries again until the lock expires, and logs each failure.
 1. Before Porter starts, the worker gets a 60-second lease on the blob `rp-executions/<resource ID>` in the management storage account. It renews the lease every 15 seconds. If another worker holds the lease, the worker keeps its session and tries again every 30 seconds.
    When it gets the lease, it renews the session lock. If the session is lost, the worker does not run Porter, because another worker can have the message.
 1. The blob holds a record of the last step for the resource and the results of up to 20 earlier steps. If the record shows that the same step finished, the worker does not run Porter. It reads the outputs again and sends the recorded status.
    This also applies to a copy of a message that arrives after other steps for the resource. For example, the API can send a step again.
-   When a step starts, the worker keeps the 20 most recent results as earlier results and removes the other results. An earlier result keeps the first 4,000 characters of its status message, because a status message can be up to 2 MB.
-   If the lease expired before a record write, the worker takes the lease again. It does not replace a record that another worker wrote in the meantime. After a Porter run, the worker sends the status also if it cannot write the record.
+1. When a step starts, the worker keeps the 20 most recent results as earlier results and removes the other results. An earlier result keeps the first 4,000 characters of its status message, because a status message can be up to 2 MB.
+   A copy that arrives after more than 20 other steps for the resource does not find its result, and the worker runs Porter again.
+1. If the lease expired before a record write, the worker takes the lease again. It does not replace a record that another worker wrote in the meantime. After a Porter run, the worker sends the status also if it cannot write the record.
 1. Each status message of a Porter run has an `executionId`. After a step has a final status, the API ignores a status from another run, a later status from the same run and a final status that it already saved.
 1. If the API wrote the final status itself, for example after a failed send of the next step, the first run of the step replaces it. An uninstall keeps its earlier rule for a final step.
 1. An upgrade does not install a deleted resource again. The resource processor sends `updating_failed` if the last successful action of the Porter installation was an uninstall. Without this check, `porter installations apply` runs the install action.
    An upgrade can still repair a failed install, also an install that failed before Porter wrote its record.
-   If the resource processor cannot read the Porter installation, for example because the Porter storage is not available, it also sends `updating_failed`.
+   If the resource processor cannot read the Porter installation in 30 seconds, for example because the Porter storage is not available, it also sends `updating_failed`.
 
 A status message without `executionId` comes from a resource processor before version 0.13.16, or it is the failed status after a storage access error. The API keeps the earlier rules for it. An API before version 0.29.0 ignores the field. So you can deploy the API and the resource processor in any order.
 
@@ -167,7 +168,9 @@ If the API stops between the write and the send, the entry stays. When the API s
 
 In the last two cases, the updater also sets the resource of the request to the failed status. A first step on another resource, for example the firewall, did not run, so that resource keeps its status.
 
-A second copy of a message is safe, because the resource processor runs each step once. The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status. An uninstall keeps its earlier rule for a final step.
+A second copy of a message is safe. The resource processor finds the result of the step in the execution record and sends the recorded status.
+If the record does not have the result of the first run, Porter runs again, and the API ignores the status of the second run.
+The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status. An uninstall keeps its earlier rule for a final step.
 
 The status message of a step stays on the `deploymentstatus` queue until the API has sent the message of the next step. So a stop of the API during a pipeline does not need this entry.
 
