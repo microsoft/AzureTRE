@@ -15,8 +15,8 @@ KEYWORDS = {"if", "then", "elif", "else", "do", "while", "until", "!", "{", "}"}
 
 
 def words(line):
-    """The words of one line, as the shell reads its quotes and comments."""
-    lexer = shlex.shlex(line, posix=True, punctuation_chars=";&|()")
+    """The words of one line, with their quotes, so that a quoted or escaped separator stays a word."""
+    lexer = shlex.shlex(line, posix=False, punctuation_chars=";&|()")
     lexer.whitespace_split = True
     try:
         return list(lexer)
@@ -25,18 +25,29 @@ def words(line):
         return re.findall(r"[;&|()]+|[^\s;&|()]+", re.sub(r"(^|\s)#.*", "", line))
 
 
+def unquoted(word):
+    """A word without the quotes around it, as the shell gives it to the command."""
+    if len(word) >= 2 and word[0] == word[-1] and word[0] in "'\"":
+        return word[1:-1]
+    return word
+
+
 def set_arguments(text):
     """The arguments of each set command that the shell runs."""
     for line in text.splitlines():
-        command_start, args = True, None
-        for word in words(line) + [";"]:
+        command_start, args, after_backslash = True, None, False
+        for raw in words(line) + [";"]:
+            # A quoted separator keeps its quotes. An escaped one, as in "find -exec ... \\;", follows a backslash.
+            separator = raw in SEPARATORS and not after_backslash
+            after_backslash = raw == "\\"
+            word = unquoted(raw)
             if args is not None:
-                if word in SEPARATORS:
+                if separator:
                     yield args
                     args = None
                 else:
                     args.append(word)
-            if word in SEPARATORS or (command_start and word in KEYWORDS):
+            if separator or (command_start and raw in KEYWORDS):
                 command_start = True
             elif command_start and word == "set" and args is None:
                 args, command_start = [], False
@@ -95,6 +106,8 @@ class TemplateScriptTests(unittest.TestCase):
             "echo done # then set -x",
             "printf '%s\\n' 'then set -x for debugging'",
             'echo "if set -x; then"',
+            "printf '%s\\n' ';' set -x",
+            "find . -exec rm {} \\; set -x",
         ):
             with self.subTest(line=line):
                 self.assertFalse(turns_on_trace(line))
