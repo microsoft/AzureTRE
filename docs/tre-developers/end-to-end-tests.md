@@ -233,6 +233,7 @@ The **E2E Test Results (Bundle)** artefact contains:
 
 The JSON report copies only selected identifiers and operation states. It excludes resource properties, tokens and failure tracebacks.
 Source versions describe the checked-out manifests; verify deployed versions separately when reusing an environment.
+A test can call `record_deployed_resource` for a resource that it reads. The report then has a `deployed_template_version` record for that resource.
 `passed_selected_cases` means the selected assertions and their teardown passed. The report always leaves `full_lifecycle_proven` false for a separate evidence review.
 An entirely skipped selection exits unsuccessfully. Individual skipped cases retain their reasons, and a mixed pass/skip result is marked `partial`.
 
@@ -264,6 +265,7 @@ Failed cleanup fails the test. Core Key Vault credentials can remain soft-delete
 This case does not configure the CycleCloud application or create an HPC cluster. Browser access, application TLS trust, private DNS reachability and prior-release upgrades remain unproven.
 The existing bundle grants subscription Contributor to its VM and permits SharedSubnet access to ARM and GitHub. It does not disable the storage public endpoint.
 A private endpoint and a successful server lifecycle do not prove workspace isolation or storage access restrictions.
+
 ### Private OHDSI validation
 
 Select the bundle from a branch that contains its repaired bootstrap and validation case:

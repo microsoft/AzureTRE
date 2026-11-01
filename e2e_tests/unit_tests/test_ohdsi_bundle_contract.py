@@ -43,11 +43,10 @@ from pathlib import Path
 args=sys.argv[1:]
 body=Path(args[args.index('-f')+1]).read_text() if '-f' in args else sys.stdin.read()
 with open(os.environ['CALLS'],'a') as f:f.write(json.dumps({'args':args,'body':body})+'\\n')
-sys.exit(int(os.environ.get('PSQL_EXIT','0')))
+# A real psql returns 0 after a failed statement unless ON_ERROR_STOP is on.
+sys.exit(int(os.environ.get('PSQL_EXIT','0')) if 'ON_ERROR_STOP=1' in args else 0)
 """,
         )
-        self.fake("envsubst", "import os,sys\nprint(os.path.expandvars(sys.stdin.read()))\n")
-        self.fake("md5sum", "import hashlib,sys\nprint(hashlib.md5(sys.stdin.buffer.read()).hexdigest())\n")
 
     def fake(self, name, body):
         p = self.folder / name
