@@ -65,13 +65,29 @@ class ExecutionLease:
             self.expires = time.monotonic() + LEASE_SECONDS
             # Another worker can have taken the lease, written its record and released the lease in the meantime.
             # Keep that record, so that a copy of its message finds the result.
-            stored = (await self._download()).get("executionId")
-            if stored not in (self.execution_id, record.get("executionId")):
-                raise RuntimeError(
-                    f"Another worker wrote the execution record {self.blob.blob_name} after the lease expired"
-                )
+            stored = await self._download()
+            if stored.get("executionId") not in (self.execution_id, record.get("executionId")):
+                if not finishes_running_step(record, stored):
+                    raise RuntimeError(
+                        f"Another worker wrote the execution record {self.blob.blob_name} after the lease expired"
+                    )
+                # The other worker ran the same step again and did not write a result. Write this result, so that a
+                # copy of the message does not run Porter again. Keep the earlier results of the other worker, because
+                # they can be newer.
+                record = {**record, "earlierSteps": stored.get("earlierSteps", record.get("earlierSteps", []))}
             await self.blob.upload_blob(json.dumps(record), overwrite=True, lease=self.lease)
         self.execution_id = record.get("executionId")
+
+
+def finishes_running_step(record: dict, stored: dict) -> bool:
+    """Return True if the record has the result of the step that the stored record shows as running."""
+    step = (record.get("operationId"), record.get("stepId"))
+    return (
+        record.get("state") == "finished"
+        and stored.get("state") == "running"
+        and None not in step
+        and (stored.get("operationId"), stored.get("stepId")) == step
+    )
 
 
 async def create_blob(container: ContainerClient, blob):

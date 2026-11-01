@@ -155,6 +155,42 @@ async def test_the_running_record_replaces_only_the_record_that_the_worker_read(
     assert blob.upload_blob.await_count == (2 if replaced else 1)
 
 
+STEP = {"operationId": "operation-1", "stepId": "step-1"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "stored, state, replaced",
+    [
+        # After the lease expired, another worker ran the same step again and stopped before it wrote the result.
+        pytest.param({**STEP, "state": "running"}, "finished", True, id="same-step-running"),
+        pytest.param({**STEP, "state": "finished"}, "finished", False, id="same-step-finished"),
+        pytest.param({**STEP, "stepId": "step-2", "state": "running"}, "finished", False, id="other-step-running"),
+        # Before Porter starts, the worker does not take the step from a worker that can still run Porter.
+        pytest.param({**STEP, "state": "running"}, "running", False, id="running-over-running"),
+    ],
+)
+async def test_a_result_replaces_only_a_running_record_of_the_same_step(stored, state, replaced):
+    newer = [{**STEP, "stepId": "step-0", "executionId": "newer-result"}]
+    content = json.dumps({**stored, "executionId": "other-run", "earlierSteps": newer}).encode()
+    blob = MagicMock(
+        upload_blob=AsyncMock(side_effect=[precondition_failed(), None]),
+        download_blob=AsyncMock(return_value=MagicMock(readall=AsyncMock(return_value=content))),
+        blob_name="resource-1",
+    )
+    execution = leases.ExecutionLease(blob, MagicMock(acquire=AsyncMock()))
+    record = {**STEP, "executionId": "this-run", "state": state, "earlierSteps": []}
+    if replaced:
+        await execution.write(record)
+        # The earlier results of the other worker can have a step that finished after this worker started.
+        assert json.loads(blob.upload_blob.await_args.args[0]) == {**record, "earlierSteps": newer}
+        assert execution.execution_id == "this-run"
+    else:
+        with pytest.raises(RuntimeError):
+            await execution.write(record)
+    assert blob.upload_blob.await_count == (2 if replaced else 1)
+
+
 @pytest.mark.asyncio
 async def test_a_lease_that_another_worker_took_stops_the_record_write():
     taken = HttpResponseError(message="lease already present")

@@ -130,7 +130,8 @@ Service Bus can give the same message to more than one worker. The resource proc
    This also applies to a copy of a message that arrives after other steps for the resource. For example, the API can send a step again.
 1. When a step starts, the worker keeps the 20 most recent results as earlier results and removes the other results. An earlier result keeps the first 4,000 characters of its status message, because a status message can be up to 2 MB.
    A copy that arrives after more than 20 other steps for the resource does not find its result, and the worker runs Porter again.
-1. If the lease expired before a record write, the worker takes the lease again. It does not replace a record that another worker wrote in the meantime. After a Porter run, the worker sends the status also if it cannot write the record.
+1. If the lease expired before a record write, the worker takes the lease again. It does not replace a record that another worker wrote in the meantime.
+   If that record shows the same step as running, the worker writes the result of its Porter run over it. After a Porter run, the worker sends the status also if it cannot write the record.
 1. Each status message of a Porter run has an `executionId`. After a step has a final status, the API ignores a status from another run, a later status from the same run and a final status that it already saved.
 1. If the API wrote the final status itself, for example after a failed send of the next step, the first run of the step replaces it. An uninstall keeps its earlier rule for a final step.
 1. An upgrade does not install a deleted resource again. The resource processor sends `updating_failed` if the last successful action of the Porter installation was an uninstall. Without this check, `porter installations apply` runs the install action.
