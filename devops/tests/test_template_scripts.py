@@ -2,29 +2,52 @@
 
 from pathlib import Path
 import re
+import shlex
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-# The arguments of each set command, also after a separator or a keyword, up to a comment or the next command.
-SET = re.compile(
-    r"(?:^|[;&|]|\bthen\b|\bdo\b|\belse\b|\bif\b|\bwhile\b|\buntil\b)[ \t]*set[ \t]+([^\n#;&|]*)", re.MULTILINE
-)
 # A shebang line with a flag group that contains x.
 SHEBANG = re.compile(r"\A#![^\n]*[ \t]-[a-zA-Z]*x")
+# Words after which the next word is a command.
+SEPARATORS = {";", "&", "&&", "|", "||", "|&", "(", ")", ";;"}
+KEYWORDS = {"if", "then", "elif", "else", "do", "while", "until", "!", "{", "}"}
 
 
-# Quoted text and comments, which do not run a command.
-QUOTED = re.compile(r"'[^'\n]*'|\"(?:[^\"\\\n]|\\.)*\"")
-COMMENT = re.compile(r"(^|[ \t])#[^\n]*", re.MULTILINE)
+def words(line):
+    """The words of one line, as the shell reads its quotes and comments."""
+    lexer = shlex.shlex(line, posix=True, punctuation_chars=";&|()")
+    lexer.whitespace_split = True
+    try:
+        return list(lexer)
+    except ValueError:
+        # An open quote, for example in the text of a here-document. Read the plain words.
+        return re.findall(r"[;&|()]+|[^\s;&|()]+", re.sub(r"(^|\s)#.*", "", line))
+
+
+def set_arguments(text):
+    """The arguments of each set command that the shell runs."""
+    for line in text.splitlines():
+        command_start, args = True, None
+        for word in words(line) + [";"]:
+            if args is not None:
+                if word in SEPARATORS:
+                    yield args
+                    args = None
+                else:
+                    args.append(word)
+            if word in SEPARATORS or (command_start and word in KEYWORDS):
+                command_start = True
+            elif command_start and word == "set" and args is None:
+                args, command_start = [], False
+            else:
+                command_start = False
 
 
 def turns_on_trace(text):
     if SHEBANG.search(text):
         return True
-    commands = COMMENT.sub(r"\1", QUOTED.sub("''", text))
-    for match in SET.finditer(commands):
-        args = match.group(1).split()
+    for args in set_arguments(text):
         for index, arg in enumerate(args):
             if arg == "--":
                 break
@@ -48,6 +71,8 @@ class TemplateScriptTests(unittest.TestCase):
             "set -o pipefail; set -x",
             "if true; then set -x; fi",
             "true && set -x",
+            'set "-x"',
+            "set -o 'xtrace'",
             "if set -x; then :; fi",
             "while set -x; do break; done",
             "until set -x; do :; done",
