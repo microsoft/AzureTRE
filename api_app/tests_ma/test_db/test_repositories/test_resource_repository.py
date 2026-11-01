@@ -16,6 +16,7 @@ from db.repositories.resources import (
     ResourceRepository,
     mask_sensitive_properties,
     masked_property_paths,
+    restore_sensitive_values,
     set_masked_values,
 )
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -540,6 +541,16 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
     )
 
 
+SECRET = {"type": "string", "sensitive": True}
+ACCOUNTS = {
+    "accounts": {
+        "type": "array",
+        "updateable": True,
+        "items": {"type": "object", "properties": {"name": {"type": "string"}, "token": SECRET}},
+    }
+}
+
+
 def masking_template(properties, all_of=None) -> ResourceTemplate:
     return ResourceTemplate(
         id="masking-template-id",
@@ -554,10 +565,10 @@ def masking_template(properties, all_of=None) -> ResourceTemplate:
 
 
 def test_masked_property_paths_escape_nested_names():
+    template = masking_template({"settings": {"type": "object", "properties": {"a/b": SECRET, "c~d": SECRET}}})
     properties = {"settings": {"a/b": "real", "c~d": "real", "plain": "x"}}
-    masked = {"settings": {"a/b": "REDACTED", "c~d": "REDACTED", "plain": "x"}}
 
-    assert masked_property_paths(properties, masked) == ["/properties/settings/a~1b", "/properties/settings/c~0d"]
+    assert masked_property_paths(properties, template) == ["/properties/settings/a~1b", "/properties/settings/c~0d"]
 
 
 @pytest.mark.asyncio
@@ -622,6 +633,97 @@ async def test_mask_stored_sensitive_values_finds_a_property_that_a_branch_decla
         partition_key="ws",
         patch_operations=[{"op": "set", "path": "/properties/password", "value": strings.REDACTED_SENSITIVE_VALUE}],
     )
+
+
+def test_the_migration_finds_the_values_that_an_install_or_an_update_masks():
+    template = masking_template({**ACCOUNTS, "settings": {"type": "object", "properties": {"password": SECRET}}})
+    properties = {
+        "accounts": [{"name": "a", "token": "first"}, {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE}],
+        "groups": [[{"token": "nested"}]],
+        "settings": {"password": "real", "name": "token"},
+    }
+
+    assert mask_sensitive_properties(properties, template) == {
+        "accounts": [
+            {"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE},
+            {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE},
+        ],
+        "groups": [[{"token": strings.REDACTED_SENSITIVE_VALUE}]],
+        "settings": {"password": strings.REDACTED_SENSITIVE_VALUE, "name": "token"},
+    }
+    # The migration changes only the values that are not the placeholder yet, and not a whole list.
+    assert masked_property_paths(properties, template) == [
+        "/properties/accounts/0/token",
+        "/properties/groups/0/0/token",
+        "/properties/settings/password",
+    ]
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_stores_a_placeholder_for_sensitive_values_in_array_items(_, __, resource_repo):
+    resource_repo.update_item_with_etag = AsyncMock()
+    history_repo = AsyncMock()
+    resource = sample_resource()
+    resource.properties["accounts"] = [{"name": "a", "token": "earlier value"}]
+    resource_patch = ResourcePatch(properties={"accounts": [{"name": "a", "token": "new value"}]})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        masking_template(ACCOUNTS),
+        "etag",
+        None,
+        history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    masked_accounts = [{"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    assert resource_repo.update_item_with_etag.await_args.args[0].properties["accounts"] == masked_accounts
+    assert returned.properties["accounts"] == [{"name": "a", "token": "new value"}]
+    assert history_repo.create_resource_history_item.await_args.args[0].properties["accounts"] == masked_accounts
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_masks_values_in_array_items(resource_repo):
+    template = masking_template(ACCOUNTS)
+    resource_repo._container = AsyncMock()
+    accounts = [{"name": "a", "token": "real"}, {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    resource_repo.query = AsyncMock(
+        return_value=[stored_resource("ws", "masking-template", "workspace", {"accounts": accounts})]
+    )
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump()]
+    template_repo.get_template_by_name_and_version.return_value = template
+    history_repo = history_without_items()
+    history_repo.query.return_value = [{"id": "h-1", "resourceId": "ws", "properties": {"accounts": accounts[:1]}}]
+
+    assert await resource_repo.mask_stored_sensitive_values(template_repo, history_repo) == (1, 1)
+    set_token = [{"op": "set", "path": "/properties/accounts/0/token", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    resource_repo.container.patch_item.assert_awaited_once_with(
+        item="ws", partition_key="ws", patch_operations=set_token
+    )
+    history_repo.container.patch_item.assert_awaited_once_with(
+        item="h-1", partition_key="ws", patch_operations=set_token
+    )
+
+
+def test_restore_sensitive_values_restores_values_in_array_items():
+    # A pipeline step of the primary resource reads the stored document and gets the real values from memory.
+    placeholder = {"token": strings.REDACTED_SENSITIVE_VALUE}
+    stored = {"accounts": [{"name": "a", **placeholder}, {"name": "b", **placeholder}], "groups": [placeholder]}
+    source = {
+        "accounts": [{"name": "a", "token": "first"}, {"name": "b", "token": "second"}],
+        "groups": [{"token": "x"}, {"token": "y"}],
+    }
+
+    restored = restore_sensitive_values(stored, source)
+
+    assert restored["accounts"] == source["accounts"]
+    # The items of two lists with different lengths can be different items, so the placeholder stays.
+    assert restored["groups"] == [placeholder]
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.enrich_template")

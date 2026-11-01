@@ -65,45 +65,67 @@ def sensitive_property_names(template: dict) -> set:
     return names
 
 
+def sensitive_values(properties: Dict[str, Any], template: ResourceTemplate) -> List[Tuple[tuple, Any]]:
+    """Return the path and the value of each sensitive value in properties.
+
+    A path is a tuple of keys and list indexes. A value is sensitive if its key is a sensitive property name of the
+    template, also in a nested object or in an array item. The install, the update and the migration all use this
+    function, so they mask the same values.
+    """
+    names = sensitive_property_names(template.model_dump())
+    found = []
+
+    def collect(value: Any, path: tuple):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in names:
+                    found.append((path + (key,), item))
+                else:
+                    collect(item, path + (key,))
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                collect(item, path + (index,))
+
+    collect(properties, ())
+    return found
+
+
 def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
-    updated_resource_parameters = copy.deepcopy(properties)
-    sensitive_names = sensitive_property_names(template.model_dump())
-
-    def recurse_input_props(prop_dict: dict):
-        for prop_name, prop in prop_dict.items():
-            if prop_name in sensitive_names:
-                prop_dict[prop_name] = REDACTED_SENSITIVE_VALUE
-            if isinstance(prop, dict):
-                recurse_input_props(prop)
-
-    recurse_input_props(updated_resource_parameters)
-
-    return updated_resource_parameters
+    masked = copy.deepcopy(properties)
+    for path, _ in sensitive_values(masked, template):
+        parent = masked
+        for part in path[:-1]:
+            parent = parent[part]
+        parent[path[-1]] = REDACTED_SENSITIVE_VALUE
+    return masked
 
 
 def restore_sensitive_values(properties: dict, source: dict) -> dict:
-    """Return a copy of properties with the real value from source in place of each placeholder."""
-    restored = copy.deepcopy(properties)
-    for key, value in restored.items():
-        original = source.get(key)
+    """Return a copy of properties with the real value from source in place of each placeholder.
+
+    Two lists of the same length pair their items by index. A list with a different length keeps its placeholders,
+    because its items can be different items.
+    """
+
+    def restore(value: Any, original: Any) -> Any:
         if isinstance(value, dict) and isinstance(original, dict):
-            restored[key] = restore_sensitive_values(value, original)
-        elif value == REDACTED_SENSITIVE_VALUE and original is not None and original != REDACTED_SENSITIVE_VALUE:
-            restored[key] = copy.deepcopy(original)
-    return restored
+            return {key: restore(item, original.get(key)) for key, item in value.items()}
+        if isinstance(value, list) and isinstance(original, list) and len(value) == len(original):
+            return [restore(item, original_item) for item, original_item in zip(value, original)]
+        if value == REDACTED_SENSITIVE_VALUE and original is not None and original != REDACTED_SENSITIVE_VALUE:
+            return copy.deepcopy(original)
+        return copy.deepcopy(value)
+
+    return restore(properties, source)
 
 
-def masked_property_paths(properties: dict, masked: dict, path: Optional[List[str]] = None) -> List[str]:
-    """Return a JSON pointer for each value that mask_sensitive_properties changed."""
-    path = path or ["properties"]
-    paths = []
-    for key, value in masked.items():
-        original = properties.get(key)
-        if isinstance(value, dict) and isinstance(original, dict):
-            paths += masked_property_paths(original, value, path + [key])
-        elif value != original:
-            paths.append("".join("/" + part.replace("~", "~0").replace("/", "~1") for part in path + [key]))
-    return paths
+def masked_property_paths(properties: dict, template: ResourceTemplate) -> List[str]:
+    """Return a JSON pointer for each sensitive value in properties that is not the placeholder."""
+    return [
+        "".join("/" + str(part).replace("~", "~0").replace("/", "~1") for part in ("properties",) + path)
+        for path, value in sensitive_values(properties, template)
+        if value != REDACTED_SENSITIVE_VALUE
+    ]
 
 
 async def set_masked_values(container, item_id: str, partition_key: str, paths: List[str]):
@@ -350,8 +372,7 @@ class ResourceRepository(BaseRepository):
         async def mask(item: dict, template: Optional[ResourceTemplate], container, partition_key: str) -> bool:
             if template is None:
                 return False
-            properties = item.get("properties") or {}
-            paths = masked_property_paths(properties, mask_sensitive_properties(properties, template))
+            paths = masked_property_paths(item.get("properties") or {}, template)
             if paths:
                 await set_masked_values(container, item["id"], partition_key, paths)
             return bool(paths)
