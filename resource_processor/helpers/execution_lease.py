@@ -27,6 +27,8 @@ class ExecutionLease:
         self.blob = blob
         self.lease = lease
         self.expires = time.monotonic() + LEASE_SECONDS
+        # The execution ID in the record that this worker read or wrote last.
+        self.execution_id = None
 
     async def renew(self):
         await self.lease.renew()
@@ -36,6 +38,11 @@ class ExecutionLease:
         return self.expires - time.monotonic()
 
     async def read(self) -> dict:
+        record = await self._download()
+        self.execution_id = record.get("executionId")
+        return record
+
+    async def _download(self) -> dict:
         download = await self.blob.download_blob(lease=self.lease)
         content = await download.readall()
         try:
@@ -56,7 +63,15 @@ class ExecutionLease:
             # Azure gives the same lease ID again if no other worker took the lease. If one did, this raises 409.
             await self.lease.acquire(lease_duration=LEASE_SECONDS)
             self.expires = time.monotonic() + LEASE_SECONDS
+            # Another worker can have taken the lease, written its record and released the lease in the meantime.
+            # Keep that record, so that a copy of its message finds the result.
+            stored = (await self._download()).get("executionId")
+            if stored not in (self.execution_id, record.get("executionId")):
+                raise RuntimeError(
+                    f"Another worker wrote the execution record {self.blob.blob_name} after the lease expired"
+                )
             await self.blob.upload_blob(json.dumps(record), overwrite=True, lease=self.lease)
+        self.execution_id = record.get("executionId")
 
 
 async def create_blob(container: ContainerClient, blob):

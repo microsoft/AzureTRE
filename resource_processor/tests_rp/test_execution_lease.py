@@ -105,13 +105,54 @@ def precondition_failed():
     return error
 
 
+def download_of(execution_id):
+    content = json.dumps({"executionId": execution_id, "state": "running"}).encode()
+    return MagicMock(readall=AsyncMock(return_value=content))
+
+
 @pytest.mark.asyncio
 async def test_an_expired_lease_is_taken_again_for_the_record():
-    blob = MagicMock(upload_blob=AsyncMock(side_effect=[precondition_failed(), None]))
+    blob = MagicMock(
+        upload_blob=AsyncMock(side_effect=[precondition_failed(), None]),
+        download_blob=AsyncMock(return_value=download_of("this-run")),
+    )
     lease = MagicMock(acquire=AsyncMock())
-    await leases.ExecutionLease(blob, lease).write({"state": "finished"})
+    await leases.ExecutionLease(blob, lease).write({"executionId": "this-run", "state": "finished"})
     lease.acquire.assert_awaited_once_with(lease_duration=leases.LEASE_SECONDS)
     assert blob.upload_blob.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_a_record_that_another_worker_wrote_after_the_lease_expired_stays():
+    # Another worker ran a later step, wrote its record and released the lease before this worker took it again.
+    blob = MagicMock(
+        upload_blob=AsyncMock(side_effect=[precondition_failed(), None]),
+        download_blob=AsyncMock(return_value=download_of("later-run")),
+        blob_name="resource-1",
+    )
+    lease = MagicMock(acquire=AsyncMock())
+    with pytest.raises(RuntimeError, match="Another worker wrote the execution record resource-1"):
+        await leases.ExecutionLease(blob, lease).write({"executionId": "this-run", "state": "finished"})
+    lease.acquire.assert_awaited_once_with(lease_duration=leases.LEASE_SECONDS)
+    assert blob.upload_blob.await_count == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stored, replaced", [("earlier-run", True), ("later-run", False)])
+async def test_the_running_record_replaces_only_the_record_that_the_worker_read(stored, replaced):
+    blob = MagicMock(
+        upload_blob=AsyncMock(side_effect=[precondition_failed(), None]),
+        download_blob=AsyncMock(side_effect=[download_of("earlier-run"), download_of(stored)]),
+        blob_name="resource-1",
+    )
+    execution = leases.ExecutionLease(blob, MagicMock(acquire=AsyncMock()))
+    await execution.read()
+    if replaced:
+        await execution.write({"executionId": "this-run", "state": "running"})
+    else:
+        with pytest.raises(RuntimeError):
+            await execution.write({"executionId": "this-run", "state": "running"})
+    assert blob.upload_blob.await_count == (2 if replaced else 1)
 
 
 @pytest.mark.asyncio
