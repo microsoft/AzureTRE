@@ -138,7 +138,11 @@ Service Bus can give the same message to more than one worker. The resource proc
    An upgrade can still repair a failed install, also an install that failed before Porter wrote its record.
    If the resource processor cannot read the Porter installation in 30 seconds, for example because the Porter storage is not available, it also sends `updating_failed`.
 
-A status message without `executionId` comes from a resource processor before version 0.13.16, or it is the failed status after a storage access error. The API keeps the earlier rules for it. An API before version 0.29.0 ignores the field. So you can deploy the API and the resource processor in any order.
+A status message without `executionId` comes from a resource processor before version 0.13.16, or it is the failed status after a storage access error. The API keeps the earlier rules for it and removes the `executionId` of the step.
+Then a status of a Porter run replaces that status. For example, the success of a worker that ran Porter replaces the failed status of a second worker after a storage access error.
+An uninstall keeps its earlier rule for a final step.
+
+An API before version 0.29.0 ignores the field. So you can deploy the API and the resource processor in any order.
 
 The resource processor now needs the management storage account for each step. If the account refuses access (HTTP 401 or 403), the resource processor sends the failed status for the step. A Terraform backend in the same account failed in the same way before this change. For other storage errors, Service Bus delivers the message again.
 

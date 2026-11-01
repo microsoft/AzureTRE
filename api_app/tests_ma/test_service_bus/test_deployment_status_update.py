@@ -1229,6 +1229,25 @@ async def test_the_first_run_replaces_a_failure_that_the_api_wrote(persisted_pip
     send.assert_awaited_once()
 
 
+# An uninstall keeps the earlier rule for a final step from #5253.
+@pytest.mark.parametrize("persisted_pipeline", [RequestAction.Install, RequestAction.Upgrade, "restart"], indirect=True)
+async def test_the_running_execution_replaces_a_failure_without_an_execution_id(persisted_pipeline):
+    updater, stored, message, send, (in_progress, success, failure) = persisted_pipeline
+    assert await updater.update_status_in_database(message(in_progress)) is True
+    # After a lost session, a second worker got HTTP 403 from the management storage account. It sent a failure
+    # without an execution ID, while the first worker still ran Porter.
+    assert await updater.update_status_in_database(message(failure, execution_id=None)) is True
+    assert stored["operation"].steps[0].status == failure
+
+    assert await updater.update_status_in_database(message(success)) is True
+
+    step = stored["operation"].steps[0]
+    assert step.status == success
+    assert step.executionId == "run-a"
+    assert stored["resources"][step.resourceId].deploymentStatus == success
+    send.assert_awaited_once()
+
+
 async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
     workspace = create_sample_workspace_object("d9236f8f-7fbb-46d3-9c94-dea6daf32b7f")
     operation = create_sample_operation(workspace.id, RequestAction.Install)
@@ -1251,7 +1270,8 @@ async def test_a_message_without_an_execution_id_keeps_the_earlier_rules():
     assert await updater.update_status_in_database(message) is True
 
     assert operation.steps[0].status == Status.DeploymentFailed
-    assert operation.steps[0].executionId == "run-a"
+    # The step shows a status without an execution ID, so the first run of the step can replace it.
+    assert operation.steps[0].executionId is None
 
 
 @patch("service_bus.deployment_status_updater.logger")

@@ -296,8 +296,9 @@ class DeploymentStatusUpdater:
             step_to_update.status = message.status
             step_to_update.message = message.message
             step_to_update.updatedWhen = get_timestamp()
-            if message.executionId is not None:
-                step_to_update.executionId = message.executionId
+            # A status without an execution ID also clears the ID of the step, so a run can replace that status. For
+            # example, a second worker sends a failure without an ID after HTTP 403, while the first worker still runs.
+            step_to_update.executionId = message.executionId
             # Repeated runs make the final status complete only after its writes and dispatch.
             track_completion = uninstall_operation or message.executionId is not None
 
@@ -415,13 +416,14 @@ class DeploymentStatusUpdater:
     ) -> bool:
         """
         Service Bus can give a step to a second resource processor worker. Keep the first final status of the step.
-        A message without an execution ID comes from an older resource processor, so the earlier rules apply to it.
+        A message without an execution ID comes from an older resource processor, or from a worker after a storage
+        access error. The earlier rules apply to it.
         """
         if message.executionId is None or not (step.is_success() or step.is_failure()):
             return False
         if step.executionId is None:
-            # The API or an older resource processor wrote this final status. The first run of the step replaces it,
-            # for example after the API failed a step whose message the resource processor still got.
+            # The API wrote this final status, or a message without an execution ID set it. The first run of the step
+            # replaces it, for example after the API failed a step whose message the resource processor still got.
             return False
         if step.executionId != message.executionId:
             logger.info(f"Ignoring a status from another run of step {operation.id}/{step.id}")
