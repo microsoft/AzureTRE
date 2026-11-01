@@ -234,6 +234,7 @@ If the updater also sets the resource to the failed status, it writes the operat
 The operation write also removes the `pendingDispatch` entry. So if the API stops between the two writes, or if it cannot write the resource, the updater does not find the entry again.
 
 The operation then shows the failed status, but the resource keeps the status that it had before the request. A new resource keeps an empty `deploymentStatus`.
+If a workspace update changes the Airlock version, the API writes `awaiting_update` to the workspace before it writes the operation. Then the workspace keeps `awaiting_update`.
 If the API could not write the resource, it logs `Unable to send the pending message of operation <operation ID>`.
 
 To repair the status, set `deploymentStatus` of the resource to the `status` of the operation in Cosmos DB. [Manually editing resources in Cosmos DB](../troubleshooting-faq/manually-editing-resources.md) gives the steps.
