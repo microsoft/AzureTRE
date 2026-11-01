@@ -7,6 +7,10 @@ resource "azurerm_role_assignment" "researchers_fhir_contributor" {
   scope                = azurerm_healthcare_fhir_service.fhir[0].id
   role_definition_name = "FHIR Data Contributor"
   principal_id         = var.workspace_researchers_group_id
+
+  # The groups get FHIR data access only after the private endpoint and its DNS records exist.
+  # On uninstall, Terraform deletes the role before the zone group and the endpoint.
+  depends_on = [azapi_resource.health_services_dns_zone_group]
 }
 
 resource "azurerm_role_assignment" "researchers_dicom_data_owner" {
@@ -25,6 +29,10 @@ resource "azurerm_role_assignment" "owners_fhir_contributor" {
   scope                = azurerm_healthcare_fhir_service.fhir[0].id
   role_definition_name = "FHIR Data Contributor"
   principal_id         = var.workspace_owners_group_id
+
+  # The groups get FHIR data access only after the private endpoint and its DNS records exist.
+  # On uninstall, Terraform deletes the role before the zone group and the endpoint.
+  depends_on = [azapi_resource.health_services_dns_zone_group]
 }
 
 resource "azurerm_role_assignment" "owners_dicom_data_owner" {
