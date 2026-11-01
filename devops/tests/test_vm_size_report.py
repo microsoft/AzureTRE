@@ -54,15 +54,16 @@ def table_rows(report):
 
 class PatternTests(unittest.TestCase):
     def test_finds_vm_sizes_in_any_case(self):
-        line = 'sizes = ["Standard_B2s", "STANDARD_D2_V3", "Standard_E64-32s_v5", "Basic_A0"]'
+        line = 'sizes = ["Standard_B2s", "STANDARD_D2_V3", "Standard_E64-32s_v5", "Basic_A0", "standard_b2s", "Standard_d2_v3"]'
         self.assertEqual(
             [match.group() for match in VM_SIZE.finditer(line)],
-            ["Standard_B2s", "STANDARD_D2_V3", "Standard_E64-32s_v5", "Basic_A0"],
+            ["Standard_B2s", "STANDARD_D2_V3", "Standard_E64-32s_v5", "Basic_A0", "standard_b2s", "Standard_d2_v3"],
         )
 
     def test_skips_skus_that_are_not_vm_sizes(self):
         line = (
-            "Standard_LRS Standard_GRS Standard_v2 basic_workspace_request basic_resource_template "
+            "Standard_LRS Standard_GRS Standard_v2 standard_v3 STANDARD_V2 standard_lrs basic_workspace_request "
+            "basic_resource_template "
             "GP_Standard_D2ds_v4 B_Standard_B1ms MO_Standard_E2ds_v4"
         )
         self.assertEqual(list(VM_SIZE.finditer(line)), [])

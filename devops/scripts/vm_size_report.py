@@ -27,10 +27,10 @@ OWN_FILES = {
     SCRIPT.parents[1] / "tests" / "test_vm_size_report.py",
     SCRIPT.parents[2] / "docs" / "tre-admins" / "vm-size-availability.md",
 }
-# After the prefix, a VM size has a family that starts with a capital letter, and a vCPU count.
-# This keeps out Standard_LRS, Standard_v2 and identifiers such as basic_workspace_request.
-# The word boundary keeps out database SKUs such as GP_Standard_D2ds_v4, which are not VM SKUs.
-VM_SIZE = re.compile(r"\b(?i:standard|basic)_[A-Z][A-Za-z]*[0-9][A-Za-z0-9_-]*")
+# After the prefix, a VM size has a family of letters and a vCPU count, in any case.
+# The vCPU count keeps out Standard_LRS and identifiers such as basic_workspace_request. A tier such as
+# Standard_v2 is not a VM size. The word boundary keeps out database SKUs such as GP_Standard_D2ds_v4.
+VM_SIZE = re.compile(r"\b(?i:standard|basic)_(?![vV][0-9]+\b)[A-Za-z]+[0-9][A-Za-z0-9_-]*")
 # A database tier label such as "B | 4GB 2vCores" can map to a database SKU without its tier prefix, for example
 # {"B | 4GB 2vCores": "Standard_B2s"}. The scan skips a size that is the value of such a label, because it is
 # a database SKU and not a VM size.

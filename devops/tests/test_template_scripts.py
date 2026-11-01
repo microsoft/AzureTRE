@@ -14,10 +14,16 @@ SET = re.compile(
 SHEBANG = re.compile(r"\A#![^\n]*[ \t]-[a-zA-Z]*x")
 
 
+# Quoted text and comments, which do not run a command.
+QUOTED = re.compile(r"'[^'\n]*'|\"(?:[^\"\\\n]|\\.)*\"")
+COMMENT = re.compile(r"(^|[ \t])#[^\n]*", re.MULTILINE)
+
+
 def turns_on_trace(text):
     if SHEBANG.search(text):
         return True
-    for match in SET.finditer(text):
+    commands = COMMENT.sub(r"\1", QUOTED.sub("''", text))
+    for match in SET.finditer(commands):
         args = match.group(1).split()
         for index, arg in enumerate(args):
             if arg == "--":
@@ -60,6 +66,10 @@ class TemplateScriptTests(unittest.TestCase):
             "set -e; tar -xzf a.tgz",
             "echo reset -x",
             "#!/bin/bash\nset -e",
+            "# if set -x",
+            "echo done # then set -x",
+            "printf '%s\\n' 'then set -x for debugging'",
+            'echo "if set -x; then"',
         ):
             with self.subTest(line=line):
                 self.assertFalse(turns_on_trace(line))
