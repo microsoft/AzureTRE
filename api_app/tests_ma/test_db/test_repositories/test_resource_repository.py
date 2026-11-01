@@ -12,7 +12,12 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from tests_ma.test_api.conftest import create_test_user
 
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
-from db.repositories.resources import ResourceRepository, masked_property_paths, set_masked_values
+from db.repositories.resources import (
+    ResourceRepository,
+    mask_sensitive_properties,
+    masked_property_paths,
+    set_masked_values,
+)
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from models.domain.resource import Resource
 from models.domain.resource_template import ResourceTemplate
@@ -535,6 +540,19 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
     )
 
 
+def masking_template(properties, all_of=None) -> ResourceTemplate:
+    return ResourceTemplate(
+        id="masking-template-id",
+        name="masking-template",
+        version="1.0.0",
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=[],
+        properties=properties,
+        allOf=all_of,
+    )
+
+
 def test_masked_property_paths_escape_nested_names():
     properties = {"settings": {"a/b": "real", "c~d": "real", "plain": "x"}}
     masked = {"settings": {"a/b": "REDACTED", "c~d": "REDACTED", "plain": "x"}}
@@ -550,6 +568,60 @@ async def test_set_masked_values_sends_at_most_ten_operations_in_each_request():
     await set_masked_values(container, "item", "partition", paths)
 
     assert [len(call.kwargs["patch_operations"]) for call in container.patch_item.await_args_list] == [10, 1]
+
+
+PASSWORD = {"type": "string", "sensitive": True, "updateable": True}
+PASSWORD_RULE = {"properties": {"password": {"type": "string", "pattern": "^.{8,}$"}}}
+IF_MODE_A = {"properties": {"mode": {"const": "a"}}}
+
+
+@pytest.mark.parametrize(
+    "properties, all_of",
+    [
+        ({"password": PASSWORD}, [{"if": IF_MODE_A, "then": PASSWORD_RULE}]),
+        ({"password": PASSWORD}, [{"if": IF_MODE_A, "then": {}, "else": PASSWORD_RULE}]),
+        ({"password": PASSWORD}, [{"anyOf": [PASSWORD_RULE]}]),
+        ({"password": PASSWORD}, [{"oneOf": [PASSWORD_RULE, {}]}]),
+        (
+            {"password": {"type": "string"}},
+            [
+                {"if": IF_MODE_A, "then": {"properties": {"password": PASSWORD}}},
+                {"if": IF_MODE_A, "then": PASSWORD_RULE},
+            ],
+        ),
+    ],
+)
+def test_a_property_stays_sensitive_if_one_of_its_declarations_is_sensitive(properties, all_of):
+    # A later declaration of the same name without the flag must not remove it.
+    masked = mask_sensitive_properties({"password": "real value", "mode": "a"}, masking_template(properties, all_of))
+
+    assert masked == {"password": strings.REDACTED_SENSITIVE_VALUE, "mode": "a"}
+
+
+def history_without_items():
+    history_repo = MagicMock()
+    history_repo.container = AsyncMock()
+    history_repo.query = AsyncMock(return_value=[])
+    return history_repo
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_finds_a_property_that_a_branch_declares_again(resource_repo):
+    template = masking_template({"password": PASSWORD}, [{"if": IF_MODE_A, "then": PASSWORD_RULE}])
+    resource_repo._container = AsyncMock()
+    resource_repo.query = AsyncMock(
+        return_value=[stored_resource("ws", "masking-template", "workspace", {"password": "real"})]
+    )
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump()]
+    template_repo.get_template_by_name_and_version.return_value = template
+
+    assert await resource_repo.mask_stored_sensitive_values(template_repo, history_without_items()) == (1, 0)
+    resource_repo.container.patch_item.assert_awaited_once_with(
+        item="ws",
+        partition_key="ws",
+        patch_operations=[{"op": "set", "path": "/properties/password", "value": strings.REDACTED_SENSITIVE_VALUE}],
+    )
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.enrich_template")

@@ -37,41 +37,32 @@ Draft7TREValidator = extend(
 )
 
 
-def template_properties(template: dict) -> dict:
-    """Return each property schema of a template by name, also from allOf, then and else branches."""
-    flattened_template_props = {}
-
-    # Recurse through the template and collect all properties in one dict.
-    def flatten_template_props(template_fragment: dict):
-        if template_fragment is None:
-            return
-
-        for prop_name, prop in template_fragment.items():
-            if prop_name == "pipeline":
-                continue
-
-            if prop_name == "properties" and template_fragment["properties"] is not None:
-                for inner_prop_name, inner_prop in template_fragment["properties"].items():
-                    flattened_template_props[inner_prop_name] = inner_prop
-
-            if isinstance(prop, list) and len(prop) > 0:
-                for p in prop:
-                    if isinstance(p, dict):
-                        flatten_template_props(p)
-
-            if isinstance(prop, dict) and prop_name != "if":
-                flatten_template_props(prop)
-
-    flatten_template_props(template)
-    return flattened_template_props
-
-
 def sensitive_property_names(template: dict) -> set:
-    return {
-        name
-        for name, prop in template_properties(template).items()
-        if isinstance(prop, dict) and prop.get("sensitive") is True
-    }
+    """Return the name of each property that has sensitive set to true in one or more of its declarations.
+
+    The template can declare a name more than once, for example at the top level and in an allOf, anyOf, oneOf,
+    then or else branch. A declaration without the flag does not remove it. Nested objects and array items count,
+    but if conditions and the pipeline do not.
+    """
+    names = set()
+
+    def collect(template_fragment: dict):
+        for key, value in template_fragment.items():
+            if key in ("pipeline", "if"):
+                continue
+            if key == "properties" and isinstance(value, dict):
+                names.update(
+                    name for name, prop in value.items() if isinstance(prop, dict) and prop.get("sensitive") is True
+                )
+            if isinstance(value, dict):
+                collect(value)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        collect(item)
+
+    collect(template)
+    return names
 
 
 def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
