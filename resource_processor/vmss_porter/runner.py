@@ -679,10 +679,16 @@ async def get_porter_outputs(msg_body: dict, config: dict):
         # The API reads outputs as a list. It rejects a dict, so the operation never gets the failed status.
         return False, []
     else:
-        outputs_json = []
         try:
             outputs_json = json.loads(stdout)
+        except (TypeError, ValueError):
+            outputs_json = None
+        if not isinstance(outputs_json, list):
+            # A success without outputs lets the API continue, and the next pipeline step gets empty values.
+            logger.error(f"{msg_body['id']}: Failed to get outputs, because the Porter output is not a JSON list")
+            return False, []
 
+        try:
             # loop props individually to try to deserialise to dict/list, as all TF outputs are strings, but we want the pure value
             for i in range(0, len(outputs_json)):
                 if "{" in outputs_json[i]["value"] or "[" in outputs_json[i]["value"]:

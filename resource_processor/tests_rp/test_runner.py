@@ -420,7 +420,7 @@ async def test_receive_message_unknown_exception(
 
 @pytest.mark.asyncio
 @patch("vmss_porter.runner.build_porter_command", return_value=([["porter", "install"]], None, "tre-params-test", None))
-@patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
+@patch("vmss_porter.runner.run_porter", return_value=(0, "[]", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action(
     mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
@@ -591,7 +591,7 @@ async def test_invoke_porter_action_nonzero_exit_without_confirmed_absence_repor
     "vmss_porter.runner.build_porter_command",
     return_value=([["porter", "custom-action"]], None, "tre-params-test", None),
 )
-@patch("vmss_porter.runner.run_porter", return_value=(0, "stdout", "stderr"))
+@patch("vmss_porter.runner.run_porter", return_value=(0, "[]", "stderr"))
 @patch("vmss_porter.runner.service_bus_message_generator", return_value="test_message")
 async def test_invoke_porter_action_custom_action(
     mock_service_bus_message_generator, mock_run_porter, mock_build_porter_command, mock_service_bus_client
@@ -1131,6 +1131,44 @@ async def test_get_porter_outputs(mock_run_porter, mock_build_porter_command_for
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
+    "stdout",
+    [
+        pytest.param("not json", id="invalid-json"),
+        pytest.param('{"name": "output1", "value": "value1"}', id="not-a-list"),
+        pytest.param(None, id="no-output"),
+    ],
+)
+async def test_get_porter_outputs_fails_when_the_output_list_cannot_be_read(stdout):
+    # A success without outputs lets the next pipeline step use an empty value, for example a callback URI.
+    with (
+        patch("vmss_porter.runner.build_porter_command_for_outputs", return_value=[["porter", "output", "list"]]),
+        patch("vmss_porter.runner.run_porter", return_value=(0, stdout, None)),
+    ):
+        assert await get_porter_outputs({"id": "test_id", "action": "upgrade"}, {}) == (False, [])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        pytest.param('{"key": "value"}', {"key": "value"}, id="json-value"),
+        pytest.param("[not json", "[not json", id="text-with-a-bracket"),
+    ],
+)
+async def test_get_porter_outputs_keeps_a_value_that_is_not_json(value, expected):
+    stdout = json.dumps([{"name": "output1", "value": value}])
+    with (
+        patch("vmss_porter.runner.build_porter_command_for_outputs", return_value=[["porter", "output", "list"]]),
+        patch("vmss_porter.runner.run_porter", return_value=(0, stdout, None)),
+    ):
+        assert await get_porter_outputs({"id": "test_id", "action": "upgrade"}, {}) == (
+            True,
+            [{"name": "output1", "value": expected}],
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "output_result, expected_status",
     [
         pytest.param(
@@ -1138,7 +1176,7 @@ async def test_get_porter_outputs(mock_run_porter, mock_build_porter_command_for
             "updating_failed",
             id="output-command-fails",
         ),
-        pytest.param((0, "not json", None), "updated", id="invalid-json"),
+        pytest.param((0, "not json", None), "updating_failed", id="invalid-json"),
     ],
 )
 async def test_invoke_porter_action_sends_outputs_as_a_list(output_result, expected_status):
