@@ -505,7 +505,7 @@ def recorded_results(record: dict) -> list:
 
 async def run_step(msg_body: dict, execution, sb_client: ServiceBusClient, config: dict) -> bool:
     """
-    Run the step once. If the execution record shows that a worker already finished this step, send its status again.
+    Run the step. If the execution record shows that a worker already finished this step, send its status again.
     """
 
     def same_step(entry: dict) -> bool:

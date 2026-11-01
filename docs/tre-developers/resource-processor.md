@@ -192,7 +192,12 @@ If a worker cannot renew the execution lease for 60 seconds, for example because
 The Porter action of the worker continues, because the resource processor cannot stop it. Porter 1.4.0 cannot pass a cancel request to the Docker container of its action.
 If the worker also loses its Service Bus session, another worker gets the message and the lease. The record shows the step as running, so the second worker runs Porter again.
 
-The second worker cannot know if the first worker stopped or only lost access to the storage account. After a worker stops during a Porter run, the next worker must run the step again in the same way.
+A stop of a worker also does not always stop its Porter action. The Docker container of the action runs on the Docker daemon of the VM, next to the resource processor container.
+If a worker process or the resource processor container stops while the VM runs, the Docker container of the action can continue.
+For example, a worker process can stop when the VM has no free memory, or an operator can restart the resource processor container.
+After such a stop, another worker gets the message and the lease. That worker runs Porter for the step again, also if the earlier action still runs.
+
+The second worker cannot know if the Porter action of the first worker still runs. After a worker and its Porter action stop, for example when the VM restarts, the next worker must run the step again.
 So the resource processor does not block the second run. Before version 0.13.16, a lost session alone caused a second run.
 For a bundle that uses Terraform, the Terraform state lock often stops the second run, and that run fails.
 
@@ -202,13 +207,16 @@ For example, the step can show the state lock failure of the second run, while t
 If two runs overlap, the logs show these messages:
 
 - The first worker logs `Execution lease expired after <n> failed renewals` for the step. It can also log `Session lock expired` or `The session lock expired before the message was completed`.
-  After its Porter run, it can log `Could not save the execution record`.
+  After its Porter run, it can log `Could not save the execution record`. A worker that stopped does not log these messages.
 - The second worker logs `An earlier worker stopped during step <step ID> for <resource ID>.`
+  If only the second worker logs a message of this list, examine the VM of the first worker. A Porter action of a stopped worker can still run there.
 - The API logs `Ignoring a status from another run of step <operation ID>/<step ID>` for the final status that comes second.
+  A worker that stopped does not send a final status, so the API does not log this message.
 
 If you find these messages, do these steps:
 
-1. Wait until both workers log `Sent status message for <resource ID>: <status>`. Then both Porter runs are complete.
+1. Wait until both Porter runs end. A worker logs `Sent status message for <resource ID>: <status>` after its run.
+   If a worker does not log this message, [connect to its VM](#connect-to-the-resource-processor-terminal). Use `docker ps` to find the container of the Porter action for the step. Wait until this container stops.
 1. Examine the Azure resources of the step.
 1. If the status of the step is not correct for these resources, send the request again. For example, update the resource or send the delete again.
 
