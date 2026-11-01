@@ -13,14 +13,14 @@ In addition, when creating this workspace service you can choose to deploy [FHIR
 
 ![Healthcare Service](images/hs_details.png)
 
-## Install failures before version 0.3.9
+## Install failures before version 1.0.0
 
-Before version 0.3.9, an install can fail after Azure creates the FHIR service.
+Before version 1.0.0, an install can fail after Azure creates the FHIR service.
 If Azure reports the FHIR service as `Accepted` after the create, the azurerm provider stops its wait, and Terraform does not save the FHIR service.
 After this failure, each update and each delete of the Health service fails.
 To repair the service, delete its FHIR service in the Azure portal, and then delete the Health service again.
 
-Before version 0.3.9, an install without FHIR and DICOM can fail at the private endpoint.
+Before version 1.0.0, an install without FHIR and DICOM can fail at the private endpoint.
 Azure keeps the failed endpoint, but Terraform does not save it. After this failure, each update and each delete of the Health service fails.
 To repair the service, delete the private endpoint `pe-hs<suffix>` of the service in the Azure portal. Its provisioning state is `Failed`.
 Then delete the Health service, or upgrade it and turn on FHIR or DICOM with an update.
@@ -38,23 +38,23 @@ Azure writes the private DNS records of a zone when the DNS zone group of this e
 The DNS zone group always has the zone for the healthcare workspace and FHIR. It has the DICOM zone only when the service has DICOM.
 If an update adds DICOM, Terraform adds the DICOM zone to the group, and Azure writes the DICOM record. The endpoint stays.
 The FHIR record is in the same zone as the healthcare workspace record. So if an update adds or removes FHIR, Terraform deletes the group before the FHIR change and creates it again after the change. Azure then writes the records again.
-Private access to the healthcare workspace and DICOM stops until the new group exists. For an update that adds FHIR, this time includes the FHIR create, which took 9 to 12 minutes in tests.
+Private access to the healthcare workspace and DICOM stops until the new group exists. For an update that adds FHIR, this time includes the FHIR create. In tests, the whole update that adds FHIR took 12 to 18 minutes.
 If the FHIR change fails, the new group does not exist, and private access stays stopped. To repair the service, run the update again.
 If the update fails again, set `deploy_fhir` back to its earlier value. Terraform then creates the group for the other services.
 If Azure has a FHIR service that Terraform did not save, delete that FHIR service in the Azure portal first.
 Azure links a new service to the endpoint some minutes after Terraform creates the service.
 During this time, Azure refuses a change to the DNS zone group with HTTP 409, and Terraform tries again.
 
-Before version 0.3.9, the endpoint resource created the DNS zone group, and the group did not change when an update added a service.
+Before version 1.0.0, the endpoint resource created the DNS zone group, and the group did not change when an update added a service.
 If you added DICOM to an existing service before this version, the DICOM host can resolve to a public address.
-An upgrade to version 0.3.9 deletes the old DNS zone group and creates a new one, so Azure writes the missing record.
+An upgrade to version 1.0.0 deletes the old DNS zone group and creates a new one, so Azure writes the missing record.
 Terraform deletes the old group after the changes to FHIR and DICOM, directly before it creates the new group.
 Until the upgrade creates the new group, the private DNS records do not exist, and private access to the services stops.
 Do not delete a working private endpoint to repair the service.
 
 The DICOM service has public network access turned off.
-Before version 0.3.9, Terraform created the DICOM service with public network access on.
-An upgrade to version 0.3.9 turns it off.
+Before version 1.0.0, Terraform created the DICOM service with public network access on.
+An upgrade to version 1.0.0 turns it off.
 
 The private endpoint on the healthcare workspace blocks public traffic to FHIR and DICOM.
 A request from outside the workspace network gets HTTP 403.
