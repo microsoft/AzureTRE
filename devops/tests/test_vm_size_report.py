@@ -164,6 +164,28 @@ class ScanTests(unittest.TestCase):
             },
         )
 
+    def test_scan_skips_database_skus_that_a_tier_label_maps(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = git_repo(
+                directory,
+                {
+                    "test_mysql.py": (
+                        'SKUS = {"B | 4GB 2vCores": "Standard_B2s", "GP | 8GB 2vCores": "Standard_D2ds_v4"}\n'
+                        'VM = {"vm_size": "Standard_B2s"}\n'
+                        'PAYLOAD = {"sql_sku": "B | 4GB 2vCores", "vm_size": "Standard_D2s_v5"}\n'
+                    ),
+                    "locals.tf": '"BC | 16GB 2vCores" = "Standard_E2ds_v4"\n',
+                },
+            )
+            references = find_references(repo)
+        self.assertEqual(
+            references,
+            {
+                "standard_b2s": [Reference("test_mysql.py", 2, "Standard_B2s")],
+                "standard_d2s_v5": [Reference("test_mysql.py", 3, "Standard_D2s_v5")],
+            },
+        )
+
     def test_scan_skips_the_files_of_this_tool(self):
         self.assertIn(Path(__file__).resolve(), OWN_FILES)
         self.assertTrue(all(path.is_file() for path in OWN_FILES))

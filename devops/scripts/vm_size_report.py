@@ -25,6 +25,10 @@ OWN_FILES = {SCRIPT, CATALOGUE, SCRIPT.parents[1] / "tests" / "test_vm_size_repo
 # This keeps out Standard_LRS, Standard_v2 and identifiers such as basic_workspace_request.
 # The word boundary keeps out database SKUs such as GP_Standard_D2ds_v4, which are not VM SKUs.
 VM_SIZE = re.compile(r"\b(?i:standard|basic)_[A-Z][A-Za-z]*[0-9][A-Za-z0-9_-]*")
+# A database tier label such as "B | 4GB 2vCores" can map to a database SKU without its tier prefix, for example
+# {"B | 4GB 2vCores": "Standard_B2s"}. The scan skips a size that is the value of such a label, because it is
+# a database SKU and not a VM size.
+DATABASE_TIER_KEY = re.compile(r'"[A-Z]{1,2} \| \d+GB \d+vCores"\s*[:=]\s*"$')
 REGION = re.compile(r"[a-z0-9]+")
 # Keep only the fields that the report uses. The full output for all regions is too large.
 SKU_FIELDS = (
@@ -164,6 +168,8 @@ def find_references(repo, exclude=()):
         # Split on newlines only, so that the line numbers are the same as on GitHub.
         for number, line in enumerate(data.decode("utf-8", errors="replace").split("\n"), start=1):
             for match in VM_SIZE.finditer(line):
+                if DATABASE_TIER_KEY.search(line, 0, match.start()):
+                    continue
                 size = match.group().rstrip("_-")
                 references.setdefault(size.lower(), []).append(Reference(name, number, size))
     return references
