@@ -41,14 +41,7 @@ The workflow logs in to Azure with the identity of the `CICD` environment. The r
 
 GitHub shows **Run workflow** only when the workflow file is on the default branch.
 
-### Runs on a branch push
-
-The workflow also starts on a push to a branch other than `main`, if the push changes one of these files:
-
-- The files that set VM sizes in code: `porter.yaml`, `template_schema.json` and Terraform files in `templates`, the files in `core/terraform`, `config_schema.json` and the action `devcontainer_run_command`.
-- The files of the report: the script, the catalogue and the workflow.
-
-A run on a push checks the `LOCATION` region of the `CICD` environment. A new push to the same branch stops the older push run. Another run does not stop a manual run. A push by Dependabot, or a push in a fork without the `CICD` secrets, skips the report and does not fail. The workflow does not start on pull requests.
+The workflow runs only when a person starts it. It does not start on a push or on a pull request, because the identity of the `CICD` environment can change resources. An automatic run on branch pushes needs a separate identity that can only read.
 
 ## Read the report
 
