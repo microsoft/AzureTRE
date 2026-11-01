@@ -191,6 +191,49 @@ async def test_an_upgrade_does_not_install_a_deleted_resource(absent, porter_run
         assert code == 0
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "lookup, porter_runs",
+    [
+        # An install can fail before Porter writes a record. An upgrade can repair it.
+        pytest.param((0, "[]", None), True, id="no-installation"),
+        pytest.param((1, None, "store not available"), False, id="command-fails"),
+        pytest.param((0, "not json", None), False, id="invalid-json"),
+        pytest.param((0, "{}", None), False, id="not-a-list"),
+        pytest.param(TimeoutError(), False, id="timeout"),
+    ],
+)
+async def test_an_upgrade_runs_only_after_a_successful_installation_lookup(lookup, porter_runs):
+    commands = []
+
+    async def helper(command, config, *args, **kwargs):
+        commands.append(command)
+        if command[:3] == ["porter", "installations", "list"]:
+            if isinstance(lookup, Exception):
+                raise lookup
+            return lookup
+        return 0, "", ""
+
+    with (
+        patch.object(runner, "run_command_helper", side_effect=helper),
+        patch.object(runner, "azure_login_command", return_value=[]),
+        patch.object(runner, "azure_acr_login_command", return_value=[]),
+        patch.object(runner, "apply_porter_credentials_sets_command", return_value=[]),
+    ):
+        code, _, error = await runner.run_porter(
+            [["porter", "installations", "apply"]], {}, required_installation="resource-1"
+        )
+    assert commands[0][:3] == ["porter", "installations", "list"]
+    assert (["porter", "installations", "apply"] in commands) is porter_runs
+    if porter_runs:
+        assert code == 0
+    else:
+        assert code == 1
+        assert error == (
+            "Cannot verify the Porter installation of resource 'resource-1'. Check Porter storage access and retry."
+        )
+
+
 def installation(installed=None, uninstalled=None, name="resource-1"):
     return {"name": name, "status": {"installed": installed, "uninstalled": uninstalled}}
 
@@ -209,7 +252,8 @@ def installation(installed=None, uninstalled=None, name="resource-1"):
         # A failed install has neither time. An upgrade can repair it.
         ([installation()], False),
         ([installation(name="other-resource")], False),
-        (None, False),
+        # A failed lookup does not show that the last successful action was not an uninstall.
+        (None, None),
     ],
 )
 async def test_an_upgrade_finds_a_removed_installation(output, removed):

@@ -343,13 +343,22 @@ async def run_porter(
 
     # `porter installations apply` installs an uninstalled installation. An upgrade must not create a deleted
     # resource again.
-    if required_installation is not None and await _confirm_porter_installation_removed(required_installation, config):
-        return (
-            1,
-            None,
-            f"Cannot upgrade resource '{required_installation}': the last successful action of its Porter "
-            "installation was an uninstall. An upgrade does not install a deleted resource.",
-        )
+    if required_installation is not None:
+        removed = await _confirm_porter_installation_removed(required_installation, config)
+        if removed is None:
+            return (
+                1,
+                None,
+                f"Cannot verify the Porter installation of resource '{required_installation}'. "
+                "Check Porter storage access and retry.",
+            )
+        if removed:
+            return (
+                1,
+                None,
+                f"Cannot upgrade resource '{required_installation}': the last successful action of its Porter "
+                "installation was an uninstall. An upgrade does not install a deleted resource.",
+            )
 
     last_returncode = None
     last_stdout = None
@@ -434,10 +443,11 @@ async def _list_porter_installations(installation_id: str, config: dict) -> Opti
             ),
             timeout=30,
         )
-        return json.loads(output) if code == 0 else None
+        installations = json.loads(output) if code == 0 else None
     except Exception:
         # An unreadable store, invalid response or timeout proves nothing.
         return None
+    return installations if isinstance(installations, list) else None
 
 
 async def _confirm_porter_installation_absent(installation_id: str, config: dict) -> bool:
@@ -455,17 +465,20 @@ def _porter_time(value) -> Optional[datetime]:
         return None
 
 
-async def _confirm_porter_installation_removed(installation_id: str, config: dict) -> bool:
+async def _confirm_porter_installation_removed(installation_id: str, config: dict) -> Optional[bool]:
     """
-    Confirm that the last successful action of the Porter installation was an uninstall.
+    Confirm that the last successful action of the Porter installation was an uninstall. Return None if the lookup fails.
     Porter keeps the record of an uninstalled installation. A failed install has neither time, so an upgrade can repair it.
     An install can also fail before Porter writes a record, for example at the sign-in or in an earlier pipeline step.
     So no record proves nothing, and an upgrade can repair that install too.
     """
     installations = await _list_porter_installations(installation_id, config)
-    matches = [item for item in installations or [] if item.get("name") == installation_id]
+    if installations is None:
+        # An unreadable store does not show that the last successful action was not an uninstall.
+        return None
+    matches = [item for item in installations if item.get("name") == installation_id]
     if not matches:
-        # No record, an unreadable store, or a list with other installations only, proves nothing.
+        # No record, or a list with other installations only, proves nothing.
         return False
     status = matches[0].get("status") or {}
     uninstalled = _porter_time(status.get("uninstalled"))
