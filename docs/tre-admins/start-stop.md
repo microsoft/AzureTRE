@@ -50,22 +50,17 @@ catch {
   throw $_.Exception
 }
 
-$azContext = Get-AzContext
-$azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
-$profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
-$token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
-
-$authHeader = @{
-  'Content-Type'  = 'application/json'
-  'Authorization' = 'Bearer ' + $token.AccessToken
-}
-
 # Get all resource groups that have the default Azure TRE project tag value
 $ResourceGroups = Get-AzResourceGroup -Tag @{'project' = 'Azure Trusted Research Environment' }
 foreach ($Group in $ResourceGroups) {
   if ($Group.ResourceGroupName -like '*-ws-*') {
     # Deal with the workspace resource groups separately (below)
     continue
+  }
+
+  if ($Group.Tags.ContainsKey('AutoStop') -and $Group.Tags['AutoStop'] -ieq 'false') {
+        Write-Host "Skipping resource group '$($Group.ResourceGroupName)' because its AutoStop tag is set to false."
+        continue
   }
 
   # Deallocate the Azure Firewall (expecting only one per TRE instance)
@@ -84,13 +79,28 @@ foreach ($Group in $ResourceGroups) {
     Stop-AzApplicationGateway -ApplicationGateway $Gateway
   }
 
-  # Stop the MySQL servers
+  # Stop the MySQL servers (legacy)
   $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/servers"
   foreach ($Server in $MySQLServers) {
     # Invoke the REST API
-    Write-Output "Stopping MySQL '$($Server.Name)'"
-    $restUri = 'https://management.azure.com/subscriptions/' + $azContext.Subscription.Id + '/resourceGroups/' + $Group.ResourceGroupName + '/providers/Microsoft.DBForMySQL/servers/' + $Server.Name + '/stop?api-version=2020-01-01'
-    $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+    Write-Output "Stopping legacy MySQL '$($Server.Name)'"
+    $response = $response = Invoke-AzRestMethod -Method POST -Path "$($Server.ResourceId)/stop?api-version=2020-01-01"
+
+    if ($response.StatusCode -notin 200, 202) {
+      Write-Warning "Failed to stop MySQL '$($Server.Name)': $($response.StatusCode) $($response.Content)"
+    }
+  }
+
+  # Stop the MySQL servers (Flexible)
+  $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/flexibleServers"
+  foreach ($Server in $MySQLServers) {
+    # Invoke the REST API
+    Write-Output "Stopping MySQL Flexible Server '$($Server.Name)'"
+    $response = $response = Invoke-AzRestMethod -Method POST -Path "$($Server.ResourceId)/stop?api-version=2024-12-30"
+
+    if ($response.StatusCode -notin 200, 202) {
+      Write-Warning "Failed to stop MySQL '$($Server.Name)': $($response.StatusCode) $($response.Content)"
+    }
   }
 
   # Deallocate all the virtual machine scale sets (resource processor)
@@ -134,21 +144,26 @@ catch {
     throw $_.Exception
 }
 
-$azContext = Get-AzContext
-$azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
-$profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
-$token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
+# $azContext = Get-AzContext
+# $azProfile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+# $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($azProfile)
+# $token = $profileClient.AcquireAccessToken($azContext.Subscription.TenantId)
 
-$authHeader = @{
-    'Content-Type'  = 'application/json'
-    'Authorization' = 'Bearer ' + $token.AccessToken
-}
+# $authHeader = @{
+#     'Content-Type'  = 'application/json'
+#     'Authorization' = 'Bearer ' + $token.AccessToken
+# }
 
 # Get all resource groups that have the default Azure TRE project tag value
 $ResourceGroups = Get-AzResourceGroup -Tag @{'project' = 'Azure Trusted Research Environment' }
 foreach ($Group in $ResourceGroups) {
     if ($Group.ResourceGroupName -like '*-ws-*') {
         # Don't deal with the workspace resource groups
+        continue
+    }
+
+    if ($Group.Tags.ContainsKey('AutoStart') -and $Group.Tags['AutoStart'] -ieq 'false') {
+        Write-Output "Skipping resource group '$($Group.ResourceGroupName)' because its AutoStart tag is set to false."
         continue
     }
 
@@ -176,13 +191,28 @@ foreach ($Group in $ResourceGroups) {
         Start-AzApplicationGateway -ApplicationGateway $Gateway
     }
 
-    # Start the MySQL servers
+    # Start the MySQL servers (any legacy left)
     $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/servers"
     foreach ($Server in $MySQLServers) {
         # Invoke the REST API
-        Write-Output "Starting MySQL '$($Server.Name)'"
-        $restUri = 'https://management.azure.com/subscriptions/' + $azContext.Subscription.Id + '/resourceGroups/' + $Group.ResourceGroupName + '/providers/Microsoft.DBForMySQL/servers/' + $Server.Name + '/start?api-version=2020-01-01'
-        $response = Invoke-RestMethod -Uri $restUri -Method POST -Headers $authHeader
+        Write-Output "Starting legacy MySQL '$($Server.Name)'"
+        $response = Invoke-AzRestMethod -Method POST -Path "$($Server.ResourceId)/start?api-version=2020-01-01"
+
+        if ($response.StatusCode -notin 200, 202) {
+          Write-Warning "Failed to start MySQL '$($Server.Name)': $($response.StatusCode) $($response.Content)"
+        }
+    }
+
+    # Start the MySQL servers (Flexible)
+    $MySQLServers = Get-AzResource -ResourceGroupName $Group.ResourceGroupName -ResourceType "Microsoft.DBforMySQL/flexibleServers"
+    foreach ($Server in $MySQLServers) {
+        # Invoke the REST API
+        Write-Output "Starting MySQL Flexible Server '$($Server.Name)'"
+        $response = Invoke-AzRestMethod -Method POST -Path "$($Server.ResourceId)/start?api-version=2024-12-30"
+
+        if ($response.StatusCode -notin 200, 202) {
+          Write-Warning "Failed to start MySQL '$($Server.Name)': $($response.StatusCode) $($response.Content)"
+        }
     }
 
     # Allocate all the virtual machine scale sets (resource processor)
