@@ -44,6 +44,28 @@ on: # yamllint disable-line rule:truthy
         type: string
         required: false
         default: ""
+  # A push to a branch checks the LOCATION region of CICD. A manual run covers main.
+  # There is no pull_request trigger, so a pull request never starts the workflow.
+  push:
+    branches-ignore:
+      - main
+    paths:
+      # The files that set VM sizes in code.
+      - "templates/**/porter.yaml"
+      - "templates/**/template_schema.json"
+      - "templates/**/*.tf"
+      - "core/terraform/**"
+      - "config_schema.json"
+      - ".github/actions/devcontainer_run_command/action.yml"
+      # The files of the report.
+      - "devops/scripts/vm_size_report.py"
+      - "devops/scripts/vm_size_catalogue.txt"
+      - ".github/workflows/vm_size_report.yml"
+
+# A new push stops the older run on the same branch.
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -74,7 +96,8 @@ jobs:
 
       - name: Report VM size availability
         env:
-          REGION: ${{ inputs.region }}
+          # A push has no inputs, so it uses ci-location.
+          REGION: ${{ inputs.region || 'ci-location' }}
           MORE_REGIONS: ${{ inputs.more_regions }}
           CI_LOCATION: ${{ vars.LOCATION }}
           LINK_BASE: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}

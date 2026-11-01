@@ -39,7 +39,16 @@ gh workflow run vm_size_report.yml -f region=none -f more_regions=uksouth,eastus
 
 The workflow logs in to Azure with the identity of the `CICD` environment. The report shows on the summary page of the run. The report is also in the `vm-size-report` artifact for 7 days. The workflow leaves the subscription out of the report, because anyone can see the run of a public repository.
 
-GitHub shows the workflow in **Actions** only when the workflow file is on the default branch.
+GitHub shows **Run workflow** only when the workflow file is on the default branch.
+
+### Runs on a branch push
+
+The workflow also starts on a push to a branch other than `main`, if the push changes one of these files:
+
+- The files that set VM sizes in code: `porter.yaml`, `template_schema.json` and Terraform files in `templates`, the files in `core/terraform`, `config_schema.json` and the action `devcontainer_run_command`.
+- The files of the report: the script, the catalogue and the workflow.
+
+A run on a push checks the `LOCATION` region of the `CICD` environment. A new push to the same branch stops the older run. The workflow does not start on pull requests.
 
 ## Read the report
 
