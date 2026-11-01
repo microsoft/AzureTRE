@@ -121,7 +121,7 @@ Furthermore, Porter provides a set of [mixins](https://porter.sh/mixins/) - anal
 
 ### Repeated messages
 
-Service Bus can give the same message to more than one worker. The resource processor uses these rules to run each step once:
+Service Bus can give the same message to more than one worker. The resource processor uses these rules to prevent a second run of a step:
 
 1. The `workspacequeue` queue keeps a session lock for 5 minutes. While a worker runs a step, it renews the lock every minute. If a renewal fails, the worker tries again until the lock expires, and logs each failure.
 1. Before Porter starts, the worker gets a 60-second lease on the blob `rp-executions/<resource ID>` in the management storage account. It renews the lease every 15 seconds. If another worker holds the lease, the worker keeps its session and tries again every 30 seconds.
@@ -137,6 +137,8 @@ Service Bus can give the same message to more than one worker. The resource proc
 1. An upgrade does not install a deleted resource again. The resource processor sends `updating_failed` if the last successful action of the Porter installation was an uninstall. Without this check, `porter installations apply` runs the install action.
    An upgrade can still repair a failed install, also an install that failed before Porter wrote its record.
    If the resource processor cannot read the Porter installation in 30 seconds, for example because the Porter storage is not available, it also sends `updating_failed`.
+
+These rules do not prevent all second runs. [Known limits](#known-limits) describes two runs of a step at the same time.
 
 A status message without `executionId` comes from a resource processor before version 0.13.16, or it is the failed status after a storage access error. The API keeps the earlier rules for it and removes the `executionId` of the step.
 Then a status of a Porter run replaces that status. For example, the success of a worker that ran Porter replaces the failed status of a second worker after a storage access error.
@@ -181,6 +183,53 @@ If the record does not have the result of the first run, Porter runs again, and 
 The entry stays if the API sent the message but stopped before it removed the entry. If the resource processor then sends a status for a step that the updater set to failed, the API saves that status. An uninstall keeps its earlier rule for a final step.
 
 The status message of a step stays on the `deploymentstatus` queue until the API has sent the message of the next step. So a stop of the API during a pipeline does not need this entry.
+
+### Known limits
+
+#### Two runs of one step at the same time
+
+If a worker cannot renew the execution lease for 60 seconds, for example because it cannot connect to the management storage account, the lease expires.
+The Porter action of the worker continues, because the resource processor cannot stop it. Porter 1.4.0 cannot pass a cancel request to the Docker container of its action.
+If the worker also loses its Service Bus session, another worker gets the message and the lease. The record shows the step as running, so the second worker runs Porter again.
+
+The second worker cannot know if the first worker stopped or only lost access to the storage account. After a worker stops during a Porter run, the next worker must run the step again in the same way.
+So the resource processor does not block the second run. Before version 0.13.16, a lost session alone caused a second run.
+For a bundle that uses Terraform, the Terraform state lock often stops the second run, and that run fails.
+
+The API keeps the first final status that it gets for the step, and it ignores the final status of the other run. This can be the status of the first run, also after the second run started.
+For example, the step can show the state lock failure of the second run, while the first run changed the resources.
+
+If two runs overlap, the logs show these messages:
+
+- The first worker logs `Execution lease expired after <n> failed renewals` for the step. It can also log `Session lock expired` or `The session lock expired before the message was completed`.
+  After its Porter run, it can log `Could not save the execution record`.
+- The second worker logs `An earlier worker stopped during step <step ID> for <resource ID>.`
+- The API logs `Ignoring a status from another run of step <operation ID>/<step ID>` for the final status that comes second.
+
+If you find these messages, do these steps:
+
+1. Wait until both workers log `Sent status message for <resource ID>: <status>`. Then both Porter runs are complete.
+1. Examine the Azure resources of the step.
+1. If the status of the step is not correct for these resources, send the request again. For example, update the resource or send the delete again.
+
+#### A new request while the updater sends a first step
+
+The updater first checks for a later request for the resource, and then it builds and sends the message. These are two separate actions, and the API does not stop a new request between them.
+The time between them is short: one or two Cosmos DB queries, the build of the message and the send. The API can accept a new request for the resource in this time.
+Then the first step of the earlier request can run after the first step of the new request. For example, an install can run after a delete and deploy the resource again.
+
+If a deleted resource shows `deploying` or `deployed` again, delete it again. The API log then contains `Sending the pending first step message of operation <operation ID>` for the install.
+
+#### The resource status after the updater writes a failed status
+
+If the updater also sets the resource to the failed status, it writes the operation first and then the resource. The operation write comes first, so that the etag check of the claim can stop both writes.
+The operation write also removes the `pendingDispatch` entry. So if the API stops between the two writes, or if it cannot write the resource, the updater does not find the entry again.
+
+The operation then shows the failed status, but the resource keeps the status that it had before the request. A new resource keeps an empty `deploymentStatus`.
+If the API could not write the resource, it logs `Unable to send the pending message of operation <operation ID>`.
+
+To repair the status, set `deploymentStatus` of the resource to the `status` of the operation in Cosmos DB. [Manually editing resources in Cosmos DB](../troubleshooting-faq/manually-editing-resources.md) gives the steps.
+A later request for the resource also sets its status.
 
 ### Porter Azure plugin
 
