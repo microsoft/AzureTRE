@@ -104,15 +104,17 @@ def restore_sensitive_values(properties: dict, source: dict) -> dict:
     """Return a copy of properties with the real value from source in place of each placeholder.
 
     Two lists of the same length pair their items by index. A list with a different length keeps its placeholders,
-    because its items can be different items.
+    because its items can be different items. A null in source is a real value. Only a key that source does not have
+    keeps its placeholder.
     """
+    missing = object()
 
     def restore(value: Any, original: Any) -> Any:
         if isinstance(value, dict) and isinstance(original, dict):
-            return {key: restore(item, original.get(key)) for key, item in value.items()}
+            return {key: restore(item, original.get(key, missing)) for key, item in value.items()}
         if isinstance(value, list) and isinstance(original, list) and len(value) == len(original):
             return [restore(item, original_item) for item, original_item in zip(value, original)]
-        if value == REDACTED_SENSITIVE_VALUE and original is not None and original != REDACTED_SENSITIVE_VALUE:
+        if value == REDACTED_SENSITIVE_VALUE and original is not missing and original != REDACTED_SENSITIVE_VALUE:
             return copy.deepcopy(original)
         return copy.deepcopy(value)
 

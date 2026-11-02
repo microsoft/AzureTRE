@@ -726,6 +726,17 @@ def test_restore_sensitive_values_restores_values_in_array_items():
     assert restored["groups"] == [placeholder]
 
 
+def test_restore_sensitive_values_restores_an_explicit_null():
+    # The install stores a placeholder also for a null value. Only a key that the request does not have keeps it.
+    placeholder = strings.REDACTED_SENSITIVE_VALUE
+    stored = {"settings": {"token": placeholder, "password": placeholder}, "accounts": [{"token": placeholder}]}
+    source = {"settings": {"token": None}, "accounts": [{"token": None}]}
+
+    restored = restore_sensitive_values(stored, source)
+
+    assert restored == {"settings": {"token": None, "password": placeholder}, "accounts": [{"token": None}]}
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "sensitive_in_target, expected", [(True, strings.REDACTED_SENSITIVE_VALUE), (False, "new value")]
