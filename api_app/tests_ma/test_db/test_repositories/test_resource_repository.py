@@ -17,9 +17,13 @@ from db.repositories.resources import (
     mask_sensitive_properties,
     masked_property_paths,
     restore_sensitive_values,
-    set_masked_values,
 )
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import (
+    CosmosAccessConditionFailedError,
+    CosmosHttpResponseError,
+    CosmosResourceNotFoundError,
+)
 from models.domain.resource import Resource
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
@@ -470,6 +474,7 @@ def stored_resource(resource_id, template_name, resource_type, properties, **fie
         "templateVersion": "1.0.0",
         "resourceType": resource_type,
         "properties": properties,
+        "_etag": "1",
         **fields,
     }
 
@@ -506,8 +511,14 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
     ]
     history = {
         "ws": [
-            {"id": "h-1", "resourceId": "ws", "templateVersion": "0.9.0", "properties": {"client_secret": "older"}},
-            {"id": "h-2", "resourceId": "ws", "properties": {"client_secret": "REDACTED"}},
+            {
+                "id": "h-1",
+                "resourceId": "ws",
+                "templateVersion": "0.9.0",
+                "properties": {"client_secret": "older"},
+                "_etag": "1",
+            },
+            {"id": "h-2", "resourceId": "ws", "properties": {"client_secret": "REDACTED"}, "_etag": "1"},
         ],
     }
 
@@ -522,13 +533,14 @@ async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_r
 
     assert result == (2, 1)
     set_secret = [{"op": "set", "path": "/properties/client_secret", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    if_not_modified = {"etag": "1", "match_condition": MatchConditions.IfNotModified}
     assert [call.kwargs for call in resource_repo.container.patch_item.await_args_list] == [
-        {"item": "ws", "partition_key": "ws", "patch_operations": set_secret},
-        {"item": "ur", "partition_key": "ur", "patch_operations": set_secret},
+        {"item": "ws", "partition_key": "ws", "patch_operations": set_secret, **if_not_modified},
+        {"item": "ur", "partition_key": "ur", "patch_operations": set_secret, **if_not_modified},
     ]
     # The history container uses the resource ID as its partition key.
     history_repo.container.patch_item.assert_awaited_once_with(
-        item="h-1", partition_key="ws", patch_operations=set_secret
+        item="h-1", partition_key="ws", patch_operations=set_secret, **if_not_modified
     )
     # A resource of a template without a sensitive property needs no history read.
     read_ids = [call.kwargs["parameters"][0]["value"] for call in history_repo.query.await_args_list]
@@ -571,14 +583,127 @@ def test_masked_property_paths_escape_nested_names():
     assert masked_property_paths(properties, template) == ["/properties/settings/a~1b", "/properties/settings/c~0d"]
 
 
+class FakeContainer:
+    """Apply a patch with an etag only to the document that has this etag, as Cosmos DB does."""
+
+    def __init__(self, *documents):
+        self.documents = {document["id"]: copy.deepcopy(document) for document in documents}
+        self.requests = []
+
+    async def read_item(self, item, partition_key):
+        return copy.deepcopy(self.documents[item])
+
+    async def patch_item(self, item, partition_key, patch_operations, etag=None, match_condition=None):
+        self.requests.append((item, len(patch_operations), etag))
+        document = copy.deepcopy(self.documents[item])
+        if match_condition == MatchConditions.IfNotModified and etag != document["_etag"]:
+            raise CosmosAccessConditionFailedError(status_code=412)
+        for operation in patch_operations:
+            *parents, name = [part.replace("~1", "/").replace("~0", "~") for part in operation["path"].split("/")[1:]]
+            target = document
+            try:
+                for part in parents:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                target[int(name) if isinstance(target, list) else name] = operation["value"]
+            except (IndexError, KeyError):
+                raise CosmosHttpResponseError(status_code=400, message=f"The path {operation['path']} does not exist")
+        document["_etag"] = str(int(document["_etag"]) + 1)
+        self.documents[item] = document
+        return copy.deepcopy(document)
+
+
+def migration_template_repo(*templates):
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump() for template in templates]
+    by_version = {template.version: template for template in templates}
+    template_repo.get_template_by_name_and_version.side_effect = lambda name, version, *_: by_version[version]
+    return template_repo
+
+
 @pytest.mark.asyncio
-async def test_set_masked_values_sends_at_most_ten_operations_in_each_request():
-    container = AsyncMock()
-    paths = [f"/properties/secret_{index}" for index in range(11)]
+async def test_the_migration_sends_at_most_ten_operations_with_the_etag_of_each_result(resource_repo):
+    secrets = {f"secret_{index}": SECRET for index in range(11)}
+    snapshot = stored_resource("ws", "masking-template", "workspace", {name: "real" for name in secrets})
+    resource_repo._container = FakeContainer(snapshot)
+    resource_repo.query = AsyncMock(return_value=[snapshot])
 
-    await set_masked_values(container, "item", "partition", paths)
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(masking_template(secrets)), history_without_items()
+    )
 
-    assert [len(call.kwargs["patch_operations"]) for call in container.patch_item.await_args_list] == [10, 1]
+    assert result == (1, 0)
+    # Cosmos DB accepts at most 10 operations in one request. The second request has the etag of the first result.
+    assert resource_repo.container.requests == [("ws", 10, "1"), ("ws", 1, "2")]
+    assert set(resource_repo.container.documents["ws"]["properties"].values()) == {strings.REDACTED_SENSITIVE_VALUE}
+
+
+@pytest.mark.asyncio
+async def test_the_migration_keeps_a_new_value_that_the_new_version_does_not_mark_sensitive(resource_repo):
+    first = masking_template({"token": SECRET})
+    second = masking_template({"token": {"type": "string"}}, version="2.0.0")
+    snapshot = stored_resource("ws", "masking-template", "workspace", {"token": "earlier value"})
+    # After the read of the migration, an update set a new value and a version that does not mark it sensitive.
+    updated = {**snapshot, "templateVersion": "2.0.0", "properties": {"token": "new value"}, "_etag": "2"}
+    resource_repo._container = FakeContainer(updated)
+    resource_repo.query = AsyncMock(return_value=[snapshot])
+
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(first, second), history_without_items()
+    )
+
+    assert result == (0, 0)
+    assert resource_repo.container.documents["ws"]["properties"] == {"token": "new value"}
+
+
+@pytest.mark.asyncio
+async def test_the_migration_computes_the_paths_again_after_a_change_and_continues(resource_repo):
+    accounts = [{"name": "a", "token": "real"}, {"name": "b", "token": "real"}]
+    snapshot = [
+        stored_resource("ws", "masking-template", "workspace", {"accounts": accounts}),
+        stored_resource("ws-2", "masking-template", "workspace", {"accounts": accounts[:1]}),
+    ]
+    # After the read of the migration, an update removed the second account. The path with index 1 is not valid now.
+    updated = {**snapshot[0], "properties": {"accounts": accounts[:1]}, "_etag": "2"}
+    resource_repo._container = FakeContainer(updated, snapshot[1])
+    resource_repo.query = AsyncMock(return_value=snapshot)
+
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(masking_template(ACCOUNTS)), history_without_items()
+    )
+
+    assert result == (2, 0)
+    assert resource_repo.container.requests == [("ws", 2, "1"), ("ws", 1, "2"), ("ws-2", 1, "1")]
+    masked = [{"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    documents = resource_repo.container.documents
+    assert [documents[resource_id]["properties"]["accounts"] for resource_id in ("ws", "ws-2")] == [masked] * 2
+
+
+@pytest.mark.asyncio
+async def test_the_migration_continues_if_a_document_changes_at_each_attempt(resource_repo):
+    class BusyContainer(FakeContainer):
+        async def patch_item(self, item, **kwargs):
+            if item == "ws":
+                # Another request changes the document before each patch of the migration.
+                self.documents[item]["_etag"] = str(int(self.documents[item]["_etag"]) + 1)
+            return await super().patch_item(item, **kwargs)
+
+    snapshot = [
+        stored_resource("ws", "masking-template", "workspace", {"token": "real"}),
+        stored_resource("ws-2", "masking-template", "workspace", {"token": "real"}),
+    ]
+    resource_repo._container = BusyContainer(*snapshot)
+    resource_repo.query = AsyncMock(return_value=snapshot)
+
+    with patch("db.repositories.resources.logger") as logger:
+        result = await resource_repo.mask_stored_sensitive_values(
+            migration_template_repo(masking_template({"token": SECRET})), history_without_items()
+        )
+
+    assert result == (1, 0)
+    assert [request[0] for request in resource_repo.container.requests] == ["ws", "ws", "ws", "ws-2"]
+    assert resource_repo.container.documents["ws"]["properties"] == {"token": "real"}
+    assert resource_repo.container.documents["ws-2"]["properties"] == {"token": strings.REDACTED_SENSITIVE_VALUE}
+    logger.warning.assert_called_once()
 
 
 PASSWORD = {"type": "string", "sensitive": True, "updateable": True}
@@ -632,6 +757,8 @@ async def test_mask_stored_sensitive_values_finds_a_property_that_a_branch_decla
         item="ws",
         partition_key="ws",
         patch_operations=[{"op": "set", "path": "/properties/password", "value": strings.REDACTED_SENSITIVE_VALUE}],
+        etag="1",
+        match_condition=MatchConditions.IfNotModified,
     )
 
 
@@ -698,15 +825,18 @@ async def test_mask_stored_sensitive_values_masks_values_in_array_items(resource
     template_repo.query.return_value = [template.model_dump()]
     template_repo.get_template_by_name_and_version.return_value = template
     history_repo = history_without_items()
-    history_repo.query.return_value = [{"id": "h-1", "resourceId": "ws", "properties": {"accounts": accounts[:1]}}]
+    history_repo.query.return_value = [
+        {"id": "h-1", "resourceId": "ws", "properties": {"accounts": accounts[:1]}, "_etag": "1"}
+    ]
 
     assert await resource_repo.mask_stored_sensitive_values(template_repo, history_repo) == (1, 1)
     set_token = [{"op": "set", "path": "/properties/accounts/0/token", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    if_not_modified = {"etag": "1", "match_condition": MatchConditions.IfNotModified}
     resource_repo.container.patch_item.assert_awaited_once_with(
-        item="ws", partition_key="ws", patch_operations=set_token
+        item="ws", partition_key="ws", patch_operations=set_token, **if_not_modified
     )
     history_repo.container.patch_item.assert_awaited_once_with(
-        item="h-1", partition_key="ws", patch_operations=set_token
+        item="h-1", partition_key="ws", patch_operations=set_token, **if_not_modified
     )
 
 

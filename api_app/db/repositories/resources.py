@@ -3,7 +3,8 @@ import semantic_version
 from datetime import datetime, UTC
 from typing import Any, Dict, Optional, Tuple, List
 
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError, CosmosResourceNotFoundError
 from resources.strings import RESOURCE_ACTION_INSTALL, REDACTED_SENSITIVE_VALUE
 from core import config
 from db.errors import (
@@ -128,18 +129,6 @@ def masked_property_paths(properties: dict, template: ResourceTemplate) -> List[
         for path, value in sensitive_values(properties, template)
         if value != REDACTED_SENSITIVE_VALUE
     ]
-
-
-async def set_masked_values(container, item_id: str, partition_key: str, paths: List[str]):
-    # Cosmos DB accepts at most 10 operations in one patch request.
-    for start in range(0, len(paths), 10):
-        await container.patch_item(
-            item=item_id,
-            partition_key=partition_key,
-            patch_operations=[
-                {"op": "set", "path": path, "value": REDACTED_SENSITIVE_VALUE} for path in paths[start : start + 10]
-            ],
-        )
 
 
 class ResourceRepository(BaseRepository):
@@ -373,29 +362,55 @@ class ResourceRepository(BaseRepository):
                     templates[key] = None
             return templates[key]
 
-        async def mask(item: dict, template: Optional[ResourceTemplate], container, partition_key: str) -> bool:
-            if template is None:
-                return False
-            paths = masked_property_paths(item.get("properties") or {}, template)
-            if paths:
-                await set_masked_values(container, item["id"], partition_key, paths)
-            return bool(paths)
+        async def mask(resource: dict, item: dict, container, partition_key: str) -> bool:
+            """Replace each real sensitive value of item, which is the resource or one of its history items.
+
+            Each patch request has the etag of the document that gave its paths. If another request changed the
+            document after that read, Cosmos DB refuses the patch. Then the migration reads the document again, gets
+            the template of its version and finds the paths again. After 3 refusals, the next run masks the document.
+            """
+            changed = False
+            for _ in range(3):
+                template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
+                if template is None:
+                    return changed
+                paths = masked_property_paths(item.get("properties") or {}, template)
+                try:
+                    # Cosmos DB accepts at most 10 operations in one patch request. The patched document has the etag
+                    # for the next request.
+                    for start in range(0, len(paths), 10):
+                        item = await container.patch_item(
+                            item=item["id"],
+                            partition_key=partition_key,
+                            patch_operations=[
+                                {"op": "set", "path": path, "value": REDACTED_SENSITIVE_VALUE}
+                                for path in paths[start : start + 10]
+                            ],
+                            etag=item["_etag"],
+                            match_condition=MatchConditions.IfNotModified,
+                        )
+                        changed = True
+                    return changed
+                except CosmosAccessConditionFailedError:
+                    item = await container.read_item(item=item["id"], partition_key=partition_key)
+            logger.warning(
+                f"Document {item['id']} changed during each attempt to mask it. The next migration masks it."
+            )
+            return changed
 
         changed_resources = 0
         changed_history_items = 0
         for resource in resources.values():
             if resource["templateName"] not in names_with_sensitive_values:
                 continue
-            template = await template_for(resource, resource["templateVersion"])
-            changed_resources += await mask(resource, template, self.container, resource["id"])
+            changed_resources += await mask(resource, resource, self.container, resource["id"])
 
             history_items = await resource_history_repo.query(
                 query="SELECT * FROM c WHERE c.resourceId = @resourceId",
                 parameters=[{"name": "@resourceId", "value": resource["id"]}],
             )
             for item in history_items:
-                template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
-                changed_history_items += await mask(item, template, resource_history_repo.container, item["resourceId"])
+                changed_history_items += await mask(resource, item, resource_history_repo.container, item["resourceId"])
 
         return changed_resources, changed_history_items
 
