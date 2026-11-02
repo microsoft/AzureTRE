@@ -35,6 +35,14 @@ provider "azurerm" {
   storage_use_azuread = true
 }
 
+# Uploads the Atlas UI config with the storage account key. The share and its web app mount already use the key,
+# and Azure AD access to file data needs a role that the resource processor does not have.
+provider "azurerm" {
+  alias = "shared_key"
+  features {}
+  storage_use_azuread = false
+}
+
 module "terraform_azurerm_environment_configuration" {
   source          = "git::https://github.com/microsoft/terraform-azurerm-environment-configuration.git?ref=0.7.0"
   arm_environment = var.arm_environment

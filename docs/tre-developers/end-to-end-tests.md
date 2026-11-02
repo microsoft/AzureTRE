@@ -233,7 +233,66 @@ The **E2E Test Results (Bundle)** artefact contains:
 
 The JSON report copies only selected identifiers and operation states. It excludes resource properties, tokens and failure tracebacks.
 Source versions describe the checked-out manifests; verify deployed versions separately when reusing an environment.
+A test can call `record_deployed_resource` for a resource that it reads. The report then has a `deployed_template_version` record for that resource.
 `passed_selected_cases` means the selected assertions and their teardown passed. The report always leaves `full_lifecycle_proven` false for a separate evidence review.
 An entirely skipped selection exits unsuccessfully. Individual skipped cases retain their reasons, and a mixed pass/skip result is marked `partial`.
 
 Unavailable bundles fail with the gap recorded in the map. Adding a selector does not implement missing tests or fix bundle publication and registration gaps.
+
+### CycleCloud server validation
+
+Select `tre-shared-service-cyclecloud` with the branch workflow's bundle input, or use:
+
+```bash
+TEST_BUNDLE=tre-shared-service-cyclecloud make test-e2e-bundle
+```
+
+Use a dedicated AzureCloud environment with one writer and no existing CycleCloud service or DNS zone.
+Publish and register the checkout firewall and CycleCloud bundles. Deploy the firewall before validation.
+Register the CycleCloud bundle, version 1.0.0 or later, with `start` and `stop` actions.
+Accept the CycleCloud server image terms separately before the run. The test reads the agreement and regional image list. It does not accept terms.
+Check `Standard_D4s_v5` capacity and quota in the core region before deployment. Image availability does not prove VM capacity.
+
+The case creates one server and checks its private VM address, DNS configuration, blob private endpoint, managed identity and firewall rules.
+It also checks the network security group of the VM network card. By default, the inbound allow rules must be for the core address space and the `AzureLoadBalancer` service tag only, and the lowest-priority rule must deny other `VirtualNetwork` traffic.
+It invokes stop/start through TRE and verifies the VM power states. It changes the overview to exercise a same-version Terraform upgrade and checks that the VM identity remains stable.
+The same update sets `cluster_address_spaces` to one test range outside the core address space. The test then checks that the TCP 9443 rule allows exactly that range.
+The test records the existing firewall as reused. Smoke completes before the bundle job starts.
+
+The job sets `CYCLECLOUD_VALIDATION_DEADLINE` before container setup. The test reserves 120 minutes for cleanup within its 270-minute deadline.
+It owns an accepted service before polling. Cleanup waits for terminal operations, verifies ownership and then uses TRE deletion.
+It verifies removal of the VM, disk, NIC, network security group, storage, blob private endpoint, DNS zone and captured identity's roles. It also checks that the original firewall rules are restored.
+Failed cleanup fails the test. Core Key Vault credentials can remain soft-deleted. The test does not retrieve or purge them.
+
+This case does not configure the CycleCloud application or create an HPC cluster. Browser access, application TLS trust, private DNS reachability and prior-release upgrades remain unproven.
+The case reads the network rules from Azure Resource Manager. It does not send traffic from a workspace to the server.
+The existing bundle grants subscription Contributor to its VM and permits SharedSubnet access to ARM and GitHub. It does not disable the storage public endpoint.
+A private endpoint and a successful server lifecycle do not prove workspace isolation or storage access restrictions.
+
+### Private OHDSI validation
+
+Select the bundle from a branch that contains its repaired bootstrap and validation case:
+
+```bash
+TEST_BUNDLE=tre-workspace-service-ohdsi make test-e2e-bundle
+```
+
+Use a dedicated AzureCloud environment with one writer and matching deployment and authentication tenants.
+Publish and register the checkout base-workspace, firewall and OHDSI bundles. Deploy the firewall before the test.
+Check PostgreSQL 14 capacity for `B_Standard_B1ms`, 32 GiB storage and availability zone 1 in the selected region.
+The case creates a fresh Automatic workspace. It disables backups and sets `configure_data_source=false` without data-source properties.
+
+The case checks both private web apps, their pinned images and PostgreSQL networking.
+It also checks that the WebAPI identity has a role on each of its five Key Vault secrets and no role on the vault, and that each Key Vault reference resolves.
+Successful installation includes the bundle's private WebAPI readiness check and local administrator setup.
+A metadata update exercises a same-version upgrade. The test checks the callback and firewall collections after each operation.
+It waits for terminal operations before updates or deletion. It owns accepted resources before evidence writes or client closure.
+
+The job sets `OHDSI_VALIDATION_DEADLINE` before container setup. The case reserves 120 minutes for cleanup within 270 minutes.
+Cleanup removes the service before its workspace. It checks Azure resource removal, app DNS records, callback removal and firewall restoration.
+If service cleanup fails, the case retains the workspace and fails. The shared core PostgreSQL DNS link remains in place.
+Key Vault items can remain soft-deleted under the existing retention policy.
+
+Browser sign-in, independent private HTTP and DNS probes, database data persistence and previous-version upgrades remain unproven.
+Synapse provisioning, CDM queries and clinical workflows need separate cases. Retained non-empty data-source properties are outside this case.
+The Synapse script does not currently inspect `configure_data_source`; empty properties avoid that path.

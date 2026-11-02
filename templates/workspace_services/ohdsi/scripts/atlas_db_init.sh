@@ -3,19 +3,18 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-admin_user_password="${OHDSI_ADMIN_PASSWORD}${OHDSI_ADMIN_USERNAME}"
-app_user_password="${OHDSI_APP_PASSWORD}${OHDSI_APP_USERNAME}"
-admin_md5=("md5$(echo -n "$admin_user_password" | md5sum | awk '{ print $1 }')")
-export admin_md5
-app_md5=("md5$(echo -n "$app_user_password" | md5sum | awk '{ print $1 }')'")
-export app_md5
+export PGCONNECT_TIMEOUT=30
+export PGOPTIONS='-c statement_timeout=600000 -c lock_timeout=30000'
 
-printf 'Creating roles and users'
-envsubst < ../sql/atlas_create_roles_users.sql | psql -v ON_ERROR_STOP=0 -e "$MAIN_CONNECTION_STRING"
-printf 'Creating roles and users: done.'
+printf 'Creating roles and users\n'
+psql -X -v ON_ERROR_STOP=1 "$MAIN_CONNECTION_STRING" \
+    -v "admin_role=$OHDSI_ADMIN_ROLE" -v "app_role=$OHDSI_APP_ROLE" \
+    -v "admin_username=$OHDSI_ADMIN_USERNAME" -v "app_username=$OHDSI_APP_USERNAME" \
+    -v "admin_password=$OHDSI_ADMIN_PASSWORD" -v "app_password=$OHDSI_APP_PASSWORD" \
+    -v "database_name=$DATABASE_NAME" -f ../sql/atlas_create_roles_users.sql
 
-printf 'Creating schema'
-envsubst < ../sql/atlas_create_schema.sql | psql -v ON_ERROR_STOP=1 -e "$OHDSI_ADMIN_CONNECTION_STRING"
-printf 'Creating schema: done.'
-
-printf 'Done'
+printf 'Creating schema\n'
+psql -X -v ON_ERROR_STOP=1 "$OHDSI_ADMIN_CONNECTION_STRING" \
+    -v "schema_name=$SCHEMA_NAME" -v "admin_role=$OHDSI_ADMIN_ROLE" \
+    -v "app_role=$OHDSI_APP_ROLE" -f ../sql/atlas_create_schema.sql
+printf 'Database initialisation complete\n'
