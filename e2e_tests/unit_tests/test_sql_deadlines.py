@@ -121,6 +121,28 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
                 await owned.setup()
                 self.assertEqual(owned.finalisers, [])
 
+    async def test_group_setup_creates_and_owns_an_automatic_workspace(self):
+        create_workspace = AsyncMock(return_value=("/workspaces/ws", "ws"))
+        create_service = AsyncMock(return_value=("/service", "service"))
+        with (
+            self.budgets(),
+            patch.object(lifecycle.config, "TEST_WORKSPACE_APP_ID", "app"),
+            patch.object(lifecycle.config, "TEST_WORKSPACE_APP_SECRET", "secret"),
+            patch.object(lifecycle.config, "TEST_WORKSPACE_ID", "existing"),
+            patch.object(lifecycle.config, "TEST_WORKSPACE_SERVICE_ID", "existing-service"),
+            patch.object(lifecycle, "create_or_get_test_workspace", create_workspace),
+            patch.object(lifecycle, "get_workspace_owner_token", AsyncMock(return_value="token")),
+            patch.object(lifecycle, "create_or_get_test_workpace_service", create_service),
+        ):
+            async with lifecycle.sql_lifecycle(True) as owned:
+                await owned.setup(groups=True)
+                self.assertEqual([name for name, _ in owned.finalisers], ["/workspaces/ws", "/service"])
+                owned.finalisers.clear()
+        create_workspace.assert_awaited_once_with(
+            auth_type="Automatic", verify=True, pre_created_workspace_id="", client_id="", client_secret=""
+        )
+        create_service.assert_awaited_once_with("/workspaces/ws", "token", "", True)
+
     async def test_job_start_deadline_reduces_work_time(self):
         with patch.dict(os.environ, SQL_VALIDATION_DEADLINE=str(time.time() + 125 * 60)):
             work, finish = lifecycle.lifecycle_deadlines()

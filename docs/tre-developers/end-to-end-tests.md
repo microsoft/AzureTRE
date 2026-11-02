@@ -205,6 +205,28 @@ The query returns counts only. The CI identity needs read access to the Log Anal
 At the end, the case makes sure that the web app and MySQL have public network access disabled, and that the storage firewall denies by default.
 The Gitea job uses the SQL time limits with its own `GITEA_VALIDATION_DEADLINE`.
 
+### Health selection
+
+Select `tre-workspace-service-health` to run `test_health.py::test_private_fhir_access_and_dicom_update`.
+The case creates its own workspace, Guacamole service, Windows VM and Health service with FHIR R4.
+The Health bundle needs the workspace owners group, and only an Automatic workspace gets Entra ID groups.
+So the case always creates an Automatic workspace. It does not use `TEST_WORKSPACE_ID`, `TEST_WORKSPACE_SERVICE_ID` or `TEST_WORKSPACE_APP_ID`.
+From the VM, the case makes sure that the FHIR host resolves to a private address and that the FHIR metadata is available.
+If the FHIR name lookup fails, the case runs that probe again after 60 seconds, 3 attempts in total. Before this lookup, the probe changes no data.
+It also makes sure that FHIR rejects a data request without a token (HTTP 401) and from an identity without a role (HTTP 403).
+The case then gives the VM identity a temporary FHIR Data Contributor role on the FHIR service and writes a Patient.
+The role can take some minutes to apply, so the probe waits up to 10 minutes for a first HTTP 200.
+Until the end of this wait, the probe sends the create again after HTTP 403 or 429.
+It sends the search again after HTTP 403, 429, 500, 502, 503 or 504.
+If a probe fails, the test error gives the stage and the HTTP status of the failed request.
+An update adds DICOM. The case makes sure that the update kept the private endpoint.
+It then reads the Patient again and makes sure that the DICOM host is private and needs a token.
+At the end, the case sends FHIR and DICOM requests without a token from the test runner, outside the workspace network.
+Azure must reject each request with HTTP 403. The case tries again for up to 5 minutes, because Azure can take this time to block public traffic.
+The case then reads the healthcare workspace and DICOM again, and makes sure that each has public network access disabled.
+The case does not read this value on FHIR. Azure keeps `publicNetworkAccess` `Enabled` on FHIR, also after a request sets `Disabled`.
+The Health job uses the SQL time limits with its own `HEALTH_VALIDATION_DEADLINE`.
+
 ### Run the branch workflow before merge
 
 1. Push the reviewed changes to a branch in `microsoft/AzureTRE`.

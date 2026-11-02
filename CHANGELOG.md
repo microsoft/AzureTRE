@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD041 -->
 ## (Unreleased)
 **BREAKING CHANGES**
+* `tre-workspace-service-health` 1.0.0 stops an install, update or upgrade of a Health service without FHIR and DICOM before Terraform changes a resource. Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
+  If the upgrade of an earlier service without FHIR and DICOM stops, turn on FHIR or DICOM with an update, or delete the service. ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
 * Existing resources with legacy Porter parameter overrides must complete a resource upgrade before custom actions or uninstall. The current template version can be reused. See [upgrading resources](docs/tre-admins/upgrading-resources.md#upgrade-existing-resources-for-document-based-porter-parameters). (`resource_processor` 0.13.10) ([#4904](https://github.com/microsoft/AzureTRE/pull/4904))
 * Set `enable_legacy_airlock` explicitly to `true` in your `config.yaml`. It currently defaults to `true` but will default to `false` in a future release;
 Setting to `false` will delete existing airlock storage accounts and must only be done once all workspaces use the v2 airlock. ([#5048](https://github.com/microsoft/AzureTRE/pull/5048))
@@ -9,6 +11,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
+* Add a private Health lifecycle check. A workspace VM reads the FHIR metadata through private DNS, and gets HTTP 401 without a token and HTTP 403 without a role. Then the VM writes and reads a Patient across an update that adds DICOM. The generic workspace service install case no longer installs Health, because its CI workspace has no Entra ID groups. ([#5147](https://github.com/microsoft/AzureTRE/issues/5147))
 * Add a private MySQL lifecycle check. A Nexus-backed Linux VM writes a row through private DNS, the SKU changes from Burstable to General Purpose, and the VM reads the row again. ([#5148](https://github.com/microsoft/AzureTRE/issues/5148))
 * Run the `stop`, `start` and `reset_password` actions in the Guacamole Linux VM check, and make sure of the VM power state and the new Key Vault secret version through Azure. ([#5145](https://github.com/microsoft/AzureTRE/issues/5145))
 * Add a private Gitea lifecycle check. A workspace VM uses the Gitea API through private DNS, gets HTTP 401 without credentials and with a wrong password, and commits a file to a private repository.
@@ -47,6 +50,14 @@ BUG FIXES:
 * Clean up backup-test workspaces after failed provisioning. ([#5135](https://github.com/microsoft/AzureTRE/issues/5135))
 * Create the OpenAI private endpoint after the model deployment, so that Azure does not reject it while the deployment updates the account. (`tre-workspace-service-openai` 1.1.0) ([#5249](https://github.com/microsoft/AzureTRE/issues/5249))
 * Give the Gitea workspace service identity the Key Vault role only on the three secrets that its web app reads. It had the role on the whole workspace Key Vault. (`tre-workspace-service-gitea` 2.0.0) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
+* Add the DICOM zone to the DNS zone group of the Health private endpoint when an update adds DICOM. Azure wrote private DNS records only for the services that existed when it created the zone group. So a DICOM service that an update added resolved to a public address.
+  The zone group is now a separate resource, so the endpoint stays, and Terraform tries again while Azure links the new service to the endpoint. An upgrade creates the zone group again and writes a record that an earlier update did not get.
+  The FHIR record is in the zone of the workspace record, so an update that adds or removes FHIR also creates the zone group again. Private access to the Health services stops until the new group exists. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
+* Turn off public network access on the Health DICOM service. The azurerm provider created DICOM with public network access on, and an upgrade turned it on again after Azure turned it off. An upgrade changes the setting in place. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
+* Keep the Health data roles of the workspace groups when the service changes. The role assignments used a role definition ID without the subscription, but Azure returns the ID with the subscription. So each update deleted the role assignments and created them again. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
+* Give the workspace groups their DICOM data role after Azure links the DICOM service to the Health private endpoint. Terraform gave the role immediately after the DICOM create. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
+* Give FHIR R4 to a Health request that turns on FHIR without `fhir_kind`. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
+* Give the workspace groups their FHIR data role after the Health private endpoint exists. Terraform gave the role before the endpoint, and an uninstall did not delete the role before the endpoint. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
 * Disable public network access on the MySQL flexible server, so that clients can connect only through the private endpoint. Move the MySQL bundle to azurerm 4.27.0, which has this setting. An upgrade changes the setting in place. (`tre-workspace-service-mysql` 1.0.16) ([#5148](https://github.com/microsoft/AzureTRE/issues/5148))
 * Create the Gitea workspace service file share through Resource Manager. Terraform used the file endpoint of the storage account, which the TRE firewall blocks until the private endpoint and its DNS record exist. So an install can fail, and after a delete removes the private endpoint, each later update or delete fails.
   Also disable public network access on the Gitea MySQL server. An upgrade keeps the existing share and changes the server setting in place. (`tre-workspace-service-gitea` 2.0.0) ([#5141](https://github.com/microsoft/AzureTRE/issues/5141))
@@ -103,6 +114,7 @@ BUG FIXES:
 * Fix Guacamole login failures in large workspaces: raise the user-resources API timeout from 5s to 30s, batch template version lookups into one Cosmos query, and query VM power states concurrently. (`tre-service-guacamole` 0.14.6, `API` 0.27.31) ([#5099](https://github.com/microsoft/AzureTRE/issues/5099))
 * Fix API resource update retries so a successful retry returns the patched resource to the original caller. (`API` 0.27.32) ([#5025](https://github.com/microsoft/AzureTRE/pull/5025))
 * Fix the health check falsely returning OK when Cosmos is down or inaccessible. ([#4926](https://github.com/microsoft/AzureTRE/issues/4926))
+* Keep a new Health FHIR service in the Terraform state when Azure reports it as `Accepted` after the create. Before version 4.75.0, the azurerm provider waited for `Succeeded` after the create and saved the service only after this wait. So the install failed, and each later update and delete of the service failed. The Health bundle now uses azurerm 5.11.0. (`tre-workspace-service-health` 1.0.0) ([#5295](https://github.com/microsoft/AzureTRE/issues/5295))
 
 ## (0.29.1)
 **BREAKING CHANGES**

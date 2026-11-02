@@ -4,7 +4,15 @@ resource "azurerm_healthcare_workspace" "healthcare_workspace" {
   location            = data.azurerm_resource_group.ws.location
   tags                = local.workspace_service_tags
 
-  lifecycle { ignore_changes = [tags] }
+  lifecycle {
+    ignore_changes = [tags]
+
+    # Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service.
+    precondition {
+      condition     = var.deploy_fhir || var.deploy_dicom
+      error_message = "Deploy FHIR, DICOM or both. Azure fails a private endpoint to a healthcare workspace without a FHIR or DICOM service."
+    }
+  }
 }
 
 resource "azurerm_healthcare_fhir_service" "fhir" {
@@ -25,7 +33,6 @@ resource "azurerm_healthcare_fhir_service" "fhir" {
     type = "SystemAssigned"
   }
 
-
   lifecycle { ignore_changes = [tags] }
 }
 
@@ -35,6 +42,9 @@ resource "azurerm_healthcare_dicom_service" "dicom" {
   workspace_id = azurerm_healthcare_workspace.healthcare_workspace.id
   location     = data.azurerm_resource_group.ws.location
   tags         = local.workspace_service_tags
+
+  # The provider default turns on public network access.
+  public_network_access_enabled = false
 
   identity {
     type = "SystemAssigned"
@@ -50,11 +60,6 @@ resource "azurerm_private_endpoint" "health_services_private_endpoint" {
   subnet_id           = data.azurerm_subnet.services.id
   tags                = local.workspace_service_tags
 
-  private_dns_zone_group {
-    name                 = "private-dns-zone-group"
-    private_dns_zone_ids = [data.azurerm_private_dns_zone.health.id, data.azurerm_private_dns_zone.dicom.id]
-  }
-
   private_service_connection {
     private_connection_resource_id = azurerm_healthcare_workspace.healthcare_workspace.id
     name                           = "psc-${azurerm_healthcare_workspace.healthcare_workspace.name}"
@@ -62,10 +67,68 @@ resource "azurerm_private_endpoint" "health_services_private_endpoint" {
     is_manual_connection           = false
   }
 
+  # Azure fails an endpoint to a healthcare workspace without a FHIR or DICOM service.
   depends_on = [
     azurerm_healthcare_fhir_service.fhir,
     azurerm_healthcare_dicom_service.dicom
   ]
 
-  lifecycle { ignore_changes = [tags] }
+  # The DNS zone group is a separate resource. The provider changes a zone group in this
+  # resource only together with the whole endpoint.
+  lifecycle { ignore_changes = [tags, private_dns_zone_group] }
+}
+
+# Before version 1.0.0, the endpoint resource created the DNS zone group. This removes
+# that group once, so that the resource below can create a group with the same name.
+resource "azapi_resource_action" "remove_endpoint_dns_zone_group" {
+  type        = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01"
+  resource_id = "${azurerm_private_endpoint.health_services_private_endpoint.id}/privateDnsZoneGroups/private-dns-zone-group"
+  method      = "DELETE"
+
+  retry = {
+    error_message_regex = ["AnotherOperationInProgress"]
+  }
+
+  # The delete waits for the changes to FHIR and DICOM, so that the records are absent only
+  # until the new group exists. If a change to a service fails, the old group stays.
+  depends_on = [
+    azurerm_healthcare_fhir_service.fhir,
+    azurerm_healthcare_dicom_service.dicom
+  ]
+}
+
+# The workspace and FHIR records are in the same zone, so an update that adds FHIR does not
+# change the group. A new group makes Azure write the records of all services of the endpoint.
+resource "terraform_data" "fhir_deployed" {
+  input = var.deploy_fhir
+}
+
+# Azure writes the private DNS records of a zone when the group gets that zone. Azure
+# links a new service to the endpoint after the service create returns. A change to the
+# group during this time gets HTTP 409, so the provider tries again.
+resource "azapi_resource" "health_services_dns_zone_group" {
+  type      = "Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01"
+  name      = "private-dns-zone-group"
+  parent_id = azurerm_private_endpoint.health_services_private_endpoint.id
+
+  body = {
+    properties = {
+      privateDnsZoneConfigs = concat(
+        [{ name = "health", properties = { privateDnsZoneId = data.azurerm_private_dns_zone.health.id } }],
+        var.deploy_dicom ? [{ name = "dicom", properties = { privateDnsZoneId = data.azurerm_private_dns_zone.dicom.id } }] : []
+      )
+    }
+  }
+
+  retry = {
+    error_message_regex = ["AnotherOperationInProgress"]
+  }
+
+  depends_on = [
+    azapi_resource_action.remove_endpoint_dns_zone_group,
+    azurerm_healthcare_fhir_service.fhir,
+    azurerm_healthcare_dicom_service.dicom
+  ]
+
+  lifecycle { replace_triggered_by = [terraform_data.fhir_deployed] }
 }
