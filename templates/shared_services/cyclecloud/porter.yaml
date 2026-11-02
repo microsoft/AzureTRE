@@ -1,7 +1,7 @@
 ---
 schemaVersion: 1.0.0
 name: tre-shared-service-cyclecloud
-version: 0.7.10
+version: 1.0.0
 description: "An Azure TRE Shared Service Template for Azure Cyclecloud"
 registry: azuretre
 dockerfile: Dockerfile.tmpl
@@ -53,6 +53,10 @@ parameters:
   - name: key_store_id
     type: string
     default: ""
+  - name: cluster_address_spaces
+    type: string
+    description: "Address spaces of cluster nodes that connect to the CycleCloud server on port 9443"
+    default: "W10=" # b64 for []
 
 outputs:
   - name: azure_resource_id
@@ -89,6 +93,7 @@ install:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        cluster_address_spaces: ${ bundle.parameters.cluster_address_spaces }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -110,6 +115,7 @@ upgrade:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        cluster_address_spaces: ${ bundle.parameters.cluster_address_spaces }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"
@@ -131,6 +137,7 @@ uninstall:
         arm_environment: ${ bundle.parameters.arm_environment }
         enable_cmk_encryption: ${ bundle.parameters.enable_cmk_encryption }
         key_store_id: ${ bundle.parameters.key_store_id }
+        cluster_address_spaces: ${ bundle.parameters.cluster_address_spaces }
       backendConfig:
         use_azuread_auth: "true"
         use_oidc: "true"

@@ -70,6 +70,9 @@ resource "azurerm_virtual_machine" "cyclecloud" {
 
   tags = local.tre_shared_service_tags
 
+  # Start the server only after its network card has the inbound rules.
+  depends_on = [azurerm_network_interface_security_group_association.cyclecloud]
+
   # Azure does not offer Standard_DS3_v2 to all subscriptions in all regions. Keep the size of existing servers.
   lifecycle { ignore_changes = [tags, vm_size] }
 }
