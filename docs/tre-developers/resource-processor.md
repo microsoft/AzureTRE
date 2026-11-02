@@ -166,6 +166,7 @@ If the API stops between the write and the send, the entry stays. When the API s
    The first step of a cascade is for a child resource, so a later request for that child also counts.
    The updater sets the step and the operation to the failed status. It does not change the resource, because the later request owns its status.
 1. If the step has no status, the updater builds the message again from Cosmos DB and sends it with the message ID `<operation ID>:<step ID>`. Then it removes the entry.
+   The build applies the properties of the pipeline step again. If the API changed the resource of the step before it stopped, the `append` array action finds its item and does not add it again.
 1. If an install or an update sets a sensitive property, the first message has the real value, and Cosmos DB keeps `REDACTED`.
    The operation write records this in the entry, and the updater cannot build such a message again.
    It sets the step and the operation to the failed status, with a message that asks the user to send the request again with the sensitive values if the status does not change.

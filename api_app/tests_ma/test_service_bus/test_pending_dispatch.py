@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import uuid
 from unittest.mock import AsyncMock, patch
@@ -8,7 +9,11 @@ from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 
 from db.errors import EntityDoesNotExist
 from db.repositories.operations import PENDING_DISPATCH
-from models.domain.operation import Status
+from models.domain.operation import Operation, OperationStep, Status
+from models.domain.request_action import RequestAction
+from models.domain.resource import ResourceType
+from models.domain.resource_template import Pipeline, PipelineStep, PipelineStepProperty, ResourceTemplate
+from models.domain.shared_service import SharedService
 from models.domain.workspace import Workspace
 from resources import strings
 from service_bus.deployment_status_updater import (
@@ -16,6 +21,7 @@ from service_bus.deployment_status_updater import (
     NOT_SENT_WITH_SENSITIVE_VALUES,
     DeploymentStatusUpdater,
 )
+from service_bus.resource_request_sender import send_resource_request_message
 from tests_ma.test_service_bus.test_deployment_status_update import OPERATION_ID, create_sample_operation
 
 pytestmark = pytest.mark.asyncio
@@ -328,3 +334,138 @@ async def test_a_failed_entry_does_not_stop_the_pass(updater):
         await updater.resend_pending_dispatches()
 
     assert sent == ["second"]
+
+
+class ApiStopped(BaseException):
+    """The API process stops. The error handler of the sender does not run."""
+
+
+def template(name: str, resource_type: ResourceType, pipeline: Pipeline = None) -> ResourceTemplate:
+    return ResourceTemplate(
+        id=f"{name}-id",
+        name=name,
+        version="0.1.0",
+        resourceType=resource_type,
+        current=True,
+        required=[],
+        properties={},
+        pipeline=pipeline,
+    )
+
+
+def firewall_append_template() -> ResourceTemplate:
+    """The first step of the install adds a rule collection to the firewall with the "append" action."""
+    return template(
+        "tre-workspace-base",
+        ResourceType.Workspace,
+        Pipeline(
+            install=[
+                PipelineStep(
+                    stepId="firewall-step",
+                    resourceTemplateName="tre-shared-service-firewall",
+                    resourceType=ResourceType.SharedService,
+                    resourceAction="upgrade",
+                    properties=[
+                        PipelineStepProperty(
+                            name="rule_collections",
+                            type="array",
+                            arraySubstitutionAction="append",
+                            value={"name": "rc_{{ resource.id }}", "action": "Allow"},
+                        )
+                    ],
+                ),
+                PipelineStep(stepId="main"),
+            ]
+        ),
+    )
+
+
+def resource_store(*resources):
+    """Keep the resources as Cosmos DB does, so that a second preparation reads the patch of the first one."""
+    stored = {resource.id: resource for resource in resources}
+    repo = AsyncMock()
+    repo.get_resource_by_id.side_effect = lambda resource_id: copy.deepcopy(stored[str(resource_id)])
+
+    def patch_resource(resource, resource_patch, resource_template, **_):
+        resource.properties.update(resource_patch.properties)
+        stored[resource.id] = copy.deepcopy(resource)
+        return resource, resource_template
+
+    repo.patch_resource.side_effect = patch_resource
+    return repo, stored
+
+
+@patch("service_bus.deployment_status_updater.send_deployment_message")
+@patch("service_bus.resource_request_sender.send_deployment_message")
+async def test_a_resend_after_a_stop_between_the_patch_and_the_send_appends_the_item_once(
+    first_send_mock, resend_mock, updater, test_user
+):
+    templates = {
+        "tre-workspace-base": firewall_append_template(),
+        "tre-shared-service-firewall": template("tre-shared-service-firewall", ResourceType.SharedService),
+    }
+    resource = workspace({})
+    firewall = SharedService(
+        id=FIREWALL_ID, templateName="tre-shared-service-firewall", templateVersion="0.1.0", etag="", properties={}
+    )
+    resource_repo, stored = resource_store(resource, firewall)
+    template_repo = AsyncMock()
+    template_repo.get_template_by_name_and_version.side_effect = lambda name, *_: templates[name]
+    operation = Operation(
+        id=OPERATION_ID,
+        resourceId=RESOURCE_ID,
+        resourcePath="test",
+        action=RequestAction.Install,
+        createdWhen=1.0,
+        user=test_user,
+        steps=[
+            OperationStep(
+                id="random-uuid",
+                templateStepId="firewall-step",
+                resourceId=FIREWALL_ID,
+                resourceTemplateName="tre-shared-service-firewall",
+                resourceType=ResourceType.SharedService,
+                resourceAction="upgrade",
+                status=Status.AwaitingUpdate,
+                sourceTemplateResourceId=RESOURCE_ID,
+            ),
+            OperationStep(
+                id="main-step",
+                templateStepId="main",
+                resourceId=RESOURCE_ID,
+                resourceAction="install",
+                status=Status.AwaitingDeployment,
+                sourceTemplateResourceId=RESOURCE_ID,
+            ),
+        ],
+    )
+    operations_repo = AsyncMock()
+    operations_repo.create_operation_item.return_value = operation
+    # The API patches the firewall, then stops before the send. The entry stays.
+    first_send_mock.side_effect = ApiStopped
+
+    with pytest.raises(ApiStopped):
+        await send_resource_request_message(
+            resource=resource,
+            operations_repo=operations_repo,
+            resource_repo=resource_repo,
+            user=test_user,
+            resource_template_repo=template_repo,
+            resource_history_repo=AsyncMock(),
+            action=RequestAction.Install,
+        )
+    operations_repo.clear_pending_dispatch.assert_not_awaited()
+    assert len(stored[FIREWALL_ID].properties["rule_collections"]) == 1
+
+    # The task prepares the first step again from Cosmos DB and sends it.
+    updater.resource_repo = resource_repo
+    updater.resource_template_repo = template_repo
+    document = operation.model_dump()
+    document["_etag"] = "etag"
+    document[PENDING_DISPATCH] = {"stepId": "random-uuid", "messageId": MESSAGE_ID, "createdWhen": 1.0}
+    await updater.resend_pending_dispatch(document)
+
+    expected = [{"name": f"rc_{RESOURCE_ID}", "action": "Allow"}]
+    assert stored[FIREWALL_ID].properties["rule_collections"] == expected
+    assert json.loads(resend_mock.await_args.kwargs["content"])["parameters"]["rule_collections"] == expected
+    updater.operations_repo.clear_pending_dispatch.assert_awaited_once_with(OPERATION_ID, MESSAGE_ID)

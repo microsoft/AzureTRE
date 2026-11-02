@@ -72,6 +72,7 @@ BUG FIXES:
 * Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes.
   If that message has sensitive values from an install or an update, the request fails with a clear message, because the API does not store these values.
   The resend does not change a resource that a later request changed, and it does not change the resource of a first step on another resource.
+  The `append` array action of a pipeline step does not add an item that the array already has. So if the API prepares a step again, for example at a resend after the patch of the resource, the array does not get the same item two times.
   (`api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Store a placeholder for each sensitive property when the API saves an update of a resource, as it already does at the install. The new value goes to the resource processor only in the request message.
   Before this change, an update stored the new value of a sensitive property in Cosmos DB and in the resource history. An example is the `client_secret` of a workspace.
