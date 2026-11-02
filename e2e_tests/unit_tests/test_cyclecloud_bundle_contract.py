@@ -133,5 +133,12 @@ class CycleCloudBundleContractTests(unittest.TestCase):
         self.assertIn('variable "cluster_address_spaces"', (BUNDLE / "terraform/variables.tf").read_text())
         self.assertRegex(
             (BUNDLE / "terraform/locals.tf").read_text(),
-            r"cluster_address_spaces\s*=\s*jsondecode\(base64decode\(var\.cluster_address_spaces\)\)",
+            r"for cidr in jsondecode\(base64decode\(var\.cluster_address_spaces\)\)",
         )
+
+    def test_cluster_ranges_use_their_network_address(self):
+        # The schema accepts a range with host bits, so Terraform must not refuse it after the API stored it.
+        locals_tf = (BUNDLE / "terraform/locals.tf").read_text()
+        self.assertRegex(locals_tf, r"cluster_address_spaces\s*=\s*distinct\(\[")
+        self.assertIn('"${cidrhost(cidr, 0)}/${split("/", cidr)[1]}"', locals_tf)
+        self.assertNotIn("cidrhost", (BUNDLE / "terraform/variables.tf").read_text())

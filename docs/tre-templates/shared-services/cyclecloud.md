@@ -57,7 +57,9 @@ The CycleCloud server has a network security group on its network card. The netw
 
 Cluster nodes connect to the CycleCloud server on TCP port 9443 when the cluster does not use a return proxy. For the ports that CycleCloud uses, see [CycleCloud required ports and traffic](https://learn.microsoft.com/azure/cyclecloud/how-to/network-security?view=cyclecloud-8#required-ports-and-traffic).
 
-To let the nodes of a cluster connect, update the CycleCloud shared service and add the address space of the workspace to `cluster_address_spaces`. Use the CIDR format, for example `10.1.4.0/24`. When you delete the cluster, remove the address space from the list.
+To let the nodes of a cluster connect, update the CycleCloud shared service and add the address space of the workspace to `cluster_address_spaces`. Use the CIDR format, for example `10.1.4.0/24`. If a range has host bits, for example `10.1.4.5/24`, the bundle uses its network address, `10.1.4.0/24`.
+
+All clusters in one workspace use the same address space. Keep the address space of a workspace in the list until you delete the last cluster in that workspace.
 
 ### Upgrade to version 1.0.0
 
