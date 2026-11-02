@@ -1,5 +1,6 @@
 """Check the file share backup probe, the Azure Backup helpers and the backup case set-up."""
 
+from contextlib import asynccontextmanager
 import json
 from pathlib import Path
 import re
@@ -326,6 +327,29 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
             await resources.delete_now("/one")
         self.assertEqual(await resources.close(), [])
         failed.assert_awaited_once()
+
+    async def test_the_kept_backup_is_owned_before_the_owner_token_lookup(self):
+        # A failed lookup after the workspace install must not leave the kept backup without its clean-up.
+        resources = sql_lifecycle.SQLResources(False, 0)
+
+        @asynccontextmanager
+        async def lifecycle(verify, deadline_variable):
+            yield resources
+
+        with (
+            patch.dict(case.os.environ, {"AZURE_ENVIRONMENT": "AzureCloud", "ARM_SUBSCRIPTION_ID": "sub"}),
+            patch.object(case.config, "TRE_ID", "tre"),
+            patch.object(case, "sql_lifecycle", lifecycle),
+            patch.object(
+                sql_lifecycle, "create_or_get_test_workspace", AsyncMock(return_value=("/workspaces/w", "w-abcd"))
+            ),
+            patch.object(case, "get_workspace_owner_token", AsyncMock(side_effect=RuntimeError("no token"))),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "no token"):
+                await case.test_file_share_restore_and_workspace_delete(False, False)
+        self.assertEqual([name for name, _ in resources.finalisers], ["retained backup", "/workspaces/w"])
+        group = "/subscriptions/sub/resourceGroups/rg-tre-ws-abcd"
+        self.assertEqual(resources.finalisers[0][1].args[:2], ("/workspaces/w", group))
 
     async def test_a_last_cleanup_runs_after_the_cleanups_owned_before_it(self):
         resources = sql_lifecycle.SQLResources(False, sql_lifecycle.asyncio.get_running_loop().time() + 60)
