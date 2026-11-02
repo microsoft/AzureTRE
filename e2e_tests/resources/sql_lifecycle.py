@@ -110,8 +110,16 @@ class SQLResources:
     async def delete_now(self, name):
         """Run the cleanup of one owned resource now, so that the case can check its result."""
         index = next(i for i, (owned, _) in enumerate(self.finalisers) if owned == name)
-        _, callback = self.finalisers.pop(index)
-        await callback()
+        cleanup = asyncio.create_task(self.finalisers[index][1]())
+        # The resource stays owned until its cleanup ends. If the work deadline stops the case here, the cleanup
+        # goes on, and the reserved cleanup waits for it. So no second disable or delete starts.
+        entry = (name, lambda: cleanup)
+        self.finalisers[index] = entry
+        try:
+            await asyncio.shield(cleanup)
+        finally:
+            if cleanup.done():
+                self.finalisers.remove(entry)
 
     async def delete(self, resource_path, token):
         while True:

@@ -317,6 +317,16 @@ class BackupSetupTests(unittest.IsolatedAsyncioTestCase):
         second.assert_not_awaited()
         self.assertEqual([name for name, _ in resources.finalisers], ["/two"])
 
+    async def test_a_failed_early_delete_is_not_sent_again(self):
+        # A failed delete stays for diagnosis, so the reserved clean-up does not send it again.
+        resources = sql_lifecycle.SQLResources(False, sql_lifecycle.asyncio.get_running_loop().time() + 60)
+        failed = AsyncMock(side_effect=AssertionError("deleting_failed"))
+        resources.own("/one", failed)
+        with self.assertRaises(AssertionError):
+            await resources.delete_now("/one")
+        self.assertEqual(await resources.close(), [])
+        failed.assert_awaited_once()
+
     async def test_a_last_cleanup_runs_after_the_cleanups_owned_before_it(self):
         resources = sql_lifecycle.SQLResources(False, sql_lifecycle.asyncio.get_running_loop().time() + 60)
         order = []

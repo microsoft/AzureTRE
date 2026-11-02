@@ -171,6 +171,28 @@ class SQLDeadlineTests(unittest.IsolatedAsyncioTestCase):
                 owned.finalisers.clear()
         self.assertEqual(order, [("callback", "/workspaces/ws", "ws"), "service"])
 
+    async def test_an_early_delete_that_the_work_deadline_stops_ends_before_the_last_cleanup(self):
+        # The kept backup clean-up runs only after the API deleted the workspace.
+        events = []
+
+        async def delete_workspace():
+            events.append("delete start")
+            await asyncio.sleep(0.1)
+            events.append("delete done")
+
+        async def remove_kept_backup():
+            events.append("kept backup")
+
+        with self.budgets(total=0.4, reserve=0.35):
+            with self.assertRaises(TimeoutError):
+                async with lifecycle.sql_lifecycle(True) as owned:
+                    owned.own("/workspaces/ws", delete_workspace)
+                    owned.own_last("retained backup", remove_kept_backup)
+                    await owned.delete_now("/workspaces/ws")
+                    await asyncio.sleep(10)
+        # The reserved clean-up waits for the same delete. It does not send a second delete.
+        self.assertEqual(events, ["delete start", "delete done", "kept backup"])
+
     async def test_job_start_deadline_reduces_work_time(self):
         with patch.dict(os.environ, SQL_VALIDATION_DEADLINE=str(time.time() + 125 * 60)):
             work, finish = lifecycle.lifecycle_deadlines()

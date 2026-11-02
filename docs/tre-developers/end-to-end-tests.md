@@ -260,6 +260,7 @@ If Azure keeps the vault, the deleted backup data stays for 14 days. The step th
 Delete the resource group by hand after that date. Until then, the destroy of the CI environment stops at this resource group.
 This step runs after the workspace delete, also when the case fails after the workspace install. If the workspace install fails, the retained resource group can stay.
 The step runs only if the API deleted the workspace, so a failed delete stays for diagnosis.
+If the deadline expires during the workspace delete, the delete continues in the time for clean-up, and this step runs after the delete ends.
 
 ### Airlock v1 to v2 move
 
