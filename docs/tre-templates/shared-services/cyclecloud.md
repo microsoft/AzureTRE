@@ -39,8 +39,38 @@ To connect to the CycleCloud server, the TRE Administrator must connect to the C
 
 - Hit Save, and then "Back to Clusters"
 
+## Network rules
+
+The CycleCloud server has a network security group on its network card. The network security group has these inbound rules:
+
+| Priority | Source | Ports | Access |
+| --- | --- | --- | --- |
+| 100 | The address space of the core virtual network | TCP 443 and 22 | Allow |
+| 110 | The address spaces in the `cluster_address_spaces` property | TCP 9443 | Allow |
+| 120 | The `AzureLoadBalancer` service tag | All | Allow |
+| 4096 | The `VirtualNetwork` service tag | All | Deny |
+
+- The admin jumpbox is in the core virtual network. Administrators connect to the CycleCloud server from the jumpbox, as the steps above describe.
+- The `VirtualNetwork` service tag includes the peered workspace virtual networks. By default, workspaces cannot connect to the CycleCloud server.
+- The bundle creates the rule for TCP port 9443 only when `cluster_address_spaces` has one or more address spaces. The default is an empty list.
+- The outbound rules are the Azure default rules.
+
+Cluster nodes connect to the CycleCloud server on TCP port 9443 when the cluster does not use a return proxy. For the ports that CycleCloud uses, see [CycleCloud required ports and traffic](https://learn.microsoft.com/azure/cyclecloud/how-to/network-security?view=cyclecloud-8#required-ports-and-traffic).
+
+To let the nodes of a cluster connect, update the CycleCloud shared service and add the address space of the workspace to `cluster_address_spaces`. Use the CIDR format, for example `10.1.4.0/24`. When you delete the cluster, remove the address space from the list.
+
+### Upgrade to version 1.0.0
+
+Version 1.0.0 adds the network rules. After the upgrade, cluster nodes in workspaces cannot connect to the CycleCloud server until you set `cluster_address_spaces`.
+
+1. Find the address space of each workspace that has a CycleCloud cluster. The `address_spaces` property of the workspace has this value.
+1. Upgrade the CycleCloud shared service to version 1.0.0. The upgrade needs a [force version update](../../tre-admins/upgrading-resources.md#force-version-update).
+1. Update the CycleCloud shared service. Set `cluster_address_spaces` to the address spaces from step 1.
+
 ## Create a Cluster
 - Before you start creating the cluster retrieve the last 4 digits of the workspace ID that you want to deploy the cluster into.
+
+- Update the CycleCloud shared service. Add the address space of the workspace to `cluster_address_spaces`, so that the cluster nodes can connect to the CycleCloud server. See [Network rules](#network-rules).
 
 - Create a user in CycleCloud as per <https://docs.microsoft.com/en-us/azure/cyclecloud/concepts/user-management?view=cyclecloud-8#adding-new-users-to-cyclecloud> . The SSH key for the user will need to be created within the workspace and public key exporting. We suggest using the 4 digits retrieved in step 1 as part of the user account.
 
