@@ -68,7 +68,7 @@ BUG FIXES:
   An upgrade no longer installs a resource that Porter uninstalled. An upgrade also fails with `updating_failed` if the resource processor cannot read the Porter installation in 30 seconds.
   A worker that lost its session while it waited for the lease does not run Porter.
   Two runs can still overlap if a worker loses the lease and its session during one Porter run. They can also overlap if a worker stops and its Porter action continues. The resource processor document gives the [known limits](docs/tre-developers/resource-processor.md#known-limits).
-  (`core` 0.18.17, `resource_processor` 0.13.16, `api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
+  (`core` 0.19.1, `resource_processor` 0.13.16, `api` 0.29.0) ([#5236](https://github.com/microsoft/AzureTRE/issues/5236))
 * Send the first step message of a request again if the API stops after it writes the operation and before it sends the message. The API keeps a `pendingDispatch` entry in the operation until the send, and the deployment status updater handles older entries every 5 minutes.
   If that message has sensitive values from an install or an update, the request fails with a clear message, because the API does not store these values.
   The resend does not change a resource that a later request changed, and it does not change the resource of a first step on another resource.
