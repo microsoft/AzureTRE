@@ -8,7 +8,7 @@ Setting to `false` will delete existing airlock storage accounts and must only b
   Mirror the repositories before the upgrade, and rotate the workspace client secret after it. See the [Gitea upgrade steps](docs/tre-templates/workspace-services/gitea.md#upgrading-to-version-200). The upgrade needs a [force version update](docs/tre-admins/upgrading-resources.md#force-version-update). ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * A bundle gets `REDACTED` for a sensitive property in a later action that does not give a new value for it. This now also applies after an update that set the property.
   It also applies to a sensitive property in an array item. It also applies to a property with more than one declaration in the template, if one declaration has `sensitive`.
-  If a custom bundle needs such a value in a later action, make the bundle keep it, for example in Key Vault. The base workspace does this for its client secret. (`api` 0.29.0)
+  If a custom bundle needs such a value in a later action, make the bundle keep it, for example in Key Vault. The base workspace does this for its client secret. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
 
 ENHANCEMENTS:
 * Register the OpenAI bundle for branch validation, add GPT-5.1 as the default model and check regional model and quota prerequisites before its private lifecycle test. (`tre-workspace-service-openai` 1.1.0) ([#5150](https://github.com/microsoft/AzureTRE/issues/5150))
@@ -61,8 +61,9 @@ BUG FIXES:
 * Give the Gitea shared service identity the Key Vault role only on the two secrets that its web app reads. It had the role on the whole core Key Vault. (`tre-shared-service-gitea` 1.2.6) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * Give the Nexus VM identity the Key Vault role only on the Nexus admin password and the Nexus TLS certificate. It had the role on the whole core Key Vault. (`tre-shared-service-sonatype-nexus` 3.11.4) ([#5283](https://github.com/microsoft/AzureTRE/issues/5283))
 * Send an empty outputs list when the resource processor cannot read the Porter outputs. The API rejected the empty dict, so a pipeline step that failed to read its outputs, for example after a transient container registry login failure, stayed in progress until the caller stopped waiting.
-  The resource processor also sends the failed status for the step if the output text of Porter is not a JSON list. (`resource_processor` 0.13.16)
+  The resource processor also sends the failed status for the step if the output text of Porter is not a JSON list. (`resource_processor` 0.13.16) ([#5297](https://github.com/microsoft/AzureTRE/issues/5297))
 * Give each resource processor worker its own Azure CLI folder. Each worker signs in before each Porter action. When two workers did this at the same time, one worker read the shared profile file while the other wrote it, and the next `az acr login` failed with `Please run 'az login'`. The action then failed after 3 seconds. (`resource_processor` 0.13.16)
+  ([#5297](https://github.com/microsoft/AzureTRE/issues/5297))
 * Prevent a second run of a resource processor step when Service Bus gives its message to a second worker. The resource processor renews the session lock with retries, and a blob lease lets one worker at a time run Porter for a resource. The API ignores a status from another run of a finished step.
   An upgrade no longer installs a resource that Porter uninstalled. An upgrade also fails with `updating_failed` if the resource processor cannot read the Porter installation in 30 seconds.
   A worker that lost its session while it waited for the lease does not run Porter.
@@ -81,11 +82,11 @@ BUG FIXES:
   Delete the old secret only after an update with the new secret succeeds.
   The placeholder also covers a sensitive property in an array item, at the install too. In a later action that does not give a new value for such a property, the bundle gets `REDACTED`, as for other sensitive properties.
   If a template declares a property in more than one branch, one declaration with `sensitive` is enough. At an update that changes the template version, the new version decides which properties are sensitive.
-  For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0)
+  For a template whose action has more steps than `main`, for example the unrestricted workspace, the first message now also gets the real sensitive values at an install. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
 * Describe a schema error of a resource request without the submitted values. The API logged the full jsonschema error text and returned it in the HTTP 400 response of a create request.
   The create route of an Airlock review VM did the same in its HTTP 500 response.
   That text contains the submitted properties, for example a client secret. The response now names the property and the template rule.
-  The API also wrote this text to its console log, which the core Log Analytics workspace keeps for 30 days by default. If a create request with a client secret got a schema error before this version, create a new secret for the workspace application. (`api` 0.29.0)
+  The API also wrote this text to its console log, which the core Log Analytics workspace keeps for 30 days by default. If a create request with a client secret got a schema error before this version, create a new secret for the workspace application. (`api` 0.29.0) ([#5298](https://github.com/microsoft/AzureTRE/issues/5298))
 * Update `vite` from 7.3.6 to 7.3.7 and the UI Vitest packages from 4.1.11 to 4.1.12 to address security advisories in the development server and the test mocker. (`ui` 0.10.4) ([#5274](https://github.com/microsoft/AzureTRE/pull/5274))
 * Update `aiohttp` from 3.14.3 to 3.14.4 in `api_app`, `resource_processor`, and the CLI to address security advisories. (`API` 0.28.7, `resource_processor` 0.13.15, `CLI` 0.2.13) ([#5270](https://github.com/microsoft/AzureTRE/pull/5270))
 * Rename a test variable in the E2E polling tests so that CodeQL stops reporting false clear-text logging alerts. ([#5266](https://github.com/microsoft/AzureTRE/pull/5266))
