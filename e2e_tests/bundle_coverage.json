@@ -222,7 +222,7 @@
       ],
       "limitations": [
         "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary secret-scoped role assignment.",
-        "Configuration upgrade uses the current bundle version. Previous-version migration remains separate (#5128). The SQL bundle has no custom actions."
+        "Configuration upgrade uses the current bundle version. Previous-version migration remains separate. The SQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
@@ -268,7 +268,7 @@
       ],
       "limitations": [
         "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary secret-scoped role assignment.",
-        "The case uses the admin account, not OpenID sign-in or researcher identities. The update uses the current bundle version. Previous-version migration remains separate (#5128)."
+        "The case uses the admin account, not OpenID sign-in or researcher identities. The update uses the current bundle version. Previous-version migration remains separate."
       ],
       "unavailable_reason": ""
     },
@@ -406,7 +406,7 @@
       ],
       "limitations": [
         "AzureCloud only. Requires permission to run commands on a test-created workspace VM and create a temporary service-scoped role assignment.",
-        "The case does not use DICOM data, FHIR STU3 or researcher identities. The update uses the current bundle version. Previous-version migration remains separate (#5128)."
+        "The case does not use DICOM data, FHIR STU3 or researcher identities. The update uses the current bundle version. Previous-version migration remains separate."
       ],
       "unavailable_reason": ""
     },
@@ -434,7 +434,7 @@
       ],
       "limitations": [
         "AzureCloud only. Requires a suitable Nexus instance or explicit Nexus EULA consent, permission to run commands on a test-created workspace VM and a temporary secret-scoped role assignment.",
-        "The SKU change uses the current bundle version. Previous-version migration remains separate (#5128). The MySQL bundle has no custom actions."
+        "The SKU change uses the current bundle version. Previous-version migration remains separate. The MySQL bundle has no custom actions."
       ],
       "unavailable_reason": ""
     },
