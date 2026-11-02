@@ -70,6 +70,12 @@ async def preflight(arm, settings):
     location = group.get("location", "").lower().replace(" ", "")
     assert re.fullmatch(r"[a-z0-9]+", location), "Core region is missing"
     vnet = f"{settings.group}/providers/Microsoft.Network/virtualNetworks/vnet-{settings.tre_id}"
+    vnet_record = await arm.request("GET", vnet, NETWORK_API)
+    same_id(vnet_record.get("id"), vnet)
+    address_space = vnet_record["properties"]["addressSpace"]["addressPrefixes"]
+    assert address_space and all(ip_network(v).is_private for v in address_space), (
+        "Core VNet must use private addresses"
+    )
     subnet = vnet + "/subnets/SharedSubnet"
     subnet_record = await arm.request("GET", subnet, NETWORK_API)
     same_id(subnet_record.get("id"), subnet)
@@ -104,6 +110,7 @@ async def preflight(arm, settings):
     return {
         "location": location,
         "vnet": vnet,
+        "address_space": address_space,
         "subnet": subnet,
         "prefixes": prefixes,
         "zone": zone,
@@ -120,6 +127,7 @@ def resource_ids(settings, core, identifier):
         "vm": f"{group}/providers/Microsoft.Compute/virtualMachines/{vm}",
         "disk": f"{group}/providers/Microsoft.Compute/disks/{vm}-osdisk",
         "nic": f"{group}/providers/Microsoft.Network/networkInterfaces/nic-cyclecloud-{settings.tre_id}-{suffix}",
+        "nsg": f"{group}/providers/Microsoft.Network/networkSecurityGroups/nsg-cyclecloud-{settings.tre_id}-{suffix}",
         "storage": f"{group}/providers/Microsoft.Storage/storageAccounts/{storage}",
         "endpoint": f"{group}/providers/Microsoft.Network/privateEndpoints/pe-{storage}",
         "zone": core["zone"],
@@ -133,6 +141,7 @@ def resource_types(ids):
             ("vm", COMPUTE_API),
             ("disk", DISK_API),
             ("nic", NETWORK_API),
+            ("nsg", NETWORK_API),
             ("storage", STORAGE_API),
             ("endpoint", NETWORK_API),
             ("zone", DNS_API),
@@ -145,6 +154,7 @@ async def guard_owned(arm, ids, tags):
     for key, version in (
         ("vm", COMPUTE_API),
         ("nic", NETWORK_API),
+        ("nsg", NETWORK_API),
         ("storage", STORAGE_API),
         ("endpoint", NETWORK_API),
         ("zone", DNS_API),
@@ -177,12 +187,49 @@ async def principal_roles(arm, subscription, principal):
     raise RuntimeError("CycleCloud role-assignment pagination exceeded its bound")
 
 
-async def validate_resources(arm, settings, core, ids, identifier):
+def rule_values(properties, single, plural):
+    values = list(properties.get(plural) or [])
+    if properties.get(single):
+        values.append(properties[single])
+    return tuple(sorted(values))
+
+
+def validate_network_rules(nsg, address_space, clusters):
+    """Allow the core network, the cluster ranges and the load balancer. Deny other virtual network sources."""
+    inbound = [r["properties"] for r in nsg["properties"]["securityRules"] if r["properties"]["direction"] == "Inbound"]
+    allowed = sorted(
+        (
+            p["protocol"].lower(),
+            rule_values(p, "destinationPortRange", "destinationPortRanges"),
+            rule_values(p, "sourceAddressPrefix", "sourceAddressPrefixes"),
+        )
+        for p in inbound
+        if p["access"] == "Allow"
+    )
+    expected = [("*", ("*",), ("AzureLoadBalancer",)), ("tcp", ("22", "443"), tuple(sorted(address_space)))]
+    if clusters:
+        expected.append(("tcp", ("9443",), tuple(sorted(clusters))))
+    assert allowed == sorted(expected), "CycleCloud inbound allow rules differ from the core and cluster ranges"
+    denied = [p for p in inbound if p["access"] == "Deny"]
+    assert len(denied) == 1, "CycleCloud needs one inbound deny rule"
+    deny = denied[0]
+    assert (
+        deny["protocol"],
+        rule_values(deny, "destinationPortRange", "destinationPortRanges"),
+        rule_values(deny, "sourceAddressPrefix", "sourceAddressPrefixes"),
+    ) == ("*", ("*",), ("VirtualNetwork",)), "CycleCloud must deny other inbound virtual network traffic"
+    assert all(p["priority"] < deny["priority"] for p in inbound if p is not deny), (
+        "The CycleCloud deny rule must have the lowest priority"
+    )
+
+
+async def validate_resources(arm, settings, core, ids, identifier, clusters=()):
     tags = {"tre_id": settings.tre_id, "tre_shared_service_id": identifier}
     records = {}
     for key, version in (
         ("vm", COMPUTE_API),
         ("nic", NETWORK_API),
+        ("nsg", NETWORK_API),
         ("storage", STORAGE_API),
         ("endpoint", NETWORK_API),
         ("zone", DNS_API),
@@ -204,6 +251,9 @@ async def validate_resources(arm, settings, core, ids, identifier):
     same_id(properties["storageProfile"]["osDisk"]["managedDisk"]["id"], ids["disk"])
     assert len(properties["networkProfile"]["networkInterfaces"]) == 1
     same_id(properties["networkProfile"]["networkInterfaces"][0]["id"], ids["nic"])
+    nsg = records["nic"]["properties"].get("networkSecurityGroup") or {}
+    same_id(nsg.get("id"), ids["nsg"])
+    validate_network_rules(records["nsg"], core["address_space"], clusters)
     configs = records["nic"]["properties"]["ipConfigurations"]
     assert len(configs) == 1
     ip = configs[0]["properties"]

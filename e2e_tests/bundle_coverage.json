@@ -90,10 +90,10 @@
       "limitations": [
         "Requires AzureCloud, accepted CycleCloud marketplace image terms, the regional image and Standard_D4s_v5 capacity. The test does not accept terms or change quotas.",
         "Requires an empty CycleCloud slot, current firewall and one writer in a dedicated environment. The fixed DNS zone prevents parallel CycleCloud services.",
-        "Checks VM power actions, ARM configuration, TRE firewall rules, same-version metadata upgrade and bounded cleanup. Previous-version upgrades remain unproven.",
+        "Checks VM power actions, ARM configuration, TRE firewall rules, the network rules of the VM network card, a same-version update of the metadata and cluster address spaces, and bounded cleanup. Reads the network rules from ARM and does not send traffic from a workspace. Previous-version upgrades remain unproven.",
         "Does not configure the CycleCloud application, create HPC clusters or prove browser access, private DNS reachability or application TLS trust.",
         "The existing bundle grants its VM subscription Contributor and allows SharedSubnet access to ARM and GitHub. Storage public access is not disabled by this bundle. These controls do not prove workspace isolation.",
-        "Cleanup verifies the VM, disk, NIC, storage, private endpoint, DNS zone, captured identity roles and firewall rules. Key Vault credentials can remain soft-deleted; secret purge is not attempted."
+        "Cleanup verifies the VM, disk, NIC, network security group, storage, private endpoint, DNS zone, captured identity roles and firewall rules. Key Vault credentials can remain soft-deleted; secret purge is not attempted."
       ],
       "unavailable_reason": ""
     },

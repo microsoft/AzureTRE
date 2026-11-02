@@ -249,20 +249,23 @@ TEST_BUNDLE=tre-shared-service-cyclecloud make test-e2e-bundle
 
 Use a dedicated AzureCloud environment with one writer and no existing CycleCloud service or DNS zone.
 Publish and register the checkout firewall and CycleCloud bundles. Deploy the firewall before validation.
-Register the repaired CycleCloud bundle, version 0.7.10 or later, with `start` and `stop` actions.
+Register the CycleCloud bundle, version 1.0.0 or later, with `start` and `stop` actions.
 Accept the CycleCloud server image terms separately before the run. The test reads the agreement and regional image list. It does not accept terms.
 Check `Standard_D4s_v5` capacity and quota in the core region before deployment. Image availability does not prove VM capacity.
 
 The case creates one server and checks its private VM address, DNS configuration, blob private endpoint, managed identity and firewall rules.
+It also checks the network security group of the VM network card. By default, the inbound allow rules must be for the core address space and the `AzureLoadBalancer` service tag only, and the lowest-priority rule must deny other `VirtualNetwork` traffic.
 It invokes stop/start through TRE and verifies the VM power states. It changes the overview to exercise a same-version Terraform upgrade and checks that the VM identity remains stable.
+The same update sets `cluster_address_spaces` to one test range outside the core address space. The test then checks that the TCP 9443 rule allows exactly that range.
 The test records the existing firewall as reused. Smoke completes before the bundle job starts.
 
 The job sets `CYCLECLOUD_VALIDATION_DEADLINE` before container setup. The test reserves 120 minutes for cleanup within its 270-minute deadline.
 It owns an accepted service before polling. Cleanup waits for terminal operations, verifies ownership and then uses TRE deletion.
-It verifies removal of the VM, disk, NIC, storage, blob private endpoint, DNS zone and captured identity's roles. It also checks that the original firewall rules are restored.
+It verifies removal of the VM, disk, NIC, network security group, storage, blob private endpoint, DNS zone and captured identity's roles. It also checks that the original firewall rules are restored.
 Failed cleanup fails the test. Core Key Vault credentials can remain soft-deleted. The test does not retrieve or purge them.
 
 This case does not configure the CycleCloud application or create an HPC cluster. Browser access, application TLS trust, private DNS reachability and prior-release upgrades remain unproven.
+The case reads the network rules from Azure Resource Manager. It does not send traffic from a workspace to the server.
 The existing bundle grants subscription Contributor to its VM and permits SharedSubnet access to ARM and GitHub. It does not disable the storage public endpoint.
 A private endpoint and a successful server lifecycle do not prove workspace isolation or storage access restrictions.
 

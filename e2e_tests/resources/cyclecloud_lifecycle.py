@@ -126,9 +126,9 @@ class CycleCloudService:
                     return resource, operations
                 await asyncio.sleep(15)
 
-    async def change(self, *, action=None, overview=None):
-        if action not in (None, "start", "stop") or (action is not None) == (overview is not None):
-            raise ValueError("Select one supported CycleCloud action or a metadata update")
+    async def change(self, *, action=None, properties=None):
+        if action not in (None, "start", "stop") or (action is not None) == bool(properties):
+            raise ValueError("Select one supported CycleCloud action or a property update")
         resource, _ = await self.wait_terminal()
         endpoint = get_full_endpoint(f"/api{self.path}")
         headers = await self.headers()
@@ -137,7 +137,7 @@ class CycleCloudService:
             if action:
                 response = await client.post(endpoint + "/invoke-action", headers=headers, params={"action": action})
             else:
-                response = await client.patch(endpoint, headers=headers, json={"properties": {"overview": overview}})
+                response = await client.patch(endpoint, headers=headers, json={"properties": properties})
         if response.status_code != 202:
             raise RuntimeError(f"CycleCloud mutation failed: HTTP {response.status_code}")
         operation = response.json()["operation"]
@@ -149,8 +149,8 @@ class CycleCloudService:
         observed = next(o for o in operations if o["id"] == operation_id)
         if observed["status"] in FAILED or result["deploymentStatus"] in FAILED:
             raise RuntimeError("CycleCloud mutation or its pipeline failed")
-        if overview is not None and result["properties"].get("overview") != overview:
-            raise AssertionError("CycleCloud metadata update was not preserved")
+        if properties and any(result["properties"].get(k) != v for k, v in properties.items()):
+            raise AssertionError("CycleCloud property update was not preserved")
         return result
 
     async def close(self):

@@ -1,5 +1,6 @@
 """Validate one CycleCloud server without configuring or creating HPC clusters."""
 
+from ipaddress import ip_network
 from uuid import uuid4
 
 import pytest
@@ -25,6 +26,9 @@ from e2e_tests.resources.cyclecloud_lifecycle import cyclecloud_lifecycle
 from e2e_tests.resources.resource import get_resource
 from e2e_tests.resources.sql_probe import arm_client
 from e2e_tests.run_bundle import load_catalog
+
+# A private range outside the core address space. The update allows it to reach port 9443.
+CLUSTER_TEST_RANGE = "172.31.254.0/24"
 
 
 async def prerequisites(verify):
@@ -95,25 +99,35 @@ async def validate_lifecycle(verify):
             firewall = await prerequisites(verify)
             baseline = firewall_rules(firewall)
             core = await preflight(arm, settings)
+            if any(ip_network(CLUSTER_TEST_RANGE).overlaps(ip_network(v)) for v in core["address_space"]):
+                raise ValueError("The CycleCloud cluster test range must be outside the core address space")
             record = await service.create()
             ids = resource_ids(settings, core, service.identifier)
 
-            async def inspect(record):
+            async def inspect(record, clusters=()):
                 assert record["templateVersion"] == load_catalog()[TEMPLATE]["source_version"]
                 assert record["properties"]["connection_uri"] == "https://" + core["zone"].rsplit("/", 1)[1]
                 record_deployed_resource(record, service.path)
-                identity = await validate_resources(arm, settings, core, ids, service.identifier)
+                identity = await validate_resources(arm, settings, core, ids, service.identifier, clusters)
                 validate_firewall(await current_firewall(), baseline, service.identifier, core["prefixes"])
                 return identity
 
+            # By default, only the core network and the load balancer can connect to the server.
             principal = await inspect(record)
             await wait_power(arm, ids["vm"], "running")
             await service.change(action="stop")
             await wait_power(arm, ids["vm"], "deallocated")
             await service.change(action="start")
             await wait_power(arm, ids["vm"], "running")
-            updated = await service.change(overview="CycleCloud lifecycle metadata upgrade")
-            assert await inspect(updated) == principal, "CycleCloud upgrade replaced the VM identity"
+            updated = await service.change(
+                properties={
+                    "overview": "CycleCloud lifecycle metadata upgrade",
+                    "cluster_address_spaces": [CLUSTER_TEST_RANGE],
+                }
+            )
+            assert await inspect(updated, [CLUSTER_TEST_RANGE]) == principal, (
+                "CycleCloud upgrade replaced the VM identity"
+            )
 
 
 @pytest.mark.asyncio(loop_scope="session")

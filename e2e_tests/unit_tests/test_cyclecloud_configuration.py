@@ -15,6 +15,41 @@ SUB = "11111111-1111-4111-8111-111111111111"
 SERVICE = "22222222-2222-4222-8222-222222222222"
 PRINCIPAL = "33333333-3333-4333-8333-333333333333"
 ROOT = Path(__file__).resolve().parents[2]
+CLUSTER = "172.31.254.0/24"
+
+
+def nsg_rule(name, priority, access, protocol, ports, sources):
+    properties = {
+        "priority": priority,
+        "direction": "Inbound",
+        "access": access,
+        "protocol": protocol,
+        "sourcePortRange": "*",
+        "destinationAddressPrefix": "*",
+        "destinationPortRanges": [],
+        "sourceAddressPrefixes": [],
+    }
+    if len(ports) == 1:
+        properties["destinationPortRange"] = ports[0]
+    else:
+        properties["destinationPortRanges"] = ports
+    if sources in ("AzureLoadBalancer", "VirtualNetwork"):
+        properties["sourceAddressPrefix"] = sources
+    else:
+        properties["sourceAddressPrefixes"] = sources
+    return {"name": name, "properties": properties}
+
+
+def default_rules():
+    return [
+        nsg_rule("AllowCoreHttpsSshInbound", 100, "Allow", "Tcp", ["22", "443"], ["10.0.0.0/22"]),
+        nsg_rule("AllowAzureLoadBalancerInbound", 120, "Allow", "*", ["*"], "AzureLoadBalancer"),
+        nsg_rule("DenyVirtualNetworkInbound", 4096, "Deny", "*", ["*"], "VirtualNetwork"),
+    ]
+
+
+def cluster_rule(sources):
+    return nsg_rule("AllowClusterNodesInbound", 110, "Allow", "Tcp", ["9443"], sources)
 
 
 def fixture():
@@ -22,6 +57,7 @@ def fixture():
     net = settings.group + "/providers/Microsoft.Network/virtualNetworks/vnet-tre-test"
     core = {
         "vnet": net,
+        "address_space": ["10.0.0.0/22"],
         "subnet": net + "/subnets/SharedSubnet",
         "prefixes": ["10.0.1.0/24"],
         "zone": settings.group
@@ -58,8 +94,10 @@ def fixture():
         },
     )
     records[ids["nic"]]["properties"] = {
-        "ipConfigurations": [{"properties": {"subnet": {"id": core["subnet"]}, "privateIPAddress": "10.0.1.5"}}]
+        "networkSecurityGroup": {"id": ids["nsg"]},
+        "ipConfigurations": [{"properties": {"subnet": {"id": core["subnet"]}, "privateIPAddress": "10.0.1.5"}}],
     }
+    records[ids["nsg"]]["properties"] = {"securityRules": default_rules()}
     records[ids["zone"] + "/A/@"] = {"properties": {"aRecords": [{"ipv4Address": "10.0.1.5"}]}}
     records[ids["zone"] + "/virtualNetworkLinks/cyclecloudlink-core"] = {"properties": {"virtualNetwork": {"id": net}}}
     records[ids["storage"]].update(
@@ -135,8 +173,51 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(AssertionError):
                     await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE)
 
+    async def test_network_card_allows_only_the_core_network_by_default(self):
+        rules = self.records[self.ids["nsg"]]["properties"]["securityRules"]
+        for defect in ("association", "workspace", "cluster", "core", "deny", "priority", "outbound_only"):
+            with self.subTest(defect=defect):
+                rules[:] = default_rules()
+                self.records[self.ids["nic"]]["properties"]["networkSecurityGroup"] = {"id": self.ids["nsg"]}
+                if defect == "association":
+                    del self.records[self.ids["nic"]]["properties"]["networkSecurityGroup"]
+                if defect == "workspace":
+                    rules.append(nsg_rule("AllowWorkspace", 130, "Allow", "Tcp", ["443"], ["10.2.0.0/24"]))
+                if defect == "cluster":
+                    rules.append(cluster_rule([CLUSTER]))
+                if defect == "core":
+                    rules[0]["properties"]["sourceAddressPrefixes"] = ["10.0.0.0/8"]
+                if defect == "deny":
+                    del rules[2]
+                if defect == "priority":
+                    rules[2]["properties"]["priority"] = 105
+                if defect == "outbound_only":
+                    rules[2]["properties"]["direction"] = "Outbound"
+                with self.assertRaises(AssertionError):
+                    await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE)
+        rules[:] = default_rules()
+        self.records[self.ids["nic"]]["properties"]["networkSecurityGroup"] = {"id": self.ids["nsg"]}
+        self.assertEqual(await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE), PRINCIPAL)
+
+    async def test_cluster_rule_allows_exactly_the_requested_ranges(self):
+        rules = self.records[self.ids["nsg"]]["properties"]["securityRules"]
+        with self.assertRaises(AssertionError):
+            await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE, [CLUSTER])
+        rules.append(cluster_rule([CLUSTER]))
+        self.assertEqual(
+            await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE, [CLUSTER]), PRINCIPAL
+        )
+        rules[-1] = cluster_rule([CLUSTER, "10.2.0.0/24"])
+        with self.assertRaises(AssertionError):
+            await cc.validate_resources(self.arm, self.settings, self.core, self.ids, SERVICE, [CLUSTER])
+
     async def test_cleanup_refuses_foreign_tags_before_any_write(self):
         self.records[self.ids["storage"]]["tags"]["tre_shared_service_id"] = "other"
+        with self.assertRaisesRegex(AssertionError, "ownership"):
+            await cc.guard_owned(self.arm, self.ids, {"tre_id": self.settings.tre_id, "tre_shared_service_id": SERVICE})
+
+    async def test_cleanup_refuses_a_foreign_network_security_group(self):
+        self.records[self.ids["nsg"]]["tags"]["tre_shared_service_id"] = "other"
         with self.assertRaisesRegex(AssertionError, "ownership"):
             await cc.guard_owned(self.arm, self.ids, {"tre_id": self.settings.tre_id, "tre_shared_service_id": SERVICE})
 
@@ -152,6 +233,7 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
             await cc.assert_removed(self.arm, self.ids, SUB, PRINCIPAL)
         sleep.assert_awaited_once()
         self.arm.request.assert_any_await("GET", self.ids["disk"], cc.DISK_API, missing_ok=True)
+        self.arm.request.assert_any_await("GET", self.ids["nsg"], cc.NETWORK_API, missing_ok=True)
 
     async def test_role_pagination_is_complete_and_cannot_change_authority(self):
         endpoint = f"/subscriptions/{SUB}/providers/Microsoft.Authorization/roleAssignments"
@@ -172,6 +254,10 @@ class ConfigurationTests(unittest.IsolatedAsyncioTestCase):
             "id": self.settings.group,
             "tags": {"tre_id": self.settings.tre_id},
             "location": self.core["location"],
+        }
+        self.records[self.core["vnet"]] = {
+            "id": self.core["vnet"],
+            "properties": {"addressSpace": {"addressPrefixes": ["10.0.0.0/22"]}},
         }
         self.records[self.core["subnet"]] = {"id": self.core["subnet"], "properties": {"addressPrefix": "10.0.1.0/24"}}
         self.records[self.settings.group + "/providers/Microsoft.Network/publicIPAddresses/pip-agw-tre-test"] = {

@@ -146,8 +146,34 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
             AsyncMock(side_effect=[(resource(), []), (resource("updated"), [{"id": OPERATION, "status": "updated"}])]),
         ):
             with self.assertRaisesRegex(AssertionError, "not preserved"):
-                await self.service.change(overview="new text")
+                await self.service.change(properties={"overview": "new text"})
         self.assertEqual(self.client.patch.await_args.kwargs["json"], {"properties": {"overview": "new text"}})
+
+    async def test_cluster_address_spaces_update_is_sent_and_preserved(self):
+        self.own()
+        self.client.patch.return_value = accepted()
+        update = {"overview": "new text", "cluster_address_spaces": ["172.31.254.0/24"]}
+        with patch.object(
+            self.service,
+            "wait_terminal",
+            AsyncMock(
+                side_effect=[
+                    (resource(), []),
+                    (resource("updated", **update), [{"id": OPERATION, "status": "updated"}]),
+                ]
+            ),
+        ):
+            result = await self.service.change(properties=update)
+        self.assertEqual(result["properties"]["cluster_address_spaces"], ["172.31.254.0/24"])
+        self.assertEqual(self.client.patch.await_args.kwargs["json"], {"properties": update})
+
+    async def test_change_needs_one_action_or_a_property_update(self):
+        self.own()
+        for arguments in ({}, {"properties": {}}, {"action": "restart"}, {"action": "stop", "properties": {"a": 1}}):
+            with self.subTest(arguments=arguments), self.assertRaises(ValueError):
+                await self.service.change(**arguments)
+        self.client.patch.assert_not_awaited()
+        self.client.post.assert_not_awaited()
 
     async def test_cleanup_waits_then_guards_then_deletes_and_verifies(self):
         self.own()
