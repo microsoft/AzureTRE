@@ -136,6 +136,15 @@ class CycleCloudBundleContractTests(unittest.TestCase):
             r"for cidr in jsondecode\(base64decode\(var\.cluster_address_spaces\)\)",
         )
 
+    def test_parameter_set_lists_each_porter_parameter(self):
+        # make bundle-check-params compares these names, and make bundle-install needs the check to pass.
+        manifest = yaml.safe_load((BUNDLE / "porter.yaml").read_text())
+        parameter_set = json.loads((BUNDLE / "parameters.json").read_text())
+        self.assertEqual(
+            {p["name"] for p in manifest["parameters"]} - {"arm_use_msi"},
+            {p["name"] for p in parameter_set["parameters"]} - {"arm_use_msi"},
+        )
+
     def test_cluster_ranges_use_their_network_address(self):
         # The schema accepts a range with host bits, so Terraform must not refuse it after the API stored it.
         locals_tf = (BUNDLE / "terraform/locals.tf").read_text()
