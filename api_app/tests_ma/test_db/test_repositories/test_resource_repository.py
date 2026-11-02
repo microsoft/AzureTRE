@@ -12,8 +12,18 @@ from tests_ma.test_api.test_routes.test_resource_helpers import FAKE_CREATE_TIME
 from tests_ma.test_api.conftest import create_test_user
 
 from db.errors import EntityDoesNotExist, UserNotAuthorizedToUseTemplate
-from db.repositories.resources import ResourceRepository
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from db.repositories.resources import (
+    ResourceRepository,
+    mask_sensitive_properties,
+    masked_property_paths,
+    restore_sensitive_values,
+)
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import (
+    CosmosAccessConditionFailedError,
+    CosmosHttpResponseError,
+    CosmosResourceNotFoundError,
+)
 from models.domain.resource import Resource
 from models.domain.resource_template import ResourceTemplate
 from models.domain.user_resource_template import UserResourceTemplate
@@ -367,7 +377,9 @@ async def test_get_resource_dict_by_id_raises_entity_does_not_exist_if_no_resour
 @patch("db.repositories.resources_history.ResourceHistoryRepository.save_item", return_value=AsyncMock())
 @patch("db.repositories.resources.ResourceRepository.validate_patch")
 @patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
-async def test_patch_resource_preserves_property_history(_, __, ___, resource_repo, resource_history_repo):
+async def test_patch_resource_preserves_property_history(
+    _, __, ___, resource_repo, resource_history_repo, basic_resource_template
+):
     """
     Tests that properties are copied into a history array and only certain values in the root are updated
     """
@@ -386,7 +398,14 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.updatedWhen = FAKE_UPDATE_TIMESTAMP
 
     await resource_repo.patch_resource(
-        resource, resource_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE
+        resource,
+        resource_patch,
+        basic_resource_template,
+        etag,
+        None,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE,
     )
     resource_repo.update_item_with_etag.assert_called_once_with(expected_resource, etag)
 
@@ -399,9 +418,489 @@ async def test_patch_resource_preserves_property_history(_, __, ___, resource_re
     expected_resource.user = user.model_dump()
 
     await resource_repo.patch_resource(
-        new_resource, new_patch, None, etag, None, resource_history_repo, user, strings.RESOURCE_ACTION_UPDATE
+        new_resource,
+        new_patch,
+        basic_resource_template,
+        etag,
+        None,
+        resource_history_repo,
+        user,
+        strings.RESOURCE_ACTION_UPDATE,
     )
     resource_repo.update_item_with_etag.assert_called_with(expected_resource, etag)
+
+
+def template_with_secret(template: ResourceTemplate) -> ResourceTemplate:
+    template = template.model_copy(deep=True)
+    template.properties["client_secret"] = {"type": "string", "sensitive": True, "updateable": True}
+    return template
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_stores_a_placeholder_for_sensitive_values(_, __, resource_repo, basic_resource_template):
+    resource_repo.update_item_with_etag = AsyncMock()
+    history_repo = AsyncMock()
+    resource = sample_resource()
+    # A document that an update wrote before the update path masked sensitive values.
+    resource.properties["client_secret"] = "earlier value"
+    resource_patch = ResourcePatch(properties={"client_secret": "new value"})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        template_with_secret(basic_resource_template),
+        "etag",
+        None,
+        history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    stored = resource_repo.update_item_with_etag.await_args.args[0]
+    assert stored.properties["client_secret"] == strings.REDACTED_SENSITIVE_VALUE
+    assert stored.properties["display_name"] == "initial display name"
+    # The caller builds the request message from the returned resource.
+    assert returned.properties["client_secret"] == "new value"
+    history_item = history_repo.create_resource_history_item.await_args.args[0]
+    assert history_item.properties["client_secret"] == strings.REDACTED_SENSITIVE_VALUE
+
+
+def stored_resource(resource_id, template_name, resource_type, properties, **fields):
+    return {
+        "id": resource_id,
+        "templateName": template_name,
+        "templateVersion": "1.0.0",
+        "resourceType": resource_type,
+        "properties": properties,
+        "_etag": "1",
+        **fields,
+    }
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_replaces_only_real_values(resource_repo, basic_resource_template):
+    template = template_with_secret(basic_resource_template)
+    resource_repo._container = AsyncMock()
+    resource_repo.query = AsyncMock(
+        return_value=[
+            stored_resource("ws", "workspace-template", "workspace", {"client_secret": "real", "display_name": "n"}),
+            stored_resource("ws-2", "workspace-template", "workspace", {"client_secret": "REDACTED"}),
+            stored_resource("svc", "service-template", "workspace-service", {}),
+            stored_resource(
+                "ur", "user-template", "user-resource", {"client_secret": "real"}, parentWorkspaceServiceId="svc"
+            ),
+            stored_resource("old", "removed-template", "workspace", {"client_secret": "real"}),
+        ]
+    )
+
+    async def get_template(name, version, resource_type, parent_service_name=None):
+        if name == "removed-template":
+            raise EntityDoesNotExist
+        return template
+
+    secret = {"properties": {"client_secret": {"type": "string", "sensitive": True}}}
+    template_repo = AsyncMock()
+    template_repo.get_template_by_name_and_version.side_effect = get_template
+    template_repo.query.return_value = [
+        {"name": "workspace-template", **secret},
+        {"name": "user-template", **secret},
+        {"name": "removed-template", **secret},
+        {"name": "service-template", "properties": {"display_name": {"type": "string"}}},
+    ]
+    history = {
+        "ws": [
+            {
+                "id": "h-1",
+                "resourceId": "ws",
+                "templateVersion": "0.9.0",
+                "properties": {"client_secret": "older"},
+                "_etag": "1",
+            },
+            {"id": "h-2", "resourceId": "ws", "properties": {"client_secret": "REDACTED"}, "_etag": "1"},
+        ],
+    }
+
+    async def history_query(query, parameters):
+        return history.get(parameters[0]["value"], [])
+
+    history_repo = MagicMock()
+    history_repo.container = AsyncMock()
+    history_repo.query = AsyncMock(side_effect=history_query)
+
+    result = await resource_repo.mask_stored_sensitive_values(template_repo, history_repo)
+
+    assert result == (2, 1)
+    set_secret = [{"op": "set", "path": "/properties/client_secret", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    if_not_modified = {"etag": "1", "match_condition": MatchConditions.IfNotModified}
+    assert [call.kwargs for call in resource_repo.container.patch_item.await_args_list] == [
+        {"item": "ws", "partition_key": "ws", "patch_operations": set_secret, **if_not_modified},
+        {"item": "ur", "partition_key": "ur", "patch_operations": set_secret, **if_not_modified},
+    ]
+    # The history container uses the resource ID as its partition key.
+    history_repo.container.patch_item.assert_awaited_once_with(
+        item="h-1", partition_key="ws", patch_operations=set_secret, **if_not_modified
+    )
+    # A resource of a template without a sensitive property needs no history read.
+    read_ids = [call.kwargs["parameters"][0]["value"] for call in history_repo.query.await_args_list]
+    assert read_ids == ["ws", "ws-2", "ur", "old"]
+    template_repo.get_template_by_name_and_version.assert_any_await(
+        "user-template", "1.0.0", ResourceType.UserResource, "service-template"
+    )
+    template_repo.get_template_by_name_and_version.assert_any_await(
+        "workspace-template", "0.9.0", ResourceType.Workspace, None
+    )
+
+
+SECRET = {"type": "string", "sensitive": True}
+ACCOUNTS = {
+    "accounts": {
+        "type": "array",
+        "updateable": True,
+        "items": {"type": "object", "properties": {"name": {"type": "string"}, "token": SECRET}},
+    }
+}
+
+
+def masking_template(properties, all_of=None, version="1.0.0") -> ResourceTemplate:
+    return ResourceTemplate(
+        id="masking-template-id",
+        name="masking-template",
+        version=version,
+        resourceType=ResourceType.Workspace,
+        current=True,
+        required=[],
+        properties=properties,
+        allOf=all_of,
+    )
+
+
+def test_masked_property_paths_escape_nested_names():
+    template = masking_template({"settings": {"type": "object", "properties": {"a/b": SECRET, "c~d": SECRET}}})
+    properties = {"settings": {"a/b": "real", "c~d": "real", "plain": "x"}}
+
+    assert masked_property_paths(properties, template) == ["/properties/settings/a~1b", "/properties/settings/c~0d"]
+
+
+class FakeContainer:
+    """Apply a patch with an etag only to the document that has this etag, as Cosmos DB does."""
+
+    def __init__(self, *documents):
+        self.documents = {document["id"]: copy.deepcopy(document) for document in documents}
+        self.requests = []
+
+    async def read_item(self, item, partition_key):
+        return copy.deepcopy(self.documents[item])
+
+    async def patch_item(self, item, partition_key, patch_operations, etag=None, match_condition=None):
+        self.requests.append((item, len(patch_operations), etag))
+        document = copy.deepcopy(self.documents[item])
+        if match_condition == MatchConditions.IfNotModified and etag != document["_etag"]:
+            raise CosmosAccessConditionFailedError(status_code=412)
+        for operation in patch_operations:
+            *parents, name = [part.replace("~1", "/").replace("~0", "~") for part in operation["path"].split("/")[1:]]
+            target = document
+            try:
+                for part in parents:
+                    target = target[int(part)] if isinstance(target, list) else target[part]
+                target[int(name) if isinstance(target, list) else name] = operation["value"]
+            except (IndexError, KeyError):
+                raise CosmosHttpResponseError(status_code=400, message=f"The path {operation['path']} does not exist")
+        document["_etag"] = str(int(document["_etag"]) + 1)
+        self.documents[item] = document
+        return copy.deepcopy(document)
+
+
+def migration_template_repo(*templates):
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump() for template in templates]
+    by_version = {template.version: template for template in templates}
+    template_repo.get_template_by_name_and_version.side_effect = lambda name, version, *_: by_version[version]
+    return template_repo
+
+
+@pytest.mark.asyncio
+async def test_the_migration_sends_at_most_ten_operations_with_the_etag_of_each_result(resource_repo):
+    secrets = {f"secret_{index}": SECRET for index in range(11)}
+    snapshot = stored_resource("ws", "masking-template", "workspace", {name: "real" for name in secrets})
+    resource_repo._container = FakeContainer(snapshot)
+    resource_repo.query = AsyncMock(return_value=[snapshot])
+
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(masking_template(secrets)), history_without_items()
+    )
+
+    assert result == (1, 0)
+    # Cosmos DB accepts at most 10 operations in one request. The second request has the etag of the first result.
+    assert resource_repo.container.requests == [("ws", 10, "1"), ("ws", 1, "2")]
+    assert set(resource_repo.container.documents["ws"]["properties"].values()) == {strings.REDACTED_SENSITIVE_VALUE}
+
+
+@pytest.mark.asyncio
+async def test_the_migration_keeps_a_new_value_that_the_new_version_does_not_mark_sensitive(resource_repo):
+    first = masking_template({"token": SECRET})
+    second = masking_template({"token": {"type": "string"}}, version="2.0.0")
+    snapshot = stored_resource("ws", "masking-template", "workspace", {"token": "earlier value"})
+    # After the read of the migration, an update set a new value and a version that does not mark it sensitive.
+    updated = {**snapshot, "templateVersion": "2.0.0", "properties": {"token": "new value"}, "_etag": "2"}
+    resource_repo._container = FakeContainer(updated)
+    resource_repo.query = AsyncMock(return_value=[snapshot])
+
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(first, second), history_without_items()
+    )
+
+    assert result == (0, 0)
+    assert resource_repo.container.documents["ws"]["properties"] == {"token": "new value"}
+
+
+@pytest.mark.asyncio
+async def test_the_migration_computes_the_paths_again_after_a_change_and_continues(resource_repo):
+    accounts = [{"name": "a", "token": "real"}, {"name": "b", "token": "real"}]
+    snapshot = [
+        stored_resource("ws", "masking-template", "workspace", {"accounts": accounts}),
+        stored_resource("ws-2", "masking-template", "workspace", {"accounts": accounts[:1]}),
+    ]
+    # After the read of the migration, an update removed the second account. The path with index 1 is not valid now.
+    updated = {**snapshot[0], "properties": {"accounts": accounts[:1]}, "_etag": "2"}
+    resource_repo._container = FakeContainer(updated, snapshot[1])
+    resource_repo.query = AsyncMock(return_value=snapshot)
+
+    result = await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(masking_template(ACCOUNTS)), history_without_items()
+    )
+
+    assert result == (2, 0)
+    assert resource_repo.container.requests == [("ws", 2, "1"), ("ws", 1, "2"), ("ws-2", 1, "1")]
+    masked = [{"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    documents = resource_repo.container.documents
+    assert [documents[resource_id]["properties"]["accounts"] for resource_id in ("ws", "ws-2")] == [masked] * 2
+
+
+@pytest.mark.asyncio
+async def test_the_migration_continues_if_a_document_changes_at_each_attempt(resource_repo):
+    class BusyContainer(FakeContainer):
+        async def patch_item(self, item, **kwargs):
+            if item == "ws":
+                # Another request changes the document before each patch of the migration.
+                self.documents[item]["_etag"] = str(int(self.documents[item]["_etag"]) + 1)
+            return await super().patch_item(item, **kwargs)
+
+    snapshot = [
+        stored_resource("ws", "masking-template", "workspace", {"token": "real"}),
+        stored_resource("ws-2", "masking-template", "workspace", {"token": "real"}),
+    ]
+    resource_repo._container = BusyContainer(*snapshot)
+    resource_repo.query = AsyncMock(return_value=snapshot)
+
+    with patch("db.repositories.resources.logger") as logger:
+        result = await resource_repo.mask_stored_sensitive_values(
+            migration_template_repo(masking_template({"token": SECRET})), history_without_items()
+        )
+
+    assert result == (1, 0)
+    assert [request[0] for request in resource_repo.container.requests] == ["ws", "ws", "ws", "ws-2"]
+    assert resource_repo.container.documents["ws"]["properties"] == {"token": "real"}
+    assert resource_repo.container.documents["ws-2"]["properties"] == {"token": strings.REDACTED_SENSITIVE_VALUE}
+    logger.warning.assert_called_once()
+
+
+PASSWORD = {"type": "string", "sensitive": True, "updateable": True}
+PASSWORD_RULE = {"properties": {"password": {"type": "string", "pattern": "^.{8,}$"}}}
+IF_MODE_A = {"properties": {"mode": {"const": "a"}}}
+
+
+@pytest.mark.parametrize(
+    "properties, all_of",
+    [
+        ({"password": PASSWORD}, [{"if": IF_MODE_A, "then": PASSWORD_RULE}]),
+        ({"password": PASSWORD}, [{"if": IF_MODE_A, "then": {}, "else": PASSWORD_RULE}]),
+        ({"password": PASSWORD}, [{"anyOf": [PASSWORD_RULE]}]),
+        ({"password": PASSWORD}, [{"oneOf": [PASSWORD_RULE, {}]}]),
+        (
+            {"password": {"type": "string"}},
+            [
+                {"if": IF_MODE_A, "then": {"properties": {"password": PASSWORD}}},
+                {"if": IF_MODE_A, "then": PASSWORD_RULE},
+            ],
+        ),
+    ],
+)
+def test_a_property_stays_sensitive_if_one_of_its_declarations_is_sensitive(properties, all_of):
+    # A later declaration of the same name without the flag must not remove it.
+    masked = mask_sensitive_properties({"password": "real value", "mode": "a"}, masking_template(properties, all_of))
+
+    assert masked == {"password": strings.REDACTED_SENSITIVE_VALUE, "mode": "a"}
+
+
+def history_without_items():
+    history_repo = MagicMock()
+    history_repo.container = AsyncMock()
+    history_repo.query = AsyncMock(return_value=[])
+    return history_repo
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_finds_a_property_that_a_branch_declares_again(resource_repo):
+    template = masking_template({"password": PASSWORD}, [{"if": IF_MODE_A, "then": PASSWORD_RULE}])
+    resource_repo._container = AsyncMock()
+    resource_repo.query = AsyncMock(
+        return_value=[stored_resource("ws", "masking-template", "workspace", {"password": "real"})]
+    )
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump()]
+    template_repo.get_template_by_name_and_version.return_value = template
+
+    assert await resource_repo.mask_stored_sensitive_values(template_repo, history_without_items()) == (1, 0)
+    resource_repo.container.patch_item.assert_awaited_once_with(
+        item="ws",
+        partition_key="ws",
+        patch_operations=[{"op": "set", "path": "/properties/password", "value": strings.REDACTED_SENSITIVE_VALUE}],
+        etag="1",
+        match_condition=MatchConditions.IfNotModified,
+    )
+
+
+def test_the_migration_finds_the_values_that_an_install_or_an_update_masks():
+    template = masking_template({**ACCOUNTS, "settings": {"type": "object", "properties": {"password": SECRET}}})
+    properties = {
+        "accounts": [{"name": "a", "token": "first"}, {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE}],
+        "groups": [[{"token": "nested"}]],
+        "settings": {"password": "real", "name": "token"},
+    }
+
+    assert mask_sensitive_properties(properties, template) == {
+        "accounts": [
+            {"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE},
+            {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE},
+        ],
+        "groups": [[{"token": strings.REDACTED_SENSITIVE_VALUE}]],
+        "settings": {"password": strings.REDACTED_SENSITIVE_VALUE, "name": "token"},
+    }
+    # The migration changes only the values that are not the placeholder yet, and not a whole list.
+    assert masked_property_paths(properties, template) == [
+        "/properties/accounts/0/token",
+        "/properties/groups/0/0/token",
+        "/properties/settings/password",
+    ]
+
+
+@pytest.mark.asyncio
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_stores_a_placeholder_for_sensitive_values_in_array_items(_, __, resource_repo):
+    resource_repo.update_item_with_etag = AsyncMock()
+    history_repo = AsyncMock()
+    resource = sample_resource()
+    resource.properties["accounts"] = [{"name": "a", "token": "earlier value"}]
+    resource_patch = ResourcePatch(properties={"accounts": [{"name": "a", "token": "new value"}]})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        masking_template(ACCOUNTS),
+        "etag",
+        None,
+        history_repo,
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    masked_accounts = [{"name": "a", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    assert resource_repo.update_item_with_etag.await_args.args[0].properties["accounts"] == masked_accounts
+    assert returned.properties["accounts"] == [{"name": "a", "token": "new value"}]
+    assert history_repo.create_resource_history_item.await_args.args[0].properties["accounts"] == masked_accounts
+
+
+@pytest.mark.asyncio
+async def test_mask_stored_sensitive_values_masks_values_in_array_items(resource_repo):
+    template = masking_template(ACCOUNTS)
+    resource_repo._container = AsyncMock()
+    accounts = [{"name": "a", "token": "real"}, {"name": "b", "token": strings.REDACTED_SENSITIVE_VALUE}]
+    resource_repo.query = AsyncMock(
+        return_value=[stored_resource("ws", "masking-template", "workspace", {"accounts": accounts})]
+    )
+    template_repo = AsyncMock()
+    template_repo.query.return_value = [template.model_dump()]
+    template_repo.get_template_by_name_and_version.return_value = template
+    history_repo = history_without_items()
+    history_repo.query.return_value = [
+        {"id": "h-1", "resourceId": "ws", "properties": {"accounts": accounts[:1]}, "_etag": "1"}
+    ]
+
+    assert await resource_repo.mask_stored_sensitive_values(template_repo, history_repo) == (1, 1)
+    set_token = [{"op": "set", "path": "/properties/accounts/0/token", "value": strings.REDACTED_SENSITIVE_VALUE}]
+    if_not_modified = {"etag": "1", "match_condition": MatchConditions.IfNotModified}
+    resource_repo.container.patch_item.assert_awaited_once_with(
+        item="ws", partition_key="ws", patch_operations=set_token, **if_not_modified
+    )
+    history_repo.container.patch_item.assert_awaited_once_with(
+        item="h-1", partition_key="ws", patch_operations=set_token, **if_not_modified
+    )
+
+
+def test_restore_sensitive_values_restores_values_in_array_items():
+    # A pipeline step of the primary resource reads the stored document and gets the real values from memory.
+    placeholder = {"token": strings.REDACTED_SENSITIVE_VALUE}
+    stored = {"accounts": [{"name": "a", **placeholder}, {"name": "b", **placeholder}], "groups": [placeholder]}
+    source = {
+        "accounts": [{"name": "a", "token": "first"}, {"name": "b", "token": "second"}],
+        "groups": [{"token": "x"}, {"token": "y"}],
+    }
+
+    restored = restore_sensitive_values(stored, source)
+
+    assert restored["accounts"] == source["accounts"]
+    # The items of two lists with different lengths can be different items, so the placeholder stays.
+    assert restored["groups"] == [placeholder]
+
+
+def test_restore_sensitive_values_restores_an_explicit_null():
+    # The install stores a placeholder also for a null value. Only a key that the request does not have keeps it.
+    placeholder = strings.REDACTED_SENSITIVE_VALUE
+    stored = {"settings": {"token": placeholder, "password": placeholder}, "accounts": [{"token": placeholder}]}
+    source = {"settings": {"token": None}, "accounts": [{"token": None}]}
+
+    restored = restore_sensitive_values(stored, source)
+
+    assert restored == {"settings": {"token": None, "password": placeholder}, "accounts": [{"token": None}]}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "sensitive_in_target, expected", [(True, strings.REDACTED_SENSITIVE_VALUE), (False, "new value")]
+)
+@patch("db.repositories.resources.ResourceRepository.validate_patch")
+@patch("db.repositories.resources.ResourceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
+async def test_patch_resource_masks_with_the_template_of_the_target_version(
+    _, __, resource_repo, sensitive_in_target, expected
+):
+    client_secret = {"type": "string", "updateable": True}
+    source = masking_template({"client_secret": {**client_secret, "sensitive": not sensitive_in_target}})
+    target = masking_template({"client_secret": {**client_secret, "sensitive": sensitive_in_target}}, version="1.1.0")
+    template_repo = AsyncMock()
+    template_repo.get_template_by_name_and_version.return_value = target
+    resource_repo.update_item_with_etag = AsyncMock()
+    resource = sample_resource()
+    resource.templateVersion = "1.0.0"
+    resource_patch = ResourcePatch(templateVersion="1.1.0", properties={"client_secret": "new value"})
+
+    returned, _ = await resource_repo.patch_resource(
+        resource,
+        resource_patch,
+        source,
+        "etag",
+        template_repo,
+        AsyncMock(),
+        create_test_user(),
+        strings.RESOURCE_ACTION_UPDATE,
+    )
+
+    stored = resource_repo.update_item_with_etag.await_args.args[0]
+    assert stored.templateVersion == "1.1.0"
+    assert stored.properties["client_secret"] == expected
+    assert returned.properties["client_secret"] == "new value"
 
 
 @patch("db.repositories.resources.ResourceTemplateRepository.enrich_template")

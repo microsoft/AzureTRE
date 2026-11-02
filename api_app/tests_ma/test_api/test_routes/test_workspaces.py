@@ -4,6 +4,8 @@ from unittest.mock import AsyncMock
 import uuid
 from pydantic import Field
 import pytest
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 from mock import patch
 
 from fastapi import status
@@ -83,6 +85,23 @@ def disabled_workspace() -> Workspace:
     workspace = sample_workspace(WORKSPACE_ID)
     workspace.isEnabled = False
     return workspace
+
+
+def schema_error_with_a_secret() -> ValidationError:
+    """A schema error of a submitted value. Its message and its text have the value, so the old routes returned it."""
+    try:
+        validate(instance={"vm_size": "secret-value"}, schema={"properties": {"vm_size": {"enum": ["small"]}}})
+    except ValidationError as error:
+        assert "secret-value" in error.message
+        return error
+
+
+def assert_no_submitted_value(response, logger_mock):
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "vm_size" in response.text
+    assert "secret-value" not in response.text
+    assert "secret-value" not in str(logger_mock.mock_calls)
+    logger_mock.exception.assert_not_called()
 
 
 def sample_workspace(workspace_id=WORKSPACE_ID, auth_info: dict = {}) -> Workspace:
@@ -678,6 +697,28 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         assert "Storage name availability check failed. Please try again." in response.text
 
+    @patch("api.routes.workspaces.logger")
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_400_without_the_submitted_values(
+        self, _, mock_create_workspace_item, logger_mock, app, client, workspace_input
+    ):
+        submitted = {"client_secret": "secret-value", "display_name": "name"}
+        try:
+            validate(instance=submitted, schema={"required": ["client_id"]})
+        except ValidationError as error:
+            # The text of a root error has the whole input, so the old route returned and logged the secret.
+            assert "secret-value" in str(error)
+            mock_create_workspace_item.side_effect = error
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "client_id" in response.text
+        assert "secret-value" not in response.text
+        assert "secret-value" not in str(logger_mock.mock_calls)
+        logger_mock.exception.assert_not_called()
+
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
@@ -743,7 +784,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_patches_workspace(
         self, _, __, update_item_mock, ___, ____, _____, _______, app, client
@@ -778,7 +822,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_upgrade_major_version_returns_bad_request(
         self, _, __, update_item_mock, ___, ____, _____, ______, app, client
@@ -852,7 +899,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     )
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
     @patch("api.routes.workspaces.WorkspaceRepository.update_item_with_etag", return_value=sample_workspace())
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspaces_with_downgrade_version_returns_bad_request(
         self, _, __, update_item_mock, ___, ____, _____, ______, app, client
@@ -924,7 +974,10 @@ class TestWorkspaceRoutesThatRequireAdminRights:
     @patch(
         "api.routes.workspaces.WorkspaceRepository.update_item_with_etag", side_effect=CosmosAccessConditionFailedError
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.WorkspaceRepository.get_timestamp", return_value=FAKE_UPDATE_TIMESTAMP)
     async def test_patch_workspace_returns_409_if_bad_etag(
         self, _, __, update_item_mock, ___, ____, _____, app, client
@@ -946,6 +999,23 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         update_item_mock.assert_called_once_with(modified_workspace, etag)
         assert response.status_code == status.HTTP_409_CONFLICT
         assert response.text == strings.ETAG_CONFLICT
+
+    # [PATCH] /workspaces/{workspace_id}
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.WorkspaceRepository.patch_workspace")
+    async def test_patch_workspace_returns_400_without_the_submitted_values(
+        self, patch_workspace_mock, _, logger_mock, app, client
+    ):
+        patch_workspace_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE, workspace_id=WORKSPACE_ID),
+            json={"isEnabled": True},
+            headers={"etag": "some-etag-value"},
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [DELETE] /workspaces/{workspace_id}
     @patch(
@@ -1247,6 +1317,26 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    # [POST] /workspaces/{workspace_id}/workspace-services
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
+    @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    async def test_post_workspace_services_returns_400_without_the_submitted_values(
+        self, create_mock, _, get_workspace_mock, logger_mock, app, client, workspace_service_input
+    ):
+        get_workspace_mock.return_value = sample_workspace(
+            auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
+        )
+        create_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.post(
+            app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID),
+            json=workspace_service_input,
+        )
+
+        assert_no_submitted_value(response, logger_mock)
 
     # [DELETE] /workspaces/{workspace_id}/services/{service_id}
     @patch(
@@ -1637,7 +1727,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         "api.routes.resource_helpers.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
@@ -1997,6 +2090,7 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
             headers={"etag": etag},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "INVALID-DATA" not in response.text
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
@@ -2047,6 +2141,27 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         assert response.text == strings.ETAG_CONFLICT
 
     # [PATCH] /workspaces/{workspace_id}/services/{service_id}
+    @patch("api.routes.workspaces.logger")
+    @patch(
+        "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
+        return_value=sample_workspace_service(),
+    )
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id", return_value=sample_workspace())
+    @patch("api.routes.workspaces.WorkspaceServiceRepository.patch_workspace_service")
+    async def test_patch_workspace_service_returns_400_without_the_submitted_values(
+        self, patch_mock, _, __, logger_mock, app, client
+    ):
+        patch_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.patch(
+            app.url_path_for(strings.API_UPDATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID),
+            json={"isEnabled": True},
+            headers={"etag": "some-etag-value"},
+        )
+
+        assert_no_submitted_value(response, logger_mock)
+
+    # [PATCH] /workspaces/{workspace_id}/services/{service_id}
     @pytest.mark.parametrize(
         "workspace_id, workspace_service_id",
         [
@@ -2081,7 +2196,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
         "api.routes.workspaces.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=WORKSPACE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",
         return_value=sample_workspace_service(),
@@ -2503,6 +2621,26 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
+    @patch("api.routes.workspaces.logger")
+    @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
+    @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
+    @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
+    async def test_post_user_resources_returns_400_without_the_submitted_values(
+        self, create_mock, _, get_workspace_mock, logger_mock, app, client, sample_user_resource_input_data
+    ):
+        get_workspace_mock.return_value = sample_workspace(
+            auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
+        )
+        create_mock.side_effect = schema_error_with_a_secret()
+
+        response = await client.post(
+            app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID),
+            json=sample_user_resource_input_data,
+        )
+
+        assert_no_submitted_value(response, logger_mock)
+
+    # [POST] /workspaces/{workspace_id}/workspace-services/{service_id}/user-resources
     @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version")
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
@@ -2824,7 +2962,10 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
         "api.routes.resource_helpers.send_resource_request_message",
         return_value=sample_resource_operation(resource_id=USER_RESOURCE_ID, operation_id=OPERATION_ID),
     )
-    @patch("api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version", return_value=None)
+    @patch(
+        "api.routes.workspaces.ResourceTemplateRepository.get_template_by_name_and_version",
+        return_value=sample_resource_template(),
+    )
     @patch("api.routes.workspaces.validate_user_has_valid_role_for_user_resource")
     @patch(
         "api.dependencies.workspaces.WorkspaceServiceRepository.get_workspace_service_by_id",

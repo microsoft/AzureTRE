@@ -1,5 +1,7 @@
 import time
 import pytest
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 from mock import patch
 from fastapi import status
 from azure.core.exceptions import HttpResponseError
@@ -775,6 +777,39 @@ class TestAirlockRoutesThatRequireAirlockManagerRights:
             )
         )
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    @patch("api.routes.airlock.logger")
+    @patch("api.routes.airlock.create_review_vm")
+    @patch(
+        "services.airlock.AirlockRequestRepository.read_item_by_id",
+        return_value=sample_airlock_request_object(status=AirlockRequestStatus.InReview),
+    )
+    @patch(
+        "api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id", return_value=sample_workspace()
+    )
+    async def test_post_create_review_user_resource_hides_the_input_of_a_schema_error(
+        self, _, __, create_review_vm_mock, logger_mock, app, client
+    ):
+        try:
+            validate(instance={"airlock_request_sas_url": "https://sas-value"}, schema={"required": ["os_image"]})
+        except ValidationError as error:
+            # The review VM input has the SAS URL of the request, and the text of a root error has the whole input.
+            assert "sas-value" in str(error)
+            create_review_vm_mock.side_effect = error
+
+        response = await client.post(
+            app.url_path_for(
+                strings.API_CREATE_AIRLOCK_REVIEW_USER_RESOURCE,
+                workspace_id=WORKSPACE_ID,
+                airlock_request_id=AIRLOCK_REQUEST_ID,
+            )
+        )
+
+        assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        assert "os_image" in response.text
+        assert "sas-value" not in response.text
+        assert "sas-value" not in str(logger_mock.mock_calls)
+        logger_mock.exception.assert_not_called()
 
     @patch(
         "services.airlock.AirlockRequestRepository.read_item_by_id",

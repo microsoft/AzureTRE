@@ -29,6 +29,7 @@ from resources import strings
 from .workspaces import save_and_deploy_resource, construct_location_header
 from azure.cosmos.exceptions import CosmosAccessConditionFailedError
 from .resource_helpers import (
+    validation_error_detail,
     enrich_resource_with_available_upgrades,
     enrich_resources_with_available_upgrades,
     send_custom_action_message,
@@ -106,7 +107,11 @@ async def create_shared_service(
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(
             shared_service_input, user.roles
         )
-    except (ValidationError, ValueError) as e:
+    except ValidationError as e:
+        # Do not log or return str(e). It contains the submitted properties, which can be secrets.
+        logger.warning(f"Shared service input does not match the template: {validation_error_detail(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
+    except ValueError as e:
         logger.exception("Failed create shared service model instance")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except DuplicateEntity as e:
@@ -174,7 +179,7 @@ async def patch_shared_service(
     except CosmosAccessConditionFailedError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=strings.ETAG_CONFLICT)
     except ValidationError as v:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=v.message)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(v))
     except (MajorVersionUpdateDenied, TargetTemplateVersionDoesNotExist, VersionDowngradeDenied) as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

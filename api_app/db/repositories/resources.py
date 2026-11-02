@@ -1,10 +1,11 @@
 import copy
 import semantic_version
 from datetime import datetime, UTC
-from typing import Optional, Tuple, List
+from typing import Any, Dict, Optional, Tuple, List
 
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from resources.strings import RESOURCE_ACTION_INSTALL
+from azure.core import MatchConditions
+from azure.cosmos.exceptions import CosmosAccessConditionFailedError, CosmosResourceNotFoundError
+from resources.strings import RESOURCE_ACTION_INSTALL, REDACTED_SENSITIVE_VALUE
 from core import config
 from db.errors import (
     VersionDowngradeDenied,
@@ -28,12 +29,106 @@ from models.domain.workspace import Workspace
 from models.domain.workspace_service import WorkspaceService
 from models.schemas.resource import ResourcePatch
 from pydantic import UUID4, TypeAdapter
+from services.logging import logger
 
 
 # Keep Draft 7 keyword semantics while enforcing TRE's restriction on extra fields.
 Draft7TREValidator = extend(
     Draft7Validator, {"unevaluatedProperties": Draft202012Validator.VALIDATORS["unevaluatedProperties"]}
 )
+
+
+def sensitive_property_names(template: dict) -> set:
+    """Return the name of each property that has sensitive set to true in one or more of its declarations.
+
+    The template can declare a name more than once, for example at the top level and in an allOf, anyOf, oneOf,
+    then or else branch. A declaration without the flag does not remove it. Nested objects and array items count,
+    but if conditions and the pipeline do not.
+    """
+    names = set()
+
+    def collect(template_fragment: dict):
+        for key, value in template_fragment.items():
+            if key in ("pipeline", "if"):
+                continue
+            if key == "properties" and isinstance(value, dict):
+                names.update(
+                    name for name, prop in value.items() if isinstance(prop, dict) and prop.get("sensitive") is True
+                )
+            if isinstance(value, dict):
+                collect(value)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        collect(item)
+
+    collect(template)
+    return names
+
+
+def sensitive_values(properties: Dict[str, Any], template: ResourceTemplate) -> List[Tuple[tuple, Any]]:
+    """Return the path and the value of each sensitive value in properties.
+
+    A path is a tuple of keys and list indexes. A value is sensitive if its key is a sensitive property name of the
+    template, also in a nested object or in an array item. The install, the update and the migration all use this
+    function, so they mask the same values.
+    """
+    names = sensitive_property_names(template.model_dump())
+    found = []
+
+    def collect(value: Any, path: tuple):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in names:
+                    found.append((path + (key,), item))
+                else:
+                    collect(item, path + (key,))
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                collect(item, path + (index,))
+
+    collect(properties, ())
+    return found
+
+
+def mask_sensitive_properties(properties: Dict[str, Any], template: ResourceTemplate) -> dict:
+    masked = copy.deepcopy(properties)
+    for path, _ in sensitive_values(masked, template):
+        parent = masked
+        for part in path[:-1]:
+            parent = parent[part]
+        parent[path[-1]] = REDACTED_SENSITIVE_VALUE
+    return masked
+
+
+def restore_sensitive_values(properties: dict, source: dict) -> dict:
+    """Return a copy of properties with the real value from source in place of each placeholder.
+
+    Two lists of the same length pair their items by index. A list with a different length keeps its placeholders,
+    because its items can be different items. A null in source is a real value. Only a key that source does not have
+    keeps its placeholder.
+    """
+    missing = object()
+
+    def restore(value: Any, original: Any) -> Any:
+        if isinstance(value, dict) and isinstance(original, dict):
+            return {key: restore(item, original.get(key, missing)) for key, item in value.items()}
+        if isinstance(value, list) and isinstance(original, list) and len(value) == len(original):
+            return [restore(item, original_item) for item, original_item in zip(value, original)]
+        if value == REDACTED_SENSITIVE_VALUE and original is not missing and original != REDACTED_SENSITIVE_VALUE:
+            return copy.deepcopy(original)
+        return copy.deepcopy(value)
+
+    return restore(properties, source)
+
+
+def masked_property_paths(properties: dict, template: ResourceTemplate) -> List[str]:
+    """Return a JSON pointer for each sensitive value in properties that is not the placeholder."""
+    return [
+        "".join("/" + str(part).replace("~", "~0").replace("/", "~1") for part in ("properties",) + path)
+        for path, value in sensitive_values(properties, template)
+        if value != REDACTED_SENSITIVE_VALUE
+    ]
 
 
 class ResourceRepository(BaseRepository):
@@ -198,7 +293,10 @@ class ResourceRepository(BaseRepository):
         resource_action: str,
         force_version_update: bool = False,
     ) -> Tuple[Resource, ResourceTemplate]:
-        await resource_history_repo.create_resource_history_item(resource)
+        # A document from before the masking of updates can still have real sensitive values.
+        history_resource = copy.deepcopy(resource)
+        history_resource.properties = mask_sensitive_properties(resource.properties, resource_template)
+        await resource_history_repo.create_resource_history_item(history_resource)
         # now update the resource props
         resource.resourceVersion = resource.resourceVersion + 1
         resource.user = user.model_dump() if hasattr(user, "model_dump") else user
@@ -207,8 +305,9 @@ class ResourceRepository(BaseRepository):
         if resource_patch.isEnabled is not None:
             resource.isEnabled = resource_patch.isEnabled
 
+        target_template = resource_template
         if resource_patch.templateVersion is not None:
-            await self.validate_template_version_patch(
+            target_template = await self.validate_template_version_patch(
                 resource, resource_patch, resource_template_repo, resource_template, force_version_update
             )
             resource.templateVersion = resource_patch.templateVersion
@@ -219,8 +318,101 @@ class ResourceRepository(BaseRepository):
             # if we're here then we're valid - update the props + persist
             resource.properties.update(resource_patch.properties)
 
-        await self.update_item_with_etag(resource, etag)
+        # Cosmos DB keeps sensitive values as a placeholder, as at the install. The returned resource keeps the
+        # real values, because the caller builds the request message from it. The stored document has the target
+        # version, so the template of that version decides which values are sensitive.
+        masked_resource = copy.deepcopy(resource)
+        masked_resource.properties = mask_sensitive_properties(resource.properties, target_template)
+        await self.update_item_with_etag(masked_resource, etag)
         return resource, resource_template
+
+    async def mask_stored_sensitive_values(
+        self, resource_template_repo: ResourceTemplateRepository, resource_history_repo: ResourceHistoryRepository
+    ) -> Tuple[int, int]:
+        """Replace each real sensitive value that an earlier update stored with the placeholder.
+
+        Returns the number of resource documents and history items that changed. A second run changes nothing.
+        """
+        # Only resources of a template with a sensitive property, in any of its versions, can have such a value.
+        names_with_sensitive_values = {
+            template["name"]
+            for template in await resource_template_repo.query(query="SELECT * FROM c")
+            if sensitive_property_names(template)
+        }
+        resources = {resource["id"]: resource for resource in await self.query(query="SELECT * FROM c")}
+        templates = {}
+
+        async def template_for(resource: dict, version: str) -> Optional[ResourceTemplate]:
+            resource_type = ResourceType(resource["resourceType"])
+            parent_service_name = None
+            if resource_type == ResourceType.UserResource:
+                parent = resources.get(resource.get("parentWorkspaceServiceId"))
+                if parent is None:
+                    logger.warning(f"No parent workspace service for user resource {resource['id']}")
+                    return None
+                parent_service_name = parent["templateName"]
+            key = (resource["templateName"], version, resource_type, parent_service_name)
+            if key not in templates:
+                try:
+                    templates[key] = await resource_template_repo.get_template_by_name_and_version(*key)
+                except EntityDoesNotExist:
+                    logger.warning(
+                        f"No template {resource['templateName']} {version} to mask resource {resource['id']}"
+                    )
+                    templates[key] = None
+            return templates[key]
+
+        async def mask(resource: dict, item: dict, container, partition_key: str) -> bool:
+            """Replace each real sensitive value of item, which is the resource or one of its history items.
+
+            Each patch request has the etag of the document that gave its paths. If another request changed the
+            document after that read, Cosmos DB refuses the patch. Then the migration reads the document again, gets
+            the template of its version and finds the paths again. After 3 refusals, the next run masks the document.
+            """
+            changed = False
+            for _ in range(3):
+                template = await template_for(resource, item.get("templateVersion") or resource["templateVersion"])
+                if template is None:
+                    return changed
+                paths = masked_property_paths(item.get("properties") or {}, template)
+                try:
+                    # Cosmos DB accepts at most 10 operations in one patch request. The patched document has the etag
+                    # for the next request.
+                    for start in range(0, len(paths), 10):
+                        item = await container.patch_item(
+                            item=item["id"],
+                            partition_key=partition_key,
+                            patch_operations=[
+                                {"op": "set", "path": path, "value": REDACTED_SENSITIVE_VALUE}
+                                for path in paths[start : start + 10]
+                            ],
+                            etag=item["_etag"],
+                            match_condition=MatchConditions.IfNotModified,
+                        )
+                        changed = True
+                    return changed
+                except CosmosAccessConditionFailedError:
+                    item = await container.read_item(item=item["id"], partition_key=partition_key)
+            logger.warning(
+                f"Document {item['id']} changed during each attempt to mask it. The next migration masks it."
+            )
+            return changed
+
+        changed_resources = 0
+        changed_history_items = 0
+        for resource in resources.values():
+            if resource["templateName"] not in names_with_sensitive_values:
+                continue
+            changed_resources += await mask(resource, resource, self.container, resource["id"])
+
+            history_items = await resource_history_repo.query(
+                query="SELECT * FROM c WHERE c.resourceId = @resourceId",
+                parameters=[{"name": "@resourceId", "value": resource["id"]}],
+            )
+            for item in history_items:
+                changed_history_items += await mask(resource, item, resource_history_repo.container, item["resourceId"])
+
+        return changed_resources, changed_history_items
 
     async def get_resource_dependency_list(self, resource: Resource) -> List:
         # Get the parent resource path and id
@@ -251,7 +443,8 @@ class ResourceRepository(BaseRepository):
         resource_template_repo: ResourceTemplateRepository,
         resource_template: ResourceTemplate,
         force_version_update: bool = False,
-    ):
+    ) -> ResourceTemplate:
+        """Return the template of the target version."""
         parent_service_template_name = None
         if resource.resourceType == ResourceType.UserResource:
             try:
@@ -282,7 +475,7 @@ class ResourceRepository(BaseRepository):
 
         # validate if target template with desired version is registered
         try:
-            await resource_template_repo.get_template_by_name_and_version(
+            return await resource_template_repo.get_template_by_name_and_version(
                 resource.templateName,
                 resource_patch.templateVersion,
                 resource_template.resourceType,

@@ -37,7 +37,9 @@ def substitute_properties(
                 if prop.arraySubstitutionAction == "overwrite":
                     existing_arr = [val]
 
-                if prop.arraySubstitutionAction == "append":
+                # The API can prepare a step again, for example at the resend of a first step after an API stop. So
+                # "append" does not add an item that the array already has.
+                if prop.arraySubstitutionAction == "append" and val not in existing_arr:
                     existing_arr.append(val)
 
                 if prop.arraySubstitutionAction == "remove":
