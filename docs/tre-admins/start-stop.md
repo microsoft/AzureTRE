@@ -38,6 +38,8 @@ If you create a new Automation account, you will have the required modules prein
 
 Finally, schedule it to run when it makes sense for you.
 
+If you have multiple Azure TRE instances deployed, you can use the tag `AutoStop : false` on the core TRE resource group if want to exclude that instance from the Stop automation. TRE resource groups without the tag will take part in the automation.
+
 ### Stop Runbook Script
 
 ```powershell
@@ -132,7 +134,9 @@ foreach ($Group in $ResourceGroups) {
 
 ### Automating `start`
 
-To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, Virtual Machines, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below:
+To restart the TRE core services (Firewall, Application Gateway(s), Virtual Machine Scale Sets, Virtual Machines, and MySQL), you can use `make tre-start`. Depending on your workflow, you might not be able to easily execute the `make` target. Alternatively, you can create a second Runbook and execute it manually. The PowerShell code to start TRE core services is below.
+
+If you have multiple Azure TRE instances deployed, you can use the tag `AutoStart : false` on the core TRE resource group if want to exclude that instance from the Start automation. TRE resource groups without the tag will take part in the automation.
 
 ```powershell
 try {
