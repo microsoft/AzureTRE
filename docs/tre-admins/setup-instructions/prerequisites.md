@@ -17,6 +17,9 @@ The Azure TRE solution contains a [development container](https://code.visualstu
 The files for the dev container are located in `/.devcontainer/` folder.
 
 !!! tip
+    If you are connected to the Internet through an SSL Proxy, you can drop your trusted root CA certificates into the `/.devcontainer/trusted_ca` folder. The dev container will automatically include the certificates when it is built.
+
+!!! tip
     An alternative of running the development container locally is to use [GitHub Codespaces](https://docs.github.com/en/codespaces).
 
 !!! warning
