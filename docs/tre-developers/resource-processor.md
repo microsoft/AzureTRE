@@ -150,7 +150,7 @@ The resource processor now needs the management storage account for each step. I
 
 For local debugging, your identity needs the Storage Blob Data Contributor role on the management storage account.
 
-To test a lost session lock, add the key `"test_skip_session_lock_renewal": "true"` to the `RP_BUNDLE_VALUES` JSON object and deploy the core. Remove the key after the test.
+To test a lost session lock, add the key `"test_skip_session_lock_renewal": "true"` to the `RP_BUNDLE_VALUES` JSON object and deploy the core. Remove the key after the test. While the key is on, the resource processor logs a warning at start-up.
 While Porter runs, the resource processor then does not renew the session lock, so Service Bus gives a step that takes more than 5 minutes to another worker.
 Do not use this setting in production.
 

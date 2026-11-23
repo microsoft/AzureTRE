@@ -97,6 +97,18 @@ async def test_set_up_config(mock_get_config):
     }
 
 
+@pytest.mark.parametrize("skip_renewal", [False, True])
+@patch("vmss_porter.runner.logger")
+@patch("vmss_porter.runner.get_config")
+def test_set_up_config_warns_when_the_session_lock_test_setting_is_on(mock_get_config, mock_logger, skip_renewal):
+    mock_get_config.return_value = {"test_skip_session_lock_renewal": skip_renewal}
+
+    set_up_config()
+
+    warnings = [call.args[0] for call in mock_logger.warning.call_args_list]
+    assert any("test_skip_session_lock_renewal is on" in warning for warning in warnings) is skip_renewal
+
+
 async def setup_service_bus_client_and_credential(mock_service_bus_client, mock_default_credential, msi_id):
     mock_credential = AsyncMock()
     mock_default_credential.return_value.__aenter__ = AsyncMock(return_value=mock_credential)

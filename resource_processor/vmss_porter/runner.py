@@ -83,10 +83,16 @@ def validate_resource_request(message: object) -> None:
 def set_up_config() -> Optional[dict]:
     try:
         config = get_config()
-        return config
     except KeyError as e:
         logger.error(f"Environment variable {e} is not set correctly...Exiting")
         sys.exit(1)
+    if config.get("test_skip_session_lock_renewal"):
+        logger.warning(
+            "The test setting test_skip_session_lock_renewal is on. While Porter runs, the resource processor does "
+            "not renew the session lock, so Service Bus can give a message to a second worker. Do not use it in "
+            "production. Remove it from RP_BUNDLE_VALUES after the test."
+        )
+    return config
 
 
 @asynccontextmanager
