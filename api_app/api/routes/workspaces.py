@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Path, status, Res
 from pydantic import UUID4
 
 from jsonschema.exceptions import ValidationError
+from pydantic import ValidationError as ModelValidationError
 
 from api.helpers import get_repository
 from api.dependencies.operations import get_operation_by_id_from_path
@@ -187,7 +188,7 @@ async def create_workspace(
         )
         # Validate the resolved (template-derived) airlock version rather than the raw request.
         ensure_workspace_airlock_version_supported(workspace.properties, default_version=1)
-    except ValidationError as e:
+    except (ValidationError, ModelValidationError) as e:
         # Do not log or return str(e). It contains the submitted properties, which can be secrets.
         logger.warning(f"Workspace input does not match the template: {validation_error_detail(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
@@ -539,7 +540,7 @@ async def create_workspace_service(
         workspace_service, resource_template = await workspace_service_repo.create_workspace_service_item(
             workspace_service_input, workspace.id, user.roles
         )
-    except ValidationError as e:
+    except (ValidationError, ModelValidationError) as e:
         # Do not log or return str(e). It contains the submitted properties, which can be secrets.
         logger.warning(f"Workspace service input does not match the template: {validation_error_detail(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))
@@ -862,7 +863,7 @@ async def create_user_resource(
             user.roles,
             owner_id,
         )
-    except ValidationError as e:
+    except (ValidationError, ModelValidationError) as e:
         # Do not log or return str(e). It contains the submitted properties, which can be secrets.
         logger.warning(f"User resource input does not match the template: {validation_error_detail(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))

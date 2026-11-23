@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jsonschema.exceptions import ValidationError
+from pydantic import ValidationError as ModelValidationError
 
 from db.repositories.operations import OperationRepository
 from db.errors import (
@@ -107,7 +108,7 @@ async def create_shared_service(
         shared_service, resource_template = await shared_services_repo.create_shared_service_item(
             shared_service_input, user.roles
         )
-    except ValidationError as e:
+    except (ValidationError, ModelValidationError) as e:
         # Do not log or return str(e). It contains the submitted properties, which can be secrets.
         logger.warning(f"Shared service input does not match the template: {validation_error_detail(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=validation_error_detail(e))

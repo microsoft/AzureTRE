@@ -13,7 +13,7 @@ from db.repositories.resources import ResourceRepository, mask_sensitive_propert
 from db.repositories.resources_history import ResourceHistoryRepository
 from models.domain.resource_template import ResourceTemplate
 from models.domain.authentication import User
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError as ModelValidationError
 
 from db.errors import DuplicateEntity, EntityDoesNotExist
 from db.repositories.operations import OperationRepository
@@ -133,11 +133,14 @@ NAME_ONLY_VALIDATORS = {"required", "additionalProperties", "unevaluatedProperti
 SCHEMA_LIST_VALIDATORS = {"allOf", "anyOf", "oneOf", "not", "if", "then", "else"}
 
 
-def validation_error_detail(error: ValidationError) -> str:
-    """Describe a schema error without the submitted values, because a value can be a secret.
+def validation_error_detail(error: ValidationError | ModelValidationError) -> str:
+    """Describe a schema error or a model error without the submitted values, because a value can be a secret.
 
-    str(error) can contain the whole input, and error.message can contain the value that failed.
+    str(error) can contain the whole input, and error.message can contain the value that failed. A Pydantic error is
+    also a ValueError, and its text has the input value of each error.
     """
+    if isinstance(error, ModelValidationError):
+        return model_error_detail(error)
     location = "/".join(str(part) for part in error.absolute_path) or "properties"
     if error.validator is None:
         # A false subschema allows no value. Its message repeats the submitted value.
@@ -151,6 +154,21 @@ def validation_error_detail(error: ValidationError) -> str:
     if len(rule) > 200:
         rule = rule[:200] + "..."
     return f"'{location}' does not match the '{error.validator}' rule of the template: {rule}"
+
+
+def model_error_detail(error: ModelValidationError) -> str:
+    """Describe each error of a Pydantic model with its location and message, without the input value.
+
+    The message of a custom validator can contain the value, so such an error gives only its location.
+    """
+    details = []
+    for item in error.errors(include_url=False, include_context=False, include_input=False):
+        location = "/".join(str(part) for part in item["loc"]) or "properties"
+        if item["type"] in ("value_error", "assertion_error"):
+            details.append(f"'{location}' is not valid")
+        else:
+            details.append(f"'{location}': {item['msg']}")
+    return ". ".join(details)
 
 
 def construct_location_header(operation: Operation) -> str:

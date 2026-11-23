@@ -18,6 +18,7 @@ from api.routes.resource_helpers import (
 )
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError as ModelValidationError, field_validator
 from db.repositories.resources_history import ResourceHistoryRepository
 from tests_ma.test_api.conftest import create_test_user
 from resources import strings
@@ -457,3 +458,46 @@ def test_validation_error_detail_has_no_submitted_value(instance, schema, expect
 
 def test_validation_error_detail_keeps_the_message_of_an_api_error():
     assert validation_error_detail(ValidationError("Version 2.0.0 is not valid")) == "Version 2.0.0 is not valid"
+
+
+class ModelWithAValidator(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def name_is_short(cls, value):
+        raise ValueError(f"{value} is too long")
+
+
+def model_error(model, value) -> ModelValidationError:
+    try:
+        TypeAdapter(model).validate_python(value)
+    except ModelValidationError as error:
+        # This is the reason for the helper: the Pydantic text has the submitted values.
+        assert "secret-value" in str(error)
+        return error
+    raise AssertionError("The value matches the model")
+
+
+@pytest.mark.parametrize(
+    "model, value, expected",
+    [
+        (
+            dict[str, int],
+            {"vm_size": "secret-value"},
+            "'vm_size': Input should be a valid integer, unable to parse string as an integer",
+        ),
+        (ModelWithAValidator, {"name": "secret-value"}, "'name' is not valid"),
+        (
+            dict[str, int],
+            {"a": "secret-value", "b": "secret-value"},
+            "'a': Input should be a valid integer, unable to parse string as an integer. "
+            "'b': Input should be a valid integer, unable to parse string as an integer",
+        ),
+    ],
+)
+def test_validation_error_detail_of_a_model_error_has_no_submitted_value(model, value, expected):
+    detail = validation_error_detail(model_error(model, value))
+
+    assert detail == expected
+    assert "secret-value" not in detail

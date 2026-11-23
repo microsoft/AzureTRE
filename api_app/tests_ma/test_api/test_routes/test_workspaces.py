@@ -2,7 +2,7 @@ import random
 import threading
 from unittest.mock import AsyncMock
 import uuid
-from pydantic import Field
+from pydantic import Field, TypeAdapter, ValidationError as ModelValidationError
 import pytest
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -93,6 +93,16 @@ def schema_error_with_a_secret() -> ValidationError:
         validate(instance={"vm_size": "secret-value"}, schema={"properties": {"vm_size": {"enum": ["small"]}}})
     except ValidationError as error:
         assert "secret-value" in error.message
+        return error
+
+
+def model_error_with_a_secret() -> ModelValidationError:
+    """A Pydantic error of a submitted value. It is a ValueError and its text has the value, so the old routes returned it."""
+    try:
+        TypeAdapter(dict[str, int]).validate_python({"vm_size": "secret-value"})
+    except ModelValidationError as error:
+        assert isinstance(error, ValueError)
+        assert "secret-value" in str(error)
         return error
 
 
@@ -719,6 +729,18 @@ class TestWorkspaceRoutesThatRequireAdminRights:
         assert "secret-value" not in str(logger_mock.mock_calls)
         logger_mock.exception.assert_not_called()
 
+    @patch("api.routes.workspaces.logger")
+    @patch("api.routes.workspaces.WorkspaceRepository.create_workspace_item")
+    @patch("api.routes.workspaces.extract_auth_information")
+    async def test_post_workspaces_returns_400_without_the_submitted_values_of_a_model_error(
+        self, _, mock_create_workspace_item, logger_mock, app, client, workspace_input
+    ):
+        mock_create_workspace_item.side_effect = model_error_with_a_secret()
+
+        response = await client.post(app.url_path_for(strings.API_CREATE_WORKSPACE), json=workspace_input)
+
+        assert_no_submitted_value(response, logger_mock)
+
     # [PATCH] /workspaces/{workspace_id}
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.WorkspaceRepository.patch_workspace", return_value=None)
@@ -1323,13 +1345,14 @@ class TestWorkspaceServiceRoutesThatRequireOwnerRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_workspace_by_id")
     @patch("api.routes.workspaces.OperationRepository.resource_has_deployed_operation", return_value=True)
     @patch("api.routes.workspaces.WorkspaceServiceRepository.create_workspace_service_item")
+    @pytest.mark.parametrize("error_with_a_secret", [schema_error_with_a_secret, model_error_with_a_secret])
     async def test_post_workspace_services_returns_400_without_the_submitted_values(
-        self, create_mock, _, get_workspace_mock, logger_mock, app, client, workspace_service_input
+        self, create_mock, _, get_workspace_mock, logger_mock, error_with_a_secret, app, client, workspace_service_input
     ):
         get_workspace_mock.return_value = sample_workspace(
             auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
         )
-        create_mock.side_effect = schema_error_with_a_secret()
+        create_mock.side_effect = error_with_a_secret()
 
         response = await client.post(
             app.url_path_for(strings.API_CREATE_WORKSPACE_SERVICE, workspace_id=WORKSPACE_ID),
@@ -2625,13 +2648,22 @@ class TestWorkspaceServiceRoutesThatRequireOwnerOrResearcherRights:
     @patch("api.dependencies.workspaces.WorkspaceRepository.get_deployed_workspace_by_id")
     @patch("api.dependencies.workspaces.WorkspaceServiceRepository.get_deployed_workspace_service_by_id")
     @patch("api.routes.workspaces.UserResourceRepository.create_user_resource_item")
+    @pytest.mark.parametrize("error_with_a_secret", [schema_error_with_a_secret, model_error_with_a_secret])
     async def test_post_user_resources_returns_400_without_the_submitted_values(
-        self, create_mock, _, get_workspace_mock, logger_mock, app, client, sample_user_resource_input_data
+        self,
+        create_mock,
+        _,
+        get_workspace_mock,
+        logger_mock,
+        error_with_a_secret,
+        app,
+        client,
+        sample_user_resource_input_data,
     ):
         get_workspace_mock.return_value = sample_workspace(
             auth_info={"sp_id": "ab123", "roles": {"WorkspaceOwner": "ab124", "WorkspaceResearcher": "ab125"}}
         )
-        create_mock.side_effect = schema_error_with_a_secret()
+        create_mock.side_effect = error_with_a_secret()
 
         response = await client.post(
             app.url_path_for(strings.API_CREATE_USER_RESOURCE, workspace_id=WORKSPACE_ID, service_id=SERVICE_ID),

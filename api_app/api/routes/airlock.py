@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status as status_code, Response
 
 from jsonschema.exceptions import ValidationError
+from pydantic import ValidationError as ModelValidationError
 from api.helpers import get_repository
 from db.repositories.resources_history import ResourceHistoryRepository
 from db.repositories.user_resources import UserResourceRepository
@@ -276,7 +277,7 @@ async def create_review_user_resource(
             detail=f"Failed to retrieve Airlock Review configuration for workspace {workspace.id}.\
                             Please ask your TRE administrator to check the configuration. Details: {str(e)}",
         )
-    except ValidationError as e:
+    except (ValidationError, ModelValidationError) as e:
         # Do not log or return str(e). It contains the input of the review VM, with the SAS URL of the request.
         logger.warning(f"The review VM input does not match the template: {validation_error_detail(e)}")
         raise HTTPException(

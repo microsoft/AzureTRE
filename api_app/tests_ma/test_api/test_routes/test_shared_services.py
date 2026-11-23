@@ -16,6 +16,7 @@ from .test_workspaces import (
     OPERATION_ID,
     assert_no_submitted_value,
     sample_resource_operation,
+    model_error_with_a_secret,
     schema_error_with_a_secret,
 )
 
@@ -231,10 +232,11 @@ class TestSharedServiceRoutesThatRequireAdminRights:
     # [POST] /shared-services
     @patch("api.routes.shared_services.logger")
     @patch("api.routes.shared_services.SharedServiceRepository.create_shared_service_item")
+    @pytest.mark.parametrize("error_with_a_secret", [schema_error_with_a_secret, model_error_with_a_secret])
     async def test_post_shared_services_returns_400_without_the_submitted_values(
-        self, create_mock, logger_mock, app, client, shared_service_input
+        self, create_mock, logger_mock, error_with_a_secret, app, client, shared_service_input
     ):
-        create_mock.side_effect = schema_error_with_a_secret()
+        create_mock.side_effect = error_with_a_secret()
 
         response = await client.post(app.url_path_for(strings.API_CREATE_SHARED_SERVICE), json=shared_service_input)
 
