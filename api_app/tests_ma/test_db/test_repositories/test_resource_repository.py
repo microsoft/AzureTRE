@@ -909,9 +909,15 @@ TOKEN_OBJECT = {"type": "object", "properties": {"label": {"type": "string"}, "t
             {"name": "n", "token": "real"},
             {"name": "n", "token": R},
         ),
-        # A path cannot name the values of these keywords, so the whole value is masked.
-        ({"type": "object", "properties": NAME, "unevaluatedProperties": SECRET}, {"name": "n", "a": "real"}, R),
-        ({"type": "array", "contains": SECRET}, ["x", "real"], R),
+        # unevaluatedProperties and unevaluatedItems use the same rule as additionalProperties and items.
+        (
+            {"type": "object", "properties": NAME, "unevaluatedProperties": SECRET},
+            {"name": "n", "a": "real"},
+            {"name": "n", "a": R},
+        ),
+        ({"type": "array", "prefixItems": [{"type": "string"}], "unevaluatedItems": SECRET}, ["x", "real"], ["x", R]),
+        # A path cannot name the item that contains describes, so each item is masked.
+        ({"type": "array", "contains": SECRET}, ["x", "real"], [R, R]),
     ],
 )
 def test_each_schema_keyword_that_describes_a_value_can_declare_it_as_sensitive(declaration, value, masked):
@@ -920,6 +926,32 @@ def test_each_schema_keyword_that_describes_a_value_can_declare_it_as_sensitive(
     assert mask_sensitive_properties({"setting": value}, template) == {"setting": masked}
     # The migration selects the templates to read with the same function.
     assert sensitive_schema(template.model_dump())
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "all_of, masked",
+    [
+        (
+            [{"properties": NAME, "unevaluatedProperties": TOKEN_OBJECT}],
+            {"name": "n", "settings": {"label": "l", "token": R}},
+        ),
+        # A sensitive flag at the top level masks each property, and the properties stay an object.
+        ([{"sensitive": True}], {"name": R, "settings": R}),
+    ],
+)
+async def test_a_sensitive_flag_in_a_top_level_branch_keeps_the_properties_an_object(resource_repo, all_of, masked):
+    template = masking_template({**NAME, "settings": {"type": "object"}}, all_of)
+    properties = {"name": "n", "settings": {"label": "l", "token": "real"}}
+    snapshot = stored_resource("ws", "masking-template", "workspace", copy.deepcopy(properties))
+    resource_repo._container = FakeContainer(snapshot)
+    resource_repo.query = AsyncMock(return_value=[snapshot])
+
+    assert mask_sensitive_properties(properties, template) == masked
+    assert await resource_repo.mask_stored_sensitive_values(
+        migration_template_repo(template), history_without_items()
+    ) == (1, 0)
+    assert resource_repo.container.documents["ws"]["properties"] == masked
 
 
 def test_each_item_of_a_list_with_sensitive_items_is_masked():
